@@ -22,10 +22,6 @@ export interface V1InitRequest {
 /**
  * Build the `GET /v1/consent/init` request.
  *
- * Do not add custom headers to it. Init must stay a CORS simple request, so
- * a browser sends it with no preflight before the banner can show: the
- * overrides go in the query string, and `Accept-Language` is safelisted.
- *
  * @param options - Project URL, optional `initUrl`, credentials, the
  *   caller headers already filtered to the init inputs, the overrides, and
  *   the experiment arm and journey the request carries.
@@ -66,6 +62,9 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 	return {
 		init: {
 			credentials: options.credentials,
+			// No custom headers: init must stay a CORS simple request, or a
+			// browser sends a preflight before the banner can show. The
+			// overrides go in the query; Accept-Language is safelisted.
 			headers: {
 				accept: 'application/json',
 				...options.headers,

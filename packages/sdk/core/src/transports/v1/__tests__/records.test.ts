@@ -182,6 +182,14 @@ describe('save: POST /v1/consent/records', () => {
 		expect(isUuidV7(String(bodyAt(calls, 0).idempotencyKey))).toBe(true);
 	});
 
+	test('sends the property without a trailing dot', async () => {
+		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+
+		await transportWith(fetch, 'www.example.com.').save(savePayload());
+
+		expect(bodyAt(calls, 0).property).toBe('www.example.com');
+	});
+
 	test('lowercases the property', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
 
@@ -250,6 +258,19 @@ describe('save: the answer', () => {
 			expect(error).toMatchObject({ code, requestId: 'req_save', status });
 		}
 	);
+
+	test('retries a 409 whose body names no code', async () => {
+		const { fetch } = stubFetch(
+			() => new Response('<html>Conflict</html>', { status: 409 })
+		);
+
+		const error = await transportWith(fetch)
+			.save(savePayload())
+			.catch((caught: unknown) => caught);
+
+		expect(error).toMatchObject({ code: 'conflict', status: 409 });
+		expect(isConsentSaveRejection(error)).toBe(false);
+	});
 
 	test('a subject_conflict is the refusal the kernel recovers from', async () => {
 		const { fetch } = stubFetch(() => v1Error(409, 'subject_conflict'));
@@ -327,6 +348,25 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 			identityProvider: 'clerk',
 			identityToken: 'token',
 		});
+	});
+
+	test('reports the canonical ID a save answers for a stored sub_ ID', async () => {
+		const { fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const seen: [string, string][] = [];
+		const transport = createV1RecordTransport({
+			fetch,
+			onSubjectId: (subjectId, previous) => seen.push([subjectId, previous]),
+			projectUrl: PROJECT_URL,
+		});
+
+		await transport.save(
+			savePayload({
+				subject: { subjectId: LEGACY_SUBJECT },
+				subjectId: LEGACY_SUBJECT,
+			})
+		);
+
+		expect(seen).toEqual([[SUBJECT, LEGACY_SUBJECT]]);
 	});
 
 	test('reports the canonical ID for a stored sub_ ID', async () => {

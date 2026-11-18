@@ -21,6 +21,8 @@ export type InthApiErrorCode = string;
 export interface InthApiErrorDetail {
 	/** `error.code`, else a code derived from the HTTP status. */
 	code: InthApiErrorCode;
+	/** Whether the body named `code`, rather than the status implying it. */
+	codeFromBody: boolean;
 	/** `error.message`, cut to a bounded length. */
 	message: string;
 	/** `requestId` from the body, else the `x-request-id` header. */
@@ -166,8 +168,10 @@ export const readInthApiErrorDetail = async function readInthApiErrorDetail(
 				})
 			: {};
 	const message = nonEmpty(error.message) ?? response.statusText ?? '';
+	const bodyCode = nonEmpty(error.code);
 	return {
-		code: nonEmpty(error.code) ?? codeForStatus(response.status),
+		code: bodyCode ?? codeForStatus(response.status),
+		codeFromBody: bodyCode !== undefined,
 		details: error.details,
 		message:
 			message.length > MAX_MESSAGE_LENGTH

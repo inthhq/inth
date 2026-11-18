@@ -21,6 +21,7 @@ import type { RememberedDecisionInputs } from '../decision-inputs';
 import { readInthApiError } from './error';
 import { buildV1ConsentRecordBody } from './records-body';
 import {
+	readJson,
 	resolveProperty,
 	resolveV1Fetch,
 	subjectLinkPath,
@@ -47,9 +48,9 @@ export interface V1RecordTransportOptions {
 	 */
 	property?: string;
 	/**
-	 * Called when a link answers with a subject ID other than the one it was
-	 * sent, such as the UUID for a stored `sub_` ID. A save hands the kernel
-	 * its canonical ID in its result; a link has no such path.
+	 * Called when an answer names a subject ID other than the one sent, such
+	 * as the UUID for a stored `sub_` ID. The kernel reads a first save's ID
+	 * from its result; a replay's and a link's reach it only here.
 	 */
 	onSubjectId?: (subjectId: string, previous: string) => void;
 }
@@ -85,7 +86,7 @@ const readLink = function readLink(
 /** The save result, or `undefined` for an answer without a canonical subject ID. */
 const toSaveResult = function toSaveResult(
 	data: unknown
-): V1SaveResult | undefined {
+): (V1SaveResult & { subjectId: string }) | undefined {
 	const body =
 		typeof data === 'object' && data !== null
 			? (data as { link?: unknown; subjectId?: unknown })
@@ -93,20 +94,15 @@ const toSaveResult = function toSaveResult(
 	if (typeof body.subjectId !== 'string' || !isUuidV7(body.subjectId)) {
 		return undefined;
 	}
-	const result: V1SaveResult = { ok: true, subjectId: body.subjectId };
+	const result: V1SaveResult & { subjectId: string } = {
+		ok: true,
+		subjectId: body.subjectId,
+	};
 	const link = readLink(body.link);
 	if (link) {
 		result.link = link;
 	}
 	return result;
-};
-
-const readJson = async function readJson(response: Response): Promise<unknown> {
-	try {
-		return await response.json();
-	} catch {
-		return undefined;
-	}
 };
 
 /**
@@ -131,6 +127,12 @@ export const createV1RecordTransport = function createV1RecordTransport(
 	const base = trimTrailingSlash(options.projectUrl);
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createV1RecordTransport');
 	const property = resolveProperty(base, options.property);
+
+	const reportSubjectId = (canonical: string, sent: string) => {
+		if (canonical !== sent) {
+			options.onSubjectId?.(canonical, sent);
+		}
+	};
 
 	const post = (url: string, body: unknown) =>
 		fetchImpl(url, {
@@ -162,12 +164,8 @@ export const createV1RecordTransport = function createV1RecordTransport(
 				| { subjectId?: unknown }
 				| undefined;
 			const canonical = answer?.subjectId;
-			if (
-				typeof canonical === 'string' &&
-				isUuidV7(canonical) &&
-				canonical !== subjectId
-			) {
-				options.onSubjectId?.(canonical, subjectId);
+			if (typeof canonical === 'string' && isUuidV7(canonical)) {
+				reportSubjectId(canonical, subjectId);
 			}
 		},
 
@@ -199,6 +197,7 @@ export const createV1RecordTransport = function createV1RecordTransport(
 					`Inth transport: ${V1_ROUTES.records} answered ${response.status} without a canonical subject ID`
 				);
 			}
+			reportSubjectId(result.subjectId, payload.subjectId);
 			return result;
 		},
 	};

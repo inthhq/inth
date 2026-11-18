@@ -8,11 +8,12 @@ import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { ExplicitChoice } from '../../consent-record/types';
 import { createIdempotencyKey } from '../../libs/subject-uuid';
 import type { SavePayload } from '../../types';
+import type { DecisionAssertion } from '../decision-inputs';
 
 /** The body, without the decision assertion the transport adds. */
 export type V1ConsentRecordBody = Omit<
 	V1ConsentRecordInput,
-	'country' | 'fingerprint' | 'gpc' | 'language' | 'policyId' | 'region'
+	keyof DecisionAssertion
 >;
 
 /**

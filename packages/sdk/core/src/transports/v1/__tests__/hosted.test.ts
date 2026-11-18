@@ -3,6 +3,7 @@
  * kernel.
  */
 import type { InitOutput } from '@inth/sdk-schema/types';
+import { v1ConsentInitQuerySchema } from '@inth/sdk-schema/v1';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createKernel } from '../../../kernel';
@@ -76,6 +77,11 @@ describe('init: GET /v1/consent/init', () => {
 			region: 'BY',
 			stored: '0',
 		});
+		expect(
+			v1ConsentInitQuerySchema['~standard'].validate(
+				Object.fromEntries(url.searchParams)
+			)
+		).not.toHaveProperty('issues');
 		expect(calls[0]?.init.method).toBe('GET');
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
 	});
@@ -235,57 +241,6 @@ describe('inside a kernel', () => {
 		expect(result).toMatchObject({ ok: true, subjectId: SUBJECT });
 		expect(kernel.getSnapshot().subject?.subjectId).toBe(SUBJECT);
 		expect(resolved).toEqual([{ next: SUBJECT, previous: LEGACY_SUBJECT }]);
-		kernel.dispose();
-	});
-
-	test('a queued save replays with the idempotency key it was first sent with', async () => {
-		const store = createMemoryOutboxStore();
-		const { calls, fetch } = stubFetch(
-			() =>
-				json(503, {
-					error: { code: 'server_error', message: 'down' },
-					requestId: 'r1',
-				}),
-			() => json(200, INIT_OUTPUT),
-			() => json(200, { subjectId: SUBJECT })
-		);
-		const kernel = createKernel(
-			{
-				transport: createV1HostedTransport({ fetch, projectUrl: PROJECT_URL }),
-			},
-			{ outboxStore: store }
-		);
-
-		const first = await kernel.commands.save('all');
-		expect(first.ok).toBe(false);
-		await kernel.commands.init();
-		await vi.waitFor(() => expect(calls).toHaveLength(3));
-
-		const saves = calls.filter((call) =>
-			call.url.endsWith('/v1/consent/records')
-		);
-		expect(saves).toHaveLength(2);
-		const [sent, replayed] = saves.map(
-			(call) => (call.body as { idempotencyKey: string }).idempotencyKey
-		);
-		expect(sent).toBeDefined();
-		expect(replayed).toBe(sent);
-		kernel.dispose();
-	});
-
-	test('identify without an identity token makes no request', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
-		const kernel = createKernel(
-			{
-				transport: createV1HostedTransport({ fetch, projectUrl: PROJECT_URL }),
-			},
-			{ outboxStore: createMemoryOutboxStore() }
-		);
-		kernel.hydrate({ subject: { subjectId: SUBJECT } });
-
-		await kernel.commands.identify({ externalId: 'user_123' });
-
-		expect(calls).toEqual([]);
 		kernel.dispose();
 	});
 

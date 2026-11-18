@@ -44,6 +44,19 @@ export const resolveV1Fetch = function resolveV1Fetch(
 	return resolved;
 };
 
+export const readJson = async function readJson(
+	response: Response
+): Promise<unknown> {
+	try {
+		return await response.json();
+	} catch {
+		return undefined;
+	}
+};
+
+const toProperty = (host: string): string =>
+	host.toLowerCase().replace(/\.+$/u, '');
+
 /**
  * The property a consent belongs to: the explicit option, else the page's
  * host name, else the project URL's host name, else `localhost`.
@@ -53,13 +66,13 @@ export const resolveProperty = function resolveProperty(
 	explicit: string | undefined
 ): string {
 	if (explicit) {
-		return explicit.toLowerCase();
+		return toProperty(explicit);
 	}
 	if (typeof window !== 'undefined' && window.location?.hostname) {
-		return window.location.hostname.toLowerCase();
+		return toProperty(window.location.hostname);
 	}
 	try {
-		return new URL(projectUrl).hostname.toLowerCase();
+		return toProperty(new URL(projectUrl).hostname);
 	} catch {
 		return 'localhost';
 	}

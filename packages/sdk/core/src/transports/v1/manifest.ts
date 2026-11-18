@@ -152,7 +152,25 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 	const manifestUrl = options.manifestUrl ?? `${base}${V1_ROUTES.manifest}`;
 	const unreported = createUnreportedJourneys();
 	let lastDecisionInputs: RememberedDecisionInputs | undefined;
+	// Overlapping inits: only the latest may update the assertion state.
+	let initGeneration = 0;
 	let manifestPromise: Promise<ConsentManifest> | undefined;
+
+	const fetchManifest =
+		async function fetchManifest(): Promise<ConsentManifest> {
+			const response = await fetchImpl(manifestUrl, {
+				credentials: options.credentials,
+				headers: { accept: 'application/json', ...options.headers },
+				method: 'GET',
+			});
+			if (!response.ok) {
+				throw await readInthApiError(
+					`Inth transport: ${V1_ROUTES.manifest}`,
+					response
+				);
+			}
+			return (await response.json()) as ConsentManifest;
+		};
 
 	const getManifest = function getManifest(): Promise<ConsentManifest> {
 		if (options.snapshot) {
@@ -161,18 +179,7 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 		// Cached on success only, so the kernel's init retry fetches again.
 		manifestPromise ??= (async () => {
 			try {
-				const response = await fetchImpl(manifestUrl, {
-					credentials: options.credentials,
-					headers: { accept: 'application/json', ...options.headers },
-					method: 'GET',
-				});
-				if (!response.ok) {
-					throw await readInthApiError(
-						`Inth transport: ${V1_ROUTES.manifest}`,
-						response
-					);
-				}
-				return (await response.json()) as ConsentManifest;
+				return await fetchManifest();
 			} catch (error) {
 				manifestPromise = undefined;
 				throw error;
@@ -199,6 +206,8 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 	return {
 		...records,
 		async init(ctx: InitContext): Promise<TransportInitResponse> {
+			initGeneration += 1;
+			const generation = initGeneration;
 			const manifest = await getManifest();
 			const inputs = mergeInputs(options.inputs, ctx.overrides);
 			const { journey } = ctx;
@@ -236,7 +245,9 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 			if (adTechProviders) {
 				payload.adTechProviders = adTechProviders;
 			}
-			lastDecisionInputs = rememberDecisionInputs(payload, inputs.gpc);
+			if (generation === initGeneration) {
+				lastDecisionInputs = rememberDecisionInputs(payload, inputs.gpc);
+			}
 
 			const reportTo =
 				options.report &&

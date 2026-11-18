@@ -83,6 +83,27 @@ describe('GET /v1/consent/manifest', () => {
 		await transport.init({ overrides: {}, user: null });
 		expect(calls).toHaveLength(2);
 	});
+
+	test('a fetch that throws at once is tried again by the next init', async () => {
+		let attempts = 0;
+		const transport = createV1ManifestTransport({
+			fetch: (() => {
+				attempts += 1;
+				if (attempts === 1) {
+					throw new TypeError('offline');
+				}
+				return Promise.resolve(json(200, MANIFEST));
+			}) as typeof globalThis.fetch,
+			projectUrl: PROJECT_URL,
+		});
+
+		await expect(transport.init({ overrides: {}, user: null })).rejects.toThrow(
+			'offline'
+		);
+		await transport.init({ overrides: {}, user: null });
+
+		expect(attempts).toBe(2);
+	});
 });
 
 describe('saves in manifest mode', () => {
@@ -131,7 +152,7 @@ describe('saves in manifest mode', () => {
 });
 
 describe('POST /v1/consent/sessions', () => {
-	test('a server caller reports the resolution, with the site as property', async () => {
+	test('a server caller reports the resolution with the visitor headers', async () => {
 		const { calls, fetch } = stubFetch(
 			() => new Response(null, { status: 202 })
 		);
