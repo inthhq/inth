@@ -204,18 +204,24 @@ describe('save: POST /v1/consent/records', () => {
 		expect(isUuidV7(String(bodyAt(calls, 0).idempotencyKey))).toBe(true);
 	});
 
-	test.each([
-		['www.example.com.', 'www.example.com'],
-		['www.example.com..', 'www.example.com.'],
-	])('sends %s as the property %s', async (option, property) => {
+	test('sends the property without a trailing dot', async () => {
 		const { calls, fetch } = stubFetch(() =>
 			json(200, { recordId: RECORD, subjectId: SUBJECT })
 		);
 
-		await transportWith(fetch, option).save(savePayload());
+		await transportWith(fetch, 'www.example.com.').save(savePayload());
 
-		expect(bodyAt(calls, 0).property).toBe(property);
+		expect(bodyAt(calls, 0).property).toBe('www.example.com');
 	});
+
+	test.each(['www.example.com..', 'https://example.com', '[::1]'])(
+		'refuses the property option %s',
+		(option) => {
+			const { fetch } = stubFetch(() => json(200, {}));
+
+			expect(() => transportWith(fetch, option)).toThrow(TypeError);
+		}
+	);
 
 	test('lowercases the property', async () => {
 		const { calls, fetch } = stubFetch(() =>

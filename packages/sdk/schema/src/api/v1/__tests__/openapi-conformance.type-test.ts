@@ -172,8 +172,9 @@ type Found =
  * backend to fix.
  */
 type DocumentGaps =
-	// The backend does not answer `scriptRegistry` on `/v1` yet. The SDK
-	// reads it when present.
+	// Clarification 19 says the document describes `scriptRegistry`, but the
+	// backend does not answer it on `/v1` yet and the document leaves it out.
+	// The SDK reads it when present.
 	| 'init answer.scriptRegistry: only in SDK'
 	| 'manifest answer.scriptRegistry: only in SDK'
 	// The manifest type is shared with the 3.x routes, whose producer may

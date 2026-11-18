@@ -95,8 +95,8 @@ const readExperiment = function readExperiment(
 };
 
 /**
- * The report body, with the journey's site as `property` and without the
- * tenant a 3.x manifest may name.
+ * The report body, with the journey's site as `property` when it is a host
+ * name, and without the tenant a 3.x manifest may name.
  *
  * @param options - What to report.
  * @returns The body of `POST /v1/consent/sessions`.
@@ -113,10 +113,8 @@ export const buildV1ConsentSessionReport = function buildV1ConsentSessionReport(
 		return report;
 	}
 	const { domain, ...rest } = journey;
-	return {
-		...report,
-		journey: domain ? { ...rest, property: toProperty(domain) } : rest,
-	};
+	const property = domain ? toProperty(domain) : undefined;
+	return { ...report, journey: property ? { ...rest, property } : rest };
 };
 
 /**

@@ -255,6 +255,15 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			},
 		],
 		[
+			'a property that is not a host name',
+			{
+				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				idempotencyKey: KEY,
+				property: 'https://example.com',
+				subjectId: SUBJECT,
+			},
+		],
+		[
 			'a malformed type',
 			{
 				acceptances: [{ proofToken: 'p', type: 'Terms' }],

@@ -165,8 +165,8 @@ const readAcceptances = function readAcceptances(
  * @param input - What the caller passed.
  * @returns The body of `POST /v1/documents/acceptances`.
  * @throws {TypeError} When there are no acceptances or too many, no
- * idempotency key, no subject ID or external ID, or a document type is
- * malformed.
+ * idempotency key, no subject ID or external ID, or a document type or the
+ * property is malformed.
  */
 const buildAcceptancesBody = function buildAcceptancesBody(
 	input: RecordAcceptancesInput
@@ -212,6 +212,11 @@ const buildAcceptancesBody = function buildAcceptancesBody(
 	}
 	if (input.property) {
 		body.property = toProperty(input.property);
+		if (body.property === undefined) {
+			throw new TypeError(
+				`${LABEL}: property "${input.property}" is not a host name or app ID.`
+			);
+		}
 	}
 	if (input.context) {
 		body.context = { ...input.context };

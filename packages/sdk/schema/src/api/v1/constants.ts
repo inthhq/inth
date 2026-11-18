@@ -27,7 +27,8 @@ export const V1_UUID_PATTERN =
  * A property: a site's host name, or an app's application or bundle ID, as
  * lowercase labels separated by single dots.
  */
-export const V1_PROPERTY_PATTERN = /^[\d_a-z-]+(?:\.[\d_a-z-]+)*$/u;
+// oxlint-disable-next-line prefer-named-capture-group -- The backend's text, compared as is.
+export const V1_PROPERTY_PATTERN = /^[a-z0-9_-]+(\.[a-z0-9_-]+)*$/u;
 
 /** The longest property the backend accepts. */
 export const V1_PROPERTY_MAX_LENGTH = 253;
@@ -36,7 +37,7 @@ export const V1_PROPERTY_MAX_LENGTH = 253;
 export const V1_MAX_ACCEPTANCES = 20;
 
 /** A document type, such as `privacy_policy`, `terms_us` or `terms_eu`. */
-export const V1_DOCUMENT_TYPE_PATTERN = /^[a-z][\d_a-z]*$/u;
+export const V1_DOCUMENT_TYPE_PATTERN = /^[a-z][a-z0-9_]*$/u;
 
 /** Response header that carries the request ID. */
 export const V1_REQUEST_ID_HEADER = 'x-request-id';
