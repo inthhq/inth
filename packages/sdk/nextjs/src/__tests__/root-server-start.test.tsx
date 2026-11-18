@@ -392,3 +392,43 @@ test('runs each serverStart once per render', async () => {
 	expect(html).toContain(JSON.stringify(pixel.src));
 	expect(serverStart).toHaveBeenCalledTimes(1);
 });
+
+test('starts an integration from the registry source the state lists with experimentalScriptRegistry', async () => {
+	const registrySrc = 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js';
+	const renderListed = async (experimentalScriptRegistry?: boolean) => {
+		const stream = await renderToReadableStream(
+			<ConsentRoot
+				options={{
+					experimentalScriptRegistry,
+					mode: transportMode({ init: () => Promise.resolve({}) }),
+				}}
+				scripts={[{ ...pixel, integration: 'pixel' }]}
+				state={{
+					...grantedState(),
+					initialScriptRegistry: {
+						sources: {
+							pixel: { integrity: 'sha384-registry', src: registrySrc },
+						},
+					},
+				}}
+			>
+				<main id="page">Page</main>
+			</ConsentRoot>
+		);
+		await stream.allReady;
+		return new Response(stream).text();
+	};
+	// The URL and attributes the server start inserts the pixel's tag with.
+	const started = (html: string) =>
+		/i\("pixel",(?<src>"[^"]+")(?:,\{"attributes":(?<attributes>\{[^}]*\}))?/u.exec(
+			html
+		)?.groups ?? {};
+	// The first render loads the start module.
+	await renderListed(true);
+
+	expect({ ...started(await renderListed(true)) }).toEqual({
+		attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
+		src: JSON.stringify(registrySrc),
+	});
+	expect(started(await renderListed()).src).toBe(JSON.stringify(pixel.src));
+});
