@@ -32,26 +32,26 @@ Cookie banner, preference center, and consent-gated scripts for sites without a 
 ## Prerequisites
 
 - A page where you can add a `<script>` tag
-- An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests
+- An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or `c15t.testing.js` on test pages
 
 ## Installation
 
-Paste before `</head>`, with the backend URL from your Inth project:
+Paste before `</head>`, with the project URL from your Inth project:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@inth/sdk-browser/dist/c15t.js"
-  data-project-url="YOUR_INTH_BACKEND_URL"
+  src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/c15t.js"
+  data-project-url="YOUR_INTH_PROJECT_URL"
   defer
 ></script>
 ```
 
-A URL without a version loads the newest release, so pin an exact version, such as `@inth/sdk-browser@3.2.0`, in production. The default `c15t.js` requires a backend URL. Load `dist/c15t.local.js` for local mode or `dist/c15t.headless.js` for the runtime without any UI.
+A URL without a version loads the newest release, so pin an exact version, such as `@inth/sdk@3.2.0`, in production. The default `c15t.js` requires a project URL. Load `lib/browser/dist/c15t.testing.js` on test pages with no backend, or `lib/browser/dist/c15t.headless.js` for the runtime without any UI.
 
 For bundled apps:
 
 ```bash
-npm install @inth/sdk-browser
+npm install @inth/sdk
 ```
 
 ## Usage
@@ -89,11 +89,11 @@ See the [documentation](https://c15t.com/docs/frameworks/html/quickstart) for gu
 | File | Use it for |
 | --- | --- |
 | `c15t.js` | Inth or a self-hosted backend. Set `data-project-url`. A self-hosted backend also serves a preconfigured script at `/c15t.js` |
-| `c15t.local.js` | Local mode, for development and tests: choices stay in the browser, with local policy rules, and Inth keeps no server-side record of consent. Before 3.2.0 this file was `c15t.offline.js` |
+| `c15t.testing.js` | Test pages only: the stock UI with `testing()`, which resolves a policy in the browser with no backend |
 | `c15t.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/manifest` |
 | `c15t.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |
 | `c15t.devtools.js` | A DevTools panel, with a Location tab to try policies by region |
-| `c15t.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk-browser/gpp` |
+| `c15t.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk/gpp` |
 
 ## Docs for AI Agents
 

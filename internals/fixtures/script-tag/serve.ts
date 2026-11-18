@@ -45,7 +45,8 @@ const published = (file: string, region: string): string => {
 	const source = here(`../../doc-snippets/html/${file}`);
 	return extractRegion(readFileSync(source, 'utf8'), region, source);
 };
-const cdnPrefix = 'https://cdn.jsdelivr.net/npm/@inth/sdk@alpha/dist/';
+const cdnPrefix =
+	'https://cdn.jsdelivr.net/npm/@inth/sdk@alpha/lib/browser/dist/';
 const backendPlaceholder = 'https://your-project.inth.app';
 const projectUrl = process.env.INTH_PROJECT_URL;
 

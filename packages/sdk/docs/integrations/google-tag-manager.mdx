@@ -137,8 +137,8 @@ To add it:
 3. Set **Inth script URL** to one of:
    - `https://your-project.inth.app/c15t.js` for an Inth project, which
      serves the script with its backend URL already set.
-   - `https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/dist/c15t.js`,
-     with **Backend URL** set to your backend. The tag fails without it.
+   - `https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/lib/browser/dist/c15t.js`,
+     with **Project URL** set to your project. The tag fails without it.
 4. Under **Consent categories**, tick each purpose your container's tags
    serve. Inth asks the visitor about these, besides strictly necessary.
    Analytics and Marketing are ticked by default. With none ticked, Inth
@@ -150,7 +150,7 @@ To add it:
    get no default from the tag. **Wait for update** defaults to 500
    milliseconds.
 
-Use an exact version, such as `3.1.0`. The template rejects tags such as
+Use an exact version, such as `3.2.0`. The template rejects tags such as
 `latest` and ranges such as `3.1`, which jsDelivr would move to each new
 release without a change to your container. It accepts only Inth and jsDelivr
 URLs. For a self-hosted backend,
