@@ -338,9 +338,9 @@ export const helperParityCases = {
 		expected: {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: undefined,
-			src: 'https://inth.api.useinsider.com/ins.js?id=123456',
+			src: 'https://c15t.api.useinsider.com/ins.js?id=123456',
 		},
-		script: insiderTag({ partnerId: '123456', partnerName: 'inth' }),
+		script: insiderTag({ partnerId: '123456', partnerName: 'c15t' }),
 	},
 	intercom: {
 		expected: {

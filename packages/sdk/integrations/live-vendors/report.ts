@@ -42,7 +42,7 @@ const MONITOR_ISSUE_TITLE_PATTERN = new RegExp(
 );
 
 const SIGNATURE_MARKER_PATTERN =
-	/<!-- inth-monitor-signature: (?<capture1>[a-z, ]*) -->/u;
+	/<!-- c15t-monitor-signature: (?<capture1>[a-z, ]*) -->/u;
 
 /**
  * Escapes third-party text (vendor URLs, error messages, probe details)
@@ -208,7 +208,7 @@ export const buildMonitorIssueBody = function buildMonitorIssueBody(
 
 	const notes = result.notes ? `\n> ${sanitizeInline(result.notes)}\n` : '';
 
-	return `<!-- inth-monitor-signature: ${signature} -->
+	return `<!-- c15t-monitor-signature: ${signature} -->
 The live vendor monitor detected a contract failure for **${result.label}**.
 
 ${metadataLines.join('\n')}

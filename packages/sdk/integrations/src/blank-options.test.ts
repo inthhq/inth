@@ -347,7 +347,7 @@ const requiredIdCases: {
 		script: { category: 'marketing', id: 'customer-io' },
 	},
 	{
-		create: (id) => insiderTag({ partnerId: asId(id), partnerName: 'inth' }),
+		create: (id) => insiderTag({ partnerId: asId(id), partnerName: 'c15t' }),
 		helper: 'insiderTag',
 		option: 'partnerId',
 		script: { category: 'marketing', id: 'insider' },
@@ -355,7 +355,7 @@ const requiredIdCases: {
 	{
 		create: (id) =>
 			insiderTag({
-				...{ partnerId: '123456', partnerName: 'inth' },
+				...{ partnerId: '123456', partnerName: 'c15t' },
 				partnerName: asId(id),
 			}),
 		helper: 'insiderTag',

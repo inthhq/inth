@@ -1016,8 +1016,8 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			);
 		},
 		createScript: () =>
-			insiderTag({ partnerId: '123456', partnerName: 'inth' }),
-		loaderUrlSubstring: 'inth.api.useinsider.com/ins.js?id=123456',
+			insiderTag({ partnerId: '123456', partnerName: 'c15t' }),
+		loaderUrlSubstring: 'c15t.api.useinsider.com/ins.js?id=123456',
 		notes:
 			'The placeholder partner returns HTTP 200 with a 52-byte HTML response, not an SDK. This checks the user/page/init bootstrap and endpoint reachability only. A dedicated Web SDK-enabled account is required for runtime and consent-update validation; collection stays blocked.',
 		tier: 'loader-only',
