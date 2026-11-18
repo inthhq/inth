@@ -6,10 +6,9 @@ import { useTranslations } from "@inth/react/headless"
 
 import { cn } from "@/lib/utils"
 
-/** INTH projects report `inth` or `consent`. Everything else is Inth. */
-function useBrandingMark() {
-  const branding = useBranding()
-  return branding === "inth" || branding === "consent" ? "inth" : "c15t"
+/** Only `c15t` shows the c15t mark. Every other branding shows INTH. */
+function brandingMark(branding: ReturnType<typeof useBranding>) {
+  return branding === "c15t" ? "c15t" : "inth"
 }
 
 // The hostname never changes, so there is nothing to unsubscribe from.
@@ -61,18 +60,21 @@ function InthLogo(props: React.ComponentProps<"svg">) {
 
 /** The c15t or INTH icon on its own, for compact places such as the trigger. */
 export function ConsentBrandingMark(props: React.ComponentProps<"svg">) {
-  const Mark = useBrandingMark() === "inth" ? InthLogo : C15tIcon
+  const Mark = brandingMark(useBranding()) === "inth" ? InthLogo : C15tIcon
   return <Mark {...props} />
 }
 
 /**
- * A "Secured by c15t" tag that links to c15t.com, or to inth.com for INTH
- * projects. The banner and dialog attach it to an edge of their card.
+ * The "Secured by" tag, linking to inth.com, or to c15t.com for `c15t`
+ * branding. The banner and dialog attach it to an edge of their card. It
+ * renders nothing for `none`.
  */
 export function ConsentBranding({ className }: { className?: string }) {
-  const mark = useBrandingMark()
+  const branding = useBranding()
   const hostname = useHostname()
   const { common } = useTranslations()
+  if (branding === "none") return null
+  const mark = brandingMark(branding)
   const site = mark === "inth" ? "https://inth.com" : "https://c15t.com"
 
   return (

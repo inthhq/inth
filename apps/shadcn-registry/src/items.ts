@@ -98,7 +98,7 @@ export const uiItems: UiItem[] = [
 	},
 	{
 		description:
-			'The "Secured by c15t" tag on the banner, dialog and sheet, and the mark on the dialog trigger.',
+			'The "Secured by" tag on the banner, dialog and sheet, and the mark on the dialog trigger.',
 		files: [component('consent-branding.tsx')],
 		name: 'consent-branding',
 		title: 'Consent branding',
