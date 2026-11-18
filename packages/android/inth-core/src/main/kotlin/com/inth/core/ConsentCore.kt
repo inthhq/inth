@@ -364,6 +364,14 @@ class ConsentCore @InthInternalApi constructor(
 	/** Local notice dismissal, guarded by [mutationLock]. */
 	private var noticeDismissal: NoticeDismissal? = null
 
+	/**
+	 * The user [identify] last attached, so a record can name its identity provider and
+	 * properties as well as the external id the subject carries. Memory only, like the
+	 * token it never holds: after a relaunch records name the external id alone.
+	 */
+	@Volatile
+	private var identifiedUser: KernelUser? = null
+
 	@Volatile
 	private var storedSnapshotFound = false
 
@@ -1215,6 +1223,7 @@ class ConsentCore @InthInternalApi constructor(
 					)
 				)
 			else {
+				identifiedUser = user
 				val snapshot = state.get()
 				notifySnapshot()
 				background.execute {
@@ -1240,6 +1249,7 @@ class ConsentCore @InthInternalApi constructor(
 			)
 				published = published.copy(model = ConsentModel.IAB)
 			installSnapshot(published)
+			identifiedUser = user
 		}
 		persist()
 		mutation.release()
@@ -1327,6 +1337,7 @@ class ConsentCore @InthInternalApi constructor(
 		if (transition != null) {
 			mutation.release()
 			if (transition) {
+				identifiedUser = null
 				notifySnapshot()
 			}
 			else
@@ -1344,6 +1355,7 @@ class ConsentCore @InthInternalApi constructor(
 			val current = state.get()
 			subject = (current.subject ?: ConsentSubject(subjectIdGenerator())).copy(externalId = null)
 			published = current.copy(subject = subject, revision = current.revision + 1)
+			identifiedUser = null
 			if (
 				iabConfiguration != null &&
 					evaluationPolicy?.model == ConsentModel.IAB &&
@@ -2239,9 +2251,11 @@ class ConsentCore @InthInternalApi constructor(
 			confirmed = ConfirmedCoverage(categories = confirmed, actionAt = actionAt),
 			consents = published.effectivePermissions,
 			overrides = published.overrides,
-			// The mobile snapshot carries identity on the subject, so the user
-			// object is reconstructed from it rather than held separately.
-			user = published.subject?.externalId?.let { KernelUser(externalId = it) },
+			// The subject carries the external id. The provider and properties come from the
+			// user identify attached, while that is still the subject's external id.
+			user = published.subject?.externalId?.let { externalId ->
+				identifiedUser?.takeIf { it.externalId == externalId } ?: KernelUser(externalId = externalId)
+			},
 			model = published.model,
 			uiSource = surfaceAtAction,
 			consentAction = action,
