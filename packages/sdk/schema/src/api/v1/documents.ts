@@ -20,7 +20,7 @@ import {
 	v1PropertySchema,
 	v1SubjectIdSchema,
 } from './common';
-import { V1_DOCUMENT_TYPE_PATTERN } from './constants';
+import { V1_DOCUMENT_TYPE_PATTERN, V1_MAX_ACCEPTANCES } from './constants';
 
 export const v1DocumentTypeSchema = v.pipe(
 	v.string(),
@@ -57,6 +57,15 @@ const effectiveDateSchema = v.pipe(
 	v.examples(['2026-11-18T00:00:00.000Z'])
 );
 
+/** A publish may name the day alone; the answers carry a date and time. */
+const publishEffectiveDateSchema = v.pipe(
+	v.union([v.pipe(v.string(), v.isoDate()), effectiveDateSchema]),
+	v.description(
+		'ISO 8601 date, or date and time with a zone, the version takes effect.'
+	),
+	v.examples(['2026-11-18', '2026-11-18T00:00:00.000Z'])
+);
+
 export const v1DocumentParamsSchema = v.object({
 	type: v1DocumentTypeSchema,
 });
@@ -66,7 +75,7 @@ export const v1DocumentParamsSchema = v.object({
 // ---------------------------------------------------------------------------
 
 export const v1DocumentPublishInputSchema = v.object({
-	effectiveDate: effectiveDateSchema,
+	effectiveDate: publishEffectiveDateSchema,
 	hash: v1DocumentHashSchema,
 	/**
 	 * `false` marks a small edit: people who accepted the previous required
@@ -131,7 +140,11 @@ export const v1DocumentAcceptancesInputSchema = v.pipe(
 	v.object({
 		acceptances: v.pipe(
 			v.array(v1DocumentAcceptanceItemSchema),
-			v.minLength(1, 'At least one acceptance is required')
+			v.minLength(1, 'At least one acceptance is required'),
+			v.maxLength(
+				V1_MAX_ACCEPTANCES,
+				`At most ${V1_MAX_ACCEPTANCES} acceptances are allowed`
+			)
 		),
 		acceptedAt: v1EpochMillisecondsSchema,
 		context: v.optional(

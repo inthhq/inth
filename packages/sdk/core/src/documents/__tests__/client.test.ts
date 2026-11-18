@@ -229,6 +229,17 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			{ acceptances: [], idempotencyKey: KEY, subjectId: SUBJECT },
 		],
 		[
+			'more than 20 acceptances',
+			{
+				acceptances: Array.from({ length: 21 }, () => ({
+					proofToken: 'p',
+					type: 'terms_us',
+				})),
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
+		],
+		[
 			'no key',
 			{
 				acceptances: [{ proofToken: 'p', type: 'terms_us' }],

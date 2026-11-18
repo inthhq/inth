@@ -95,7 +95,8 @@ const readExperiment = function readExperiment(
 };
 
 /**
- * The report body, with the journey's site as `property`.
+ * The report body, with the journey's site as `property` and without the
+ * tenant a 3.x manifest may name.
  *
  * @param options - What to report.
  * @returns The body of `POST /v1/consent/sessions`.
@@ -103,7 +104,11 @@ const readExperiment = function readExperiment(
 export const buildV1ConsentSessionReport = function buildV1ConsentSessionReport(
 	options: BuildConsentSessionReportOptions
 ): V1ConsentSessionReport {
-	const { journey, ...report } = buildConsentSessionReport(options);
+	const {
+		journey,
+		tenantId: _tenantId,
+		...report
+	} = buildConsentSessionReport(options);
 	if (!journey) {
 		return report;
 	}

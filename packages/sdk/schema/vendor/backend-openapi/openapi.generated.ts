@@ -170,6 +170,808 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
 	schemas: {
+		ConsentCheckResponse: {
+			results: {
+				[key: string]: {
+					hasConsent: boolean;
+					isLatestPolicy: boolean;
+				};
+			};
+		};
+		ConsentInitResponse: {
+			adTechProviders?: {
+				id: number;
+				name: string;
+				policyUrl: string;
+			}[];
+			/** @enum {string} */
+			branding: 'c15t' | 'inth' | 'consent' | 'none';
+			cmpId?: number;
+			customVendors?: {
+				cookieMaxAgeSeconds?: number;
+				dataCategories?: number[];
+				dataRetentionDays?: number;
+				description?: string;
+				features?: number[];
+				id: string | number;
+				legIntPurposes?: number[];
+				name: string;
+				/** Format: uri */
+				privacyPolicyUrl: string;
+				purposes: number[];
+				specialFeatures?: number[];
+				usesCookies?: boolean;
+				usesNonCookieAccess?: boolean;
+			}[];
+			gvl?: {
+				dataCategories?: {
+					[key: string]: {
+						description: string;
+						id: number;
+						name: string;
+					};
+				};
+				features: {
+					[key: string]: {
+						description: string;
+						descriptionLegal?: string;
+						id: number;
+						illustrations: string[];
+						name: string;
+					};
+				};
+				gvlSpecificationVersion: number;
+				lastUpdated: string;
+				purposes: {
+					[key: string]: {
+						description: string;
+						descriptionLegal?: string;
+						id: number;
+						illustrations: string[];
+						name: string;
+					};
+				};
+				specialFeatures: {
+					[key: string]: {
+						description: string;
+						descriptionLegal?: string;
+						id: number;
+						illustrations: string[];
+						name: string;
+					};
+				};
+				specialPurposes: {
+					[key: string]: {
+						description: string;
+						descriptionLegal?: string;
+						id: number;
+						illustrations: string[];
+						name: string;
+					};
+				};
+				stacks: {
+					[key: string]: {
+						description: string;
+						id: number;
+						name: string;
+						purposes: number[];
+						specialFeatures: number[];
+					};
+				};
+				standardTexts?: {
+					features: string;
+					purposes?: string;
+					specialFeatures?: string;
+					specialPurposes?: string;
+				};
+				tcfPolicyVersion: number;
+				vendorListVersion: number;
+				vendors: {
+					[key: string]: {
+						cookieMaxAgeSeconds: number | null;
+						cookieRefresh: boolean;
+						dataCategories?: number[];
+						dataRetention?: {
+							purposes?: {
+								[key: string]: number;
+							};
+							specialPurposes?: {
+								[key: string]: number;
+							};
+							stdRetention?: number;
+						};
+						deletedDate?: string;
+						deviceStorageDisclosureUrl?: string;
+						features: number[];
+						flexiblePurposes: number[];
+						id: number;
+						legIntPurposes: number[];
+						name: string;
+						overflow?: {
+							httpGetLimit: number;
+						};
+						purposes: number[];
+						specialFeatures: number[];
+						specialPurposes: number[];
+						urls: {
+							langId: string;
+							legIntClaim?: string;
+							privacy?: string;
+						}[];
+						usesCookies: boolean;
+						usesNonCookieAccess: boolean;
+					};
+				};
+			} | null;
+			gvlReference?: {
+				context?: {
+					country?: string;
+					gpc?: boolean;
+					region?: string;
+				};
+				/** @constant */
+				format?: 'init';
+				language: string;
+				summary?: {
+					items: string[];
+					vendorCount: number;
+				};
+				url: string;
+				vendorListVersion: number;
+			};
+			/** @enum {string} */
+			hosting?: 'inth' | 'self-hosted';
+			location: {
+				countryCode: string | null;
+				regionCode: string | null;
+			};
+			policyResolution:
+				| {
+						policy: null;
+						/** @constant */
+						status: 'unconfigured';
+						/** @constant */
+						version: 1;
+				  }
+				| {
+						policy: null;
+						/** @constant */
+						status: 'no-match';
+						/** @constant */
+						version: 1;
+				  }
+				| {
+						policy: null;
+						/** @enum {string} */
+						reason:
+							| 'invalid-configuration'
+							| 'insufficient-inputs'
+							| 'transport'
+							| 'unsupported-contract'
+							| 'invalid-payload';
+						/** @constant */
+						status: 'failed';
+						/** @constant */
+						version: 1;
+				  }
+				| {
+						fingerprints: {
+							choice: string;
+							legacyMaterial?: string;
+							notice: string;
+							policy: string;
+						};
+						/** @enum {string} */
+						matchedBy: 'region' | 'country' | 'default' | 'fallback';
+						policy: {
+							actions: {
+								allowed: ('accept' | 'reject' | 'customize' | 'dismiss')[];
+								equivalent: ('accept' | 'reject' | 'customize' | 'dismiss')[][];
+								required: ('accept' | 'reject' | 'customize' | 'dismiss')[];
+							};
+							copyRevision: string | null;
+							i18n?: {
+								language?: string;
+								messageProfile?: string;
+							};
+							id: string;
+							/** @enum {string} */
+							model: 'opt-in' | 'opt-out' | 'iab' | 'none';
+							preselectedCategories: (
+								| 'experience'
+								| 'functionality'
+								| 'marketing'
+								| 'measurement'
+							)[];
+							privacySignals: {
+								gpc: {
+									denyCategories: (
+										| 'experience'
+										| 'functionality'
+										| 'marketing'
+										| 'measurement'
+									)[];
+								};
+							};
+							/** @enum {string} */
+							prompt: 'choice' | 'notice' | 'none';
+							proof: {
+								storeIp: boolean;
+								storeLanguage: boolean;
+								storeUserAgent: boolean;
+							};
+							rights: ('disclosure' | 'preferences' | 'opt-out')[];
+							scope: (
+								| 'experience'
+								| 'functionality'
+								| 'marketing'
+								| 'measurement'
+							)[];
+							/** @enum {string} */
+							scopeMode: 'strict' | 'permissive';
+							validity: {
+								choiceMs: number;
+								noticeMs: number;
+							};
+						};
+						policyId: string;
+						/** @constant */
+						status: 'matched';
+						/** @constant */
+						version: 1;
+				  };
+			policySnapshotToken?: string;
+			resolvedPrivacySignals?: {
+				gpc?: boolean;
+			};
+			translations: {
+				language: string;
+				translations: {
+					common: {
+						acceptAll?: string;
+						acknowledge?: string;
+						customize?: string;
+						dismiss?: string;
+						rejectAll?: string;
+						save?: string;
+					};
+					consentGate?: {
+						actionButton?: string;
+						title?: string;
+					};
+					consentManagerDialog: {
+						description?: string;
+						title?: string;
+						vendors?: {
+							disabledByCategory?: string;
+							privacyPolicy?: string;
+							switchLabel?: string;
+							title?: string;
+						};
+					};
+					consentTypes: {
+						experience?: {
+							description?: string;
+							title?: string;
+						};
+						functionality?: {
+							description?: string;
+							title?: string;
+						};
+						marketing?: {
+							description?: string;
+							title?: string;
+						};
+						measurement?: {
+							description?: string;
+							title?: string;
+						};
+						necessary?: {
+							description?: string;
+							title?: string;
+						};
+					};
+					cookieBanner: {
+						description?: string;
+						title?: string;
+						noticeDescription?: string;
+						noticeTitle?: string;
+					};
+					legalLinks?: {
+						cookiePolicy?: string;
+						privacyPolicy?: string;
+						termsOfService?: string;
+					};
+					rights?: {
+						optOut?: string;
+						preferences?: string;
+					};
+				};
+			};
+			vendorListVersion?: string;
+			vendors?: {
+				category: components['schemas']['VendorCategoryCondition'];
+				description?: string;
+				disabled?: boolean;
+				/** Format: uri */
+				homepageUrl?: string;
+				/**
+				 * @description Stable vendor slug used by scripts, rules and iframes.
+				 * @example meta-pixel
+				 * @example google-analytics
+				 */
+				id: string;
+				legalName?: string;
+				name: string;
+				/** Format: uri */
+				privacyPolicyUrl: string;
+			}[];
+		};
+		/** @description Every policy the project serves, with the banner text in each language, independent of the visitor. */
+		ConsentManifestResponse: {
+			appName?: string;
+			/** @enum {string} */
+			branding: 'c15t' | 'inth' | 'consent' | 'none';
+			cmpId?: number;
+			/** @enum {string} */
+			hosting?: 'inth' | 'self-hosted';
+			iab?: {
+				additionalConsent?: {
+					providers: number[];
+					url: string;
+				};
+				customVendors?: {
+					cookieMaxAgeSeconds?: number;
+					dataCategories?: number[];
+					dataRetentionDays?: number;
+					description?: string;
+					features?: number[];
+					id: string | number;
+					legIntPurposes?: number[];
+					name: string;
+					/** Format: uri */
+					privacyPolicyUrl: string;
+					purposes: number[];
+					specialFeatures?: number[];
+					usesCookies?: boolean;
+					usesNonCookieAccess?: boolean;
+				}[];
+				enabled: boolean;
+				gvl?: {
+					url: string;
+					version?: number | string;
+				};
+			};
+			policyFailure?: {
+				errors: string[];
+				/** @constant */
+				reason: 'invalid-configuration';
+			};
+			policyPacks?: {
+				fingerprints: {
+					choice: string;
+					legacyMaterial?: string;
+					notice: string;
+					policy: string;
+				};
+				match: {
+					countries?: string[];
+					fallback?: boolean;
+					isDefault?: boolean;
+					/** @description Countries whose missing region uses this rule, after country matches. */
+					regionFallbacks?: string[];
+					regions?: {
+						country: string;
+						region: string;
+					}[];
+				};
+				rule: {
+					actions: {
+						allowed: ('accept' | 'reject' | 'customize' | 'dismiss')[];
+						equivalent: ('accept' | 'reject' | 'customize' | 'dismiss')[][];
+						required: ('accept' | 'reject' | 'customize' | 'dismiss')[];
+					};
+					copyRevision: string | null;
+					i18n?: {
+						language?: string;
+						messageProfile?: string;
+					};
+					id: string;
+					/** @enum {string} */
+					model: 'opt-in' | 'opt-out' | 'iab' | 'none';
+					preselectedCategories: (
+						| 'experience'
+						| 'functionality'
+						| 'marketing'
+						| 'measurement'
+					)[];
+					privacySignals: {
+						gpc: {
+							denyCategories: (
+								| 'experience'
+								| 'functionality'
+								| 'marketing'
+								| 'measurement'
+							)[];
+						};
+					};
+					/** @enum {string} */
+					prompt: 'choice' | 'notice' | 'none';
+					proof: {
+						storeIp: boolean;
+						storeLanguage: boolean;
+						storeUserAgent: boolean;
+					};
+					rights: ('disclosure' | 'preferences' | 'opt-out')[];
+					scope: (
+						| 'experience'
+						| 'functionality'
+						| 'marketing'
+						| 'measurement'
+					)[];
+					/** @enum {string} */
+					scopeMode: 'strict' | 'permissive';
+					validity: {
+						choiceMs: number;
+						noticeMs: number;
+					};
+				};
+			}[];
+			/** @description Fingerprints the manifest. It is also the ETag. */
+			revision: string;
+			/** @constant */
+			schemaVersion: 2;
+			translations?: {
+				/** @description Banner text overrides, by language. */
+				customTranslations?: {
+					[key: string]: Record<string, unknown>;
+				};
+				/** @description Message profiles and the default profile. */
+				i18n?: Record<string, unknown>;
+			};
+			vendorListVersion?: string;
+			vendors?: {
+				category: components['schemas']['VendorCategoryCondition'];
+				description?: string;
+				disabled?: boolean;
+				/** Format: uri */
+				homepageUrl?: string;
+				/**
+				 * @description Stable vendor slug used by scripts, rules and iframes.
+				 * @example meta-pixel
+				 * @example google-analytics
+				 */
+				id: string;
+				legalName?: string;
+				name: string;
+				/** Format: uri */
+				privacyPolicyUrl: string;
+			}[];
+		};
+		ConsentRecordRequest: {
+			/**
+			 * @description Google Additional Consent v2 string for ad tech providers outside the IAB Global Vendor List. Stored only with tcString.
+			 * @example 2~89.486~dv.2572
+			 */
+			addtlConsent?: string;
+			/**
+			 * @description User action that produced this consent state.
+			 * @example all
+			 * @example necessary
+			 * @example custom
+			 */
+			consentAction?: string;
+			country?: string | null;
+			/** @description Runtime policy fingerprint asserted by manifest-mode clients. */
+			fingerprint?: string;
+			/** @description Global Privacy Control input used by manifest-mode saves. */
+			gpc?: boolean;
+			/**
+			 * @description Language input used by manifest-mode decision replay.
+			 * @example en
+			 */
+			language?: string;
+			/** @description Additional audit metadata to store with the consent. */
+			metadata?: {
+				[key: string]: unknown;
+			};
+			/**
+			 * @description Consent model the client applied. Used when no policy decision is available.
+			 * @example opt-in
+			 * @example opt-out
+			 * @example iab
+			 */
+			model?: string;
+			policyId?: string | null;
+			/** @description The signed policy snapshot token `GET /v1/consent/init` answered with. */
+			policySnapshotToken?: string;
+			region?: string | null;
+			/** @description IAB TCF TC string for IAB consent submissions. */
+			tcString?: string;
+			/**
+			 * @description UI surface that collected the consent.
+			 * @example banner
+			 * @example dialog
+			 * @example widget
+			 */
+			uiSource?: string;
+			vendorChoice?: {
+				/** @description Epoch milliseconds when the vendor grants were confirmed. */
+				confirmedAt: number;
+				/** @description Granted flag per declared vendor id. */
+				grants: {
+					[key: string]: boolean;
+				};
+				/** @constant */
+				version: 1;
+			};
+			answer: {
+				categories: {
+					necessary?: {
+						basis:
+							| {
+									/** @description Choice prompt fingerprint (domain choice, version 1). */
+									fingerprint: string;
+									/** @constant */
+									kind: 'choice-v1';
+							  }
+							| {
+									/** @constant */
+									kind: 'legacy-v2';
+									/** @description v2 material policy fingerprint, when the record had one. */
+									materialFingerprint?: string;
+							  };
+						/** @description Epoch milliseconds when the category was confirmed. */
+						confirmedAt: number;
+						value: boolean;
+					};
+					experience?: {
+						basis:
+							| {
+									/** @description Choice prompt fingerprint (domain choice, version 1). */
+									fingerprint: string;
+									/** @constant */
+									kind: 'choice-v1';
+							  }
+							| {
+									/** @constant */
+									kind: 'legacy-v2';
+									/** @description v2 material policy fingerprint, when the record had one. */
+									materialFingerprint?: string;
+							  };
+						/** @description Epoch milliseconds when the category was confirmed. */
+						confirmedAt: number;
+						value: boolean;
+					};
+					functionality?: {
+						basis:
+							| {
+									/** @description Choice prompt fingerprint (domain choice, version 1). */
+									fingerprint: string;
+									/** @constant */
+									kind: 'choice-v1';
+							  }
+							| {
+									/** @constant */
+									kind: 'legacy-v2';
+									/** @description v2 material policy fingerprint, when the record had one. */
+									materialFingerprint?: string;
+							  };
+						/** @description Epoch milliseconds when the category was confirmed. */
+						confirmedAt: number;
+						value: boolean;
+					};
+					marketing?: {
+						basis:
+							| {
+									/** @description Choice prompt fingerprint (domain choice, version 1). */
+									fingerprint: string;
+									/** @constant */
+									kind: 'choice-v1';
+							  }
+							| {
+									/** @constant */
+									kind: 'legacy-v2';
+									/** @description v2 material policy fingerprint, when the record had one. */
+									materialFingerprint?: string;
+							  };
+						/** @description Epoch milliseconds when the category was confirmed. */
+						confirmedAt: number;
+						value: boolean;
+					};
+					measurement?: {
+						basis:
+							| {
+									/** @description Choice prompt fingerprint (domain choice, version 1). */
+									fingerprint: string;
+									/** @constant */
+									kind: 'choice-v1';
+							  }
+							| {
+									/** @constant */
+									kind: 'legacy-v2';
+									/** @description v2 material policy fingerprint, when the record had one. */
+									materialFingerprint?: string;
+							  };
+						/** @description Epoch milliseconds when the category was confirmed. */
+						confirmedAt: number;
+						value: boolean;
+					};
+				};
+			};
+			confirmed: (
+				| 'necessary'
+				| 'experience'
+				| 'functionality'
+				| 'marketing'
+				| 'measurement'
+			)[];
+			externalId?: string;
+			/** @description When the visitor gave this answer, in epoch milliseconds. */
+			givenAt: number;
+			/**
+			 * Format: uuid
+			 * @description A UUID of any version, in lower case, made once per user action and sent again on every retry of it.
+			 */
+			idempotencyKey: string;
+			identityProvider?: string;
+			identityToken?: string;
+			/** @description Where the answer was given: a site’s host name, or an app’s application or bundle ID, in lower case. */
+			property: string;
+			/** @description A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place. */
+			subjectId: string;
+		};
+		ConsentRecordResponse: {
+			link?:
+				| {
+						/** @constant */
+						stored: true;
+						/** @constant */
+						verifiedBy: 'identity_token';
+				  }
+				| {
+						/** @enum {string} */
+						reason: 'unverified' | 'invalid_token';
+						/** @constant */
+						stored: false;
+				  };
+			/**
+			 * Format: uuid
+			 * @description The event that recorded the save.
+			 */
+			recordId: string;
+			/**
+			 * Format: uuid
+			 * @description The subject’s UUID. Store it in place of the ID sent.
+			 */
+			subjectId: string;
+		};
+		ConsentSessionRequest: {
+			adapter?: string;
+			country: string | null;
+			experiment?: {
+				arm: string;
+				id: string;
+			};
+			gpc: boolean;
+			journey?: {
+				/** Format: uuid */
+				id: string;
+				/** @enum {string} */
+				prompt: 'due' | 'stored' | 'not-required';
+				/** @enum {string} */
+				scope: 'page' | 'tab';
+				storedChoice: boolean;
+				/** @description Where the answer was given: a site’s host name, or an app’s application or bundle ID, in lower case. */
+				property?: string;
+			};
+			language: string;
+			policy: {
+				fingerprint: string;
+				id: string;
+				/** @enum {string} */
+				matchedBy: 'region' | 'country' | 'default' | 'fallback';
+				/** @enum {string} */
+				model: 'opt-in' | 'opt-out' | 'iab' | 'none';
+			} | null;
+			region: string | null;
+			/** @enum {string} */
+			resolution: 'matched' | 'no-match' | 'unconfigured' | 'failed';
+			revision: string;
+			/** @enum {string} */
+			source: 'render' | 'route' | 'init';
+		};
+		DocumentAcceptancesRequest: {
+			acceptances: {
+				proofToken: string;
+				type: string;
+			}[];
+			acceptedAt: number;
+			context?: {
+				ipAddress?: string;
+				userAgent?: string;
+			};
+			externalId?: string;
+			/**
+			 * Format: uuid
+			 * @description A UUID of any version, in lower case, made once per user action and sent again on every retry of it.
+			 */
+			idempotencyKey: string;
+			identityProvider?: string;
+			identityToken?: string;
+			/** @description Where the answer was given: a site’s host name, or an app’s application or bundle ID, in lower case. */
+			property?: string;
+			/** @description A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place. */
+			subjectId?: string;
+		};
+		DocumentAcceptancesResponse: {
+			acceptances: {
+				/** @description Epoch milliseconds. */
+				acceptedAt: number;
+				/** @description `sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file. */
+				hash: string;
+				type: string;
+				version: string;
+			}[];
+			/**
+			 * Format: uuid
+			 * @description The device’s UUID when the request named a device, which replaces the ID sent, and the person’s otherwise.
+			 */
+			subjectId: string;
+		};
+		DocumentCurrentResponse: {
+			document: {
+				/** Format: date-time */
+				effectiveDate: string;
+				/** @description `sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file. */
+				hash: string;
+				requiresAcceptance: boolean;
+				type: string;
+				version: string;
+			};
+			/** @description Send it back with an acceptance. It pins the type, version and hash shown. */
+			proofToken: string;
+			/** Format: date-time */
+			proofTokenExpiresAt: string;
+		};
+		DocumentPublishRequest: {
+			/** @description An ISO-8601 date, or a date and time that names its zone. */
+			effectiveDate: string;
+			/** @description `sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file. */
+			hash: string;
+			/** @default true */
+			requiresAcceptance?: boolean;
+			version: string;
+		};
+		DocumentPublishResponse: {
+			document: {
+				/** Format: date-time */
+				effectiveDate: string;
+				/** @description `sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file. */
+				hash: string;
+				requiresAcceptance: boolean;
+				type: string;
+				version: string;
+				/** Format: uuid */
+				id: string;
+				isCurrent: boolean;
+			};
+		};
+		SubjectLinkRequest: {
+			externalId: string;
+			identityProvider?: string;
+			identityToken?: string;
+		};
+		SubjectLinkResponse: {
+			externalId: string;
+			/**
+			 * Format: uuid
+			 * @description The device’s UUID. Store it in place of the ID sent.
+			 */
+			subjectId: string;
+			/** @enum {string} */
+			verifiedBy: 'api_key' | 'identity_token';
+		};
 		/** @description Every /v1 failure. `details` is optional; for a refused body it holds the issues by field. */
 		V1Error: {
 			error: {
@@ -201,7 +1003,7 @@ export interface components {
 			/** @description The same as the `x-request-id` response header. */
 			requestId: string;
 		};
-		V1CategoryCondition:
+		VendorCategoryCondition:
 			| (
 					| 'necessary'
 					| 'functionality'
@@ -211,16 +1013,16 @@ export interface components {
 			  )
 			| {
 					and:
-						| components['schemas']['V1CategoryCondition']
-						| components['schemas']['V1CategoryCondition'][];
+						| components['schemas']['VendorCategoryCondition']
+						| components['schemas']['VendorCategoryCondition'][];
 			  }
 			| {
 					or:
-						| components['schemas']['V1CategoryCondition']
-						| components['schemas']['V1CategoryCondition'][];
+						| components['schemas']['VendorCategoryCondition']
+						| components['schemas']['VendorCategoryCondition'][];
 			  }
 			| {
-					not: components['schemas']['V1CategoryCondition'];
+					not: components['schemas']['VendorCategoryCondition'];
 			  };
 	};
 	responses: never;
@@ -238,10 +1040,16 @@ export interface operations {
 				country?: string;
 				/** @description ISO 3166-2 subdivision code of the visitor. */
 				region?: string;
-				/** @description `1` when the browser sends Global Privacy Control. */
-				gpc?: string;
+				/** @description `1` when the browser sends Global Privacy Control, `0` when it does not. */
+				gpc?: '0' | '1';
 				/** @description A banner experiment arm to show. */
 				experiment?: string;
+				/** @description The ID of the visit’s consent journey, made by the SDK. */
+				journey?: string;
+				/** @description How long the journey lasts: one page, or the tab. */
+				journeyScope?: 'page' | 'tab';
+				/** @description `1` when the browser already holds a stored answer, `0` when it does not. */
+				stored?: '0' | '1';
 			};
 			header?: never;
 			path?: never;
@@ -255,350 +1063,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': {
-						adTechProviders?: {
-							id: number;
-							name: string;
-							policyUrl: string;
-						}[];
-						/** @enum {string} */
-						branding: 'c15t' | 'inth' | 'consent' | 'none';
-						cmpId?: number;
-						customVendors?: {
-							cookieMaxAgeSeconds?: number;
-							dataCategories?: number[];
-							dataRetentionDays?: number;
-							description?: string;
-							features?: number[];
-							id: string | number;
-							legIntPurposes?: number[];
-							name: string;
-							/** Format: uri */
-							privacyPolicyUrl: string;
-							purposes: number[];
-							specialFeatures?: number[];
-							usesCookies?: boolean;
-							usesNonCookieAccess?: boolean;
-						}[];
-						gvl?: {
-							dataCategories?: {
-								[key: string]: {
-									description: string;
-									id: number;
-									name: string;
-								};
-							};
-							features: {
-								[key: string]: {
-									description: string;
-									descriptionLegal?: string;
-									id: number;
-									illustrations: string[];
-									name: string;
-								};
-							};
-							gvlSpecificationVersion: number;
-							lastUpdated: string;
-							purposes: {
-								[key: string]: {
-									description: string;
-									descriptionLegal?: string;
-									id: number;
-									illustrations: string[];
-									name: string;
-								};
-							};
-							specialFeatures: {
-								[key: string]: {
-									description: string;
-									descriptionLegal?: string;
-									id: number;
-									illustrations: string[];
-									name: string;
-								};
-							};
-							specialPurposes: {
-								[key: string]: {
-									description: string;
-									descriptionLegal?: string;
-									id: number;
-									illustrations: string[];
-									name: string;
-								};
-							};
-							stacks: {
-								[key: string]: {
-									description: string;
-									id: number;
-									name: string;
-									purposes: number[];
-									specialFeatures: number[];
-								};
-							};
-							standardTexts?: {
-								features: string;
-								purposes?: string;
-								specialFeatures?: string;
-								specialPurposes?: string;
-							};
-							tcfPolicyVersion: number;
-							vendorListVersion: number;
-							vendors: {
-								[key: string]: {
-									cookieMaxAgeSeconds: number | null;
-									cookieRefresh: boolean;
-									dataCategories?: number[];
-									dataRetention?: {
-										purposes?: {
-											[key: string]: number;
-										};
-										specialPurposes?: {
-											[key: string]: number;
-										};
-										stdRetention?: number;
-									};
-									deletedDate?: string;
-									deviceStorageDisclosureUrl?: string;
-									features: number[];
-									flexiblePurposes: number[];
-									id: number;
-									legIntPurposes: number[];
-									name: string;
-									overflow?: {
-										httpGetLimit: number;
-									};
-									purposes: number[];
-									specialFeatures: number[];
-									specialPurposes: number[];
-									urls: {
-										langId: string;
-										legIntClaim?: string;
-										privacy?: string;
-									}[];
-									usesCookies: boolean;
-									usesNonCookieAccess: boolean;
-								};
-							};
-						} | null;
-						gvlReference?: {
-							context?: {
-								country?: string;
-								gpc?: boolean;
-								region?: string;
-							};
-							/** @constant */
-							format?: 'init';
-							language: string;
-							summary?: {
-								items: string[];
-								vendorCount: number;
-							};
-							url: string;
-							vendorListVersion: number;
-						};
-						/** @enum {string} */
-						hosting?: 'inth' | 'self-hosted';
-						location: {
-							countryCode: string | null;
-							regionCode: string | null;
-						};
-						policyResolution:
-							| {
-									policy: null;
-									/** @constant */
-									status: 'unconfigured';
-									/** @constant */
-									version: 1;
-							  }
-							| {
-									policy: null;
-									/** @constant */
-									status: 'no-match';
-									/** @constant */
-									version: 1;
-							  }
-							| {
-									policy: null;
-									/** @enum {string} */
-									reason:
-										| 'invalid-configuration'
-										| 'insufficient-inputs'
-										| 'transport'
-										| 'unsupported-contract'
-										| 'invalid-payload';
-									/** @constant */
-									status: 'failed';
-									/** @constant */
-									version: 1;
-							  }
-							| {
-									fingerprints: {
-										choice: string;
-										legacyMaterial?: string;
-										notice: string;
-										policy: string;
-									};
-									/** @enum {string} */
-									matchedBy: 'region' | 'country' | 'default' | 'fallback';
-									policy: {
-										actions: {
-											allowed: (
-												| 'accept'
-												| 'reject'
-												| 'customize'
-												| 'dismiss'
-											)[];
-											equivalent: (
-												| 'accept'
-												| 'reject'
-												| 'customize'
-												| 'dismiss'
-											)[][];
-											required: (
-												| 'accept'
-												| 'reject'
-												| 'customize'
-												| 'dismiss'
-											)[];
-										};
-										copyRevision: string | null;
-										i18n?: {
-											language?: string;
-											messageProfile?: string;
-										};
-										id: string;
-										/** @enum {string} */
-										model: 'opt-in' | 'opt-out' | 'iab' | 'none';
-										preselectedCategories: (
-											| 'experience'
-											| 'functionality'
-											| 'marketing'
-											| 'measurement'
-										)[];
-										privacySignals: {
-											gpc: {
-												denyCategories: (
-													| 'experience'
-													| 'functionality'
-													| 'marketing'
-													| 'measurement'
-												)[];
-											};
-										};
-										/** @enum {string} */
-										prompt: 'choice' | 'notice' | 'none';
-										proof: {
-											storeIp: boolean;
-											storeLanguage: boolean;
-											storeUserAgent: boolean;
-										};
-										rights: ('disclosure' | 'preferences' | 'opt-out')[];
-										scope: (
-											| 'experience'
-											| 'functionality'
-											| 'marketing'
-											| 'measurement'
-										)[];
-										/** @enum {string} */
-										scopeMode: 'strict' | 'permissive';
-										validity: {
-											choiceMs: number;
-											noticeMs: number;
-										};
-									};
-									policyId: string;
-									/** @constant */
-									status: 'matched';
-									/** @constant */
-									version: 1;
-							  };
-						policySnapshotToken?: string;
-						resolvedPrivacySignals?: {
-							gpc?: boolean;
-						};
-						translations: {
-							language: string;
-							translations: {
-								common: {
-									acceptAll?: string;
-									acknowledge?: string;
-									customize?: string;
-									dismiss?: string;
-									rejectAll?: string;
-									save?: string;
-								};
-								consentGate?: {
-									actionButton?: string;
-									title?: string;
-								};
-								consentManagerDialog: {
-									description?: string;
-									title?: string;
-									vendors?: {
-										disabledByCategory?: string;
-										privacyPolicy?: string;
-										switchLabel?: string;
-										title?: string;
-									};
-								};
-								consentTypes: {
-									experience?: {
-										description?: string;
-										title?: string;
-									};
-									functionality?: {
-										description?: string;
-										title?: string;
-									};
-									marketing?: {
-										description?: string;
-										title?: string;
-									};
-									measurement?: {
-										description?: string;
-										title?: string;
-									};
-									necessary?: {
-										description?: string;
-										title?: string;
-									};
-								};
-								cookieBanner: {
-									description?: string;
-									title?: string;
-									noticeDescription?: string;
-									noticeTitle?: string;
-								};
-								legalLinks?: {
-									cookiePolicy?: string;
-									privacyPolicy?: string;
-									termsOfService?: string;
-								};
-								rights?: {
-									optOut?: string;
-									preferences?: string;
-								};
-							};
-						};
-						vendorListVersion?: string;
-						vendors?: {
-							category: components['schemas']['V1CategoryCondition'];
-							description?: string;
-							disabled?: boolean;
-							/** Format: uri */
-							homepageUrl?: string;
-							/**
-							 * @description Stable vendor slug used by scripts, rules and iframes.
-							 * @example meta-pixel
-							 * @example google-analytics
-							 */
-							id: string;
-							legalName?: string;
-							name: string;
-							/** Format: uri */
-							privacyPolicyUrl: string;
-						}[];
-					};
+					'application/json': components['schemas']['ConsentInitResponse'];
 				};
 			};
 			/** @description invalid_request */
@@ -719,7 +1184,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': Record<string, unknown>;
+					'application/json': components['schemas']['ConsentManifestResponse'];
 				};
 			};
 			/** @description invalid_request */
@@ -810,126 +1275,19 @@ export interface operations {
 	};
 	postV1ConsentRecords: {
 		parameters: {
-			query?: never;
+			query?: {
+				/** @description The ID of the visit’s consent journey, made by the SDK. */
+				journey?: string;
+				/** @description How long the journey lasts: one page, or the tab. */
+				journeyScope?: 'page' | 'tab';
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
 		};
 		requestBody: {
 			content: {
-				'application/json': {
-					answer: {
-						categories: {
-							necessary?: {
-								basis:
-									| {
-											/** @description Choice prompt fingerprint (domain choice, version 1). */
-											fingerprint: string;
-											/** @constant */
-											kind: 'choice-v1';
-									  }
-									| {
-											/** @constant */
-											kind: 'legacy-v2';
-											/** @description v2 material policy fingerprint, when the record had one. */
-											materialFingerprint?: string;
-									  };
-								/** @description Epoch milliseconds when the category was confirmed. */
-								confirmedAt: number;
-								value: boolean;
-							};
-							experience?: {
-								basis:
-									| {
-											/** @description Choice prompt fingerprint (domain choice, version 1). */
-											fingerprint: string;
-											/** @constant */
-											kind: 'choice-v1';
-									  }
-									| {
-											/** @constant */
-											kind: 'legacy-v2';
-											/** @description v2 material policy fingerprint, when the record had one. */
-											materialFingerprint?: string;
-									  };
-								/** @description Epoch milliseconds when the category was confirmed. */
-								confirmedAt: number;
-								value: boolean;
-							};
-							functionality?: {
-								basis:
-									| {
-											/** @description Choice prompt fingerprint (domain choice, version 1). */
-											fingerprint: string;
-											/** @constant */
-											kind: 'choice-v1';
-									  }
-									| {
-											/** @constant */
-											kind: 'legacy-v2';
-											/** @description v2 material policy fingerprint, when the record had one. */
-											materialFingerprint?: string;
-									  };
-								/** @description Epoch milliseconds when the category was confirmed. */
-								confirmedAt: number;
-								value: boolean;
-							};
-							marketing?: {
-								basis:
-									| {
-											/** @description Choice prompt fingerprint (domain choice, version 1). */
-											fingerprint: string;
-											/** @constant */
-											kind: 'choice-v1';
-									  }
-									| {
-											/** @constant */
-											kind: 'legacy-v2';
-											/** @description v2 material policy fingerprint, when the record had one. */
-											materialFingerprint?: string;
-									  };
-								/** @description Epoch milliseconds when the category was confirmed. */
-								confirmedAt: number;
-								value: boolean;
-							};
-							measurement?: {
-								basis:
-									| {
-											/** @description Choice prompt fingerprint (domain choice, version 1). */
-											fingerprint: string;
-											/** @constant */
-											kind: 'choice-v1';
-									  }
-									| {
-											/** @constant */
-											kind: 'legacy-v2';
-											/** @description v2 material policy fingerprint, when the record had one. */
-											materialFingerprint?: string;
-									  };
-								/** @description Epoch milliseconds when the category was confirmed. */
-								confirmedAt: number;
-								value: boolean;
-							};
-						};
-					};
-					confirmed: (
-						| 'necessary'
-						| 'experience'
-						| 'functionality'
-						| 'marketing'
-						| 'measurement'
-					)[];
-					externalId?: string;
-					/** @description Epoch milliseconds when the category was confirmed. */
-					givenAt: number;
-					/** Format: uuid */
-					idempotencyKey: string;
-					identityProvider?: string;
-					identityToken?: string;
-					property: string;
-					/** @description A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place. */
-					subjectId: string;
-				};
+				'application/json': components['schemas']['ConsentRecordRequest'];
 			};
 		};
 		responses: {
@@ -939,31 +1297,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': {
-						link?:
-							| {
-									/** @constant */
-									stored: true;
-									/** @constant */
-									verifiedBy: 'identity_token';
-							  }
-							| {
-									/** @enum {string} */
-									reason: 'unverified' | 'invalid_token';
-									/** @constant */
-									stored: false;
-							  };
-						/**
-						 * Format: uuid
-						 * @description The event that recorded the save.
-						 */
-						recordId: string;
-						/**
-						 * Format: uuid
-						 * @description The subject’s UUID. Store it in place of the ID sent.
-						 */
-						subjectId: string;
-					};
+					'application/json': components['schemas']['ConsentRecordResponse'];
 				};
 			};
 			/** @description invalid_request */
@@ -1124,41 +1458,7 @@ export interface operations {
 		};
 		requestBody: {
 			content: {
-				'application/json': {
-					adapter?: string;
-					country: string | null;
-					experiment?: {
-						arm: string;
-						id: string;
-					};
-					gpc: boolean;
-					journey?: {
-						/** Format: uuid */
-						id: string;
-						/** @enum {string} */
-						prompt: 'due' | 'stored' | 'not-required';
-						/** @enum {string} */
-						scope: 'page' | 'tab';
-						storedChoice: boolean;
-						property?: string;
-					};
-					language: string;
-					policy: {
-						fingerprint: string;
-						id: string;
-						/** @enum {string} */
-						matchedBy: 'region' | 'country' | 'default' | 'fallback';
-						/** @enum {string} */
-						model: 'opt-in' | 'opt-out' | 'iab' | 'none';
-					} | null;
-					region: string | null;
-					/** @enum {string} */
-					resolution: 'matched' | 'no-match' | 'unconfigured' | 'failed';
-					revision: string;
-					/** @enum {string} */
-					source: 'render' | 'route' | 'init';
-					tenantId?: string | null;
-				};
+				'application/json': components['schemas']['ConsentSessionRequest'];
 			};
 		};
 		responses: {
@@ -1297,11 +1597,7 @@ export interface operations {
 		};
 		requestBody: {
 			content: {
-				'application/json': {
-					externalId: string;
-					identityProvider?: string;
-					identityToken?: string;
-				};
+				'application/json': components['schemas']['SubjectLinkRequest'];
 			};
 		};
 		responses: {
@@ -1311,16 +1607,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': {
-						externalId: string;
-						/**
-						 * Format: uuid
-						 * @description The device’s UUID. Store it in place of the ID sent.
-						 */
-						subjectId: string;
-						/** @enum {string} */
-						verifiedBy: 'api_key' | 'identity_token';
-					};
+					'application/json': components['schemas']['SubjectLinkResponse'];
 				};
 			};
 			/** @description invalid_request */
@@ -1474,20 +1761,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': {
-						document: {
-							/** Format: date-time */
-							effectiveDate: string;
-							hash: string | null;
-							requiresAcceptance: boolean;
-							type: string;
-							version: string;
-						};
-						/** @description Send it back with an acceptance. It pins the type, version and hash shown. */
-						proofToken: string;
-						/** Format: date-time */
-						proofTokenExpiresAt: string;
-					};
+					'application/json': components['schemas']['DocumentCurrentResponse'];
 				};
 			};
 			/** @description invalid_request */
@@ -1588,15 +1862,7 @@ export interface operations {
 		};
 		requestBody: {
 			content: {
-				'application/json': {
-					/** @description An ISO-8601 date, or a date and time that names its zone. */
-					effectiveDate: string;
-					/** @description `sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file. */
-					hash: string;
-					/** @default true */
-					requiresAcceptance?: boolean;
-					version: string;
-				};
+				'application/json': components['schemas']['DocumentPublishRequest'];
 			};
 		};
 		responses: {
@@ -1606,19 +1872,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': {
-						document: {
-							/** Format: date-time */
-							effectiveDate: string;
-							hash: string | null;
-							requiresAcceptance: boolean;
-							type: string;
-							version: string;
-							/** Format: uuid */
-							id: string;
-							isCurrent: boolean;
-						};
-					};
+					'application/json': components['schemas']['DocumentPublishResponse'];
 				};
 			};
 			/** @description invalid_request */
@@ -1760,25 +2014,7 @@ export interface operations {
 		};
 		requestBody: {
 			content: {
-				'application/json': {
-					acceptances: {
-						proofToken: string;
-						type: string;
-					}[];
-					acceptedAt: number;
-					context?: {
-						ipAddress?: string;
-						userAgent?: string;
-					};
-					externalId?: string;
-					/** Format: uuid */
-					idempotencyKey: string;
-					identityProvider?: string;
-					identityToken?: string;
-					property?: string;
-					/** @description A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place. */
-					subjectId?: string;
-				};
+				'application/json': components['schemas']['DocumentAcceptancesRequest'];
 			};
 		};
 		responses: {
@@ -1788,20 +2024,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': {
-						acceptances: {
-							/** @description Epoch milliseconds. */
-							acceptedAt: number;
-							hash: string | null;
-							type: string;
-							version: string;
-						}[];
-						/**
-						 * Format: uuid
-						 * @description The device’s UUID when the request named a device, which replaces the ID sent, and the person’s otherwise.
-						 */
-						subjectId: string;
-					};
+					'application/json': components['schemas']['DocumentAcceptancesResponse'];
 				};
 			};
 			/** @description invalid_request */
@@ -1962,14 +2185,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': {
-						results: {
-							[key: string]: {
-								hasConsent: boolean;
-								isLatestPolicy: boolean;
-							};
-						};
-					};
+					'application/json': components['schemas']['ConsentCheckResponse'];
 				};
 			};
 			/** @description invalid_request */

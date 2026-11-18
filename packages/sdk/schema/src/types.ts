@@ -84,6 +84,7 @@ export type {
 } from './api/v1';
 export {
 	V1_DOCUMENT_TYPE_PATTERN,
+	V1_MAX_ACCEPTANCES,
 	V1_REQUEST_ID_HEADER,
 	V1_UUID_V7_PATTERN,
 } from './api/v1/constants';

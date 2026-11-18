@@ -62,9 +62,9 @@ export const readJson = async function readJson(
 	}
 };
 
-/** A host name or app ID as a property: lowercase, with no trailing dot. */
+/** A host name or app ID as a property: lowercase, less one trailing dot. */
 export const toProperty = (host: string): string =>
-	host.toLowerCase().replace(/\.+$/u, '');
+	host.toLowerCase().replace(/\.$/u, '');
 
 /**
  * The property a consent belongs to: the explicit option, else the page's

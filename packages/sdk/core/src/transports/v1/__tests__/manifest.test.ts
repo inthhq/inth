@@ -349,6 +349,19 @@ describe('POST /v1/consent/sessions', () => {
 		}
 	);
 
+	test('leaves off the tenant a 3.x manifest names', () => {
+		const report = buildV1ConsentSessionReport({
+			init: {
+				location: { countryCode: null, regionCode: null },
+				translations: { language: 'en' },
+			} as never,
+			manifest: { ...MANIFEST, tenantId: 'tenant_1' },
+			source: 'route',
+		});
+
+		expect(report).not.toHaveProperty('tenantId');
+	});
+
 	test('a relative project URL reports nothing', async () => {
 		const { calls, fetch } = stubFetch(() =>
 			json(200, { recordId: RECORD, subjectId: SUBJECT })
