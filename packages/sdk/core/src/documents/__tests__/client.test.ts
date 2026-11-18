@@ -42,6 +42,20 @@ const RECORDED = {
 	subjectId: SUBJECT,
 };
 
+/** The receipt for a batch of terms and privacy policy. */
+const RECORDED_BOTH = {
+	...RECORDED,
+	acceptances: [
+		...RECORDED.acceptances,
+		{
+			acceptedAt: 1_763_467_200_000,
+			hash: HASH,
+			type: 'privacy_policy',
+			version: '2026-11-01',
+		},
+	],
+};
+
 describe('getCurrent: GET /v1/documents/:type/current', () => {
 	test('reads the version in force and its proof token, without the secret key', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, CURRENT));
@@ -108,7 +122,7 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 
 describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 	test('sends the acceptances, the subject and the key', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, RECORDED));
+		const { calls, fetch } = stubFetch(() => json(200, RECORDED_BOTH));
 		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
 
 		const result = await documents.recordAcceptances({
@@ -122,7 +136,11 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			subjectId: SUBJECT,
 		});
 
-		expect(result).toEqual(RECORDED);
+		expect(result).toEqual(RECORDED_BOTH);
+		expect(result.acceptances.map(({ type }) => type)).toEqual([
+			'terms_us',
+			'privacy_policy',
+		]);
 		expect(calls).toHaveLength(1);
 		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/documents/acceptances`);
 		expect(calls[0]?.init.method).toBe('POST');
