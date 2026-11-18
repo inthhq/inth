@@ -92,7 +92,7 @@ describe('loadConsent', () => {
 			const platform = { waitUntil: vi.fn() };
 			const event = await withHandle(
 				createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
-				{ backendURL: BACKEND, snapshot: MANIFEST_FIXTURE }
+				{ projectUrl: BACKEND, snapshot: MANIFEST_FIXTURE }
 			);
 			if (hasPlatformHook) {
 				(event as { platform?: unknown }).platform = { context: platform };
@@ -133,8 +133,8 @@ describe('loadConsent', () => {
 				},
 			}),
 			{
-				backendURL: BACKEND,
 				mode: manifest({ snapshot: MANIFEST_FIXTURE }),
+				projectUrl: BACKEND,
 				routePrefix: '/api/c15t',
 			}
 		);
@@ -147,8 +147,8 @@ describe('loadConsent', () => {
 		});
 		expect(consent.prefetch.initialTranslations?.language).toBe('de');
 		expect(consent).toMatchObject({
-			backendURL: BACKEND,
 			mode: { type: 'manifest' },
+			projectUrl: BACKEND,
 			routePrefix: '/api/c15t',
 		});
 		expect(consent.mode).not.toHaveProperty('snapshot');
@@ -164,7 +164,7 @@ describe('loadConsent', () => {
 		);
 		const event = await withHandle(
 			createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
-			{ backendURL: BACKEND, mode: manifest() }
+			{ mode: manifest(), projectUrl: BACKEND }
 		);
 		const { consent } = await loadConsent(event, {
 			fetch,
@@ -245,7 +245,7 @@ describe('loadConsent', () => {
 				},
 				url: 'http://localhost:5173/',
 			}),
-			{ backendURL: '/api/self-host', mode: hosted() }
+			{ mode: hosted(), projectUrl: '/api/self-host' }
 		);
 		const { consent } = await loadConsent(event);
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
@@ -254,15 +254,15 @@ describe('loadConsent', () => {
 		expect(consent.prefetch.initialPolicyResolution?.policyId).toBe(
 			'eu-opt-in'
 		);
-		expect(consent.backendURL).toBe('/api/self-host');
+		expect(consent.projectUrl).toBe('/api/self-host');
 	});
 
 	test('a cross-origin hosted backend uses the configured fetch', async () => {
 		const fetch = answer();
 		const eventFetch = answer();
 		const event = await withHandle(createEvent({ fetch: eventFetch }), {
-			backendURL: 'https://api.example.com',
 			mode: hosted(),
+			projectUrl: 'https://api.example.com',
 		});
 		await loadConsent(event, { fetch });
 		expect(eventFetch).not.toHaveBeenCalled();
@@ -282,7 +282,7 @@ describe('loadConsent', () => {
 						);
 					}),
 			}),
-			{ backendURL: '/api/self-host' }
+			{ projectUrl: '/api/self-host' }
 		);
 		const pending = loadConsent(event);
 		await vi.advanceTimersByTimeAsync(500);
@@ -295,8 +295,8 @@ describe('loadConsent', () => {
 		const event = await withHandle(
 			createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
 			{
-				backendURL: BACKEND,
 				mode: manifest({ resolve: 'browser', snapshot: MANIFEST_FIXTURE }),
+				projectUrl: BACKEND,
 			}
 		);
 		const { consent } = await loadConsent(event, { fetch });
@@ -313,7 +313,7 @@ describe('loadConsent', () => {
 				fetch,
 				headers: { cookie: CONSENTED_COOKIE, 'x-c15t-country': 'DE' },
 			}),
-			{ backendURL: BACKEND, routePrefix: '/api/c15t' }
+			{ projectUrl: BACKEND, routePrefix: '/api/c15t' }
 		);
 		expect((event.locals as { c15t: { config: unknown } }).c15t.config).toEqual(
 			{}
@@ -321,9 +321,9 @@ describe('loadConsent', () => {
 		const { consent } = await loadConsent(event, { fetch });
 		expect(fetch).not.toHaveBeenCalled();
 		expect(consent).toEqual({
-			backendURL: BACKEND,
 			mode: { type: 'manifest' },
 			prefetch: {},
+			projectUrl: BACKEND,
 			routePrefix: '/api/c15t',
 		});
 

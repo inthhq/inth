@@ -54,7 +54,7 @@ export type ProviderTransportKind =
  * Creates a kernel transport from provider runtime context.
  *
  * A provider builds one from its options: the hosted transport for
- * `backendURL`, or the one its `mode` carries (`manifest()`, `testing()`).
+ * `projectUrl`, or the one its `mode` carries (`manifest()`, `testing()`).
  * `kind` lets adapters report the selected transport through
  * `window.c15t.mode` without importing every transport implementation.
  *
@@ -69,7 +69,7 @@ export interface ProviderTransportFactory {
 /** Options for {@link hosted}. */
 export interface HostedModeOptions {
 	/** Backend URL. Can be relative (`/api/c15t`) or absolute. */
-	backendURL: string;
+	projectUrl: string;
 	/** Domain sent when consent is saved. */
 	domain?: string;
 	/** Fetch implementation used for backend requests. */
@@ -77,27 +77,27 @@ export interface HostedModeOptions {
 	/** Headers forwarded to the backend init endpoint. */
 	headers?: Record<string, string>;
 	/**
-	 * URL used for `GET /init`. Defaults to `${backendURL}/init`.
+	 * URL used for `GET /init`. Defaults to `${projectUrl}/init`.
 	 *
 	 * Point this at a same-origin server route that resolves init from a
 	 * manifest (for example with `resolveManifestInit` from
 	 * `@c15t/core/transports/manifest-cache`) while consent saves keep going
-	 * to `${backendURL}/subjects`. Manifest resolution never issues a
-	 * `policySnapshotToken`, so setting `initURL` also turns on
+	 * to `${projectUrl}/subjects`. Manifest resolution never issues a
+	 * `policySnapshotToken`, so setting `initUrl` also turns on
 	 * `assertDecisionInputs`.
 	 */
-	initURL?: string;
+	initUrl?: string;
 	/**
 	 * Assert the resolved policy decision on `POST /subjects` when the save
 	 * carries no signed `policySnapshotToken`, so the backend can reject a
 	 * save made against a stale policy instead of recording it unbound.
 	 *
-	 * @defaultValue `true` when `initURL` is set, otherwise `false`
+	 * @defaultValue `true` when `initUrl` is set, otherwise `false`
 	 */
 	assertDecisionInputs?: boolean;
 	/**
 	 * An init response an inline prefetch script already requested. The
-	 * first `init()` consumes it instead of calling `initURL`, keeping the
+	 * first `init()` consumes it instead of calling `initUrl`, keeping the
 	 * decision-input assertion intact.
 	 */
 	initialData?: Promise<SSRInitialData | undefined>;
@@ -121,7 +121,7 @@ export type HostedModeFactory = ProviderTransportFactory &
 
 /**
  * Builds the hosted transport factory a provider uses for its
- * `backendURL`. Apps set `backendURL` on the provider; adapters and tests
+ * `projectUrl`. Apps set `projectUrl` on the provider; adapters and tests
  * that need the hosted transport's other options call this.
  *
  * @param options - Hosted backend connection options.
@@ -130,13 +130,13 @@ export type HostedModeFactory = ProviderTransportFactory &
  * ```ts
  * import { hosted } from '@c15t/core/transports';
  *
- * const mode = hosted({ backendURL: '/api/c15t' });
+ * const mode = hosted({ projectUrl: '/api/c15t' });
  *
  * // Resolve init from a same-origin route, save to the backend. Saves
- * // assert the decision because `initURL` is set.
+ * // assert the decision because `initUrl` is set.
  * const sameOriginInit = hosted({
- *   backendURL: 'https://consent.example.com',
- *   initURL: '/api/consent/init',
+ *   projectUrl: 'https://consent.example.com',
+ *   initUrl: '/api/consent/init',
  * });
  * ```
  */

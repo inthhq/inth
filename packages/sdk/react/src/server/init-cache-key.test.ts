@@ -13,7 +13,7 @@ describe('createSSRInitCacheKey', () => {
 
 		const key = createSSRInitCacheKey({
 			headers,
-			normalizedURL: 'https://example.com/api/c15t',
+			normalizedUrl: 'https://example.com/api/c15t',
 		});
 
 		expect(key).toBe(
@@ -21,7 +21,7 @@ describe('createSSRInitCacheKey', () => {
 				country: 'US',
 				gpc: '1',
 				language: 'en-US,en;q=0.9',
-				normalizedURL: 'https://example.com/api/c15t',
+				normalizedUrl: 'https://example.com/api/c15t',
 				region: 'CA',
 			})
 		);
@@ -37,7 +37,7 @@ describe('createSSRInitCacheKey', () => {
 
 		const key = createSSRInitCacheKey({
 			headers,
-			normalizedURL: 'https://example.com/api/c15t',
+			normalizedUrl: 'https://example.com/api/c15t',
 			overrides: {
 				country: 'DE',
 				language: 'de-DE,de;q=0.9',
@@ -50,7 +50,7 @@ describe('createSSRInitCacheKey', () => {
 				country: 'DE',
 				gpc: '0',
 				language: 'de-DE,de;q=0.9',
-				normalizedURL: 'https://example.com/api/c15t',
+				normalizedUrl: 'https://example.com/api/c15t',
 				region: 'BE',
 			})
 		);
@@ -67,11 +67,11 @@ describe('createSSRInitCacheKey', () => {
 
 		const firstKey = createSSRInitCacheKey({
 			headers: firstHeaders,
-			normalizedURL: 'https://example.com/api/c15t',
+			normalizedUrl: 'https://example.com/api/c15t',
 		});
 		const secondKey = createSSRInitCacheKey({
 			headers: secondHeaders,
-			normalizedURL: 'https://example.com/api/c15t',
+			normalizedUrl: 'https://example.com/api/c15t',
 		});
 
 		expect(firstKey).toBe(secondKey);

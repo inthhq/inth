@@ -57,7 +57,7 @@ const RESERVED_EXPORT_NAMES = new Set([
 
 /** Options shared by framework build-time manifest generators. */
 export interface StaticManifestModuleOptions {
-	manifestURL: string;
+	manifestUrl: string;
 	fetch?: typeof globalThis.fetch;
 	exportName?: string;
 	importSource?: string;
@@ -70,14 +70,14 @@ export interface StaticManifestModuleOptions {
  * @throws {Error} When fetch is unavailable or the response is not a valid manifest.
  */
 export const loadStaticManifest = async (
-	options: Pick<StaticManifestModuleOptions, 'manifestURL' | 'fetch'>,
+	options: Pick<StaticManifestModuleOptions, 'manifestUrl' | 'fetch'>,
 	label: string
 ): Promise<ConsentManifest> => {
 	const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
 	if (!fetchImpl) {
 		throw new Error(`${label}: no fetch available.`);
 	}
-	const response = await fetchImpl(options.manifestURL, {
+	const response = await fetchImpl(options.manifestUrl, {
 		headers: { accept: 'application/json', ...c15tProtocolHeaders },
 		method: 'GET',
 	});

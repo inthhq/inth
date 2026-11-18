@@ -161,16 +161,16 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
 
 /**
  * The transport factory the runtime's options select: `mode` when it is a
- * factory or a `testing()` value, else the hosted backend at `backendURL`.
+ * factory or a `testing()` value, else the hosted backend at `projectUrl`.
  *
  * @param options - The runtime options.
- * @param hostedMode - Builds the factory for `backendURL`.
+ * @param hostedMode - Builds the factory for `projectUrl`.
  * @returns The factory, or `undefined` when the options select none.
  * @internal
  */
 export const selectTransportFactory = function selectTransportFactory(
-	options: Pick<ConsentRuntimeOptions, 'backendURL' | 'mode'>,
-	hostedMode?: (backendURL: string) => ProviderTransportFactory
+	options: Pick<ConsentRuntimeOptions, 'projectUrl' | 'mode'>,
+	hostedMode?: (projectUrl: string) => ProviderTransportFactory
 ): ProviderTransportFactory | undefined {
 	const { mode } = options;
 	if (typeof mode === 'function') {
@@ -182,8 +182,8 @@ export const selectTransportFactory = function selectTransportFactory(
 	if (mode && 'transport' in mode && mode.transport) {
 		return mode.transport;
 	}
-	if (options.backendURL !== undefined && hostedMode) {
-		return hostedMode(options.backendURL);
+	if (options.projectUrl !== undefined && hostedMode) {
+		return hostedMode(options.projectUrl);
 	}
 	return undefined;
 };
@@ -207,7 +207,7 @@ const missingBackendError = function missingBackendError(
 	} catch {
 		// No bundler and no `process`: the package name has to do.
 	}
-	return new Error(`${caller}: \`backendURL\` is required.${hint}`);
+	return new Error(`${caller}: \`projectUrl\` is required.${hint}`);
 };
 
 /**
@@ -223,9 +223,9 @@ const missingBackendError = function missingBackendError(
 export const requireTransportFactory = function requireTransportFactory(
 	options: Pick<
 		ConsentRuntimeOptions,
-		'backendURL' | 'enabled' | 'mode' | 'pkg'
+		'projectUrl' | 'enabled' | 'mode' | 'pkg'
 	>,
-	hostedMode?: (backendURL: string) => ProviderTransportFactory
+	hostedMode?: (projectUrl: string) => ProviderTransportFactory
 ): ProviderTransportFactory {
 	const factory = selectTransportFactory(options, hostedMode);
 	if (factory) {

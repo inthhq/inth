@@ -15,7 +15,7 @@ import {
 	runMod,
 } from './helpers';
 
-const PROPS = { backendURL: 'https://acme.inth.app' };
+const PROPS = { projectUrl: 'https://acme.inth.app' };
 const scratchRoots: string[] = [];
 
 const projectFixture = (): XcodeProject => {

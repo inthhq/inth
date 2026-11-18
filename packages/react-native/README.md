@@ -42,7 +42,7 @@ For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify native bui
 
 ## Native setup before JavaScript
 
-Start with an Inth project and its authored policy. The reference apps use https://example-inth.inth.app/. Replace it with your own project URL. Configure the native launch hooks before optional SDK startup; `ConsentProvider` attaches to that engine, checks the protocol and presents the native consent prompt when one is owed. Pass `privacyPolicyURL`, or `autoPresent={false}` to present it yourself. It does not bootstrap a JavaScript consent engine. Disable vendor automatic startup and keep gates current after withdrawal.
+Start with an Inth project and its authored policy. The reference apps use https://example-inth.inth.app/. Replace it with your own project URL. Configure the native launch hooks before optional SDK startup; `ConsentProvider` attaches to that engine, checks the protocol and presents the native consent prompt when one is owed. Pass `privacyPolicyUrl`, or `autoPresent={false}` to present it yourself. It does not bootstrap a JavaScript consent engine. Disable vendor automatic startup and keep gates current after withdrawal.
 
 ## Local success and delivery
 
@@ -72,7 +72,7 @@ Native IAB and Additional Consent APIs do not establish IAB registration, Google
 
 ## Inth hosted only, with dryRun for development
 
-The mobile SDK works only with Inth hosted projects. Set `backendURL` to the project URL from your Inth dashboard; prebuild and native startup refuse any other host. There is no `mode`, `initURL`, self-hosted backend or custom transport. A bundled manifest or an in-code `policy` covers a first launch without network, and queued records deliver after reconnecting. `dryRun: true` is for development and CI: consent works on the device and no consent record is sent. A release build refuses to start Inth with it. Set `autoBootstrap: false` when your native app installs the engine itself. The React components and headless hooks work the same either way. Browser script-loader and CSS APIs are not native SDK gates. See [configuration](https://c15t.com/docs/frameworks/react-native/configuration).
+The mobile SDK works only with Inth hosted projects. Set `projectUrl` to the project URL from your Inth dashboard; prebuild and native startup refuse any other host. There is no `mode`, `initURL`, self-hosted backend or custom transport. A bundled manifest or an in-code `policy` covers a first launch without network, and queued records deliver after reconnecting. `dryRun: true` is for development and CI: consent works on the device and no consent record is sent. A release build refuses to start Inth with it. Set `autoBootstrap: false` when your native app installs the engine itself. The React components and headless hooks work the same either way. Browser script-loader and CSS APIs are not native SDK gates. See [configuration](https://c15t.com/docs/frameworks/react-native/configuration).
 
 ## First release scope
 

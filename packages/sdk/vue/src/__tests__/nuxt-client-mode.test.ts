@@ -49,7 +49,7 @@ test("browser resolution sends a visitor without a location to the backend's /in
 		{}
 	);
 	const factory = clientMode(mode, {
-		backendURL: 'https://consent.example.com',
+		projectUrl: 'https://consent.example.com',
 	});
 	const transport = factory({} as Parameters<typeof factory>[0]);
 	await transport

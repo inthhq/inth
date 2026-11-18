@@ -1,5 +1,5 @@
 /**
- * Tests for resolveConsent without a backendURL: the server-only helper
+ * Tests for resolveConsent without a projectUrl: the server-only helper
  * then produces the visitor's ConsentState from the incoming TanStack
  * Start request alone, without touching the network.
  *
@@ -29,7 +29,7 @@ const resolveConsent = (
 	> = {}
 ) => baseResolveConsent({ ...options, request: createRequest(headers) });
 
-describe('resolveConsent without backendURL: cookies', () => {
+describe('resolveConsent without projectUrl: cookies', () => {
 	test('returns empty state when nothing is present', async () => {
 		expect(await resolveConsent()).toMatchObject({
 			initialRecords: { choice: null, subject: null },
@@ -95,7 +95,7 @@ describe('resolveConsent without backendURL: cookies', () => {
 	});
 });
 
-describe('resolveConsent without backendURL: geo headers', () => {
+describe('resolveConsent without projectUrl: geo headers', () => {
 	test('uses x-vercel-ip-country', async () => {
 		const state = await resolveConsent({
 			'x-vercel-ip-country': 'DE',
@@ -131,7 +131,7 @@ describe('resolveConsent without backendURL: geo headers', () => {
 	});
 });
 
-describe('resolveConsent without backendURL: language and GPC', () => {
+describe('resolveConsent without projectUrl: language and GPC', () => {
 	test('negotiates the first language from accept-language', async () => {
 		const state = await resolveConsent({
 			'accept-language': 'de-DE,de;q=0.9,en;q=0.5',
@@ -177,11 +177,11 @@ describe('resolveConsent with an inline manifest: session reports', () => {
 				'x-vercel-ip-country': 'DE',
 			},
 			{
-				backendURL: 'https://consent.example.com',
 				fetch: fetchSpy,
 				onBackgroundRevalidate: (task) => {
 					registered.push(task);
 				},
+				projectUrl: 'https://consent.example.com',
 				snapshot: MANIFEST_FIXTURE,
 			}
 		);
@@ -217,12 +217,12 @@ describe('resolveConsent with an inline manifest: session reports', () => {
 		const state = await resolveConsent(
 			{},
 			{
-				backendURL: 'https://consent.example.com',
 				experiment,
 				fetch: fetchSpy,
 				onBackgroundRevalidate: (task) => {
 					registered.push(task);
 				},
+				projectUrl: 'https://consent.example.com',
 				snapshot: MANIFEST_FIXTURE,
 			}
 		);

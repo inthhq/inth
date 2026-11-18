@@ -57,7 +57,7 @@ import { hosted, provideC15t } from '@c15t/angular';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
-    provideC15t({ mode: hosted({ backendURL: 'https://your-project.inth.app' }) }),
+    provideC15t({ mode: hosted({ projectUrl: 'https://your-project.inth.app' }) }),
   ],
 };
 ```

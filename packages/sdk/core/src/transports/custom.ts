@@ -2,7 +2,7 @@
  * `custom()`, kept on `@c15t/core/transports` only for
  * `@inth/react-native`'s web client, which builds its own transports.
  * Providers no longer take it: tests pass a transport factory as `mode`,
- * and apps set `backendURL`.
+ * and apps set `projectUrl`.
  *
  * @deprecated Remove once `@inth/react-native` no longer imports it.
  */

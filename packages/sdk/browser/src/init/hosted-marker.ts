@@ -1,7 +1,7 @@
 /**
  * `c15t.hosted()` before the engine has loaded.
  *
- * `init({ mode: c15t.hosted({ backendURL }) })` is the documented way to
+ * `init({ mode: c15t.hosted({ projectUrl }) })` is the documented way to
  * pick the hosted transport on a script-tag page, but the transport is
  * engine code. The init script's `c15t.hosted()` returns a marker carrying
  * the options instead, and the engine builds the real factory from it.

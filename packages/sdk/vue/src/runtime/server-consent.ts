@@ -36,7 +36,7 @@ export interface NuxtConsentRequest {
 
 type ModeOptions = Pick<
 	ResolveRequestConsentOptions,
-	'backendURL' | 'initHeaders' | 'initURL' | 'manifest' | 'manifestURL' | 'mode'
+	'projectUrl' | 'initHeaders' | 'initUrl' | 'manifest' | 'manifestUrl' | 'mode'
 >;
 
 /**
@@ -51,20 +51,20 @@ const readModeOptions = function readModeOptions(
 	const mode = readNuxtMode(config);
 	if (mode.type === 'hosted') {
 		return {
-			backendURL: config.backendURL,
 			initHeaders: mode.headers,
 			mode: 'hosted',
+			projectUrl: config.projectUrl,
 		};
 	}
 	const routePrefix = readNuxtRoutePrefix(config);
 	if (routePrefix !== undefined) {
-		return { initURL: `${routePrefix}/init`, mode: 'hosted' };
+		return { initUrl: `${routePrefix}/init`, mode: 'hosted' };
 	}
 	return {
-		backendURL: config.backendURL,
 		manifest: snapshot,
-		manifestURL: mode.type === 'manifest' ? mode.manifestURL : undefined,
+		manifestUrl: mode.type === 'manifest' ? mode.manifestUrl : undefined,
 		mode: 'manifest',
+		projectUrl: config.projectUrl,
 	};
 };
 

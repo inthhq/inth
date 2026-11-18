@@ -96,12 +96,12 @@ const init = {
 } as unknown as InitOutput;
 
 const config = {
-	backendURL: 'https://consent.test',
 	customFetch: (() =>
 		Promise.resolve(Response.json({ ok: true }))) as unknown as typeof fetch,
 	disableAnimation: true,
 	hideBranding: true,
 	iab: {},
+	projectUrl: 'https://consent.test',
 	trapFocus: false,
 } as ConsentConfig;
 

@@ -32,7 +32,7 @@ export default defineConfig({
 	// quickstart add it, so browser bundles get what the documented setup
 	// gives them. The backend URL is relative, so the build fetches nothing.
 	plugins: [
-		consentManifest({ backendURL: '/api/bench-consent' }),
+		consentManifest({ projectUrl: '/api/bench-consent' }),
 		tanstackStart(),
 		viteReact(),
 	],

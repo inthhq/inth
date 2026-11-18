@@ -43,7 +43,7 @@ const ADAPTER = '@c15t/angular';
 export interface C15tServerOptions {
 	/**
 	 * The app's consent route from `createConsentRoute()`. A relative
-	 * backend below its prefix, such as `hosted({ backendURL: '/api/c15t' })`,
+	 * backend below its prefix, such as `hosted({ projectUrl: '/api/c15t' })`,
 	 * is then resolved in-process instead of over the network. In manifest
 	 * mode, deferred vendor lists point at its `/init`.
 	 */
@@ -99,17 +99,17 @@ export interface C15tServerOptions {
 
 type ModeData = Partial<ProviderTransportFactory> & {
 	type?: string;
-	backendURL?: string;
+	projectUrl?: string;
 	headers?: Record<string, string>;
-	initURL?: string;
-	manifestURL?: string;
+	initUrl?: string;
+	manifestUrl?: string;
 	resolve?: 'server' | 'browser';
 	snapshot?: ConsentManifest;
 };
 
 /**
  * How the server resolves the provider's options: `mode` read from its
- * data, else the backend's manifest at `backendURL`, which falls back to
+ * data, else the backend's manifest at `projectUrl`, which falls back to
  * its `/init` with a warning when the manifest is unavailable.
  */
 const serverResolution = function serverResolution(
@@ -135,14 +135,14 @@ const serverResolution = function serverResolution(
 	}
 	const data: ModeData | undefined =
 		mode ??
-		(provider.backendURL === undefined ? undefined : { type: 'manifest' });
+		(provider.projectUrl === undefined ? undefined : { type: 'manifest' });
 	switch (data?.type) {
 		case 'hosted':
 			return {
-				backendURL: data.backendURL ?? provider.backendURL,
 				initHeaders: data.headers,
-				initURL: data.initURL,
+				initUrl: data.initUrl,
 				mode: 'hosted',
+				projectUrl: data.projectUrl ?? provider.projectUrl,
 			};
 		case 'manifest':
 			// The browser resolves; the server reads the cookie only.
@@ -150,11 +150,11 @@ const serverResolution = function serverResolution(
 				return {};
 			}
 			return {
-				backendURL: data.backendURL ?? provider.backendURL,
 				gvlRoute: route ? `${route.routePrefix}/init` : undefined,
 				manifest: data.snapshot,
-				manifestURL: data.manifestURL,
+				manifestUrl: data.manifestUrl,
 				mode: 'manifest',
+				projectUrl: data.projectUrl ?? provider.projectUrl,
 			};
 		default:
 			// A transport of its own: nothing the server can call. The cookie

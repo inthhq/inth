@@ -11,7 +11,7 @@ import { testing } from '../testing';
 describe('createClientMode', () => {
 	test('manifest() when no mode is set', () => {
 		const mode = createClientMode(undefined, {
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 		});
 
 		expect(mode.kind).toBe('manifest');
@@ -19,7 +19,7 @@ describe('createClientMode', () => {
 
 	test('hosted() asks the backend', () => {
 		const mode = createClientMode(hosted(), {
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 		});
 
 		expect(mode.kind).toBe('hosted');
@@ -28,7 +28,7 @@ describe('createClientMode', () => {
 	test('manifest() carries its data', () => {
 		const data = manifest({ resolve: 'browser' });
 		const mode = createClientMode(data, {
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 		});
 
 		expect(mode.kind).toBe('manifest');
@@ -41,10 +41,10 @@ describe('createClientMode', () => {
 
 	test('throws without a backend URL instead of running offline', () => {
 		expect(() => createClientMode(manifest(), {})).toThrow(
-			'@c15t/nextjs: `backendURL` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.'
+			'@c15t/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
 		);
 		expect(() => createClientMode(undefined, {})).toThrow(
-			'`backendURL` is required'
+			'`projectUrl` is required'
 		);
 		// A testing value is the one that needs no backend.
 		expect(createClientMode(testing(), {}).kind).toBe('offline');
@@ -54,10 +54,10 @@ describe('createClientMode', () => {
 		// Without `proxy` the consent route answers `GET` only.
 		expect(() =>
 			createClientMode(manifest(), { routePrefix: '/api/c15t' })
-		).toThrow('`backendURL` is required');
+		).toThrow('`projectUrl` is required');
 		expect(
 			createClientMode(manifest(), {
-				backendURL: '/api/c15t',
+				projectUrl: '/api/c15t',
 				routePrefix: '/api/c15t',
 			}).kind
 		).toBe('manifest');

@@ -2,7 +2,7 @@
  * `@c15t/nextjs/testing` — run the consent flow in tests with no backend.
  *
  * Set `mode: testing()` in `c15t.config.ts`, or pass it as
- * `ConsentRoot`'s `options.mode`. It needs no `backendURL`. The server
+ * `ConsentRoot`'s `options.mode`. It needs no `projectUrl`. The server
  * resolves nothing, and the browser resolves the recommended policy pack
  * with no network; set `overrides.country` (and `overrides.region`) to
  * pick the policy:

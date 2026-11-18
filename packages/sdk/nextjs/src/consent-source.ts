@@ -6,14 +6,14 @@
  */
 import type { ManifestMode } from '@c15t/core/modes';
 import {
-	backendURL as generatedBackendURL,
+	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
 } from '@c15t/nextjs/generated-manifest';
 import userConfig from '@c15t/nextjs/user-config';
 import type { ConsentManifest } from '@c15t/schema/types';
 
 import type { ConsentConfig } from './config';
-import { checkRoutePrefix, readBackendURLFromEnv } from './config';
+import { checkRoutePrefix, readProjectUrlFromEnv } from './config';
 
 /** Options every server helper takes to override `c15t.config.ts`. */
 export interface ConsentSourceOptions {
@@ -26,14 +26,14 @@ export interface ConsentSourceOptions {
 	 * Backend base URL. Defaults to the config's, then
 	 * `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL`.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 
 	/**
 	 * Absolute `GET /manifest` URL. Defaults to the mode's absolute
-	 * `manifestURL`, then `${backendURL}/manifest`. Setting it resolves
+	 * `manifestUrl`, then `${projectUrl}/manifest`. Setting it resolves
 	 * from the manifest whatever the mode.
 	 */
-	manifestURL?: string;
+	manifestUrl?: string;
 
 	/**
 	 * A manifest to resolve from, in place of the snapshot
@@ -46,9 +46,9 @@ export interface ConsentSourceOptions {
 /** What the server resolves from. */
 export interface ConsentSource {
 	config: ConsentConfig | undefined;
-	backendURL: string | undefined;
+	projectUrl: string | undefined;
 	mode: 'hosted' | 'manifest' | undefined;
-	manifestURL: string | undefined;
+	manifestUrl: string | undefined;
 	snapshot: ConsentManifest | undefined;
 	/** Hosted mode's `/init` headers. */
 	initHeaders: Record<string, string> | undefined;
@@ -79,15 +79,15 @@ export const readConfigRoutePrefix = function readConfigRoutePrefix(
 };
 
 /** The backend URL: explicit, then the config's, the env's, the build's. */
-const resolveBackendURL = function resolveBackendURL(
+const resolveProjectUrl = function resolveProjectUrl(
 	options: ConsentSourceOptions,
 	config: ConsentConfig | undefined
 ): string | undefined {
 	return (
-		options.backendURL ??
-		config?.backendURL ??
-		readBackendURLFromEnv() ??
-		generatedBackendURL
+		options.projectUrl ??
+		config?.projectUrl ??
+		readProjectUrlFromEnv() ??
+		generatedProjectUrl
 	);
 };
 
@@ -95,25 +95,25 @@ const resolveBackendURL = function resolveBackendURL(
 const resolveManifestSource = function resolveManifestSource(
 	options: ConsentSourceOptions,
 	mode: ManifestMode | undefined,
-	backendURL: string | undefined
-): Pick<ConsentSource, 'manifestURL' | 'mode' | 'snapshot'> {
+	projectUrl: string | undefined
+): Pick<ConsentSource, 'manifestUrl' | 'mode' | 'snapshot'> {
 	const manifestMode = mode;
-	// A `/`-relative manifestURL is the browser's, usually the app's route.
-	const modeURL = isPath(manifestMode?.manifestURL)
+	// A `/`-relative manifestUrl is the browser's, usually the app's route.
+	const modeURL = isPath(manifestMode?.manifestUrl)
 		? undefined
-		: manifestMode?.manifestURL;
-	const manifestURL = options.manifestURL ?? modeURL;
+		: manifestMode?.manifestUrl;
+	const manifestUrl = options.manifestUrl ?? modeURL;
 	const buildSnapshot =
-		manifestURL === undefined && manifestMode?.source !== 'runtime'
+		manifestUrl === undefined && manifestMode?.source !== 'runtime'
 			? generatedSnapshot
 			: undefined;
 	const snapshot = options.snapshot ?? manifestMode?.snapshot ?? buildSnapshot;
 	const resolvable =
 		snapshot !== undefined ||
-		manifestURL !== undefined ||
-		backendURL !== undefined;
+		manifestUrl !== undefined ||
+		projectUrl !== undefined;
 	return {
-		manifestURL,
+		manifestUrl,
 		mode: resolvable ? 'manifest' : undefined,
 		snapshot,
 	};
@@ -123,12 +123,12 @@ const resolveManifestSource = function resolveManifestSource(
  * The config, mode and manifest source for a server helper call.
  *
  * - `manifest()` resolves from the snapshot, unless the mode
- *   says `source: 'runtime'` or names an absolute `manifestURL`, which the
- *   server then fetches. A `/`-relative `manifestURL` is the browser's,
+ *   says `source: 'runtime'` or names an absolute `manifestUrl`, which the
+ *   server then fetches. A `/`-relative `manifestUrl` is the browser's,
  *   usually the app's own route, so the server reads
- *   `${backendURL}/manifest` instead.
+ *   `${projectUrl}/manifest` instead.
  * - No mode means `manifest()`.
- * - `hosted()` asks the hosted backend's `${backendURL}/init`.
+ * - `hosted()` asks the hosted backend's `${projectUrl}/init`.
  * - `testing()` resolves nothing on the server; the browser does.
  *
  * @param options - Explicit overrides of the config.
@@ -141,24 +141,24 @@ export const resolveConsentSource = function resolveConsentSource(
 	const config = options.config ?? userConfig;
 	const mode = config?.mode;
 	const routePrefix = readConfigRoutePrefix(config);
-	const backendURL = resolveBackendURL(options, config);
+	const projectUrl = resolveProjectUrl(options, config);
 	const forcedManifest =
-		options.manifestURL !== undefined || options.snapshot !== undefined;
+		options.manifestUrl !== undefined || options.snapshot !== undefined;
 	const none = {
 		config,
 		initHeaders: undefined,
-		manifestURL: undefined,
+		manifestUrl: undefined,
 		routePrefix,
 		snapshot: undefined,
 	};
 	if (mode?.type === 'testing' && !forcedManifest) {
-		return { ...none, backendURL: undefined, mode: undefined };
+		return { ...none, mode: undefined, projectUrl: undefined };
 	}
 	if (mode?.type === 'hosted' && !forcedManifest) {
 		return {
 			...none,
-			backendURL,
-			mode: backendURL === undefined ? undefined : 'hosted',
+			mode: projectUrl === undefined ? undefined : 'hosted',
+			projectUrl,
 		};
 	}
 	return {
@@ -166,8 +166,8 @@ export const resolveConsentSource = function resolveConsentSource(
 		...resolveManifestSource(
 			options,
 			mode?.type === 'manifest' ? mode : undefined,
-			backendURL
+			projectUrl
 		),
-		backendURL,
+		projectUrl,
 	};
 };

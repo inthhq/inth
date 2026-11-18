@@ -7,9 +7,9 @@
  * global setup starts the stub on its own port and hands it to `next build`
  * through this public variable, which Next inlines into the bundle.
  */
-const backendURL = process.env.NEXT_PUBLIC_COMPAT_BACKEND_URL;
-if (!backendURL) {
+const projectUrl = process.env.NEXT_PUBLIC_COMPAT_BACKEND_URL;
+if (!projectUrl) {
 	throw new Error('NEXT_PUBLIC_COMPAT_BACKEND_URL was not set at build time');
 }
 
-export const COMPAT_STATIC_BACKEND_URL: string = backendURL;
+export const COMPAT_STATIC_BACKEND_URL: string = projectUrl;

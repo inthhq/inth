@@ -82,7 +82,7 @@ export const resolveCli = function resolveCli(projectRoot: string): string {
 
 /** Arguments for `c15t mobile-manifest`. */
 export const manifestArguments = function manifestArguments(
-	backendURL: string,
+	projectUrl: string,
 	settings: ResolvedBundleManifest,
 	out: string,
 	build: ManifestBuild
@@ -90,7 +90,7 @@ export const manifestArguments = function manifestArguments(
 	return [
 		'mobile-manifest',
 		'--backend-url',
-		backendURL,
+		projectUrl,
 		'--out',
 		out,
 		'--build',
@@ -119,7 +119,7 @@ const runs = new Map<string, Promise<void>>();
  */
 export const fetchBundledManifest = function fetchBundledManifest(
 	projectRoot: string,
-	backendURL: string,
+	projectUrl: string,
 	settings: ResolvedBundleManifest,
 	build: ManifestBuild,
 	dependencies = { resolveCli, spawn }
@@ -135,7 +135,7 @@ export const fetchBundledManifest = function fetchBundledManifest(
 			process.execPath,
 			[
 				dependencies.resolveCli(projectRoot),
-				...manifestArguments(backendURL, settings, out, build),
+				...manifestArguments(projectUrl, settings, out, build),
 			],
 			{ cwd: projectRoot, stdio: 'inherit' }
 		);

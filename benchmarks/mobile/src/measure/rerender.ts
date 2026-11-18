@@ -83,7 +83,7 @@ const StatusProbe = (): ReactNode =>
 const BenchTree = (): ReactNode =>
 	createElement(
 		ConsentProvider,
-		{ privacyPolicyURL: 'https://example.com/privacy' },
+		{ privacyPolicyUrl: 'https://example.com/privacy' },
 		createElement(MarketingProbe),
 		createElement(MeasurementProbe),
 		createElement(StatusProbe),

@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
 	c15t: {
-		backendURL: 'https://nuxt-consent-io.inth.app',
 		consentCategories: ['necessary', 'measurement', 'marketing'],
+		projectUrl: 'https://nuxt-consent-io.inth.app',
 	},
 	devtools: { enabled: true },
 	modules: ['../src/module'],

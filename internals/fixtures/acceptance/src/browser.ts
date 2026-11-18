@@ -27,7 +27,7 @@ window.posthog = {
 export const openBrowserContext = async function openBrowserContext(
 	browser: Browser,
 	baseURL: string,
-	backendURL: string,
+	projectUrl: string,
 	failInit = false,
 	options: BrowserContextOptions = {}
 ): Promise<{ context: BrowserContext; page: Page; requests: Requests }> {
@@ -51,7 +51,7 @@ export const openBrowserContext = async function openBrowserContext(
 	};
 	const localOrigins = new Set([
 		new URL(baseURL).origin,
-		new URL(backendURL).origin,
+		new URL(projectUrl).origin,
 	]);
 	await context.route('**/*', async (route) => {
 		const url = new URL(route.request().url());

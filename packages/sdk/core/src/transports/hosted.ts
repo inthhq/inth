@@ -70,15 +70,15 @@ export interface HostedTransportOptions {
 	 * Backend URL. Can be relative (`/api/c15t`) or absolute.
 	 * Trailing slashes are stripped.
 	 */
-	backendURL: string;
+	projectUrl: string;
 
 	/**
-	 * URL used for `GET /init`. Defaults to `${backendURL}/init`.
+	 * URL used for `GET /init`. Defaults to `${projectUrl}/init`.
 	 *
 	 * Use this to point initialization at a same-origin server route while
-	 * keeping consent saves on `${backendURL}/subjects`.
+	 * keeping consent saves on `${projectUrl}/subjects`.
 	 */
-	initURL?: string;
+	initUrl?: string;
 
 	/**
 	 * Assert the resolved policy decision on `POST /subjects`.
@@ -87,7 +87,7 @@ export interface HostedTransportOptions {
 	 * language, and GPC signal it resolved, and `save` sends them whenever
 	 * the payload has no signed `policySnapshotToken`, so the backend can
 	 * reject a save made against a stale policy instead of recording it
-	 * unbound. Enable this when `initURL` points at a same-origin route that
+	 * unbound. Enable this when `initUrl` points at a same-origin route that
 	 * resolves init from a manifest: manifest resolution never issues a
 	 * snapshot token.
 	 *
@@ -104,7 +104,7 @@ export interface HostedTransportOptions {
 	/**
 	 * An init response that was already requested, for example by an inline
 	 * prefetch script that ran before hydration. The first `init()` consumes
-	 * it instead of calling `initURL`, and still records the decision inputs
+	 * it instead of calling `initUrl`, and still records the decision inputs
 	 * when `assertDecisionInputs` is set, so the first save stays bound to
 	 * that decision. A rejected or empty promise falls back to the fetch.
 	 */
@@ -242,8 +242,8 @@ const buildAllowedInitHeaders = function buildAllowedInitHeaders(
 export const createHostedTransport = function createHostedTransport(
 	options: HostedTransportOptions
 ): HostedKernelTransport {
-	const base = trimSlash(options.backendURL);
-	const initURL = options.initURL ?? `${base}/init`;
+	const base = trimSlash(options.projectUrl);
+	const initUrl = options.initUrl ?? `${base}/init`;
 	const fetchImpl = resolveFetch(options.fetch);
 	const initHeaders = buildAllowedInitHeaders(options.headers);
 	const credentials = options.credentials ?? 'include';
@@ -291,26 +291,26 @@ export const createHostedTransport = function createHostedTransport(
 		const generation = initGeneration;
 		prepareInit(ctx);
 		const request = createHostedInitRequest({
-			backendURL: base,
 			credentials: initCredentials,
 			experiment: ctx.experiment,
 			headers: initHeaders,
-			initURL,
+			initUrl,
 			journey: ctx.journey,
 			overrides: ctx.overrides,
+			projectUrl: base,
 		});
 		const { requestHeaders } = request;
 		const supplied =
 			initialData ??
-			(options.initURL || !pagePrefetch
+			(options.initUrl || !pagePrefetch
 				? undefined
 				: consumePrefetchedInitialData({
-						backendURL: base,
 						credentials: initCredentials,
 						overrides: {
 							...extractConsentRequestInputs(new Headers(requestHeaders)),
 							...ctx.overrides,
 						},
+						projectUrl: base,
 					}));
 		initialData = undefined;
 		// Awaited only when there is one: with nothing prefetched, `fetch`
@@ -364,11 +364,11 @@ export const createHostedTransport = function createHostedTransport(
 
 	const records = createHostedRecordTransport(
 		{
-			backendURL: base,
 			credentials,
 			domain: options.domain,
 			fetch: fetchImpl,
 			now: options.now,
+			projectUrl: base,
 		},
 		{
 			inputs: () => lastDecisionInputs,

@@ -7,7 +7,7 @@ import { createConsentRoute } from '@c15t/angular/ssr';
  * suite sets `C15T_BACKEND_URL` to its fixture backend.
  */
 export const consentRoute = createConsentRoute({
-	backendURL:
+	projectUrl:
 		process.env['C15T_BACKEND_URL'] ?? 'https://your-project.inth.app',
 	proxy: true,
 });

@@ -256,8 +256,8 @@ describe('the Vue plugin applies colorScheme', () => {
 	test('leaves the class to the host that owns a borrowed runtime', () => {
 		stubSystemScheme(true);
 		const runtime = createConsentRuntime({
-			backendURL: 'https://consent.example.test',
 			pkg: '@c15t/vue-test',
+			projectUrl: 'https://consent.example.test',
 		});
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
 		app.use(c15tVue, { colorScheme: 'dark', runtime });

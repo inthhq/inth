@@ -18,7 +18,7 @@ const BUILT: ConsentManifest = {
 };
 
 beforeEach(() => {
-	setGenerated({ backendURL: 'https://consent.example.com', snapshot: BUILT });
+	setGenerated({ projectUrl: 'https://consent.example.com', snapshot: BUILT });
 });
 
 afterEach(() => {
@@ -28,8 +28,8 @@ afterEach(() => {
 describe('manifest()', () => {
 	test("uses the build's snapshot and backend URL", () => {
 		expect({ ...manifest() }).toMatchObject({
-			backendURL: 'https://consent.example.com',
 			kind: 'manifest',
+			projectUrl: 'https://consent.example.com',
 			snapshot: BUILT,
 			type: 'manifest',
 		});
@@ -38,17 +38,17 @@ describe('manifest()', () => {
 	test("source: 'runtime' leaves the build's snapshot out", () => {
 		const mode = manifest({ source: 'runtime' });
 		expect(mode.snapshot).toBeUndefined();
-		expect(mode.backendURL).toBe('https://consent.example.com');
+		expect(mode.projectUrl).toBe('https://consent.example.com');
 	});
 
-	test("a manifestURL on a CDN still saves to the build's backend", () => {
+	test("a manifestUrl on a CDN still saves to the build's backend", () => {
 		for (const options of [
-			{ manifestURL: 'https://cdn.example/policy.json' },
+			{ manifestUrl: 'https://cdn.example/policy.json' },
 			// As from an unset `import.meta.env` variable.
-			{ backendURL: undefined, manifestURL: 'https://cdn.example/policy.json' },
+			{ manifestUrl: 'https://cdn.example/policy.json', projectUrl: undefined },
 		]) {
 			const mode = manifest(options);
-			expect(mode.backendURL).toBe('https://consent.example.com');
+			expect(mode.projectUrl).toBe('https://consent.example.com');
 			expect(mode.snapshot).toBeUndefined();
 		}
 	});
@@ -56,12 +56,12 @@ describe('manifest()', () => {
 	test('options replace the defaults', () => {
 		const own: ConsentManifest = { ...BUILT, revision: 'own' };
 		expect({
-			...manifest({ backendURL: 'https://other.example', snapshot: own }),
-		}).toMatchObject({ backendURL: 'https://other.example', snapshot: own });
+			...manifest({ projectUrl: 'https://other.example', snapshot: own }),
+		}).toMatchObject({ projectUrl: 'https://other.example', snapshot: own });
 	});
 
-	test("a manifestURL is fetched at runtime and wins over the build's snapshot", async () => {
-		const manifestURL = 'https://cdn.example.com/manifest';
+	test("a manifestUrl is fetched at runtime and wins over the build's snapshot", async () => {
+		const manifestUrl = 'https://cdn.example.com/manifest';
 		const withPolicy = (id: string): ConsentManifest => ({
 			...BUILT,
 			policyPacks: [
@@ -73,14 +73,14 @@ describe('manifest()', () => {
 			],
 		});
 		setGenerated({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			snapshot: withPolicy('bundled'),
 		});
 		const fetch = vi.fn<typeof globalThis.fetch>(() =>
 			Promise.resolve(new Response(JSON.stringify(withPolicy('from-url'))))
 		);
 
-		const transport = manifest({ fetch, manifestURL })();
+		const transport = manifest({ fetch, manifestUrl })();
 		const init = await transport.init?.({
 			overrides: {},
 			user: null,
@@ -88,7 +88,7 @@ describe('manifest()', () => {
 
 		expect(init?.policyResolution?.policy?.id).toBe('from-url');
 		expect(fetch.mock.calls.map(([input]) => String(input))).toEqual([
-			manifestURL,
+			manifestUrl,
 		]);
 	});
 });

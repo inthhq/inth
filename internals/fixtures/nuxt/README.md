@@ -42,7 +42,7 @@ off, so a consent row referencing a policy that doesn't exist inserts happily
 locally and only fails once deployed. Running real Postgres in dev means
 constraint bugs surface here. Delete `.pgdata/` to reset the demo.
 
-The demo shell in `nuxt.config.ts` sets `backendURL` to the self-hosted route,
+The demo shell in `nuxt.config.ts` sets `projectUrl` to the self-hosted route,
 overriding the placeholder in the `config/` layers. The acceptance suite sets
 `NUXT_PUBLIC_C15T_BACKEND_URL` to point the demo at its mock backend instead.
 

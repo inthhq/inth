@@ -28,7 +28,7 @@ export interface HostedRecordTransportOptions {
 	 * Backend URL. Can be relative (`/api/c15t`) or absolute.
 	 * Trailing slashes are stripped.
 	 */
-	backendURL: string;
+	projectUrl: string;
 	/** Fetch implementation. Defaults to `globalThis.fetch`. */
 	fetch?: typeof globalThis.fetch;
 	/**
@@ -83,7 +83,7 @@ export const trimSlash = function trimSlash(url: string): string {
  * the browser hostname, the backend URL hostname, then `'localhost'`.
  */
 const resolveDomain = function resolveDomain(
-	backendURL: string,
+	projectUrl: string,
 	explicit: string | undefined
 ): string {
 	if (explicit) {
@@ -93,7 +93,7 @@ const resolveDomain = function resolveDomain(
 		return window.location.hostname;
 	}
 	try {
-		return new URL(backendURL).hostname;
+		return new URL(projectUrl).hostname;
 	} catch {
 		return 'localhost';
 	}
@@ -141,7 +141,7 @@ export const resolveFetch = function resolveFetch(
  * ```ts
  * import { createHostedRecordTransport } from '@c15t/core';
  *
- * const records = createHostedRecordTransport({ backendURL: '/api/c15t' });
+ * const records = createHostedRecordTransport({ projectUrl: '/api/c15t' });
  * await records.save(payload);
  * ```
  */
@@ -149,7 +149,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 	options: HostedRecordTransportOptions,
 	decision?: HostedDecisionSource
 ): HostedRecordTransport {
-	const base = trimSlash(options.backendURL);
+	const base = trimSlash(options.projectUrl);
 	const fetchImpl = resolveFetch(options.fetch);
 	const credentials = options.credentials ?? 'include';
 	const domain = resolveDomain(base, options.domain);

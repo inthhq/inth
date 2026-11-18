@@ -57,7 +57,7 @@ const readExpoManifest = function readExpoManifest(): unknown {
  *
  * @returns The shared client over the browser engine.
  * @throws {Error} When the app config carries no `extra.inth`.
- * @throws {ProjectURLError} When `backendURL` is not an Inth project URL.
+ * @throws {ProjectUrlError} When `projectUrl` is not an Inth project URL.
  */
 export const getConsentClient = function getConsentClient(): ConsentClient {
 	if (client === null) {

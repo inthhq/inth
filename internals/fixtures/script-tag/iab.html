@@ -28,13 +28,13 @@
 				[
 					'config',
 					{
-						backendURL: 'https://your-project.inth.app',
+						projectUrl: 'https://your-project.inth.app',
 						overrides: { country: 'DE' },
 						storageConfig: { storageKey: 'c15t-iab-example' },
 						iab: {
 							// Demo CMP ID and sample vendor list. Use your CMP configuration in production.
 							cmpId: 28,
-							gvlURL: new URL('/iab-gvl.json', location.href).href,
+							gvlUrl: new URL('/iab-gvl.json', location.href).href,
 						},
 						ui: { trigger: true, theme: { colors: { primary: '#0a66ff' } } },
 					},

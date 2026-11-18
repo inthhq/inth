@@ -95,7 +95,7 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [Consent state reference](./concepts/consent-state.md): How c15t saves choices, gates IAB vendors, hydrates server records and keeps browser tabs and storage in step.
 - [Data fetching](./concepts/data-fetching.md): Choose the recommended build-time policy snapshot or runtime manifest fetching, backend /init, browser resolution or local rules, and understand where consent choices are saved.
 - [How consent works](./concepts/how-consent-works.md): What c15t decides on each page load, the difference between a permission and a recorded choice, and what happens when a visitor saves.
-- [Consent modes](./concepts/modes.md): Reference for backendURL and the optional mode, manifest(), hosted() and testing(), in every c15t framework package, where each one resolves the visitor's policy, what it adds to first-load JavaScript, the build-time manifest fetch and its fallback, and the backend URL variable each framework reads.
+- [Consent modes](./concepts/modes.md): Reference for projectUrl and the optional mode, manifest(), hosted() and testing(), in every c15t framework package, where each one resolves the visitor's policy, what it adds to first-load JavaScript, the build-time manifest fetch and its fallback, and the backend URL variable each framework reads.
 - [Policies](./concepts/policies.md): How policy models, prompts and scope decide what c15t asks visitors, where to change the rules, and why a banner may not appear.
 
 ## Guides

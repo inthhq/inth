@@ -50,7 +50,7 @@ export interface ClientModeOptions {
 	 * here: `routePrefix` alone never receives saves, because a route
 	 * without a proxy answers `GET` only.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * Prefix of the app's own consent route, such as `/api/c15t`. Manifest
 	 * mode re-inits through `${routePrefix}/init`, and browser resolution
@@ -225,11 +225,11 @@ const withEarlyRequest = function withEarlyRequest(
 
 /** Options for {@link lazyHosted}. */
 export interface LazyHostedOptions {
-	/** Backend URL for saves, and for `GET /init` without `initURL`. */
-	backendURL: string;
+	/** Backend URL for saves, and for `GET /init` without `initUrl`. */
+	projectUrl: string;
 	/** Same-origin route that resolves init, such as `/api/c15t/init`. */
-	initURL?: string;
-	/** Defaults to whether `initURL` is set. */
+	initUrl?: string;
+	/** Defaults to whether `initUrl` is set. */
 	assertDecisionInputs?: boolean;
 	/** Headers forwarded to `GET /init`. */
 	headers?: Record<string, string>;
@@ -260,7 +260,7 @@ const startEarlyInit = function startEarlyInit(
 		!fetch ||
 		options.initialData ||
 		(options.headers && Object.keys(options.headers).length > 0) ||
-		(!options.initURL && hasPrefetchedInitialData())
+		(!options.initUrl && hasPrefetchedInitialData())
 	) {
 		return undefined;
 	}
@@ -269,8 +269,8 @@ const startEarlyInit = function startEarlyInit(
 	// matches this one and takes its response.
 	const request: HostedInitRequest = createHostedInitRequest({
 		...ctx,
-		backendURL: options.backendURL,
-		initURL: options.initURL,
+		initUrl: options.initUrl,
+		projectUrl: options.projectUrl,
 	});
 	return sendEarly(fetch, request.url, request.init);
 };
@@ -287,7 +287,7 @@ const startEarlyInit = function startEarlyInit(
  * Both halves use the `fetch` that was global when the transport was
  * created, as the full transport does.
  *
- * @param options - Backend URL and, for same-origin init, `initURL`.
+ * @param options - Backend URL and, for same-origin init, `initUrl`.
  * @param load - Loads the hosted transport's module.
  * @returns A provider transport factory.
  */
@@ -296,13 +296,13 @@ export const lazyHosted = function lazyHosted(
 	load: LoadHostedModule = loadHostedModule
 ): ProviderTransportFactory {
 	const assertDecisionInputs =
-		options.assertDecisionInputs ?? options.initURL !== undefined;
+		options.assertDecisionInputs ?? options.initUrl !== undefined;
 	return Object.assign(
 		(): KernelTransport => {
 			const fetch = globalThis.fetch?.bind(globalThis);
 			return createLazyInitTransport(
 				createHostedRecordTransport(
-					{ backendURL: options.backendURL, fetch },
+					{ fetch, projectUrl: options.projectUrl },
 					assertDecisionInputs
 						? {
 								inputs: () => undefined,
@@ -316,13 +316,13 @@ export const lazyHosted = function lazyHosted(
 					const { createHostedTransport } = await load();
 					return createHostedTransport({
 						assertDecisionInputs,
-						backendURL: options.backendURL,
 						fetch: early && fetch ? withEarlyRequest(fetch, early) : fetch,
 						headers: options.headers,
-						initURL: options.initURL,
+						initUrl: options.initUrl,
 						initialData: options.initialData,
 						// `fetch` here is the global one, as the page's script uses.
 						pagePrefetch: true,
+						projectUrl: options.projectUrl,
 					});
 				}
 			);
@@ -378,7 +378,7 @@ export const lazyTesting = function lazyTesting(
 /** Options for {@link lazyBrowserManifest}. */
 export type LazyBrowserManifestOptions = BrowserManifestOptions & {
 	/** Backend URL for saves and the `/init` fallback. */
-	backendURL: string;
+	projectUrl: string;
 };
 
 /**
@@ -417,8 +417,8 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 				(typeof globalThis.fetch === 'function'
 					? globalThis.fetch.bind(globalThis)
 					: undefined);
-			const manifestURL =
-				options.manifestURL ?? `${trimSlash(options.backendURL)}/manifest`;
+			const manifestUrl =
+				options.manifestUrl ?? `${trimSlash(options.projectUrl)}/manifest`;
 			let early: EarlyRequest | undefined;
 			let firstLoad: ReturnType<LoadManifestBrowserModule> | undefined;
 			let initStarted = false;
@@ -426,7 +426,7 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 				fetch && !options.snapshot
 					? sendEarly(
 							fetch,
-							manifestURL,
+							manifestUrl,
 							createManifestRequestInit({
 								credentials: options.credentials,
 								headers: options.headers,
@@ -472,9 +472,9 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 			}
 			return createLazyInitTransport(
 				createHostedRecordTransport({
-					backendURL: options.backendURL,
 					domain: options.domain,
 					fetch,
+					projectUrl: options.projectUrl,
 				}),
 				async () => {
 					initStarted = true;
@@ -490,7 +490,7 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 						{
 							...options,
 							fetch: early && fetch ? withEarlyRequest(fetch, early) : fetch,
-							manifestURL: options.snapshot ? options.manifestURL : manifestURL,
+							manifestUrl: options.snapshot ? options.manifestUrl : manifestUrl,
 						} as BrowserManifestOptions,
 						context
 					);
@@ -527,7 +527,7 @@ let warnedImplementation = false;
  * import { clientMode } from '@c15t/core/runtime/client-mode';
  *
  * const mode = clientMode(manifest(), {
- *   backendURL: 'https://your-project.inth.app',
+ *   projectUrl: 'https://your-project.inth.app',
  *   routePrefix: '/api/c15t',
  * });
  * ```
@@ -555,15 +555,15 @@ export const clientMode = function clientMode(
 		return lazyTesting(testingEntry, testingOptionsOf(mode));
 	}
 	// Saves never fall back to `routePrefix`: a consent route only forwards
-	// writes when the caller says so by passing it as `backendURL`.
-	const { backendURL } = options;
-	if (backendURL === undefined) {
+	// writes when the caller says so by passing it as `projectUrl`.
+	const { projectUrl } = options;
+	if (projectUrl === undefined) {
 		throw new Error(
-			'c15t: `backendURL` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.'
+			'c15t: `projectUrl` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.'
 		);
 	}
 	if (mode.type === 'hosted') {
-		return lazyHosted({ backendURL, initialData: options.initialData });
+		return lazyHosted({ initialData: options.initialData, projectUrl });
 	}
 	if (mode.resolve === 'browser') {
 		const {
@@ -575,20 +575,20 @@ export const clientMode = function clientMode(
 		return Object.assign(
 			lazyBrowserManifest({
 				...browser,
-				backendURL,
-				manifestURL:
-					mode.manifestURL ??
+				manifestUrl:
+					mode.manifestUrl ??
 					(routePrefix === undefined ? undefined : `${routePrefix}/manifest`),
+				projectUrl,
 			} as LazyBrowserManifestOptions),
 			mode
 		);
 	}
 	return Object.assign(
 		lazyHosted({
-			backendURL,
-			initURL: routePrefix === undefined ? undefined : `${routePrefix}/init`,
+			initUrl: routePrefix === undefined ? undefined : `${routePrefix}/init`,
 			initialData: options.initialData,
 			kind: 'manifest',
+			projectUrl,
 		}),
 		mode
 	);

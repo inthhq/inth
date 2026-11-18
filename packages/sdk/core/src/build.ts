@@ -26,14 +26,14 @@ export type { ConsentManifest } from '@c15t/schema/types';
 export { createDialogChunkPlugin } from './build-dialog-chunk';
 export type { DialogChunkPlugin } from './build-dialog-chunk';
 
-const resolveBuildManifestURL = (
+const resolveBuildManifestUrl = (
 	options: {
-		backendURL?: string;
-		manifestURL?: string;
+		projectUrl?: string;
+		manifestUrl?: string;
 	},
 	label: string
 ): string => {
-	const source = options.manifestURL ?? options.backendURL;
+	const source = options.manifestUrl ?? options.projectUrl;
 	let url: URL;
 	try {
 		url = new URL(source ?? '');
@@ -47,7 +47,7 @@ const resolveBuildManifestURL = (
 			`${label}: build-time manifests require an http(s) upstream URL.`
 		);
 	}
-	if (options.manifestURL === undefined) {
+	if (options.manifestUrl === undefined) {
 		url.pathname = `${url.pathname.replace(/\/+$/u, '')}/manifest`;
 	}
 	return url.href;
@@ -63,8 +63,8 @@ const resolveBuildManifestURL = (
  */
 export const loadBuildManifest = (
 	options: {
-		backendURL?: string;
-		manifestURL?: string;
+		projectUrl?: string;
+		manifestUrl?: string;
 		fetch?: typeof globalThis.fetch;
 	},
 	label: string
@@ -72,7 +72,7 @@ export const loadBuildManifest = (
 	loadStaticManifest(
 		{
 			fetch: options.fetch,
-			manifestURL: resolveBuildManifestURL(options, label),
+			manifestUrl: resolveBuildManifestUrl(options, label),
 		},
 		label
 	);
@@ -92,11 +92,11 @@ const BUILD_MANIFEST_TIMEOUT_MS = 10_000;
  * @internal
  */
 export const hasBuildManifestSource = (options: {
-	backendURL?: string;
-	manifestURL?: string;
+	projectUrl?: string;
+	manifestUrl?: string;
 }): boolean => {
 	try {
-		resolveBuildManifestURL(options, '');
+		resolveBuildManifestUrl(options, '');
 		return true;
 	} catch {
 		return false;
@@ -390,8 +390,8 @@ const reportMissingSource = (
  */
 export const loadManifestForBuild = async (
 	source: {
-		backendURL?: string;
-		manifestURL?: string;
+		projectUrl?: string;
+		manifestUrl?: string;
 		fetch?: typeof globalThis.fetch;
 	},
 	policy: ManifestBuildPolicy
@@ -409,9 +409,9 @@ export const loadManifestForBuild = async (
 		return undefined;
 	}
 	const envHint = policy.envNames?.length
-		? ` Pass backendURL or set ${formatEnvNames(policy.envNames)}.`
+		? ` Pass projectUrl or set ${formatEnvNames(policy.envNames)}.`
 		: '';
-	const configured = source.manifestURL ?? source.backendURL;
+	const configured = source.manifestUrl ?? source.projectUrl;
 	if (!configured) {
 		reportMissingSource(policy, { explicit, mode }, envHint);
 		return undefined;
@@ -419,7 +419,7 @@ export const loadManifestForBuild = async (
 	if (!hasBuildManifestSource(source)) {
 		if (explicit && mode === 'fail') {
 			try {
-				resolveBuildManifestURL(source, label);
+				resolveBuildManifestUrl(source, label);
 			} catch (error) {
 				throw new Error(`${(error as Error).message}${envHint}`, {
 					cause: error,
@@ -432,7 +432,7 @@ export const loadManifestForBuild = async (
 		return undefined;
 	}
 	const fetchImpl = source.fetch ?? globalThis.fetch?.bind(globalThis);
-	const url = resolveBuildManifestURL(source, label);
+	const url = resolveBuildManifestUrl(source, label);
 	const phase = command === 'build' ? 'the build' : 'dev';
 	try {
 		return await loadBuildManifest(
@@ -473,7 +473,7 @@ export interface ManifestBuildOptions {
 	 * Absolute backend base URL. The build appends `/manifest`. Framework
 	 * integrations read their public backend URL variable when it is unset.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * What a failed manifest fetch does. `'runtime'` (the default) logs a
 	 * warning, and the server fetches the policy at runtime, asking the
@@ -494,10 +494,10 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	/**
 	 * `'runtime'` never downloads a snapshot: `@c15t/core/generated`
 	 * exports `snapshot: undefined` and the app reads the manifest at
-	 * runtime. Set it when the app's `manifest()` passes `manifestURL` or
+	 * runtime. Set it when the app's `manifest()` passes `manifestUrl` or
 	 * `source: 'runtime'`. Those discard the build's snapshot, but the
 	 * bundle still imports it, so without this option the build fetches
-	 * `${backendURL}/manifest` and fails when that fetch fails.
+	 * `${projectUrl}/manifest` and fails when that fetch fails.
 	 *
 	 * @default 'build'
 	 */
@@ -559,7 +559,7 @@ export type InitPrefetchOptions = Pick<
 /** What `@c15t/core/generated` exports. */
 export interface GeneratedManifestModule {
 	/** The backend URL the build read the manifest from. */
-	backendURL: string | undefined;
+	projectUrl: string | undefined;
 	/** The fetched manifest, or `undefined` to read it at runtime. */
 	snapshot: ConsentManifest | undefined;
 }
@@ -603,7 +603,7 @@ export const renderGeneratedModule = (
 	return [
 		'// Written by the c15t build integration. Do not edit.',
 		...(options.serverOnly ? ["import 'server-only';"] : []),
-		`export const backendURL = ${JSON.stringify(module.backendURL) ?? 'undefined'};`,
+		`export const projectUrl = ${JSON.stringify(module.projectUrl) ?? 'undefined'};`,
 		snapshot,
 		'',
 	].join('\n');
@@ -619,7 +619,7 @@ export const renderGeneratedDeclarations = (importSource: string): string =>
 	[
 		`import type { ConsentManifest } from '${importSource}';`,
 		'',
-		'export declare const backendURL: string | undefined;',
+		'export declare const projectUrl: string | undefined;',
 		'export declare const snapshot: ConsentManifest | undefined;',
 		'',
 	].join('\n');
@@ -690,7 +690,7 @@ export const writeManifestCacheModule = async (
 	logger: ManifestBuildLogger = labelledBuildLogger(defaults.label)
 ): Promise<ManifestCacheFiles> => {
 	const snapshot = await loadManifestForBuild(
-		{ backendURL: options.backendURL, fetch: options.fetch },
+		{ fetch: options.fetch, projectUrl: options.projectUrl },
 		{
 			command: defaults.command,
 			envNames: defaults.envNames,
@@ -704,7 +704,7 @@ export const writeManifestCacheModule = async (
 		defaults.rootDir ?? process.cwd(),
 		MANIFEST_CACHE_DIR
 	);
-	const module = { backendURL: options.backendURL, snapshot };
+	const module = { projectUrl: options.projectUrl, snapshot };
 	const [server, browser] = await Promise.all([
 		writeModuleFile(
 			join(directory, 'manifest.js'),
@@ -980,7 +980,7 @@ export interface ManifestHtmlContext {
  * backend's `/init` anyway unless the page supplies a location.
  */
 const LOCATION_ADVICE =
-	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoURL` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `backendURL`, which asks the hosted backend instead.";
+	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `projectUrl`, which asks the hosted backend instead.";
 
 /** Id of the inline script `initPrefetch` adds to `index.html`. */
 const PREFETCH_SCRIPT_ID = 'c15t-initial-data-prefetch';
@@ -1009,7 +1009,7 @@ const VIRTUAL_GENERATED_ID = '\0@c15t/core/generated';
  * an unread export removable and stops the bundler from folding the value.
  */
 const PLACEHOLDERS = {
-	backendURL: '__c15t_build_backend_url__',
+	projectUrl: '__c15t_build_backend_url__',
 	snapshot: '__c15t_build_snapshot__',
 } as const;
 
@@ -1040,7 +1040,7 @@ const GENERATED_IMPORTERS = [
 /**
  * Builds the Vite plugin behind each `consentManifest` export. It serves
  * the virtual `@c15t/core/generated` module, so no file is written into the
- * app. Preview uses the existing build. Without `backendURL`, the first of
+ * app. Preview uses the existing build. Without `projectUrl`, the first of
  * `envNames` that is set supplies it; the first `VITE_` variable, when
  * unset or empty, is then set to the URL used, so app code reads the same
  * value. The c15t variables come before the Inth ones.
@@ -1052,7 +1052,7 @@ const GENERATED_IMPORTERS = [
  * - `vite build` gives the exports stand-ins and fills them in after
  *   tree-shaking, in `renderChunk`. A chunk that still contains the
  *   snapshot triggers the fetch, under the build policy. A chunk that
- *   reads `backendURL` when none is set gets the missing-URL policy.
+ *   reads `projectUrl` when none is set gets the missing-URL policy.
  * - `vite dev` fetches when the module is first loaded, under the dev
  *   policy. Dev has no tree-shaking, so this also happens for a hosted
  *   app; dev only warns.
@@ -1061,7 +1061,7 @@ const GENERATED_IMPORTERS = [
  *
  * In a server-rendered framework, the client environment's module exports
  * `snapshot: undefined`, so the snapshot never reaches the browser bundle.
- * `backendURL` is public and reaches every environment.
+ * `projectUrl` is public and reaches every environment.
  *
  * The plugin keeps the virtual module out of dependency pre-bundling and
  * bundles the c15t packages in server builds, so a c15t package can import
@@ -1087,7 +1087,7 @@ export const createConsentManifestPlugin = (
 	}
 ): ConsentManifestPlugin => {
 	let resolved: ManifestPluginConfig | undefined;
-	let backendURL: string | undefined;
+	let projectUrl: string | undefined;
 	let serverRendered = false;
 	let generation: Promise<ConsentManifest | undefined> | undefined;
 	let missingURLReported = false;
@@ -1106,7 +1106,7 @@ export const createConsentManifestPlugin = (
 		envNames: defaults.envNames,
 		// The mode is set in app code, which the plugin can't read.
 		failureHint:
-			" If the app passes manifest({ manifestURL }) or manifest({ source: 'runtime' }), pass `source: 'runtime'` to this plugin so the build skips this download.",
+			" If the app passes manifest({ manifestUrl }) or manifest({ source: 'runtime' }), pass `source: 'runtime'` to this plugin so the build skips this download.",
 		label: defaults.label,
 		logger: logger(),
 		onBuildError: options.onBuildError,
@@ -1114,7 +1114,7 @@ export const createConsentManifestPlugin = (
 	const fetchSnapshot = async (): Promise<ConsentManifest | undefined> => {
 		try {
 			const snapshot = await loadManifestForBuild(
-				{ backendURL, fetch: options.fetch },
+				{ fetch: options.fetch, projectUrl },
 				policy()
 			);
 			// Only a build knows the bundle uses `manifest()`: dev loads the
@@ -1139,20 +1139,20 @@ export const createConsentManifestPlugin = (
 		return generation;
 	};
 	/**
-	 * A bundle reads `backendURL` but none is set: the hosted backend or
+	 * A bundle reads `projectUrl` but none is set: the hosted backend or
 	 * `manifest()` without their own URL. Warns once rather than failing,
-	 * because a mode that passes its own `backendURL` still reads the
+	 * because a mode that passes its own `projectUrl` still reads the
 	 * build's as its default; one that does not throws when the app starts.
 	 * A bundle that also reads the snapshot was already reported by its
 	 * fetch.
 	 */
-	const reportMissingBackendURL = (): void => {
+	const reportMissingProjectUrl = (): void => {
 		if (missingURLReported) {
 			return;
 		}
 		missingURLReported = true;
 		logger().warn(
-			`no backend URL is set. A provider without \`backendURL\`, and \`manifest()\` without its own, throw when the app starts. Pass backendURL to the plugin or set ${formatEnvNames(defaults.envNames)}.`
+			`no backend URL is set. A provider without \`projectUrl\`, and \`manifest()\` without its own, throw when the app starts. Pass projectUrl to the plugin or set ${formatEnvNames(defaults.envNames)}.`
 		);
 	};
 	/** Warns once, for a multi-page app, why no page got the script. */
@@ -1176,9 +1176,9 @@ export const createConsentManifestPlugin = (
 		if (!initPrefetch || serverRendered) {
 			return undefined;
 		}
-		if (!backendURL) {
+		if (!projectUrl) {
 			if (options.initPrefetch !== undefined) {
-				reportMissingBackendURL();
+				reportMissingProjectUrl();
 			}
 			return undefined;
 		}
@@ -1195,7 +1195,7 @@ export const createConsentManifestPlugin = (
 			return undefined;
 		}
 		const prefetchOptions: PrefetchOptions =
-			initPrefetch === true ? { backendURL } : { ...initPrefetch, backendURL };
+			initPrefetch === true ? { projectUrl } : { ...initPrefetch, projectUrl };
 		const script = `<script id="${PREFETCH_SCRIPT_ID}">${buildPrefetchScript(
 			prefetchOptions
 		)}</script>`;
@@ -1223,7 +1223,7 @@ export const createConsentManifestPlugin = (
 			!serverRendered &&
 			htmlInput &&
 			Boolean(initPrefetch) &&
-			Boolean(backendURL) &&
+			Boolean(projectUrl) &&
 			!runtimeOnly
 		);
 	};
@@ -1234,7 +1234,6 @@ export const createConsentManifestPlugin = (
 			try {
 				return await loadBuildManifest(
 					{
-						backendURL,
 						fetch:
 							fetchImpl &&
 							((input, init) =>
@@ -1242,6 +1241,7 @@ export const createConsentManifestPlugin = (
 									...init,
 									signal: AbortSignal.timeout(BUILD_MANIFEST_TIMEOUT_MS),
 								})),
+						projectUrl,
 					},
 					defaults.label
 				);
@@ -1354,8 +1354,8 @@ export const createConsentManifestPlugin = (
 			}
 			const envRoot =
 				typeof config.envDir === 'string' ? config.envDir : config.root;
-			backendURL =
-				options.backendURL ??
+			projectUrl =
+				options.projectUrl ??
 				readBuildEnv(defaults.envNames, {
 					env: config.env,
 					mode: config.mode,
@@ -1364,8 +1364,8 @@ export const createConsentManifestPlugin = (
 			const exposed = defaults.envNames.find((name) =>
 				name.startsWith('VITE_')
 			);
-			if (backendURL && exposed && config.env && !config.env[exposed]) {
-				config.env[exposed] = backendURL;
+			if (projectUrl && exposed && config.env && !config.env[exposed]) {
+				config.env[exposed] = projectUrl;
 			}
 		},
 		enforce: 'pre' as const,
@@ -1389,7 +1389,7 @@ export const createConsentManifestPlugin = (
 			if (command() === 'dev') {
 				return renderGeneratedModule(
 					{
-						backendURL,
+						projectUrl,
 						snapshot:
 							clientStub || runtimeOnly ? undefined : await loadSnapshot(),
 					},
@@ -1407,10 +1407,10 @@ export const createConsentManifestPlugin = (
 			const lines = [
 				'// Written by the c15t build integration. Do not edit.',
 				'// The build fills in what the bundle still reads after tree-shaking.',
-				`export const backendURL = ${
-					backendURL === undefined
-						? placeholderExpression(PLACEHOLDERS.backendURL)
-						: JSON.stringify(backendURL)
+				`export const projectUrl = ${
+					projectUrl === undefined
+						? placeholderExpression(PLACEHOLDERS.projectUrl)
+						: JSON.stringify(projectUrl)
 				};`,
 				snapshotLine,
 				'',
@@ -1422,8 +1422,8 @@ export const createConsentManifestPlugin = (
 		outputOptions: dialogChunks.outputOptions,
 		async renderChunk(code: string) {
 			const readsSnapshot = code.includes(PLACEHOLDERS.snapshot);
-			const readsBackendURL = code.includes(PLACEHOLDERS.backendURL);
-			if (!(readsSnapshot || readsBackendURL)) {
+			const readsProjectUrl = code.includes(PLACEHOLDERS.projectUrl);
+			if (!(readsSnapshot || readsProjectUrl)) {
 				return null;
 			}
 			let rendered = code;
@@ -1436,12 +1436,12 @@ export const createConsentManifestPlugin = (
 					snapshot ? `(${JSON.stringify(snapshot)})` : 'void 0'
 				);
 			}
-			if (readsBackendURL) {
+			if (readsProjectUrl) {
 				if (!readsSnapshot) {
-					reportMissingBackendURL();
+					reportMissingProjectUrl();
 				}
 				rendered = rendered.replace(
-					placeholderPattern(PLACEHOLDERS.backendURL),
+					placeholderPattern(PLACEHOLDERS.projectUrl),
 					'void 0'
 				);
 			}
@@ -1514,12 +1514,12 @@ export const createConsentManifestPlugin = (
  * `snapshot` is `undefined`. Set `onBuildError` or `C15T_ON_BUILD_ERROR` to
  * change that. When the policy depends on the visitor's location, it warns
  * and suggests the hosted backend, since the browser's `manifest()` then still asks
- * the backend's `/init` unless the page passes `inputs` or `geoURL`. With
- * `manifest({ manifestURL })` or `manifest({ source: 'runtime' })`, pass
+ * the backend's `/init` unless the page passes `inputs` or `geoUrl`. With
+ * `manifest({ manifestUrl })` or `manifest({ source: 'runtime' })`, pass
  * `source: 'runtime'` here too, so the build never fetches a snapshot the
  * app would discard.
  *
- * @param options - Backend URL, `onBuildError` and `source`. `backendURL`
+ * @param options - Backend URL, `onBuildError` and `source`. `projectUrl`
  * defaults to `VITE_C15T_BACKEND_URL`, then `VITE_INTH_PROJECT_URL`.
  * @returns A Vite plugin, compatible with React, Vue, Svelte and Solid builds.
  * @throws {Error} When the fetch fails in `'fail'` mode, stopping Vite.

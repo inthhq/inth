@@ -49,8 +49,8 @@ describe('createConsentRoute', () => {
 	test('serves and resolves a snapshot without an upstream policy request', async () => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const { GET } = createConsentRoute({
-			backendURL: BACKEND,
 			fetch,
+			projectUrl: BACKEND,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		expect(await (await GET(restEvent('manifest'))).json()).toEqual(
@@ -72,7 +72,7 @@ describe('createConsentRoute', () => {
 		expect(Object.keys(createConsentRoute()).sort()).toEqual(['GET']);
 		expect(
 			Object.keys(
-				createConsentRoute({ backendURL: BACKEND, proxy: true })
+				createConsentRoute({ projectUrl: BACKEND, proxy: true })
 			).sort()
 		).toEqual(['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']);
 	});
@@ -80,8 +80,8 @@ describe('createConsentRoute', () => {
 	test('GET dispatches on the rest parameter, or the path of a fixed route', async () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({
-			backendURL: BACKEND,
 			fetch,
+			projectUrl: BACKEND,
 		});
 		const manifest = await GET(restEvent('manifest'));
 		const root = await GET(restEvent(''));
@@ -96,7 +96,7 @@ describe('createConsentRoute', () => {
 	test('fetches a relative backend in-process through event.fetch', async () => {
 		const eventFetch = upstream();
 		const { GET } = createConsentRoute({
-			backendURL: '/api/self-host',
+			projectUrl: '/api/self-host',
 		});
 		await GET(
 			createEvent({
@@ -117,7 +117,7 @@ describe('createConsentRoute', () => {
 		try {
 			const fetch = upstream();
 			const waitUntil = vi.fn();
-			const { GET } = createConsentRoute({ backendURL: BACKEND, fetch });
+			const { GET } = createConsentRoute({ fetch, projectUrl: BACKEND });
 			const event = () =>
 				Object.assign(restEvent('manifest'), {
 					platform: { context: { waitUntil } },
@@ -135,8 +135,8 @@ describe('createConsentRoute', () => {
 	test('the proxy vouches for the hop chain with event.getClientAddress()', async () => {
 		const fetch = upstream();
 		const { POST } = createConsentRoute({
-			backendURL: BACKEND,
 			fetch,
+			projectUrl: BACKEND,
 			proxy: true,
 		});
 		const response = await POST(
@@ -174,7 +174,7 @@ describe('createConsentRoute with c15tHandle', () => {
 		const own = { ...MANIFEST_FIXTURE, revision: 'from-the-handle' };
 		const { GET } = createConsentRoute({ fetch });
 		const response = await throughHandle(
-			c15tHandle({ backendURL: BACKEND, snapshot: own }),
+			c15tHandle({ projectUrl: BACKEND, snapshot: own }),
 			GET,
 			restEvent('manifest')
 		);
@@ -188,12 +188,12 @@ describe('createConsentRoute with c15tHandle', () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({ fetch });
 		await throughHandle(
-			c15tHandle({ backendURL: 'https://handle.example' }),
+			c15tHandle({ projectUrl: 'https://handle.example' }),
 			GET,
 			restEvent('manifest')
 		);
 		await throughHandle(
-			c15tHandle({ backendURL: 'https://hosted.example' }),
+			c15tHandle({ projectUrl: 'https://hosted.example' }),
 			GET,
 			restEvent('manifest')
 		);
@@ -203,13 +203,13 @@ describe('createConsentRoute with c15tHandle', () => {
 		]);
 	});
 
-	test("reads a manifest() mode's manifestURL", async () => {
+	test("reads a manifest() mode's manifestUrl", async () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({ fetch });
 		await throughHandle(
 			c15tHandle({
-				backendURL: BACKEND,
-				mode: manifestMode({ manifestURL: 'https://cdn.example/manifest' }),
+				mode: manifestMode({ manifestUrl: 'https://cdn.example/manifest' }),
+				projectUrl: BACKEND,
 			}),
 			GET,
 			restEvent('manifest')
@@ -222,11 +222,11 @@ describe('createConsentRoute with c15tHandle', () => {
 	test('explicit route options win over the handle', async () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({
-			backendURL: 'https://route.example',
 			fetch,
+			projectUrl: 'https://route.example',
 		});
 		await throughHandle(
-			c15tHandle({ backendURL: 'https://handle.example' }),
+			c15tHandle({ projectUrl: 'https://handle.example' }),
 			GET,
 			restEvent('manifest')
 		);
@@ -236,13 +236,13 @@ describe('createConsentRoute with c15tHandle', () => {
 	});
 
 	test('the proxy setup forwards saves to the build backend, not to itself', async () => {
-		// c15tHandle({ backendURL: '/api/c15t', routePrefix: '/api/c15t' })
+		// c15tHandle({ projectUrl: '/api/c15t', routePrefix: '/api/c15t' })
 		// points the browser at the route; the route must forward upstream.
-		setGenerated({ backendURL: BACKEND });
+		setGenerated({ projectUrl: BACKEND });
 		const fetch = upstream();
 		const eventFetch = vi.fn<typeof globalThis.fetch>();
 		const handle = c15tHandle({
-			backendURL: '/api/c15t',
+			projectUrl: '/api/c15t',
 			routePrefix: '/api/c15t',
 		});
 		const { GET, POST } = createConsentRoute({ fetch, proxy: true });
@@ -254,7 +254,7 @@ describe('createConsentRoute with c15tHandle', () => {
 				Response.json(await loadConsent(event, { fetch })),
 		}).then((response) => response.json());
 		expect(consent).toMatchObject({
-			backendURL: '/api/c15t',
+			projectUrl: '/api/c15t',
 			routePrefix: '/api/c15t',
 		});
 

@@ -419,8 +419,8 @@ const declareVendor = (framework: Framework, dir: string, manager: string) => {
 	} else if (framework === 'react') {
 		edit(
 			manager,
-			'backendURL: import.meta.env.VITE_C15T_BACKEND_URL as string,',
-			`backendURL: import.meta.env.VITE_C15T_BACKEND_URL as string,\n  vendors: [\n    ${fixtureVendor},\n  ],`
+			'projectUrl: import.meta.env.VITE_C15T_BACKEND_URL as string,',
+			`projectUrl: import.meta.env.VITE_C15T_BACKEND_URL as string,\n  vendors: [\n    ${fixtureVendor},\n  ],`
 		);
 	} else {
 		edit(

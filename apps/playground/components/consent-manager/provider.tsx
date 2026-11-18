@@ -197,7 +197,6 @@ export const ConsentManager = ({ children }: ConsentManagerProps) => {
 	return (
 		<ConsentProvider
 			options={{
-				backendURL: DEFAULT_BACKEND_URL,
 				consentCategories: [
 					'necessary',
 					'functionality',
@@ -215,6 +214,7 @@ export const ConsentManager = ({ children }: ConsentManagerProps) => {
 				},
 				mode: hosted(),
 				overrides: geoOverrides,
+				projectUrl: DEFAULT_BACKEND_URL,
 				scripts: createDemoScripts('internal-analytics'),
 				storageConfig: {
 					crossSubdomain: true,

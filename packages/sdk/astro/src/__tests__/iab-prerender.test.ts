@@ -59,8 +59,8 @@ describe('<IABConsentBanner /> on a prerendered page', () => {
 			headers: new Headers(),
 			options: resolveOptions({
 				...OPTIONS,
-				backendURL: 'https://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			}),
 			prerendered: true,
 		});

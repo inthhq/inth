@@ -45,7 +45,7 @@ const parity = JSON.parse(
 describe('prebuild refuses what the native cores refuse', () => {
 	it('accepts the shared rules, including fractional validity days', () => {
 		expect(
-			resolveParams({ backendURL: BACKEND, policy: { rules: parity.rules } })
+			resolveParams({ policy: { rules: parity.rules }, projectUrl: BACKEND })
 				.policyRules
 		).toEqual(parity.rules);
 	});
@@ -53,7 +53,7 @@ describe('prebuild refuses what the native cores refuse', () => {
 	it('refuses every policy the backend or the device refuses', () => {
 		const accepted = parity.invalid.filter(({ rules }) => {
 			try {
-				resolveParams({ backendURL: BACKEND, policy: { rules } as never });
+				resolveParams({ policy: { rules } as never, projectUrl: BACKEND });
 				return true;
 			} catch (error) {
 				return !(error instanceof InthPluginError);
@@ -65,7 +65,7 @@ describe('prebuild refuses what the native cores refuse', () => {
 	it('accepts every policy the backend accepts', () => {
 		const refused = parity.accepted.filter(({ rules }) => {
 			try {
-				resolveParams({ backendURL: BACKEND, policy: { rules } as never });
+				resolveParams({ policy: { rules } as never, projectUrl: BACKEND });
 				return false;
 			} catch {
 				return true;
@@ -81,15 +81,15 @@ describe('prebuild refuses what the native cores refuse', () => {
 		]) {
 			expect(() =>
 				resolveParams({
-					backendURL: BACKEND,
 					policy: { rules: [{ ...fallback, ...extra }] as never },
+					projectUrl: BACKEND,
 				})
 			).toThrow(/unknown category "\*"/u);
 		}
 		expect(
 			resolveParams({
-				backendURL: BACKEND,
 				policy: { rules: [{ ...fallback, categories: ['*'] }] },
+				projectUrl: BACKEND,
 			}).policyRules
 		).toHaveLength(1);
 	});
@@ -97,28 +97,28 @@ describe('prebuild refuses what the native cores refuse', () => {
 	it('names the missing scopeMode for a partial scope', () => {
 		expect(() =>
 			resolveParams({
-				backendURL: BACKEND,
 				policy: { rules: [{ ...fallback, categories: ['measurement'] }] },
+				projectUrl: BACKEND,
 			})
 		).toThrow(/needs scopeMode/u);
 	});
 });
 
 describe('the in-code policy', () => {
-	it('works with backendURL, and with dryRun', () => {
+	it('works with projectUrl, and with dryRun', () => {
 		expect(resolveParams(WITH_POLICY)).toMatchObject({
-			backendURL: BACKEND,
 			policyRules: IN_CODE_POLICY.rules,
+			projectUrl: BACKEND,
 		});
 		expect(resolveParams({ ...WITH_POLICY, dryRun: true }).policyRules).toEqual(
 			IN_CODE_POLICY.rules
 		);
-		expect(resolveParams({ backendURL: BACKEND }).policyRules).toBeNull();
+		expect(resolveParams({ projectUrl: BACKEND }).policyRules).toBeNull();
 	});
 
-	it('still needs backendURL, because records are sent there', () => {
+	it('still needs projectUrl, because records are sent there', () => {
 		expect(() => resolveParams({ policy: IN_CODE_POLICY } as never)).toThrow(
-			/backendURL is required/u
+			/projectUrl is required/u
 		);
 	});
 
@@ -140,7 +140,7 @@ describe('the in-code policy', () => {
 	it('refuses rules the cores would refuse at launch', () => {
 		const refused = (rules: unknown[], message: RegExp) =>
 			expect(() =>
-				resolveParams({ backendURL: BACKEND, policy: { rules } as never })
+				resolveParams({ policy: { rules } as never, projectUrl: BACKEND })
 			).toThrow(message);
 		refused([], /non-empty rules array/u);
 		refused([fallback, fallback], /unique/u);
@@ -158,11 +158,11 @@ describe('the in-code policy', () => {
 
 	it('names the rules file on both platforms and removes the keys when policy is removed', async () => {
 		const inCode = resolveParams(WITH_POLICY);
-		const fetched = resolveParams({ backendURL: BACKEND });
+		const fetched = resolveParams({ projectUrl: BACKEND });
 		const plist = applyInfoPlist(inCode, {});
 		expect(plist[IOS_PLIST_KEY.policyRules]).toBe(POLICY_RULES_NAME);
 		// The rules sit beside the project URL: records still go to Inth.
-		expect(plist[IOS_PLIST_KEY.backendURL]).toBe(BACKEND);
+		expect(plist[IOS_PLIST_KEY.projectUrl]).toBe(BACKEND);
 		expect(applyInfoPlist(fetched, plist)[IOS_PLIST_KEY.policyRules]).toBe(
 			undefined
 		);

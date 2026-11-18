@@ -35,9 +35,9 @@ interface CachedPolicy {
 	c: string | null | undefined;
 }
 
-const keyOf = (backendURL: string, overrides?: KernelOverrides): string =>
+const keyOf = (projectUrl: string, overrides?: KernelOverrides): string =>
 	[
-		backendURL,
+		projectUrl,
 		overrides?.country ?? '',
 		overrides?.region ?? '',
 		overrides?.language ?? '',
@@ -47,12 +47,12 @@ const keyOf = (backendURL: string, overrides?: KernelOverrides): string =>
  * The cached response for this backend and overrides, shaped as a
  * prefetch result `snapshotFromPrefetchedInit` reads, or `undefined`.
  *
- * @param backendURL - The backend URL the page uses.
+ * @param projectUrl - The backend URL the page uses.
  * @param overrides - The page's overrides.
  * @returns The cached response, or `undefined`.
  */
 export const readPolicyCache = function readPolicyCache(
-	backendURL: string,
+	projectUrl: string,
 	overrides?: KernelOverrides
 ): PrefetchedInitialData | undefined {
 	try {
@@ -60,7 +60,7 @@ export const readPolicyCache = function readPolicyCache(
 			window.localStorage.getItem(POLICY_CACHE_KEY) ?? 'null'
 		) as CachedPolicy | null;
 		if (
-			entry?.k === keyOf(backendURL, overrides) &&
+			entry?.k === keyOf(projectUrl, overrides) &&
 			Date.now() - entry.t < MAX_AGE_MS
 		) {
 			return {
@@ -77,12 +77,12 @@ export const readPolicyCache = function readPolicyCache(
 /**
  * Keep the policy fields of an `/init` response.
  *
- * @param backendURL - The backend URL the page uses.
+ * @param projectUrl - The backend URL the page uses.
  * @param overrides - The page's overrides.
  * @param data - The response.
  */
 export const writePolicyCache = function writePolicyCache(
-	backendURL: string,
+	projectUrl: string,
 	overrides: KernelOverrides | undefined,
 	data: PrefetchedInitialData
 ): void {
@@ -99,7 +99,7 @@ export const writePolicyCache = function writePolicyCache(
 			policyResolution: init.policyResolution,
 			policySnapshotToken: init.policySnapshotToken,
 		},
-		k: keyOf(backendURL, overrides),
+		k: keyOf(projectUrl, overrides),
 		t: Date.now(),
 	};
 	try {

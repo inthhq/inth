@@ -55,7 +55,7 @@ describe('IAB browser entry', () => {
 			vi.fn(() => response.promise)
 		);
 		const client = init({
-			iab: { cmpId: 28, gvlURL: 'https://example.test/gvl.json' },
+			iab: { cmpId: 28, gvlUrl: 'https://example.test/gvl.json' },
 			overrides: { country: 'DE' },
 			ui: false,
 		});
@@ -74,7 +74,7 @@ describe('IAB browser entry', () => {
 			vi.fn(() => response.promise)
 		);
 		const client = init({
-			iab: { cmpId: 28, gvlURL: 'https://example.test/gvl.json' },
+			iab: { cmpId: 28, gvlUrl: 'https://example.test/gvl.json' },
 			overrides: { country: 'DE' },
 			ui: false,
 		});
@@ -426,7 +426,7 @@ describe('IAB browser entry', () => {
 	it('shows GVL failure and prevents confirmation without a loaded vendor list', async () => {
 		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
 		const client = init({
-			iab: { cmpId: 28, gvlURL: 'https://example.test/gvl.json' },
+			iab: { cmpId: 28, gvlUrl: 'https://example.test/gvl.json' },
 			overrides: { country: 'DE' },
 			ui: { styles: false },
 		});

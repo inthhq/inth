@@ -90,12 +90,12 @@ export const isFixtureHost = function isFixtureHost(hostname: string): boolean {
  * the examples' committed `.env` files and over config fallbacks.
  */
 export const backendEnv = function backendEnv(
-	backendURL: string
+	projectUrl: string
 ): Record<string, string> {
 	return {
-		NEXT_PUBLIC_C15T_BACKEND_URL: backendURL,
-		NUXT_PUBLIC_C15T_BACKEND_URL: backendURL,
-		PUBLIC_C15T_BACKEND_URL: backendURL,
-		VITE_C15T_BACKEND_URL: backendURL,
+		NEXT_PUBLIC_C15T_BACKEND_URL: projectUrl,
+		NUXT_PUBLIC_C15T_BACKEND_URL: projectUrl,
+		PUBLIC_C15T_BACKEND_URL: projectUrl,
+		VITE_C15T_BACKEND_URL: projectUrl,
 	};
 };

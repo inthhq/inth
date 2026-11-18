@@ -4,7 +4,7 @@
  *
  * Only testing entries import this module, such as `@c15t/core/testing`
  * and `@c15t/react/testing`, so the policy pack and the resolver stay out
- * of every app that sets `backendURL`.
+ * of every app that sets `projectUrl`.
  *
  * @packageDocumentation
  * @internal
@@ -54,7 +54,7 @@ export const assertNotProduction = function assertNotProduction(
 	}
 	if (production) {
 		throw new Error(
-			`c15t: testing() from ${entry} is for tests and does not run in production. Set \`backendURL\` on the provider and remove \`mode: testing()\`.`
+			`c15t: testing() from ${entry} is for tests and does not run in production. Set \`projectUrl\` on the provider and remove \`mode: testing()\`.`
 		);
 	}
 };

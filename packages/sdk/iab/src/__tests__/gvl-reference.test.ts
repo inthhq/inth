@@ -586,7 +586,7 @@ test('retries a configured endpoint without a deferred reference', async () => {
 	vi.stubGlobal('fetch', fetch);
 	const handle = createIAB({
 		cmpId: 28,
-		gvlURL: 'https://vendors.test/list.json',
+		gvlUrl: 'https://vendors.test/list.json',
 		kernel,
 		persistence: false,
 	});

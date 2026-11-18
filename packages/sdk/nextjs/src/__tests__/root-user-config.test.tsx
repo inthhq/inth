@@ -14,9 +14,9 @@ import { policyFixture } from './policy-fixture';
 // oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's c15t.config.ts. The mock is that alias; ConsentRoot is real.
 vi.mock('@c15t/nextjs/user-config', () => ({
 	default: {
-		backendURL: 'https://consent.example.com',
 		// Manifest mode, so the browser inits through the route prefix.
 		mode: { type: 'manifest' },
+		projectUrl: 'https://consent.example.com',
 		routePrefix: '/api/consent',
 		scripts: [
 			{

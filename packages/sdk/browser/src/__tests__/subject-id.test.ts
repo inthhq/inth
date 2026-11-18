@@ -92,8 +92,8 @@ const load = function load(
 	const client = createConsentClient({
 		consentCategories: ['marketing', 'measurement'],
 		mode: manifest({
-			backendURL: 'https://backend.test',
 			fetch: backend,
+			projectUrl: 'https://backend.test',
 			snapshot,
 		}),
 		overrides,

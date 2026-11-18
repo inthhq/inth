@@ -73,8 +73,8 @@ type Kind = keyof typeof readers;
 
 const mountSubscribers = function mountSubscribers() {
 	const config = {
-		backendURL: 'https://consent.example',
 		consentCategories: ['necessary', 'measurement', 'marketing'],
+		projectUrl: 'https://consent.example',
 	} as ConsentConfig;
 	const context = createVueConsentKernelContext({ config, prefetch: init });
 	context.activeUI.value = 'banner';

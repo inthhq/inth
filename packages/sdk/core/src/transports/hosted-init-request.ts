@@ -16,11 +16,11 @@ import { c15tProtocolParams } from './version-header';
 
 /** The `GET /init` request the hosted transport sends. */
 export interface HostedInitRequest {
-	/** `initURL`, or `${backendURL}/init`, with the init query parameters. */
+	/** `initUrl`, or `${projectUrl}/init`, with the init query parameters. */
 	url: string;
 	/**
 	 * The request inputs in their header form: the allowed caller headers
-	 * plus the overrides and any init parameters `initURL` already carried.
+	 * plus the overrides and any init parameters `initUrl` already carried.
 	 * The overrides travel in the query string; this record is what the
 	 * response is read against.
 	 */
@@ -43,7 +43,7 @@ export interface HostedInitRequest {
  * as headers, so passing any outside the CORS safelist brings the
  * preflight back.
  *
- * @param options - Backend URL, optional `initURL`, credentials mode, the
+ * @param options - Backend URL, optional `initUrl`, credentials mode, the
  *   already-allowlisted caller headers, the init overrides, and the
  *   experiment arm and consent journey the request carries.
  * @returns The URL, the request inputs as headers and the fetch options.
@@ -51,15 +51,15 @@ export interface HostedInitRequest {
  */
 export const createHostedInitRequest =
 	function createHostedInitRequest(options: {
-		backendURL: string;
-		initURL?: string;
+		projectUrl: string;
+		initUrl?: string;
 		credentials?: RequestCredentials;
 		headers?: Record<string, string>;
 		overrides: InitContext['overrides'];
 		experiment?: InitContext['experiment'];
 		journey?: InitContext['journey'];
 	}): HostedInitRequest {
-		const base = options.initURL ?? `${trimSlash(options.backendURL)}/init`;
+		const base = options.initUrl ?? `${trimSlash(options.projectUrl)}/init`;
 		const params = appendInitParams(base, {
 			...c15tProtocolParams,
 			...buildRequestContextParams(options.overrides),
@@ -72,7 +72,7 @@ export const createHostedInitRequest =
 					storedChoice: options.journey.storedChoice,
 				})
 			: params;
-		// An `initURL` parameter c15t does not replace, such as `?gpc=1`,
+		// An `initUrl` parameter c15t does not replace, such as `?gpc=1`,
 		// reaches the backend, so the response is read against it too.
 		const requestHeaders = Object.fromEntries(
 			applyInitParamsToHeaders(

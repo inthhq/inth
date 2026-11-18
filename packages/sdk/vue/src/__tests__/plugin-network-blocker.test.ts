@@ -40,12 +40,12 @@ const mountWith = (options: C15tVuePluginOptions) => {
 test('the plugin blocks requests matching its networkBlocker rules', async () => {
 	const onRequestBlocked = vi.fn();
 	const { trackerCalls } = mountWith({
-		backendURL: 'https://consent.example.test',
 		networkBlocker: {
 			logBlockedRequests: false,
 			onRequestBlocked,
 			rules: [{ category: 'measurement', domain: 'tracker.example' }],
 		},
+		projectUrl: 'https://consent.example.test',
 	});
 
 	// The init request fails, so optional categories stay denied.
@@ -60,8 +60,8 @@ test('the plugin blocks requests matching its networkBlocker rules', async () =>
 
 test('networkBlocker: false leaves fetch alone', async () => {
 	const { trackerCalls } = mountWith({
-		backendURL: 'https://consent.example.test',
 		networkBlocker: false,
+		projectUrl: 'https://consent.example.test',
 	});
 
 	expect((await window.fetch(TRACKER)).status).toBe(503);

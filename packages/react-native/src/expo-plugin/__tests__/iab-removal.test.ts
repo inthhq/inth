@@ -9,21 +9,21 @@ import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
 import { FIXTURE_DIR } from './helpers';
 
-const backendURL = 'https://demo.inth.app';
+const projectUrl = 'https://demo.inth.app';
 const withIab = resolveParams({
-	backendURL,
 	iab: {
 		cmpId: 1234,
 		cmpVersion: 7,
 		consentScreen: 3,
 		publisherCountryCode: 'DE',
 	},
+	projectUrl,
 });
 const withoutConsentScreen = resolveParams({
-	backendURL,
 	iab: { cmpId: 1234, cmpVersion: 7, publisherCountryCode: 'DE' },
+	projectUrl,
 });
-const withoutIab = resolveParams({ backendURL });
+const withoutIab = resolveParams({ projectUrl });
 
 it('removing iab on incremental prebuild clears the earlier CMP identity', async () => {
 	const firstPlist = applyInfoPlist(withIab, {
@@ -58,7 +58,7 @@ it('removing iab on incremental prebuild clears the earlier CMP identity', async
 });
 
 it('removes the retired keys from a native project that was not regenerated', async () => {
-	const plist = applyInfoPlist(resolveParams({ backendURL }), {
+	const plist = applyInfoPlist(resolveParams({ projectUrl }), {
 		CFBundleDisplayName: 'Privacy demo',
 		'com.inth.backend.initUrl': 'https://app.example.com/api/init',
 		'com.inth.backend.mode': 'selfHosted',
@@ -66,7 +66,7 @@ it('removes the retired keys from a native project that was not regenerated', as
 	});
 	expect(plist).toStrictEqual({
 		CFBundleDisplayName: 'Privacy demo',
-		'com.inth.backend.url': backendURL,
+		'com.inth.backend.url': projectUrl,
 	});
 
 	const manifest = await AndroidConfig.Manifest.readAndroidManifestAsync(
@@ -85,19 +85,19 @@ it('removes the retired keys from a native project that was not regenerated', as
 			value
 		);
 	}
-	applyAndroidManifest(resolveParams({ backendURL }), manifest);
+	applyAndroidManifest(resolveParams({ projectUrl }), manifest);
 	const inthEntries = (application['meta-data'] ?? [])
 		.filter((item) => item.$['android:name'].startsWith('com.inth.'))
 		.map((item) => [item.$['android:name'], item.$['android:value']]);
-	expect(inthEntries).toStrictEqual([['com.inth.BACKEND_URL', backendURL]]);
+	expect(inthEntries).toStrictEqual([['com.inth.BACKEND_URL', projectUrl]]);
 });
 
 it('writes the dryRun flag on both platforms only while it is on', async () => {
 	const on = resolveParams({
-		backendURL: 'http://localhost:8787',
 		dryRun: true,
+		projectUrl: 'http://localhost:8787',
 	});
-	const off = resolveParams({ backendURL });
+	const off = resolveParams({ projectUrl });
 
 	const plist = applyInfoPlist(on, {});
 	expect(plist['com.inth.dryRun']).toBe(true);
@@ -116,5 +116,5 @@ it('writes the dryRun flag on both platforms only while it is on', async () => {
 	expect(value('com.inth.BACKEND_URL')).toBe('http://localhost:8787');
 	applyAndroidManifest(off, manifest);
 	expect(value('com.inth.DRY_RUN')).toBeUndefined();
-	expect(value('com.inth.BACKEND_URL')).toBe(backendURL);
+	expect(value('com.inth.BACKEND_URL')).toBe(projectUrl);
 });

@@ -152,7 +152,7 @@ const App = (
 ): ReactNode => (
 	<ConsentProvider
 		{...(props as ConsentProviderProps)}
-		privacyPolicyURL={URL}
+		privacyPolicyUrl={URL}
 	/>
 );
 

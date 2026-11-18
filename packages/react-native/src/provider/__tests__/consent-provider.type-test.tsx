@@ -7,7 +7,7 @@ import { ConsentProvider } from '../consent-provider';
 declare const enabled: boolean;
 
 export const presents = (
-	<ConsentProvider privacyPolicyURL="https://example.com/privacy">
+	<ConsentProvider privacyPolicyUrl="https://example.com/privacy">
 		<span />
 	</ConsentProvider>
 );
@@ -21,7 +21,7 @@ export const optsOut = (
 export const decidedAtRuntime = (
 	<ConsentProvider
 		autoPresent={enabled}
-		privacyPolicyURL="https://example.com/privacy"
+		privacyPolicyUrl="https://example.com/privacy"
 	>
 		<span />
 	</ConsentProvider>

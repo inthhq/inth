@@ -22,7 +22,7 @@ import type {
 	ConsentPresenterPresentation,
 	NativeAutoPresentSettings,
 } from '../native/presenter';
-import { isPrivacyPolicyURL } from './privacy-policy-url';
+import { isPrivacyPolicyUrl } from './privacy-policy-url';
 
 /**
  * The code a native presenter rejects with when it refuses the privacy-policy URL.
@@ -203,7 +203,7 @@ const failed = function failed(
 		report(mirror, `url:${String(settings.privacyPolicyURL)}`, () => {
 			// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
 			console.error(
-				`Inth ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(settings.privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
+				`Inth ConsentProvider: the native presenter refused privacyPolicyUrl ${JSON.stringify(settings.privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
 				error
 			);
 		});
@@ -314,18 +314,18 @@ export const onConsentScreenChange = function onConsentScreenChange(
 /**
  * Refuse a privacy-policy URL the native host would reject, at render time.
  *
- * @param privacyPolicyURL - The value the app passed.
+ * @param privacyPolicyUrl - The value the app passed.
  * @throws {TypeError} When it is missing or is a URL a native presenter would
- *   refuse. See {@link isPrivacyPolicyURL} for the exact rules.
+ *   refuse. See {@link isPrivacyPolicyUrl} for the exact rules.
  */
-export const assertPrivacyPolicyURL: (
-	privacyPolicyURL: string | undefined
-) => asserts privacyPolicyURL is string = function assertPrivacyPolicyURL(
-	privacyPolicyURL
+export const assertPrivacyPolicyUrl: (
+	privacyPolicyUrl: string | undefined
+) => asserts privacyPolicyUrl is string = function assertPrivacyPolicyUrl(
+	privacyPolicyUrl
 ) {
-	if (privacyPolicyURL === undefined || !isPrivacyPolicyURL(privacyPolicyURL)) {
+	if (privacyPolicyUrl === undefined || !isPrivacyPolicyUrl(privacyPolicyUrl)) {
 		throw new TypeError(
-			`<ConsentProvider> presents the consent prompt and needs an absolute HTTPS privacyPolicyURL with a DNS host, such as "https://example.com/privacy". Got ${JSON.stringify(privacyPolicyURL)}. Pass a valid URL, or autoPresent={false} to present the prompt yourself.`
+			`<ConsentProvider> presents the consent prompt and needs an absolute HTTPS privacyPolicyUrl with a DNS host, such as "https://example.com/privacy". Got ${JSON.stringify(privacyPolicyUrl)}. Pass a valid URL, or autoPresent={false} to present the prompt yourself.`
 		);
 	}
 };

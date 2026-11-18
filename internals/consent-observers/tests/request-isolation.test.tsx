@@ -180,7 +180,7 @@ const VisitorRoot = ({
 }) =>
 	visitor.adapter === 'next' ? (
 		<NextConsentRoot
-			config={{ backendURL: BACKEND_URL }}
+			config={{ projectUrl: BACKEND_URL }}
 			persistence={false}
 			state={visitor.state}
 		>
@@ -274,9 +274,9 @@ describe('Next.js request isolation', () => {
 			const upstream = reversedManifestFetch(fetches);
 			const resolve = (cookie: string) =>
 				resolveNextConsent({
-					backendURL: BACKEND_URL,
 					fetch: upstream.fetch,
-					manifestURL: `${BACKEND_URL}/manifest`,
+					manifestUrl: `${BACKEND_URL}/manifest`,
+					projectUrl: BACKEND_URL,
 					request: nextRequest(cookie),
 					// Isolation, not the render budget, is under test here.
 					timeoutMs: false,
@@ -323,8 +323,8 @@ describe('TanStack Start request isolation', () => {
 		const upstream = reversedManifestFetch(1);
 		const resolve = (cookie: string) =>
 			resolveTanStackConsent({
-				backendURL: BACKEND_URL,
 				fetch: upstream.fetch,
+				projectUrl: BACKEND_URL,
 				request: tanStackRequest(cookie),
 				// Isolation, not the render budget, is under test here.
 				timeoutMs: false,

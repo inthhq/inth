@@ -43,7 +43,7 @@ Write the policy as rules in the backend's `PolicyRule` names: `id`, `match`,
 `actions`, `validity`, `privacySignals` and `copyRevision`. The SDK resolves
 them on the device with the backend's matching order: region, country,
 `regionFallbacks`, `fallback`, then `isDefault`. Consent records still go to
-your Inth project at `backendURL`.
+your Inth project at `projectUrl`.
 
 Inth recomputes each decision against the policy your project serves. It
 rejects a record whose policy it does not serve, with HTTP 422 and the reason
@@ -63,7 +63,7 @@ export default {
 		[
 			'@inth/react-native',
 			{
-				backendURL: 'https://your-project.inth.app',
+				projectUrl: 'https://your-project.inth.app',
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				policy: {
 					rules: [
@@ -158,7 +158,7 @@ export default {
 		[
 			'@inth/react-native',
 			{
-				backendURL: 'https://your-project.inth.app',
+				projectUrl: 'https://your-project.inth.app',
 				bundleManifest: { allowStaleManifest: false, languages: ['de'] },
 			},
 		],

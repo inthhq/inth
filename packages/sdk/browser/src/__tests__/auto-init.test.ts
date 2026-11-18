@@ -51,21 +51,21 @@ describe('readScriptOptions', () => {
 	it('maps data attributes to client options', () => {
 		const options = readScriptOptions(
 			scriptWith({
-				'data-backend-url': 'https://x.c15t.dev',
 				'data-categories': 'measurement, marketing',
 				'data-color-scheme': 'dark',
 				'data-country': 'DE',
 				'data-hide-branding': '',
 				'data-privacy-policy-url': '/privacy',
+				'data-project-url': 'https://x.c15t.dev',
 				'data-trigger': 'true',
 			})
 		);
 
 		expect(options).toEqual({
-			backendURL: 'https://x.c15t.dev',
 			consentCategories: ['measurement', 'marketing'],
 			legalLinks: { privacyPolicy: { href: '/privacy' } },
 			overrides: { country: 'DE' },
+			projectUrl: 'https://x.c15t.dev',
 			ui: {
 				banner: { hideBranding: true, legalLinks: ['privacyPolicy'] },
 				colorScheme: 'dark',
@@ -162,8 +162,8 @@ describe('readPageOptions', () => {
 	it('layers queued config over the script attributes, in order', () => {
 		const { manual, options } = readPageOptions(
 			scriptWith({
-				'data-backend-url': 'https://x.c15t.dev',
 				'data-color-scheme': 'light',
+				'data-project-url': 'https://x.c15t.dev',
 			}),
 			[
 				{ consentCategories: ['marketing'], ui: { trigger: true } },
@@ -173,8 +173,8 @@ describe('readPageOptions', () => {
 
 		expect(manual).toBe(false);
 		expect(options).toEqual({
-			backendURL: 'https://x.c15t.dev',
 			consentCategories: ['measurement'],
+			projectUrl: 'https://x.c15t.dev',
 			ui: { colorScheme: 'light', trigger: true },
 		});
 	});

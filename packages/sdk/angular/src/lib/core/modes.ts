@@ -1,6 +1,6 @@
 /**
  * The transports `provideC15t()` selects: the hosted backend for
- * `backendURL`, and `manifest()` for `mode`.
+ * `projectUrl`, and `manifest()` for `mode`.
  *
  * Core's factories carry their transport's code: the hosted transport,
  * the manifest resolver. That code would ship with every page's first load
@@ -91,16 +91,16 @@ const hostedByURL = new Map<string, HostedModeFactory>();
 /**
  * The hosted factory for a backend URL.
  *
- * @param backendURL - Backend URL, relative or absolute.
+ * @param projectUrl - Backend URL, relative or absolute.
  * @returns The same factory for the same URL.
  * @internal
  */
 export const hostedFor = function hostedFor(
-	backendURL: string
+	projectUrl: string
 ): HostedModeFactory {
-	let mode = hostedByURL.get(backendURL);
+	let mode = hostedByURL.get(projectUrl);
 	if (!mode) {
-		mode = createHostedModeFactory({ backendURL }, (transport) =>
+		mode = createHostedModeFactory({ projectUrl }, (transport) =>
 			provided
 				? provided.hosted(transport)
 				: lazyTransport(async () =>
@@ -109,7 +109,7 @@ export const hostedFor = function hostedFor(
 						)
 					)
 		);
-		hostedByURL.set(backendURL, mode);
+		hostedByURL.set(projectUrl, mode);
 	}
 	return mode;
 };
@@ -117,15 +117,15 @@ export const hostedFor = function hostedFor(
 /**
  * The transport factory `provideC15t()`'s options select: `mode` when it
  * is a factory or a `testing()` value, else the hosted backend at
- * `backendURL`.
+ * `projectUrl`.
  *
- * @param options - The provider's `backendURL` and `mode`.
+ * @param options - The provider's `projectUrl` and `mode`.
  * @returns The factory, or `undefined` when none is set. The runtime then
  * throws, naming the provider.
  * @internal
  */
 export const selectedMode = function selectedMode(options: {
-	backendURL?: string;
+	projectUrl?: string;
 	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 }): ProviderTransportFactory | undefined {
 	const { mode } = options;
@@ -136,9 +136,9 @@ export const selectedMode = function selectedMode(options: {
 	if (mode && 'transport' in mode && mode.transport) {
 		return mode.transport;
 	}
-	return options.backendURL === undefined
+	return options.projectUrl === undefined
 		? undefined
-		: hostedFor(options.backendURL);
+		: hostedFor(options.projectUrl);
 };
 
 /**

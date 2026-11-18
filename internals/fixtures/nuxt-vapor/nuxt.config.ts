@@ -19,13 +19,13 @@ const future = process.env.C15T_NUXT_FUTURE === '1';
 
 export default defineNuxtConfig({
 	c15t: {
-		// The suite's mock backend, or the placeholder project URL.
-		backendURL:
-			process.env.NUXT_PUBLIC_C15T_BACKEND_URL ??
-			'https://your-project.inth.app',
 		// Read at runtime, so the acceptance suite's backend outage reaches
 		// the server render.
 		mode: manifest({ source: 'runtime' }),
+		// The suite's mock backend, or the placeholder project URL.
+		projectUrl:
+			process.env.NUXT_PUBLIC_C15T_BACKEND_URL ??
+			'https://your-project.inth.app',
 	},
 	compatibilityDate: '2026-10-05',
 	css: ['~/consent-example.css'],

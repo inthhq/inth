@@ -16,10 +16,10 @@ export interface FetchSSRDataOptionsBase {
 	 * Can be absolute (https://...) or relative (/api/consent). A relative
 	 * URL resolves against the request's `host` header.
 	 */
-	backendURL: string;
+	projectUrl: string;
 
 	/**
-	 * Resolve a relative `backendURL` against the request's `forwarded`,
+	 * Resolve a relative `projectUrl` against the request's `forwarded`,
 	 * `x-forwarded-host` and `x-forwarded-proto` headers instead of `host`.
 	 * Any client can send those headers, so set this only behind a proxy
 	 * that sets them and drops incoming ones. Also forwards those three

@@ -8,7 +8,7 @@ import {
 	forwardSessionReportHeaders,
 	isSpeculativeRequest,
 	reportConsentSession,
-	resolveSessionReportBackendURL,
+	resolveSessionReportProjectUrl,
 } from '../session-report';
 
 const manifest: ConsentManifest = {
@@ -44,7 +44,7 @@ const resolveInit = async (
 	overrides: { country?: string; gpc?: boolean } = {}
 ) => {
 	const transport = createManifestTransport({
-		backendURL: 'https://consent.example.com',
+		projectUrl: 'https://consent.example.com',
 		snapshot: manifest,
 	});
 	const response = await transport.init({
@@ -105,19 +105,19 @@ describe('buildConsentSessionReport', () => {
 	});
 });
 
-describe('resolveSessionReportBackendURL', () => {
+describe('resolveSessionReportProjectUrl', () => {
 	test('accepts only an explicit absolute backend', () => {
 		expect(
-			resolveSessionReportBackendURL({
-				backendURL: 'https://consent.example.com/',
+			resolveSessionReportProjectUrl({
+				projectUrl: 'https://consent.example.com/',
 			})
 		).toBe('https://consent.example.com');
 		// A relative URL cannot be fetched from a server, and the app's own
 		// proxy route would count the visitor twice on the way through.
-		expect(resolveSessionReportBackendURL({ backendURL: '/api/c15t' })).toBe(
+		expect(resolveSessionReportProjectUrl({ projectUrl: '/api/c15t' })).toBe(
 			undefined
 		);
-		expect(resolveSessionReportBackendURL({})).toBe(undefined);
+		expect(resolveSessionReportProjectUrl({})).toBe(undefined);
 	});
 });
 
@@ -170,11 +170,11 @@ describe('reportConsentSession', () => {
 			.fn()
 			.mockResolvedValue(new Response(null, { status: 204 }));
 		await reportConsentSession({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
 			headers: new Headers({ origin: 'https://www.example.org' }),
 			init: init as never,
 			manifest,
+			projectUrl: 'https://consent.example.com',
 			source: 'route',
 			url: journeyURL,
 		});
@@ -198,11 +198,11 @@ describe('reportConsentSession', () => {
 			storedChoice: false,
 		} as const;
 		await reportConsentSession({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
 			init: init as never,
 			journey: explicit,
 			manifest,
+			projectUrl: 'https://consent.example.com',
 			source: 'render',
 			url: journeyURL,
 		});
@@ -221,7 +221,6 @@ describe('reportConsentSession', () => {
 
 		await reportConsentSession({
 			adapter: '@c15t/svelte',
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
 			headers: new Headers({
 				cookie: 'c15t=secret',
@@ -231,6 +230,7 @@ describe('reportConsentSession', () => {
 			init: init as never,
 			inputs: { country: 'DE', gpc: false },
 			manifest,
+			projectUrl: 'https://consent.example.com',
 			source: 'route',
 			waitUntil: (task) => {
 				registered.push(task);
@@ -260,10 +260,10 @@ describe('reportConsentSession', () => {
 		const failing = vi.fn().mockRejectedValue(new Error('backend down'));
 		await expect(
 			reportConsentSession({
-				backendURL: 'https://consent.example.com',
 				fetch: failing,
 				init: init as never,
 				manifest,
+				projectUrl: 'https://consent.example.com',
 				source: 'render',
 			})
 		).resolves.toBeUndefined();
@@ -271,10 +271,10 @@ describe('reportConsentSession', () => {
 
 		const unused = vi.fn();
 		await reportConsentSession({
-			backendURL: '/api/c15t',
 			fetch: unused,
 			init: init as never,
 			manifest,
+			projectUrl: '/api/c15t',
 			source: 'render',
 		});
 		expect(unused).not.toHaveBeenCalled();
@@ -303,11 +303,11 @@ describe('isSpeculativeRequest', () => {
 		const init = await resolveInit();
 		const fetchSpy = vi.fn();
 		await reportConsentSession({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
 			headers: new Headers({ 'next-router-prefetch': '1' }),
 			init: init as never,
 			manifest,
+			projectUrl: 'https://consent.example.com',
 			source: 'render',
 		});
 		expect(fetchSpy).not.toHaveBeenCalled();
@@ -322,10 +322,10 @@ describe('reportConsentSession lifetime hook', () => {
 			.mockResolvedValue(new Response(null, { status: 204 }));
 		await expect(
 			reportConsentSession({
-				backendURL: 'https://consent.example.com',
 				fetch: fetchSpy,
 				init: init as never,
 				manifest,
+				projectUrl: 'https://consent.example.com',
 				source: 'route',
 				waitUntil: () => {
 					throw new Error('after() called outside a request scope');
@@ -347,8 +347,8 @@ describe('reportConsentSession never blocks the resolution', () => {
 		const fetchSpy = vi.fn().mockReturnValue(pending);
 		const registered: Promise<void>[] = [];
 		const transport = createManifestTransport({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
+			projectUrl: 'https://consent.example.com',
 			report: {
 				source: 'render',
 				waitUntil: (task) => {
@@ -384,10 +384,10 @@ describe('reportConsentSession never blocks the resolution', () => {
 			.mockResolvedValue(new Response('nope', { status: 500 }));
 		await expect(
 			reportConsentSession({
-				backendURL: 'https://consent.example.com',
 				fetch: refused,
 				init: init as never,
 				manifest,
+				projectUrl: 'https://consent.example.com',
 				source: 'route',
 			})
 		).resolves.toBeUndefined();
@@ -403,10 +403,10 @@ describe('reportConsentSession never blocks the resolution', () => {
 		});
 		await expect(
 			reportConsentSession({
-				backendURL: 'https://consent.example.com',
 				fetch: timedOut as unknown as typeof globalThis.fetch,
 				init: init as never,
 				manifest,
+				projectUrl: 'https://consent.example.com',
 				source: 'route',
 			})
 		).resolves.toBeUndefined();
@@ -417,10 +417,10 @@ describe('reportConsentSession never blocks the resolution', () => {
 		const init = await resolveInit();
 		const registered: Promise<void>[] = [];
 		const returned = reportConsentSession({
-			backendURL: 'https://consent.example.com',
 			fetch: vi.fn().mockResolvedValue(new Response(null, { status: 204 })),
 			init: init as never,
 			manifest,
+			projectUrl: 'https://consent.example.com',
 			source: 'route',
 			waitUntil: (task) => {
 				registered.push(task);
@@ -436,21 +436,21 @@ describe('reportConsentSession never blocks the resolution', () => {
 			.fn()
 			.mockResolvedValue(new Response(null, { status: 204 }));
 		await reportConsentSession({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
 			init: init as never,
 			manifest,
 			method: 'HEAD',
+			projectUrl: 'https://consent.example.com',
 			source: 'route',
 		});
 		expect(fetchSpy).not.toHaveBeenCalled();
 
 		await reportConsentSession({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
 			init: init as never,
 			manifest,
 			method: 'get',
+			projectUrl: 'https://consent.example.com',
 			source: 'route',
 		});
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -473,7 +473,7 @@ describe('createManifestTransport report option', () => {
 			);
 		const transport = createManifestTransport({
 			fetch: fetchSpy,
-			manifestURL: 'https://cdn.example.com/tenant.json',
+			manifestUrl: 'https://cdn.example.com/tenant.json',
 			report: { source: 'render' },
 		});
 		await transport.init({ overrides: { country: 'DE' }, user: null });
@@ -490,9 +490,9 @@ describe('createManifestTransport report option', () => {
 			.fn()
 			.mockResolvedValue(new Response(null, { status: 204 }));
 		const transport = createManifestTransport({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
 			headers: { cookie: 'c15t=secret', 'x-forwarded-for': '203.0.113.42' },
+			projectUrl: 'https://consent.example.com',
 			report: { adapter: '@c15t/nextjs', source: 'render' },
 			snapshot: manifest,
 		});
@@ -528,8 +528,8 @@ describe('createManifestTransport report option', () => {
 	test('sends nothing without the option', async () => {
 		const fetchSpy = vi.fn();
 		const transport = createManifestTransport({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
+			projectUrl: 'https://consent.example.com',
 			snapshot: manifest,
 		});
 		await transport.init({ overrides: { country: 'DE' }, user: null });

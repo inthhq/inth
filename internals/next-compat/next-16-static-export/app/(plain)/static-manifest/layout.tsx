@@ -13,7 +13,7 @@ import { consentManifest } from '../../../lib/consent-manifest.generated';
 const StaticManifestLayout = ({ children }: { children: ReactNode }) => (
 	<ConsentShell
 		styles={false}
-		backendURL={COMPAT_STATIC_BACKEND_URL}
+		projectUrl={COMPAT_STATIC_BACKEND_URL}
 		manifest={consentManifest}
 		scenario="static-manifest"
 		transport="static"

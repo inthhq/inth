@@ -12,7 +12,7 @@ import type {
 	RuntimeNetworkBlockerOptions,
 	RuntimePersistenceOptions,
 	RuntimeScriptLoaderOptions,
-	WithBackendURL,
+	WithProjectUrl,
 } from '@c15t/core/runtime';
 import type { ConsentTesting } from '@c15t/core/testing';
 import type { CreateIABOptions } from '@c15t/iab';
@@ -53,7 +53,7 @@ export interface C15tSharedOptions
 	extends
 		Omit<
 			ConsentRuntimeOptions,
-			| 'backendURL'
+			| 'projectUrl'
 			| 'createIAB'
 			| 'gpp'
 			| 'iab'
@@ -130,7 +130,7 @@ export interface C15tSharedOptions
  * import { provideC15t } from '@c15t/angular';
  *
  * export const appConfig: ApplicationConfig = {
- *   providers: [provideC15t({ backendURL: '/api/c15t' })],
+ *   providers: [provideC15t({ projectUrl: '/api/c15t' })],
  * };
  * ```
  */
@@ -140,15 +140,15 @@ export interface C15tOptions extends C15tSharedOptions {
 	 * URL. Required unless `mode` is `testing()` or `enabled` is `false`.
 	 * Read once.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * How the visitor's policy is resolved. Read once.
 	 *
-	 * - Omitted: the browser asks `${backendURL}/init`. With
+	 * - Omitted: the browser asks `${projectUrl}/init`. With
 	 *   `provideC15tServer()`, the server render resolves from the
 	 *   backend's consent manifest, falling back to `/init` with a warning
 	 *   when it is unavailable.
-	 * - `hosted()` from `@c15t/angular`: ask `${backendURL}/init`, on the
+	 * - `hosted()` from `@c15t/angular`: ask `${projectUrl}/init`, on the
 	 *   server too.
 	 * - `manifest()` from `@c15t/angular`: resolve from the manifest in the
 	 *   browser too.
@@ -171,16 +171,16 @@ export interface C15tRuntimeOptions extends C15tSharedOptions {
 	/** The runtime to render. Its owner starts and disposes it. */
 	runtime: ConsentRuntime;
 	/** The external runtime brings its own transport. */
-	backendURL?: undefined;
+	projectUrl?: undefined;
 	mode?: undefined;
 }
 
 /**
  * Either way of configuring {@link provideC15t}. The first needs
- * `backendURL` unless `mode` is `testing()` or `enabled` is `false`.
+ * `projectUrl` unless `mode` is `testing()` or `enabled` is `false`.
  */
 export type C15tProviderOptions =
-	| WithBackendURL<C15tOptions>
+	| WithProjectUrl<C15tOptions>
 	| C15tRuntimeOptions;
 
 /**
@@ -195,7 +195,7 @@ export const C15T_OPTIONS = new InjectionToken<C15tProviderOptions>(
 
 /** Options without the runtime, as `ConsentManager.options()` holds them. */
 export type C15tResolvedOptions = Omit<C15tSharedOptions, never> & {
-	backendURL?: string;
+	projectUrl?: string;
 	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 };
 

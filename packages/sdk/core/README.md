@@ -58,7 +58,7 @@ import { hosted } from '@c15t/core'
 import { createConsentRuntime } from '@c15t/core/runtime'
 
 export const runtime = createConsentRuntime({
-  mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+  mode: hosted({ projectUrl: 'https://your-project.inth.app' }),
 })
 ```
 

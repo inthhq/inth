@@ -1,4 +1,4 @@
-import type { WithBackendURL } from '@c15t/core/runtime';
+import type { WithProjectUrl } from '@c15t/core/runtime';
 /** Optional browser entry with the CMP, TC codec, and IAB preference UI. */
 import { createIAB, initializeIABStub, destroyIABStub } from '@c15t/iab';
 
@@ -12,7 +12,7 @@ import type { ConsentClient, ConsentClientOptions } from './types';
  * @returns The client, with one runtime shared by ordinary and IAB UI.
  */
 export const createConsentClient = (
-	options: WithBackendURL<ConsentClientOptions>
+	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient =>
 	createClient(options, {
 		createIAB,
@@ -32,7 +32,7 @@ export const createConsentClient = (
  * @returns The started client. CMP controls are on `client.runtime.iab`.
  */
 export const init = (
-	options: WithBackendURL<ConsentClientOptions>
+	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient => {
 	const client = createConsentClient(options);
 	client.start();

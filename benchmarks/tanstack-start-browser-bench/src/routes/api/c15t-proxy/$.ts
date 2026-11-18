@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import {
 	BENCH_BACKEND_URL,
-	getBenchManifestURL,
+	getBenchManifestUrl,
 } from '../../../bench/manifest-url';
 
 /**
@@ -15,8 +15,8 @@ import {
 export const Route = createFileRoute('/api/c15t-proxy/$')({
 	server: {
 		handlers: createConsentRoute({
-			backendURL: BENCH_BACKEND_URL,
-			manifestURL: getBenchManifestURL(),
+			manifestUrl: getBenchManifestUrl(),
+			projectUrl: BENCH_BACKEND_URL,
 			proxy: true,
 		}),
 	},

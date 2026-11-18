@@ -152,9 +152,9 @@ describe('createHostedRecordTransport', () => {
 			Promise.resolve(jsonResponse({ subjectId: 'sub_1' }))
 		);
 		const records = createHostedRecordTransport({
-			backendURL: 'https://consent.example.com/',
 			domain: 'example.com',
 			fetch,
+			projectUrl: 'https://consent.example.com/',
 		});
 
 		const result = await records.save({
@@ -183,7 +183,7 @@ describe('createHostedRecordTransport', () => {
 	test('a required decision refuses a save that carries none', async () => {
 		const fetch = vi.fn();
 		const records = createHostedRecordTransport(
-			{ backendURL: '/api/c15t', fetch },
+			{ fetch, projectUrl: '/api/c15t' },
 			{ inputs: () => undefined, pending: () => undefined, required: true }
 		);
 
@@ -198,8 +198,8 @@ describe('createHostedRecordTransport', () => {
 			Promise.resolve(jsonResponse({}, 404))
 		);
 		const records = createHostedRecordTransport({
-			backendURL: '/api/c15t',
 			fetch,
+			projectUrl: '/api/c15t',
 		});
 
 		await expect(records.loadSubjectRecord('sub_1')).resolves.toBeNull();

@@ -57,8 +57,8 @@ describe('nativeUI prop', () => {
 		],
 	])('refuses %s at prebuild', (_label, nativeUI, message) => {
 		const props = {
-			backendURL: BACKEND,
 			nativeUI,
+			projectUrl: BACKEND,
 			theme: { colors: { primary: '#2563EB' } },
 		};
 		expect(() => applyToFixture(props as never)).toThrowError(message);

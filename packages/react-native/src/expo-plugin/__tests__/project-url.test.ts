@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	INTH_PROJECT_HOST_SUFFIXES,
-	normalizeProjectURL,
-	ProjectURLError,
+	normalizeProjectUrl,
+	ProjectUrlError,
 } from '../project-url';
 
 interface Accepted {
@@ -41,10 +41,10 @@ const fixture = JSON.parse(
 
 const reasonOf = (input: string, relaxed: boolean): string | null => {
 	try {
-		normalizeProjectURL(input, { relaxed });
+		normalizeProjectUrl(input, { relaxed });
 		return null;
 	} catch (error) {
-		if (error instanceof ProjectURLError) {
+		if (error instanceof ProjectUrlError) {
 			return error.reason;
 		}
 		throw error;
@@ -72,9 +72,9 @@ describe('the Inth project URL rule', () => {
 		it.each(fixture[name].accept)(
 			'accepts $input as $normalized',
 			({ input, normalized }) => {
-				expect(normalizeProjectURL(input, { relaxed })).toBe(normalized);
+				expect(normalizeProjectUrl(input, { relaxed })).toBe(normalized);
 				// The normal form is what native code reads back, so it must pass again.
-				expect(normalizeProjectURL(normalized, { relaxed })).toBe(normalized);
+				expect(normalizeProjectUrl(normalized, { relaxed })).toBe(normalized);
 			}
 		);
 
@@ -88,11 +88,11 @@ describe('the Inth project URL rule', () => {
 	});
 
 	it('says what was given and what is wrong, under the option name', () => {
-		expect(() => normalizeProjectURL('https://consent.example.com')).toThrow(
-			'backendURL must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.'
+		expect(() => normalizeProjectUrl('https://consent.example.com')).toThrow(
+			'projectUrl must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.'
 		);
 		expect(() =>
-			normalizeProjectURL('http://acme.inth.app', { option: '--backend-url' })
+			normalizeProjectUrl('http://acme.inth.app', { option: '--backend-url' })
 		).toThrow(
 			'--backend-url must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "http://acme.inth.app": the scheme must be https.'
 		);

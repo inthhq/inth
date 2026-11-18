@@ -56,7 +56,6 @@ export const ConsentManager = ({
 }) => (
 	<ConsentProvider
 		options={{
-			backendURL: '/api/bench-consent',
 			callbacks: {
 				onChoiceRecorded() {
 					const probe = getProbeState();
@@ -68,6 +67,7 @@ export const ConsentManager = ({
 			consentCategories,
 			mode: hosted(),
 			prefetch: state,
+			projectUrl: '/api/bench-consent',
 			theme,
 		}}
 	>

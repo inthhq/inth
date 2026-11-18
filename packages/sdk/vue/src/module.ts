@@ -49,6 +49,7 @@ import {
 	readNuxtRoutePrefix,
 } from './runtime/nuxt-mode';
 import type { NuxtMode } from './runtime/nuxt-mode';
+import { PROJECT_URL_RUNTIME_KEY } from './runtime/runtime-config';
 import type { BuiltOptions } from './runtime/server/build-options';
 import {
 	collectStyleSources,
@@ -143,7 +144,7 @@ const INTH_URL_ENV = 'NUXT_PUBLIC_INTH_PROJECT_URL';
  * Where the backend URL came from, so the runtime knows whether
  * `NUXT_PUBLIC_INTH_PROJECT_URL` may replace it on a running server.
  */
-type BackendURLSource = 'option' | 'c15t-env' | 'inth-env' | 'none';
+type ProjectUrlSource = 'option' | 'c15t-env' | 'inth-env' | 'none';
 
 /**
  * The variable the app reads at runtime also gives the build its backend
@@ -152,11 +153,11 @@ type BackendURLSource = 'option' | 'c15t-env' | 'inth-env' | 'none';
  * the `.env` files in the root. `NUXT_PUBLIC_C15T_BACKEND_URL` wins over
  * `NUXT_PUBLIC_INTH_PROJECT_URL`.
  */
-const fillBackendURLFromEnv = (
+const fillProjectUrlFromEnv = (
 	options: ModuleOptions,
 	nuxt: Nuxt
-): BackendURLSource => {
-	if (options.backendURL !== undefined) {
+): ProjectUrlSource => {
+	if (options.projectUrl !== undefined) {
 		return 'option';
 	}
 	const envOptions = {
@@ -165,12 +166,12 @@ const fillBackendURLFromEnv = (
 	};
 	const fromC15t = readBuildEnv([BACKEND_URL_ENV], envOptions);
 	if (fromC15t) {
-		options.backendURL = fromC15t;
+		options.projectUrl = fromC15t;
 		return 'c15t-env';
 	}
 	const fromInth = readBuildEnv([INTH_URL_ENV], envOptions);
 	if (fromInth) {
-		options.backendURL = fromInth;
+		options.projectUrl = fromInth;
 		return 'inth-env';
 	}
 	return 'none';
@@ -212,7 +213,7 @@ const checkRoutePrefix = function checkRoutePrefix(
 };
 
 /**
- * `manifest()` saves consent at `${backendURL}/subjects` from the browser.
+ * `manifest()` saves consent at `${projectUrl}/subjects` from the browser.
  * The consent route answers `GET` only, so without a backend URL every save
  * would fail after the visitor chose. A `snapshot` replaces the manifest
  * download, not the save endpoint. `nuxt prepare` runs during dependency
@@ -222,21 +223,21 @@ const checkRoutePrefix = function checkRoutePrefix(
  */
 const assertManifestBackend = function assertManifestBackend(
 	mode: NuxtMode,
-	backendURL: string | undefined,
+	projectUrl: string | undefined,
 	nuxt: Nuxt
 ): void {
 	if (
 		mode.type !== 'manifest' ||
-		backendURL !== undefined ||
+		projectUrl !== undefined ||
 		nuxt.options._prepare
 	) {
 		return;
 	}
 	const reason = mode.snapshot
-		? `manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest download, but the browser saves consent with POST \${backendURL}/subjects`
-		: `manifest() needs a backend URL: the browser saves consent with POST \${backendURL}/subjects`;
+		? `manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest download, but the browser saves consent with POST \${projectUrl}/subjects`
+		: `manifest() needs a backend URL: the browser saves consent with POST \${projectUrl}/subjects`;
 	throw new Error(
-		`@c15t/vue: ${reason}, and the consent route only answers GET. Set ${BACKEND_URL_ENV} (or ${INTH_URL_ENV}), or \`c15t.backendURL\` in nuxt.config.ts.`
+		`@c15t/vue: ${reason}, and the consent route only answers GET. Set ${BACKEND_URL_ENV} (or ${INTH_URL_ENV}), or \`c15t.projectUrl\` in nuxt.config.ts.`
 	);
 };
 
@@ -249,7 +250,7 @@ const assertManifestBackend = function assertManifestBackend(
  */
 const loadNuxtBuildManifest = function loadNuxtBuildManifest(
 	mode: NuxtMode,
-	backendURL: string | undefined,
+	projectUrl: string | undefined,
 	onBuildError: ModuleOptions['onBuildError'],
 	nuxt: Nuxt
 ): Promise<ConsentManifest | undefined> | undefined {
@@ -263,7 +264,7 @@ const loadNuxtBuildManifest = function loadNuxtBuildManifest(
 	}
 	const logger = useLogger('@c15t/vue');
 	return loadManifestForBuild(
-		{ backendURL, manifestURL: mode.manifestURL },
+		{ manifestUrl: mode.manifestUrl, projectUrl },
 		{
 			command: nuxt.options.dev ? 'dev' : 'build',
 			envNames: [BACKEND_URL_ENV, INTH_URL_ENV],
@@ -286,7 +287,7 @@ const loadNuxtBuildManifest = function loadNuxtBuildManifest(
  */
 const resolveSnapshots = async function resolveSnapshots(
 	mode: NuxtMode,
-	backendURL: string | undefined,
+	projectUrl: string | undefined,
 	onBuildError: ModuleOptions['onBuildError'],
 	nuxt: Nuxt
 ): Promise<{
@@ -298,7 +299,7 @@ const resolveSnapshots = async function resolveSnapshots(
 	}
 	const serverSnapshot =
 		mode.snapshot ??
-		(await loadNuxtBuildManifest(mode, backendURL, onBuildError, nuxt));
+		(await loadNuxtBuildManifest(mode, projectUrl, onBuildError, nuxt));
 	return {
 		clientSnapshot: mode.resolve === 'browser' ? serverSnapshot : undefined,
 		serverSnapshot,
@@ -367,7 +368,11 @@ const publishOptions = function publishOptions(
 		}
 	}
 	const { mode: _mode, routePrefix: _routePrefix, ...rest } = existing ?? {};
-	const published: Record<string, unknown> = defu(rest, options);
+	const { projectUrl, ...other } = options;
+	const published: Record<string, unknown> = defu(rest, {
+		...other,
+		[PROJECT_URL_RUNTIME_KEY]: projectUrl,
+	});
 	published.mode = built.mode;
 	published.routePrefix = built.routePrefix;
 	// Untyped: an app's generated runtime config types read `routePrefix`
@@ -404,7 +409,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		name: '@c15t/vue',
 	},
 	async setup({ devtools, initPrefetch, onBuildError, ...options }, nuxt) {
-		const backendURLSource = fillBackendURLFromEnv(options, nuxt);
+		const projectUrlSource = fillProjectUrlFromEnv(options, nuxt);
 		// Nuxt merges module options with `defu`, which skips `null`, so a
 		// `colorScheme: null` under the `c15t` key would arrive unset and
 		// mirror a `dark` class. Read it back: `null` leaves `c15t-dark` to
@@ -418,11 +423,11 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		const mode = readModuleMode(options);
 		options.routePrefix = checkRoutePrefix(options);
 		const routePrefix = readNuxtRoutePrefix(options);
-		assertManifestBackend(mode, options.backendURL, nuxt);
+		assertManifestBackend(mode, options.projectUrl, nuxt);
 		warnStaticServerResolution(mode, nuxt);
 		const { clientSnapshot, serverSnapshot } = await resolveSnapshots(
 			mode,
-			options.backendURL,
+			options.projectUrl,
 			onBuildError,
 			nuxt
 		);
@@ -440,7 +445,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 				// `NUXT_PUBLIC_C15T_BACKEND_URL` replaces at runtime. The key
 				// exists so `NUXT_C15T_BACKEND_URL` can give the route an
 				// address of its own.
-				backendURL: '',
+				[PROJECT_URL_RUNTIME_KEY]: '',
 				// The `/init` script reads it: with `ssr: false` for the whole
 				// app, every page is a shell.
 				ssr: nuxt.options.ssr !== false,
@@ -609,7 +614,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// Nuxt applies `NUXT_PUBLIC_C15T_BACKEND_URL` on a running server by
 		// itself. The Inth variable needs a plugin, and only while neither the
 		// option nor the c15t variable gave the build its URL.
-		if (backendURLSource === 'inth-env' || backendURLSource === 'none') {
+		if (projectUrlSource === 'inth-env' || projectUrlSource === 'none') {
 			addServerPlugin(
 				resolver.resolve('./runtime/server/inth-project-url.nuxt')
 			);

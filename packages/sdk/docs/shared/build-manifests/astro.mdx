@@ -10,8 +10,8 @@ not fetch, so type checks work without the backend. `astro preview` serves the
 completed build and never fetches a new snapshot.
 
 The build fetches only from an absolute upstream backend URL or
-`manifestURL`, because it cannot fetch a route in the app it is still
-compiling. `c15t()` without a `backendURL` reads `PUBLIC_C15T_BACKEND_URL`, then
+`manifestUrl`, because it cannot fetch a route in the app it is still
+compiling. `c15t()` without a `projectUrl` reads `PUBLIC_C15T_BACKEND_URL`, then
 `PUBLIC_INTH_PROJECT_URL`.
 With a relative URL, `manifest({ source: 'runtime' })`,
 `manifest({ snapshot })`, `hosted()` or `testing()`, the integration skips

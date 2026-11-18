@@ -2,7 +2,7 @@ import type { TestingModeOptions } from './modes';
 /**
  * `@c15t/core/testing` — run the consent flow in tests with no backend.
  *
- * Pass `testing()` as the runtime's `mode`. It needs no `backendURL`. It
+ * Pass `testing()` as the runtime's `mode`. It needs no `projectUrl`. It
  * resolves the recommended policy pack locally, so a test picks the
  * policy by setting `overrides.country` (and `overrides.region`):
  *
@@ -19,7 +19,7 @@ import type { TestingModeOptions } from './modes';
  * `PolicyRule` shape as the backend's policies.
  *
  * It throws when `process.env.NODE_ENV` is `'production'`. Production
- * apps set `backendURL`. To keep consent out of the way in an app's own
+ * apps set `projectUrl`. To keep consent out of the way in an app's own
  * tests instead, set `enabled: false`: it grants every category, shows no
  * UI and sends nothing.
  *

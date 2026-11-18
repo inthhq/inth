@@ -12,7 +12,7 @@ dialog and an optional floating trigger. Each change has one place to go:
 | Change | Option |
 | --- | --- |
 | Colors, radius, fonts, spacing | `ui.theme` |
-| One part's CSS | `ui.theme.slots` with `ui.stylesheetURLs`, `::part()`, or `ui.css` |
+| One part's CSS | `ui.theme.slots` with `ui.stylesheetUrls`, `::part()`, or `ui.css` |
 | Your own stylesheet | `ui: { shadow: false }` |
 | Banner shape, position, button layout, blocking | `presentation.prompt` |
 | Banner text | `ui.banner` |
@@ -60,7 +60,7 @@ UI in the browser's element panel to find one.
 
 To style parts with classes from your own stylesheet, such as a Tailwind or
 CSS Modules build, put the classes on parts with `ui.theme.slots` and link the
-stylesheet into the shadow root with `ui.stylesheetURLs`. Page CSS can also
+stylesheet into the shadow root with `ui.stylesheetUrls`. Page CSS can also
 reach a part by its slot key with `[data-c15t-ui]::part(consentBannerCard)`.
 [Class names and CSS-in-JS](/docs/customization/class-names) and
 [Tailwind CSS](/docs/customization/tailwind) show both, and

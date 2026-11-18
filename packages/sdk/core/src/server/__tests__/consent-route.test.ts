@@ -133,7 +133,7 @@ const route = function route(
 ) {
 	return createConsentRouteHandler({
 		adapter: '@c15t/test',
-		backendURL: BACKEND,
+		projectUrl: BACKEND,
 		...options,
 	});
 };
@@ -219,23 +219,23 @@ describe('dispatch', () => {
 });
 
 describe('upstream source', () => {
-	test('reads the manifest below backendURL, or manifestURL when set', async () => {
+	test('reads the manifest below projectUrl, or manifestUrl when set', async () => {
 		const fromBackend = upstream();
 		await route({ fetch: fromBackend })(request('/api/c15t/manifest'));
-		const fromManifestURL = upstream();
+		const fromManifestUrl = upstream();
 		await route({
-			fetch: fromManifestURL,
-			manifestURL: 'https://cdn.example.com/m.json',
+			fetch: fromManifestUrl,
+			manifestUrl: 'https://cdn.example.com/m.json',
 		})(request('/api/c15t/manifest'));
 		expect(calledURLs(fromBackend)).toEqual([`${BACKEND}/manifest`]);
-		expect(calledURLs(fromManifestURL)).toEqual([
+		expect(calledURLs(fromManifestUrl)).toEqual([
 			'https://cdn.example.com/m.json',
 		]);
 	});
 
 	test('a relative URL resolves against request.url, never a forged forwarding header', async () => {
 		const fetch = upstream();
-		await route({ backendURL: '/consent-backend', fetch })(
+		await route({ fetch, projectUrl: '/consent-backend' })(
 			request('/api/c15t/manifest', {
 				headers: { 'x-forwarded-host': 'evil.example' },
 			})
@@ -246,8 +246,8 @@ describe('upstream source', () => {
 	test('a relative URL resolves against forwarding headers when they are trusted', async () => {
 		const fetch = upstream();
 		await route({
-			backendURL: '/consent-backend',
 			fetch,
+			projectUrl: '/consent-backend',
 			trustForwardedHeaders: true,
 		})(
 			request('/api/c15t/manifest', {
@@ -265,7 +265,7 @@ describe('upstream source', () => {
 	test('with localFetch a relative URL is fetched in-process by path, whatever the Host', async () => {
 		const fetch = upstream();
 		const localFetch = upstream();
-		await route({ backendURL: '/api/self-host', fetch })(
+		await route({ fetch, projectUrl: '/api/self-host' })(
 			new Request('http://evil.example/api/c15t/manifest'),
 			{ localFetch, route: 'manifest' }
 		);
@@ -284,31 +284,31 @@ describe('upstream source', () => {
 	test('throws without a configured URL, whatever the environment says', async () => {
 		vi.stubEnv('C15T_BACKEND_URL', BACKEND);
 		vi.stubEnv('C15T_MANIFEST_URL', `${BACKEND}/manifest`);
-		const handle = route({ backendURL: undefined });
+		const handle = route({ projectUrl: undefined });
 		await expect(handle(request('/api/c15t/init'))).rejects.toThrow(
-			'@c15t/test: pass backendURL or manifestURL.'
+			'@c15t/test: pass projectUrl or manifestUrl.'
 		);
 		await expect(handle(request('/api/c15t/manifest'))).rejects.toThrow(
-			'@c15t/test: pass backendURL or manifestURL.'
+			'@c15t/test: pass projectUrl or manifestUrl.'
 		);
 	});
 
-	test('rejects a backendURL or manifestURL it cannot resolve', async () => {
+	test('rejects a projectUrl or manifestUrl it cannot resolve', async () => {
 		await expect(
-			route({ backendURL: 'consent.example.com' })(request('/api/c15t/init'))
-		).rejects.toThrow('@c15t/test: invalid backendURL.');
+			route({ projectUrl: 'consent.example.com' })(request('/api/c15t/init'))
+		).rejects.toThrow('@c15t/test: invalid projectUrl.');
 		await expect(
-			route({ manifestURL: '//evil.example/manifest' })(
+			route({ manifestUrl: '//evil.example/manifest' })(
 				request('/api/c15t/manifest')
 			)
-		).rejects.toThrow('@c15t/test: invalid manifestURL.');
+		).rejects.toThrow('@c15t/test: invalid manifestUrl.');
 	});
 
-	test('an invalid manifestURL is an error, not a reason to fall back to /init', async () => {
+	test('an invalid manifestUrl is an error, not a reason to fall back to /init', async () => {
 		const fetch = upstream();
 		await expect(
-			route({ fetch, manifestURL: 'not a url' })(request('/api/c15t/init'))
-		).rejects.toThrow('@c15t/test: invalid manifestURL.');
+			route({ fetch, manifestUrl: 'not a url' })(request('/api/c15t/init'))
+		).rejects.toThrow('@c15t/test: invalid manifestUrl.');
 		expect(fetch).not.toHaveBeenCalled();
 	});
 
@@ -519,8 +519,8 @@ describe('manifest request credentials', () => {
 	test('drops identity headers before a cleartext manifest request', async () => {
 		const fetch = upstream();
 		const response = await route({
-			backendURL: 'http://backend.example',
 			fetch,
+			projectUrl: 'http://backend.example',
 			proxy: { forwardHeaders: ['x-api-key', 'accept-language'] },
 		})(
 			request('/api/c15t/manifest', {
@@ -1005,10 +1005,10 @@ describe('session reports', () => {
 
 	test.each([
 		['a HEAD probe', {}, { method: 'HEAD' }],
-		['a relative backendURL', { backendURL: '/api/self-host' }, {}],
+		['a relative projectUrl', { projectUrl: '/api/self-host' }, {}],
 		[
-			'a manifestURL alone',
-			{ backendURL: undefined, manifestURL: `${BACKEND}/manifest` },
+			'a manifestUrl alone',
+			{ manifestUrl: `${BACKEND}/manifest`, projectUrl: undefined },
 			{},
 		],
 	] as const)('sends none for %s', async (_, options, init) => {
@@ -1117,7 +1117,7 @@ describe('request budget', () => {
 		);
 		const startedAt = Date.now();
 		await expect(
-			route({ backendURL: '/api/self-host' })(
+			route({ projectUrl: '/api/self-host' })(
 				request('/api/c15t/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: '50' },
 				}),
@@ -1178,7 +1178,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			location: { countryCode: null, regionCode: null },
 			translations: { language: 'en', translations: {} },
 		});
-		const response = await route({ backendURL: '/api/self-host' })(
+		const response = await route({ projectUrl: '/api/self-host' })(
 			request('/api/c15t/init', {
 				headers: {
 					cookie: 'c15t=secret',
@@ -1212,7 +1212,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-		await route({ backendURL: '/api/self-host' })(
+		await route({ projectUrl: '/api/self-host' })(
 			request(
 				`/api/c15t/init?utm_source=mail&journey=${id}&journeyScope=tab&stored=1`
 			),
@@ -1231,7 +1231,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			location: { countryCode: null, regionCode: null },
 			translations: { language: 'en', translations: {} },
 		});
-		await route({ backendURL: '/api/self-host' })(
+		await route({ projectUrl: '/api/self-host' })(
 			request('/api/c15t/init?country=DE&gpc=0&contract=1'),
 			{ localFetch }
 		);
@@ -1250,7 +1250,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-		const handle = route({ backendURL: BACKEND, fetch });
+		const handle = route({ fetch, projectUrl: BACKEND });
 		const query = `?journey=${id}&journeyScope=page&stored=0`;
 		const lastInitOrigin = () =>
 			new Headers(
@@ -1419,7 +1419,7 @@ describe('/init fallback for a backend without /manifest', () => {
 				? Promise.resolve(new Response('unavailable', { status: 500 }))
 				: answer(url, init)
 		);
-		const handle = route({ backendURL: `${BACKEND}/warn`, fetch });
+		const handle = route({ fetch, projectUrl: `${BACKEND}/warn` });
 		expect((await handle(request('/api/c15t/init'))).ok).toBe(true);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
@@ -1444,15 +1444,15 @@ describe('/init fallback for a backend without /manifest', () => {
 		]);
 	});
 
-	test('surfaces the failure when only a manifestURL is configured', async () => {
+	test('surfaces the failure when only a manifestUrl is configured', async () => {
 		const fetch = vi.fn<ManifestFetch>(() =>
 			Promise.resolve(new Response('nope', { status: 503 }))
 		);
 		await expect(
 			route({
-				backendURL: undefined,
 				fetch,
-				manifestURL: `${BACKEND}/manifest`,
+				manifestUrl: `${BACKEND}/manifest`,
+				projectUrl: undefined,
 			})(request('/api/c15t/manifest'))
 		).rejects.toThrow(/503/u);
 		expect(fetch).toHaveBeenCalledTimes(1);
@@ -1558,23 +1558,23 @@ describe('proxy', () => {
 
 	test('forwards to a relative backend through localFetch', async () => {
 		const localFetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
-		await route({ backendURL: '/api/self-host', proxy: true })(
+		await route({ projectUrl: '/api/self-host', proxy: true })(
 			new Request('http://evil.example/api/c15t/subjects', { method: 'POST' }),
 			{ localFetch, path: 'subjects' }
 		);
 		expect(calledURLs(localFetch)).toEqual(['/api/self-host/subjects']);
 	});
 
-	test('needs a backendURL', async () => {
+	test('needs a projectUrl', async () => {
 		await expect(
 			route({
-				backendURL: undefined,
-				manifestURL: `${BACKEND}/manifest`,
+				manifestUrl: `${BACKEND}/manifest`,
+				projectUrl: undefined,
 				proxy: true,
 			})(request('/api/c15t/subjects', { method: 'POST' }), {
 				path: 'subjects',
 			})
-		).rejects.toThrow('@c15t/test: pass backendURL to use proxy.');
+		).rejects.toThrow('@c15t/test: pass projectUrl to use proxy.');
 	});
 });
 

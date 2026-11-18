@@ -39,7 +39,7 @@ no consent module. Use a development build for iOS and Android.
 ## Use the plugin configuration on web
 
 The [Expo config plugin](/docs/frameworks/react-native/expo#configure-the-plugin)
-writes `backendURL`, `dryRun`, `domain`, `consentCategories` and `forceGPC` to
+writes `projectUrl`, `dryRun`, `domain`, `consentCategories` and `forceGPC` to
 `extra.inth` in the app config. Expo inlines the app config into the web
 bundle, and the web engine reads its options from there. There is no web-only
 option to set.
@@ -54,7 +54,7 @@ build needs no native module.
 
 Web has no native consent screens. The provider treats a web build like a
 binary built with `nativeUI: false`: it presents nothing by itself, and it does
-not need `privacyPolicyURL` on web. Mount the React Native components, or your
+not need `privacyPolicyUrl` on web. Mount the React Native components, or your
 own UI inside `ConsentPrompt`, for web:
 
 {/* example: fragment */}
@@ -65,7 +65,7 @@ import { Platform } from 'react-native';
 
 export default function App() {
 	return (
-		<ConsentProvider privacyPolicyURL="https://example.com/privacy">
+		<ConsentProvider privacyPolicyUrl="https://example.com/privacy">
 			<Root />
 			{Platform.OS === 'web' ? <ConsentBanner /> : null}
 		</ConsentProvider>

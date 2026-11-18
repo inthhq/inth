@@ -89,12 +89,12 @@ const renderBanner = async function renderBanner(
 	options: RenderOptions = {}
 ) {
 	const config = {
-		backendURL: 'https://consent.example',
 		consentCategories: ['necessary', 'measurement', 'marketing'],
 		customFetch: mockFetch(),
 		disableAnimation: true,
 		domain: 'consent.example',
 		hideBranding: true,
+		projectUrl: 'https://consent.example',
 		...options.config,
 	} as ConsentConfig;
 	const context = createVueConsentKernelContext({ config, prefetch: init });

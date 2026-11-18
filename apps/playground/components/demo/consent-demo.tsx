@@ -330,8 +330,8 @@ export const ConsentDemo = () => {
 		params.mode === 'hosted'
 			? {
 					...sharedOptions,
-					backendURL: HOSTED_DEMO_BACKEND_URL,
 					mode: hosted(),
+					projectUrl: HOSTED_DEMO_BACKEND_URL,
 				}
 			: {
 					mode: testing({

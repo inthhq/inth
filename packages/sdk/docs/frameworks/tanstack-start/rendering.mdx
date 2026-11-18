@@ -131,9 +131,9 @@ Keep these details right:
   like Next.js `defineConsentConfig({ proxy: true })`. It needs `routePrefix`,
   and throws
   ``@c15t/tanstack-start: `proxy` sends saves through the consent route, so it needs `routePrefix`.``
-  without it. With `hosted({ backendURL })`, the browser still goes through
+  without it. With `hosted({ projectUrl })`, the browser still goes through
   the route; only the server asks that URL, so pass the same URL to
-  `createConsentRoute({ backendURL })`. To send only init through the route
+  `createConsentRoute({ projectUrl })`. To send only init through the route
   and keep saves going straight to your backend, drop `proxy: true` from
   both and keep `routePrefix`.
 - The proxy forwards the visitor's user agent, language, origin and location
@@ -162,7 +162,7 @@ resolve consent from the backend URL `consentManifest()` read:
   starts the `/init` request before the app's JavaScript loads, and
   `ConsentRoot` uses that response instead of sending its own. If c15t
   assigns a banner experiment's arm, pass the experiment too:
-  `consentPrefetchHead({ backendURL, experiment })`. Without it,
+  `consentPrefetchHead({ projectUrl, experiment })`. Without it,
   `ConsentRoot` sends a second `/init` for visitors who have not chosen yet.
 
 Drop the consent loader from a prerendered root. A loader that stays anyway
@@ -177,9 +177,9 @@ static files. SPA mode renders the same root route
 into its shell.
 
 `c15t/tanstack-start/static` is a lower-level alternative that bundles the
-manifest at build time. `createStaticConsentResolver({ manifest, geoURL })`
+manifest at build time. `createStaticConsentResolver({ manifest, geoUrl })`
 gives first paint the manifest's unknown-location policy, its fallback rule
-or else its default rule, then the visitor's regional policy once `geoURL`
+or else its default rule, then the visitor's regional policy once `geoUrl`
 answers. You write the consent transport yourself, and new policy needs a
 rebuild. A manifest with neither rule resolves to a failed
 `insufficient-inputs` result.

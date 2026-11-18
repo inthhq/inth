@@ -57,8 +57,8 @@ describe('hosted browser prefetch consumption', () => {
 				.fn()
 				.mockImplementation(() => Promise.resolve(response()));
 			vi.stubGlobal('fetch', fetch);
-			await primePrefetchedInitialData({ backendURL: '/api/c15t', overrides });
-			await createHostedTransport({ backendURL: '/api/c15t' }).init(context);
+			await primePrefetchedInitialData({ overrides, projectUrl: '/api/c15t' });
+			await createHostedTransport({ projectUrl: '/api/c15t' }).init(context);
 			expect(fetch).toHaveBeenCalledTimes(2);
 		}
 	);
@@ -67,8 +67,8 @@ describe('hosted browser prefetch consumption', () => {
 		const fetch = vi.fn().mockImplementation(() => Promise.resolve(response()));
 		vi.stubGlobal('fetch', fetch);
 		// Execute the actual beforeInteractive script, including its window registry.
-		window.eval(buildPrefetchScript({ backendURL: '/api/c15t' }));
-		const transport = createHostedTransport({ backendURL: '/api/c15t' });
+		window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+		const transport = createHostedTransport({ projectUrl: '/api/c15t' });
 		expect(fetch).toHaveBeenCalledTimes(1);
 		const first = await transport.init?.(context);
 		expect(first?.policyResolution).toEqual(payload.policyResolution);
@@ -86,14 +86,14 @@ describe('hosted browser prefetch consumption', () => {
 			.fn()
 			.mockImplementation(() => Promise.resolve(response()));
 		vi.stubGlobal('fetch', pageFetch);
-		window.eval(buildPrefetchScript({ backendURL: '/api/c15t' }));
+		window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
 		// A wrapper that signs or routes requests has to see `/init`.
 		const signed = vi
 			.fn()
 			.mockImplementation(() => Promise.resolve(response()));
 		await createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: signed,
+			projectUrl: '/api/c15t',
 		}).init?.(context);
 		expect(pageFetch).toHaveBeenCalledTimes(1);
 		expect(signed).toHaveBeenCalledTimes(1);
@@ -109,9 +109,9 @@ describe('hosted browser prefetch consumption', () => {
 				.fn()
 				.mockResolvedValue(response({ policy: legacyPolicy }, contract));
 			vi.stubGlobal('fetch', fetch);
-			await primePrefetchedInitialData({ backendURL: '/api/c15t' });
+			await primePrefetchedInitialData({ projectUrl: '/api/c15t' });
 			const result = await createHostedTransport({
-				backendURL: '/api/c15t',
+				projectUrl: '/api/c15t',
 			}).init?.(context);
 			expect(result?.policyResolution).toMatchObject({
 				reason,
@@ -126,9 +126,9 @@ describe('hosted browser prefetch consumption', () => {
 			'fetch',
 			vi.fn().mockResolvedValue(response({ policy: legacyPolicy }, null))
 		);
-		await primePrefetchedInitialData({ backendURL: '/api/c15t' });
+		await primePrefetchedInitialData({ projectUrl: '/api/c15t' });
 		const result = await createHostedTransport({
-			backendURL: '/api/c15t',
+			projectUrl: '/api/c15t',
 		}).init?.(context);
 		expect(result?.policyResolution).toMatchObject({
 			reason: 'unsupported-contract',
@@ -142,8 +142,8 @@ describe('hosted browser prefetch consumption', () => {
 			.mockRejectedValueOnce(new Error('offline'))
 			.mockResolvedValue(response());
 		vi.stubGlobal('fetch', fetch);
-		await primePrefetchedInitialData({ backendURL: '/api/c15t' });
-		await createHostedTransport({ backendURL: '/api/c15t' }).init?.(context);
+		await primePrefetchedInitialData({ projectUrl: '/api/c15t' });
+		await createHostedTransport({ projectUrl: '/api/c15t' }).init?.(context);
 		expect(fetch).toHaveBeenCalledTimes(2);
 	});
 
@@ -151,17 +151,17 @@ describe('hosted browser prefetch consumption', () => {
 		const fetch = vi.fn().mockImplementation(() => Promise.resolve(response()));
 		vi.stubGlobal('fetch', fetch);
 		await primePrefetchedInitialData({
-			backendURL: '/api/c15t',
 			overrides: { country: 'DE' },
+			projectUrl: '/api/c15t',
 		});
-		await createHostedTransport({ backendURL: '/api/c15t' }).init?.({
+		await createHostedTransport({ projectUrl: '/api/c15t' }).init?.({
 			...context,
 			overrides: { country: 'FR' },
 		});
 		expect(fetch).toHaveBeenCalledTimes(2);
 		await createHostedTransport({
-			backendURL: '/api/c15t',
-			initURL: '/other/init',
+			initUrl: '/other/init',
+			projectUrl: '/api/c15t',
 		}).init?.(context);
 		expect(fetch).toHaveBeenCalledTimes(3);
 	});
@@ -169,7 +169,7 @@ describe('hosted browser prefetch consumption', () => {
 	it('sends the request within init() when nothing was prefetched', async () => {
 		const fetch = vi.fn().mockResolvedValue(response());
 		vi.stubGlobal('fetch', fetch);
-		const sent = createHostedTransport({ backendURL: '/api/c15t' }).init?.(
+		const sent = createHostedTransport({ projectUrl: '/api/c15t' }).init?.(
 			context
 		);
 		// A provider sends init from its first render; the request has to be
@@ -185,7 +185,7 @@ describe('hosted browser prefetch consumption', () => {
 		});
 		const fetch = vi.fn().mockResolvedValue(response());
 		vi.stubGlobal('fetch', fetch);
-		window.eval(buildPrefetchScript({ backendURL: '/api/c15t' }));
+		window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
 		const entries = Object.values(
 			(
 				window as Window & {
@@ -208,8 +208,8 @@ describe('hosted browser prefetch consumption', () => {
 				.fn()
 				.mockImplementation(() => Promise.resolve(response()));
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ backendURL: '/api/c15t' }));
-			await createHostedTransport({ backendURL: '/api/c15t' }).init(
+			window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+			await createHostedTransport({ projectUrl: '/api/c15t' }).init(
 				withoutJourney
 			);
 			expect(fetch).toHaveBeenCalledTimes(2);
@@ -225,9 +225,9 @@ describe('hosted browser prefetch consumption', () => {
 				.mockImplementation(() => Promise.resolve(response()));
 			vi.stubGlobal('fetch', fetch);
 			window.eval(
-				buildPrefetchScript({ backendURL: '/api/c15t', journey: false })
+				buildPrefetchScript({ journey: false, projectUrl: '/api/c15t' })
 			);
-			await createHostedTransport({ backendURL: '/api/c15t' }).init(
+			await createHostedTransport({ projectUrl: '/api/c15t' }).init(
 				withoutJourney
 			);
 			expect(fetch).toHaveBeenCalledTimes(1);
@@ -250,8 +250,8 @@ describe('hosted browser prefetch consumption', () => {
 			vi.stubGlobal('fetch', fetch);
 			window.eval(
 				buildPrefetchScript({
-					backendURL: '/api/c15t',
 					experiment: { ...experiment, arm: 'bar' },
+					projectUrl: '/api/c15t',
 				})
 			);
 			return fetch;
@@ -259,7 +259,7 @@ describe('hosted browser prefetch consumption', () => {
 
 		it('reuses an early request that sent the arm this init runs', async () => {
 			const fetch = prefetchBar();
-			await createHostedTransport({ backendURL: '/api/c15t' }).init(
+			await createHostedTransport({ projectUrl: '/api/c15t' }).init(
 				running('bar')
 			);
 			expect(fetch).toHaveBeenCalledTimes(1);
@@ -272,7 +272,7 @@ describe('hosted browser prefetch consumption', () => {
 			'sends its own /init when the early request sent %s',
 			async (_label, ctx) => {
 				const fetch = prefetchBar();
-				await createHostedTransport({ backendURL: '/api/c15t' }).init(ctx);
+				await createHostedTransport({ projectUrl: '/api/c15t' }).init(ctx);
 				expect(fetch).toHaveBeenCalledTimes(2);
 			}
 		);
@@ -282,8 +282,8 @@ describe('hosted browser prefetch consumption', () => {
 				.fn()
 				.mockImplementation(() => Promise.resolve(response()));
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ backendURL: '/api/c15t' }));
-			await createHostedTransport({ backendURL: '/api/c15t' }).init(
+			window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+			await createHostedTransport({ projectUrl: '/api/c15t' }).init(
 				running('bar')
 			);
 			expect(fetch).toHaveBeenCalledTimes(2);
@@ -293,11 +293,11 @@ describe('hosted browser prefetch consumption', () => {
 			const fetch = vi.fn();
 			vi.stubGlobal('fetch', fetch);
 			const transport = createHostedTransport({
-				backendURL: '/api/c15t',
 				initialData: Promise.resolve({
 					init: await response().json(),
 					producerPolicyContract: '1',
 				}),
+				projectUrl: '/api/c15t',
 			});
 			await transport.init(running('bar'));
 			expect(fetch).not.toHaveBeenCalled();

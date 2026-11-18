@@ -3,7 +3,7 @@
  * with no backend.
  *
  * Pass `testing()` as the plugin's `mode`, or as `c15t.mode` in
- * `nuxt.config.ts`. It needs no `backendURL`. It resolves the recommended
+ * `nuxt.config.ts`. It needs no `projectUrl`. It resolves the recommended
  * policy pack in the browser and sends nothing; set `overrides.country`
  * (and `overrides.region`) to pick the policy:
  *

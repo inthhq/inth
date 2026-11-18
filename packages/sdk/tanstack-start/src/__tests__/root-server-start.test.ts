@@ -26,9 +26,9 @@ const pixel: Script = {
 /** A US-style policy: marketing runs until the visitor opts out. */
 const optOutState = () =>
 	resolveConsent({
-		// A relative backend is the app's own route: no session report.
-		backendURL: '/api/c15t',
 		mode: manifest(),
+		// A relative backend is the app's own route: no session report.
+		projectUrl: '/api/c15t',
 		request: new Request('https://app.example.com/'),
 		snapshot: manifestOf([optOutRule({ prompt: 'none' })]),
 	});
@@ -103,7 +103,7 @@ test("renders no start script for a state that is no one visitor's", async () =>
 
 	// `{}` as the static root passes it; the backend URL stands in for the
 	// one `consentManifest()` supplies.
-	const empty = { backendURL: 'https://consent.example.com' };
+	const empty = { projectUrl: 'https://consent.example.com' };
 
 	// A first render loads the start module, as in the tests above.
 	await render(prerendered);

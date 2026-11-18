@@ -70,8 +70,8 @@ const ReactManifestClientPage = () => {
 	const transport = useMemo(
 		() =>
 			createManifestTransport({
-				backendURL: '/api/bench-consent',
-				manifestURL: '/api/c15t/manifest',
+				manifestUrl: '/api/c15t/manifest',
+				projectUrl: '/api/bench-consent',
 			}),
 		[]
 	);

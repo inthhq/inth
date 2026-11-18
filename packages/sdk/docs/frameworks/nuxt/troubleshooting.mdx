@@ -116,7 +116,7 @@ part in parentheses names the cause:
 - `returned an invalid consent manifest`: the URL answers, but not with a c15t
   manifest.
 
-- `manifest() needs a backend URL`: neither `backendURL` nor
+- `manifest() needs a backend URL`: neither `projectUrl` nor
   `NUXT_PUBLIC_C15T_BACKEND_URL` (or `NUXT_PUBLIC_INTH_PROJECT_URL`) is set. `nuxt build` and `nuxt dev` both
   stop, whatever `onBuildError` says, because the browser saves consent to
   the backend. `manifest({ snapshot })` stops with
@@ -124,14 +124,14 @@ part in parentheses names the cause:
 
 With `onBuildError: 'fail'`, this error also appears:
 
-- `build-time manifests require an absolute upstream URL`: `backendURL` or
-  `manifestURL` is a relative path. Without `onBuildError: 'fail'`, the
+- `build-time manifests require an absolute upstream URL`: `projectUrl` or
+  `manifestUrl` is a relative path. Without `onBuildError: 'fail'`, the
   module skips the fetch instead.
 
 **Fix.** Set `NUXT_PUBLIC_C15T_BACKEND_URL` (or
-`NUXT_PUBLIC_INTH_PROJECT_URL`), or `backendURL` under the `c15t` key, to your project's absolute backend URL, including any path prefix; the
+`NUXT_PUBLIC_INTH_PROJECT_URL`), or `projectUrl` under the `c15t` key, to your project's absolute backend URL, including any path prefix; the
 module adds `/manifest`. To download from another address, set
-`mode: manifest({ manifestURL })` to the full manifest URL, which is used as
+`mode: manifest({ manifestUrl })` to the full manifest URL, which is used as
 written. Make sure the build machine can reach the backend. To deploy while
 it is down, build with `C15T_ON_BUILD_ERROR=runtime`, or set
 `onBuildError: 'runtime'`. To never fetch at build time, set
@@ -172,8 +172,8 @@ data.
 
 ## Options from an earlier alpha have no effect
 
-**Check.** The `c15t` key sets `manifest`, `manifestURL`, `manifestSnapshot`,
-`buildManifest`, `geoURL`, `initRoute` or `manifestRoute`. The module no
+**Check.** The `c15t` key sets `manifest`, `manifestUrl`, `manifestSnapshot`,
+`buildManifest`, `geoUrl`, `initRoute` or `manifestRoute`. The module no
 longer reads them.
 
 **Fix.** Use `mode` and `routePrefix`:
@@ -183,11 +183,11 @@ longer reads them.
 | `manifest: 'server'` | Nothing: `manifest()` is the default |
 | `manifest: 'client'` | `mode: manifest({ resolve: 'browser' })` |
 | `manifest: false` | `mode: hosted()` |
-| `manifestURL`, `geoURL`, `manifestSnapshot` | `manifest({ manifestURL })`, `manifest({ geoURL })`, `manifest({ snapshot })` |
+| `manifestUrl`, `geoUrl`, `manifestSnapshot` | `manifest({ manifestUrl })`, `manifest({ geoUrl })`, `manifest({ snapshot })` |
 | `buildManifest: false` | `mode: manifest({ source: 'runtime' })` |
 | `buildManifest: true` | `onBuildError: 'fail'` |
 | `initRoute`, `manifestRoute` | `routePrefix`, one catch-all for both |
-| `NUXT_PUBLIC_C15T_MANIFEST_URL`, `NUXT_C15T_MANIFEST_URL` | `mode: manifest({ manifestURL })` in `nuxt.config.ts`. The variables are no longer read, so the manifest URL is fixed at build time. `NUXT_PUBLIC_C15T_BACKEND_URL` and `NUXT_C15T_BACKEND_URL` still work. |
+| `NUXT_PUBLIC_C15T_MANIFEST_URL`, `NUXT_C15T_MANIFEST_URL` | `mode: manifest({ manifestUrl })` in `nuxt.config.ts`. The variables are no longer read, so the manifest URL is fixed at build time. `NUXT_PUBLIC_C15T_BACKEND_URL` and `NUXT_C15T_BACKEND_URL` still work. |
 | `domain` | Nothing. Saves send the page's hostname. |
 | `ConsentPreferencesLink` | `ConsentDialogLink`. The floating `ConsentDialogTrigger` keeps its name. |
 | `ConsentFrame` | `ConsentGate` |
@@ -198,7 +198,7 @@ longer reads them.
 location. When your policy depends on the visitor's country or region, the
 browser asks the backend's `/init` for it on the first visit.
 
-**Fix.** Pass `geoURL` to `manifest()` with a route on your site that returns
+**Fix.** Pass `geoUrl` to `manifest()` with a route on your site that returns
 the visitor's `country` and `region`, so the browser resolves the policy
 itself. Or use `hosted()`, which makes the same `/init` request without
 bundling the manifest.

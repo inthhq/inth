@@ -31,8 +31,8 @@ export const COMPAT_MANIFEST_URL = `${COMPAT_ROUTE_PREFIX}/manifest`;
  * explicitly.
  */
 export const COMPAT_HOSTED_CONFIG = defineConsentConfig({
-	backendURL: COMPAT_BACKEND_URL,
 	mode: hosted(),
+	projectUrl: COMPAT_BACKEND_URL,
 });
 
 /**
@@ -42,7 +42,7 @@ export const COMPAT_HOSTED_CONFIG = defineConsentConfig({
  * request's geo headers. The route files read the same config.
  */
 export const COMPAT_CONSENT_CONFIG = defineConsentConfig({
-	backendURL: COMPAT_BACKEND_URL,
+	projectUrl: COMPAT_BACKEND_URL,
 	routePrefix: COMPAT_ROUTE_PREFIX,
 });
 

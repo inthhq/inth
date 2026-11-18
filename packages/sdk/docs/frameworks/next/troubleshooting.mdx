@@ -18,16 +18,16 @@ Without it, the helper logs a warning only outside production.
 **Check.** If the consent route repeatedly calls itself, check its upstream
 URL.
 
-**Fix.** Set the config's `backendURL`, or `NEXT_PUBLIC_C15T_BACKEND_URL` (or
+**Fix.** Set the config's `projectUrl`, or `NEXT_PUBLIC_C15T_BACKEND_URL` (or
 `NEXT_PUBLIC_INTH_PROJECT_URL`), to
 the absolute Inth or self-hosted backend endpoint. To send the browser through
 `/api/c15t`, set `proxy: true` and `routePrefix` instead of a relative
-`backendURL`; the route keeps the absolute URL. See
+`projectUrl`; the route keeps the absolute URL. See
 [Next.js optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
 ## Why does `next build` or `next dev` fail to fetch the manifest?
 
-**Check.** `withConsentManifest` downloads `${backendURL}/manifest` when
+**Check.** `withConsentManifest` downloads `${projectUrl}/manifest` when
 `next build`, `next dev` or `next typegen` loads `next.config.ts`. When the
 download fails or takes longer than 10 seconds, `next build` stops with an
 error that starts with `@c15t/nextjs/build: could not fetch the consent
@@ -46,8 +46,8 @@ parentheses names the cause:
   with a c15t manifest. It may be a different service, or a backend that does
   not support this c15t version.
 
-`no backend URL is set` means the build found no `backendURL` option, no
-`backendURL` in `c15t.config.ts` and no `NEXT_PUBLIC_C15T_BACKEND_URL` or
+`no backend URL is set` means the build found no `projectUrl` option, no
+`projectUrl` in `c15t.config.ts` and no `NEXT_PUBLIC_C15T_BACKEND_URL` or
 `NEXT_PUBLIC_INTH_PROJECT_URL`, or empty ones. `next build` stops on it and
 `next dev` warns. A notice that the build `skipped the consent manifest fetch`
 means the backend URL is a path such as `/api/c15t`. With
@@ -153,8 +153,8 @@ the next section.
 **Check.** The page, or `next build` while it prerenders the page, throws one
 of these errors from `ConsentRoot`:
 
-- ``@c15t/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.``
-- ``@c15t/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.``
+- ``@c15t/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
+- ``@c15t/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
 
 A production build prints only the first sentence, such as
 `@c15t/nextjs: manifest() needs a backend URL.`
@@ -192,9 +192,9 @@ The checks run on the server only; the browser copy of the file skips them.
 
 **Fix.** The [config reference](/docs/frameworks/next/data-fetching-reference#config-reference)
 lists each message. The most common is
-``@c15t/nextjs: defineConsentConfig needs `backendURL`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.``
+``@c15t/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.``
 Set the variable in `.env.local` and in your host's build settings, or pass
-`backendURL`.
+`projectUrl`.
 
 ## Why is the visitor's location unknown on the server?
 

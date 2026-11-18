@@ -214,8 +214,8 @@ describe('manifest() first paint without a known location', () => {
 		const client = createConsentClient({
 			consentCategories: ['measurement'],
 			mode: manifest({
-				backendURL: 'https://example.test',
 				fetch: fetchSpy,
+				projectUrl: 'https://example.test',
 				snapshot: inlineManifest,
 			}),
 			overrides,
@@ -381,8 +381,8 @@ describe('manifest() with GPP and an unknown location', () => {
 		);
 	const inline = (fetchSpy: typeof fetch) =>
 		manifest({
-			backendURL: 'https://example.test',
 			fetch: fetchSpy,
+			projectUrl: 'https://example.test',
 			snapshot: sameBannerEverywhereManifest,
 		});
 
@@ -447,8 +447,8 @@ describe('manifest() transports', () => {
 		inlineManifest: ConsentManifest,
 		fetchSpy: typeof fetch
 	) => ({
-		backendURL: 'https://example.test',
 		fetch: fetchSpy,
+		projectUrl: 'https://example.test',
 		snapshot: inlineManifest,
 	});
 
@@ -483,8 +483,8 @@ describe('manifest()', () => {
 		const client = createConsentClient({
 			consentCategories: ['measurement'],
 			mode: manifest({
-				backendURL: 'https://example.test',
 				fetch: fetchSpy,
+				projectUrl: 'https://example.test',
 				snapshot: everywhereManifest,
 			}),
 		});
@@ -508,8 +508,8 @@ describe('manifest()', () => {
 		const fetchSpy = vi.fn<typeof fetch>(() => Promise.resolve(initResponse()));
 		const client = createConsentClient({
 			mode: manifest({
-				backendURL: 'https://example.test',
 				fetch: fetchSpy,
+				projectUrl: 'https://example.test',
 				snapshot: {
 					...geoManifest,
 					policyPacks: [
@@ -540,8 +540,8 @@ describe('manifest()', () => {
 		);
 		const client = createConsentClient({
 			mode: manifest({
-				backendURL: 'https://example.test/api/',
 				fetch: fetchSpy,
+				projectUrl: 'https://example.test/api/',
 				snapshot: undefined,
 			}),
 		});
@@ -559,10 +559,10 @@ describe('manifest()', () => {
 		'https://cdn.example.test/manifest.json?revision=1',
 		'https://manifest',
 		'//manifest',
-	])('requires a backend for non-endpoint manifest URL %s', (manifestURL) => {
+	])('requires a backend for non-endpoint manifest URL %s', (manifestUrl) => {
 		const fetchSpy = vi.fn<typeof fetch>();
-		expect(() => manifest({ fetch: fetchSpy, manifestURL })).toThrow(
-			/backendURL/u
+		expect(() => manifest({ fetch: fetchSpy, manifestUrl })).toThrow(
+			/projectUrl/u
 		);
 		expect(fetchSpy).not.toHaveBeenCalled();
 	});
@@ -571,7 +571,7 @@ describe('manifest()', () => {
 		'requires a backend for an inline-only manifest',
 		(inlineManifest) => {
 			expect(() => manifest({ snapshot: inlineManifest })).toThrow(
-				/backendURL/u
+				/projectUrl/u
 			);
 		}
 	);
@@ -579,19 +579,19 @@ describe('manifest()', () => {
 	it('rejects an inferred manifest client before starting a runtime', () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
 		expect(() => createConsentClient({ manifest: everywhereManifest })).toThrow(
-			/backendURL/u
+			/projectUrl/u
 		);
 		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 
 	it.each(['', 'https://api.example.test/c15t/'])(
 		'uses the explicit backend %j for CDN manifest geo and saves',
-		async (backendURL) => {
-			const manifestURL = 'https://cdn.example.test/consent.json';
-			const expectedBackend = backendURL.replace(/\/$/u, '');
+		async (projectUrl) => {
+			const manifestUrl = 'https://cdn.example.test/consent.json';
+			const expectedBackend = projectUrl.replace(/\/$/u, '');
 			const fetchSpy = vi.fn<typeof fetch>((input) => {
 				const url = String(input);
-				if (url === manifestURL) {
+				if (url === manifestUrl) {
 					return Promise.resolve(new Response(JSON.stringify(geoManifest)));
 				}
 				if (url.split('?')[0]?.endsWith('/init')) {
@@ -602,14 +602,14 @@ describe('manifest()', () => {
 				);
 			});
 			const client = createConsentClient({
-				mode: manifest({ backendURL, fetch: fetchSpy, manifestURL }),
+				mode: manifest({ fetch: fetchSpy, manifestUrl, projectUrl }),
 			});
 			clients.push(client);
 			client.start();
 			await client.ready();
 			await expect(client.acceptAll()).resolves.toMatchObject({ ok: true });
 			expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-				manifestURL,
+				manifestUrl,
 				`${expectedBackend}/init`,
 				`${expectedBackend}/subjects`,
 			]);
@@ -624,8 +624,8 @@ describe('manifest()', () => {
 		);
 		const client = createConsentClient({
 			mode: manifest({
-				backendURL: '',
 				fetch: fetchSpy,
+				projectUrl: '',
 				snapshot: everywhereManifest,
 			}),
 		});
@@ -645,8 +645,8 @@ describe('manifest()', () => {
 			{
 				consentCategories: ['measurement'],
 				mode: manifest({
-					backendURL: 'https://x.c15t.dev',
 					fetch: fetchSpy,
+					projectUrl: 'https://x.c15t.dev',
 					snapshot: everywhereManifest,
 				}),
 			},
@@ -670,8 +670,8 @@ describe('manifest()', () => {
 		const client = createConsentClient(
 			{
 				mode: manifest({
-					backendURL: 'https://x.c15t.dev',
 					fetch: fetchSpy,
+					projectUrl: 'https://x.c15t.dev',
 					snapshot: geoManifest,
 				}),
 			},
@@ -692,8 +692,8 @@ describe('manifest()', () => {
 		const client = createConsentClient(
 			{
 				mode: manifest({
-					backendURL: 'https://x.c15t.dev',
 					fetch: fetchSpy,
+					projectUrl: 'https://x.c15t.dev',
 					snapshot: geoManifest,
 				}),
 				overrides: { country: 'FR' },
@@ -718,9 +718,9 @@ describe('manifest()', () => {
 			'https://api.example.test/c15t/manifest?revision=1',
 			'https://api.example.test/c15t',
 		],
-	])('derives the API endpoints from %s', async (manifestURL, backendURL) => {
+	])('derives the API endpoints from %s', async (manifestUrl, projectUrl) => {
 		const fetchSpy = vi.fn<typeof fetch>((input) => {
-			if (String(input) === manifestURL) {
+			if (String(input) === manifestUrl) {
 				return Promise.resolve(new Response(JSON.stringify(geoManifest)));
 			}
 			if (String(input).split('?')[0]?.endsWith('/init')) {
@@ -731,16 +731,16 @@ describe('manifest()', () => {
 			);
 		});
 		const client = createConsentClient({
-			mode: manifest({ fetch: fetchSpy, manifestURL }),
+			mode: manifest({ fetch: fetchSpy, manifestUrl }),
 		});
 		clients.push(client);
 		client.start();
 		const snapshot = await client.ready();
 		await expect(client.acceptAll()).resolves.toMatchObject({ ok: true });
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-			manifestURL,
-			`${backendURL}/init`,
-			`${backendURL}/subjects`,
+			manifestUrl,
+			`${projectUrl}/init`,
+			`${projectUrl}/subjects`,
 		]);
 		expect(snapshot.location?.countryCode).toBe('DE');
 	});
@@ -758,7 +758,7 @@ describe('manifest()', () => {
 			{
 				mode: manifest({
 					fetch: fetchSpy,
-					manifestURL: 'https://x.c15t.dev/manifest',
+					manifestUrl: 'https://x.c15t.dev/manifest',
 				}),
 			},
 			{ pkg: 'test' }

@@ -78,7 +78,7 @@ export interface ConsentRootProps {
 	 */
 	options?: Omit<
 		ConsentProviderOptions,
-		| 'backendURL'
+		| 'projectUrl'
 		| 'mode'
 		| 'clearOnRevocation'
 		| 'networkBlocker'

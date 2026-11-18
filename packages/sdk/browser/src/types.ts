@@ -40,7 +40,7 @@ import type { Theme } from '@c15t/ui/theme';
  * The transports a script-tag site can name without importing anything.
  * `init()` from `@c15t/browser` takes `hosted()` or a factory instead.
  *
- * - `hosted` — `GET /init` and `POST /subjects` against `backendURL`.
+ * - `hosted` — `GET /init` and `POST /subjects` against `projectUrl`.
  * - `manifest` — the backend's cacheable `/manifest` inlined or fetched,
  *   resolved locally so the banner can render without waiting on `/init`.
  *   Falls back to `/init` with a warning when the manifest is unavailable.
@@ -150,7 +150,7 @@ export interface ConsentUIOptions {
 	 * A slot adds classes (a string, or `className`) and inline `style` to
 	 * one part, keyed like `consentBannerCard` or `buttonPrimary`. The
 	 * classes' rules must reach the part: with `shadow: false` the page's
-	 * stylesheets do; in the shadow root, link them with `stylesheetURLs` or
+	 * stylesheets do; in the shadow root, link them with `stylesheetUrls` or
 	 * pass their text in `css`.
 	 */
 	theme?: Theme;
@@ -171,7 +171,7 @@ export interface ConsentUIOptions {
 	 *
 	 * @example ['/assets/site.css']
 	 */
-	stylesheetURLs?: string[];
+	stylesheetUrls?: string[];
 	/**
 	 * Include the bundled stylesheet. Defaults to `true`. With `shadow: false`,
 	 * set `false` when the page loads `@c15t/browser/styles.css`.
@@ -312,7 +312,7 @@ export interface ConsentClientBaseOptions extends Pick<
  * ```ts
  * import { init } from '@c15t/browser';
  *
- * init({ backendURL: 'https://your-project.inth.app' });
+ * init({ projectUrl: 'https://your-project.inth.app' });
  * ```
  */
 export interface ConsentClientOptions extends ConsentClientBaseOptions {
@@ -320,11 +320,11 @@ export interface ConsentClientOptions extends ConsentClientBaseOptions {
 	 * Backend URL: your Inth project URL. Required unless `mode` is
 	 * `testing()` or `enabled` is `false`.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * How the visitor's policy is resolved.
 	 *
-	 * - Omitted, or `hosted()`: ask `${backendURL}/init`.
+	 * - Omitted, or `hosted()`: ask `${projectUrl}/init`.
 	 * - `manifest()`: resolve from the backend's consent manifest in the
 	 *   browser, falling back to `/init` with a warning when it is
 	 *   unavailable. Import it only if you use it, so the bundler leaves
@@ -352,33 +352,33 @@ export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	 * Backend origin: your Inth project URL. Required, except in
 	 * `c15t.testing.js`.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/** Inline consent manifest for `manifest` mode. */
 	manifest?: ConsentManifest;
 	/**
 	 * Manifest URL for `manifest` mode. URLs other than the backend's
-	 * `/manifest` endpoint require an explicit `backendURL`.
+	 * `/manifest` endpoint require an explicit `projectUrl`.
 	 */
-	manifestURL?: string;
+	manifestUrl?: string;
 }
 
 /** Options for `@c15t/browser/hosted` and the default `c15t.js` bundle. */
 export interface HostedConsentClientOptions extends Omit<
 	ScriptTagClientOptions,
-	'mode' | 'manifest' | 'manifestURL'
+	'mode' | 'manifest' | 'manifestUrl'
 > {
 	/** Defaults to hosted. Factories must have `kind: 'hosted'`. */
 	mode?: 'hosted' | HostedMode | ProviderTransportFactory;
 	/** Hosted bundles do not resolve manifests in the browser. */
 	manifest?: never;
 	/** Hosted bundles do not fetch manifests in the browser. */
-	manifestURL?: never;
+	manifestUrl?: never;
 }
 
 /** Options for `c15t.testing.js`. */
 export interface TestingScriptTagOptions extends Omit<
 	ScriptTagClientOptions,
-	'mode' | 'backendURL' | 'manifest' | 'manifestURL'
+	'mode' | 'projectUrl' | 'manifest' | 'manifestUrl'
 > {
 	/**
 	 * Always `testing()`: a value from `c15t.testing()`, or a transport
@@ -393,11 +393,11 @@ export interface TestingScriptTagOptions extends Omit<
 	 */
 	policy?: (PolicyRule | PolicyPresetName)[];
 	/** The testing file needs no backend. */
-	backendURL?: never;
+	projectUrl?: never;
 	/** The testing file resolves rules, not manifests. */
 	manifest?: never;
 	/** The testing file does not fetch manifests. */
-	manifestURL?: never;
+	manifestUrl?: never;
 }
 
 /** Handle on a mounted UI. */

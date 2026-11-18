@@ -73,7 +73,7 @@ const registeredMode = function registeredMode(
 	requestsInit: boolean
 ): ProviderTransportFactory {
 	const factory = Object.assign(
-		() => createHostedTransport({ backendURL: BACKEND, fetch: backendFetch }),
+		() => createHostedTransport({ fetch: backendFetch, projectUrl: BACKEND }),
 		{ kind: 'custom' as const }
 	);
 	const entry: EarlyInitMode & { backend: object } = {

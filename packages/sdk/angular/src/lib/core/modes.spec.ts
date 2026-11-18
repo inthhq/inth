@@ -11,28 +11,28 @@ import {
 
 describe('the transports provideC15t() selects', () => {
 	test('a backend URL alone is the hosted backend, with its options as data', () => {
-		const mode = selectedMode({ backendURL: '/api/c15t' }) as unknown as {
-			backendURL?: string;
+		const mode = selectedMode({ projectUrl: '/api/c15t' }) as unknown as {
+			projectUrl?: string;
 			kind?: string;
 			type?: string;
 		};
 		expect(mode.type).toBe('hosted');
 		expect(mode.kind).toBe('hosted');
-		expect(mode.backendURL).toBe('/api/c15t');
-		expect(selectedMode({ backendURL: '/api/c15t' })).toBe(mode);
+		expect(mode.projectUrl).toBe('/api/c15t');
+		expect(selectedMode({ projectUrl: '/api/c15t' })).toBe(mode);
 	});
 
 	test('testing() selects its own transport, with or without a backend URL', () => {
 		const mode = testing();
-		expect(selectedMode({ backendURL: '/api/c15t', mode })).toBe(
+		expect(selectedMode({ mode, projectUrl: '/api/c15t' })).toBe(
 			mode.transport
 		);
 		expect(selectedMode({ mode })).toBe(mode.transport);
 	});
 
 	test('hosted() selects the hosted backend, as no mode does', () => {
-		expect(selectedMode({ backendURL: '/api/c15t', mode: hosted() })).toBe(
-			selectedMode({ backendURL: '/api/c15t' })
+		expect(selectedMode({ mode: hosted(), projectUrl: '/api/c15t' })).toBe(
+			selectedMode({ projectUrl: '/api/c15t' })
 		);
 	});
 
@@ -48,16 +48,16 @@ describe('the transports provideC15t() selects', () => {
 		const mode = hostedFor('/api/handed-over');
 		expect(mode({} as never)).toBe(transport);
 		expect(build).toHaveBeenCalledWith(
-			expect.objectContaining({ backendURL: '/api/handed-over' })
+			expect.objectContaining({ projectUrl: '/api/handed-over' })
 		);
 	});
 
 	test('manifest() carries the kind and options core reads', () => {
 		const fromManifest = manifest({
-			manifestURL: '/api/c15t/manifest',
-		}) as unknown as { kind: string; manifestURL: string };
+			manifestUrl: '/api/c15t/manifest',
+		}) as unknown as { kind: string; manifestUrl: string };
 		expect(fromManifest.kind).toBe('manifest');
-		expect(fromManifest.manifestURL).toBe('/api/c15t/manifest');
+		expect(fromManifest.manifestUrl).toBe('/api/c15t/manifest');
 	});
 
 	// Every transport loads its code on first use. A failed chunk request

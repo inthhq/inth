@@ -18,7 +18,7 @@ expectTypeOf(resolveConsent).returns.resolves.toEqualTypeOf<ConsentState>();
 expectTypeOf(resolveConsent)
 	.parameter(0)
 	.toEqualTypeOf<ResolveConsentOptions | undefined>();
-expectTypeOf<ResolveConsentOptions['backendURL']>().toEqualTypeOf<
+expectTypeOf<ResolveConsentOptions['projectUrl']>().toEqualTypeOf<
 	string | undefined
 >();
 expectTypeOf<ConsentState['mode']>().toEqualTypeOf<ConsentMode | undefined>();

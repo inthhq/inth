@@ -30,8 +30,8 @@ fixture. The Next.js 15 and webpack fixtures use the same files. The check
 confirms that c15t's banner and dialog keep their styles under Tailwind's
 preflight, that a padding utility on the banner root
 beats c15t's own padding, and that the `dark:` variant applies. The fixtures run
-without a backend, so they use `testing()` mode or a local `backendURL`. Keep the
-`mode` or `backendURL` from your quickstart.
+without a backend, so they use `testing()` mode or a local `projectUrl`. Keep the
+`mode` or `projectUrl` from your quickstart.
 
 ## Set up Tailwind CSS 4
 
@@ -128,7 +128,7 @@ first paint.
     <include src="../shared/examples/tailwind-v4/html/tailwind-css.mdx" />
 
     To put utilities on c15t's parts, link the same build into the shadow root
-    with `ui.stylesheetURLs`, as in
+    with `ui.stylesheetUrls`, as in
     [put utilities on c15t parts](#put-utilities-on-c15t-parts).
   </Tab>
 
@@ -136,7 +136,7 @@ first paint.
     `init()` from `@c15t/browser` renders into a shadow root, the same way as
     the script tag. Build Tailwind as usual for your page. To put utilities on
     c15t's parts, pass the URL of your built stylesheet in
-    `ui.stylesheetURLs`, as in
+    `ui.stylesheetUrls`, as in
     [put utilities on c15t parts](#put-utilities-on-c15t-parts).
   </Tab>
 </Tabs>
@@ -391,7 +391,7 @@ Tailwind only generates classes it finds in the files its `content` globs or
 
   <Tab value="HTML">
     Put the classes on parts with `ui.theme.slots`, and link your Tailwind
-    build into the shadow root with `ui.stylesheetURLs`. Keep the page's own
+    build into the shadow root with `ui.stylesheetUrls`. Keep the page's own
     link too. Tailwind 4 registers some of its variables with `@property`,
     which only takes effect in the page's stylesheets, not a shadow root's:
 
@@ -401,7 +401,7 @@ Tailwind only generates classes it finds in the files its `content` globs or
   </Tab>
 
   <Tab value="JavaScript">
-    Pass `ui.stylesheetURLs` and `ui.theme.slots` to `init()`. Keep a link to
+    Pass `ui.stylesheetUrls` and `ui.theme.slots` to `init()`. Keep a link to
     the same stylesheet on the page, because Tailwind 4's `@property` rules
     only take effect there:
 
@@ -409,7 +409,7 @@ Tailwind only generates classes it finds in the files its `content` globs or
 
     ```ts title="src/consent.ts (partial)"
     ui: {
-      stylesheetURLs: ['/tailwind.css'],
+      stylesheetUrls: ['/tailwind.css'],
       theme: {
         slots: {
           consentBannerCard: 'rounded-none border-4 border-sky-600',

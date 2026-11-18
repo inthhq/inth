@@ -2,7 +2,7 @@
  * Where the injected routes read the manifest from. The server render
  * resolves through `resolveRequestConsent` in `@c15t/core/server` instead.
  */
-import { resolveRequestBackendURL } from '@c15t/core/server';
+import { resolveRequestProjectUrl } from '@c15t/core/server';
 import type { ConsentRouteFetchGvl } from '@c15t/core/server';
 
 import type { C15tResolvedOptions } from '../types';
@@ -32,7 +32,7 @@ const trimSlash = function trimSlash(value: string): string {
 /**
  * Work out where `GET /manifest` lives for this request.
  *
- * `manifestURL` when set, otherwise `${backendURL}/manifest`.
+ * `manifestUrl` when set, otherwise `${projectUrl}/manifest`.
  *
  * @param source - The request URL and headers, used to resolve relative URLs.
  * @param options - The resolved integration options.
@@ -44,11 +44,11 @@ export const resolveManifestSourceFrom = function resolveManifestSourceFrom(
 	options: C15tResolvedOptions
 ): string {
 	const { mode } = options;
-	const manifestURL = mode.type === 'manifest' ? mode.manifestURL : undefined;
-	if (manifestURL) {
-		const resolved = resolveRequestBackendURL(manifestURL, {
+	const manifestUrl = mode.type === 'manifest' ? mode.manifestUrl : undefined;
+	if (manifestUrl) {
+		const resolved = resolveRequestProjectUrl(manifestUrl, {
 			headers: source.headers,
-			requestURL: source.url,
+			requestUrl: source.url,
 		});
 		if (!resolved) {
 			throw new Error('@c15t/astro: invalid manifest URL.');
@@ -56,13 +56,13 @@ export const resolveManifestSourceFrom = function resolveManifestSourceFrom(
 		return resolved;
 	}
 
-	const { backendURL } = options;
-	if (!backendURL) {
-		throw new Error('@c15t/astro: pass backendURL or manifestURL.');
+	const { projectUrl } = options;
+	if (!projectUrl) {
+		throw new Error('@c15t/astro: pass projectUrl or manifestUrl.');
 	}
-	const resolved = resolveRequestBackendURL(backendURL, {
+	const resolved = resolveRequestProjectUrl(projectUrl, {
 		headers: source.headers,
-		requestURL: source.url,
+		requestUrl: source.url,
 	});
 	if (!resolved) {
 		throw new Error('@c15t/astro: invalid backend URL.');

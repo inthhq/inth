@@ -38,7 +38,7 @@ const ENGINE_ID = 'virtual:c15t/engine';
 const RESOLVED_ENGINE_ID = `\0${ENGINE_ID}`;
 
 /**
- * Variables the top-level `backendURL` defaults to, in order: the c15t one,
+ * Variables the top-level `projectUrl` defaults to, in order: the c15t one,
  * then the Inth project URL other Inth SDKs share.
  */
 const BACKEND_URL_ENVS = ['PUBLIC_C15T_BACKEND_URL', 'PUBLIC_INTH_PROJECT_URL'];
@@ -219,25 +219,25 @@ const MODE_TYPES = new Set(['manifest', 'hosted', 'testing']);
  * Check the mode is plain data from `manifest()`, `hosted()` or
  * `testing()`, and that it has a backend to talk to.
  *
- * `manifest()` reads `${backendURL}/manifest` on the server and the
- * browser saves consent at `${backendURL}/subjects`, so without a backend
+ * `manifest()` reads `${projectUrl}/manifest` on the server and the
+ * browser saves consent at `${projectUrl}/subjects`, so without a backend
  * URL it fails here, whatever `routePrefix` is. A `snapshot` replaces the
  * manifest fetch only: the injected consent route answers `GET`, so saves
- * still need the backend. `backendURL: ''` saves on this origin but gives
+ * still need the backend. `projectUrl: ''` saves on this origin but gives
  * the server no manifest, so without a snapshot it also needs a
- * `manifestURL`.
+ * `manifestUrl`.
  *
  * @param mode - The configured mode, or `undefined` for the default.
- * @param backendURL - The resolved top-level backend URL.
+ * @param projectUrl - The resolved top-level backend URL.
  * @returns The mode.
  * @throws {Error} When the mode is not mode data, or has nowhere to go.
  */
 const resolveMode = function resolveMode(
 	mode: C15tAstroOptions['mode'],
-	backendURL: string | undefined
+	projectUrl: string | undefined
 ): ConsentMode {
 	if (mode === undefined) {
-		return resolveMode({ type: 'manifest' }, backendURL);
+		return resolveMode({ type: 'manifest' }, projectUrl);
 	}
 	if (
 		typeof mode !== 'object' ||
@@ -249,23 +249,23 @@ const resolveMode = function resolveMode(
 		);
 	}
 	const envHint =
-		'Set PUBLIC_C15T_BACKEND_URL (or PUBLIC_INTH_PROJECT_URL) in .env, or pass `backendURL` to c15t().';
-	if (mode.type === 'hosted' && backendURL === undefined) {
+		'Set PUBLIC_C15T_BACKEND_URL (or PUBLIC_INTH_PROJECT_URL) in .env, or pass `projectUrl` to c15t().';
+	if (mode.type === 'hosted' && projectUrl === undefined) {
 		throw new Error(
 			`@c15t/astro: hosted() needs a backend URL to ask for each visitor's policy. ${envHint}`
 		);
 	}
-	if (mode.type === 'manifest' && backendURL === undefined) {
+	if (mode.type === 'manifest' && projectUrl === undefined) {
 		throw new Error(
 			mode.snapshot
-				? `@c15t/astro: manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest fetch, but the browser saves consent with POST \${backendURL}/subjects, and the consent route only answers GET. ${envHint}`
-				: `@c15t/astro: manifest() needs a backend URL: the server reads its policy from \${backendURL}/manifest, and the browser saves consent there with POST /subjects. ${envHint}`
+				? `@c15t/astro: manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest fetch, but the browser saves consent with POST \${projectUrl}/subjects, and the consent route only answers GET. ${envHint}`
+				: `@c15t/astro: manifest() needs a backend URL: the server reads its policy from \${projectUrl}/manifest, and the browser saves consent there with POST /subjects. ${envHint}`
 		);
 	}
 	if (mode.type === 'manifest' && !mode.snapshot) {
-		if (backendURL === '' && !mode.manifestURL) {
+		if (projectUrl === '' && !mode.manifestUrl) {
 			throw new Error(
-				"@c15t/astro: `backendURL: ''` saves consent on this origin but gives the server no manifest to fetch. Pass manifest({ manifestURL }) or manifest({ snapshot })."
+				"@c15t/astro: `projectUrl: ''` saves consent on this origin but gives the server no manifest to fetch. Pass manifest({ manifestUrl }) or manifest({ snapshot })."
 			);
 		}
 	}
@@ -332,7 +332,7 @@ const assertSerializable = function assertSerializable(
 /**
  * Normalize user options into the serializable shape every consumer reads.
  *
- * @param options - The options passed to `c15t()`, with `backendURL`
+ * @param options - The options passed to `c15t()`, with `projectUrl`
  * already defaulted from the environment.
  * @returns Options with defaults applied.
  * @throws {Error} When an option holds a function, `mode` is not mode data
@@ -344,7 +344,7 @@ export const resolveOptions = function resolveOptions(
 	options: C15tAstroOptions = {}
 ): C15tResolvedOptions {
 	assertSerializable(options);
-	const mode = resolveMode(options.mode, options.backendURL);
+	const mode = resolveMode(options.mode, options.projectUrl);
 	// A JavaScript `astro.config.mjs` has no type checking, so `ui: 'solid'`
 	// reaches `buildBootScript()` and throws a bare `TypeError` on an
 	// undefined adapter entry. Name the supported values instead.
@@ -889,7 +889,7 @@ const bundleBuildManifest = async function bundleBuildManifest(
 	}
 	const { loadManifestForBuild } = await import('@c15t/core/build');
 	const snapshot = await loadManifestForBuild(
-		{ backendURL: resolved.backendURL, manifestURL: mode.manifestURL },
+		{ manifestUrl: mode.manifestUrl, projectUrl: resolved.projectUrl },
 		{
 			command,
 			envNames: BACKEND_URL_ENVS,
@@ -960,14 +960,14 @@ const resolveSiteOptions = async function resolveSiteOptions(
 ): Promise<C15tResolvedOptions> {
 	const { fileURLToPath } = await import('node:url');
 	const root = config?.root;
-	const backendURL =
-		options.backendURL ??
+	const projectUrl =
+		options.projectUrl ??
 		readBuildEnv(BACKEND_URL_ENVS, {
 			mode: command === 'build' ? 'production' : 'development',
 			root: root ? fileURLToPath(root) : process.cwd(),
 		});
 	const site = resolveOptions(
-		backendURL === undefined ? options : { ...options, backendURL }
+		projectUrl === undefined ? options : { ...options, projectUrl }
 	);
 	if (options.ui === undefined) {
 		site.ui = inferUIAdapter(

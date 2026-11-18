@@ -78,7 +78,7 @@ describe('clientMode()', () => {
 	test("defaults to manifest mode, the server frameworks' default", () => {
 		expect({
 			...clientMode(undefined, {
-				backendURL: 'https://backend.example',
+				projectUrl: 'https://backend.example',
 				routePrefix: '/api/c15t',
 			}),
 		}).toEqual({ kind: 'manifest', type: 'manifest' });
@@ -86,7 +86,7 @@ describe('clientMode()', () => {
 
 	test('hosted() asks the backend /init', async () => {
 		const mode = clientMode(hosted(), {
-			backendURL: 'https://backend.example',
+			projectUrl: 'https://backend.example',
 		});
 
 		expect(mode.kind).toBe('hosted');
@@ -100,21 +100,21 @@ describe('clientMode()', () => {
 	});
 
 	test('carries the mode data', () => {
-		expect({ ...clientMode(manifest(), { backendURL: '' }) }).toEqual({
+		expect({ ...clientMode(manifest(), { projectUrl: '' }) }).toEqual({
 			kind: 'manifest',
 			type: 'manifest',
 		});
 		expect(
-			clientMode({ type: 'testing' }, { backendURL: '/api/c15t' }).kind
+			clientMode({ type: 'testing' }, { projectUrl: '/api/c15t' }).kind
 		).toBe('offline');
 		expect(
-			clientMode(manifest({ resolve: 'browser' }), { backendURL: '' }).kind
+			clientMode(manifest({ resolve: 'browser' }), { projectUrl: '' }).kind
 		).toBe('manifest');
 	});
 
 	test('manifest() re-inits through the route prefix and asserts the decision', async () => {
 		const mode = clientMode(manifest(), {
-			backendURL: 'https://backend.example',
+			projectUrl: 'https://backend.example',
 			routePrefix: '/api/c15t/',
 		});
 		const transport = mode(context);
@@ -131,7 +131,7 @@ describe('clientMode()', () => {
 
 	test('manifest() without a route prefix inits against the backend, unasserted', async () => {
 		const transport = clientMode(manifest(), {
-			backendURL: 'https://backend.example',
+			projectUrl: 'https://backend.example',
 		})(context);
 
 		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
@@ -149,18 +149,18 @@ describe('clientMode()', () => {
 			clientMode(manifest({ snapshot: everywhereManifest }), {
 				routePrefix: '/api/c15t',
 			})
-		).toThrow('`backendURL` is required');
+		).toThrow('`projectUrl` is required');
 		expect(() =>
 			clientMode(
 				manifest({ resolve: 'browser', snapshot: everywhereManifest }),
 				{ routePrefix: '/api/c15t' }
 			)
-		).toThrow('`backendURL` is required');
+		).toThrow('`projectUrl` is required');
 	});
 
 	test('manifest() saves through a forwarding route passed as the backend', async () => {
 		const transport = clientMode(manifest(), {
-			backendURL: '/api/c15t',
+			projectUrl: '/api/c15t',
 			routePrefix: '/api/c15t',
 		})(context);
 
@@ -183,9 +183,9 @@ describe('clientMode()', () => {
 	});
 
 	test('throws when there is no backend URL', () => {
-		expect(() => clientMode(undefined)).toThrow('`backendURL` is required');
-		expect(() => clientMode(hosted())).toThrow('`backendURL` is required');
-		expect(() => clientMode(manifest())).toThrow('`backendURL` is required');
+		expect(() => clientMode(undefined)).toThrow('`projectUrl` is required');
+		expect(() => clientMode(hosted())).toThrow('`projectUrl` is required');
+		expect(() => clientMode(manifest())).toThrow('`projectUrl` is required');
 	});
 
 	test('returns a transport factory unchanged, warning for an implementation', () => {
@@ -207,7 +207,7 @@ describe('lazyHosted()', () => {
 			Promise.reject(new Error('the init path must not load'))
 		);
 		const transport = lazyHosted(
-			{ backendURL: 'https://backend.example' },
+			{ projectUrl: 'https://backend.example' },
 			load
 		)(context);
 
@@ -243,7 +243,7 @@ describe('lazyHosted()', () => {
 			return { createHostedTransport };
 		});
 		const transport = lazyHosted(
-			{ backendURL: 'https://backend.example' },
+			{ projectUrl: 'https://backend.example' },
 			load
 		)(context);
 
@@ -282,11 +282,11 @@ describe('lazyHosted()', () => {
 			)
 		);
 		await primePrefetchedInitialData({
-			backendURL: 'https://backend.example',
 			journey: false,
+			projectUrl: 'https://backend.example',
 		});
 		const transport = lazyHosted(
-			{ backendURL: 'https://backend.example' },
+			{ projectUrl: 'https://backend.example' },
 			() => Promise.resolve({ createHostedTransport })
 		)(context);
 
@@ -306,7 +306,7 @@ describe('lazyHosted()', () => {
 			)
 		);
 		const transport = lazyHosted(
-			{ backendURL: 'https://backend.example' },
+			{ projectUrl: 'https://backend.example' },
 			() => Promise.resolve({ createHostedTransport })
 		)(context);
 
@@ -324,8 +324,8 @@ describe('lazyHosted()', () => {
 		const init = vi.fn(() => Promise.resolve({}));
 		const transport = lazyHosted(
 			{
-				backendURL: 'https://backend.example',
 				headers: { 'accept-language': 'de' },
+				projectUrl: 'https://backend.example',
 			},
 			() =>
 				Promise.resolve({
@@ -342,7 +342,6 @@ describe('lazyHosted()', () => {
 
 	test('the first init reads initialData and sends no /init', async () => {
 		const transport = clientMode(manifest(), {
-			backendURL: 'https://backend.example',
 			initialData: Promise.resolve({
 				init: {
 					branding: 'c15t',
@@ -350,6 +349,7 @@ describe('lazyHosted()', () => {
 					translations: { language: 'en', translations: { common: {} } },
 				},
 			} as never),
+			projectUrl: 'https://backend.example',
 			routePrefix: '/api/c15t',
 		})(context);
 
@@ -369,7 +369,7 @@ describe('lazyHosted()', () => {
 					({ init }) as unknown as ReturnType<typeof createHostedTransport>,
 			});
 		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
-		const transport = lazyHosted({ backendURL: '/api/c15t' }, load)(context);
+		const transport = lazyHosted({ projectUrl: '/api/c15t' }, load)(context);
 
 		await expect(transport.init?.(initContext())).rejects.toThrow(
 			'chunk failed'
@@ -429,13 +429,13 @@ describe('lazyBrowserManifest()', () => {
 			Promise.resolve({ createBrowserManifestTransport })
 		);
 		const transport = clientMode(manifest({ resolve: 'browser' }), {
-			backendURL: 'https://backend.example',
+			projectUrl: 'https://backend.example',
 			routePrefix: '/api/c15t',
 		});
 		const built = lazyBrowserManifest(
 			{
-				backendURL: 'https://backend.example',
-				manifestURL: '/api/c15t/manifest',
+				manifestUrl: '/api/c15t/manifest',
+				projectUrl: 'https://backend.example',
 			},
 			load
 		)(context);
@@ -473,8 +473,8 @@ describe('lazyBrowserManifest()', () => {
 	) =>
 		lazyBrowserManifest(
 			{
-				backendURL: 'https://backend.example',
-				manifestURL: '/api/c15t/manifest',
+				manifestUrl: '/api/c15t/manifest',
+				projectUrl: 'https://backend.example',
 			},
 			load
 		)(transportContext);
@@ -578,7 +578,7 @@ describe('lazyBrowserManifest()', () => {
 
 	test('a snapshot needs no manifest request', async () => {
 		const transport = lazyBrowserManifest(
-			{ backendURL: 'https://backend.example', snapshot: everywhereManifest },
+			{ projectUrl: 'https://backend.example', snapshot: everywhereManifest },
 			() => Promise.resolve({ createBrowserManifestTransport })
 		)(context);
 

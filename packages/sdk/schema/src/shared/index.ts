@@ -255,8 +255,8 @@ export {
 	dedupeDefinedValues,
 	dedupeTrimmedStrings,
 } from './policy-utils';
-export { resolveBackendURL } from './server-url';
-export type { ResolveBackendURLOptions } from './server-url';
+export { resolveProjectUrl } from './server-url';
+export type { ResolveProjectUrlOptions } from './server-url';
 export {
 	getTranslations,
 	getTranslationsData,

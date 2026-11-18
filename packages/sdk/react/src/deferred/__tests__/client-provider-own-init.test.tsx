@@ -55,9 +55,9 @@ test('sends /init itself and shows the banner before the engine; the engine reus
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				backendURL: 'https://consent.test',
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
+				projectUrl: 'https://consent.test',
 			}}
 		>
 			<ConsentBanner />

@@ -43,16 +43,16 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	cookieHeader?: string | null;
 	/**
 	 * c15t backend base URL, absolute or origin-relative. When set, the
-	 * helper calls `${backendURL}/init` and folds the response into the
+	 * helper calls `${projectUrl}/init` and folds the response into the
 	 * returned state when no snapshot is supplied. With a snapshot, an
 	 * absolute backend URL receives session reports. Without either, only
 	 * cookies and headers are read.
 	 *
-	 * A relative URL resolves against `requestURL`, or the `host` header
+	 * A relative URL resolves against `requestUrl`, or the `host` header
 	 * when there is none. `x-forwarded-*` headers are ignored unless
 	 * `trustForwardedHeaders` is set.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * The consent manifest to resolve with, such as `snapshot` from
 	 * `c15t/generated`. Resolves locally using this visitor's inputs.
@@ -65,12 +65,12 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	onBackgroundRevalidate?: (task: Promise<void>) => void;
 	/**
 	 * The URL SvelteKit resolved the request under (`event.url`). A
-	 * relative `backendURL` resolves against its origin. `loadConsent`
+	 * relative `projectUrl` resolves against its origin. `loadConsent`
 	 * passes it for you.
 	 */
-	requestURL?: string | URL;
+	requestUrl?: string | URL;
 	/**
-	 * Resolve a relative `backendURL` against the request's `forwarded`,
+	 * Resolve a relative `projectUrl` against the request's `forwarded`,
 	 * `x-forwarded-host` and `x-forwarded-proto` headers. Any client can
 	 * send those, so set this only behind a proxy that sets them and drops
 	 * incoming ones. Setting the origin where SvelteKit builds `event.url`

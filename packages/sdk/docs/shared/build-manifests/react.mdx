@@ -10,12 +10,12 @@ import { consentManifest } from 'c15t/build';
 export default {
 	plugins: [
 		// Keep your existing framework plugins here.
-		consentManifest({ backendURL: 'https://your-project.inth.app' }),
+		consentManifest({ projectUrl: 'https://your-project.inth.app' }),
 	],
 };
 ```
 
-Without `backendURL`, the plugin reads `VITE_C15T_BACKEND_URL`, then
+Without `projectUrl`, the plugin reads `VITE_C15T_BACKEND_URL`, then
 `VITE_INTH_PROJECT_URL`. The plugin
 fetches the policy during `vite build`, or in `vite dev` when the app first
 loads it, and serves it as `snapshot` from `c15t/generated`. A build fetches
@@ -38,7 +38,7 @@ or overrides to keep regional resolution on the snapshot.
 
 When the build has no snapshot, as in `vite dev` after a failed fetch,
 `snapshot` is `undefined`, and the browser fetches
-`${backendURL}/manifest` instead.
+`${projectUrl}/manifest` instead.
 
 When the required country or region is missing, the transport calls backend
 `/init` and uses its resolved policy and translations. That response can use

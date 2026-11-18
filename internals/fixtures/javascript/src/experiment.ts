@@ -54,8 +54,8 @@ const logExperimentEvent = function logExperimentEvent(text: string): void {
 };
 
 const consent = init({
-	backendURL: 'https://your-project.inth.app',
-	...testBackend('backendURL'),
+	projectUrl: 'https://your-project.inth.app',
+	...testBackend('projectUrl'),
 	callbacks: {
 		onChoiceRecorded: (payload: OnChoiceRecordedPayload) => {
 			if (!payload.experiment) {

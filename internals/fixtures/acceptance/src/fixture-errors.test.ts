@@ -13,7 +13,7 @@ describe.each([
 		const log = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const server = await start();
 		try {
-			const response = await fetch(server.backendURL, {
+			const response = await fetch(server.projectUrl, {
 				headers: { 'x-forwarded-host': '<private-host>' },
 			});
 			expect(response.status).toBe(500);

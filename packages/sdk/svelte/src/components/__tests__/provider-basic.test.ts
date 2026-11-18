@@ -98,7 +98,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 	test('hosted() reports hosted mode and calls the init URL', async () => {
 		const result = render(ProviderOnlyFixture, {
 			options: {
-				backendURL: '/api/c15t',
+				projectUrl: '/api/c15t',
 			},
 		});
 
@@ -147,8 +147,8 @@ describe('ConsentProvider Basic Request Behavior', () => {
 				mountedKernel = kernel;
 			},
 			options: {
-				backendURL: '/api/c15t',
 				iab: { enabled: true, vendors: [755] },
+				projectUrl: '/api/c15t',
 			},
 		});
 
@@ -174,7 +174,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 				// @ts-expect-error Verify the runtime guard for untyped callers.
 				options: {},
 			})
-		).toThrow('@c15t/svelte ConsentProvider: `backendURL` is required.');
+		).toThrow('@c15t/svelte ConsentProvider: `projectUrl` is required.');
 	});
 
 	test('should not make fetch calls in offline mode', async () => {
@@ -199,7 +199,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		render(ConsentProvider, {
 			mode: testOffline(),
 			options: {
-				backendURL: 'https://example.invalid',
+				projectUrl: 'https://example.invalid',
 			},
 		});
 

@@ -59,7 +59,7 @@ import type { WorkflowContext } from './workflow';
 /** What the plugin publishes under `extra.inth`. */
 export interface InthExtraConfig {
 	/** The Inth project URL, in its normal form. */
-	backendURL: string;
+	projectUrl: string;
 	/** Categories the app declares, or `null` when it declares none. Read on web. */
 	consentCategories: readonly string[] | null;
 	/** Whether consent records are dropped instead of sent. */
@@ -78,7 +78,6 @@ const buildExtra = function buildExtra(
 	params: ResolvedInthParams
 ): InthExtraConfig {
 	return {
-		backendURL: params.backendURL,
 		consentCategories:
 			params.consentCategories.length > 0
 				? [...params.consentCategories]
@@ -87,6 +86,7 @@ const buildExtra = function buildExtra(
 		dryRun: params.dryRun,
 		enableAppTrackingTransparency: params.appTrackingTransparency.enabled,
 		forceGPC: params.forceGPC,
+		projectUrl: params.projectUrl,
 		protocol: buildProtocolInfo(),
 	};
 };
@@ -257,7 +257,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 			if (bundle === null) {
 				return true;
 			}
-			await fetchBundledManifest(projectRoot, params.backendURL, bundle, build);
+			await fetchBundledManifest(projectRoot, params.projectUrl, bundle, build);
 			return existsSync(join(projectRoot, source));
 		};
 		next = withXcodeProject(next, async (cfg) => {
@@ -284,7 +284,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 			await embedPolicyResource(
 				cfg.modRequest.projectRoot,
 				source,
-				params.backendURL,
+				params.projectUrl,
 				join(cfg.modRequest.platformProjectRoot, name, POLICY_RESOURCE_NAME)
 			);
 			if (!cfg.modResults.hasFile(`${name}/${POLICY_RESOURCE_NAME}`)) {
@@ -309,7 +309,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 				await embedPolicyResource(
 					cfg.modRequest.projectRoot,
 					source,
-					params.backendURL,
+					params.projectUrl,
 					androidPolicyDestination(cfg.modRequest.projectRoot)
 				);
 				return cfg;

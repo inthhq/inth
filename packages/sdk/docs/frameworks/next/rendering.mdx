@@ -146,7 +146,7 @@ mount the consent route from the
 [App Router guide](/docs/frameworks/next/app-router#initialize-in-the-browser).
 The browser then asks `/api/c15t/init`, which resolves the bundled policy on
 your server with the browser request's location headers. Without
-`routePrefix`, the browser asks `${backendURL}/init`.
+`routePrefix`, the browser asks `${projectUrl}/init`.
 
 For a whole app of static pages, use this as the only root layout. To mix
 static pages with server-rendered ones, give each kind its own root layout in
@@ -158,7 +158,7 @@ localStorage.
 To resolve the policy in the browser itself, set
 `mode: manifest({ resolve: 'browser' })`. The browser then loads the resolver
 and fetches `${routePrefix}/manifest`. It has no location input of its own,
-so a location-based policy still asks `/init` unless you pass `geoURL`. See
+so a location-based policy still asks `/init` unless you pass `geoUrl`. See
 [consent modes](/docs/concepts/modes#manifest).
 
 ## Keep pages static with `ensureStatic`
@@ -208,7 +208,7 @@ without fetching policy. With runtime caching, warm requests make no policy
 request to the backend, but an empty cache fetches upstream.
 With backend `/init`, every server render or browser initialization
 asks the backend to resolve the visitor. Consent saves go to
-`${backendURL}/subjects` either way.
+`${projectUrl}/subjects` either way.
 
 Tests run without a backend with `mode: testing()` from `c15t/next/testing`;
 without a backend URL, `manifest()` and `hosted()` throw. See

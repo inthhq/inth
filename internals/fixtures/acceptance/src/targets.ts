@@ -215,13 +215,13 @@ export const selectedTargets = function selectedTargets(): ExampleTarget[] {
 };
 
 export const exampleEnvironment = function exampleEnvironment(
-	backendURL: string,
+	projectUrl: string,
 	port: number
 ): NodeJS.ProcessEnv {
 	const values: NodeJS.ProcessEnv = {
 		...process.env,
 		ASTRO_TELEMETRY_DISABLED: '1',
-		C15T_BACKEND_URL: backendURL,
+		C15T_BACKEND_URL: projectUrl,
 		HOST: '127.0.0.1',
 		NEXT_TELEMETRY_DISABLED: '1',
 		NITRO_HOST: '127.0.0.1',
@@ -231,7 +231,7 @@ export const exampleEnvironment = function exampleEnvironment(
 		PORT: String(port),
 	};
 	for (const prefix of ['NEXT_PUBLIC_', 'VITE_', 'PUBLIC_', 'NUXT_PUBLIC_']) {
-		values[`${prefix}C15T_BACKEND_URL`] = backendURL;
+		values[`${prefix}C15T_BACKEND_URL`] = projectUrl;
 		values[`${prefix}POSTHOG_KEY`] = 'phc_example_test';
 		values[`${prefix}X_PIXEL_ID`] = 'example-test';
 	}

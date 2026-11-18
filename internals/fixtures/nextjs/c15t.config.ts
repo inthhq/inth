@@ -8,8 +8,8 @@ import { testBackend } from './lib/test-backend';
  * import it.
  */
 export default defineConsentConfig({
-	backendURL: 'https://your-project.inth.app',
-	...testBackend('backendURL'),
+	projectUrl: 'https://your-project.inth.app',
+	...testBackend('projectUrl'),
 	// Pages that pass no state resolve consent in the browser from the
 	// manifest route, `app/api/c15t/manifest/route.ts`.
 	mode: manifest({ resolve: 'browser' }),

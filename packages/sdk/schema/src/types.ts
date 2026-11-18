@@ -36,7 +36,7 @@ export type {
 } from './api/legal-document';
 // API types - Meta
 export type { StatusOutput } from './api/meta';
-export type { ResolveBackendURLOptions } from './shared';
+export type { ResolveProjectUrlOptions } from './shared';
 // API types - Session
 export type { ConsentSessionReport, ConsentSessionSource } from './api/session';
 // API types - Subject
@@ -150,7 +150,7 @@ export {
 	parseGlobalPrivacyControl,
 	policyMatchers,
 	REGION_HEADERS,
-	resolveBackendURL,
+	resolveProjectUrl,
 	resolveInitFromManifest,
 	resolvePolicyResolutionFromManifest,
 	sliceConsentManifestLanguage,

@@ -69,8 +69,8 @@ ___TEMPLATE_PARAMETERS___
   },
   {
     "type": "TEXT",
-    "name": "backendUrl",
-    "displayName": "Backend URL",
+    "name": "projectUrl",
+    "displayName": "Project URL",
     "simpleValueType": true,
     "valueHint": "https://your-project.inth.app",
     "enablingConditions": [
@@ -411,16 +411,16 @@ const isAllowedScriptUrl = (url) => {
 
 // c15t.js from jsDelivr runs in hosted mode and stops without a backend URL.
 // c15t.local.js stops when it gets one. Inth bundles carry their own.
-const backendUrlProblem = (url, backend) => {
+const projectUrlProblem = (url, backend) => {
   if (url.indexOf('https://' + JSDELIVR_PREFIX) !== 0) return '';
   if (endsWith(url, '/c15t.js') && backend === '') {
-    return 'jsDelivr\'s c15t.js needs a "Backend URL".';
+    return 'jsDelivr\'s c15t.js needs a "Project URL".';
   }
   if (endsWith(url, '/c15t.local.js') && backend !== '') {
-    return 'c15t.local.js uses no backend. Clear "Backend URL".';
+    return 'c15t.local.js uses no backend. Clear "Project URL".';
   }
   if (endsWith(url, '/c15t.offline.js') && backend !== '') {
-    return 'c15t.offline.js uses no backend. Clear "Backend URL".';
+    return 'c15t.offline.js uses no backend. Clear "Project URL".';
   }
   return '';
 };
@@ -544,16 +544,16 @@ const inject =
   templateStorage.getItem('c15tLoading') !== true;
 const scriptUrl =
   typeof data.scriptUrl === 'string' ? data.scriptUrl.trim() : '';
-const backendUrl =
-  typeof data.backendUrl === 'string' ? data.backendUrl.trim() : '';
+const projectUrl =
+  typeof data.projectUrl === 'string' ? data.projectUrl.trim() : '';
 
 if (inject && !isAllowedScriptUrl(scriptUrl)) {
   log('c15t: "c15t script URL" must be an Inth project /c15t.js URL or a ' +
       'jsDelivr URL for an exact @c15t/browser version and c15t.js, ' +
       'c15t.local.js, c15t.headless.js or c15t.iab.js. Got: ' + scriptUrl);
   data.gtmOnFailure();
-} else if (inject && backendUrlProblem(scriptUrl, backendUrl) !== '') {
-  log('c15t: ' + backendUrlProblem(scriptUrl, backendUrl));
+} else if (inject && projectUrlProblem(scriptUrl, projectUrl) !== '') {
+  log('c15t: ' + projectUrlProblem(scriptUrl, projectUrl));
   data.gtmOnFailure();
 } else {
   if (inject) {
@@ -561,9 +561,9 @@ if (inject && !isAllowedScriptUrl(scriptUrl)) {
     // c15t to infer its categories from, so it would ask about none.
     const config = {};
     const categories = readCategories();
-    if (backendUrl !== '') config.backendURL = backendUrl;
+    if (projectUrl !== '') config.projectUrl = projectUrl;
     if (categories.length > 0) config.consentCategories = categories;
-    if (config.backendURL || config.consentCategories) c15t(['config', config]);
+    if (config.projectUrl || config.consentCategories) c15t(['config', config]);
   }
   // The queue keeps these through a failed load, so a retry reuses them.
   if (templateStorage.getItem('c15tSubscribed') !== true) {
@@ -972,11 +972,11 @@ scenarios:
     runCode({
       loadScript: true,
       scriptUrl: 'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.js',
-      backendUrl: 'https://your-project.inth.app',
+      projectUrl: 'https://your-project.inth.app',
       waitForUpdate: '500'
     });
 
-    assertThat(calls[0]).isEqualTo(['config', { backendURL: 'https://your-project.inth.app' }]);
+    assertThat(calls[0]).isEqualTo(['config', { projectUrl: 'https://your-project.inth.app' }]);
     assertThat(calls[1][1]).isEqualTo('ready');
     assertThat(calls[2][1]).isEqualTo('consent');
     assertThat(injected).isEqualTo(
@@ -1056,7 +1056,7 @@ scenarios:
     runCode({
       loadScript: true,
       scriptUrl: 'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.js',
-      backendUrl: '',
+      projectUrl: '',
       waitForUpdate: '500'
     });
 
@@ -1072,7 +1072,7 @@ scenarios:
     runCode({
       loadScript: true,
       scriptUrl: 'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.offline.js',
-      backendUrl: 'https://your-project.inth.app',
+      projectUrl: 'https://your-project.inth.app',
       waitForUpdate: '500'
     });
 

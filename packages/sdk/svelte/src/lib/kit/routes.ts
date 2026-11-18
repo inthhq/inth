@@ -14,7 +14,7 @@
  * alive.
  */
 import {
-	backendURL as builtBackendURL,
+	projectUrl as builtProjectUrl,
 	snapshot as builtSnapshot,
 } from '@c15t/core/generated';
 import { createConsentRouteHandler, readWaitUntil } from '@c15t/core/server';
@@ -105,19 +105,19 @@ const readForwarding = function readForwarding(
 export interface ConsentRouteOptions {
 	/**
 	 * The c15t backend. Defaults to what `c15tHandle()` was given: a
-	 * `hosted()` mode's `backendURL`, then the handle's `backendURL`, then
+	 * `hosted()` mode's `projectUrl`, then the handle's `projectUrl`, then
 	 * the URL `consentManifest()` read from `PUBLIC_C15T_BACKEND_URL` or
 	 * `PUBLIC_INTH_PROJECT_URL`. A
-	 * handle `backendURL` that points at this route, as in the proxy setup,
-	 * is skipped. The manifest is read from `${backendURL}/manifest` when
+	 * handle `projectUrl` that points at this route, as in the proxy setup,
+	 * is skipped. The manifest is read from `${projectUrl}/manifest` when
 	 * there is no snapshot.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
-	 * Full manifest URL. Takes precedence over `${backendURL}/manifest`.
-	 * Defaults to the `manifestURL` of the handle's `manifest()` mode.
+	 * Full manifest URL. Takes precedence over `${projectUrl}/manifest`.
+	 * Defaults to the `manifestUrl` of the handle's `manifest()` mode.
 	 */
-	manifestURL?: string;
+	manifestUrl?: string;
 	/**
 	 * A manifest to resolve with. Defaults to the handle's: the mode's
 	 * `snapshot`, then `c15tHandle({ snapshot })`, then the one
@@ -125,7 +125,7 @@ export interface ConsentRouteOptions {
 	 */
 	snapshot?: ConsentManifest;
 	/**
-	 * Fetch implementation for an absolute `backendURL` or `manifestURL`.
+	 * Fetch implementation for an absolute `projectUrl` or `manifestUrl`.
 	 * Defaults to the global `fetch`. A relative one, such as
 	 * `/api/self-host`, goes through `event.fetch` instead.
 	 */
@@ -161,7 +161,7 @@ export interface ConsentRouteOptions {
 		event: RequestEvent
 	) => void;
 	/**
-	 * Forward consent writes to `backendURL` through this route, so the
+	 * Forward consent writes to `projectUrl` through this route, so the
 	 * browser only talks to this origin. Without it the route answers `GET`
 	 * only and a save gets `405`.
 	 *
@@ -181,8 +181,8 @@ export interface ConsentRouteOptions {
 	 * version header, and `x-c15t-proxy: @c15t/svelte`. The hosted backend
 	 * sits behind a firewall that scores a bare server-to-server request as a
 	 * bot; these give it the signals a direct browser request carries, and a
-	 * stable key for a bypass rule. It needs `backendURL`, not a
-	 * `manifestURL` alone. A path such as `/api/self-host` names a route in
+	 * stable key for a bypass rule. It needs `projectUrl`, not a
+	 * `manifestUrl` alone. A path such as `/api/self-host` names a route in
 	 * this app: requests to it go through `event.fetch`, which SvelteKit
 	 * answers in-process, so the request's `Host` header never chooses
 	 * where they go.
@@ -218,8 +218,8 @@ export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
 
 /** What the route resolves with, from its options and the handle's. */
 interface RouteSource {
-	backendURL: string | undefined;
-	manifestURL: string | undefined;
+	projectUrl: string | undefined;
+	manifestUrl: string | undefined;
 	snapshot: ConsentManifest | undefined;
 }
 
@@ -234,20 +234,20 @@ const trimTrailingSlashes = function trimTrailingSlashes(
 };
 
 /**
- * Whether a handle's relative `backendURL` names this route, as
- * `c15tHandle({ backendURL: '/api/c15t', routePrefix: '/api/c15t' })` does
+ * Whether a handle's relative `projectUrl` names this route, as
+ * `c15tHandle({ projectUrl: '/api/c15t', routePrefix: '/api/c15t' })` does
  * when saves go through the proxy. Forwarding there would call the route
  * itself.
  */
 const pointsAtRoute = function pointsAtRoute(
-	backendURL: string,
+	projectUrl: string,
 	event: RequestEvent,
 	locals: C15tLocals | undefined
 ): boolean {
-	if (!backendURL.startsWith('/')) {
+	if (!projectUrl.startsWith('/')) {
 		return false;
 	}
-	const target = trimTrailingSlashes(backendURL);
+	const target = trimTrailingSlashes(projectUrl);
 	if (
 		locals?.routePrefix !== undefined &&
 		target === trimTrailingSlashes(locals.routePrefix)
@@ -264,11 +264,11 @@ const pointsAtRoute = function pointsAtRoute(
 };
 
 /** The handle's backend URL, unless it points at this route. */
-const readHandleBackendURL = function readHandleBackendURL(
+const readHandleProjectUrl = function readHandleProjectUrl(
 	event: RequestEvent,
 	locals: C15tLocals | undefined
 ): string | undefined {
-	const fromHandle = locals?.backendURL;
+	const fromHandle = locals?.projectUrl;
 	if (fromHandle === undefined || pointsAtRoute(fromHandle, event, locals)) {
 		return undefined;
 	}
@@ -302,18 +302,18 @@ const readRouteSource = function readRouteSource(
 ): RouteSource {
 	const { c15t: locals } = (event.locals ?? {}) as { c15t?: C15tLocals };
 	const mode = locals?.mode;
-	// With browser resolution, `manifestURL` is what the browser fetches
+	// With browser resolution, `manifestUrl` is what the browser fetches
 	// instead of this route.
-	const modeManifestURL =
+	const modeManifestUrl =
 		mode?.type === 'manifest' && mode.resolve !== 'browser'
-			? mode.manifestURL
+			? mode.manifestUrl
 			: undefined;
 	return {
-		backendURL:
-			options.backendURL ??
-			readHandleBackendURL(event, locals) ??
-			builtBackendURL,
-		manifestURL: options.manifestURL ?? modeManifestURL,
+		manifestUrl: options.manifestUrl ?? modeManifestUrl,
+		projectUrl:
+			options.projectUrl ??
+			readHandleProjectUrl(event, locals) ??
+			builtProjectUrl,
 		snapshot: options.snapshot ?? readHandleSnapshot(locals),
 	};
 };
@@ -366,19 +366,19 @@ export const createConsentRoute = function createConsentRoute<
 		const source = readRouteSource(options, event);
 		if (
 			built &&
-			built.source.backendURL === source.backendURL &&
-			built.source.manifestURL === source.manifestURL &&
+			built.source.projectUrl === source.projectUrl &&
+			built.source.manifestUrl === source.manifestUrl &&
 			built.source.snapshot === source.snapshot
 		) {
 			return built.handle;
 		}
 		const handle = createConsentRouteHandler({
 			adapter: '@c15t/svelte',
-			backendURL: source.backendURL,
 			fetch: options.fetch,
 			fetchGvl: options.fetchGvl,
 			manifest: source.snapshot,
-			manifestURL: source.manifestURL,
+			manifestUrl: source.manifestUrl,
+			projectUrl: source.projectUrl,
 			proxy: options.proxy,
 		});
 		built = { handle, source };

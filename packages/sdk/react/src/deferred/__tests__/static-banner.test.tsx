@@ -44,11 +44,11 @@ const subjectSaves = () =>
 
 let answer: () => void = () => undefined;
 const requestContext = {
-	backendURL: BACKEND,
 	country: null,
 	credentials: 'same-origin',
 	gpc: false,
 	language: null,
+	projectUrl: BACKEND,
 	region: null,
 };
 
@@ -99,9 +99,9 @@ const renderPage = () =>
 	render(
 		<ConsentProvider
 			options={{
-				backendURL: BACKEND,
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
+				projectUrl: BACKEND,
 			}}
 		>
 			<Probe />

@@ -53,7 +53,7 @@ too. When both are set, `NEXT_PUBLIC_C15T_BACKEND_URL` wins.
 Next.js inlines `NEXT_PUBLIC_` variables at build time, so the build, the
 server and the browser use the same URL, and changing the variable on a built
 app has no effect until you rebuild. To set the URL in code instead, pass
-`backendURL` to `defineConsentConfig` and to `withConsentManifest`.
+`projectUrl` to `defineConsentConfig` and to `withConsentManifest`.
 
 ## Bundle the manifest during builds
 
@@ -72,7 +72,7 @@ so it can hold `scripts` but must hold no secrets.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `backendURL` | `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${backendURL}/subjects`. |
+| `projectUrl` | `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${projectUrl}/subjects`. |
 | `mode` | `manifest()` | `manifest()`, `hosted()` or `testing()` from `c15t/next`. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where you mount the [consent route](#initialize-in-the-browser). Set it only when some pages resolve consent in the browser. |
 | `proxy` | `false` | Send browser saves through the consent route too. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
@@ -175,7 +175,7 @@ in `c15t.config.ts` and pass `createConsentRoute({ proxy: true })`, which
 forwards the remaining consent paths, such as `/subjects`, to the backend; see
 [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
-Without `routePrefix`, a page without `state` calls `${backendURL}/init`. The
+Without `routePrefix`, a page without `state` calls `${projectUrl}/init`. The
 HTML is the same for every visitor either way. To mix these pages with
 server-rendered ones, see
 [static, ISR and cached pages](/docs/frameworks/next/rendering#render-static-isr-and-cached-pages).
@@ -195,8 +195,8 @@ export default defineConsentConfig({ mode: hosted() });
 Keep `withConsentManifest` in `next.config.ts`: it is what finds
 `c15t.config.ts`. With `hosted()` it downloads no manifest, so `next build`
 does not contact the backend. The layouts stay the same. `resolveConsent`
-and the browser now call `${backendURL}/init`, and consent choices still go to
-`${backendURL}/subjects`. Every visit makes a backend request, which the
+and the browser now call `${projectUrl}/init`, and consent choices still go to
+`${projectUrl}/subjects`. Every visit makes a backend request, which the
 manifest avoids. For a browser-only setup with no server work, follow
 [client-side initialization](/docs/frameworks/next/client-side).
 
@@ -225,7 +225,7 @@ site in a fresh browser session with DevTools open.
 4. Open **Privacy settings** again and turn **Analytics** off. The page reloads
    and PostHog does not load again.
 5. The browser makes no `/init` request, and choices post to
-   `${backendURL}/subjects`.
+   `${projectUrl}/subjects`.
 
 Test a new visitor and two locations. Requests without location headers
 follow your unknown-location rule. [Script loading](/docs/frameworks/next/scripts)

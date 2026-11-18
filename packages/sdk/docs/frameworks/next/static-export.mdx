@@ -30,7 +30,7 @@ has nothing to answer it. `NEXT_PUBLIC_INTH_PROJECT_URL` works too; when both
 are set, `NEXT_PUBLIC_C15T_BACKEND_URL` wins.
 
 Create `c15t.config.ts` at the project root with `mode: hosted()`. Without a
-server there is no consent route, so the browser calls `${backendURL}/init`.
+server there is no consent route, so the browser calls `${projectUrl}/init`.
 
 <include src="../../shared/examples/nextjs/client-side-config.mdx" />
 
@@ -94,11 +94,11 @@ A same-origin `/api/c15t` URL needs a proxy at your host, because Next.js
 rewrites need a server. Without one, keep the absolute backend URL.
 
 To resolve a manifest in the browser instead, set
-`mode: manifest({ resolve: 'browser', manifestURL })` with an absolute
-`manifestURL` the browser can fetch, such as
+`mode: manifest({ resolve: 'browser', manifestUrl })` with an absolute
+`manifestUrl` the browser can fetch, such as
 `https://your-project.inth.app/manifest`. Browser resolution has no location
 input of its own, so location-based policies call the backend's `/init`
-unless you pass `geoURL`. `c15t/next/static` has lower-level helpers that
+unless you pass `geoUrl`. `c15t/next/static` has lower-level helpers that
 resolve a bundled manifest; see
 [static manifest helpers](/docs/frameworks/next/data-fetching-reference#static-manifest-helpers).
 

@@ -152,9 +152,9 @@ describe('resolveOptions', () => {
 			try {
 				const { calls } = await runSetup(
 					{
-						backendURL: 'https://consent.example.com',
 						mode: manifestMode(),
 						onBuildError: 'fail',
+						projectUrl: 'https://consent.example.com',
 					},
 					{},
 					command
@@ -173,7 +173,7 @@ describe('resolveOptions', () => {
 						clientSource.replace(/^export default /u, '').replace(/;$/u, '')
 					);
 					expect(clientOptions.mode).toEqual({ type: 'manifest' });
-					expect(clientOptions.backendURL).toBe('https://consent.example.com');
+					expect(clientOptions.projectUrl).toBe('https://consent.example.com');
 					expect(clientOptions.routePrefix).toBe('/api/c15t');
 					expect(clientSource).not.toContain(INLINE_MANIFEST.revision);
 				}
@@ -201,9 +201,9 @@ describe('resolveOptions', () => {
 			try {
 				await expect(
 					runSetup({
-						backendURL: 'https://consent.example.com',
 						mode: manifestMode(),
 						onBuildError: 'fail',
+						projectUrl: 'https://consent.example.com',
 					})
 				).rejects.toThrow(error);
 			} finally {
@@ -218,9 +218,9 @@ describe('resolveOptions', () => {
 		try {
 			await runSetup(
 				{
-					backendURL: 'https://consent.example.com',
 					mode: manifestMode(),
 					onBuildError: 'fail',
+					projectUrl: 'https://consent.example.com',
 				},
 				{},
 				'preview'
@@ -244,8 +244,8 @@ describe('resolveOptions', () => {
 		);
 		vi.stubGlobal('fetch', fetch);
 		const { calls } = await runSetup({
-			backendURL: 'https://consent.example.com',
 			mode: manifestMode(),
+			projectUrl: 'https://consent.example.com',
 		});
 		expect(fetch).toHaveBeenCalledWith(
 			'https://consent.example.com/manifest',
@@ -264,7 +264,7 @@ describe('resolveOptions', () => {
 			vi.fn(() => Promise.resolve(new Response(null, { status: 503 })))
 		);
 		const { calls } = await runSetup(
-			{ backendURL: 'https://consent.example.com', mode: manifestMode() },
+			{ mode: manifestMode(), projectUrl: 'https://consent.example.com' },
 			{},
 			'dev'
 		);
@@ -282,8 +282,8 @@ describe('resolveOptions', () => {
 			vi.fn(() => Promise.resolve(new Response(null, { status: 503 })))
 		);
 		const { calls } = await runSetup({
-			backendURL: 'https://consent.example.com',
 			mode: manifestMode(),
+			projectUrl: 'https://consent.example.com',
 		});
 		expect(calls.logger.warn).toHaveBeenCalledWith(
 			expect.stringContaining('during the build (/manifest responded 503')
@@ -299,9 +299,9 @@ describe('resolveOptions', () => {
 		);
 		await expect(
 			runSetup({
-				backendURL: 'https://consent.example.com',
 				mode: manifestMode(),
 				onBuildError: 'fail',
+				projectUrl: 'https://consent.example.com',
 			})
 		).rejects.toThrow(
 			"@c15t/astro: could not fetch the consent manifest from https://consent.example.com/manifest during the build (/manifest responded 503 ). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
@@ -317,8 +317,8 @@ describe('resolveOptions', () => {
 			vi.stubEnv('C15T_ON_BUILD_ERROR', fromEnv);
 			const { calls } = await runSetup({
 				...settings,
-				backendURL: 'https://consent.example.com',
 				mode: manifestMode(),
+				projectUrl: 'https://consent.example.com',
 			});
 			expect(calls.logger.warn).toHaveBeenCalledTimes(1);
 		}
@@ -329,9 +329,9 @@ describe('resolveOptions', () => {
 		await expect(
 			runSetup(
 				{
-					backendURL: 'https://consent.example.com',
 					mode: manifestMode(),
 					onBuildError: 'fail',
+					projectUrl: 'https://consent.example.com',
 				},
 				{},
 				'dev'
@@ -339,7 +339,7 @@ describe('resolveOptions', () => {
 		).rejects.toThrow('during dev (offline in tests)');
 	});
 
-	it('reads PUBLIC_C15T_BACKEND_URL when no backendURL is set', async () => {
+	it('reads PUBLIC_C15T_BACKEND_URL when no projectUrl is set', async () => {
 		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://env.example.com');
 		const fetch = vi.fn<typeof globalThis.fetch>(() =>
 			Promise.resolve(Response.json(INLINE_MANIFEST))
@@ -353,7 +353,7 @@ describe('resolveOptions', () => {
 		);
 		const hosted = await runSetup({ mode: hostedMode() });
 		expect(serverOptionsSource(hosted.calls)).toContain(
-			'"backendURL":"https://env.example.com"'
+			'"projectUrl":"https://env.example.com"'
 		);
 		expect(serverOptionsSource(calls)).toContain('"type":"manifest"');
 	});
@@ -369,7 +369,7 @@ describe('resolveOptions', () => {
 			{ root: pathToFileURL(`${root}/`) }
 		);
 		expect(serverOptionsSource(calls)).toContain(
-			'"backendURL":"https://dotenv.example.com"'
+			'"projectUrl":"https://dotenv.example.com"'
 		);
 	});
 
@@ -378,7 +378,7 @@ describe('resolveOptions', () => {
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
 		const { calls } = await runSetup({ mode: hostedMode() });
 		expect(serverOptionsSource(calls)).toContain(
-			'"backendURL":"https://inth.example.com"'
+			'"projectUrl":"https://inth.example.com"'
 		);
 	});
 
@@ -395,44 +395,44 @@ describe('resolveOptions', () => {
 			{ root: pathToFileURL(`${root}/`) }
 		);
 		expect(serverOptionsSource(calls)).toContain(
-			'"backendURL":"https://c15t.example.com"'
+			'"projectUrl":"https://c15t.example.com"'
 		);
 	});
 
-	it('an explicit backendURL beats both variables', async () => {
+	it('an explicit projectUrl beats both variables', async () => {
 		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
 		const { calls } = await runSetup({
-			backendURL: 'https://option.example.com',
 			mode: hostedMode(),
+			projectUrl: 'https://option.example.com',
 		});
 		expect(serverOptionsSource(calls)).toContain(
-			'"backendURL":"https://option.example.com"'
+			'"projectUrl":"https://option.example.com"'
 		);
 	});
 
 	it.each([
 		[
 			'hosted()',
-			{ backendURL: 'https://consent.example.com', mode: hostedMode() },
+			{ mode: hostedMode(), projectUrl: 'https://consent.example.com' },
 		],
 		['offline()', { mode: testingMode() }],
 		[
 			'a relative manifest URL',
-			{ backendURL: '', mode: manifestMode({ manifestURL: '/m.json' }) },
+			{ mode: manifestMode({ manifestUrl: '/m.json' }), projectUrl: '' },
 		],
 		[
 			"manifest({ source: 'runtime' })",
 			{
-				backendURL: 'https://consent.example.com',
 				mode: manifestMode({ source: 'runtime' }),
+				projectUrl: 'https://consent.example.com',
 			},
 		],
 		[
 			'a snapshot of its own',
 			{
-				backendURL: 'https://consent.example.com',
 				mode: manifestMode({ snapshot: INLINE_MANIFEST }),
+				projectUrl: 'https://consent.example.com',
 			},
 		],
 	] satisfies [string, C15tAstroOptions][])(
@@ -450,9 +450,9 @@ describe('resolveOptions', () => {
 		vi.stubEnv('C15T_ON_BUILD_ERROR', '');
 		await expect(
 			runSetup({
-				backendURL: '',
-				mode: manifestMode({ manifestURL: '/m.json' }),
+				mode: manifestMode({ manifestUrl: '/m.json' }),
 				onBuildError: 'fail',
+				projectUrl: '',
 			})
 		).rejects.toThrow('absolute upstream URL');
 	});
@@ -463,7 +463,7 @@ describe('resolveOptions', () => {
 
 	it('defaults to manifest() and the /api/c15t route prefix', () => {
 		const resolved = resolveOptions({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 		});
 		expect(resolved.mode).toEqual({ type: 'manifest' });
 		expect(resolved.routePrefix).toBe('/api/c15t');
@@ -508,8 +508,8 @@ describe('resolveOptions', () => {
 			expect(
 				resolveOptions({
 					...options,
-					backendURL: 'https://consent.example.com',
 					mode: manifestMode({ snapshot: INLINE_MANIFEST }),
+					projectUrl: 'https://consent.example.com',
 				}).mode.type
 			).toBe('manifest');
 		}
@@ -583,66 +583,66 @@ describe('resolveOptions', () => {
 		}
 	});
 
-	it('keeps an empty backendURL, which means this origin', () => {
+	it('keeps an empty projectUrl, which means this origin', () => {
 		vi.stubEnv('C15T_BACKEND_URL', 'https://consent.example.com');
 		try {
 			expect(
 				resolveOptions({
-					backendURL: '',
-					mode: manifestMode({ manifestURL: '/m.json' }),
+					mode: manifestMode({ manifestUrl: '/m.json' }),
+					projectUrl: '',
 				})
-			).toHaveProperty('backendURL', '');
+			).toHaveProperty('projectUrl', '');
 		} finally {
 			vi.unstubAllEnvs();
 		}
 	});
 
-	it('rejects an empty backendURL with no manifest to fetch', () => {
-		// `''` saves on this origin, but `${backendURL}/manifest` needs a real
+	it('rejects an empty projectUrl with no manifest to fetch', () => {
+		// `''` saves on this origin, but `${projectUrl}/manifest` needs a real
 		// URL, and the environment's backend URL does not replace it.
 		vi.stubEnv('C15T_BACKEND_URL', 'https://consent.example.com');
 		vi.stubEnv('C15T_MANIFEST_URL', '');
 		try {
 			expect(() =>
-				resolveOptions({ backendURL: '', mode: manifestMode() })
+				resolveOptions({ mode: manifestMode(), projectUrl: '' })
 			).toThrowError(/gives the server no manifest to fetch/u);
 		} finally {
 			vi.unstubAllEnvs();
 		}
 	});
 
-	it('accepts an empty backendURL with an inline manifest', () => {
+	it('accepts an empty projectUrl with an inline manifest', () => {
 		expect(
 			resolveOptions({
-				backendURL: '',
 				mode: manifestMode({ snapshot: INLINE_MANIFEST }),
+				projectUrl: '',
 			})
-		).toHaveProperty('backendURL', '');
+		).toHaveProperty('projectUrl', '');
 	});
 
-	it('does not take the manifest for an empty backendURL from the environment', () => {
+	it('does not take the manifest for an empty projectUrl from the environment', () => {
 		vi.stubEnv('C15T_MANIFEST_URL', 'https://consent.example.com/manifest');
 		try {
 			expect(() =>
-				resolveOptions({ backendURL: '', mode: manifestMode() })
+				resolveOptions({ mode: manifestMode(), projectUrl: '' })
 			).toThrowError(/gives the server no manifest to fetch/u);
 		} finally {
 			vi.unstubAllEnvs();
 		}
 	});
 
-	it('rejects a manifestURL with nowhere to save consent', () => {
+	it('rejects a manifestUrl with nowhere to save consent', () => {
 		// The injected routes serve init and manifest; `POST /subjects` is
-		// the backend's, so a `manifestURL` without one would 404 on save.
+		// the backend's, so a `manifestUrl` without one would 404 on save.
 		expect(() =>
-			resolveOptions({ mode: manifestMode({ manifestURL: '/m.json' }) })
+			resolveOptions({ mode: manifestMode({ manifestUrl: '/m.json' }) })
 		).toThrowError(/manifest\(\) needs a backend URL/u);
 		expect(
 			resolveOptions({
-				backendURL: 'https://consent.example.com',
-				mode: manifestMode({ manifestURL: '/m.json' }),
+				mode: manifestMode({ manifestUrl: '/m.json' }),
+				projectUrl: 'https://consent.example.com',
 			})
-		).toMatchObject({ backendURL: 'https://consent.example.com' });
+		).toMatchObject({ projectUrl: 'https://consent.example.com' });
 	});
 
 	it('rejects an experiment with no way to resolve its arm on the server', () => {
@@ -762,8 +762,8 @@ describe('astro:config:setup', () => {
 
 	it('registers the middleware before user middleware', async () => {
 		const { calls } = await runSetup({
-			backendURL: '/api/c15t',
 			mode: hostedMode(),
+			projectUrl: '/api/c15t',
 		});
 		expect(calls.addMiddleware).toHaveBeenCalledWith({
 			entrypoint: resolveOwnEntry('@c15t/astro/middleware'),
@@ -971,21 +971,21 @@ describe('astro:config:setup', () => {
 		['offline()', { mode: testingMode() }, {}, 'testingTransport'],
 		[
 			'hosted() with no adapter',
-			{ backendURL: 'https://consent.example.com', mode: hostedMode() },
+			{ mode: hostedMode(), projectUrl: 'https://consent.example.com' },
 			{},
 			'hostedTransport',
 		],
 		[
 			'hosted() with an adapter',
-			{ backendURL: 'https://consent.example.com', mode: hostedMode() },
+			{ mode: hostedMode(), projectUrl: 'https://consent.example.com' },
 			{ adapter: { name: '@astrojs/node' } },
 			'lazyTransport',
 		],
 		[
 			'manifest()',
 			{
-				backendURL: 'https://consent.example.com',
 				mode: manifestMode({ source: 'runtime' }),
+				projectUrl: 'https://consent.example.com',
 			},
 			{ adapter: { name: '@astrojs/node' } },
 			'lazyTransport',
@@ -1187,10 +1187,10 @@ describe('astro:config:setup', () => {
 
 	it('serves the serialized options from the virtual module', async () => {
 		const { calls } = await runSetup({
-			backendURL: 'https://consent.example.com',
 			consentCategories: ['necessary', 'measurement'],
 			gpp: { usApproach: 'national', usFallback: 'none' },
 			mode: hostedMode(),
+			projectUrl: 'https://consent.example.com',
 		});
 		const [config] = calls.updateConfig.mock.calls[0] as [
 			{
@@ -1211,7 +1211,7 @@ describe('astro:config:setup', () => {
 			loaded.replace(/^export default /u, '').replace(/;$/u, '')
 		);
 		expect(parsed.mode).toEqual({ type: 'hosted' });
-		expect(parsed.backendURL).toBe('https://consent.example.com');
+		expect(parsed.projectUrl).toBe('https://consent.example.com');
 		expect(parsed.consentCategories).toEqual(['necessary', 'measurement']);
 		expect(parsed.gpp).toEqual({ usApproach: 'national', usFallback: 'none' });
 	});
@@ -1241,8 +1241,8 @@ describe('astro:config:setup', () => {
 
 	it('injects one catch-all route in manifest mode', async () => {
 		const { calls } = await runSetup({
-			backendURL: 'https://consent.example.com',
 			mode: manifestMode(),
+			projectUrl: 'https://consent.example.com',
 			routePrefix: '/consent',
 		});
 		expect(calls.injectRoute).toHaveBeenCalledTimes(1);
@@ -1255,8 +1255,8 @@ describe('astro:config:setup', () => {
 
 	it('prerenders the route for browser resolution on a site with no adapter', async () => {
 		const options: C15tAstroOptions = {
-			backendURL: 'https://consent.example.com',
 			mode: manifestMode({ resolve: 'browser' }),
+			projectUrl: 'https://consent.example.com',
 		};
 		const { calls } = await runSetup(options);
 		expect(calls.injectRoute).toHaveBeenCalledWith(
@@ -1274,13 +1274,13 @@ describe('astro:config:setup', () => {
 	});
 
 	it.each([
-		['hosted mode', { backendURL: '/api/c15t', mode: hostedMode() }],
+		['hosted mode', { mode: hostedMode(), projectUrl: '/api/c15t' }],
 		['offline mode', { mode: testingMode() }],
 		[
 			'routePrefix: false',
 			{
-				backendURL: 'https://consent.example.com',
 				mode: manifestMode(),
+				projectUrl: 'https://consent.example.com',
 				routePrefix: false,
 			},
 		],
@@ -1301,8 +1301,8 @@ describe('astro:config:done', () => {
 		adapter?: { name: string }
 	) => runDone(options, ['@astrojs/svelte'], adapter, command);
 	const MANIFEST: C15tAstroOptions = {
-		backendURL: 'https://consent.example.com',
 		mode: manifestMode(),
+		projectUrl: 'https://consent.example.com',
 	};
 
 	it('names the injected route when a build has no adapter', async () => {

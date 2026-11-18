@@ -15,7 +15,7 @@ the cause:
 | Error | Cause |
 | --- | --- |
 | `/manifest responded 404` | The backend URL is wrong, or still the `https://your-project.inth.app` placeholder. |
-| `no backend URL is set` | Neither the `backendURL` option nor `VITE_C15T_BACKEND_URL` (or `VITE_INTH_PROJECT_URL`) is set, or it is empty. `vite build` stops; `vite dev` warns. |
+| `no backend URL is set` | Neither the `projectUrl` option nor `VITE_C15T_BACKEND_URL` (or `VITE_INTH_PROJECT_URL`) is set, or it is empty. `vite build` stops; `vite dev` warns. |
 | `skipped the consent manifest fetch` (a notice) | The backend URL is relative. With `onBuildError: 'fail'`, this is the error `build-time manifests require an absolute upstream URL`. |
 | `/manifest returned an invalid consent manifest.` | The URL answers, but not with a c15t v3 manifest. |
 | `fetch failed` or `no response within 10 seconds` | The machine running the command cannot reach the backend. |
@@ -27,12 +27,12 @@ machine can reach the backend. To deploy while it is down, build with
 
 ## The browser fetches the manifest at runtime
 
-**Check.** With `manifest()`, the browser requests `<backendURL>/manifest` on
+**Check.** With `manifest()`, the browser requests `<projectUrl>/manifest` on
 page load instead of resolving from a bundled policy. The build had no policy
 to bundle: `consentManifest` is missing from `plugins` in `vite.config.ts`,
 the fetch failed in `vite dev` or in a build with
 `C15T_ON_BUILD_ERROR=runtime`, or the backend URL is relative. Without the
-plugin and without a `backendURL` option, `manifest()` has no backend URL at
+plugin and without a `projectUrl` option, `manifest()` has no backend URL at
 all and throws when it runs.
 
 **Fix.** Add the plugin or fix the cause from the
@@ -43,7 +43,7 @@ the first time the app loads the policy.
 ## Consent requests go to the wrong backend
 
 **Check.** Look at `VITE_C15T_BACKEND_URL` and `VITE_INTH_PROJECT_URL` in
-`.env`, `.env.local` and the build environment, and at any `backendURL` in `vite.config.ts` or
+`.env`, `.env.local` and the build environment, and at any `projectUrl` in `vite.config.ts` or
 `src/App.svelte`. One still has the demo project, the placeholder
 `https://your-project.inth.app`, or a URL from another project. Vite writes
 `VITE_C15T_BACKEND_URL` into the bundle at build time, so changing it later
@@ -77,7 +77,7 @@ alias.
 | --- | --- |
 | `ConsentManagerProvider` | `ConsentProvider` |
 | `Frame` | `ConsentGate` |
-| `hosted({ url })` | `hosted()` with `VITE_C15T_BACKEND_URL`, or the provider's `backendURL` prop |
+| `hosted({ url })` | `hosted()` with `VITE_C15T_BACKEND_URL`, or the provider's `projectUrl` prop |
 | `ConsentManifestOptions`, `consentManifest({ outputFile })` | Removed. `consentManifest()` serves the snapshot as `c15t/generated`. |
 
 ## More help

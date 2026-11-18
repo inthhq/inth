@@ -30,8 +30,8 @@ describe('createConsentRoute', () => {
 	test('serves the deployment snapshot without fetching an upstream manifest', async () => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const { GET } = createConsentRoute({
-			backendURL: BACKEND,
 			fetch,
+			projectUrl: BACKEND,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		expect(
@@ -61,10 +61,10 @@ describe('createConsentRoute', () => {
 	});
 
 	test('returns GET, and the write methods with proxy on', () => {
-		const plain = createConsentRoute({ backendURL: BACKEND });
+		const plain = createConsentRoute({ projectUrl: BACKEND });
 		expect(Object.keys(plain)).toEqual(['GET']);
 		const proxied = createConsentRoute({
-			backendURL: BACKEND,
+			projectUrl: BACKEND,
 			proxy: true,
 		});
 		expect(Object.keys(proxied).sort()).toEqual([
@@ -80,9 +80,9 @@ describe('createConsentRoute', () => {
 	test('GET dispatches on the router splat, or the path when there is none', async () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({
-			backendURL: BACKEND,
 			cache: createManifestCache(),
 			fetch,
+			projectUrl: BACKEND,
 		});
 		const served = await GET({
 			params: { _splat: 'manifest' },
@@ -104,9 +104,9 @@ describe('createConsentRoute', () => {
 
 	test('init resolves with the inputs the request middleware remembered', async () => {
 		const { GET } = createConsentRoute({
-			backendURL: BACKEND,
 			cache: createManifestCache(),
 			fetch: upstream(),
+			projectUrl: BACKEND,
 		});
 		const incoming = request('init', { headers: { 'x-c15t-country': 'US' } });
 		rememberConsentInputs(incoming, { country: 'DE', language: 'de' });
@@ -121,8 +121,8 @@ describe('createConsentRoute', () => {
 	test('the proxy names the adapter and trusts forwarding only when told to', async () => {
 		const fetch = upstream();
 		const { POST } = createConsentRoute({
-			backendURL: BACKEND,
 			fetch,
+			projectUrl: BACKEND,
 			proxy: true,
 			trustForwardedHeaders: true,
 		});
@@ -145,12 +145,12 @@ describe('createConsentRoute', () => {
 		const registered: Promise<void>[] = [];
 		const fetch = upstream();
 		const { GET } = createConsentRoute({
-			backendURL: BACKEND,
 			cache: createManifestCache(),
 			fetch,
 			onBackgroundRevalidate: (task) => {
 				registered.push(task);
 			},
+			projectUrl: BACKEND,
 		});
 		await GET({ request: request('init') });
 		expect(registered).toHaveLength(1);

@@ -239,7 +239,7 @@ def prepare(cfg, platform, vendor, runtime=False, profile=None):
            'android': {'package': 'com.c15t.expodev'}, 'ios': {'bundleIdentifier': 'com.c15t.expodev', 'supportsTablet': True}}
     if vendor == 'c15t':
         shutil.copy2(cfg['policy'], host / 'c15t-policy.json')
-        app['plugins'] = [['@c15t/react-native/expo-plugin', {'mode': 'hosted', 'backendURL': cfg['backendUrl'],
+        app['plugins'] = [['@c15t/react-native/expo-plugin', {'mode': 'hosted', 'projectUrl': cfg['backendUrl'],
             'consentCategories': ['necessary', 'functionality', 'experience', 'measurement', 'marketing'], 'policyResource': './c15t-policy.json'}]]
     (host / 'app.json').write_text(json.dumps({'expo': app}, indent=2) + '\n')
     logs = root_for(cfg) / 'logs' / ('runtime' if runtime else ('android-optimized' if profile == 'android-optimized' else platform)) / vendor

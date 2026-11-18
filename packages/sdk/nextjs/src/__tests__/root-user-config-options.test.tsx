@@ -20,7 +20,6 @@ const configured = vi.hoisted(() => ({
 // oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's c15t.config.ts. The mock is that alias; ConsentRoot is real.
 vi.mock('@c15t/nextjs/user-config', () => ({
 	default: {
-		backendURL: 'https://consent.example.com',
 		options: {
 			callbacks: {
 				onChoiceRecorded: configured.recorded,
@@ -37,6 +36,7 @@ vi.mock('@c15t/nextjs/user-config', () => ({
 				{ kind: 'hosted' as const }
 			),
 		},
+		projectUrl: 'https://consent.example.com',
 	},
 }));
 

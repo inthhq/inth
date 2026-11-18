@@ -116,7 +116,7 @@ that is why the flag exists rather than a per-page toggle.
 
 `demo-gvl.mjs` holds a two-vendor Global Vendor List. A real site never
 ships one: hosted and manifest mode fetch it through `/init`, and an
-offline site points `iab.gvlURL` at where the real list lives, which goes
+offline site points `iab.gvlUrl` at where the real list lives, which goes
 through the in-process cache in `@c15t/core/server`.
 
 ## Consent example

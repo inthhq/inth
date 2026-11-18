@@ -47,8 +47,8 @@ describe('loadConsent', () => {
 		);
 		const event = createEvent({ headers: { 'x-c15t-country': 'DE' } });
 		await c15tHandle({
-			backendURL: 'https://consent.example.com',
 			mode: manifest({ snapshot: IAB_MANIFEST }),
+			projectUrl: 'https://consent.example.com',
 			routePrefix: '/api/c15t',
 		})({ event, resolve: () => Promise.resolve(new Response()) });
 		const { consent } = await loadConsent(event);

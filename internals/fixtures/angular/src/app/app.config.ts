@@ -16,9 +16,9 @@ import { routes } from './app.routes';
 import { provideExperimentFromURL } from './experiment';
 
 const consent: C15tProviderOptions = {
-	// The consent route `server.ts` mounts.
-	backendURL: '/api/c15t',
 	mode: hosted(),
+	// The consent route `server.ts` mounts.
+	projectUrl: '/api/c15t',
 	scripts,
 };
 

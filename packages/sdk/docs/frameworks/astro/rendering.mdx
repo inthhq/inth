@@ -61,7 +61,7 @@ export default defineConfig({
 The build downloads the manifest and the integration prerenders it as a
 static file at `/api/c15t/manifest`, so no adapter is needed. The browser
 fetches that file from your own origin, loads the resolver, and resolves the
-policy. It has no request location, so without `inputs` or `geoURL` every
+policy. It has no request location, so without `inputs` or `geoUrl` every
 visitor gets the policy your project assigns when the location is unknown.
 Use `hosted()` when your policy differs by region and you have no location
 source. Consent saves go to the backend, so your site's origin must be in
@@ -87,7 +87,7 @@ with `onBuildError: 'runtime'`, the server downloads and caches the file at
 runtime. The browser asks the injected `/api/c15t/init` route when it needs a
 decision, and saves consent to the backend URL. A server-rendered page ships
 only the code that saves consent; the code that resolves a policy loads when
-a page asks again. `manifest()` needs the backend URL as `backendURL` or
+a page asks again. `manifest()` needs the backend URL as `projectUrl` or
 `PUBLIC_C15T_BACKEND_URL` (or `PUBLIC_INTH_PROJECT_URL`); without it, the
 config fails to load.
 [Data fetching](/docs/concepts/data-fetching) compares this with calling

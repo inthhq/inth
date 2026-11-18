@@ -91,7 +91,7 @@ const readNonce = function readNonce(element: Element): string | undefined {
  *
  * ```html
  * <script src="https://cdn.jsdelivr.net/npm/@c15t/browser/dist/c15t.js"
- *   data-backend-url="https://your-project.inth.app"
+ *   data-project-url="https://your-project.inth.app"
  *   data-categories="measurement,marketing"
  *   data-color-scheme="dark"
  *   data-privacy-policy-url="/privacy"
@@ -112,19 +112,19 @@ export const readScriptOptions = function readScriptOptions(
 		return {};
 	}
 	const options: ScriptTagClientOptions = {};
-	const backendURL =
-		element.getAttribute('data-backend-url') ??
+	const projectUrl =
+		element.getAttribute('data-project-url') ??
 		element.getAttribute('data-backend');
-	if (backendURL) {
-		options.backendURL = backendURL;
+	if (projectUrl) {
+		options.projectUrl = projectUrl;
 	}
 	const mode = element.getAttribute('data-mode');
 	if (mode && MODES.has(mode)) {
 		options.mode = mode as ConsentModeName;
 	}
-	const manifestURL = element.getAttribute('data-manifest-url');
-	if (manifestURL) {
-		options.manifestURL = manifestURL;
+	const manifestUrl = element.getAttribute('data-manifest-url');
+	if (manifestUrl) {
+		options.manifestUrl = manifestUrl;
 	}
 	const categories = readList(element.getAttribute('data-categories'));
 	if (categories) {

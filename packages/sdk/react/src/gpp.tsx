@@ -36,7 +36,7 @@ export type ConsentGPPProps = RuntimeGPPOptions;
  * ```tsx
  * import { ConsentGPP } from '@c15t/react/gpp';
  *
- * <ConsentProvider options={{ mode: hosted({ backendURL }) }}>
+ * <ConsentProvider options={{ mode: hosted({ projectUrl }) }}>
  *   <ConsentGPP usFallback="none" />
  *   <App />
  * </ConsentProvider>

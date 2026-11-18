@@ -7,7 +7,7 @@ import { createHostedConsentClient } from './hosted-client';
 
 /** The global API installed by the hosted browser bundle. */
 export interface HostedC15tGlobal extends C15tGlobalBase {
-	/** Hosted transport factory for `init({ mode: c15t.hosted({ backendURL }) })`. */
+	/** Hosted transport factory for `init({ mode: c15t.hosted({ projectUrl }) })`. */
 	hosted: typeof hosted;
 }
 

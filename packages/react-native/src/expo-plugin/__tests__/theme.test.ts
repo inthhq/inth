@@ -61,7 +61,7 @@ const FULL_THEME: InthThemePluginProps = {
 };
 
 const withTheme = (theme: unknown): InthPluginProps =>
-	({ backendURL: BACKEND, theme }) as InthPluginProps;
+	({ projectUrl: BACKEND, theme }) as InthPluginProps;
 
 const themedPlist = async function themedPlist(
 	theme: unknown,
@@ -224,7 +224,7 @@ describe('theme prop', () => {
 
 	it('registers no theme write without the prop', async () => {
 		const applied = await runInfoPlist(
-			applyToFixture({ backendURL: BACKEND }),
+			applyToFixture({ projectUrl: BACKEND }),
 			{ 'com.inth.consent.primary': '#111111' }
 		);
 		expect(

@@ -42,10 +42,10 @@ const createRoot = async () => {
 };
 
 const optionsFor = (rootDir: string) => ({
-	backendURL: 'https://consent.example.com',
 	fetch: vi
 		.fn<typeof globalThis.fetch>()
 		.mockImplementation(() => Promise.resolve(Response.json(MANIFEST_FIXTURE))),
+	projectUrl: 'https://consent.example.com',
 	rootDir,
 });
 
@@ -92,7 +92,7 @@ const buildEntry = async (
 };
 
 const GENERATED_ENTRY =
-	"export { backendURL, snapshot } from '@c15t/core/generated';\nexport { snapshot as umbrella } from 'c15t/generated';\n";
+	"export { projectUrl, snapshot } from '@c15t/core/generated';\nexport { snapshot as umbrella } from 'c15t/generated';\n";
 
 describe('@c15t/core/generated in Vite', () => {
 	test('a single-page app build bundles the snapshot and writes no file', async () => {
@@ -119,7 +119,7 @@ describe('@c15t/core/generated in Vite', () => {
 		await mkdir(join(root, 'src'), { recursive: true });
 		await writeFile(
 			join(root, 'src/modes.js'),
-			"import { backendURL, snapshot } from '@c15t/core/generated';\nexport const hosted = () => ({ backendURL });\nexport const manifest = () => ({ backendURL, snapshot });\n"
+			"import { projectUrl, snapshot } from '@c15t/core/generated';\nexport const hosted = () => ({ projectUrl });\nexport const manifest = () => ({ projectUrl, snapshot });\n"
 		);
 		const code = await buildEntry(
 			root,
@@ -131,9 +131,9 @@ describe('@c15t/core/generated in Vite', () => {
 		const withoutURL = await buildEntry(
 			root,
 			consentManifest({ fetch: options.fetch }),
-			"export { backendURL } from '@c15t/core/generated';\n"
+			"export { projectUrl } from '@c15t/core/generated';\n"
 		);
-		expect(withoutURL).toContain('const backendURL = void 0;');
+		expect(withoutURL).toContain('const projectUrl = void 0;');
 	});
 
 	test('a build that reads the snapshot bundles an undefined snapshot when the fetch fails', async () => {
@@ -163,7 +163,7 @@ describe('@c15t/core/generated in Vite', () => {
 		expect(options.fetch).toHaveBeenCalledTimes(1);
 	});
 
-	test('the build failure names source: runtime for a runtime manifestURL', async () => {
+	test('the build failure names source: runtime for a runtime manifestUrl', async () => {
 		const root = await createRoot();
 		const options = optionsFor(root);
 		options.fetch.mockRejectedValue(new Error('backend unavailable'));
@@ -192,7 +192,7 @@ describe('@c15t/core/generated in Vite', () => {
 		expect(options.fetch).toHaveBeenCalledTimes(1);
 	});
 
-	test("source: 'runtime' builds without fetching, for manifest({ manifestURL })", async () => {
+	test("source: 'runtime' builds without fetching, for manifest({ manifestUrl })", async () => {
 		// The app's manifest() discards the snapshot at runtime, but the
 		// bundle still imports it, so only the plugin option can skip the
 		// fetch.
@@ -202,7 +202,7 @@ describe('@c15t/core/generated in Vite', () => {
 		const code = await buildEntry(
 			root,
 			consentManifest({ ...options, source: 'runtime' }),
-			"import { backendURL, snapshot } from '@c15t/core/generated';\nexport const mode = { backendURL, snapshot: location.hash ? undefined : snapshot };\n"
+			"import { projectUrl, snapshot } from '@c15t/core/generated';\nexport const mode = { projectUrl, snapshot: location.hash ? undefined : snapshot };\n"
 		);
 		expect(options.fetch).not.toHaveBeenCalled();
 		expect(code).not.toContain('__c15t_build_snapshot__');
@@ -267,7 +267,7 @@ describe('@c15t/core/generated in Vite', () => {
 			);
 			expect(source?.includes('build-test')).toBe(included);
 			expect(source).toContain(
-				'export const backendURL = "https://consent.example.com";'
+				'export const projectUrl = "https://consent.example.com";'
 			);
 		}
 	);
@@ -450,7 +450,7 @@ describe('@c15t/core/generated in Vite', () => {
 				undefined,
 				plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
 			)
-		).toContain('export const backendURL = "https://env.example.com/api";');
+		).toContain('export const projectUrl = "https://env.example.com/api";');
 		expect(fetch).toHaveBeenCalledWith(
 			'https://env.example.com/api/manifest',
 			expect.any(Object)
@@ -458,9 +458,9 @@ describe('@c15t/core/generated in Vite', () => {
 	});
 
 	describe('VITE_INTH_PROJECT_URL', () => {
-		const resolveBackendURL = async (
+		const resolveProjectUrl = async (
 			env: Record<string, unknown>,
-			options: { backendURL?: string } = {}
+			options: { projectUrl?: string } = {}
 		) => {
 			const root = await createRoot();
 			const { fetch } = optionsFor(root);
@@ -482,9 +482,9 @@ describe('@c15t/core/generated in Vite', () => {
 			const env: Record<string, unknown> = {
 				VITE_INTH_PROJECT_URL: 'https://inth.example.com',
 			};
-			const { fetch, source } = await resolveBackendURL(env);
+			const { fetch, source } = await resolveProjectUrl(env);
 			expect(source).toContain(
-				'export const backendURL = "https://inth.example.com";'
+				'export const projectUrl = "https://inth.example.com";'
 			);
 			expect(env.VITE_C15T_BACKEND_URL).toBe('https://inth.example.com');
 			expect(fetch).toHaveBeenCalledWith(
@@ -494,25 +494,25 @@ describe('@c15t/core/generated in Vite', () => {
 		});
 
 		test('loses to VITE_C15T_BACKEND_URL when both are set', async () => {
-			const { source } = await resolveBackendURL({
+			const { source } = await resolveProjectUrl({
 				VITE_C15T_BACKEND_URL: 'https://c15t.example.com',
 				VITE_INTH_PROJECT_URL: 'https://inth.example.com',
 			});
 			expect(source).toContain(
-				'export const backendURL = "https://c15t.example.com";'
+				'export const projectUrl = "https://c15t.example.com";'
 			);
 		});
 
-		test('an explicit backendURL beats both variables', async () => {
+		test('an explicit projectUrl beats both variables', async () => {
 			const env: Record<string, unknown> = {
 				VITE_C15T_BACKEND_URL: 'https://c15t.example.com',
 				VITE_INTH_PROJECT_URL: 'https://inth.example.com',
 			};
-			const { source } = await resolveBackendURL(env, {
-				backendURL: 'https://option.example.com',
+			const { source } = await resolveProjectUrl(env, {
+				projectUrl: 'https://option.example.com',
 			});
 			expect(source).toContain(
-				'export const backendURL = "https://option.example.com";'
+				'export const projectUrl = "https://option.example.com";'
 			);
 		});
 	});
@@ -549,19 +549,19 @@ describe('@c15t/core/generated in Vite', () => {
 		};
 		const devOnly = createLogger();
 		await load(
-			consentManifest({ backendURL: 'https://consent.example.com', fetch }),
+			consentManifest({ fetch, projectUrl: 'https://consent.example.com' }),
 			devOnly,
 			'serve'
 		);
 		// Dev loads the module for every mode, so it can't tell.
 		expect(devOnly.warn).not.toHaveBeenCalled();
 		await load(
-			consentManifest({ backendURL: 'https://consent.example.com', fetch }),
+			consentManifest({ fetch, projectUrl: 'https://consent.example.com' }),
 			logger
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringMatching(
-				/^@c15t\/core\/build: the consent policy depends on the visitor's location.*backendURL/u
+				/^@c15t\/core\/build: the consent policy depends on the visitor's location.*projectUrl/u
 			)
 		);
 
@@ -625,7 +625,7 @@ describe('@c15t/core/generated in Vite', () => {
 		await mkdir(join(root, 'src'), { recursive: true });
 		await writeFile(
 			join(root, 'src/entry.js'),
-			"export { backendURL } from '@c15t/core/generated';\n"
+			"export { projectUrl } from '@c15t/core/generated';\n"
 		);
 		await build({
 			build: {
@@ -651,7 +651,7 @@ describe('@c15t/core/generated in Vite', () => {
 		});
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'no backend URL is set. A provider without `backendURL`'
+				'no backend URL is set. A provider without `projectUrl`'
 			)
 		);
 	});
@@ -694,7 +694,7 @@ const buildPage = async (
 };
 
 const HOSTED_ENTRY =
-	"import { backendURL } from '@c15t/core/generated';\nconsole.log(backendURL);\n";
+	"import { projectUrl } from '@c15t/core/generated';\nconsole.log(projectUrl);\n";
 const PREFETCH_TAG = '<script id="c15t-initial-data-prefetch"';
 
 describe('initPrefetch', () => {
@@ -705,7 +705,7 @@ describe('initPrefetch', () => {
 		const tag = html.indexOf(PREFETCH_TAG);
 		expect(tag).toBeGreaterThan(html.indexOf('<meta charset="UTF-8" />'));
 		expect(tag).toBeLessThan(html.indexOf('rel="stylesheet"'));
-		expect(html).toContain('"backendURL":"https://consent.example.com"');
+		expect(html).toContain('"projectUrl":"https://consent.example.com"');
 		expect(html).toContain('"journey":"auto"');
 		expect(options.fetch).not.toHaveBeenCalled();
 	});
@@ -834,7 +834,7 @@ describe('initPrefetch', () => {
 
 	test('a page without a <head> keeps the script after the doctype', async () => {
 		const plugin = createConsentManifestPlugin(
-			{ backendURL: 'https://consent.example.com' },
+			{ projectUrl: 'https://consent.example.com' },
 			{ envNames: [], label: 'test' }
 		);
 		plugin.configResolved({
@@ -872,7 +872,7 @@ describe('initPrefetch', () => {
 	test('a server-rendered app that left the option unset hears nothing', async () => {
 		const logger = createLogger();
 		const plugin = createConsentManifestPlugin(
-			{ backendURL: 'https://consent.example.com' },
+			{ projectUrl: 'https://consent.example.com' },
 			{ envNames: [], label: 'test', serverRendered: true }
 		);
 		plugin.configResolved({ command: 'build', logger, root: '/app' });
@@ -896,7 +896,7 @@ describe('@c15t/core/generated typings', () => {
 			'utf8'
 		);
 		expect(declarations).toContain(
-			'export declare const backendURL: string | undefined;'
+			'export declare const projectUrl: string | undefined;'
 		);
 		expect(declarations).toContain(
 			'export declare const snapshot: ConsentManifest | undefined;'
@@ -915,7 +915,7 @@ describe('@c15t/core/generated typings', () => {
 
 	test('the stand-in module exports undefined without a build integration', async () => {
 		expect({ ...(await import('../generated')) }).toEqual({
-			backendURL: undefined,
+			projectUrl: undefined,
 			snapshot: undefined,
 		});
 	});
@@ -945,7 +945,7 @@ describe('node_modules/.cache/c15t output', () => {
 		const server = await readFile(files.server, 'utf8');
 		expect(server).toContain('"revision": "build-test"');
 		expect(server).toContain(
-			'export const backendURL = "https://consent.example.com";'
+			'export const projectUrl = "https://consent.example.com";'
 		);
 		expect(server).not.toContain('server-only');
 		const browser = await readFile(files.browser, 'utf8');
@@ -956,7 +956,7 @@ describe('node_modules/.cache/c15t output', () => {
 			[
 				"import type { ConsentManifest } from 'c15t/next/static';",
 				'',
-				'export declare const backendURL: string | undefined;',
+				'export declare const projectUrl: string | undefined;',
 				'export declare const snapshot: ConsentManifest | undefined;',
 				'',
 			].join('\n')
@@ -971,7 +971,7 @@ describe('node_modules/.cache/c15t output', () => {
 			createLogger()
 		);
 		expect({ ...(await import(server)) }).toEqual({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
 	});
@@ -1009,17 +1009,17 @@ describe('node_modules/.cache/c15t output', () => {
 			'https://consent.example.com/api/manifest?key=x#config',
 		],
 	])(
-		'fetches /manifest under backendURL %s',
-		async (backendURL, manifestURL) => {
+		'fetches /manifest under projectUrl %s',
+		async (projectUrl, manifestUrl) => {
 			const root = await createRoot();
 			const options = optionsFor(root);
 			await writeManifestCacheModule(
-				{ ...options, backendURL },
+				{ ...options, projectUrl },
 				defaultsFor(root),
 				createLogger()
 			);
 			expect(options.fetch).toHaveBeenCalledWith(
-				manifestURL,
+				manifestUrl,
 				expect.any(Object)
 			);
 		}
@@ -1144,9 +1144,9 @@ describe('build-time manifest policy', () => {
 	});
 
 	test.each(['/api/c15t', 'file:///backend'])(
-		'skips the fetch in a production build for backendURL %j',
-		async (backendURL) => {
-			const { logger, options, source } = await write({ backendURL });
+		'skips the fetch in a production build for projectUrl %j',
+		async (projectUrl) => {
+			const { logger, options, source } = await write({ projectUrl });
 			expect(options.fetch).not.toHaveBeenCalled();
 			expect(source).toContain(STUB);
 			expect(logger.info).toHaveBeenCalledWith(
@@ -1157,13 +1157,13 @@ describe('build-time manifest policy', () => {
 
 	test.each([undefined, ''])(
 		"onBuildError: 'fail' stops a production build without a backend URL (%j)",
-		async (backendURL) => {
+		async (projectUrl) => {
 			const { error, options } = await write({
-				backendURL,
 				onBuildError: 'fail',
+				projectUrl,
 			});
 			expect(error?.message).toBe(
-				"test/build: no backend URL is set, so the build cannot fetch the consent manifest. Pass backendURL or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to build without a snapshot."
+				"test/build: no backend URL is set, so the build cannot fetch the consent manifest. Pass projectUrl or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to build without a snapshot."
 			);
 			expect(options.fetch).not.toHaveBeenCalled();
 		}
@@ -1173,35 +1173,35 @@ describe('build-time manifest policy', () => {
 		'%s warns without a backend URL',
 		async (command) => {
 			const { logger, source } = await write(
-				{ backendURL: undefined },
+				{ projectUrl: undefined },
 				command
 			);
 			expect(source).toContain(STUB);
 			expect(logger.warn).toHaveBeenCalledWith(
-				`no backend URL is set, so ${command === 'build' ? 'the build' : 'dev'} cannot fetch the consent manifest. Pass backendURL or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). The server fetches it at runtime, or asks the backend's /init.`
+				`no backend URL is set, so ${command === 'build' ? 'the build' : 'dev'} cannot fetch the consent manifest. Pass projectUrl or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). The server fetches it at runtime, or asks the backend's /init.`
 			);
 		}
 	);
 
 	test("onBuildError: 'runtime' skips a build without a backend URL with a notice", async () => {
 		const { logger, source } = await write({
-			backendURL: undefined,
 			onBuildError: 'runtime',
+			projectUrl: undefined,
 		});
 		expect(source).toContain(STUB);
 		expect(logger.warn).not.toHaveBeenCalled();
 		expect(logger.info).toHaveBeenCalledWith(
-			'skipped the consent manifest fetch because no backend URL is set. Pass backendURL or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).'
+			'skipped the consent manifest fetch because no backend URL is set. Pass projectUrl or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).'
 		);
 	});
 
-	test("rejects a relative backendURL with onBuildError: 'fail'", async () => {
+	test("rejects a relative projectUrl with onBuildError: 'fail'", async () => {
 		const { error, options } = await write({
-			backendURL: '/api/c15t',
 			onBuildError: 'fail',
+			projectUrl: '/api/c15t',
 		});
 		expect(error?.message).toContain(
-			'build-time manifests require an absolute upstream URL. Pass backendURL or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).'
+			'build-time manifests require an absolute upstream URL. Pass projectUrl or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).'
 		);
 		expect(options.fetch).not.toHaveBeenCalled();
 	});
@@ -1226,9 +1226,9 @@ describe('build-time manifest policy', () => {
 describe('framework build snapshot', () => {
 	test('keeps an explicit manifest URL intact, including its query', async () => {
 		const options = optionsFor(await createRoot());
-		const manifestURL = 'https://consent.example.com/public.json?version=2';
-		await loadBuildManifest({ ...options, manifestURL }, 'test/build');
-		expect(options.fetch).toHaveBeenCalledWith(manifestURL, expect.any(Object));
+		const manifestUrl = 'https://consent.example.com/public.json?version=2';
+		await loadBuildManifest({ ...options, manifestUrl }, 'test/build');
+		expect(options.fetch).toHaveBeenCalledWith(manifestUrl, expect.any(Object));
 	});
 
 	test('derives the upstream manifest URL from the backend', async () => {
@@ -1236,8 +1236,8 @@ describe('framework build snapshot', () => {
 		expect(
 			await loadBuildManifest(
 				{
-					backendURL: 'https://consent.example.com/api/',
 					fetch: options.fetch,
+					projectUrl: 'https://consent.example.com/api/',
 				},
 				'test/build'
 			)
@@ -1250,8 +1250,8 @@ describe('framework build snapshot', () => {
 
 	test.each(['/api/c15t/manifest', 'file:///manifest.json', ''])(
 		'rejects a source the build cannot fetch: %s',
-		(manifestURL) => {
-			expect(() => loadBuildManifest({ manifestURL }, 'test/build')).toThrow(
+		(manifestUrl) => {
+			expect(() => loadBuildManifest({ manifestUrl }, 'test/build')).toThrow(
 				'upstream'
 			);
 		}

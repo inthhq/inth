@@ -62,7 +62,6 @@ afterEach(async () => {
 
 test('puts slot classes and styles on the stock banner under components', async () => {
 	const config = {
-		backendURL: 'https://consent.example',
 		components: {
 			banner: {
 				card: { class: 'app-card', style: { color: 'rgb(4, 5, 6)' } },
@@ -71,6 +70,7 @@ test('puts slot classes and styles on the stock banner under components', async 
 		customFetch: vi.fn(() => new Response('{}')) as unknown as typeof fetch,
 		disableAnimation: true,
 		hideBranding: true,
+		projectUrl: 'https://consent.example',
 		theme: {
 			slots: {
 				consentBannerCard: {
@@ -120,11 +120,11 @@ test('puts slot classes and styles on the stock banner under components', async 
 
 test('drops the stock classes of a part whose slot sets noStyle', async () => {
 	const config = {
-		backendURL: 'https://consent.example',
 		components: { banner: { card: { class: 'app-card' } } },
 		customFetch: vi.fn(() => new Response('{}')) as unknown as typeof fetch,
 		disableAnimation: true,
 		hideBranding: true,
+		projectUrl: 'https://consent.example',
 		theme: {
 			slots: {
 				consentBannerCard: { className: 'theme-card', noStyle: true },
@@ -172,7 +172,6 @@ test('drops the stock classes of a part whose slot sets noStyle', async () => {
 
 test('applies the assigned experiment arm slots to the stock banner', async () => {
 	const config = {
-		backendURL: 'https://consent.example',
 		customFetch: vi.fn(() => new Response('{}')) as unknown as typeof fetch,
 		disableAnimation: true,
 		experiment: {
@@ -182,6 +181,7 @@ test('applies the assigned experiment arm slots to the stock banner', async () =
 			id: 'card-class',
 		},
 		hideBranding: true,
+		projectUrl: 'https://consent.example',
 		theme: { slots: { consentBannerTitle: 'theme-title' } },
 	} as ConsentConfig;
 	const context = createVueConsentKernelContext({ config, prefetch: init });

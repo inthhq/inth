@@ -1,6 +1,6 @@
 // After the resolver, so bundlers place the snapshot next to the code and
 // the English copy it shares the most strings with.
-import { backendURL, snapshot } from '@c15t/core/generated';
+import { projectUrl, snapshot } from '@c15t/core/generated';
 /**
  * The single-page app `manifest()`: resolve init in the browser from the
  * consent manifest the build downloaded.
@@ -21,7 +21,7 @@ export type ManifestModeOptions = BrowserManifestOptions;
  * `@c15t/svelte/vite` downloaded: the snapshot, and the backend URL it
  * read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. Saves
  * still go to that backend.
- * With `manifestURL`, that URL is fetched when the page loads and the
+ * With `manifestUrl`, that URL is fetched when the page loads and the
  * build's snapshot is not used. Without a snapshot, as after
  * `source: 'runtime'` or a dev server that could not reach the backend,
  * the manifest is fetched from the backend when the page loads. With
@@ -36,7 +36,7 @@ export type ManifestModeOptions = BrowserManifestOptions;
  *
  * @param options - Overrides for the snapshot, backend and location.
  * @returns A transport factory for `ConsentProvider`'s `mode`.
- * @throws {Error} When there is no snapshot, `manifestURL` or `backendURL`.
+ * @throws {Error} When there is no snapshot, `manifestUrl` or `projectUrl`.
  * @example
  * ```svelte
  * <script lang="ts">
@@ -52,16 +52,16 @@ export const manifest = function manifest(
 	options: ManifestModeOptions = {}
 ): BrowserManifestModeFactory {
 	return browserManifest({
-		// A `manifestURL` is fetched at runtime and `source: 'runtime'` asks
+		// A `manifestUrl` is fetched at runtime and `source: 'runtime'` asks
 		// for the backend's, so both skip the build's snapshot. A snapshot of
 		// your own replaces it.
 		snapshot:
-			options.manifestURL || options.source === 'runtime'
+			options.manifestUrl || options.source === 'runtime'
 				? undefined
 				: snapshot,
 		...options,
-		// Saves go to the build's backend, even when `manifestURL` names
+		// Saves go to the build's backend, even when `manifestUrl` names
 		// where the policy comes from.
-		backendURL: options.backendURL ?? backendURL,
+		projectUrl: options.projectUrl ?? projectUrl,
 	} as ManifestModeOptions);
 };

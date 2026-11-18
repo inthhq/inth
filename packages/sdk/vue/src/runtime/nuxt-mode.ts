@@ -15,7 +15,7 @@ export interface NuxtConsentModeConfig {
 	 * `NUXT_PUBLIC_INTH_PROJECT_URL`, read when the build starts and again
 	 * by the server at runtime.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * How the visitor's policy is resolved. Plain data, read from
 	 * `nuxt.config.ts` only.
@@ -27,7 +27,7 @@ export interface NuxtConsentModeConfig {
 	 * - `hosted()` from `c15t/vue`: ask the backend's `/init` for every
 	 *   visitor.
 	 * - `testing()` from `c15t/vue/testing`: the browser resolves a policy
-	 *   with no network, for tests. Needs no `backendURL`, and throws in
+	 *   with no network, for tests. Needs no `projectUrl`, and throws in
 	 *   production builds.
 	 *
 	 * @default manifest()

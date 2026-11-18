@@ -25,8 +25,8 @@ import { testBackend } from '../test-backend';
 // sends init and saves to the consent route in src/routes/api/c15t/$.ts.
 const getConsentState = createServerFn({ method: 'GET' }).handler(
 	createConsentStateHandler({
-		backendURL: 'https://your-project.inth.app',
-		...testBackend('backendURL'),
+		projectUrl: 'https://your-project.inth.app',
+		...testBackend('projectUrl'),
 		proxy: true,
 		routePrefix: '/api/c15t',
 	})

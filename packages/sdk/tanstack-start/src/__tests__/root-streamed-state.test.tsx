@@ -60,7 +60,7 @@ const deferred = function deferred() {
 
 // The server function's config, as `createConsentStateHandler({
 // routePrefix: '/api/c15t', proxy: true })` puts it on the state.
-const sameOrigin = { backendURL: '/api/c15t', routePrefix: '/api/c15t' };
+const sameOrigin = { projectUrl: '/api/c15t', routePrefix: '/api/c15t' };
 
 const initResponse = () =>
 	Response.json({

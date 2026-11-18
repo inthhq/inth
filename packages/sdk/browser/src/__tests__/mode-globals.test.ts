@@ -63,7 +63,7 @@ const optionsFor = function optionsFor(
 ): ConsentClientOptions {
 	return {
 		...(mode === 'hosted'
-			? { backendURL: 'https://consent.example.test' }
+			? { projectUrl: 'https://consent.example.test' }
 			: { policy: [policy] }),
 		consentCategories: ['measurement'],
 		prefetch: { initialPolicyResolution: resolution },
@@ -148,7 +148,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 	it('keeps the bundle tag options for a later manual init and re-init', async () => {
 		const script = scriptWith({
 			...(mode === 'hosted'
-				? { 'data-backend-url': 'https://consent.example.test' }
+				? { 'data-project-url': 'https://consent.example.test' }
 				: {
 						'data-acknowledge-no-records': '',
 						'data-policy': 'europeOptIn',
@@ -339,7 +339,7 @@ describe('default CDN entry', () => {
 			],
 		];
 		vi.spyOn(document, 'currentScript', 'get').mockReturnValue(
-			scriptWith({ 'data-backend-url': 'https://consent.example.test' })
+			scriptWith({ 'data-project-url': 'https://consent.example.test' })
 		);
 
 		const api = await loadTag('hosted');
@@ -383,9 +383,9 @@ describe('default CDN entry', () => {
 		);
 		vi.spyOn(document, 'currentScript', 'get').mockReturnValue(
 			scriptWith({
-				'data-backend-url': 'https://consent.example.test',
 				'data-manual': '',
 				'data-no-ui': '',
+				'data-project-url': 'https://consent.example.test',
 			})
 		);
 
@@ -406,7 +406,7 @@ describe('default CDN entry', () => {
 		);
 
 		await expect(loadTag('hosted')).rejects.toThrow(
-			/`backendURL` is required/u
+			/`projectUrl` is required/u
 		);
 
 		expect(installed().client).toBeNull();
@@ -421,14 +421,14 @@ describe('default CDN entry', () => {
 			{ manifest: { branding: 'c15t', revision: '1', schemaVersion: 2 } },
 			/manifest inputs/u,
 		],
-		['manifest URL', { manifestURL: '/manifest' }, /manifest inputs/u],
+		['manifest URL', { manifestUrl: '/manifest' }, /manifest inputs/u],
 	])('rejects %s before starting', async (_name, options, error) => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fetchSpy);
 		testWindow.c15t = [
 			[
 				'config',
-				{ backendURL: 'https://consent.example.test', ui: false, ...options },
+				{ projectUrl: 'https://consent.example.test', ui: false, ...options },
 			],
 		];
 

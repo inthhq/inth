@@ -6,7 +6,7 @@ import {
 	ConsentProvider,
 	hosted,
 } from '@c15t/react';
-import type { ConsentProviderOptions, WithBackendURL } from '@c15t/react';
+import type { ConsentProviderOptions, WithProjectUrl } from '@c15t/react';
 import type { ReactNode } from 'react';
 
 import { ReactBenchmarkProbe } from './probe';
@@ -14,7 +14,7 @@ import { getBenchState } from './state';
 import type { ReactBenchScenario } from './state';
 
 // Keep this fixture compatible with revisions before automatic styles.
-type BenchmarkProviderOptions = WithBackendURL<ConsentProviderOptions> & {
+type BenchmarkProviderOptions = WithProjectUrl<ConsentProviderOptions> & {
 	styles?: boolean;
 };
 
@@ -50,7 +50,6 @@ export const ReactBenchmarkProvider = ({
 	theme?: ConsentProviderOptions['theme'];
 }) => {
 	const options: BenchmarkProviderOptions = {
-		backendURL: '/api/bench-consent',
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getBenchState(scenario);
@@ -67,6 +66,7 @@ export const ReactBenchmarkProvider = ({
 		},
 		consentCategories,
 		mode: hosted(),
+		projectUrl: '/api/bench-consent',
 		styles,
 		theme,
 	};

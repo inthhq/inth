@@ -60,9 +60,9 @@ const update = (snapshot) => {
 
 const gatePage = `<!doctype html><html lang="en"><head>${head}</head><body><div id="content">${gatePageHTML}</div><a href="#c15t-preferences" data-testid="consent-dialog-link">Privacy settings</a><script src="/__gate/browser/c15t.js" data-manual></script><script type="module">${bridge}
 const client = window.c15t.init(${JSON.stringify({
-	backendURL: '/__gate/api',
 	consentCategories: gateConsentCategories,
 	mode: 'hosted',
+	projectUrl: '/__gate/api',
 	scripts: gateScripts(),
 })});
 client.subscribe(update);

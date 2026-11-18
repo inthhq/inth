@@ -63,9 +63,9 @@ interface SheetResolveContext {
  * written into the app.
  *
  * The snapshot stays on the server: in the client environment, `snapshot`
- * is `undefined`. `backendURL` is public and reaches both.
+ * is `undefined`. `projectUrl` is public and reaches both.
  *
- * The backend URL comes from `backendURL` or, when that is omitted, from
+ * The backend URL comes from `projectUrl` or, when that is omitted, from
  * `VITE_C15T_BACKEND_URL`, then `VITE_INTH_PROJECT_URL`, including `.env`
  * files. When `VITE_C15T_BACKEND_URL` is unset, the plugin sets
  * `import.meta.env.VITE_C15T_BACKEND_URL` to the URL it used, so server and
@@ -76,7 +76,7 @@ interface SheetResolveContext {
  * fetches the policy at runtime and asks the backend's `/init` while the
  * manifest is unavailable. Set `onBuildError: 'fail'`, or
  * `C15T_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
- * for a `backendURL` that is not absolute http(s), and with
+ * for a `projectUrl` that is not absolute http(s), and with
  * `source: 'runtime'`, for an app whose `manifest({ source: 'runtime' })`
  * reads the policy at runtime.
  *

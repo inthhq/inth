@@ -108,9 +108,9 @@ test('renders ConsentRoot from a server function that lists it', async () => {
 		.handler(
 			(() => undefined) as never,
 			createConsentStateHandler({
-				// A relative backend is the app's own route: no session report.
-				backendURL: '/api/c15t',
 				mode: manifest(),
+				// A relative backend is the app's own route: no session report.
+				projectUrl: '/api/c15t',
 				request,
 				snapshot: manifestOf([optInRule()]),
 			}) as never

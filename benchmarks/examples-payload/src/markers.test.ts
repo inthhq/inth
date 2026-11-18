@@ -53,7 +53,7 @@ describe('findBoundaries', () => {
 
 	it('reports every boundary a chunk carries', () => {
 		const chunk = [
-			'throw new Error("createManifestTransport: either `manifest` or `manifestURL` is required.")',
+			'throw new Error("createManifestTransport: either `manifest` or `manifestUrl` is required.")',
 			'{id:"quebec_opt_in"}',
 			'{title:"Wir respektieren deine Privatsph\\xE4re."}',
 			'window.__tcfapi=function(){}',

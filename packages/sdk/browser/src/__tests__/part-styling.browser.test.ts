@@ -100,7 +100,7 @@ describe('styling stock UI parts from outside', () => {
 
 	it('applies a slot class from a stylesheet linked into the shadow root', async () => {
 		const card = await mountCard({
-			stylesheetURLs: [cssURL(`.brand-card { border-top-color: ${BRAND}; }`)],
+			stylesheetUrls: [cssURL(`.brand-card { border-top-color: ${BRAND}; }`)],
 			theme: { slots: { consentBannerCard: 'brand-card' } },
 		});
 
@@ -112,7 +112,7 @@ describe('styling stock UI parts from outside', () => {
 		// Tailwind 4 declares the same layer order the stock sheet declares
 		// first, so its utilities outrank c15t's components layer.
 		const card = await mountCard({
-			stylesheetURLs: [
+			stylesheetUrls: [
 				cssURL(
 					'@layer theme, base, components, utilities;\n' +
 						`@layer utilities { .border-t-brand { border-top-color: ${BRAND}; } }`

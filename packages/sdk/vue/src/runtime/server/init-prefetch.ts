@@ -91,13 +91,13 @@ export const buildInitPrefetchTag = function buildInitPrefetchTag(
 		return undefined;
 	}
 	// The URL the browser's hosted transport asks, so both match.
-	const { backendURL } = config;
-	if (!(backendURL && FETCHABLE_BACKEND_RE.test(backendURL))) {
+	const { projectUrl } = config;
+	if (!(projectUrl && FETCHABLE_BACKEND_RE.test(projectUrl))) {
 		return undefined;
 	}
 	const nonce = input.nonce ?? config.nonce;
 	const attributes = nonce ? ` nonce="${escapeAttribute(nonce)}"` : '';
-	return `<script${attributes}>${buildPrefetchScript({ backendURL })}</script>`;
+	return `<script${attributes}>${buildPrefetchScript({ projectUrl })}</script>`;
 };
 
 const CHARSET_RE = /<meta charset=[^>]*>/iu;

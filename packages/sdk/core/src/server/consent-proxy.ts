@@ -138,7 +138,7 @@ const MAX_DECODE_PASSES = 3;
 /** Options for an adapter's opt-in consent proxy (`proxy: { ... }`). */
 export interface ConsentProxyOptions {
 	/**
-	 * Extra upstream paths to allow, relative to `backendURL`. Exact segments
+	 * Extra upstream paths to allow, relative to `projectUrl`. Exact segments
 	 * (`'export'`) or a trailing `*` for one wildcard segment
 	 * (`'subjects/*'`). The defaults (`subjects`, `subjects/*`, `init`,
 	 * `manifest`, `health`, `status`) are always allowed.
@@ -543,7 +543,7 @@ export interface ForwardConsentRequestInput {
 	/** Path below the route prefix, for example `subjects/sub_1`. */
 	path: string;
 	/** Absolute backend base URL. */
-	backendURL: string;
+	projectUrl: string;
 	/** Resolved proxy options. */
 	options: ResolvedConsentProxyOptions;
 	/** Hop-chain values the adapter vouches for. */
@@ -560,7 +560,7 @@ const isTimeoutError = (error: unknown): boolean =>
 	(error as { name?: unknown } | null)?.name === 'TimeoutError';
 
 /**
- * Forwards one request to `${backendURL}/${path}${search}` and returns the
+ * Forwards one request to `${projectUrl}/${path}${search}` and returns the
  * upstream status and body as a stream, with headers shaped for the browser.
  *
  * Nothing identity-bearing crosses a cleartext link to a remote host: only
@@ -577,7 +577,7 @@ const isTimeoutError = (error: unknown): boolean =>
  * ```ts
  * return forwardConsentRequest({
  *   adapter: '@c15t/example',
- *   backendURL: 'https://consent.example.com',
+ *   projectUrl: 'https://consent.example.com',
  *   forwarding: { host: url.host, proto: 'https' },
  *   options: resolveConsentProxyOptions(true)!,
  *   path: 'subjects',
@@ -587,7 +587,7 @@ const isTimeoutError = (error: unknown): boolean =>
  */
 export const forwardConsentRequest = async function forwardConsentRequest({
 	adapter,
-	backendURL,
+	projectUrl,
 	fetch: fetchImpl,
 	forwarding,
 	options,
@@ -600,7 +600,7 @@ export const forwardConsentRequest = async function forwardConsentRequest({
 	}
 
 	const { search } = new URL(request.url);
-	const base = trimTrailingSlashes(backendURL);
+	const base = trimTrailingSlashes(projectUrl);
 	const target = `${base}/${normalized}${search}`;
 	// The segment check above rejects anything the URL parser would fold, so
 	// the parsed target must still sit exactly at the allowlisted path.

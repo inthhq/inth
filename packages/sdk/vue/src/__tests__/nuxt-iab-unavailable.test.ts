@@ -39,10 +39,10 @@ vi.mock('#imports', async () => {
 		showError: nuxt.showError,
 		useAppConfig: () => ({
 			c15t: {
-				backendURL: 'https://consent.example',
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				iab: nuxt.iab,
 				iframeBlocker: false,
+				projectUrl: 'https://consent.example',
 			},
 		}),
 		// The plugin sets the subject cookie on the server render.

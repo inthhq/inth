@@ -19,7 +19,7 @@ afterEach(() => {
 
 describe('consentPrefetchHead', () => {
 	test('returns a head() fragment with one inline script', () => {
-		const head = consentPrefetchHead({ backendURL: '/api/c15t' });
+		const head = consentPrefetchHead({ projectUrl: '/api/c15t' });
 		expect(head.scripts).toHaveLength(1);
 		expect(head.scripts[0]?.id).toBe('c15t-initial-data-prefetch');
 		expect(head.scripts[0]?.children).toContain('/init');
@@ -30,8 +30,8 @@ describe('readPrefetchedInitialData', () => {
 	test('is undefined on the server', () => {
 		expect(
 			readPrefetchedInitialData({
-				backendURL: `${ORIGIN}/consent`,
 				overrides: undefined,
+				projectUrl: `${ORIGIN}/consent`,
 				routePrefix: undefined,
 			})
 		).toBeUndefined();
@@ -49,10 +49,10 @@ describe('readPrefetchedInitialData', () => {
 		);
 		vi.stubGlobal('fetch', fetchSpy);
 
-		const primed = primePrefetchedInitialData({ backendURL: '/api/c15t' });
+		const primed = primePrefetchedInitialData({ projectUrl: '/api/c15t' });
 		const found = readPrefetchedInitialData({
-			backendURL: 'https://consent.example.com',
 			overrides: undefined,
+			projectUrl: 'https://consent.example.com',
 			routePrefix: '/api/c15t/',
 		});
 
@@ -71,20 +71,20 @@ describe('readPrefetchedInitialData', () => {
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}')));
 
 		const primed = primePrefetchedInitialData({
-			backendURL: '/api/c15t',
 			overrides: { gpc: true },
+			projectUrl: '/api/c15t',
 		});
 		expect(
 			readPrefetchedInitialData({
-				backendURL: '/api/c15t',
 				overrides: { gpc: true },
+				projectUrl: '/api/c15t',
 				routePrefix: undefined,
 			})
 		).toBe(primed);
 		expect(
 			readPrefetchedInitialData({
-				backendURL: '/api/c15t',
 				overrides: undefined,
+				projectUrl: '/api/c15t',
 				routePrefix: undefined,
 			})
 		).toBeUndefined();
@@ -92,19 +92,19 @@ describe('readPrefetchedInitialData', () => {
 });
 
 describe('readPrefetchedInitialData: default init target', () => {
-	test('an absolute backendURL matches a head prefetch keyed on the backend', () => {
+	test('an absolute projectUrl matches a head prefetch keyed on the backend', () => {
 		vi.stubGlobal('window', {
 			location: { hostname: 'app.example.com', origin: ORIGIN },
 		});
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}')));
 
 		const primed = primePrefetchedInitialData({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 		});
 		expect(
 			readPrefetchedInitialData({
-				backendURL: 'https://consent.example.com',
 				overrides: undefined,
+				projectUrl: 'https://consent.example.com',
 				routePrefix: undefined,
 			})
 		).toBe(primed);
@@ -117,12 +117,12 @@ describe('readPrefetchedInitialData: route prefix', () => {
 			location: { hostname: 'app.example.com', origin: ORIGIN },
 		});
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}')));
-		primePrefetchedInitialData({ backendURL: 'https://consent.example.com' });
+		primePrefetchedInitialData({ projectUrl: 'https://consent.example.com' });
 
 		expect(
 			readPrefetchedInitialData({
-				backendURL: 'https://consent.example.com',
 				overrides: undefined,
+				projectUrl: 'https://consent.example.com',
 				routePrefix: '/api/c15t',
 			})
 		).toBeUndefined();

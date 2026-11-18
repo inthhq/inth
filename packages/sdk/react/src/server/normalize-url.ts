@@ -1,4 +1,4 @@
-import { resolveRequestBackendURL } from '@c15t/core/server';
+import { resolveRequestProjectUrl } from '@c15t/core/server';
 
 const ABSOLUTE_URL_REGEX = /^https?:\/\//u;
 
@@ -15,49 +15,49 @@ const trimTrailingSlash = function trimTrailingSlash(url: string): string {
 /**
  * Validates and normalizes a backend URL.
  *
- * @param backendURL - The URL to validate (absolute or relative)
+ * @param projectUrl - The URL to validate (absolute or relative)
  * @returns An object with isAbsolute flag and the normalized URL
  * @throws {Error} If the URL format is invalid
  *
  * @example
  * ```ts
- * validateBackendURL('https://api.example.com/');
- * // Returns: { isAbsolute: true, normalizedURL: 'https://api.example.com' }
+ * validateProjectUrl('https://api.example.com/');
+ * // Returns: { isAbsolute: true, normalizedUrl: 'https://api.example.com' }
  *
- * validateBackendURL('/api/consent/');
- * // Returns: { isAbsolute: false, normalizedURL: '/api/consent' }
+ * validateProjectUrl('/api/consent/');
+ * // Returns: { isAbsolute: false, normalizedUrl: '/api/consent' }
  * ```
  *
  * @public
  */
-export const validateBackendURL = function validateBackendURL(
-	backendURL: string
+export const validateProjectUrl = function validateProjectUrl(
+	projectUrl: string
 ): {
 	isAbsolute: boolean;
-	normalizedURL: string;
+	normalizedUrl: string;
 } {
 	// Check if URL is absolute (starts with protocol)
-	const isAbsolute = ABSOLUTE_URL_REGEX.test(backendURL);
+	const isAbsolute = ABSOLUTE_URL_REGEX.test(projectUrl);
 
 	if (isAbsolute) {
 		// Validate that the URL is valid
-		String(new URL(backendURL));
+		String(new URL(projectUrl));
 
 		return {
 			isAbsolute: true,
-			normalizedURL: trimTrailingSlash(backendURL),
+			normalizedUrl: trimTrailingSlash(projectUrl),
 		};
 	}
 
-	if (backendURL.startsWith('/')) {
+	if (projectUrl.startsWith('/')) {
 		return {
 			isAbsolute: false,
-			normalizedURL: trimTrailingSlash(backendURL),
+			normalizedUrl: trimTrailingSlash(projectUrl),
 		};
 	}
 
 	throw new Error(
-		`Invalid URL format: ${backendURL}. URL must be absolute (https://...) or relative starting with (/)`
+		`Invalid URL format: ${projectUrl}. URL must be absolute (https://...) or relative starting with (/)`
 	);
 };
 
@@ -72,7 +72,7 @@ export const validateBackendURL = function validateBackendURL(
  * are read only when `trustForwardedHeaders` is set, because any client can
  * send them; the `referer` header is never used.
  *
- * @param backendURL - The backend URL (absolute or relative)
+ * @param projectUrl - The backend URL (absolute or relative)
  * @param headersList - The Headers object from the incoming request
  * @param options - `trustForwardedHeaders`: resolve against the request's
  * forwarding headers. Set it only behind a proxy that sets them and drops
@@ -81,25 +81,25 @@ export const validateBackendURL = function validateBackendURL(
  *
  * @example
  * ```ts
- * import { normalizeBackendURL } from '@c15t/react/server';
+ * import { normalizeProjectUrl } from '@c15t/react/server';
  *
  * // Absolute URL - returns as-is
- * normalizeBackendURL('https://api.example.com/', headers);
+ * normalizeProjectUrl('https://api.example.com/', headers);
  * // Returns: 'https://api.example.com'
  *
  * // Relative URL - resolved from the host header
- * normalizeBackendURL('/api/consent', headers);
+ * normalizeProjectUrl('/api/consent', headers);
  * // Returns: 'https://example.com/api/consent' (for `host: example.com`)
  * ```
  *
  * @public
  */
-export const normalizeBackendURL = function normalizeBackendURL(
-	backendURL: string,
+export const normalizeProjectUrl = function normalizeProjectUrl(
+	projectUrl: string,
 	headersList: Headers,
 	options: { trustForwardedHeaders?: boolean } = {}
 ): string | null {
-	return resolveRequestBackendURL(backendURL, {
+	return resolveRequestProjectUrl(projectUrl, {
 		headers: headersList,
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});

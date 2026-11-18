@@ -11,7 +11,7 @@
  * `@c15t/core/transports/manifest-cache`.
  *
  * Each export is its own module, so a bundle that imports only
- * `resolveRequestBackendURL` does not pull in the init resolver.
+ * `resolveRequestProjectUrl` does not pull in the init resolver.
  */
 export type {
 	ConsentProxyForwarding,
@@ -64,14 +64,14 @@ export type {
 export {
 	clearManifestCache,
 	createManifestCache,
-	createManifestRequestURL,
+	createManifestRequestUrl,
 	fetchCachedManifest,
 	getManifestSMaxAge,
 	getManifestStaleWhileRevalidate,
 	MANIFEST_DEDUPE_TTL_SECONDS,
 	MANIFEST_PASSTHROUGH_HEADERS,
 	ManifestUnavailableError,
-	resolveManifestSourceURL,
+	resolveManifestSourceUrl,
 } from '../libs/manifest-cache-runtime';
 export { normalizeRoutePrefix } from './route-prefix';
 export {
@@ -84,6 +84,6 @@ export type {
 	ResolveRequestOriginOptions,
 } from './request-origin';
 export {
-	resolveRequestBackendURL,
+	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';

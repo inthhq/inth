@@ -13,7 +13,7 @@
  *
  * @example
  * ```ts
- * import { backendURL, snapshot } from '@c15t/core/generated';
+ * import { projectUrl, snapshot } from '@c15t/core/generated';
  * ```
  */
 import type { ConsentManifest } from '@c15t/schema/types';
@@ -22,7 +22,7 @@ import type { ConsentManifest } from '@c15t/schema/types';
  * The backend URL the build read the manifest from, or `undefined` when no
  * build integration set it. Public: every environment receives it.
  */
-export const backendURL: string | undefined = undefined;
+export const projectUrl: string | undefined = undefined;
 
 /**
  * The deployment's consent manifest, fetched during the build or when dev

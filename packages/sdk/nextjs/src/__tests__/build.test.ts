@@ -50,10 +50,10 @@ const createRoot = async () => {
 };
 
 const optionsFor = () => ({
-	backendURL: 'https://consent.example.com',
 	fetch: vi
 		.fn<typeof globalThis.fetch>()
 		.mockImplementation(() => Promise.resolve(Response.json(MANIFEST_FIXTURE))),
+	projectUrl: 'https://consent.example.com',
 });
 
 const readServerModule = (root: string) =>
@@ -83,7 +83,7 @@ describe('Next.js build-time manifest', () => {
 			expect(await wrapped(phase, { defaultConfig: {} })).toMatchObject(config);
 			const source = await readServerModule(root);
 			expect(source).toContain(
-				'export const backendURL = "https://consent.example.com";'
+				'export const projectUrl = "https://consent.example.com";'
 			);
 			expect(source).toContain(JSON.stringify(MANIFEST_FIXTURE.revision));
 			const browser = await readFile(
@@ -301,7 +301,7 @@ describe('Next.js build-time manifest', () => {
 		);
 	});
 
-	test('reads NEXT_PUBLIC_C15T_BACKEND_URL when backendURL is left out', async () => {
+	test('reads NEXT_PUBLIC_C15T_BACKEND_URL when projectUrl is left out', async () => {
 		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://env.example.com/api');
 		const root = await createRoot();
 		const { fetch } = optionsFor();
@@ -313,7 +313,7 @@ describe('Next.js build-time manifest', () => {
 			expect.any(Object)
 		);
 		expect(await readServerModule(root)).toContain(
-			'export const backendURL = "https://env.example.com/api";'
+			'export const projectUrl = "https://env.example.com/api";'
 		);
 	});
 
@@ -338,7 +338,7 @@ describe('Next.js build-time manifest', () => {
 				expect.any(Object)
 			);
 			expect(await readServerModule(root)).toContain(
-				`export const backendURL = "${INTH}";`
+				`export const projectUrl = "${INTH}";`
 			);
 			// Bundles inline the c15t name only, so the browser reads one value.
 			expect(config.env).toEqual({
@@ -346,7 +346,7 @@ describe('Next.js build-time manifest', () => {
 				OTHER: '1',
 			});
 			// `defineConsentConfig`, on the server and in the browser.
-			expect(defineConsentConfig().backendURL).toBe(INTH);
+			expect(defineConsentConfig().projectUrl).toBe(INTH);
 		});
 
 		test('reads it from a .env file', async () => {
@@ -377,16 +377,16 @@ describe('Next.js build-time manifest', () => {
 				expect.any(Object)
 			);
 			expect(config.env).toEqual({ OTHER: '1' });
-			expect(defineConsentConfig().backendURL).toBe(C15T);
+			expect(defineConsentConfig().projectUrl).toBe(C15T);
 		});
 
-		test('an explicit backendURL beats both variables', async () => {
+		test('an explicit projectUrl beats both variables', async () => {
 			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', undefined);
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
 			const root = await createRoot();
 			await writeFile(
 				join(root, 'c15t.config.ts'),
-				"export default { backendURL: 'https://config.example.com', mode: { type: 'manifest' } };\n"
+				"export default { projectUrl: 'https://config.example.com', mode: { type: 'manifest' } };\n"
 			);
 			const { fetch } = optionsFor();
 			await build({ fetch });
@@ -395,12 +395,12 @@ describe('Next.js build-time manifest', () => {
 				expect.any(Object)
 			);
 			expect(
-				defineConsentConfig({ backendURL: 'https://config.example.com' })
-					.backendURL
+				defineConsentConfig({ projectUrl: 'https://config.example.com' })
+					.projectUrl
 			).toBe('https://config.example.com');
 			// The wrapper's own option wins over the config file too.
 			fetch.mockClear();
-			await build({ backendURL: 'https://option.example.com', fetch });
+			await build({ fetch, projectUrl: 'https://option.example.com' });
 			expect(fetch).toHaveBeenCalledWith(
 				'https://option.example.com/manifest',
 				expect.any(Object)
@@ -413,7 +413,7 @@ describe('Next.js build-time manifest', () => {
 			await createRoot();
 			const { fetch } = optionsFor();
 			await expect(build({ fetch, onBuildError: 'fail' })).rejects.toThrow(
-				'Pass backendURL or set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL).'
+				'Pass projectUrl or set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL).'
 			);
 		});
 	});
@@ -432,9 +432,9 @@ describe('Next.js build-time manifest', () => {
 			"manifest({ source: 'runtime' })",
 		],
 		[
-			'an absolute manifest({ manifestURL })',
-			"{ mode: { type: 'manifest', manifestURL: 'https://cdn.example/policy.json' } }",
-			'absolute manifest({ manifestURL })',
+			'an absolute manifest({ manifestUrl })',
+			"{ mode: { type: 'manifest', manifestUrl: 'https://cdn.example/policy.json' } }",
+			'absolute manifest({ manifestUrl })',
 		],
 	])(
 		'next build skips the fetch when c15t.config.ts uses %s',
@@ -482,11 +482,11 @@ describe('Next.js build-time manifest', () => {
 		);
 	});
 
-	test("fetches from the config's backendURL when the env leaves it out", async () => {
+	test("fetches from the config's projectUrl when the env leaves it out", async () => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, 'c15t.config.ts'),
-			"export default { backendURL: 'https://config.example.com', mode: { type: 'manifest' } };\n"
+			"export default { projectUrl: 'https://config.example.com', mode: { type: 'manifest' } };\n"
 		);
 		const { fetch } = optionsFor();
 		await withConsentManifest({}, { fetch })('phase-production-build', {
@@ -497,7 +497,7 @@ describe('Next.js build-time manifest', () => {
 			expect.any(Object)
 		);
 		expect(await readServerModule(root)).toContain(
-			'export const backendURL = "https://config.example.com";'
+			'export const projectUrl = "https://config.example.com";'
 		);
 	});
 

@@ -36,7 +36,7 @@ const text = (value: string | undefined, fallback: string): string =>
 
 export interface FixtureConfig {
 	/** Backend the screens report, mirroring the native keys the build embeds. */
-	readonly backendURL: string;
+	readonly projectUrl: string;
 	/**
 	 * Force the in-JavaScript fake core even when the real module is in the
 	 * binary. Off by default so the example exercises the real bridge first.
@@ -61,10 +61,6 @@ export interface FixtureConfig {
 const EXAMPLE_INTH_BACKEND = 'https://example-inth.inth.app/';
 
 export const config: FixtureConfig = {
-	backendURL: text(
-		process.env.EXPO_PUBLIC_C15T_BACKEND_URL,
-		EXAMPLE_INTH_BACKEND
-	),
 	e2e: {
 		enabled: process.env.EXPO_PUBLIC_C15T_APP_E2E === '1',
 		endpoint: text(
@@ -77,6 +73,10 @@ export const config: FixtureConfig = {
 		),
 	},
 	forceFakeNative: readFlag(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE) ?? false,
+	projectUrl: text(
+		process.env.EXPO_PUBLIC_C15T_BACKEND_URL,
+		EXAMPLE_INTH_BACKEND
+	),
 	sampleIntervalMs: asNumber(
 		process.env.EXPO_PUBLIC_C15T_SAMPLE_INTERVAL_MS,
 		1000

@@ -102,7 +102,7 @@ export const onConsentPresenterSession = (
  * @param sessionId - Unused.
  * @returns `undefined`.
  */
-export const sessionPrivacyPolicyURL = (
+export const sessionPrivacyPolicyUrl = (
 	sessionId: string
 ): string | undefined => {
 	void sessionId;
@@ -126,28 +126,28 @@ export const setBeforeConsentPrompt = (
 /**
  * Rejects on web, which has no native consent screens.
  *
- * @param privacyPolicyURL - Unused.
+ * @param privacyPolicyUrl - Unused.
  * @returns Never resolves.
  * @throws {Error} With `code: 'INTH_NATIVE_UI_EXCLUDED'`.
  */
 export const presentConsentPrompt = (
-	privacyPolicyURL: string
+	privacyPolicyUrl: string
 ): Promise<ConsentPresenterSession> => {
-	void privacyPolicyURL;
+	void privacyPolicyUrl;
 	return Promise.reject(noNativeScreens('presentConsentPrompt'));
 };
 
 /**
  * Rejects on web, which has no native consent screens.
  *
- * @param privacyPolicyURL - Unused.
+ * @param privacyPolicyUrl - Unused.
  * @returns Never resolves.
  * @throws {Error} With `code: 'INTH_NATIVE_UI_EXCLUDED'`.
  */
 export const presentPreferences = (
-	privacyPolicyURL: string
+	privacyPolicyUrl: string
 ): Promise<ConsentPresenterSession> => {
-	void privacyPolicyURL;
+	void privacyPolicyUrl;
 	return Promise.reject(noNativeScreens('presentPreferences'));
 };
 

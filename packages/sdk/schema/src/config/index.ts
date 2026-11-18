@@ -421,7 +421,7 @@ export const CONSENT_COMPONENT_SLOT_KEYS = Object.entries(
  * @typeParam T - Framework attribute type bound to theme slot overrides.
  */
 export interface ConsentConfig<T = Record<string, unknown>> {
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * Consent categories shown in the UI. Backend policy allowlists that include
 	 * optional categories narrow this set. A policy allowlist of only `necessary`

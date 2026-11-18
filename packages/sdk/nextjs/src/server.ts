@@ -257,8 +257,8 @@ const reportPrefetchError = function reportPrefetchError(
  *    request.
  * 2. Resolves the visitor's policy for the config's `mode`: `manifest()`
  *    (the default) from the snapshot `withConsentManifest` downloaded, or
- *    `${backendURL}/manifest` through the in-process cache without one;
- *    `hosted()` from `${backendURL}/init`. `local()` leaves it to the
+ *    `${projectUrl}/manifest` through the in-process cache without one;
+ *    `hosted()` from `${projectUrl}/init`. `local()` leaves it to the
  *    browser.
  * 3. Folds the result into a `ConsentState` so first paint is correct
  *    without waiting for a client roundtrip.
@@ -298,7 +298,6 @@ export const resolveConsent = async function resolveConsent(
 	const { routePrefix } = source;
 	return (await resolveRequestConsent({
 		adapter: '@c15t/nextjs',
-		backendURL: source.backendURL,
 		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
@@ -312,13 +311,14 @@ export const resolveConsent = async function resolveConsent(
 			RequestInit,
 			'headers' | 'method'
 		>,
-		manifestURL: source.manifestURL,
+		manifestUrl: source.manifestUrl,
 		mode: source.mode,
 		now: options.now,
 		onError: (error, url) => reportPrefetchError(options, error, url),
 		overrides: { country: options.country, language: options.language },
 		// The app's own consent route: the render never fetches it.
 		ownRoutes: routePrefix ? [routePrefix] : [],
+		projectUrl: source.projectUrl,
 		request: facts,
 		storage: options.cookieName
 			? { storageKey: options.cookieName }

@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 
 import { scripts } from './scripts';
 
-const backendURL = 'https://your-project.inth.app';
+const projectUrl = 'https://your-project.inth.app';
 
 // `control` is the stock banner. `wall` blocks the page until the visitor
 // chooses.
@@ -63,9 +63,9 @@ export const Consent = ({
 }) => (
 	<ConsentProvider
 		options={{
-			backendURL,
 			callbacks,
 			experiment: arm === 'off' ? undefined : { ...bannerExperiment, arm },
+			projectUrl,
 			scripts,
 		}}
 	>

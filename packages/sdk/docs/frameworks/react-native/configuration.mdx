@@ -12,10 +12,10 @@ installed engine and has no backend or policy-options prop.
 
 The mobile SDKs work only with Inth hosted projects. There is one mode, so
 there is no `mode` option and no self-hosted backend on mobile. Set
-`backendURL` to the project URL from your Inth dashboard. The app fetches
+`projectUrl` to the project URL from your Inth dashboard. The app fetches
 policy from that project and sends consent records to it.
 
-`backendURL` takes these forms. Each one becomes
+`projectUrl` takes these forms. Each one becomes
 `https://your-project.inth.app`:
 
 | You write | What happens |
@@ -34,7 +34,7 @@ names the rule it broke:
 {/* example: fragment */}
 
 ```txt
-backendURL must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.
+projectUrl must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.
 ```
 
 Native startup checks the URL again with the same rule. The URL is public
@@ -48,10 +48,10 @@ replacement:
 | Removed | Use instead |
 | --- | --- |
 | `mode: 'hosted'` | Remove it. Hosted is the only mode. |
-| `mode: 'selfHosted'` | Nothing. Mobile works only with Inth. Set `backendURL` to your Inth project URL. |
-| `mode: 'offline'` | `dryRun: true` in development and CI. In production keep `backendURL`; `bundleManifest` or `policy` covers a launch without network. |
+| `mode: 'selfHosted'` | Nothing. Mobile works only with Inth. Set `projectUrl` to your Inth project URL. |
+| `mode: 'offline'` | `dryRun: true` in development and CI. In production keep `projectUrl`; `bundleManifest` or `policy` covers a launch without network. |
 | `mode: 'custom'` | `autoBootstrap: false`. Your native app installs Inth before React Native starts. Custom transports are gone. |
-| `initURL` | Nothing. The app fetches policy from `backendURL`. |
+| `initURL` | Nothing. The app fetches policy from `projectUrl`. |
 
 ## Use dryRun in development and CI
 
@@ -70,7 +70,7 @@ no network.
 
 ```ts title="app.config.ts"
 {
-	backendURL: 'https://your-project.inth.app',
+	projectUrl: 'https://your-project.inth.app',
 	dryRun: process.env.C15T_DRY_RUN === '1',
 }
 ```
@@ -87,7 +87,7 @@ launch:
 
 Remove `dryRun`, or leave its environment variable unset, in release builds.
 
-With `dryRun` on, `backendURL` also takes any `https` URL, or `http` on
+With `dryRun` on, `projectUrl` also takes any `https` URL, or `http` on
 `localhost`, `127.0.0.1` or `[::1]`, with a port and a path. Usernames,
 passwords, queries and fragments stay refused.
 
@@ -98,7 +98,7 @@ for a working `app.config.ts`. The plugin accepts:
 
 | Option | Purpose |
 | --- | --- |
-| `backendURL` | Required. The project URL from your Inth dashboard. See [Set your Inth project URL](#set-your-inth-project-url). |
+| `projectUrl` | Required. The project URL from your Inth dashboard. See [Set your Inth project URL](#set-your-inth-project-url). |
 | `dryRun` | Development and CI switch that drops consent records. Defaults to false. See [Use dryRun in development and CI](#use-dryrun-in-development-and-ci). |
 | `domain` | Domain value sent with subject writes. |
 | `consentCategories` | Optional app category declaration. |
@@ -129,7 +129,7 @@ Use these keys when configuring the same engine without Expo:
 
 | Expo option | iOS `Info.plist` key | Android application metadata |
 | --- | --- | --- |
-| `backendURL` | `com.inth.backend.url` | `com.inth.BACKEND_URL` |
+| `projectUrl` | `com.inth.backend.url` | `com.inth.BACKEND_URL` |
 | `dryRun` | `com.inth.dryRun`, boolean | `com.inth.DRY_RUN` |
 | `domain` | `com.inth.backend.domain` | `com.inth.BACKEND_DOMAIN` |
 | `consentCategories` | `com.inth.categories`, string array | `com.inth.CATEGORIES`, comma-separated |

@@ -186,7 +186,7 @@ device's region. Decide where a test build sends consent records:
   [Use dryRun in development and CI](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci).
 - A release build refuses `dryRun`: no engine starts and every gate stays
   closed. An EAS simulator build for E2E is a release build, so point it at a
-  separate Inth project for testing instead, with `backendURL` set per build
+  separate Inth project for testing instead, with `projectUrl` set per build
   profile. Its records then stay out of your production project.
 
 The region decides which prompt appears: the first layer, a notice, or none.
@@ -241,7 +241,7 @@ Replace the URL with the one from your test project in Inth. Read it in
 {/* example: fragment */}
 
 ```ts title="app.config.ts"
-backendURL: process.env.C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+projectUrl: process.env.C15T_BACKEND_URL ?? 'https://your-project.inth.app',
 ```
 
 Then add a workflow that builds with that profile and runs your flows:

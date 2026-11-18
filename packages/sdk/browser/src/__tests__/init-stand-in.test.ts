@@ -62,7 +62,7 @@ let answerInit: {
 const tag = () => {
 	const script = document.createElement('script');
 	script.setAttribute('src', OWN_SRC);
-	script.setAttribute('data-backend-url', BACKEND_URL);
+	script.setAttribute('data-project-url', BACKEND_URL);
 	return script;
 };
 

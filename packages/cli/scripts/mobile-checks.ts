@@ -46,8 +46,8 @@ const appJsonSchema = z.object({
         z.tuple([
           z.string(),
           z.object({
-            backendURL: z.string(),
             consentCategories: z.array(z.string()),
+            projectUrl: z.string(),
           }),
         ]),
       ])
@@ -140,8 +140,8 @@ export const verifyMobile = async (binary: string): Promise<void> => {
       [
         "@inth/react-native/expo-plugin",
         {
-          backendURL: "https://demo.inth.app",
           consentCategories: ["necessary", "marketing"],
+          projectUrl: "https://demo.inth.app",
         },
       ],
     ]);

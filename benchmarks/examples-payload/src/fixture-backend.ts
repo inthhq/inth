@@ -48,8 +48,8 @@ export const PUBLIC_ORIGIN_HEADER = 'x-examples-payload-origin';
  * build (`packages/backend/src/http/script.ts`): hosted mode against the
  * backend that served it.
  */
-export const scriptPrelude = function scriptPrelude(backendURL: string) {
-	const config = JSON.stringify({ backendURL, mode: 'hosted' });
+export const scriptPrelude = function scriptPrelude(projectUrl: string) {
+	const config = JSON.stringify({ mode: 'hosted', projectUrl });
 	return `(function(c){window.c15t=window.c15t||[];Array.isArray(window.c15t)?window.c15t.unshift(["config",c]):window.c15t.config(c)})(${config});\n`;
 };
 
@@ -140,11 +140,11 @@ export const startFixtureBackend = async function startFixtureBackend(
 				? 'text/css'
 				: 'text/javascript; charset=utf-8',
 		});
-		const backendURL =
+		const projectUrl =
 			request.headers[PUBLIC_ORIGIN_HEADER] ?? `http://${request.headers.host}`;
 		response.end(
 			path === '/c15t.js'
-				? `${scriptPrelude(String(backendURL))}${readFileSync(file, 'utf8')}`
+				? `${scriptPrelude(String(projectUrl))}${readFileSync(file, 'utf8')}`
 				: readFileSync(file)
 		);
 	};

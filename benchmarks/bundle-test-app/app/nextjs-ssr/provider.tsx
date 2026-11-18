@@ -17,7 +17,7 @@ export const NextjsSSRProvider = ({
 	state: RootState;
 }) => (
 	<Root
-		backendURL="/api/bench-consent"
+		projectUrl="/api/bench-consent"
 		state={state}
 	>
 		<SSRStateProbe />

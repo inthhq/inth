@@ -57,8 +57,8 @@ export interface ResolveConsentContextOptions {
 	/** The incoming request headers. */
 	headers: Headers;
 	/**
-	 * The absolute request URL. Used to resolve a relative `backendURL` or
-	 * `manifestURL` against this request's own origin and protocol; without
+	 * The absolute request URL. Used to resolve a relative `projectUrl` or
+	 * `manifestUrl` against this request's own origin and protocol; without
 	 * it the shared resolver assumes `https`.
 	 */
 	url?: string;
@@ -178,12 +178,11 @@ const modeOptions = function modeOptions(
 	switch (mode.type) {
 		case 'hosted':
 			return {
-				backendURL: options.backendURL,
 				mode: 'hosted',
+				projectUrl: options.projectUrl,
 			};
 		case 'manifest':
 			return {
-				backendURL: options.backendURL,
 				// The init route serves only lists from the shared cache; a
 				// caller's own fetch keeps its list inline.
 				gvlRoute:
@@ -191,8 +190,9 @@ const modeOptions = function modeOptions(
 						? undefined
 						: `${options.routePrefix}/init`,
 				manifest: mode.snapshot,
-				manifestURL: mode.manifestURL,
+				manifestUrl: mode.manifestUrl,
 				mode: 'manifest',
+				projectUrl: options.projectUrl,
 			};
 		default: {
 			// `testing()`: never in production.
@@ -219,7 +219,7 @@ const modeOptions = function modeOptions(
  *
  * Hosted and manifest mode get theirs from `/init`. Offline mode has no
  * backend to ask, so a site that wants a server-rendered IAB banner points
- * `iab.gvl` at a list or `iab.gvlURL` at where one lives — the second goes
+ * `iab.gvl` at a list or `iab.gvlUrl` at where one lives — the second goes
  * through the shared in-process cache, so a page render is not a download.
  *
  * A failed fetch is not fatal: the page falls back to the non-IAB banner
@@ -243,12 +243,12 @@ const withResolvedGvl = async function withResolvedGvl(input: {
 	}
 
 	let gvl: GlobalVendorList | null = iab.gvl ?? null;
-	if (!gvl && iab.gvlURL) {
+	if (!gvl && iab.gvlUrl) {
 		try {
 			gvl = await fetchCachedGvl({
 				fetch: input.fetch as ManifestFetch | undefined,
 				language: input.language,
-				url: iab.gvlURL,
+				url: iab.gvlUrl,
 			});
 		} catch {
 			gvl = null;
@@ -689,7 +689,7 @@ export {
 // framework adapters.
 export {
 	createConsentRouteHandlers,
-	resolveManifestSourceURL,
+	resolveManifestSourceUrl,
 	waitUntilFromLocals,
 } from './api/handlers';
 export type {
@@ -700,7 +700,7 @@ export { resolveManifestSourceFrom } from './api/manifest-init';
 export type { FetchGvl, RequestSource } from './api/manifest-init';
 export {
 	clearManifestCache,
-	createManifestRequestURL,
+	createManifestRequestUrl,
 	fetchCachedManifest,
 	getManifestSMaxAge,
 	getManifestStaleWhileRevalidate,

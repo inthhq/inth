@@ -31,10 +31,10 @@ let warnedImplementation = false;
 /** Where the transport sends requests. */
 export interface NextClientModeOptions {
 	/** Backend URL for saves, and for `GET /init` in hosted mode. */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * The consent route forwards writes, so the browser sends everything
-	 * to `routePrefix`, even for a `hosted()` with its own `backendURL`.
+	 * to `routePrefix`, even for a `hosted()` with its own `projectUrl`.
 	 * The server helpers keep using the absolute URLs.
 	 */
 	proxy?: boolean;
@@ -48,10 +48,10 @@ export interface NextClientModeOptions {
  *
  * - `manifest()` resolved on the server (the default): saves through the
  *   record transport; a re-init loads the hosted transport and asks
- *   `${routePrefix}/init`, else `${backendURL}/init`.
+ *   `${routePrefix}/init`, else `${projectUrl}/init`.
  * - `manifest({ resolve: 'browser' })`: the browser resolver, loaded on
  *   first init, reading `${routePrefix}/manifest`, else
- *   `${backendURL}/manifest`.
+ *   `${projectUrl}/manifest`.
  * - `hosted()`: the hosted backend's transport, loaded on first init.
  * - `testing()` from `c15t/next/testing`: the transport that
  *   resolves the recommended pack in the browser, loaded on first init.
@@ -88,19 +88,19 @@ export const createClientMode = function createClientMode(
 	}
 	// Saves never fall back to `routePrefix`: the route takes writes only
 	// with `proxy`.
-	const backendURL = options.proxy ? routePrefix : options.backendURL;
-	if (!backendURL) {
+	const projectUrl = options.proxy ? routePrefix : options.projectUrl;
+	if (!projectUrl) {
 		// Production builds drop the setup hint and its variable names.
 		throw new Error(
-			`@c15t/nextjs: \`backendURL\` is required.${
+			`@c15t/nextjs: \`projectUrl\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
-					: ' Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.'
+					: ' Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
 			}`
 		);
 	}
 	if (mode.type === 'hosted') {
-		return lazyHosted({ backendURL });
+		return lazyHosted({ projectUrl });
 	}
 	const data = mode;
 	if (data.resolve === 'browser') {
@@ -113,19 +113,19 @@ export const createClientMode = function createClientMode(
 		return Object.assign(
 			lazyBrowserManifest({
 				...browser,
-				backendURL,
-				manifestURL:
-					data.manifestURL ??
+				manifestUrl:
+					data.manifestUrl ??
 					(routePrefix === undefined ? undefined : `${routePrefix}/manifest`),
+				projectUrl,
 			} as LazyBrowserManifestOptions),
 			data
 		);
 	}
 	return Object.assign(
 		lazyHosted({
-			backendURL,
-			initURL: routePrefix === undefined ? undefined : `${routePrefix}/init`,
+			initUrl: routePrefix === undefined ? undefined : `${routePrefix}/init`,
 			kind: 'manifest',
+			projectUrl,
 		}),
 		data
 	);

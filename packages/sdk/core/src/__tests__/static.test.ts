@@ -100,7 +100,7 @@ describe('createStaticConsentResolver', () => {
 		const resolution = createStaticConsentResolver({
 			fetch,
 			geo: { countryCode: 'DE' },
-			geoURL: 'https://geo.test/context',
+			geoUrl: 'https://geo.test/context',
 			language: 'en',
 			manifest,
 		});
@@ -113,7 +113,7 @@ describe('createStaticConsentResolver', () => {
 		const fetch = geoResponse({ countryCode: 'US', regionCode: 'CA' });
 		const resolution = createStaticConsentResolver({
 			fetch,
-			geoURL: 'https://geo.test/context',
+			geoUrl: 'https://geo.test/context',
 			language: 'en',
 			manifest,
 		});
@@ -139,7 +139,7 @@ describe('createStaticConsentResolver', () => {
 	])('keeps the initial result after %s', async (_label, fetch) => {
 		const resolution = createStaticConsentResolver({
 			fetch,
-			geoURL: 'https://geo.test/context',
+			geoUrl: 'https://geo.test/context',
 			language: 'en',
 			manifest,
 		});
@@ -163,7 +163,7 @@ describe('createStaticConsentResolver', () => {
 
 		const fetched = createStaticConsentResolver({
 			fetch: geoResponse(geo),
-			geoURL: 'https://geo.test/context',
+			geoUrl: 'https://geo.test/context',
 			language: 'en',
 			manifest,
 		});
@@ -173,7 +173,7 @@ describe('createStaticConsentResolver', () => {
 	test('trims location fields and falls through to the other spelling', async () => {
 		const resolution = createStaticConsentResolver({
 			fetch: geoResponse({ country: 1, countryCode: ' US ', regionCode: 'CA' }),
-			geoURL: 'https://geo.test/context',
+			geoUrl: 'https://geo.test/context',
 			language: 'en',
 			manifest,
 		});

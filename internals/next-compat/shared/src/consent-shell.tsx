@@ -34,7 +34,7 @@ export interface ConsentShellProps {
 	 * routes that init in the browser.
 	 */
 	state?: ConsentRootProps['state'];
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * `hosted` calls the backend `/init`; `manifest` resolves init in the
 	 * browser from the same-origin manifest route and never calls `/init`;
@@ -55,10 +55,10 @@ export interface ConsentShellProps {
 }
 
 const createMode = function createMode({
-	backendURL,
+	projectUrl,
 	manifest,
 	transport,
-}: Required<Pick<ConsentShellProps, 'backendURL' | 'transport'>> &
+}: Required<Pick<ConsentShellProps, 'projectUrl' | 'transport'>> &
 	Pick<ConsentShellProps, 'manifest'>) {
 	switch (transport) {
 		case 'manifest-geo': {
@@ -68,8 +68,8 @@ const createMode = function createMode({
 		case 'manifest': {
 			return customMode(
 				createManifestTransport({
-					backendURL,
-					manifestURL: COMPAT_MANIFEST_URL,
+					manifestUrl: COMPAT_MANIFEST_URL,
+					projectUrl,
 				})
 			);
 		}
@@ -77,7 +77,7 @@ const createMode = function createMode({
 			if (!manifest) {
 				throw new Error('ConsentShell: transport="static" needs a manifest');
 			}
-			return customMode(createStaticTransport({ backendURL, manifest }));
+			return customMode(createStaticTransport({ manifest, projectUrl }));
 		}
 		default: {
 			return undefined;
@@ -87,20 +87,20 @@ const createMode = function createMode({
 
 /**
  * The root's config. `manifest-geo` uses the manifest config with the app's
- * consent route; the other transports use hosted mode against `backendURL`,
+ * consent route; the other transports use hosted mode against `projectUrl`,
  * which `options.mode` replaces for `manifest` and `static`.
  */
 const createConfig = function createConfig(
-	backendURL: string,
+	projectUrl: string,
 	transport: NonNullable<ConsentShellProps['transport']>
 ): ConsentConfig {
 	if (transport === 'manifest-geo') {
 		return COMPAT_CONSENT_CONFIG;
 	}
-	if (backendURL === COMPAT_BACKEND_URL) {
+	if (projectUrl === COMPAT_BACKEND_URL) {
 		return COMPAT_HOSTED_CONFIG;
 	}
-	return defineConsentConfig({ backendURL, mode: hosted() });
+	return defineConsentConfig({ mode: hosted(), projectUrl });
 };
 
 /**
@@ -109,7 +109,7 @@ const createConfig = function createConfig(
  * @remarks
  * Kept identical across routers and Next.js versions so a failing cell
  * points at the framework combination, not at fixture drift. Mirrors the
- * v3 pattern: one `ConsentRoot`, hosted mode against `backendURL` by
+ * v3 pattern: one `ConsentRoot`, hosted mode against `projectUrl` by
  * default, and the server state (when any) passed as a plain prop. No cell
  * has a `c15t.config.ts`, so the shell passes `config` itself.
  */
@@ -117,7 +117,7 @@ export const ConsentShell = ({
 	children,
 	scenario,
 	state,
-	backendURL = COMPAT_BACKEND_URL,
+	projectUrl = COMPAT_BACKEND_URL,
 	transport = 'hosted',
 	manifest,
 	networkBlocker,
@@ -125,12 +125,12 @@ export const ConsentShell = ({
 	styles = true,
 }: ConsentShellProps) => {
 	const mode = useMemo(
-		() => createMode({ backendURL, manifest, transport }),
-		[backendURL, manifest, transport]
+		() => createMode({ manifest, projectUrl, transport }),
+		[projectUrl, manifest, transport]
 	);
 	const config = useMemo(
-		() => createConfig(backendURL, transport),
-		[backendURL, transport]
+		() => createConfig(projectUrl, transport),
+		[projectUrl, transport]
 	);
 
 	return (

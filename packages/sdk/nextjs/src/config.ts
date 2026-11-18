@@ -22,7 +22,7 @@ import type { ConsentClientOptions } from './types';
  */
 declare const process: { env: Record<string, string | undefined> };
 
-/** Environment variable `backendURL` defaults to. */
+/** Environment variable `projectUrl` defaults to. */
 export const BACKEND_URL_ENV = 'NEXT_PUBLIC_C15T_BACKEND_URL';
 
 /**
@@ -33,7 +33,7 @@ export const BACKEND_URL_ENV = 'NEXT_PUBLIC_C15T_BACKEND_URL';
  *
  * @internal
  */
-export const readBackendURLFromEnv = function readBackendURLFromEnv():
+export const readProjectUrlFromEnv = function readProjectUrlFromEnv():
 	| string
 	| undefined {
 	try {
@@ -62,7 +62,7 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * @default process.env.NEXT_PUBLIC_C15T_BACKEND_URL, then
 	 * process.env.NEXT_PUBLIC_INTH_PROJECT_URL
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 
 	/**
 	 * How the visitor's policy is resolved. Plain data, so the browser only
@@ -75,7 +75,7 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * - `hosted()` from `c15t/next`: ask the backend's `/init` for every
 	 *   visitor.
 	 * - `testing()` from `c15t/next/testing`: the browser resolves a policy
-	 *   with no network, for tests. Needs no `backendURL`, and throws in
+	 *   with no network, for tests. Needs no `projectUrl`, and throws in
 	 *   production builds.
 	 *
 	 * To keep consent out of the way in an app's own tests instead, set
@@ -103,7 +103,7 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * The route at {@link routePrefix} was created with
 	 * `createConsentRoute({ proxy: true })` (or `createPagesConsentRoute`),
 	 * so the browser sends saves through it instead of straight to
-	 * `backendURL`. The server helpers
+	 * `projectUrl`. The server helpers
 	 * keep using those URLs, so keep them absolute. Needs `routePrefix`.
 	 * Same option as TanStack Start's `createConsentStateHandler({ proxy })`.
 	 *
@@ -184,19 +184,19 @@ const assertConsentConfig = function assertConsentConfig(
 	if (typeof config !== 'object' || config === null) {
 		throw new TypeError('@c15t/nextjs: defineConsentConfig expects an object.');
 	}
-	const backendURL = config.backendURL ?? readBackendURLFromEnv();
+	const projectUrl = config.projectUrl ?? readProjectUrlFromEnv();
 	const { mode } = config;
 	if (mode !== undefined && !MODE_TYPES.has(mode.type)) {
 		throw new TypeError(
 			'@c15t/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from c15t/next, or testing() from c15t/next/testing. Pass a transport through ConsentRoot `options.mode`.'
 		);
 	}
-	if (backendURL === undefined && mode?.type !== 'testing') {
+	if (projectUrl === undefined && mode?.type !== 'testing') {
 		throw new TypeError(
-			`@c15t/nextjs: defineConsentConfig needs \`backendURL\`, or ${BACKEND_URL_ENV} (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`
+			`@c15t/nextjs: defineConsentConfig needs \`projectUrl\`, or ${BACKEND_URL_ENV} (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`
 		);
 	}
-	assertConsentURL('backendURL', backendURL);
+	assertConsentURL('projectUrl', projectUrl);
 	if (config.routePrefix !== undefined) {
 		checkRoutePrefix(config.routePrefix);
 	}
@@ -206,8 +206,8 @@ const assertConsentConfig = function assertConsentConfig(
 		);
 	}
 	if (mode?.type === 'manifest') {
-		assertConsentURL('mode.manifestURL', mode.manifestURL);
-		assertConsentURL('mode.geoURL', mode.geoURL);
+		assertConsentURL('mode.manifestUrl', mode.manifestUrl);
+		assertConsentURL('mode.geoUrl', mode.geoUrl);
 	}
 	if (
 		config.journey !== undefined &&
@@ -262,10 +262,10 @@ export const defineConsentConfig = function defineConsentConfig(
 	if (typeof window === 'undefined') {
 		assertConsentConfig(config);
 	}
-	const backendURL = config.backendURL ?? readBackendURLFromEnv();
+	const projectUrl = config.projectUrl ?? readProjectUrlFromEnv();
 	const defined: ConsentConfig = { ...config };
-	if (backendURL !== undefined) {
-		defined.backendURL = backendURL;
+	if (projectUrl !== undefined) {
+		defined.projectUrl = projectUrl;
 	}
 	if (config.routePrefix !== undefined) {
 		defined.routePrefix = config.routePrefix.replace(/\/+$/u, '');

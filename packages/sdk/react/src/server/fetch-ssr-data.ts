@@ -3,7 +3,7 @@ import type { InitOutput, SSRInitialData } from '@c15t/core';
 
 import { version } from '../version';
 import { CLIENT_FORWARDING_HEADERS, extractRelevantHeaders } from './headers';
-import { normalizeBackendURL } from './normalize-url';
+import { normalizeProjectUrl } from './normalize-url';
 import type { FetchSSRDataOptions } from './types';
 
 interface SSRFetchResult {
@@ -12,17 +12,17 @@ interface SSRFetchResult {
 }
 
 const buildRequestContext = function buildRequestContext(options: {
-	backendURL: string;
+	projectUrl: string;
 	headers: Record<string, string>;
 	overrides?: FetchSSRDataOptions['overrides'];
 }): NonNullable<SSRInitialData['metadata']>['requestContext'] {
 	return {
-		backendURL: options.backendURL,
 		country:
 			options.overrides?.country ?? options.headers['x-c15t-country'] ?? null,
 		gpc: options.headers['sec-gpc'] === '1',
 		language:
 			options.overrides?.language ?? options.headers['accept-language'] ?? null,
+		projectUrl: options.projectUrl,
 		region:
 			options.overrides?.region ?? options.headers['x-c15t-region'] ?? null,
 	};
@@ -104,7 +104,7 @@ const logRelevantHeaders = function logRelevantHeaders(
  * GVL is now included in the init response when server has it configured.
  */
 const performInitFetch = async function performInitFetch(
-	normalizedURL: string,
+	normalizedUrl: string,
 	relevantHeaders: Record<string, string>,
 	requestContext: NonNullable<SSRInitialData['metadata']>['requestContext'],
 	debug?: boolean
@@ -112,7 +112,7 @@ const performInitFetch = async function performInitFetch(
 	const startTime = getNowMs();
 
 	try {
-		const response = await fetch(`${normalizedURL}/init`, {
+		const response = await fetch(`${normalizedUrl}/init`, {
 			cache: 'no-store',
 			headers: relevantHeaders,
 			method: 'GET',
@@ -189,13 +189,13 @@ const performInitFetch = async function performInitFetch(
  * import { fetchSSRData } from '@c15t/react/server';
  *
  * const data = await fetchSSRData({
- *   backendURL: '/api/consent',
+ *   projectUrl: '/api/consent',
  *   headers: request.headers,
  *   debug: true
  * });
  * ```
  *
- * @param options - Configuration options including backendURL, headers, overrides, and debug
+ * @param options - Configuration options including projectUrl, headers, overrides, and debug
  * @returns The SSR initial data or undefined if the fetch fails
  *
  * @public
@@ -203,7 +203,7 @@ const performInitFetch = async function performInitFetch(
 export const fetchSSRData = async function fetchSSRData(
 	options: FetchSSRDataOptions
 ): Promise<SSRInitialData | undefined> {
-	const { backendURL, headers, overrides, debug } = options;
+	const { projectUrl, headers, overrides, debug } = options;
 
 	if (debug) {
 		console.log('[c15t/server] SSR fetch starting...');
@@ -231,10 +231,10 @@ export const fetchSSRData = async function fetchSSRData(
 	}
 
 	// Normalize URL synchronously
-	const normalizedURL = normalizeBackendURL(backendURL, headers, {
+	const normalizedUrl = normalizeProjectUrl(projectUrl, headers, {
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});
-	if (!normalizedURL) {
+	if (!normalizedUrl) {
 		if (debug) {
 			console.log('[c15t/server] Failed to normalize URL, skipping SSR fetch');
 		}
@@ -242,7 +242,7 @@ export const fetchSSRData = async function fetchSSRData(
 	}
 
 	if (debug) {
-		console.log(`[c15t/server] Fetching from: ${normalizedURL}/init`);
+		console.log(`[c15t/server] Fetching from: ${normalizedUrl}/init`);
 	}
 
 	// Preserve an incoming client version; direct SSR requests use this
@@ -269,12 +269,12 @@ export const fetchSSRData = async function fetchSSRData(
 
 	// Fetch init data (GVL is included in response when server has it configured)
 	const initResult = await performInitFetch(
-		normalizedURL,
+		normalizedUrl,
 		initHeaders,
 		buildRequestContext({
-			backendURL: normalizedURL,
 			headers: initHeaders,
 			overrides,
+			projectUrl: normalizedUrl,
 		}),
 		debug
 	);

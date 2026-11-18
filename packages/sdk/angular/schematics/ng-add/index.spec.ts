@@ -88,8 +88,8 @@ describe('ng-add', () => {
 	});
 
 	it('names options so their command-line flags reach the schematic', () => {
-		// The CLI turns `backendURL` into `--backend-url`, then parses that
-		// back as `backendUrl`, so an acronym in a name drops the flag.
+		// The CLI turns `projectURL` into `--project-url`, then parses that
+		// back as `projectUrl`, so an acronym in a name drops the flag.
 		const names = Object.keys(schema.properties);
 		expect(
 			names.filter((name) => strings.camelize(strings.dasherize(name)) !== name)
@@ -98,13 +98,13 @@ describe('ng-add', () => {
 
 	it('adds provideC15t and the components to a standalone app', async () => {
 		const { tree, warnings } = await run(await createApp(), {
-			backendUrl: 'https://acme.inth.app',
+			projectUrl: 'https://acme.inth.app',
 		});
 
 		const config = tree.readText(`${root}/app/app.config.ts`);
 		expect(config).toContain("import { provideC15t } from '@c15t/angular';");
 		expect(config).toMatch(
-			/provideRouter\(routes\),\n {4}provideC15t\(\{\n {6}backendURL: 'https:\/\/acme\.inth\.app',\n {4}\}\)\n/u
+			/provideRouter\(routes\),\n {4}provideC15t\(\{\n {6}projectUrl: 'https:\/\/acme\.inth\.app',\n {4}\}\)\n/u
 		);
 		expect(config).not.toContain('Replace with');
 
@@ -126,7 +126,7 @@ describe('ng-add', () => {
 
 		const config = tree.readText(`${root}/app/app.config.ts`);
 		expect(config).toContain(
-			"// Replace with the backend URL of your Inth project.\n      backendURL: 'https://your-project.inth.app',"
+			"// Replace with the backend URL of your Inth project.\n      projectUrl: 'https://your-project.inth.app',"
 		);
 		expect(warnings).toEqual([
 			expect.stringContaining('Replace https://your-project.inth.app'),
@@ -170,7 +170,7 @@ describe('ng-add', () => {
 		const main = tree.readText(`${root}/main.ts`);
 		expect(main).toContain("import { provideC15t } from '@c15t/angular';");
 		expect(main).toContain(
-			"  providers: [provideC15t({\n    // Replace with the backend URL of your Inth project.\n    backendURL: 'https://your-project.inth.app',\n  })]"
+			"  providers: [provideC15t({\n    // Replace with the backend URL of your Inth project.\n    projectUrl: 'https://your-project.inth.app',\n  })]"
 		);
 		expect(tree.readText(`${root}/app/app.ts`)).toContain(
 			'ConsentBanner, ConsentDialog]'
@@ -212,7 +212,7 @@ describe('ng-add', () => {
 		const providers = `${root}/app/consent.providers.ts`;
 		app.create(
 			providers,
-			"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ backendURL: '/api/c15t' }) }),\n];\n"
+			"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
 		);
 		app.overwrite(
 			config,
@@ -258,7 +258,7 @@ describe('ng-add', () => {
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
-					"provideRouter(routes), consent({ mode: hosted({ backendURL: '/api/c15t' }) })"
+					"provideRouter(routes), consent({ mode: hosted({ projectUrl: '/api/c15t' }) })"
 				)}`
 		);
 		const before = app.readText(config);
@@ -276,7 +276,7 @@ describe('ng-add', () => {
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
-					"provideRouter(routes), c15t.provideC15t({ mode: c15t.hosted({ backendURL: '/api/c15t' }) })"
+					"provideRouter(routes), c15t.provideC15t({ mode: c15t.hosted({ projectUrl: '/api/c15t' }) })"
 				)}`
 		);
 		const before = app.readText(config);
@@ -303,7 +303,7 @@ describe('ng-add', () => {
 					.readText(config)
 					.replace(
 						'provideRouter(routes)',
-						`provideRouter(routes), ${called}({ mode: hosted({ backendURL: '/api/c15t' }) })`
+						`provideRouter(routes), ${called}({ mode: hosted({ projectUrl: '/api/c15t' }) })`
 					)}`
 			);
 			const before = app.readText(config);
@@ -352,7 +352,7 @@ describe('ng-add', () => {
 			}
 			app.create(
 				`${root}/app/consent/providers.ts`,
-				"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ backendURL: '/api/c15t' }) }),\n];\n"
+				"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
 			);
 			const config = `${root}/app/app.config.ts`;
 			app.overwrite(
@@ -444,7 +444,7 @@ describe('ng-add', () => {
 			app.readText(main).replace("from './app/app'", "from '@app/app'")
 		);
 		const { tree, warnings } = await run(app, {
-			backendUrl: 'https://acme.inth.app',
+			projectUrl: 'https://acme.inth.app',
 		});
 
 		expect(warnings).toEqual([]);
@@ -471,7 +471,7 @@ describe('ng-add', () => {
 			].join('\n')
 		);
 		const { tree, warnings } = await run(app, {
-			backendUrl: 'https://acme.inth.app',
+			projectUrl: 'https://acme.inth.app',
 		});
 		const text = tree.readText(main);
 
@@ -613,7 +613,7 @@ describe('ng-add', () => {
 		}
 		app.overwrite(path, text);
 		const { tree, warnings } = await run(app, {
-			backendUrl: 'https://acme.inth.app',
+			projectUrl: 'https://acme.inth.app',
 		});
 
 		expect(warnings).toEqual([]);
@@ -637,7 +637,7 @@ describe('ng-add', () => {
 		);
 		const component = app.readText(`${root}/app/app.ts`);
 		const { tree, warnings } = await run(app, {
-			backendUrl: 'https://acme.inth.app',
+			projectUrl: 'https://acme.inth.app',
 		});
 
 		// The CLI's provider helper cannot follow a namespaced bootstrap call.
@@ -662,7 +662,7 @@ describe('ng-add', () => {
 				'export const routes: Routes = [',
 				'\t{',
 				"\t\tpath: 'account',",
-				"\t\tproviders: [provideC15t({ mode: hosted({ backendURL: '/api/c15t' }) })],",
+				"\t\tproviders: [provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) })],",
 				'\t\tchildren: [],',
 				'\t},',
 				'];',
@@ -671,7 +671,7 @@ describe('ng-add', () => {
 		);
 		const config = `${root}/app/app.config.ts`;
 		const { tree, warnings } = await run(app, {
-			backendUrl: 'https://acme.inth.app',
+			projectUrl: 'https://acme.inth.app',
 		});
 
 		expect(tree.readText(config)).toMatch(/\n {4}provideC15t\(\{\n/u);
@@ -688,7 +688,7 @@ describe('ng-add', () => {
 			const config = `${root}/app/app.config.ts`;
 			app.create(
 				`${root}/app/consent.providers.ts`,
-				"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ backendURL: '/api/c15t' }) }),\n];\n"
+				"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
 			);
 			app.overwrite(
 				config,
@@ -716,7 +716,7 @@ describe('ng-add', () => {
 				"import { App } from './app/app';",
 				'',
 				'const consentConfig = {',
-				"\tproviders: [provideC15t({ mode: hosted({ backendURL: '/api/c15t' }) })],",
+				"\tproviders: [provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) })],",
 				'};',
 				'',
 				'bootstrapApplication(App, mergeApplicationConfig(appConfig, consentConfig));',
@@ -740,7 +740,7 @@ describe('ng-add', () => {
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
-					"provideRouter(routes), provideC15t({ mode: hosted({ backendURL: '/api/c15t' }) })"
+					"provideRouter(routes), provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) })"
 				)}`
 		);
 		app.create(
@@ -784,7 +784,7 @@ describe('ng-add', () => {
 			"import { hosted, provideC15t } from '@c15t/angular';",
 			"import { routes } from './app.routes';",
 			'',
-			"const c15t = provideC15t({ mode: hosted({ backendURL: '/api/c15t' }) });",
+			"const c15t = provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) });",
 			'',
 		].join('\n');
 		const known: readonly (readonly [string, string])[] = [
@@ -871,8 +871,8 @@ describe('ng-add', () => {
 			app.overwrite(config, `${header}${body}\n`);
 			const before = app.readText(config);
 			const result = await run(app, {
-				backendUrl: 'https://acme.inth.app',
 				components: false,
+				projectUrl: 'https://acme.inth.app',
 			});
 			return { before, ...result };
 		};
@@ -907,7 +907,7 @@ describe('ng-add', () => {
 				expect(tree.readText(config)).toBe(before);
 				expect(warnings).toEqual([
 					expect.stringContaining(
-						"provideC15t({ backendURL: 'https://acme.inth.app' })"
+						"provideC15t({ projectUrl: 'https://acme.inth.app' })"
 					),
 				]);
 			}
@@ -918,7 +918,7 @@ describe('ng-add', () => {
 			app.overwrite(config, `${header}${unknown[0]?.[1]}\n`);
 			const component = app.readText(`${root}/app/app.ts`);
 			const { tree, warnings } = await run(app, {
-				backendUrl: 'https://acme.inth.app',
+				projectUrl: 'https://acme.inth.app',
 			});
 
 			// Without a provider the components throw at startup, so the user

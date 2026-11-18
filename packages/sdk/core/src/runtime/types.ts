@@ -108,7 +108,7 @@ export type RuntimeIABOptions =
 			/** Pre-fetched Global Vendor List, or `null` for a non-IAB region. */
 			gvl?: GlobalVendorList | null;
 			/** Override the GVL endpoint. */
-			gvlURL?: string;
+			gvlUrl?: string;
 	  })
 	| false;
 
@@ -146,7 +146,7 @@ export interface ConsentRuntimeIABFactoryOptions {
 	/** Pre-fetched Global Vendor List, or `null` to disable IAB mode. */
 	gvl?: GlobalVendorList | null;
 	/** Override the GVL endpoint. */
-	gvlURL?: string;
+	gvlUrl?: string;
 }
 
 /**
@@ -344,13 +344,13 @@ export interface ConsentRuntimeModules {
 	 */
 	mountIAB?: (options: RuntimeIABMountOptions) => () => void;
 	/**
-	 * Builds the transport factory for the options' `backendURL`. Pass
+	 * Builds the transport factory for the options' `projectUrl`. Pass
 	 * `hosted()`'s builder from `@c15t/core/transports`
 	 * (`defaultRuntimeModules` does). A host that builds its own transport
-	 * for `backendURL` passes that instead, or passes `mode` and leaves this
+	 * for `projectUrl` passes that instead, or passes `mode` and leaves this
 	 * out.
 	 */
-	hostedMode?: (backendURL: string) => ProviderTransportFactory;
+	hostedMode?: (projectUrl: string) => ProviderTransportFactory;
 	/**
 	 * Lets the provider runtime accept a `prefetch` that is still a promise.
 	 * Pass `streamPrefetch` from `@c15t/core/runtime`. Without it a pending
@@ -403,16 +403,16 @@ export interface ConsentRuntimeOptions {
 	enabled?: boolean;
 	/**
 	 * Backend URL, relative (`/api/c15t`) or absolute. Each init asks
-	 * `${backendURL}/init` (or reads its consent manifest with
-	 * `mode: manifest()`), and saves go to `${backendURL}/subjects`.
+	 * `${projectUrl}/init` (or reads its consent manifest with
+	 * `mode: manifest()`), and saves go to `${projectUrl}/subjects`.
 	 * Required unless `mode` is `testing()` or `enabled` is `false`; a
 	 * runtime without one throws. Initial-only.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * How the visitor's policy is resolved. Initial-only.
 	 *
-	 * - Omitted, or `hosted()` from `@c15t/core`: ask `${backendURL}/init`.
+	 * - Omitted, or `hosted()` from `@c15t/core`: ask `${projectUrl}/init`.
 	 * - `manifest()` from `@c15t/core/transports/manifest-browser`: resolve
 	 *   from the backend's consent manifest in the browser, falling back to
 	 *   `/init` with a warning when the manifest is unavailable.
@@ -591,19 +591,19 @@ export interface ConsentProviderRuntimeOptions extends Omit<
 }
 
 /**
- * What makes a provider's options complete: a `backendURL`, a `testing()`
+ * What makes a provider's options complete: a `projectUrl`, a `testing()`
  * mode, a transport factory that carries its own backend (such as a
  * single-page app's `manifest()`, which reads the build's backend URL), or
  * `enabled: false`. Entry points take their options as
- * `WithBackendURL<Options>`, so TypeScript asks for `backendURL` with no
+ * `WithProjectUrl<Options>`, so TypeScript asks for `projectUrl` with no
  * mode and with `hosted()`.
  *
  * @typeParam T - The entry point's options.
  * @typeParam TTesting - What that entry point's `testing()` returns.
  */
-export type WithBackendURL<T, TTesting = ConsentTesting> = T &
+export type WithProjectUrl<T, TTesting = ConsentTesting> = T &
 	(
-		| { backendURL: string }
+		| { projectUrl: string }
 		| { mode: TTesting | ProviderTransportFactory }
 		| { enabled: false }
 	);
@@ -611,7 +611,7 @@ export type WithBackendURL<T, TTesting = ConsentTesting> = T &
 /**
  * The option set {@link ConsentProviderRuntime.update} takes: the whole
  * current options, the way a component re-renders with all of its props.
- * `backendURL` and `mode` are read once.
+ * `projectUrl` and `mode` are read once.
  */
 export type ConsentRuntimeUpdate = ConsentProviderRuntimeOptions;
 

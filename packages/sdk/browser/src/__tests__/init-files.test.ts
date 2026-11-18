@@ -13,7 +13,7 @@ const OWN_SRC = 'https://cdn.example/npm/@c15t/browser/dist/c15t.js';
 const tagWith = (attributes: Record<string, string> = {}) => {
 	const script = document.createElement('script');
 	script.setAttribute('src', OWN_SRC);
-	script.setAttribute('data-backend-url', 'https://consent.example');
+	script.setAttribute('data-project-url', 'https://consent.example');
 	for (const [name, value] of Object.entries(attributes)) {
 		script.setAttribute(name, value);
 	}

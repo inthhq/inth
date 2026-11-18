@@ -6,7 +6,7 @@ import { createConsentRoute } from '@c15t/angular/ssr';
  * The backend URL is read at runtime, on the server only.
  */
 export const consentRoute = createConsentRoute({
-	backendURL:
+	projectUrl:
 		process.env['C15T_BACKEND_URL'] ?? 'https://example-inth.inth.app',
 	proxy: true,
 });

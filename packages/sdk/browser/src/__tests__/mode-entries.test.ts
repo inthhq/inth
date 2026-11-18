@@ -70,7 +70,7 @@ const createTestingClient = ({
 		...options,
 		mode: mode ?? testing({ policy: resolveRules(policy) }),
 	});
-const backendURL = 'https://consent.example.test';
+const projectUrl = 'https://consent.example.test';
 const authoredRule: PolicyRule = {
 	...policyRulePresets.europeOptIn(),
 	categories: ['measurement', 'marketing'],
@@ -140,7 +140,7 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 		vi.stubGlobal('fetch', fetchSpy);
 		const client = track(
 			mode === 'hosted'
-				? createHostedClient({ backendURL, ui: uiOptions })
+				? createHostedClient({ projectUrl, ui: uiOptions })
 				: createTestingClient({ policy: [authoredRule], ui: uiOptions })
 		);
 
@@ -179,7 +179,7 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 		const client = track(
 			mode === 'hosted'
 				? createHostedClient({
-						backendURL,
+						projectUrl,
 						reloadOnConsentRevoked: false,
 						ui: uiOptions,
 					})
@@ -232,7 +232,7 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 			fetchSpy.mock.calls.every(
 				([input]) =>
 					mode === 'hosted' &&
-					[`${backendURL}/init`, `${backendURL}/subjects`].includes(
+					[`${projectUrl}/init`, `${projectUrl}/subjects`].includes(
 						pathOf(input)
 					)
 			)
@@ -252,8 +252,8 @@ describe('hosted browser entry', () => {
 		vi.stubGlobal('fetch', fetchSpy);
 		const client = track(
 			createHostedClient({
-				backendURL,
 				policy: [policyRulePresets.worldNone()],
+				projectUrl,
 				ui: false,
 			})
 		);
@@ -261,7 +261,7 @@ describe('hosted browser entry', () => {
 		const snapshot = await client.ready();
 
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-			`${backendURL}/init`,
+			`${projectUrl}/init`,
 		]);
 		expect(snapshot.resolution.status).toBe('matched');
 		expect(snapshot.policyRule.id).toBe(authoredRule.id);
@@ -281,14 +281,14 @@ describe('hosted browser entry', () => {
 		const client = track(
 			createHostedClient({
 				mode: hostedTransport({
-					backendURL: `${backendURL}/api/`,
 					fetch: fetchSpy,
 					headers: {
 						'Accept-Language': 'de',
 						Authorization: 'must-not-forward',
 						'CF-IPCountry': 'DE',
 					},
-					initURL: '/consent/init',
+					initUrl: '/consent/init',
+					projectUrl: `${projectUrl}/api/`,
 				}),
 				ui: false,
 			})
@@ -299,7 +299,7 @@ describe('hosted browser entry', () => {
 
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
 			'/consent/init',
-			`${backendURL}/api/subjects`,
+			`${projectUrl}/api/subjects`,
 		]);
 		const headers = new Headers(fetchSpy.mock.calls[0]?.[1]?.headers);
 		expect(headers.get('accept-language')).toBe('de');
@@ -313,11 +313,11 @@ describe('hosted browser entry', () => {
 		vi.stubGlobal('fetch', fetchSpy);
 		const client = track(
 			createHostedClient({
-				backendURL,
 				prefetch: {
 					initialPolicyResolution: policyResolution,
 					initialTranslations: { language: 'en', translations },
 				},
+				projectUrl,
 				ui: false,
 			})
 		);
@@ -326,7 +326,7 @@ describe('hosted browser entry', () => {
 		expect(fetchSpy).not.toHaveBeenCalled();
 		await client.rejectAll();
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-			`${backendURL}/subjects`,
+			`${projectUrl}/subjects`,
 		]);
 	});
 
@@ -340,7 +340,7 @@ describe('hosted browser entry', () => {
 					: request.promise
 			);
 			vi.stubGlobal('fetch', fetchSpy);
-			const client = track(createHostedClient({ backendURL, ui: uiOptions }));
+			const client = track(createHostedClient({ projectUrl, ui: uiOptions }));
 			client.start();
 			await client.ready();
 			if (action === 'save') {
@@ -371,7 +371,7 @@ describe('hosted browser entry', () => {
 			await expect(saving).resolves.toMatchObject({ ok: true });
 			client.dispose();
 
-			const next = track(createHostedClient({ backendURL, ui: uiOptions }));
+			const next = track(createHostedClient({ projectUrl, ui: uiOptions }));
 			next.start();
 			await next.ready();
 			expect(next.has('measurement')).toBe(measurement);
@@ -504,16 +504,16 @@ const manifest = {
 };
 const hostedInvalidCases: [string, ScriptTagClientOptions][] = [
 	['missing backend', {}],
-	['inline manifest', { backendURL, manifest }],
-	['manifest URL', { backendURL, manifestURL: '/manifest' }],
-	['manifest mode', { backendURL, mode: 'manifest' }],
+	['inline manifest', { manifest, projectUrl }],
+	['manifest URL', { manifestUrl: '/manifest', projectUrl }],
+	['manifest mode', { mode: 'manifest', projectUrl }],
 	['testing()', { mode: testing() as never }],
 	['custom factory', { mode: custom({}) }],
 ];
 const testingInvalidCases: [string, TestingScriptTagOptions][] = [
-	['backend URL', { backendURL } as never],
+	['backend URL', { projectUrl } as never],
 	['inline manifest', { manifest } as never],
-	['manifest URL', { manifestURL: '/manifest' } as never],
+	['manifest URL', { manifestUrl: '/manifest' } as never],
 	['hosted mode', { mode: 'hosted' } as never],
 	['manifest mode', { mode: 'manifest' } as never],
 ];

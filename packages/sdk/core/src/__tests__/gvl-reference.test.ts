@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { resolveIABBannerSummary } from '../libs/iab-banner-summary';
 import {
-	createGvlReferenceURL,
+	createGvlReferenceUrl,
 	deferInitGvl,
 	serveGvlReference,
 } from '../transports/gvl-reference';
@@ -19,7 +19,7 @@ describe('versioned public vendor list route', () => {
 		'returns a list for normalized language %s',
 		async (language) => {
 			const load = vi.fn().mockResolvedValue(gvl);
-			const url = createGvlReferenceURL('/privacy/init', gvl, language);
+			const url = createGvlReferenceUrl('/privacy/init', gvl, language);
 			const response = await serveGvlReference(
 				new Request(`https://app.test${url}`),
 				load

@@ -54,10 +54,10 @@ describe('@c15t/svelte/server resolveConsent', () => {
 		);
 		const onBackgroundRevalidate = vi.fn();
 		const state = await resolveConsent({
-			backendURL: 'https://consent.example.com',
 			fetch,
 			headers: new Headers({ 'cf-ipcountry': 'DE' }),
 			onBackgroundRevalidate,
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		expect(state.initialPolicyResolution?.status).toBe('matched');
@@ -74,23 +74,22 @@ describe('@c15t/svelte/server resolveConsent', () => {
 
 	test.each([
 		{
-			backendURL: 'https://consent.example.com',
 			country: 'DE',
 			language: 'de',
 			policyId: 'eu-opt-in',
+			projectUrl: 'https://consent.example.com',
 		},
 		{
-			backendURL: undefined,
 			country: 'US',
 			language: 'en',
 			policyId: 'notice-default',
+			projectUrl: undefined,
 		},
 	])(
 		'resolves a snapshot for $country without fetching policy',
-		async ({ backendURL, country, language, policyId }) => {
+		async ({ projectUrl, country, language, policyId }) => {
 			const fetch = backend();
 			const state = await resolveConsent({
-				backendURL,
 				fetch,
 				headers: new Headers({
 					'accept-language': language,
@@ -98,6 +97,7 @@ describe('@c15t/svelte/server resolveConsent', () => {
 					cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1234567890',
 					'sec-gpc': '1',
 				}),
+				projectUrl,
 				snapshot: MANIFEST_FIXTURE,
 			});
 			// No policy request; only the session report.
@@ -134,16 +134,16 @@ describe('@c15t/svelte/server resolveConsent', () => {
 		expect(state.initialPrivacySignals).toEqual({ gpc: undefined });
 	});
 
-	test('resolves a relative backend against requestURL and forwards the consent cookie alone', async () => {
+	test('resolves a relative backend against requestUrl and forwards the consent cookie alone', async () => {
 		const fetch = backend();
 		const state = await resolveConsent({
-			backendURL: '/consent',
 			fetch,
 			headers: new Headers({
 				cookie: 'session=secret; c15t=stored',
 				'x-forwarded-host': 'attacker.example',
 			}),
-			requestURL: 'https://app.example.com/page',
+			projectUrl: '/consent',
+			requestUrl: 'https://app.example.com/page',
 		});
 		// The query carries the consent journey the render started.
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
@@ -158,11 +158,11 @@ describe('@c15t/svelte/server resolveConsent', () => {
 		const fetch = backend();
 		const frameworkFetch = backend();
 		await resolveConsent({
-			backendURL: 'https://app.example.com/api/self-host',
 			fetch,
 			frameworkFetch,
 			headers: new Headers(),
-			requestURL: 'https://app.example.com/',
+			projectUrl: 'https://app.example.com/api/self-host',
+			requestUrl: 'https://app.example.com/',
 		});
 		expect(fetch).not.toHaveBeenCalled();
 		expect(String(frameworkFetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
@@ -172,11 +172,11 @@ describe('@c15t/svelte/server resolveConsent', () => {
 
 	test('a failed backend leaves the request-only state', async () => {
 		const state = await resolveConsent({
-			backendURL: 'https://api.example.com',
 			fetch: vi.fn<typeof globalThis.fetch>(() =>
 				Promise.reject(new Error('down'))
 			),
 			headers: new Headers({ 'cf-ipcountry': 'DE' }),
+			projectUrl: 'https://api.example.com',
 		});
 		expect(state.initialOverrides?.country).toBe('DE');
 		expect(state.initialPolicyResolution).toBeUndefined();

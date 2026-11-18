@@ -121,7 +121,7 @@ const runColdInstanceBurst =
 					cache,
 					fetch: counted.fetch,
 					now,
-					sourceURL: SOURCE_URL,
+					sourceUrl: SOURCE_URL,
 				})
 			)
 		);
@@ -170,7 +170,7 @@ const runSteadyStateExpiry =
 						cache,
 						fetch: counted.fetch,
 						now,
-						sourceURL: SOURCE_URL,
+						sourceUrl: SOURCE_URL,
 					})
 				)
 			);
@@ -221,7 +221,7 @@ const runEdgeServingStale =
 			cache: createManifestCache(),
 			fetch: counted.fetch,
 			now: clock.now(),
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		const edgeCallsAfterWarm = counted.count();
 		cdn.resetCounters();
@@ -239,7 +239,7 @@ const runEdgeServingStale =
 					cache,
 					fetch: counted.fetch,
 					now: clock.now(),
-					sourceURL: SOURCE_URL,
+					sourceUrl: SOURCE_URL,
 				});
 				samples.push(sample);
 			}
@@ -279,7 +279,7 @@ const runOriginDownWarm =
 			cache,
 			fetch: counted.fetch,
 			now: clock.now(),
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		const edgeCallsAfterWarm = counted.count();
 		cdn.resetCounters();
@@ -296,7 +296,7 @@ const runOriginDownWarm =
 					cache,
 					fetch: counted.fetch,
 					now,
-					sourceURL: SOURCE_URL,
+					sourceUrl: SOURCE_URL,
 				})
 			)
 		);
@@ -332,7 +332,7 @@ const runEdgeUnreachableWarm =
 			cache,
 			fetch: counted.fetch,
 			now: clock.now(),
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		const edgeCallsAfterWarm = counted.count();
 		cdn.resetCounters();
@@ -348,7 +348,7 @@ const runEdgeUnreachableWarm =
 				cache,
 				fetch: counted.fetch,
 				now: clock.now(),
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			samples.push(sample);
 		}
@@ -385,7 +385,7 @@ const runEdgeUnreachableCold =
 				cache,
 				fetch: counted.fetch,
 				now: clock.now(),
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			samples.push(sample);
 		}
@@ -436,7 +436,7 @@ const runBareCacheControl =
 						cache,
 						fetch: counted.fetch,
 						now,
-						sourceURL: SOURCE_URL,
+						sourceUrl: SOURCE_URL,
 					})
 				)
 			);

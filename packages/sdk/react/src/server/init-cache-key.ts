@@ -10,7 +10,7 @@ import { extractRelevantHeaders } from './headers';
  * to align cache key construction with the headers/override semantics used
  * for SSR init fetching.
  *
- * @param normalizedURL - Normalized backend URL for /init
+ * @param normalizedUrl - Normalized backend URL for /init
  * @param headers - Request headers
  * @param overrides - Optional location/language overrides
  * @returns A stable JSON string key
@@ -18,11 +18,11 @@ import { extractRelevantHeaders } from './headers';
  * @public
  */
 export const createSSRInitCacheKey = function createSSRInitCacheKey({
-	normalizedURL,
+	normalizedUrl,
 	headers,
 	overrides,
 }: {
-	normalizedURL: string;
+	normalizedUrl: string;
 	headers: Headers;
 	overrides?: Overrides;
 }): string {
@@ -40,7 +40,7 @@ export const createSSRInitCacheKey = function createSSRInitCacheKey({
 		country: effectiveCountry,
 		gpc,
 		language: effectiveLanguage,
-		normalizedURL,
+		normalizedUrl,
 		region: effectiveRegion,
 	});
 };

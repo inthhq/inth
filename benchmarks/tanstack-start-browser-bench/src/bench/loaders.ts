@@ -7,16 +7,16 @@ import {
 import type { ConsentState } from '@c15t/tanstack-start/server';
 import { createServerFn } from '@tanstack/react-start';
 
-import { BENCH_BACKEND_URL, getBenchManifestURL } from './manifest-url';
+import { BENCH_BACKEND_URL, getBenchManifestUrl } from './manifest-url';
 
 type InitPayload = Parameters<typeof mergeInitIntoConsentState>[1];
 
 /**
  * Direct-init prefetch for the `ssr` arm. The package's
- * `createConsentStateHandler({ backendURL })` always resolves init from
+ * `createConsentStateHandler({ projectUrl })` always resolves init from
  * the in-process manifest cache, which would pay `C15T_BENCH_BACKEND_LATENCY_MS`
  * once per cache fill instead of once per request. The Next arm's `ssr`
- * route calls `${backendURL}/init` server-side on every render, so this
+ * route calls `${projectUrl}/init` server-side on every render, so this
  * loader does the same with the public helpers: read cookies and headers,
  * fetch `/init` with `cache: 'no-store'`, fold the payload in.
  */
@@ -62,7 +62,7 @@ export const getDirectInitConsentState = createServerFn({
 	// root gets the URL for its own requests from the state.
 	const base = {
 		...(await resolveConsent({ request })),
-		backendURL: BENCH_BACKEND_URL,
+		projectUrl: BENCH_BACKEND_URL,
 	};
 	try {
 		const init = await fetchDirectInit(request, base);
@@ -74,7 +74,7 @@ export const getDirectInitConsentState = createServerFn({
 });
 
 /**
- * Manifest prefetch for the `manifest-ssr` arms. `manifestURL` points at
+ * Manifest prefetch for the `manifest-ssr` arms. `manifestUrl` points at
  * the fixture manifest (with the cold token when set), the same source URL
  * the `/api/c15t/$` mounts use, so the loader and the routes share one
  * in-process cache entry. The Next arm reaches the same cache by fetching
@@ -85,8 +85,8 @@ export const getManifestConsentState = createServerFn({
 	method: 'GET',
 }).handler(
 	createConsentStateHandler({
-		backendURL: BENCH_BACKEND_URL,
-		mode: manifest({ manifestURL: getBenchManifestURL() }),
+		mode: manifest({ manifestUrl: getBenchManifestUrl() }),
+		projectUrl: BENCH_BACKEND_URL,
 		routePrefix: '/api/c15t',
 	})
 );

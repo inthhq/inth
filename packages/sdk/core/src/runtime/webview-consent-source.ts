@@ -152,7 +152,7 @@ const readInjected = (): InjectedConsent | null => {
  * import { webViewConsentSource } from 'c15t';
  *
  * const options = {
- * 	mode: hosted({ backendURL: '/api/c15t' }),
+ * 	mode: hosted({ projectUrl: '/api/c15t' }),
  * 	consentSource: webViewConsentSource(),
  * };
  * ```

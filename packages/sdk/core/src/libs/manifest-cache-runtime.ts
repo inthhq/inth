@@ -559,10 +559,10 @@ const resolveEntryLifetime = function resolveEntryLifetime(input: {
 
 /** Where a server adapter reads the manifest from. */
 export interface ManifestSourceOptions {
-	/** Backend URL; the manifest is read from `${backendURL}/manifest`. */
-	backendURL?: string;
-	/** Explicit manifest URL. Takes precedence over `backendURL`. */
-	manifestURL?: string;
+	/** Backend URL; the manifest is read from `${projectUrl}/manifest`. */
+	projectUrl?: string;
+	/** Explicit manifest URL. Takes precedence over `projectUrl`. */
+	manifestUrl?: string;
 }
 
 /**
@@ -570,20 +570,20 @@ export interface ManifestSourceOptions {
  *
  * @param options - Backend or explicit manifest URL.
  * @returns The URL to fetch the manifest from.
- * @throws {Error} When neither `manifestURL` nor `backendURL` is set.
+ * @throws {Error} When neither `manifestUrl` nor `projectUrl` is set.
  */
-export const resolveManifestSourceURL = function resolveManifestSourceURL(
+export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
 	options: ManifestSourceOptions
 ): string {
-	if (options.manifestURL) {
-		return options.manifestURL;
+	if (options.manifestUrl) {
+		return options.manifestUrl;
 	}
-	if (!options.backendURL) {
+	if (!options.projectUrl) {
 		throw new Error(
-			'c15t manifest cache: `backendURL` or `manifestURL` is required.'
+			'c15t manifest cache: `projectUrl` or `manifestUrl` is required.'
 		);
 	}
-	return `${trimSlash(options.backendURL)}/manifest`;
+	return `${trimSlash(options.projectUrl)}/manifest`;
 };
 
 /**
@@ -601,15 +601,15 @@ export const resolveManifestSourceURL = function resolveManifestSourceURL(
  * `language=de`, with or without a leading `?`.
  * @returns The normalised request URL.
  */
-export const createManifestRequestURL =
-	function createManifestRequestURL(input: {
-		sourceURL: string;
+export const createManifestRequestUrl =
+	function createManifestRequestUrl(input: {
+		sourceUrl: string;
 		query?: string;
 	}): string {
-		const { sourceURL } = input;
-		const hashIndex = sourceURL.indexOf('#');
+		const { sourceUrl } = input;
+		const hashIndex = sourceUrl.indexOf('#');
 		const withoutFragment =
-			hashIndex === -1 ? sourceURL : sourceURL.slice(0, hashIndex);
+			hashIndex === -1 ? sourceUrl : sourceUrl.slice(0, hashIndex);
 		const queryIndex = withoutFragment.indexOf('?');
 		const base =
 			queryIndex === -1
@@ -637,13 +637,13 @@ export const createManifestRequestURL =
  * `query` appended unchanged and any `#fragment` dropped. Only the cache key
  * is normalised, so a URL signed over its exact query still verifies.
  */
-const createManifestFetchURL = function createManifestFetchURL(input: {
-	sourceURL: string;
+const createManifestFetchUrl = function createManifestFetchUrl(input: {
+	sourceUrl: string;
 	query?: string;
 }): string {
-	const { sourceURL } = input;
-	const hashIndex = sourceURL.indexOf('#');
-	const base = hashIndex === -1 ? sourceURL : sourceURL.slice(0, hashIndex);
+	const { sourceUrl } = input;
+	const hashIndex = sourceUrl.indexOf('#');
+	const base = hashIndex === -1 ? sourceUrl : sourceUrl.slice(0, hashIndex);
 	const query = input.query?.startsWith('?')
 		? input.query.slice(1)
 		: input.query;
@@ -655,14 +655,14 @@ const createManifestFetchURL = function createManifestFetchURL(input: {
 
 /** Options for {@link fetchCachedManifest}. */
 export interface FetchCachedManifestOptions {
-	/** Resolved upstream manifest URL (see {@link resolveManifestSourceURL}). */
-	sourceURL: string;
+	/** Resolved upstream manifest URL (see {@link resolveManifestSourceUrl}). */
+	sourceUrl: string;
 	/** Fetch implementation. Defaults to `globalThis.fetch`. */
 	fetch?: ManifestFetch;
 	/**
-	 * Already-encoded query string appended to `sourceURL`, such as
+	 * Already-encoded query string appended to `sourceUrl`, such as
 	 * `language=de`. Sent upstream as written; the cache key holds it in the
-	 * sorted form {@link createManifestRequestURL} builds.
+	 * sorted form {@link createManifestRequestUrl} builds.
 	 */
 	query?: string;
 	/** Current time in epoch milliseconds. Defaults to `Date.now()`. */
@@ -759,7 +759,7 @@ const findIdentityHeader = function findIdentityHeader(
 
 /** Refuses to send credentials in clear text to anything but loopback. */
 const assertCredentialTransport = function assertCredentialTransport(
-	requestURL: string,
+	requestUrl: string,
 	headers: Record<string, string> | undefined
 ): void {
 	const identityHeader = findIdentityHeader(headers);
@@ -768,7 +768,7 @@ const assertCredentialTransport = function assertCredentialTransport(
 	}
 	let url: URL;
 	try {
-		url = new URL(requestURL);
+		url = new URL(requestUrl);
 	} catch {
 		return;
 	}
@@ -831,7 +831,7 @@ const defaultRequestHeaders = function defaultRequestHeaders(): Record<
  * entry and the key holds no secret.
  */
 const buildCacheKey = async function buildCacheKey(
-	requestURL: string,
+	requestUrl: string,
 	headers: Record<string, string> | undefined
 ): Promise<string> {
 	const defaults = defaultRequestHeaders();
@@ -841,9 +841,9 @@ const buildCacheKey = async function buildCacheKey(
 		.map(([name, value]) => `${name}=${value}`)
 		.sort();
 	if (scope.length === 0) {
-		return requestURL;
+		return requestUrl;
 	}
-	return `${requestURL}#${await digest(scope.join('\n'))}`;
+	return `${requestUrl}#${await digest(scope.join('\n'))}`;
 };
 
 const revalidateManifest = async function revalidateManifest(input: {
@@ -855,9 +855,9 @@ const revalidateManifest = async function revalidateManifest(input: {
 	init: FetchCachedManifestOptions['init'];
 	headers: Record<string, string> | undefined;
 	now: number;
-	requestURL: string;
+	requestUrl: string;
 }): Promise<CachedManifestResponse> {
-	const { cache, cacheKey, cached, fetchImpl, generation, now, requestURL } =
+	const { cache, cacheKey, cached, fetchImpl, generation, now, requestUrl } =
 		input;
 	// A clear during the fetch bumps the generation; then the result is
 	// returned to the waiting callers but never stored.
@@ -879,7 +879,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 		headers['if-none-match'] = cached.headers.etag;
 	}
 
-	const response = await fetchImpl(requestURL, {
+	const response = await fetchImpl(requestUrl, {
 		...input.init,
 		headers,
 		method: 'GET',
@@ -1097,7 +1097,7 @@ export const withResolutionBudget = function withResolutionBudget<Value>(
  * manifest-cache entry point; every server adapter calls it, and without a
  * `cache` option they all share one process cache.
  *
- * Cache key: the URL from {@link createManifestRequestURL} (source URL plus
+ * Cache key: the URL from {@link createManifestRequestUrl} (source URL plus
  * `query`, parameters sorted, fragment dropped), followed by `#<sha-256>` of
  * the caller's `headers` when any differ from the defaults the cache sends.
  * `fetch`, `init`, `timeoutMs` and `onBackgroundRevalidate` never change the
@@ -1138,13 +1138,13 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 	}
 
 	const cache = options.cache ?? defaultManifestCache;
-	const requestURL = createManifestFetchURL(options);
-	assertCredentialTransport(requestURL, options.headers);
+	const requestUrl = createManifestFetchUrl(options);
+	assertCredentialTransport(requestUrl, options.headers);
 	// Read before the first await so a clear that lands while the key is
 	// being digested still invalidates this fill.
 	const generation = getGeneration(cache);
 	const cacheKey = await buildCacheKey(
-		createManifestRequestURL(options),
+		createManifestRequestUrl(options),
 		options.headers
 	);
 	if (getGeneration(cache) !== generation) {
@@ -1196,7 +1196,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 						? { ...options.init, signal: controller.signal }
 						: options.init,
 					now,
-					requestURL,
+					requestUrl,
 				});
 				if (getGeneration(cache) === generation) {
 					failuresByCache.get(cache)?.delete(cacheKey);

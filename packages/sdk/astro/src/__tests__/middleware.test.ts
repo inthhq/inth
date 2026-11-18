@@ -90,10 +90,10 @@ describe('consent middleware', () => {
 		// A relative backend sends no session report, so the registrations
 		// counted below are the refresh alone.
 		const options: C15tAstroOptions = {
-			backendURL: '/api/self-host',
 			mode: manifestMode({
-				manifestURL: 'https://consent.example.com/manifest',
+				manifestUrl: 'https://consent.example.com/manifest',
 			}),
+			projectUrl: '/api/self-host',
 		};
 
 		await run({ fetch: fetchImpl, locals, options });
@@ -254,8 +254,8 @@ describe('consent middleware', () => {
 			fetch: fetchImpl as never,
 			isPrerendered: true,
 			options: {
-				backendURL: 'https://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			},
 		});
 		expect(fetchImpl).not.toHaveBeenCalled();
@@ -280,8 +280,8 @@ describe('consent middleware', () => {
 			fetch: fetchImpl as never,
 			headers: { 'x-c15t-country': 'DE' },
 			options: {
-				backendURL: 'https://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			},
 		});
 		expect(fetchImpl).toHaveBeenCalledOnce();
@@ -313,9 +313,9 @@ describe('consent middleware', () => {
 		const c15t = await run({
 			fetch: fetchImpl as never,
 			options: {
-				backendURL: 'https://consent.example.com',
 				i18n: { messages: { en: { cookieBanner: { title: 'App title' } } } },
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			},
 		});
 		const copy = c15t.snapshot.translations?.translations;
@@ -345,9 +345,9 @@ describe('consent middleware', () => {
 		const c15t = await run({
 			fetch: fetchImpl as never,
 			options: {
-				backendURL: 'https://consent.example.com',
 				i18n: { locale: 'de', messages: { de: { ...stock } } },
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			},
 		});
 		expect(c15t.snapshot.translations?.translations.cookieBanner.title).toBe(
@@ -382,8 +382,8 @@ describe('consent middleware', () => {
 					)
 				) as never,
 				options: {
-					backendURL: 'https://consent.example.com',
 					mode: hostedMode(),
+					projectUrl: 'https://consent.example.com',
 				},
 			});
 			expect(c15t.snapshot.resolution).toMatchObject({
@@ -401,8 +401,8 @@ describe('consent middleware', () => {
 		const c15t = await run({
 			fetch: fetchImpl as never,
 			options: {
-				backendURL: 'https://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			},
 		});
 		expect(c15t.config.initialTranslations?.language).toBe('en');
@@ -414,8 +414,8 @@ describe('consent middleware', () => {
 			fetch: fetchImpl as never,
 			headers: { cookie: 'session=abc; c15t=c.necessary:1' },
 			options: {
-				backendURL: 'https://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			},
 		});
 		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
@@ -430,8 +430,8 @@ describe('consent middleware', () => {
 			fetch: fetchImpl as never,
 			headers: { cookie: 'session=abc; my-consent=c.necessary:1' },
 			options: {
-				backendURL: 'https://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 				storageConfig: { storageKey: 'my-consent' },
 			},
 		});
@@ -447,8 +447,8 @@ describe('consent middleware', () => {
 			fetch: fetchImpl as never,
 			headers: { cookie: 'session=abc' },
 			options: {
-				backendURL: 'https://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			},
 		});
 		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
@@ -461,7 +461,7 @@ describe('consent middleware', () => {
 		await run({
 			fetch: fetchImpl as never,
 			headers: { 'x-forwarded-host': 'evil.example' },
-			options: { backendURL: '/api/consent', mode: hostedMode() },
+			options: { mode: hostedMode(), projectUrl: '/api/consent' },
 		});
 		const [url] = fetchImpl.mock.calls[0] as [string, RequestInit];
 		expect(url.split('?')[0]).toBe('https://example.com/api/consent/init');
@@ -471,7 +471,7 @@ describe('consent middleware', () => {
 		const fetchImpl = vi.fn(() => Response.json({}));
 		const result = await run({
 			fetch: fetchImpl as never,
-			options: { backendURL: '/api/c15t', mode: hostedMode() },
+			options: { mode: hostedMode(), projectUrl: '/api/c15t' },
 		});
 		expect(fetchImpl).not.toHaveBeenCalled();
 		expect(result.hasPolicy).toBe(false);
@@ -483,8 +483,8 @@ describe('consent middleware', () => {
 			fetch: fetchImpl as never,
 			headers: { cookie: 'c15t=c.necessary:1' },
 			options: {
-				backendURL: 'http://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'http://consent.example.com',
 			},
 		});
 		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
@@ -496,7 +496,7 @@ describe('consent middleware', () => {
 		await run({
 			fetch: fetchImpl as never,
 			headers: { cookie: 'c15t=c.necessary:1' },
-			options: { backendURL: 'http://localhost:8787', mode: hostedMode() },
+			options: { mode: hostedMode(), projectUrl: 'http://localhost:8787' },
 		});
 		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
 		expect((init.headers as Record<string, string>).cookie).toBe(
@@ -525,9 +525,9 @@ it.each(['c15t=consent', 'session=unrelated'])(
 				headers: { cookie },
 				// IAB is opt-in: without `iab` an IAB policy throws.
 				options: {
-					backendURL: 'https://consent.example.com',
 					iab: { cmpId: 28 },
 					mode: hostedMode(),
+					projectUrl: 'https://consent.example.com',
 				},
 			});
 			expect(fetch).toHaveBeenCalledOnce();

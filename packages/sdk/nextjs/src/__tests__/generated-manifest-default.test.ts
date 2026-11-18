@@ -14,13 +14,13 @@ import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the generated snapshot. The mock is that alias; the helpers under test are real.
 vi.mock('@c15t/nextjs/generated-manifest', async () => ({
-	backendURL: 'https://consent.example.com',
+	projectUrl: 'https://consent.example.com',
 	snapshot: (await import('./manifest-fixture')).MANIFEST_FIXTURE,
 }));
 
 const config = defineConsentConfig({
-	backendURL: 'https://consent.example.com',
 	mode: manifest(),
+	projectUrl: 'https://consent.example.com',
 	routePrefix: '/api/c15t',
 });
 
@@ -77,8 +77,8 @@ describe('generated manifest default', () => {
 		);
 		const { GET } = createConsentRoute({
 			config: defineConsentConfig({
-				backendURL: 'https://consent.example.com',
 				mode: manifest({ source: 'runtime' }),
+				projectUrl: 'https://consent.example.com',
 			}),
 		});
 
@@ -93,12 +93,12 @@ describe('generated manifest default', () => {
 		);
 	});
 
-	test('an upstream manifestURL wins over the snapshot', async () => {
+	test('an upstream manifestUrl wins over the snapshot', async () => {
 		fetch.mockImplementation(() =>
 			Promise.resolve(Response.json({ ...MANIFEST_FIXTURE, revision: 'up' }))
 		);
 		const { GET } = createConsentRoute({
-			manifestURL: 'https://cdn.example.com/manifest.json',
+			manifestUrl: 'https://cdn.example.com/manifest.json',
 		});
 
 		const response = await GET(

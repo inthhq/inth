@@ -125,7 +125,7 @@ even though the browser's init request goes to your backend.
 
 ## Forwarding headers are ignored by default
 
-A relative `backendURL` or `manifestURL`, such as `/api/c15t`, resolves
+A relative `projectUrl` or `manifestUrl`, such as `/api/c15t`, resolves
 against the URL the Start server received the request under. c15t does not
 read `x-forwarded-host`, `x-forwarded-proto` or `forwarded` for this, because
 any client can send them. If it did, a visitor could point the server's
@@ -134,7 +134,7 @@ manifest fetch, or the proxied consent save, at a host of their choosing.
 The request URL still carries the request's `Host` header. If your server
 answers requests for any `Host`, such as a Node server exposed directly or a
 proxy that forwards `Host` from its default virtual host, use an absolute
-server-side `backendURL` and `manifestURL`. A relative one resolves against
+server-side `projectUrl` and `manifestUrl`. A relative one resolves against
 whatever `Host` the request sent.
 
 The consent proxy follows the same rule. It never copies those headers from the

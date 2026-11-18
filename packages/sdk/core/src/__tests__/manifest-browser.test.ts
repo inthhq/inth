@@ -1,6 +1,6 @@
 /**
  * The browser manifest resolver: English bundled, other languages loaded on
- * demand, and a location from the page, `geoURL` or the backend's `/init`.
+ * demand, and a location from the page, `geoUrl` or the backend's `/init`.
  */
 import {
 	createConsentManifestPolicyPack,
@@ -53,7 +53,7 @@ const jsonResponse = (body: unknown): Response =>
 describe('manifest() from manifest-browser', () => {
 	test('carries its options as data and reports the manifest kind', () => {
 		const mode = manifest({
-			backendURL: 'https://backend.example',
+			projectUrl: 'https://backend.example',
 			snapshot: everywhereManifest,
 		});
 
@@ -73,8 +73,8 @@ describe('createBrowserManifestTransport()', () => {
 	test("loads the visitor's language and resolves with its base copy", async () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
+			projectUrl: 'https://backend.example',
 			snapshot: everywhereManifest,
 		});
 
@@ -91,7 +91,7 @@ describe('createBrowserManifestTransport()', () => {
 
 	test('loads the base copy of every bundled language', async () => {
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
+			projectUrl: 'https://backend.example',
 			snapshot: everywhereManifest,
 		});
 
@@ -111,8 +111,8 @@ describe('createBrowserManifestTransport()', () => {
 			Promise.resolve(jsonResponse(vendorList))
 		);
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
+			projectUrl: 'https://backend.example',
 			snapshot: {
 				...everywhereManifest,
 				iab: {
@@ -160,8 +160,8 @@ describe('createBrowserManifestTransport()', () => {
 			)
 		);
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
+			projectUrl: 'https://backend.example',
 			snapshot: {
 				...everywhereManifest,
 				iab: {
@@ -201,10 +201,10 @@ describe('createBrowserManifestTransport()', () => {
 
 	test('withdraws ad tech providers once the manifest stops listing them', async () => {
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: vi.fn<typeof fetch>(() =>
 				Promise.resolve(jsonResponse({ vendorListVersion: 42, vendors: {} }))
 			),
+			projectUrl: 'https://backend.example',
 			snapshot: {
 				...everywhereManifest,
 				iab: {
@@ -229,7 +229,7 @@ describe('createBrowserManifestTransport()', () => {
 		expect(response?.adTechProviders).toEqual([]);
 	});
 
-	test('asks geoURL for a location the policy needs', async () => {
+	test('asks geoUrl for a location the policy needs', async () => {
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
 			Promise.resolve(
 				String(input) === '/geo'
@@ -238,9 +238,9 @@ describe('createBrowserManifestTransport()', () => {
 			)
 		);
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
-			geoURL: '/geo',
+			geoUrl: '/geo',
+			projectUrl: 'https://backend.example',
 			snapshot: geoManifest,
 		});
 
@@ -256,8 +256,8 @@ describe('createBrowserManifestTransport()', () => {
 			Promise.reject(new Error('offline'))
 		);
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
+			projectUrl: 'https://backend.example',
 			snapshot: geoManifest,
 		});
 
@@ -273,8 +273,8 @@ describe('createBrowserManifestTransport()', () => {
 			Promise.reject(new Error('offline'))
 		);
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
+			projectUrl: 'https://backend.example',
 			snapshot: {
 				...geoManifest,
 				policyPacks: [
@@ -301,9 +301,9 @@ describe('createBrowserManifestTransport()', () => {
 	test('with initFallback off, resolves for an unknown location', async () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
 			initFallback: false,
+			projectUrl: 'https://backend.example',
 			snapshot: geoManifest,
 		});
 
@@ -326,8 +326,8 @@ describe('createBrowserManifestTransport()', () => {
 			)
 		);
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://fallback.example',
 			fetch: fetchSpy,
+			projectUrl: 'https://fallback.example',
 		});
 
 		await transport.init?.(initContext({ language: 'en' }));
@@ -354,7 +354,7 @@ describe('createBrowserManifestTransport()', () => {
 			credentials: 'include',
 			fetch: fetchSpy,
 			headers: { 'x-test': '1' },
-			manifestURL: 'https://backend.example/manifest',
+			manifestUrl: 'https://backend.example/manifest',
 		});
 
 		await transport.init?.(initContext({ language: 'en' }));
@@ -432,8 +432,8 @@ describe('createBrowserManifestTransport() for an unknown location', () => {
 	test('answers in the browser when every location gets the same banner', async () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
+			projectUrl: 'https://backend.example',
 			snapshot: sameBannerEverywhere,
 		});
 
@@ -444,12 +444,12 @@ describe('createBrowserManifestTransport() for an unknown location', () => {
 		expect(response?.policyResolution).toMatchObject({ status: 'matched' });
 	});
 
-	test('skips geoURL when every location gets the same banner', async () => {
+	test('skips geoUrl when every location gets the same banner', async () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
-			geoURL: '/geo',
+			geoUrl: '/geo',
+			projectUrl: 'https://backend.example',
 			snapshot: sameBannerEverywhere,
 		});
 
@@ -464,8 +464,8 @@ describe('createBrowserManifestTransport() for an unknown location', () => {
 		);
 		const transport = createBrowserManifestTransport(
 			{
-				backendURL: 'https://backend.example',
 				fetch: fetchSpy,
+				projectUrl: 'https://backend.example',
 				snapshot: sameBannerEverywhere,
 			},
 			{ gppEnabled: true }
@@ -484,8 +484,8 @@ describe('createBrowserManifestTransport() for an unknown location', () => {
 				})
 		);
 		const transport = createBrowserManifestTransport({
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy,
+			projectUrl: 'https://backend.example',
 			snapshot: bannerSomewhere,
 		});
 
@@ -498,8 +498,8 @@ describe('createBrowserManifestTransport() for an unknown location', () => {
 
 describe('withEarlyInit()', () => {
 	const options = (snapshot: ConsentManifest, fetchSpy: typeof fetch) => ({
-		backendURL: 'https://backend.example',
 		fetch: fetchSpy,
+		projectUrl: 'https://backend.example',
 		snapshot,
 	});
 
@@ -517,7 +517,7 @@ describe('withEarlyInit()', () => {
 		);
 		const fetched = earlyInitModes.get(
 			withEarlyInit(
-				manifest({ fetch: fetchSpy, manifestURL: 'https://x.test/manifest' })
+				manifest({ fetch: fetchSpy, manifestUrl: 'https://x.test/manifest' })
 			)
 		);
 

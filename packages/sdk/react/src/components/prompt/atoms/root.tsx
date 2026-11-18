@@ -181,7 +181,7 @@ interface ConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
  * ```tsx
  * <ConsentProvider
  *   options={{
- *     mode: hosted({ backendURL: '/api/c15t' }),
+ *     mode: hosted({ projectUrl: '/api/c15t' }),
  *     theme: {
  *       colors: {
  *         surface: '#fffdf8',

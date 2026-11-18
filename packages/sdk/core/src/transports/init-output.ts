@@ -361,7 +361,7 @@ export const initResponseToKernelConfig = function initResponseToKernelConfig(
  * const response = kernelConfigToInitResponse(config);
  * const transport = response
  * 	? { init: async () => response }
- * 	: createHostedTransport({ backendURL });
+ * 	: createHostedTransport({ projectUrl });
  * ```
  */
 export const kernelConfigToInitResponse = function kernelConfigToInitResponse(

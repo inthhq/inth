@@ -45,7 +45,7 @@ const normalizeIABOptions = function normalizeIABOptions(
 				: iab.cmpVersion,
 		customVendors: iab.customVendors ?? currentIab?.customVendors,
 		gvl: iab.gvl ?? currentIab?.gvl ?? undefined,
-		gvlURL: iab.gvlURL,
+		gvlUrl: iab.gvlUrl,
 		isServiceSpecific: iab.isServiceSpecific,
 		publisherCountryCode: iab.publisherCountryCode,
 		publisherRestrictions: iab.publisherRestrictions,

@@ -9,7 +9,7 @@ export type { CreateConsentClientContext, PageAction } from './client-base';
 
 /**
  * Read the transport from the options: a factory such as `manifest()`, a
- * `testing()` value, or the hosted backend at `backendURL` for `hosted()`
+ * `testing()` value, or the hosted backend at `projectUrl` for `hosted()`
  * and no mode. Mode names are a script-tag feature.
  */
 const resolveMode = function resolveMode(
@@ -33,14 +33,14 @@ const resolveMode = function resolveMode(
 			`${pkg}: \`mode\` must be hosted() or manifest() from ${pkg}, or testing() from @c15t/browser/testing. Mode names like ${JSON.stringify(mode)} work only in the script-tag builds.`
 		);
 	}
-	if (options.backendURL === undefined) {
+	if (options.projectUrl === undefined) {
 		if (options.enabled === false) {
 			// Disabled: nothing inits until the page enables it.
 			return {
 				factory: Object.assign(
 					() => ({
 						init: () =>
-							Promise.reject(new Error(`${pkg}: \`backendURL\` is required.`)),
+							Promise.reject(new Error(`${pkg}: \`projectUrl\` is required.`)),
 					}),
 					{ kind: 'hosted' as const }
 				),
@@ -48,11 +48,11 @@ const resolveMode = function resolveMode(
 			};
 		}
 		throw new Error(
-			`${pkg}: \`backendURL\` is required. Set it to your Inth project URL, or use \`mode: testing()\` from @c15t/browser/testing in tests.`
+			`${pkg}: \`projectUrl\` is required. Set it to your Inth project URL, or use \`mode: testing()\` from @c15t/browser/testing in tests.`
 		);
 	}
 	return {
-		factory: hosted({ backendURL: options.backendURL }),
+		factory: hosted({ projectUrl: options.projectUrl }),
 		name: 'hosted',
 	};
 };

@@ -15,14 +15,14 @@ in parentheses names the cause:
 | Error | Cause |
 | --- | --- |
 | `/manifest responded 404` | The backend URL is wrong, or still the `https://your-project.inth.app` placeholder. |
-| `no backend URL is set` | Neither the `backendURL` option nor `PUBLIC_C15T_BACKEND_URL` (or `PUBLIC_INTH_PROJECT_URL`) is set, or it is empty. `vite build` stops; `vite dev` warns. |
+| `no backend URL is set` | Neither the `projectUrl` option nor `PUBLIC_C15T_BACKEND_URL` (or `PUBLIC_INTH_PROJECT_URL`) is set, or it is empty. `vite build` stops; `vite dev` warns. |
 | `skipped the consent manifest fetch` (a notice) | The backend URL is relative, such as `/api/c15t`. With `onBuildError: 'fail'`, this is the error `build-time manifests require an absolute upstream URL`. |
 | `/manifest returned an invalid consent manifest.` | The URL answers, but not with a c15t v3 manifest. |
 | `fetch failed` or `no response within 10 seconds` | The machine running the command cannot reach the backend. |
 
 **Fix.** Set `PUBLIC_C15T_BACKEND_URL` (or `PUBLIC_INTH_PROJECT_URL`) to your
 project's absolute backend URL where the command runs, in `.env` or the CI environment. The plugin reads it
-when `vite.config.ts` passes no `backendURL`. Make sure the build machine can
+when `vite.config.ts` passes no `projectUrl`. Make sure the build machine can
 reach the backend. To deploy while it is down, build with
 `C15T_ON_BUILD_ERROR=runtime`.
 A `check-types` script that starts with `svelte-kit sync` needs the backend
@@ -79,7 +79,7 @@ name, the server reads nothing and renders the banner for every visitor.
 
 ## Saving fails with 405 from /api/c15t
 
-**Check.** `c15tHandle({ backendURL: '/api/c15t' })` sends saves to the
+**Check.** `c15tHandle({ projectUrl: '/api/c15t' })` sends saves to the
 consent route, but the route does not forward writes. A route file that
 exports only `GET` still answers a save with `405`.
 
@@ -91,21 +91,21 @@ catch-all route. See
 ## The consent route times out or calls itself
 
 **Check.** `createConsentRoute` needs the backend's URL. It reads it from
-`c15tHandle()` and then `consentManifest` unless you pass `backendURL`, and
-skips a handle `backendURL` that points at the route itself. A relative
-`backendURL` passed to the route names a route in your own app, which the
+`c15tHandle()` and then `consentManifest` unless you pass `projectUrl`, and
+skips a handle `projectUrl` that points at the route itself. A relative
+`projectUrl` passed to the route names a route in your own app, which the
 handlers call in-process; if it points at `/api/c15t`, the route requests
 itself.
 
-**Fix.** Pass the Inth URL as `createConsentRoute({ backendURL })`, or leave
+**Fix.** Pass the Inth URL as `createConsentRoute({ projectUrl })`, or leave
 it unset so the route uses `PUBLIC_C15T_BACKEND_URL` or
 `PUBLIC_INTH_PROJECT_URL`.
 
 ## Consent requests go to the wrong backend
 
 **Check.** Look at `PUBLIC_C15T_BACKEND_URL` and `PUBLIC_INTH_PROJECT_URL` in
-`.env`, `.env.local` and the build environment, and at any `backendURL` in `vite.config.ts`,
-`src/hooks.server.ts` and the provider's `backendURL` prop. One still has the
+`.env`, `.env.local` and the build environment, and at any `projectUrl` in `vite.config.ts`,
+`src/hooks.server.ts` and the provider's `projectUrl` prop. One still has the
 demo project, the placeholder `https://your-project.inth.app`, or a URL from
 another project. The build reads the variable, so the URL for the policy and
 for saves is fixed when you build, and setting it when the built app starts
@@ -150,7 +150,7 @@ keep the handle's `mode` for one of the data modes from `c15t/svelte/kit`.
 
 **Check.** An import or option from an earlier v3 alpha fails, such as
 `createSvelteKitConsentRouteHandlers`, `c15tPreload` or
-`loadConsent(event, { backendURL })`. `@c15t/svelte` was not public in v2, so
+`loadConsent(event, { projectUrl })`. `@c15t/svelte` was not public in v2, so
 the alphas renamed these with no alias.
 
 **Fix.** Use the current names:
@@ -162,7 +162,7 @@ the alphas renamed these with no alias.
 | `createSvelteKitConsentRouteHandlers` | `createConsentRoute` |
 | `c15tPreload` | Part of `consentManifest()` from `c15t/svelte/vite` |
 | `ConsentManifestOptions`, `consentManifest({ outputFile })` | Removed |
-| `loadConsent(event, { backendURL, manifest, initRoute, shared })` returning `prefetch` | `c15tHandle({ mode, routePrefix, snapshot, backendURL })` in `src/hooks.server.ts`, and `export { loadConsent as load }`, which returns `{ consent }` |
+| `loadConsent(event, { projectUrl, manifest, initRoute, shared })` returning `prefetch` | `c15tHandle({ mode, routePrefix, snapshot, projectUrl })` in `src/hooks.server.ts`, and `export { loadConsent as load }`, which returns `{ consent }` |
 | `resolveConsent({ manifest })` from `@c15t/svelte/server` | `resolveConsent({ snapshot })` |
 
 <include src="../../shared/svelte/troubleshooting.mdx" />

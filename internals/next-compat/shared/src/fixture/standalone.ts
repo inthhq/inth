@@ -30,7 +30,7 @@ export interface FixtureServer {
 	/** Origin of the server, for example `http://127.0.0.1:41235`. */
 	url: string;
 	/** Absolute backend URL, the origin plus `basePath`. */
-	backendURL: string;
+	projectUrl: string;
 	close: () => Promise<void>;
 }
 
@@ -135,12 +135,12 @@ export const startFixtureServer = async function startFixtureServer({
 	const urlHost = host.includes(':') ? `[${host}]` : host;
 	const url = `http://${urlHost}:${boundPort}`;
 	return {
-		backendURL: `${url}${basePath}`,
 		close: async () => {
 			server.closeAllConnections();
 			server.close();
 			await once(server, 'close');
 		},
+		projectUrl: `${url}${basePath}`,
 		url,
 	};
 };

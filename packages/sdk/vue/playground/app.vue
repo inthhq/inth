@@ -51,7 +51,7 @@ const openBanner = function openBanner() {
 		class="playground-status"
 	>
 		{{ activeUI }}
-		<p>backend: {{ config.backendURL }}</p>
+		<p>backend: {{ config.projectUrl }}</p>
 		<p>
 			location:
 			{{ init.location?.countryCode ?? '—' }}

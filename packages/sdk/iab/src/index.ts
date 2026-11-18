@@ -142,7 +142,7 @@ export interface CreateIABOptions {
 	/**
 	 * Override the GVL endpoint. Default: `gvl.inth.app`.
 	 */
-	gvlURL?: string;
+	gvlUrl?: string;
 }
 
 /**
@@ -180,7 +180,7 @@ export interface IABProviderConfig extends IABUserConfig {
  * import { iab } from '@c15t/iab';
  *
  * <ConsentProvider options={{
- *   mode: hosted({ backendURL: '/api/c15t' }),
+ *   mode: hosted({ projectUrl: '/api/c15t' }),
  *   iab: iab({ cmpId: 28, vendors: [1, 2, 755] }),
  * }}>
  *   {children}
@@ -856,7 +856,7 @@ const resolvePreloadedGvl = function resolvePreloadedGvl(
 export const createIAB = function createIAB(
 	options: CreateIABOptions
 ): IABHandle {
-	const { kernel, cmpVersion = CMP_VERSION_NUMBER, vendors, gvlURL } = options;
+	const { kernel, cmpVersion = CMP_VERSION_NUMBER, vendors, gvlUrl } = options;
 	const cmpId = assertValidCmpId(options.cmpId);
 	const isServiceSpecific = resolveIsServiceSpecific(options.isServiceSpecific);
 	/** Restrictions checked against the most recently published list. */
@@ -959,7 +959,7 @@ export const createIAB = function createIAB(
 		// An endpoint that ignores the filter still ends up narrowed below, so the
 		// filter is an optimisation and never a behaviour change.
 		const list = await fetchGVL(vendors?.length ? vendors : undefined, {
-			endpoint: referenceEndpoint(requested) ?? gvlURL,
+			endpoint: referenceEndpoint(requested) ?? gvlUrl,
 			format: requested?.format,
 			headers: referenceHeaders(requested),
 		});

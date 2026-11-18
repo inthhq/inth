@@ -26,7 +26,7 @@ test('a render starts a page journey and sends it on the hosted /init', async ()
 	const fetch = backend();
 	vi.stubGlobal('fetch', fetch);
 	const state = await resolveNuxtConsent(
-		{ backendURL: 'https://consent.example.com', mode: { type: 'hosted' } },
+		{ mode: { type: 'hosted' }, projectUrl: 'https://consent.example.com' },
 		request
 	);
 	const sent = new URL(String(fetch.mock.calls[0]?.[0]));
@@ -39,8 +39,8 @@ test('manifest() without a consent route reads the manifest itself', async () =>
 	vi.stubGlobal('fetch', fetch);
 	await resolveNuxtConsent(
 		{
-			backendURL: 'https://consent.example.com',
 			mode: { type: 'manifest' },
+			projectUrl: 'https://consent.example.com',
 			routePrefix: false,
 		},
 		request

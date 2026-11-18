@@ -25,7 +25,6 @@ describe('Vue manifest module', () => {
 		const root = await mkdtemp(join(tmpdir(), 'c15t-vue-manifest-'));
 		try {
 			const plugin = consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch: vi.fn<typeof globalThis.fetch>().mockImplementation(() =>
 					Promise.resolve(
 						Response.json({
@@ -35,6 +34,7 @@ describe('Vue manifest module', () => {
 						})
 					)
 				),
+				projectUrl: 'https://consent.example.com',
 			});
 			await plugin.configResolved({ command: 'serve', root });
 			const source = await plugin.load.call(
@@ -67,8 +67,8 @@ describe('Vue production builds', () => {
 				logLevel: 'silent',
 				plugins: [
 					consentManifest({
-						backendURL: 'https://unreachable.invalid',
 						fetch,
+						projectUrl: 'https://unreachable.invalid',
 					}),
 				],
 				root,
@@ -88,7 +88,7 @@ describe('Vue production builds', () => {
 	it('builds an app that uses the hosted backend while the backend is down', async () => {
 		const fetch = unreachable();
 		await buildApp(
-			"import { selectedMode } from 'MODES';\nexport const mode = selectedMode({ backendURL: '/api/c15t' });\n",
+			"import { selectedMode } from 'MODES';\nexport const mode = selectedMode({ projectUrl: '/api/c15t' });\n",
 			fetch
 		);
 		expect(fetch).not.toHaveBeenCalled();
@@ -110,7 +110,6 @@ describe('location advice', () => {
 	it('suggests the hosted backend when a manifest() build bundles a policy that depends on location', async () => {
 		const warn = vi.fn();
 		const plugin = consentManifest({
-			backendURL: 'https://consent.example.com',
 			fetch: vi.fn<typeof globalThis.fetch>().mockImplementation(() =>
 				Promise.resolve(
 					Response.json({
@@ -128,6 +127,7 @@ describe('location advice', () => {
 					})
 				)
 			),
+			projectUrl: 'https://consent.example.com',
 		});
 		plugin.configResolved({
 			command: 'build',
@@ -140,7 +140,7 @@ describe('location advice', () => {
 		);
 		await plugin.renderChunk(source as string);
 		expect(warn).toHaveBeenCalledWith(
-			expect.stringMatching(/^@c15t\/vue\/vite: .*location.*backendURL/u)
+			expect.stringMatching(/^@c15t\/vue\/vite: .*location.*projectUrl/u)
 		);
 	});
 });
@@ -183,10 +183,10 @@ describe('runtime specifiers', () => {
 });
 
 describe('Vue backend URL variables', () => {
-	/** The `backendURL` the generated module exports, for the given env. */
-	const resolveBackendURL = async (
+	/** The `projectUrl` the generated module exports, for the given env. */
+	const resolveProjectUrl = async (
 		env: Record<string, unknown>,
-		options: { backendURL?: string } = {}
+		options: { projectUrl?: string } = {}
 	) => {
 		const root = await mkdtemp(join(tmpdir(), 'c15t-inth-env-'));
 		try {
@@ -210,9 +210,9 @@ describe('Vue backend URL variables', () => {
 				)
 			);
 			return {
-				backendURL: /export const backendURL = "(?<url>[^"]*)";/u.exec(source)
-					?.groups?.url,
 				env,
+				projectUrl: /export const projectUrl = "(?<url>[^"]*)";/u.exec(source)
+					?.groups?.url,
 			};
 		} finally {
 			await rm(root, { force: true, recursive: true });
@@ -222,26 +222,26 @@ describe('Vue backend URL variables', () => {
 	const C15T = 'https://c15t.example.com';
 
 	it('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
-		const { backendURL, env } = await resolveBackendURL({
+		const { projectUrl, env } = await resolveProjectUrl({
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(backendURL).toBe(INTH);
+		expect(projectUrl).toBe(INTH);
 		expect(env.VITE_C15T_BACKEND_URL).toBe(INTH);
 	});
 
 	it('VITE_C15T_BACKEND_URL wins when both are set', async () => {
-		const { backendURL } = await resolveBackendURL({
+		const { projectUrl } = await resolveProjectUrl({
 			VITE_C15T_BACKEND_URL: C15T,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(backendURL).toBe(C15T);
+		expect(projectUrl).toBe(C15T);
 	});
 
-	it('an explicit backendURL beats both variables', async () => {
-		const { backendURL } = await resolveBackendURL(
+	it('an explicit projectUrl beats both variables', async () => {
+		const { projectUrl } = await resolveProjectUrl(
 			{ VITE_C15T_BACKEND_URL: C15T, VITE_INTH_PROJECT_URL: INTH },
-			{ backendURL: 'https://option.example.com' }
+			{ projectUrl: 'https://option.example.com' }
 		);
-		expect(backendURL).toBe('https://option.example.com');
+		expect(projectUrl).toBe('https://option.example.com');
 	});
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import type { WithBackendURL } from '@c15t/core/runtime/provider';
+import type { WithProjectUrl } from '@c15t/core/runtime/provider';
 /**
  * The engine side of `ConsentRoot`, loaded on demand by `./root`.
  *
@@ -32,7 +32,7 @@ import type { ReactNode } from 'react';
 
 import { createClientMode } from './client-mode';
 import type { ConsentConfig } from './config';
-import { readBackendURLFromEnv } from './config';
+import { readProjectUrlFromEnv } from './config';
 import { NEXT_CHUNKS } from './engine-chunks';
 import { mergeOptions } from './root-options';
 import type { ConsentRootProps } from './root-options';
@@ -74,7 +74,7 @@ const createMode = function createMode(
 	// The config carries the backend URL, route prefix and `proxy`.
 	return createClientMode(
 		options?.mode ?? config?.mode,
-		config ?? { backendURL: readBackendURLFromEnv() }
+		config ?? { projectUrl: readProjectUrlFromEnv() }
 	);
 };
 
@@ -486,7 +486,7 @@ export const EagerConsentRoot = (props: ConsentRootProps) => {
 	return (
 		// `createMode` threw already when there is no backend.
 		<ConsentProvider
-			options={providerOptions as WithBackendURL<ConsentProviderOptions>}
+			options={providerOptions as WithProjectUrl<ConsentProviderOptions>}
 		>
 			{children}
 			<Suspense fallback={null}>

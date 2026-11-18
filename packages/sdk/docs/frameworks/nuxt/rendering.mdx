@@ -173,8 +173,8 @@ export default defineNuxtConfig({
 });
 ```
 
-By default the server fetches `${backendURL}/manifest`. Set
-`manifest({ manifestURL })` to fetch from another URL. The consent route and
+By default the server fetches `${projectUrl}/manifest`. Set
+`manifest({ manifestUrl })` to fetch from another URL. The consent route and
 the server render share the cache. The first render after a cold start waits
 for the fetch, up to `timeoutMs`.
 
@@ -233,11 +233,11 @@ visitor who resolves to another language loads that language's text the
 first time it is needed.
 
 The browser has no request location. When your policy depends on the
-visitor's country or region and neither `inputs` nor `geoURL` supplies one,
+visitor's country or region and neither `inputs` nor `geoUrl` supplies one,
 the browser asks the backend's `/init` on the first visit, as every
 single-page app does. It doesn't apply the rule for an unknown location,
 which could be another region's. To resolve by location in the browser, pass
-`manifest({ resolve: 'browser', geoURL: '/geo' })` with a route on your own
+`manifest({ resolve: 'browser', geoUrl: '/geo' })` with a route on your own
 origin, such as an edge function your host runs, that returns the visitor's
 `country` and `region` as JSON, for example `{ "country": "DE", "region": "BE" }`. c15t resolves the
 policy again when the response arrives. Or use `hosted()`.

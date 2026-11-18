@@ -13,8 +13,8 @@ import { testBackend } from './test-backend';
 
 createApp(App)
 	.use(c15tVue, {
-		backendURL: 'https://your-project.inth.app',
-		...testBackend('backendURL'),
+		projectUrl: 'https://your-project.inth.app',
+		...testBackend('projectUrl'),
 		callbacks: experimentCallbacks,
 		experiment: experimentFromSearch(location.search),
 		scripts,

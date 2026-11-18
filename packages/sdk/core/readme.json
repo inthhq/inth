@@ -25,7 +25,7 @@
 		"Render your banner from `runtime.kernel.getSnapshot()` and update it from `runtime.kernel.subscribe()`",
 		"Record choices with `runtime.kernel.commands.save('all')`, `save('none')`, or an object such as `{ measurement: true }`",
 		"For the full walkthrough, see the [headless runtime guide](https://c15t.com/docs/frameworks/javascript/headless)",
-		"```ts\n// src/consent-runtime.ts\nimport { hosted } from '@c15t/core'\nimport { createConsentRuntime } from '@c15t/core/runtime'\n\nexport const runtime = createConsentRuntime({\n  mode: hosted({ backendURL: 'https://your-project.inth.app' }),\n})\n```"
+		"```ts\n// src/consent-runtime.ts\nimport { hosted } from '@c15t/core'\nimport { createConsentRuntime } from '@c15t/core/runtime'\n\nexport const runtime = createConsentRuntime({\n  mode: hosted({ projectUrl: 'https://your-project.inth.app' }),\n})\n```"
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/javascript/headless",
 	"quickStartLink": "https://c15t.com/docs/frameworks/javascript/headless",

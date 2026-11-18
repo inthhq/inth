@@ -58,7 +58,7 @@ the script.
   more is needed.
 - **With the module's `nonce` option**, the script carries that nonce.
 - **With a hash-based policy**, the script's content is the same for every
-  visitor and changes only when you change `backendURL` or upgrade c15t. Copy
+  visitor and changes only when you change `projectUrl` or upgrade c15t. Copy
   the `sha256-...` value from the browser's `Refused to execute inline script`
   console error and add it to `script-src`.
 
@@ -93,8 +93,8 @@ hydration instead.
 
 In the default `manifest()` mode the browser calls your own origin for
 `/api/c15t/init`, which `'self'` covers, and sends consent saves to your
-backend. Add the backend's origin to `connect-src`. A `manifestURL` or
-`geoURL` on another origin needs that origin too. With `iab` set and an IAB
+backend. Add the backend's origin to `connect-src`. A `manifestUrl` or
+`geoUrl` on another origin needs that origin too. With `iab` set and an IAB
 TCF policy, the browser loads the Global Vendor List through the module's
 consent route in `manifest()` mode, or from your backend otherwise.
 

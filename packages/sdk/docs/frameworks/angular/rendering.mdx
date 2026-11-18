@@ -61,7 +61,7 @@ Create it in a server-only module:
 
 The route answers `/manifest` and `/init` below `/api/c15t`, resolved
 in-process from the backend's manifest. With `proxy: true` it also forwards
-consent writes, such as saves to `/subjects`, to `backendURL`. Only an
+consent writes, such as saves to `/subjects`, to `projectUrl`. Only an
 allowlist of paths is forwarded, so the route is never an open proxy. Without
 `proxy`, anything but `GET` and `HEAD` gets `405`.
 
@@ -71,10 +71,10 @@ project's backend URL in the server's environment.
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `routePrefix` | `'/api/c15t'` | Where the route is mounted. Must be a path other than `/`. |
-| `backendURL` | none | The c15t backend. The manifest is read from `${backendURL}/manifest`; session reports and the proxy go here. Must not name this route. |
-| `manifestURL` | `${backendURL}/manifest` | A full manifest URL, such as a CDN copy. |
+| `projectUrl` | none | The c15t backend. The manifest is read from `${projectUrl}/manifest`; session reports and the proxy go here. Must not name this route. |
+| `manifestUrl` | `${projectUrl}/manifest` | A full manifest URL, such as a CDN copy. |
 | `snapshot` | none | A manifest to resolve with. Nothing is fetched. |
-| `proxy` | `false` | Forward consent writes to `backendURL`. |
+| `proxy` | `false` | Forward consent writes to `projectUrl`. |
 | `trustForwardedHeaders` | `false` | Believe `Forwarded` and `X-Forwarded-*` headers. Only behind a proxy that sets them and drops incoming ones. |
 | `fetch`, `fetchGvl` | `globalThis.fetch` | Fetch for the manifest and for the Global Vendor List under an IAB policy. |
 | `waitUntil` | none | Keeps manifest refreshes and session reports alive past the response, on runtimes that stop work once a response is sent. |

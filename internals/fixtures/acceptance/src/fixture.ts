@@ -91,13 +91,13 @@ export const startExampleFixture = async function startExampleFixture(
 		throw new Error('No fixture address');
 	}
 	return {
-		backendURL: `http://127.0.0.1:${address.port}/api/c15t`,
 		async close() {
 			const closed = once(server, 'close');
 			server.closeAllConnections();
 			server.close();
 			await closed;
 		},
+		projectUrl: `http://127.0.0.1:${address.port}/api/c15t`,
 		setFailure(value: boolean) {
 			failing = value;
 		},

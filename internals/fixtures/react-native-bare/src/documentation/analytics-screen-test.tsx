@@ -54,7 +54,7 @@ describe('AnalyticsScreen', () => {
 		await render(
 			<ConsentProvider
 				client={consent.client}
-				privacyPolicyURL="https://example.com/privacy"
+				privacyPolicyUrl="https://example.com/privacy"
 			>
 				<AnalyticsScreen />
 			</ConsentProvider>

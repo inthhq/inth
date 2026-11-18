@@ -14,9 +14,9 @@ export const appConfig: ApplicationConfig = {
 		provideRouter([]),
 		provideClientHydration(withEventReplay()),
 		provideC15t({
-			// The consent route `server.ts` mounts.
-			backendURL: '/api/c15t',
 			mode: hosted(),
+			// The consent route `server.ts` mounts.
+			projectUrl: '/api/c15t',
 			// A script in a consent category, so Accept saves a category
 			// choice rather than only dismissing a notice.
 			scripts: [

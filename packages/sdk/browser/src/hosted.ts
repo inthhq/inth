@@ -1,7 +1,7 @@
 /**
  * `@c15t/browser/hosted`: the hosted client and stock UI.
  */
-import type { WithBackendURL } from '@c15t/core/runtime';
+import type { WithProjectUrl } from '@c15t/core/runtime';
 
 import { createHostedConsentClient } from './hosted-client';
 import type { ConsentClient, HostedConsentClientOptions } from './types';
@@ -15,7 +15,7 @@ import { mountConsentUI } from './ui/mount';
  * @throws {Error} When options require another bundle.
  */
 export const createConsentClient = function createConsentClient(
-	options: WithBackendURL<HostedConsentClientOptions>
+	options: WithProjectUrl<HostedConsentClientOptions>
 ): ConsentClient {
 	return createHostedConsentClient(options, {
 		mountUI: mountConsentUI,
@@ -31,7 +31,7 @@ export const createConsentClient = function createConsentClient(
  * @throws {Error} When options require another bundle.
  */
 export const init = function init(
-	options: WithBackendURL<HostedConsentClientOptions>
+	options: WithProjectUrl<HostedConsentClientOptions>
 ): ConsentClient {
 	const client = createConsentClient(options);
 	client.start();

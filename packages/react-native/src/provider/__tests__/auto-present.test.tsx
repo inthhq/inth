@@ -44,7 +44,7 @@ const on = { autoPresent: true, privacyPolicyURL: URL };
 const off = { autoPresent: false, privacyPolicyURL: URL };
 
 const App = ({ children }: { readonly children?: ReactNode }): ReactNode => (
-	<ConsentProvider privacyPolicyURL={URL}>{children}</ConsentProvider>
+	<ConsentProvider privacyPolicyUrl={URL}>{children}</ConsentProvider>
 );
 
 const rejectWith = (code: string): Promise<never> =>
@@ -111,7 +111,7 @@ describe('the settings native is told', () => {
 		await flushPromises();
 		expect(fake.autoPresent).toStrictEqual(on);
 		const next = 'https://example.org/privacy';
-		tree.rerender(<ConsentProvider privacyPolicyURL={next} />);
+		tree.rerender(<ConsentProvider privacyPolicyUrl={next} />);
 		await flushPromises();
 		expect(fake.autoPresent).toStrictEqual({
 			autoPresent: true,
@@ -220,7 +220,7 @@ describe('native refusals', () => {
 		await flushPromises();
 		expect(error).toHaveBeenCalledTimes(1);
 		expect(String(error.mock.calls[0]?.[0])).toContain(
-			'refused privacyPolicyURL'
+			'refused privacyPolicyUrl'
 		);
 		tree.unmount();
 	});
@@ -324,7 +324,7 @@ describe('a binary without the stock native screens', () => {
 		withoutNativeUI();
 		expect(() =>
 			renderTree(
-				<ConsentProvider privacyPolicyURL="http://example.com/privacy">
+				<ConsentProvider privacyPolicyUrl="http://example.com/privacy">
 					<span />
 				</ConsentProvider>
 			).unmount()
@@ -332,7 +332,7 @@ describe('a binary without the stock native screens', () => {
 	});
 });
 
-describe('privacyPolicyURL', () => {
+describe('privacyPolicyUrl', () => {
 	test('is required while the provider presents', () => {
 		createFakeNativeModule({ snapshot: owed });
 		const message = captureErrorMessage(() =>
@@ -344,7 +344,7 @@ describe('privacyPolicyURL', () => {
 			)
 		);
 
-		expect(message).toContain('privacyPolicyURL');
+		expect(message).toContain('privacyPolicyUrl');
 		expect(message).toContain('autoPresent={false}');
 	});
 
@@ -357,13 +357,13 @@ describe('privacyPolicyURL', () => {
 		const fake = createFakeNativeModule({ snapshot: owed });
 		const message = captureErrorMessage(() =>
 			renderTree(
-				<ConsentProvider privacyPolicyURL={url}>
+				<ConsentProvider privacyPolicyUrl={url}>
 					<span />
 				</ConsentProvider>
 			)
 		);
 
-		expect(message).toContain('absolute HTTPS privacyPolicyURL');
+		expect(message).toContain('absolute HTTPS privacyPolicyUrl');
 		expect(message).toContain(JSON.stringify(url));
 		expect(fake.autoPresentSettings).toStrictEqual([]);
 	});

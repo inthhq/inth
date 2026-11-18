@@ -58,7 +58,7 @@ under an IAB policy see the TCF banner. The demo uses a local vendor list and
 a demonstration CMP ID. A real site changes two things in
 `components/consent.tsx`:
 
-- **Vendor list.** Remove `gvlURL`. c15t loads the official Global Vendor
+- **Vendor list.** Remove `gvlUrl`. c15t loads the official Global Vendor
   List from your backend, or from its GVL endpoint without one. Use the
   `vendors` prop to list only the vendors you work with.
 - **CMP ID.** Replace `160` with the ID IAB Europe assigned when your CMP

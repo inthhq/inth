@@ -6,13 +6,13 @@ A TanStack Start app wired to c15t through the `c15t` umbrella package
 - `src/start.ts` registers `consentRequestMiddleware()`, so every server
   request reads one normalized set of geo, language and GPC headers.
 - `src/routes/__root.tsx` declares `getConsentState` with
-  `createServerFn().handler(createConsentStateHandler({ backendURL }))`. The
+  `createServerFn().handler(createConsentStateHandler({ projectUrl }))`. The
   root loader awaits it on the server, so the banner is in the first HTML.
   `ConsentRoot` reads the result, which carries the backend URL, with
   `Route.useLoaderData()` and calls the backend directly from the browser.
 - `src/scripts.ts` registers PostHog and X Pixel.
 - `src/routes/api/c15t/$.ts` mounts
-  `createConsentRoute({ backendURL, proxy: true })` for the same-origin
+  `createConsentRoute({ projectUrl, proxy: true })` for the same-origin
   rendering variant.
 
 ```bash

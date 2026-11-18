@@ -36,7 +36,7 @@ const forward = function forward(
 		body?: string;
 		headers?: Record<string, string>;
 		proxy?: true | ConsentProxyOptions;
-		backendURL?: string;
+		projectUrl?: string;
 		forwarding?: { for?: string; host: string; proto: string };
 		respond?: () => Response;
 	} = {}
@@ -48,11 +48,11 @@ const forward = function forward(
 	}
 	const response = forwardConsentRequest({
 		adapter: '@c15t/test-adapter',
-		backendURL: init.backendURL ?? BACKEND,
 		fetch,
 		forwarding: init.forwarding ?? FORWARDING,
 		options,
 		path,
+		projectUrl: init.projectUrl ?? BACKEND,
 		request: new Request(`https://shop.example/api/c15t/${path}?q=1`, {
 			body: init.body,
 			headers: init.headers,
@@ -210,12 +210,12 @@ describe('forwardConsentRequest', () => {
 
 	test('sends only public headers to a remote http backend', async () => {
 		const { calls, response } = forward('subjects', {
-			backendURL: 'http://consent.example.com',
 			headers: {
 				cookie: 'tenant=acme',
 				'user-agent': 'Mozilla/5.0',
 				'x-api-key': 'secret',
 			},
+			projectUrl: 'http://consent.example.com',
 			proxy: { cookieNames: ['tenant'], forwardHeaders: ['x-api-key'] },
 		});
 		await response;
@@ -233,12 +233,12 @@ describe('forwardConsentRequest', () => {
 			proto: 'https',
 		};
 		const remote = forward('subjects', {
-			backendURL: 'http://consent.example.com',
 			forwarding,
+			projectUrl: 'http://consent.example.com',
 		});
 		const loopback = forward('subjects', {
-			backendURL: 'http://localhost:8787',
 			forwarding,
+			projectUrl: 'http://localhost:8787',
 		});
 		await Promise.all([remote.response, loopback.response]);
 
@@ -253,8 +253,8 @@ describe('forwardConsentRequest', () => {
 
 	test('still sends named cookies to a loopback http backend', async () => {
 		const { calls, response } = forward('subjects', {
-			backendURL: 'http://localhost:8787',
 			headers: { cookie: 'tenant=acme' },
+			projectUrl: 'http://localhost:8787',
 			proxy: { cookieNames: ['tenant'] },
 		});
 		await response;
@@ -301,13 +301,13 @@ describe('forwardConsentRequest upstream failures', () => {
 		}
 		const answer = await forwardConsentRequest({
 			adapter: '@c15t/test-adapter',
-			backendURL: BACKEND,
 			fetch: vi
 				.fn()
 				.mockRejectedValue(error) as unknown as typeof globalThis.fetch,
 			forwarding: FORWARDING,
 			options,
 			path: 'subjects',
+			projectUrl: BACKEND,
 			request: new Request('https://shop.example/api/c15t/subjects', {
 				method: 'POST',
 			}),

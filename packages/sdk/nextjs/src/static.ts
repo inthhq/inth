@@ -16,7 +16,7 @@ export {
 } from '@c15t/core/static';
 
 export interface StaticManifestModuleOptions {
-	manifestURL: string;
+	manifestUrl: string;
 	fetch?: typeof globalThis.fetch;
 	exportName?: string;
 	/** Package entry that supplies the generated ConsentManifest type. */

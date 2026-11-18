@@ -44,8 +44,8 @@ const BACKEND = 'https://acme.inth.app';
 
 /** ATT on, with only the prompt string Apple has always read. */
 const ATT_PROPS = {
-	backendURL: BACKEND,
 	enableAppTrackingTransparency: true,
+	projectUrl: BACKEND,
 	trackingUsageDescription: 'We use your activity to pick the ads you see.',
 } as const;
 
@@ -470,7 +470,7 @@ describe('what the Markdown prompt refuses', () => {
 	it('refuses a Markdown prompt with the opt-in off', () => {
 		expect(() =>
 			applyToFixture({
-				backendURL: BACKEND,
+				projectUrl: BACKEND,
 				trackingMarkdownUsageDescription: MARKDOWN,
 			})
 		).toThrowError(/enableAppTrackingTransparency is off/u);
@@ -479,7 +479,7 @@ describe('what the Markdown prompt refuses', () => {
 	it('refuses localized Markdown with the opt-in off', () => {
 		expect(() =>
 			applyToFixture({
-				backendURL: BACKEND,
+				projectUrl: BACKEND,
 				trackingMarkdownUsageDescriptionLocalizations: {
 					de: 'DE: **Track your activity.**',
 				},

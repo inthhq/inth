@@ -15,22 +15,22 @@ export type CompatManifest = StaticConsentResolverOptions['manifest'];
 
 export interface StaticTransportOptions {
 	/** Absolute backend URL used for `POST /subjects`. */
-	backendURL: string;
+	projectUrl: string;
 	/** Manifest generated at build time by `createStaticManifestModule`. */
 	manifest: CompatManifest;
 	/**
 	 * Optional geo endpoint for `createStaticConsentResolver`. Without one,
 	 * init resolves to the manifest's unknown-location policy.
 	 */
-	geoURL?: string;
+	geoUrl?: string;
 }
 
-const resolveDomain = function resolveDomain(backendURL: string): string {
+const resolveDomain = function resolveDomain(projectUrl: string): string {
 	if (typeof window !== 'undefined' && window.location?.hostname) {
 		return window.location.hostname;
 	}
 	try {
-		return new URL(backendURL).hostname;
+		return new URL(projectUrl).hostname;
 	} catch {
 		return 'localhost';
 	}
@@ -42,12 +42,12 @@ const resolveDomain = function resolveDomain(backendURL: string): string {
  * to show the banner; only saves reach the backend.
  */
 export const createStaticTransport = function createStaticTransport({
-	backendURL,
+	projectUrl,
 	manifest,
-	geoURL,
+	geoUrl,
 }: StaticTransportOptions): KernelTransport {
-	const resolution = createStaticConsentResolver({ geoURL, manifest });
-	const base = backendURL.endsWith('/') ? backendURL.slice(0, -1) : backendURL;
+	const resolution = createStaticConsentResolver({ geoUrl, manifest });
+	const base = projectUrl.endsWith('/') ? projectUrl.slice(0, -1) : projectUrl;
 
 	return {
 		async init() {

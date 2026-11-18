@@ -50,12 +50,12 @@ vi.mock('#imports', async () => {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
 		useAppConfig: () => ({
 			c15t: {
-				backendURL: '/api/c15t',
 				consentSource: nuxt.consentSource,
 				disableAnimation: true,
 				experiment: nuxt.experiment,
 				hideBranding: true,
 				iframeBlocker: false,
+				projectUrl: '/api/c15t',
 			},
 		}),
 		useCookie: (name: string, options: Record<string, unknown>) => {

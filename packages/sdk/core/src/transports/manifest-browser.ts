@@ -49,10 +49,10 @@ export type BrowserManifestOptions = ManifestModeBaseOptions &
 		/**
 		 * Backend origin for `POST /subjects`, and for `GET /init` when the
 		 * policy depends on a location the browser doesn't know. Derived from
-		 * a `manifestURL` ending in `/manifest`. Required for other URLs and
-		 * for a `snapshot` without `manifestURL`. Use `''` for this origin.
+		 * a `manifestUrl` ending in `/manifest`. Required for other URLs and
+		 * for a `snapshot` without `manifestUrl`. Use `''` for this origin.
 		 */
-		backendURL?: string;
+		projectUrl?: string;
 		/** Fetch implementation. Defaults to `globalThis.fetch`. */
 		fetch?: typeof globalThis.fetch;
 		/** Headers sent with the manifest request and the `/init` fallback. */
@@ -63,7 +63,7 @@ export type BrowserManifestOptions = ManifestModeBaseOptions &
 		domain?: string;
 		/**
 		 * Ask the backend's `GET /init` when the policy depends on a location
-		 * neither the inputs, the overrides nor `geoURL` supplied. With
+		 * neither the inputs, the overrides nor `geoUrl` supplied. With
 		 * `false`, the manifest resolves for an unknown location instead.
 		 *
 		 * @defaultValue true
@@ -88,17 +88,17 @@ const trimSlash = function trimSlash(url: string): string {
 	return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
-const deriveBackendURL = function deriveBackendURL(
+const deriveProjectUrl = function deriveProjectUrl(
 	options: BrowserManifestOptions
 ): string | undefined {
-	if (options.backendURL !== undefined) {
-		return trimSlash(options.backendURL);
+	if (options.projectUrl !== undefined) {
+		return trimSlash(options.projectUrl);
 	}
-	if (!options.manifestURL) {
+	if (!options.manifestUrl) {
 		return undefined;
 	}
 	const withoutQuery =
-		options.manifestURL.split(/[?#]/u)[0] ?? options.manifestURL;
+		options.manifestUrl.split(/[?#]/u)[0] ?? options.manifestUrl;
 	const trimmed = trimSlash(withoutQuery);
 	if (!trimmed.endsWith('/manifest')) {
 		return undefined;
@@ -156,7 +156,7 @@ const gppOnPage = (): boolean =>
  * Whether `init()` for these inputs asks the backend's `/init`, decided
  * without loading anything: `true` asks it at once, `false` resolves in
  * the browser, `undefined` leaves it to the resolver chunk, which knows
- * whether every location gets the same banner, and to `geoURL`.
+ * whether every location gets the same banner, and to `geoUrl`.
  *
  * GPP asks `/init`: its US sections need the country an answer for an
  * unknown location does not report. So does IAB, whose vendor list the
@@ -165,13 +165,13 @@ const gppOnPage = (): boolean =>
 const asksInit = function asksInit(
 	resolved: ConsentManifest,
 	inputs: ResolveInitFromManifestInputs,
-	options: Pick<BrowserManifestOptions, 'geoURL' | 'initFallback'>,
+	options: Pick<BrowserManifestOptions, 'geoUrl' | 'initFallback'>,
 	gpp: boolean
 ): boolean | undefined {
 	if (!lacksLocation(resolved, inputs) || options.initFallback === false) {
 		return false;
 	}
-	if (options.geoURL) {
+	if (options.geoUrl) {
 		return undefined;
 	}
 	return (
@@ -215,45 +215,45 @@ const mergeInputs = function mergeInputs(
 
 /**
  * What every transport one {@link manifest} builds shares: the manifest,
- * the visitor's location from `geoURL` and the lazily loaded modules, each
+ * the visitor's location from `geoUrl` and the lazily loaded modules, each
  * loaded once per page.
  */
 interface ManifestSource {
-	backendURL: string;
+	projectUrl: string;
 	getFetch: () => typeof globalThis.fetch;
-	loadGeo: (geoURL: string) => Promise<ManifestModeInputs | undefined>;
+	loadGeo: (geoUrl: string) => Promise<ManifestModeInputs | undefined>;
 	loadManifest: () => Promise<ConsentManifest>;
 	loadResolver: () => Promise<typeof ResolveModule>;
 	/** Where the manifest is fetched, unless a snapshot is passed. */
-	manifestURL: string | undefined;
+	manifestUrl: string | undefined;
 }
 
 /**
  * Check the options and start loading what the first `init()` will need.
  *
- * @throws {Error} When none of `snapshot`, `manifestURL` and `backendURL`
- * is given, or a backend can't be derived and `backendURL` is omitted.
+ * @throws {Error} When none of `snapshot`, `manifestUrl` and `projectUrl`
+ * is given, or a backend can't be derived and `projectUrl` is omitted.
  */
 const createManifestSource = function createManifestSource(
 	options: BrowserManifestOptions
 ): ManifestSource {
-	const backendURL = deriveBackendURL(options);
-	// Without a snapshot or a `manifestURL`, read the backend's own
+	const projectUrl = deriveProjectUrl(options);
+	// Without a snapshot or a `manifestUrl`, read the backend's own
 	// `/manifest`. A build that could not fetch the snapshot passes
 	// `snapshot: undefined`, and the page still gets its policy.
-	const manifestURL =
-		options.manifestURL ??
-		(options.snapshot || backendURL === undefined
+	const manifestUrl =
+		options.manifestUrl ??
+		(options.snapshot || projectUrl === undefined
 			? undefined
-			: `${backendURL}/manifest`);
-	if (!(options.snapshot || manifestURL)) {
+			: `${projectUrl}/manifest`);
+	if (!(options.snapshot || manifestUrl)) {
 		throw new Error(
-			'c15t: manifest() needs `snapshot`, `manifestURL` or `backendURL`.'
+			'c15t: manifest() needs `snapshot`, `manifestUrl` or `projectUrl`.'
 		);
 	}
-	if (backendURL === undefined) {
+	if (projectUrl === undefined) {
 		throw new Error(
-			'c15t: manifest() needs `backendURL` unless `manifestURL` ends in `/manifest`. Pass the consent API URL, or an empty string for this origin.'
+			'c15t: manifest() needs `projectUrl` unless `manifestUrl` ends in `/manifest`. Pass the consent API URL, or an empty string for this origin.'
 		);
 	}
 	const getFetch = (): typeof globalThis.fetch =>
@@ -298,21 +298,20 @@ const createManifestSource = function createManifestSource(
 		!hasLocationMatchers(snapshot) ||
 		mayBeLocationFree(snapshot) ||
 		options.inputs?.country ||
-		options.geoURL
+		options.geoUrl
 	) {
 		preload(loadResolver);
 	}
 
 	return {
-		backendURL,
 		getFetch,
-		/** The visitor's location from `geoURL`, asked once per page. */
-		loadGeo(geoURL) {
+		/** The visitor's location from `geoUrl`, asked once per page. */
+		loadGeo(geoUrl) {
 			// Without a location the `/init` fallback still answers.
 			cachedGeo ??= (async () => {
 				try {
 					const remoteModule = await loadRemote();
-					return await remoteModule.fetchGeoInputs(geoURL, getFetch());
+					return await remoteModule.fetchGeoInputs(geoUrl, getFetch());
 				} catch {
 					return undefined;
 				}
@@ -325,7 +324,7 @@ const createManifestSource = function createManifestSource(
 			}
 			cachedManifest ??= (async () => {
 				const remoteModule = await loadRemote();
-				return remoteModule.fetchManifest(manifestURL as string, getFetch(), {
+				return remoteModule.fetchManifest(manifestUrl as string, getFetch(), {
 					credentials: options.credentials,
 					headers: options.headers,
 				});
@@ -340,7 +339,8 @@ const createManifestSource = function createManifestSource(
 			}
 		},
 		loadResolver,
-		manifestURL,
+		manifestUrl,
+		projectUrl,
 	};
 };
 
@@ -354,13 +354,13 @@ const transportFrom = function transportFrom(
 	source: ManifestSource,
 	context: Pick<ProviderTransportContext, 'gppEnabled'> | undefined
 ): KernelTransport {
-	// `''` is a real answer: a root-relative `manifestURL` such as
+	// `''` is a real answer: a root-relative `manifestUrl` such as
 	// `/manifest` or an explicit empty backend means this origin.
 	const hosted = createHostedTransport({
-		backendURL: source.backendURL,
 		domain: options.domain,
 		fetch: options.fetch,
 		headers: options.headers,
+		projectUrl: source.projectUrl,
 	});
 	// A local resolution makes no request, so nothing carries its
 	// journey; the saves that follow send none either.
@@ -399,10 +399,10 @@ const transportFrom = function transportFrom(
 		) {
 			return answer(resolved, inputs, ctx);
 		}
-		if (options.geoURL) {
+		if (options.geoUrl) {
 			inputs = mergeInputs(
 				options.inputs,
-				await source.loadGeo(options.geoURL),
+				await source.loadGeo(options.geoUrl),
 				ctx.overrides
 			);
 			if (!lacksLocation(resolved, inputs)) {
@@ -435,7 +435,7 @@ const transportFrom = function transportFrom(
 			} catch (error) {
 				// The backend's `/init` still answers when the manifest is
 				// unavailable; the next init tries the manifest again.
-				warnManifestFallback(source.manifestURL ?? 'the snapshot', error);
+				warnManifestFallback(source.manifestUrl ?? 'the snapshot', error);
 				return ask(ctx);
 			}
 			return initFrom(resolved, ctx);
@@ -450,7 +450,7 @@ const transportFrom = function transportFrom(
  * manifest and saves to the backend.
  *
  * When some locations get a different banner than others and the browser
- * doesn't know where the visitor is, it asks `geoURL` first, then falls
+ * doesn't know where the visitor is, it asks `geoUrl` first, then falls
  * back to the backend's `GET /init` so the answer stays faithful. Packs
  * keyed by location that all give the same banner resolve in the browser
  * (see {@link manifestNeedsLocation}), unless IAB GPP is on the page or
@@ -460,8 +460,8 @@ const transportFrom = function transportFrom(
  * @param options - Manifest source and backend.
  * @param context - The provider's transport context, for `gppEnabled`.
  * @returns A kernel transport.
- * @throws {Error} When none of `snapshot`, `manifestURL` and `backendURL`
- * is given, or a backend can't be derived and `backendURL` is omitted.
+ * @throws {Error} When none of `snapshot`, `manifestUrl` and `projectUrl`
+ * is given, or a backend can't be derived and `projectUrl` is omitted.
  */
 export const createBrowserManifestTransport =
 	function createBrowserManifestTransport(
@@ -482,13 +482,13 @@ export const createBrowserManifestTransport =
  * @param options - Manifest source and backend.
  * @returns A transport factory for `mode`, carrying its options. Each call
  * builds a transport of its own over one shared manifest.
- * @throws {Error} When none of `snapshot`, `manifestURL` and `backendURL`
- * is given, or a backend can't be derived and `backendURL` is omitted.
+ * @throws {Error} When none of `snapshot`, `manifestUrl` and `projectUrl`
+ * is given, or a backend can't be derived and `projectUrl` is omitted.
  * @example
  * ```ts
  * import { manifest } from '@c15t/core/transports/manifest-browser';
  *
- * const mode = manifest({ backendURL: 'https://your-project.inth.app' });
+ * const mode = manifest({ projectUrl: 'https://your-project.inth.app' });
  * ```
  */
 export const manifest = function manifest(

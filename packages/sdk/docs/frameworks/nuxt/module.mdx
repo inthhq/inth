@@ -47,7 +47,7 @@ keys, including when you register it as `c15t/vue`.
 
 | Put it in | Options |
 | --- | --- |
-| `nuxt.config.ts` | Plain data: `backendURL`, `tokens`, `presentation`, `components`, `legalLinks`, trigger options, network blocker `rules`. Also the options that only work here: `mode`, `routePrefix`, `onBuildError`, `initPrefetch` and `devtools`. |
+| `nuxt.config.ts` | Plain data: `projectUrl`, `tokens`, `presentation`, `components`, `legalLinks`, trigger options, network blocker `rules`. Also the options that only work here: `mode`, `routePrefix`, `onBuildError`, `initPrefetch` and `devtools`. |
 | `app/app.config.ts` | Anything with a function: `scripts`, `callbacks`, `networkBlocker.onRequestBlocked`. |
 
 Module options reach the browser as JSON through `runtimeConfig.public`,
@@ -72,11 +72,11 @@ NUXT_PUBLIC_C15T_BACKEND_URL=https://your-project.inth.app \
 ```
 
 `NUXT_PUBLIC_INTH_PROJECT_URL` works the same way when the build read its
-URL from that variable or had none. It never replaces a `backendURL` from
+URL from that variable or had none. It never replaces a `projectUrl` from
 `nuxt.config.ts` or a `NUXT_PUBLIC_C15T_BACKEND_URL`.
 
 The browser, server rendering and the consent route all use this value. Keep
-`backendURL` in `nuxt.config.ts`: a value in `app.config.ts` is bundled with
+`projectUrl` in `nuxt.config.ts`: a value in `app.config.ts` is bundled with
 the app and takes precedence over runtime config.
 
 When the build bundles a manifest, the policy comes from the build. The
@@ -99,8 +99,8 @@ picks up a new URL only when you generate it again.
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `backendURL` | `NUXT_PUBLIC_C15T_BACKEND_URL`, then `NUXT_PUBLIC_INTH_PROJECT_URL` | Your Inth or self-hosted backend. The build downloads the manifest from it and consent saves go to it. The module reads the variable when the build starts, and Nuxt applies it again at runtime. |
-| `mode` | `manifest()` | Where the visitor's policy comes from. Import `manifest()`, `hosted()` or `testing()` from `c15t/vue`. `nuxt.config.ts` only: the build picks the snapshots and the browser code from its `type` and `resolve`, so a `runtimeConfig.public.c15t.mode` is ignored, and so is a runtime `NUXT_PUBLIC_C15T_MODE_TYPE` or `NUXT_PUBLIC_C15T_MODE_RESOLVE`, with a warning. Its `manifestURL` and `backendURL` can still change at runtime, through `NUXT_PUBLIC_C15T_MODE_MANIFEST_URL` and `NUXT_PUBLIC_C15T_MODE_BACKEND_URL`. See [the modes](#modes). |
+| `projectUrl` | `NUXT_PUBLIC_C15T_BACKEND_URL`, then `NUXT_PUBLIC_INTH_PROJECT_URL` | Your Inth or self-hosted backend. The build downloads the manifest from it and consent saves go to it. The module reads the variable when the build starts, and Nuxt applies it again at runtime. |
+| `mode` | `manifest()` | Where the visitor's policy comes from. Import `manifest()`, `hosted()` or `testing()` from `c15t/vue`. `nuxt.config.ts` only: the build picks the snapshots and the browser code from its `type` and `resolve`, so a `runtimeConfig.public.c15t.mode` is ignored, and so is a runtime `NUXT_PUBLIC_C15T_MODE_TYPE` or `NUXT_PUBLIC_C15T_MODE_RESOLVE`, with a warning. Its `manifestUrl` and `projectUrl` can still change at runtime, through `NUXT_PUBLIC_C15T_MODE_MANIFEST_URL` and `NUXT_PUBLIC_C15T_MODE_BACKEND_URL`. See [the modes](#modes). |
 | `routePrefix` | `'/api/c15t'` | Path of the consent route the module adds in `manifest()` mode. It answers `${routePrefix}/init` and `${routePrefix}/manifest`. `false` adds no route: the server render resolves from the snapshot directly, and the browser asks the backend's `/init`. `'/'` stops the build with ``@c15t/vue: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` `nuxt.config.ts` only: the route is mounted at build time, so a `runtimeConfig.public.c15t.routePrefix` or a runtime `NUXT_PUBLIC_C15T_ROUTE_PREFIX` is ignored, with a warning. |
 | `onBuildError` | Unset | What a failed build-time manifest download does in `manifest()` mode. Unset, `nuxt build` stops and `nuxt dev` logs a warning, and the server fetches the policy at runtime. `'fail'` stops both. `'runtime'` lets both continue. A missing backend URL stops both in `manifest()` mode, with or without a snapshot, because the browser saves consent there. The `C15T_ON_BUILD_ERROR` environment variable overrides it. The download waits at most 10 seconds. |
 | `timeoutMs` | `500` | Longest wait for the policy during server rendering. `false` or `Infinity` waits as long as the backend takes; any other value that is not a finite, non-negative number uses the default. |
@@ -113,13 +113,13 @@ picks up a new URL only when you generate it again.
 | --- | --- |
 | `manifest()` | The default. The build downloads the manifest and the server resolves each visitor from it. The browser bundle holds no snapshot or resolver. |
 | `manifest({ source: 'runtime' })` | The server fetches the manifest at runtime, caches it and refreshes it in the background. Policy edits apply without a rebuild. |
-| `manifest({ snapshot })` | A manifest you supply, for example imported from a JSON file in `nuxt.config.ts`. The build downloads nothing. Consent saves still go to `backendURL`, so it needs one. |
-| `manifest({ resolve: 'browser' })` | The browser resolves the policy from the manifest, for `nuxt generate` and static hosting. Only this mode adds the snapshot to the browser bundle. Takes `geoURL` and `inputs` for the visitor's location. Pair it with `routePrefix: false` on a static host. |
+| `manifest({ snapshot })` | A manifest you supply, for example imported from a JSON file in `nuxt.config.ts`. The build downloads nothing. Consent saves still go to `projectUrl`, so it needs one. |
+| `manifest({ resolve: 'browser' })` | The browser resolves the policy from the manifest, for `nuxt generate` and static hosting. Only this mode adds the snapshot to the browser bundle. Takes `geoUrl` and `inputs` for the visitor's location. Pair it with `routePrefix: false` on a static host. |
 | `hosted()` | Every server render, and the browser on pages the server did not resolve, asks the backend's `/init`. |
 | `testing()` | The browser resolves policy rules with no backend. `testing({ policy })` replaces c15t's recommended rules. Tests only; throws in production builds. |
 
-`manifest()` also takes `manifestURL`, the URL the build and the server
-download the manifest from, by default `${backendURL}/manifest`.
+`manifest()` also takes `manifestUrl`, the URL the build and the server
+download the manifest from, by default `${projectUrl}/manifest`.
 [Rendering and deployment](/docs/frameworks/nuxt/rendering) explains which
 mode fits which deployment.
 

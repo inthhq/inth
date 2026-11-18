@@ -88,10 +88,10 @@ const fakeFetch: typeof globalThis.fetch = (input, init) => {
 };
 
 const backend = () =>
-	hosted({ backendURL: 'https://consent.example.com', fetch: fakeFetch });
+	hosted({ fetch: fakeFetch, projectUrl: 'https://consent.example.com' });
 
 /** `hosted()` on the global `fetch`, which a test stubs, as a page's is. */
-const pageBackend = () => hosted({ backendURL: 'https://consent.example.com' });
+const pageBackend = () => hosted({ projectUrl: 'https://consent.example.com' });
 
 const init = () => requests.filter((request) => request.path === '/init');
 const saves = () => requests.filter((request) => request.path === '/subjects');
@@ -638,7 +638,7 @@ describe('a journey a request before the runtime started', () => {
 		vi.stubGlobal('fetch', fakeFetch);
 		try {
 			window.eval(
-				buildPrefetchScript({ backendURL: 'https://consent.example.com' })
+				buildPrefetchScript({ projectUrl: 'https://consent.example.com' })
 			);
 			const runtime = await load({ mode: pageBackend() });
 			// The runtime took the script's response: one /init in all.
@@ -660,7 +660,7 @@ describe('a journey a request before the runtime started', () => {
 		vi.stubGlobal('fetch', fakeFetch);
 		try {
 			window.eval(
-				buildPrefetchScript({ backendURL: 'https://consent.example.com' })
+				buildPrefetchScript({ projectUrl: 'https://consent.example.com' })
 			);
 			const runtime = await load({ journey: 'tab', mode: pageBackend() });
 			// The script couldn't know the option; the id still links the save.
@@ -679,8 +679,8 @@ describe('a journey a request before the runtime started', () => {
 		try {
 			window.eval(
 				buildPrefetchScript({
-					backendURL: 'https://consent.example.com',
 					journey: 'tab',
+					projectUrl: 'https://consent.example.com',
 				})
 			);
 			const runtime = await load({ journey: 'tab', mode: pageBackend() });
@@ -699,8 +699,8 @@ describe('a journey a request before the runtime started', () => {
 		try {
 			window.eval(
 				buildPrefetchScript({
-					backendURL: 'https://consent.example.com',
 					journey: false,
+					projectUrl: 'https://consent.example.com',
 				})
 			);
 			const runtime = await load({ mode: pageBackend() });

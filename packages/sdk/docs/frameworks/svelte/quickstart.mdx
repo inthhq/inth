@@ -55,7 +55,7 @@ too. When both are set, `VITE_C15T_BACKEND_URL` wins.
 
 `consentManifest` hands the backend URL to `ConsentProvider`. No file is
 written into your project. Without the plugin, pass the URL as the
-provider's `backendURL` prop.
+provider's `projectUrl` prop.
 
 The plugin also adds a small script to `index.html` that sends `/init` while
 your JavaScript downloads, so the banner shows sooner.
@@ -122,7 +122,7 @@ If the banner does not appear, check the `/init` request, then see
 ## Other setups
 
 **Tests** pass `testing()` from `c15t/svelte/testing` as the mode. It resolves a policy
-in the browser with no backend and needs no `backendURL`. It throws in
+in the browser with no backend and needs no `projectUrl`. It throws in
 production builds. With no arguments it uses the recommended rules; pass
 `testing({ policy })` to test your own.
 
@@ -160,7 +160,7 @@ only in these cases:
 - The page already knows the visitor's location, for example from an edge
   worker, and passes it as `manifest({ inputs: { country, region } })`.
 - You run a same-origin route that returns the location and set it as
-  `geoURL`.
+  `geoUrl`.
 
 Otherwise the browser still calls `/init` on a first visit and uses the
 backend's answer, so the bundle adds bytes without saving a request.
@@ -187,5 +187,5 @@ another language loads that language's copy the first time it is needed.
 
 `manifest({ source: 'runtime' })` fetches the manifest from the backend when
 the page loads, so policy edits apply without a rebuild.
-`manifest({ manifestURL })` fetches it from another URL, such as a CDN,
+`manifest({ manifestUrl })` fetches it from another URL, such as a CDN,
 instead of using the build's snapshot.

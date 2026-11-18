@@ -119,7 +119,7 @@ export const applyColorScheme = function applyColorScheme(
  * @param styleText - The stock sheet; empty for none.
  * @param nonce - The page's CSP nonce.
  * @param beforeContent - Called with the root after the `<style>` and
- * before the wrapper, for `stylesheetURLs` links.
+ * before the wrapper, for `stylesheetUrls` links.
  * @returns The root.
  */
 export const createUIRoot = function createUIRoot(

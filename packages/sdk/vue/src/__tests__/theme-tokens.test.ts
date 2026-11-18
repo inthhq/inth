@@ -24,7 +24,7 @@ vi.mock('#imports', async () => {
 		useRequestHeaders: () => ({}),
 		useRequestURL: () => new URL('https://app.example/'),
 		useRuntimeConfig: () => ({
-			public: { c15t: { backendURL: 'https://consent.example.test' } },
+			public: { c15t: { projectUrl: 'https://consent.example.test' } },
 		}),
 		useState: (key: string, init: () => unknown) => {
 			if (!nuxt.state.has(key)) {
@@ -81,8 +81,8 @@ describe('the Vue plugin applies tokens', () => {
 		);
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
 		app.use(c15tVue, {
-			backendURL: 'https://consent.example.test',
 			nonce: 'style-nonce',
+			projectUrl: 'https://consent.example.test',
 			tokens: { 'c15t-primary': '#2f6f4e' },
 		});
 
@@ -106,7 +106,7 @@ describe('the Vue plugin applies tokens', () => {
 		const mountApp = () => {
 			const app = createApp(defineComponent({ setup: () => () => h('main') }));
 			app.use(c15tVue, {
-				backendURL: 'https://consent.example.test',
+				projectUrl: 'https://consent.example.test',
 				tokens: { 'c15t-primary': '#2f6f4e' },
 			});
 			const container = document.createElement('div');
@@ -135,7 +135,7 @@ describe('the Vue plugin applies tokens', () => {
 		document.head.append(serverStyle);
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
 		app.use(c15tVue, {
-			backendURL: 'https://consent.example.test',
+			projectUrl: 'https://consent.example.test',
 			tokens: { 'c15t-primary': '#2f6f4e' },
 		});
 		const container = document.createElement('div');
@@ -148,8 +148,8 @@ describe('the Vue plugin applies tokens', () => {
 
 	test('leaves styling to the host that owns a borrowed runtime', () => {
 		const runtime = createConsentRuntime({
-			backendURL: 'https://consent.example.test',
 			pkg: '@c15t/vue-test',
+			projectUrl: 'https://consent.example.test',
 		});
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
 		app.use(c15tVue, { runtime });

@@ -70,8 +70,8 @@ const defaultProtocolForHost = function defaultProtocolForHost(
 	return isPlainHTTP ? 'http' : 'https';
 };
 
-/** Options for {@link resolveBackendURL}. */
-export interface ResolveBackendURLOptions {
+/** Options for {@link resolveProjectUrl}. */
+export interface ResolveProjectUrlOptions {
 	/**
 	 * Restore the previous resolution order: `x-forwarded-proto` /
 	 * `x-forwarded-ssl` for the scheme, and `x-forwarded-host`, then `host`,
@@ -95,26 +95,26 @@ export interface ResolveBackendURLOptions {
  * `trustForwardedHeaders` is set. Invalid inputs return `null`; this helper
  * never throws.
  *
- * @deprecated Use `resolveRequestBackendURL` from `@c15t/core/server`,
+ * @deprecated Use `resolveRequestProjectUrl` from `@c15t/core/server`,
  * which also resolves against the framework's own request URL. This helper
  * sees only headers, and every header it can read is sent by the client.
  *
- * @param backendURL - The configured URL, absolute or `/`-relative.
+ * @param projectUrl - The configured URL, absolute or `/`-relative.
  * @param headers - The incoming request headers.
  * @param options - `trustForwardedHeaders` to read forwarding headers.
  * @returns The absolute URL, or `null` when it cannot be resolved.
  */
-export const resolveBackendURL = function resolveBackendURL(
-	backendURL: string,
+export const resolveProjectUrl = function resolveProjectUrl(
+	projectUrl: string,
 	headers: HeaderSource,
-	options: ResolveBackendURLOptions = {}
+	options: ResolveProjectUrlOptions = {}
 ): string | null {
 	try {
-		if (/^https?:\/\//iu.test(backendURL)) {
-			return trimTrailingSlash(new URL(backendURL).toString());
+		if (/^https?:\/\//iu.test(projectUrl)) {
+			return trimTrailingSlash(new URL(projectUrl).toString());
 		}
 
-		if (!backendURL.startsWith('/') || backendURL.startsWith('//')) {
+		if (!projectUrl.startsWith('/') || projectUrl.startsWith('//')) {
 			return null;
 		}
 
@@ -145,7 +145,7 @@ export const resolveBackendURL = function resolveBackendURL(
 		const { origin } = new URL(
 			`${protocol ?? defaultProtocolForHost(host)}://${host}`
 		);
-		const resolved = new URL(`${origin}${backendURL}`);
+		const resolved = new URL(`${origin}${projectUrl}`);
 		if (resolved.origin !== origin) {
 			return null;
 		}

@@ -10,8 +10,8 @@ export default defineConfig({
 	integrations: [
 		svelte(),
 		c15t({
-			backendURL: 'https://your-project.inth.app',
-			...testBackend('backendURL'),
+			projectUrl: 'https://your-project.inth.app',
+			...testBackend('projectUrl'),
 			clientEntrypoint: './src/consent-client.ts',
 			// The acceptance suite tests a backend outage during server
 			// rendering, so the server fetches the policy at runtime.

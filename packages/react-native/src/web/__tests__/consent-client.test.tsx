@@ -33,7 +33,7 @@ const PROJECT = 'https://your-project.inth.app';
 /** A permissive policy asks about the categories the app declares. */
 const CATEGORIES = ['measurement', 'marketing'] as const;
 
-const OPTIONS = { backendURL: PROJECT, consentCategories: CATEGORIES };
+const OPTIONS = { consentCategories: CATEGORIES, projectUrl: PROJECT };
 
 const OPT_IN = [
 	{
@@ -276,7 +276,7 @@ describe('createWebConsentClient', () => {
 			.spyOn(console, 'error')
 			.mockImplementation(() => undefined);
 		const client = webClient(
-			{ backendURL: 'http://localhost:8787', dryRun: true },
+			{ dryRun: true, projectUrl: 'http://localhost:8787' },
 			{ production: true }
 		);
 		await started(client);
@@ -295,13 +295,13 @@ describe('createWebConsentClient', () => {
 		});
 	});
 
-	test('refuses a backendURL that is not an Inth project unless dryRun is on', () => {
+	test('refuses a projectUrl that is not an Inth project unless dryRun is on', () => {
 		expect(() =>
-			webClient({ backendURL: 'https://consent.example.com' })
+			webClient({ projectUrl: 'https://consent.example.com' })
 		).toThrowError(/project host under inth\.app/u);
 		expect(() =>
 			webClient(
-				{ backendURL: 'http://localhost:8787', dryRun: true },
+				{ dryRun: true, projectUrl: 'http://localhost:8787' },
 				{ mode: offlineMode(), production: false }
 			)
 		).not.toThrowError();
@@ -492,9 +492,9 @@ describe('dryRun on web', () => {
 
 		const client = webClient(
 			{
-				backendURL: 'http://localhost:8787',
 				consentCategories: CATEGORIES,
 				dryRun: true,
+				projectUrl: 'http://localhost:8787',
 			},
 			{ production: false }
 		);
@@ -534,10 +534,10 @@ describe('dryRun on web', () => {
 		vi.stubGlobal('fetch', fetch);
 		const client = webClient(
 			{
-				backendURL: 'http://localhost:8787',
 				consentCategories: CATEGORIES,
 				dryRun: true,
 				forceGPC: true,
+				projectUrl: 'http://localhost:8787',
 			},
 			{ production: false }
 		);
@@ -568,10 +568,10 @@ describe('dryRun on web', () => {
 
 		const client = webClient(
 			{
-				backendURL: 'http://localhost:8787',
 				consentCategories: CATEGORIES,
 				dryRun: true,
 				forceGPC: true,
+				projectUrl: 'http://localhost:8787',
 			},
 			{ production: false }
 		);
@@ -593,23 +593,23 @@ describe('webOptionsFromManifest', () => {
 				JSON.stringify({
 					extra: {
 						inth: {
-							backendURL: PROJECT,
 							consentCategories: ['measurement'],
 							domain: null,
 							dryRun: false,
 							enableAppTrackingTransparency: true,
 							forceGPC: false,
+							projectUrl: PROJECT,
 						},
 					},
 					name: 'App',
 				})
 			)
 		).toEqual({
-			backendURL: PROJECT,
 			consentCategories: ['measurement'],
 			domain: null,
 			dryRun: false,
 			forceGPC: false,
+			projectUrl: PROJECT,
 		});
 	});
 
@@ -643,9 +643,9 @@ describe('the shared provider on web', () => {
 		// context a nested provider reuses.
 		const client = webClient(
 			{
-				backendURL: 'http://localhost:8787',
 				consentCategories: CATEGORIES,
 				dryRun: true,
+				projectUrl: 'http://localhost:8787',
 			},
 			{ production: false }
 		);

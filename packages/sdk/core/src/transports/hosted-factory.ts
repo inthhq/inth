@@ -40,14 +40,14 @@ export const createHostedModeFactory = function createHostedModeFactory(
 		() =>
 			build({
 				assertDecisionInputs:
-					settings.assertDecisionInputs ?? settings.initURL !== undefined,
-				backendURL: settings.backendURL,
+					settings.assertDecisionInputs ?? settings.initUrl !== undefined,
 				decisionInputs: settings.decisionInputs,
 				domain: settings.domain,
 				fetch: settings.fetch,
 				headers: settings.headers && { ...settings.headers },
-				initURL: settings.initURL,
+				initUrl: settings.initUrl,
 				initialData: settings.initialData,
+				projectUrl: settings.projectUrl,
 			}),
 		settings,
 		{ kind: 'hosted' as const, type: 'hosted' as const }

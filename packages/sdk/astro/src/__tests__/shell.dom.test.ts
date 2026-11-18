@@ -334,8 +334,8 @@ describe('the first-load shell', () => {
 			{ callbacks: { onChoiceRecorded, onPermissionsChanged } },
 			{
 				...OPTIONS,
-				backendURL: 'https://consent.example',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example',
 			}
 		);
 		refuseOutboxWrites();

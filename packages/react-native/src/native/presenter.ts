@@ -225,7 +225,7 @@ const remember = (
  * @param sessionId - The outcome's session.
  * @returns The URL, or `undefined` for a session this bundle did not open.
  */
-export const sessionPrivacyPolicyURL = (
+export const sessionPrivacyPolicyUrl = (
 	sessionId: string
 ): string | undefined =>
 	openSession?.id === sessionId ? openSession.url : undefined;
@@ -258,39 +258,39 @@ export const setBeforeConsentPrompt = (
 };
 
 const callNativePrompt = async (
-	privacyPolicyURL: string
+	privacyPolicyUrl: string
 ): Promise<ConsentPresenterSession> =>
 	remember(
-		parseSession(await getNativeInth().presentConsentPrompt(privacyPolicyURL)),
-		privacyPolicyURL
+		parseSession(await getNativeInth().presentConsentPrompt(privacyPolicyUrl)),
+		privacyPolicyUrl
 	);
 
 /** Open an owed native prompt on the installed engine. With a provider set to
  * `trackingRequest="beforeConsent"`, Apple's tracking alert comes first.
- * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
+ * @param privacyPolicyUrl - The app's HTTPS privacy-policy URL.
  * @returns Presentation identity. Decisions arrive through onConsentPresenterOutcome.
  */
 export const presentConsentPrompt = async (
-	privacyPolicyURL: string
+	privacyPolicyUrl: string
 ): Promise<ConsentPresenterSession> => {
 	// The app asked, so the prompt opens even if the provider left meanwhile.
 	if (beforeConsentPrompt !== null) {
 		await beforeConsentPrompt();
 	}
-	return announce(await callNativePrompt(privacyPolicyURL), 'prompt');
+	return announce(await callNativePrompt(privacyPolicyUrl), 'prompt');
 };
 
 /** Open native standing preferences, including when no prompt is owed.
- * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
+ * @param privacyPolicyUrl - The app's HTTPS privacy-policy URL.
  * @returns The existing or newly opened session.
  */
 export const presentPreferences = async (
-	privacyPolicyURL: string
+	privacyPolicyUrl: string
 ): Promise<ConsentPresenterSession> =>
 	announce(
 		remember(
-			parseSession(await getNativeInth().presentPreferences(privacyPolicyURL)),
-			privacyPolicyURL
+			parseSession(await getNativeInth().presentPreferences(privacyPolicyUrl)),
+			privacyPolicyUrl
 		),
 		'preferences'
 	);

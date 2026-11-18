@@ -16,7 +16,7 @@ import { MANIFEST_FIXTURE } from './manifest-fixture';
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Stands in for the virtual module the Vite plugin serves.
 vi.mock('@c15t/core/generated', async () => {
 	const { MANIFEST_FIXTURE: snapshot } = await import('./manifest-fixture');
-	return { backendURL: 'https://consent.example.com', snapshot };
+	return { projectUrl: 'https://consent.example.com', snapshot };
 });
 
 const requestOf = (headers: Record<string, string> = {}) =>
@@ -39,7 +39,7 @@ describe('defaults from @c15t/core/generated', () => {
 			policyId: 'eu-opt-in',
 			status: 'matched',
 		});
-		expect(state.backendURL).toBe('https://consent.example.com');
+		expect(state.projectUrl).toBe('https://consent.example.com');
 		expect(state.mode).toEqual({ type: 'manifest' });
 		expect(state).not.toHaveProperty('routePrefix');
 		// No policy request; only the session report.
@@ -64,7 +64,7 @@ describe('the client half of the state', () => {
 	test('carries the mode and route prefix, never the snapshot', async () => {
 		const state = await resolveConsent({
 			mode: {
-				manifestURL: 'https://cdn.example/manifest',
+				manifestUrl: 'https://cdn.example/manifest',
 				snapshot: MANIFEST_FIXTURE,
 				type: 'manifest',
 			},
@@ -75,7 +75,7 @@ describe('the client half of the state', () => {
 			policyId: 'eu-opt-in',
 		});
 		expect(state.mode).toEqual({
-			manifestURL: 'https://cdn.example/manifest',
+			manifestUrl: 'https://cdn.example/manifest',
 			type: 'manifest',
 		});
 		expect(state.routePrefix).toBe('/api/c15t');
@@ -89,7 +89,7 @@ describe('the client half of the state', () => {
 			routePrefix: '/api/c15t',
 		});
 		expect(state).toMatchObject({
-			backendURL: '/api/c15t',
+			projectUrl: '/api/c15t',
 			routePrefix: '/api/c15t',
 		});
 		await expect(
@@ -100,15 +100,15 @@ describe('the client half of the state', () => {
 	test('proxy keeps the hosted backend URL on the server', async () => {
 		const fetch = offlineFetch();
 		const state = await resolveConsent({
-			backendURL: 'https://backend.example',
 			fetch,
 			mode: hosted(),
+			projectUrl: 'https://backend.example',
 			proxy: true,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 			routePrefix: '/api/c15t',
 		});
 		// The browser's init and saves go through the route.
-		expect(state).toMatchObject({ backendURL: '/api/c15t' });
+		expect(state).toMatchObject({ projectUrl: '/api/c15t' });
 		expect(state.mode).toEqual({ type: 'hosted' });
 		// The server still asks the hosted backend.
 		expect(String(fetch.mock.calls[0]?.[0])).toMatch(

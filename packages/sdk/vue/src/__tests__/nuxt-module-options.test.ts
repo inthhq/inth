@@ -70,23 +70,32 @@ const publicConfig = async function publicConfig(
 describe('colorScheme from the c15t config key', () => {
 	test('keeps null, which leaves c15t-dark to the site', async () => {
 		const config = await publicConfig({
-			backendURL: '/api/c15t',
 			colorScheme: null,
+			projectUrl: '/api/c15t',
 		});
 		expect(config).toHaveProperty('colorScheme', null);
 	});
 
 	test('passes a scheme through', async () => {
 		const config = await publicConfig({
-			backendURL: '/api/c15t',
 			colorScheme: 'system',
+			projectUrl: '/api/c15t',
 		});
 		expect(config).toHaveProperty('colorScheme', 'system');
 	});
 
 	test('leaves it unset when the config does not set it', async () => {
-		const config = await publicConfig({ backendURL: '/api/c15t' });
+		const config = await publicConfig({ projectUrl: '/api/c15t' });
 		expect(config.colorScheme).toBeUndefined();
+	});
+});
+
+describe('projectUrl in the public runtime config', () => {
+	test('is stored under backendURL, the key NUXT_PUBLIC_C15T_BACKEND_URL replaces', async () => {
+		// Nuxt maps a NUXT_PUBLIC_* variable onto the key its name spells.
+		const config = await publicConfig({ projectUrl: '/api/c15t' });
+		expect(config).toHaveProperty('backendURL', '/api/c15t');
+		expect(config).not.toHaveProperty('projectUrl');
 	});
 });
 
@@ -194,7 +203,7 @@ describe('the build snapshot in manifest() mode', () => {
 			const snapshot = createSnapshot();
 			const fetch = snapshotResponse(snapshot);
 			const nuxt = await setUpModule(
-				{ backendURL: 'https://consent.example.com' },
+				{ projectUrl: 'https://consent.example.com' },
 				fetch,
 				true,
 				{ dev }
@@ -227,7 +236,7 @@ describe('the build snapshot in manifest() mode', () => {
 				new Error('backend unavailable during dependency installation')
 			);
 		const nuxt = await setUpModule(
-			{ backendURL: 'https://consent.example.com' },
+			{ projectUrl: 'https://consent.example.com' },
 			fetch,
 			true,
 			{ _prepare: true }
@@ -247,7 +256,7 @@ describe('the build snapshot in manifest() mode', () => {
 		async ({ response, error }) => {
 			await expect(
 				setUpModule(
-					{ backendURL: 'https://consent.example.com', onBuildError: 'fail' },
+					{ onBuildError: 'fail', projectUrl: 'https://consent.example.com' },
 					vi
 						.fn<typeof globalThis.fetch>()
 						.mockImplementation(() => Promise.resolve(response()))
@@ -258,7 +267,7 @@ describe('the build snapshot in manifest() mode', () => {
 
 	test('nuxt dev warns and reads the manifest at runtime when the fetch fails', async () => {
 		const nuxt = await setUpModule(
-			{ backendURL: 'https://consent.example.com' },
+			{ projectUrl: 'https://consent.example.com' },
 			unreachable(),
 			true,
 			{ dev: true }
@@ -271,7 +280,7 @@ describe('the build snapshot in manifest() mode', () => {
 
 	test('nuxt build warns and reads the manifest at runtime when the fetch fails', async () => {
 		const nuxt = await setUpModule(
-			{ backendURL: 'https://consent.example.com' },
+			{ projectUrl: 'https://consent.example.com' },
 			unreachable()
 		);
 		expect(await importManifestSnapshot(nuxt)).toBeUndefined();
@@ -283,7 +292,7 @@ describe('the build snapshot in manifest() mode', () => {
 	test("with onBuildError: 'fail', nuxt build stops when the fetch fails", async () => {
 		await expect(
 			setUpModule(
-				{ backendURL: 'https://consent.example.com', onBuildError: 'fail' },
+				{ onBuildError: 'fail', projectUrl: 'https://consent.example.com' },
 				unreachable()
 			)
 		).rejects.toThrow(
@@ -348,7 +357,7 @@ describe('the build snapshot in manifest() mode', () => {
 			}
 			try {
 				const nuxt = await setUpModule(
-					{ backendURL: 'https://consent.example.com', ...settings },
+					{ projectUrl: 'https://consent.example.com', ...settings },
 					unreachable()
 				);
 				expect(await importManifestSnapshot(nuxt)).toBeUndefined();
@@ -362,7 +371,7 @@ describe('the build snapshot in manifest() mode', () => {
 	test("onBuildError: 'fail' stops nuxt dev", async () => {
 		await expect(
 			setUpModule(
-				{ backendURL: 'https://consent.example.com', onBuildError: 'fail' },
+				{ onBuildError: 'fail', projectUrl: 'https://consent.example.com' },
 				unreachable(),
 				true,
 				{ dev: true }
@@ -370,7 +379,7 @@ describe('the build snapshot in manifest() mode', () => {
 		).rejects.toThrow('during dev (getaddrinfo ENOTFOUND)');
 	});
 
-	test('reads NUXT_PUBLIC_C15T_BACKEND_URL when backendURL is left out', async () => {
+	test('reads NUXT_PUBLIC_C15T_BACKEND_URL when projectUrl is left out', async () => {
 		vi.stubEnv('NUXT_PUBLIC_C15T_BACKEND_URL', 'https://env.example.com');
 		try {
 			const snapshot = createSnapshot();
@@ -410,11 +419,11 @@ describe('the build snapshot in manifest() mode', () => {
 			try {
 				const nuxt = await setUpModule(c15t, fetch);
 				return {
-					backendURL: (
-						nuxt.options.runtimeConfig.public.c15t as Record<string, unknown>
-					).backendURL,
 					fetch,
 					nuxt,
+					projectUrl: (
+						nuxt.options.runtimeConfig.public.c15t as Record<string, unknown>
+					).backendURL,
 				};
 			} finally {
 				vi.unstubAllEnvs();
@@ -422,17 +431,17 @@ describe('the build snapshot in manifest() mode', () => {
 		};
 
 		test('alone gives the build its URL and applies on a running server', async () => {
-			const { backendURL, fetch, nuxt } = await setUp(
+			const { projectUrl, fetch, nuxt } = await setUp(
 				{},
 				{ NUXT_PUBLIC_INTH_PROJECT_URL: INTH }
 			);
 			expect(fetch).toHaveBeenCalledWith(`${INTH}/manifest`, expect.anything());
-			expect(backendURL).toBe(INTH);
+			expect(projectUrl).toBe(INTH);
 			expect(inthPlugins(nuxt)).toHaveLength(1);
 		});
 
 		test('loses to NUXT_PUBLIC_C15T_BACKEND_URL when both are set', async () => {
-			const { backendURL, fetch, nuxt } = await setUp(
+			const { projectUrl, fetch, nuxt } = await setUp(
 				{},
 				{
 					NUXT_PUBLIC_C15T_BACKEND_URL: C15T,
@@ -440,13 +449,13 @@ describe('the build snapshot in manifest() mode', () => {
 				}
 			);
 			expect(fetch).toHaveBeenCalledWith(`${C15T}/manifest`, expect.anything());
-			expect(backendURL).toBe(C15T);
+			expect(projectUrl).toBe(C15T);
 			expect(inthPlugins(nuxt)).toHaveLength(0);
 		});
 
-		test('an explicit backendURL beats both variables', async () => {
-			const { backendURL, fetch, nuxt } = await setUp(
-				{ backendURL: 'https://option.example.com' },
+		test('an explicit projectUrl beats both variables', async () => {
+			const { projectUrl, fetch, nuxt } = await setUp(
+				{ projectUrl: 'https://option.example.com' },
 				{
 					NUXT_PUBLIC_C15T_BACKEND_URL: C15T,
 					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
@@ -456,29 +465,29 @@ describe('the build snapshot in manifest() mode', () => {
 				'https://option.example.com/manifest',
 				expect.anything()
 			);
-			expect(backendURL).toBe('https://option.example.com');
+			expect(projectUrl).toBe('https://option.example.com');
 			expect(inthPlugins(nuxt)).toHaveLength(0);
 		});
 	});
 
 	test.each([
-		['a relative backendURL', { backendURL: '/api/c15t' }],
+		['a relative projectUrl', { projectUrl: '/api/c15t' }],
 		[
 			'hosted()',
-			{ backendURL: 'https://consent.example.com', mode: { type: 'hosted' } },
+			{ mode: { type: 'hosted' }, projectUrl: 'https://consent.example.com' },
 		],
 		[
 			'testing()',
 			{
-				backendURL: 'https://consent.example.com',
 				mode: { type: 'testing' },
+				projectUrl: 'https://consent.example.com',
 			},
 		],
 		[
 			"source: 'runtime'",
 			{
-				backendURL: 'https://consent.example.com',
 				mode: { source: 'runtime', type: 'manifest' },
+				projectUrl: 'https://consent.example.com',
 			},
 		],
 	] as const)('fetches nothing with %s', async (_name, c15t) => {
@@ -496,8 +505,8 @@ describe('where the snapshot goes', () => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const nuxt = await setUpModule(
 			{
-				backendURL: 'https://consent.example.com',
 				mode: { snapshot, type: 'manifest' },
+				projectUrl: 'https://consent.example.com',
 			},
 			fetch
 		);
@@ -516,8 +525,8 @@ describe('where the snapshot goes', () => {
 		const snapshot = createSnapshot();
 		const nuxt = await setUpModule(
 			{
-				backendURL: 'https://consent.example.com',
 				mode: { resolve: 'browser', type: 'manifest' },
+				projectUrl: 'https://consent.example.com',
 				routePrefix: false,
 			},
 			snapshotResponse(snapshot),
@@ -544,8 +553,8 @@ describe('mode and routePrefix', () => {
 
 	test('hosted() uses the hosted backend, with no consent route', async () => {
 		const nuxt = await setUpModule({
-			backendURL: 'https://consent.example.com',
 			mode: { type: 'hosted' },
+			projectUrl: 'https://consent.example.com',
 		});
 		expect(handlerRoutes(nuxt)).toEqual([]);
 		expect(
@@ -554,7 +563,7 @@ describe('mode and routePrefix', () => {
 	});
 
 	test('no mode means manifest(), with the consent route', async () => {
-		const nuxt = await setUpModule({ backendURL: '/api/self-host' });
+		const nuxt = await setUpModule({ projectUrl: '/api/self-host' });
 		expect(handlerRoutes(nuxt)).toEqual(['/api/c15t/**']);
 		expect(
 			(nuxt.options.runtimeConfig.public.c15t as { mode: unknown }).mode
@@ -562,18 +571,18 @@ describe('mode and routePrefix', () => {
 	});
 
 	test('manifest() adds one catch-all consent route', async () => {
-		const nuxt = await setUpModule({ backendURL: '/api/self-host' });
+		const nuxt = await setUpModule({ projectUrl: '/api/self-host' });
 		expect(handlerRoutes(nuxt)).toEqual(['/api/c15t/**']);
 	});
 
 	test('routePrefix moves the route, and false removes it', async () => {
 		const moved = await setUpModule({
-			backendURL: '/api/self-host',
+			projectUrl: '/api/self-host',
 			routePrefix: '/consent/',
 		});
 		expect(handlerRoutes(moved)).toEqual(['/consent/**']);
 		const removed = await setUpModule({
-			backendURL: '/api/self-host',
+			projectUrl: '/api/self-host',
 			routePrefix: false,
 		});
 		expect(handlerRoutes(removed)).toEqual([]);
@@ -581,7 +590,7 @@ describe('mode and routePrefix', () => {
 
 	test('rejects a routePrefix of / at setup', async () => {
 		await expect(
-			setUpModule({ backendURL: '/api/self-host', routePrefix: '/' })
+			setUpModule({ projectUrl: '/api/self-host', routePrefix: '/' })
 		).rejects.toThrow(
 			"@c15t/vue: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
@@ -590,8 +599,8 @@ describe('mode and routePrefix', () => {
 	test('publishes the checked routePrefix over one already in runtimeConfig', async () => {
 		warn.mockClear();
 		const nuxt = createNuxt({
-			backendURL: '/api/self-host',
 			mode: { type: 'manifest' },
+			projectUrl: '/api/self-host',
 		});
 		nuxt.options.runtimeConfig.public.c15t = { routePrefix: '/' };
 		await runWithNuxtContext(nuxt, () => module({}, nuxt));
@@ -608,8 +617,8 @@ describe('mode and routePrefix', () => {
 	test('publishes the module mode over one already in runtimeConfig', async () => {
 		warn.mockClear();
 		const nuxt = createNuxt({
-			backendURL: '/api/self-host',
 			mode: { resolve: 'browser', type: 'manifest' },
+			projectUrl: '/api/self-host',
 		});
 		nuxt.options.runtimeConfig.public.c15t = { mode: { type: 'hosted' } };
 		await runWithNuxtContext(nuxt, () => module({}, nuxt));
@@ -623,16 +632,16 @@ describe('mode and routePrefix', () => {
 	});
 
 	test.each([
-		[{ backendURL: '/api/self-host' }, { type: 'manifest' }, '/api/c15t'],
+		[{ projectUrl: '/api/self-host' }, { type: 'manifest' }, '/api/c15t'],
 		[
-			{ backendURL: '/api/self-host', routePrefix: '/consent/' },
+			{ projectUrl: '/api/self-host', routePrefix: '/consent/' },
 			{ type: 'manifest' },
 			'/consent',
 		],
 		[
 			{
-				backendURL: '/api/self-host',
 				mode: { resolve: 'browser', type: 'manifest' },
+				projectUrl: '/api/self-host',
 				routePrefix: false,
 			},
 			{ resolve: 'browser', type: 'manifest' },
@@ -658,8 +667,8 @@ describe('mode and routePrefix', () => {
 
 	test('hosted() needs no consent route', async () => {
 		const nuxt = await setUpModule({
-			backendURL: 'https://consent.example.com',
 			mode: { type: 'hosted' },
+			projectUrl: 'https://consent.example.com',
 		});
 		expect(handlerRoutes(nuxt)).toEqual([]);
 	});
@@ -667,13 +676,13 @@ describe('mode and routePrefix', () => {
 	test('rejects a transport in place of mode data', async () => {
 		const transport = Object.assign(() => ({}), { kind: 'hosted' });
 		await expect(
-			setUpModule({ backendURL: '/api/self-host', mode: transport })
+			setUpModule({ mode: transport, projectUrl: '/api/self-host' })
 		).rejects.toThrow("Import `manifest` or `hosted` from 'c15t/vue'");
 	});
 
 	test('nuxt generate warns that the server cannot resolve the policy', async () => {
 		await setUpModule(
-			{ backendURL: '/api/self-host' },
+			{ projectUrl: '/api/self-host' },
 			vi.fn<typeof globalThis.fetch>(),
 			true,
 			{ _generate: true }
@@ -702,7 +711,7 @@ describe('the early /init script for ssr: false pages', () => {
 	};
 
 	test('is on by default', async () => {
-		const { plugins } = await setUp({ backendURL: '/api/c15t' });
+		const { plugins } = await setUp({ projectUrl: '/api/c15t' });
 		expect(plugins.some((path) => path.includes('init-prefetch.nuxt'))).toBe(
 			true
 		);
@@ -710,21 +719,21 @@ describe('the early /init script for ssr: false pages', () => {
 
 	test('initPrefetch: false registers nothing on the server', async () => {
 		const { plugins } = await setUp({
-			backendURL: '/api/c15t',
 			initPrefetch: false,
+			projectUrl: '/api/c15t',
 		});
 		expect(plugins.some((path) => path.includes('init-prefetch'))).toBe(false);
 	});
 
 	test("tells the server plugin about the app's ssr option", async () => {
-		expect((await setUp({ backendURL: '/api/c15t' }, false)).ssr).toBe(false);
-		expect((await setUp({ backendURL: '/api/c15t' })).ssr).toBe(true);
+		expect((await setUp({ projectUrl: '/api/c15t' }, false)).ssr).toBe(false);
+		expect((await setUp({ projectUrl: '/api/c15t' })).ssr).toBe(true);
 	});
 
 	test('stays out of the runtime config the browser receives', async () => {
 		const config = await publicConfig({
-			backendURL: '/api/c15t',
 			initPrefetch: false,
+			projectUrl: '/api/c15t',
 		});
 		expect(config).not.toHaveProperty('initPrefetch');
 	});
@@ -735,7 +744,7 @@ describe('the early /init script for ssr: false pages', () => {
 			virtual: Record<string, unknown>,
 			imports: false | Record<string, unknown> = {}
 		) {
-			const nuxt = createNuxt({ backendURL: '/api/c15t' });
+			const nuxt = createNuxt({ projectUrl: '/api/c15t' });
 			const nitroConfigHooks: ((config: unknown) => void)[] = [];
 			Object.assign(nuxt, {
 				hook: (name: string, extendConfig: (config: unknown) => void) => {
@@ -778,13 +787,13 @@ describe('the early /init script for ssr: false pages', () => {
 describe('gpp from the c15t config key', () => {
 	test('reaches the client as JSON', async () => {
 		const gpp = { optOutCategories: ['marketing'], usApproach: 'national' };
-		const config = await publicConfig({ backendURL: '/api/c15t', gpp });
+		const config = await publicConfig({ gpp, projectUrl: '/api/c15t' });
 		expect(config.gpp).toEqual(gpp);
 		expect(JSON.parse(JSON.stringify(config)).gpp).toEqual(gpp);
 	});
 
 	test('passes true through', async () => {
-		const config = await publicConfig({ backendURL: '/api/c15t', gpp: true });
+		const config = await publicConfig({ gpp: true, projectUrl: '/api/c15t' });
 		expect(config).toHaveProperty('gpp', true);
 	});
 });

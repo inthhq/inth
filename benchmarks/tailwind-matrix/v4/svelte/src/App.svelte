@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { ConsentBanner, ConsentDialog, ConsentProvider } from '@c15t/svelte';
 
-	const backendURL = 'https://your-project.inth.app';
+	const projectUrl = 'https://your-project.inth.app';
 </script>
 
 <ConsentProvider
-	{backendURL}
+	{projectUrl}
 	persistence={false}
 >
 	<p

@@ -31,7 +31,7 @@ const MAX_PORT = 65_535;
  * @param value - The URL the app passed.
  * @returns `true` for an absolute HTTPS URL with a DNS host that iOS and Android both parse.
  */
-export const isPrivacyPolicyURL = function isPrivacyPolicyURL(
+export const isPrivacyPolicyUrl = function isPrivacyPolicyUrl(
 	value: string
 ): boolean {
 	const match = URL_PATTERN.exec(value);

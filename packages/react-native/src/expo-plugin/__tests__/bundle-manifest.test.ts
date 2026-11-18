@@ -21,7 +21,7 @@ import {
 } from '../policy-resource';
 import { applyToFixture, FIXTURE_DIR, runMod } from './helpers';
 
-const backendURL = 'https://acme.inth.app';
+const projectUrl = 'https://acme.inth.app';
 const settings = {
 	allowStaleManifest: true,
 	dryRun: false,
@@ -83,7 +83,7 @@ describe('bundling the manifest at prebuild', () => {
 	it('passes the build type and stale-copy setting to c15t mobile-manifest', () => {
 		expect(
 			manifestArguments(
-				backendURL,
+				projectUrl,
 				settings,
 				'/app/inth-policy.json',
 				'release'
@@ -91,7 +91,7 @@ describe('bundling the manifest at prebuild', () => {
 		).toEqual([
 			'mobile-manifest',
 			'--backend-url',
-			backendURL,
+			projectUrl,
 			'--out',
 			'/app/inth-policy.json',
 			'--build',
@@ -105,7 +105,7 @@ describe('bundling the manifest at prebuild', () => {
 			'755,42',
 		]);
 		expect(
-			resolveParams({ backendURL, bundleManifest: true, vendors: [755, 42] })
+			resolveParams({ bundleManifest: true, projectUrl, vendors: [755, 42] })
 				.bundleManifest?.vendors
 		).toEqual([755, 42]);
 	});
@@ -113,15 +113,15 @@ describe('bundling the manifest at prebuild', () => {
 	it('fails the prebuild when the CLI fails, and runs it once per build', async () => {
 		const failing = exitingWith(1);
 		await expect(
-			fetchBundledManifest('/app-a', backendURL, settings, 'release', {
+			fetchBundledManifest('/app-a', projectUrl, settings, 'release', {
 				resolveCli: () => '/bin/inth',
 				spawn: failing,
 			})
 		).rejects.toThrow(/could not fetch the manifest for this release build/u);
 		const passing = exitingWith(0);
 		const deps = { resolveCli: () => '/bin/inth', spawn: passing };
-		await fetchBundledManifest('/app-b', backendURL, settings, 'debug', deps);
-		await fetchBundledManifest('/app-b', backendURL, settings, 'debug', deps);
+		await fetchBundledManifest('/app-b', projectUrl, settings, 'debug', deps);
+		await fetchBundledManifest('/app-b', projectUrl, settings, 'debug', deps);
 		expect(passing).toHaveBeenCalledTimes(1);
 	});
 
@@ -146,24 +146,24 @@ describe('bundling the manifest at prebuild', () => {
 	});
 
 	it('replaces policyResource and does not mix with an in-code policy', () => {
-		const resolved = resolveParams({ backendURL, bundleManifest: true });
+		const resolved = resolveParams({ bundleManifest: true, projectUrl });
 		expect(resolved.policyResource).toBe('inth-policy.json');
 		expect(resolved.bundleManifest?.allowStaleManifest).toBe(false);
 		expect(() =>
 			resolveParams({
-				backendURL,
 				bundleManifest: true,
 				policyResource: 'x.json',
+				projectUrl,
 			})
 		).toThrow(/remove policyResource/u);
 		expect(() =>
-			resolveParams({ backendURL, bundleManifest: { expiresInDays: 0 } })
+			resolveParams({ bundleManifest: { expiresInDays: 0 }, projectUrl })
 		).toThrow(/expiresInDays/u);
 		expect(() =>
 			resolveParams({
-				backendURL,
 				bundleManifest: true,
 				policy: { rules: [] },
+				projectUrl,
 			})
 		).toThrow(/policy cannot be combined with bundleManifest/u);
 	});
@@ -178,7 +178,7 @@ describe('bundling the manifest at prebuild', () => {
 			) => {
 				const payload = JSON.stringify({
 					defaultLanguage: 'en',
-					endpoint: backendURL,
+					endpoint: projectUrl,
 					expiresAt,
 					issuedAt,
 					manifestRevision: 'r1',
@@ -200,7 +200,7 @@ describe('bundling the manifest at prebuild', () => {
 				embedPolicyResource(
 					root,
 					'impossible.json',
-					backendURL,
+					projectUrl,
 					join(root, 'out.json')
 				)
 			).rejects.toThrow(/expires before it was issued/u);
@@ -210,7 +210,7 @@ describe('bundling the manifest at prebuild', () => {
 			await embedPolicyResource(
 				root,
 				'expired.json',
-				backendURL,
+				projectUrl,
 				join(root, 'out.json')
 			);
 			warn.mockRestore();
@@ -287,7 +287,7 @@ describe('bundling the manifest at prebuild', () => {
 				project: IOSConfig.XcodeUtils.getPbxproj(root),
 			});
 			const config = applyToFixture(
-				{ backendURL, bundleManifest: true },
+				{ bundleManifest: true, projectUrl },
 				{ argv: ['node', 'expo', 'run:ios'], projectRoot: root }
 			);
 			const ios = await runMod(config, 'ios', 'xcodeproj', project, {

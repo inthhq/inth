@@ -6,7 +6,7 @@ first loads it:
 
 <include src="../examples/vue/vite-config.mdx" />
 
-Without a `backendURL` option, the plugin reads `VITE_C15T_BACKEND_URL`, then
+Without a `projectUrl` option, the plugin reads `VITE_C15T_BACKEND_URL`, then
 `VITE_INTH_PROJECT_URL`, from the environment or `.env`. `manifest()` from `c15t/vue/vue-plugin`, with no
 options, reads the downloaded policy and the same backend URL, so `src/main.ts`
 needs no import from `c15t/generated`:
@@ -21,12 +21,12 @@ app.use(c15tVue, { mode: manifest(), scripts });
 
 The browser resolves the visitor's policy from the bundled snapshot, with no
 `/manifest` request. When the policy depends on the visitor's country or
-region and neither `inputs` nor `geoURL` supplies one, the browser asks the
+region and neither `inputs` nor `geoUrl` supplies one, the browser asks the
 backend's `/init` instead. The app bundles the policy and English copy, and
 loads the resolver as its own chunk when it needs it.
 
 When the build has no snapshot, as in `vite dev` after a failed download,
-`manifest()` fetches `${backendURL}/manifest` when the app starts.
+`manifest()` fetches `${projectUrl}/manifest` when the app starts.
 
 <include src="../build-time-manifest-notes.mdx" />
 

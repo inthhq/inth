@@ -17,7 +17,7 @@ export type RequestHeaderSource =
 	| Headers
 	| Record<string, string | string[] | undefined>;
 
-/** Options for {@link resolveRequestOrigin} and {@link resolveRequestBackendURL}. */
+/** Options for {@link resolveRequestOrigin} and {@link resolveRequestProjectUrl}. */
 export interface ResolveRequestOriginOptions {
 	/**
 	 * The URL the framework resolved the request under: SvelteKit
@@ -25,10 +25,10 @@ export interface ResolveRequestOriginOptions {
 	 * `getRequestURL(event)`. Frameworks derive it from their own trusted
 	 * configuration, so it decides the origin whenever it is available.
 	 */
-	requestURL?: string | URL;
+	requestUrl?: string | URL;
 
 	/**
-	 * The incoming request headers. Without a `requestURL`, the origin comes
+	 * The incoming request headers. Without a `requestUrl`, the origin comes
 	 * from `host`: over `https` for a domain name, and over `http` for
 	 * `localhost`, an IP address, or a single-label host such as `app:3000`.
 	 * Forwarding headers are read only when `trustForwardedHeaders` is set.
@@ -177,14 +177,14 @@ const originFromForwardedHeaders = function originFromForwardedHeaders(
 	return toOrigin(protocol, host);
 };
 
-const originFromRequestURL = function originFromRequestURL(
-	requestURL: string | URL | undefined
+const originFromRequestUrl = function originFromRequestUrl(
+	requestUrl: string | URL | undefined
 ): string | null {
-	if (!requestURL) {
+	if (!requestUrl) {
 		return null;
 	}
 	try {
-		const url = new URL(requestURL);
+		const url = new URL(requestUrl);
 		const protocol = normalizeProtocol(url.protocol);
 		return protocol ? toOrigin(protocol, url.host) : null;
 	} catch {
@@ -195,7 +195,7 @@ const originFromRequestURL = function originFromRequestURL(
 /**
  * The origin a relative backend URL resolves against for this request.
  *
- * Without `trustForwardedHeaders`: the framework's `requestURL`, then the
+ * Without `trustForwardedHeaders`: the framework's `requestUrl`, then the
  * `host` header (`https` for a domain name; `http` for `localhost`, an IP
  * address or a single-label host). With it, a forwarded host and a forwarded
  * scheme each override that result on their own, so either header can be
@@ -207,14 +207,14 @@ const originFromRequestURL = function originFromRequestURL(
  * request carries none.
  * @example
  * ```ts
- * resolveRequestOrigin({ requestURL: event.url });
+ * resolveRequestOrigin({ requestUrl: event.url });
  * // 'http://localhost:5173'
  * ```
  */
 export const resolveRequestOrigin = function resolveRequestOrigin(
 	options: ResolveRequestOriginOptions
 ): string | null {
-	const fromURL = originFromRequestURL(options.requestURL);
+	const fromURL = originFromRequestUrl(options.requestUrl);
 	if (options.trustForwardedHeaders) {
 		const forwarded = originFromForwardedHeaders(
 			options.headers,
@@ -246,33 +246,33 @@ const trimTrailingSlash = function trimTrailingSlash(value: string): string {
  * the result must stay on that origin, so `//other.example/x` is rejected.
  * Anything else returns `null`; the helper never throws.
  *
- * @param backendURL - The configured URL, absolute or `/`-relative.
+ * @param projectUrl - The configured URL, absolute or `/`-relative.
  * @param options - The request URL, headers, and forwarding trust.
  * @returns The absolute URL, or `null` when it cannot be resolved.
  * @example
  * ```ts
- * import { resolveRequestBackendURL } from '@c15t/core/server';
+ * import { resolveRequestProjectUrl } from '@c15t/core/server';
  *
- * resolveRequestBackendURL('/api/c15t', { requestURL: request.url });
+ * resolveRequestProjectUrl('/api/c15t', { requestUrl: request.url });
  * // 'https://app.example.com/api/c15t'
  * ```
  */
-export const resolveRequestBackendURL = function resolveRequestBackendURL(
-	backendURL: string,
+export const resolveRequestProjectUrl = function resolveRequestProjectUrl(
+	projectUrl: string,
 	options: ResolveRequestOriginOptions = {}
 ): string | null {
 	try {
-		if (ABSOLUTE_HTTP_URL.test(backendURL)) {
-			return trimTrailingSlash(new URL(backendURL).toString());
+		if (ABSOLUTE_HTTP_URL.test(projectUrl)) {
+			return trimTrailingSlash(new URL(projectUrl).toString());
 		}
-		if (!backendURL.startsWith('/') || backendURL.startsWith('//')) {
+		if (!projectUrl.startsWith('/') || projectUrl.startsWith('//')) {
 			return null;
 		}
 		const origin = resolveRequestOrigin(options);
 		if (!origin) {
 			return null;
 		}
-		const resolved = new URL(`${origin}${backendURL}`);
+		const resolved = new URL(`${origin}${projectUrl}`);
 		if (resolved.origin !== origin) {
 			return null;
 		}

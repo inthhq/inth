@@ -55,8 +55,8 @@ describe('hosted()', () => {
 			.fn()
 			.mockResolvedValue(new Response(JSON.stringify({ ok: true })));
 		const mode = hosted({
-			backendURL: '/api/c15t/',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: '/api/c15t/',
 		});
 
 		expect(mode.kind).toBe('hosted');
@@ -64,7 +64,7 @@ describe('hosted()', () => {
 		expect(fetchSpy.mock.calls[0]?.[0]).toBe('/api/c15t/subjects');
 	});
 
-	test('forwards initURL and assertDecisionInputs to the hosted transport', async () => {
+	test('forwards initUrl and assertDecisionInputs to the hosted transport', async () => {
 		const init = {
 			branding: 'c15t',
 			hasConsented: false,
@@ -97,9 +97,9 @@ describe('hosted()', () => {
 		);
 		const mode = hosted({
 			assertDecisionInputs: true,
-			backendURL: 'https://backend.example',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			initURL: '/api/consent/init',
+			initUrl: '/api/consent/init',
+			projectUrl: 'https://backend.example',
 		});
 		const transport = mode(context);
 
@@ -122,20 +122,20 @@ describe('hosted()', () => {
 
 	test('carries its options as enumerable data', () => {
 		const mode = hosted({
-			backendURL: '/api/c15t',
 			headers: { 'accept-language': 'de' },
+			projectUrl: '/api/c15t',
 		});
 
 		expect({ ...mode }).toEqual({
-			backendURL: '/api/c15t',
 			headers: { 'accept-language': 'de' },
 			kind: 'hosted',
+			projectUrl: '/api/c15t',
 			type: 'hosted',
 		});
 	});
 
 	test('recognizes its own factories, not wrappers that copy them', () => {
-		const options = { backendURL: '/api/c15t' };
+		const options = { projectUrl: '/api/c15t' };
 		const mode = hosted(options);
 		const wrapper = Object.assign(
 			(providerContext: ProviderTransportContext) => mode(providerContext),
@@ -148,15 +148,15 @@ describe('hosted()', () => {
 		expect(readHostedMode(wrapper)).toBeUndefined();
 	});
 
-	test('asserts decision inputs when initURL is set, unless told not to', async () => {
+	test('asserts decision inputs when initUrl is set, unless told not to', async () => {
 		const fetchSpy = vi.fn(() =>
 			Promise.resolve(new Response(JSON.stringify({ ok: true })))
 		);
 		const save = async (options: Partial<Parameters<typeof hosted>[0]>) => {
 			fetchSpy.mockClear();
 			const transport = hosted({
-				backendURL: 'https://backend.example',
 				fetch: fetchSpy as unknown as typeof globalThis.fetch,
+				projectUrl: 'https://backend.example',
 				...options,
 			})(context);
 			// No init has resolved a decision: an asserting transport refuses.
@@ -167,9 +167,9 @@ describe('hosted()', () => {
 		};
 
 		expect(await save({})).toBe('saved');
-		expect(await save({ initURL: '/api/c15t/init' })).toBe('refused');
+		expect(await save({ initUrl: '/api/c15t/init' })).toBe('refused');
 		expect(
-			await save({ assertDecisionInputs: false, initURL: '/api/c15t/init' })
+			await save({ assertDecisionInputs: false, initUrl: '/api/c15t/init' })
 		).toBe('saved');
 		expect(await save({ assertDecisionInputs: true })).toBe('refused');
 	});
@@ -180,22 +180,22 @@ describe('hosted()', () => {
 		);
 		const initialData = Promise.resolve(undefined);
 		const options = {
-			backendURL: 'https://old.example',
 			fetch: fetchSpy as typeof globalThis.fetch,
 			headers: { 'accept-language': 'de' },
 			initialData,
+			projectUrl: 'https://old.example',
 		};
 		const mode = hosted(options);
-		options.backendURL = 'https://new.example';
+		options.projectUrl = 'https://new.example';
 		options.headers['accept-language'] = 'fr';
 
 		expect(readHostedMode(mode)).toEqual({
-			backendURL: 'https://old.example',
 			fetch: fetchSpy,
 			headers: { 'accept-language': 'de' },
 			initialData,
+			projectUrl: 'https://old.example',
 		});
-		expect(mode.backendURL).toBe('https://old.example');
+		expect(mode.projectUrl).toBe('https://old.example');
 		expect(readHostedMode(mode)?.fetch).toBe(fetchSpy);
 		expect(readHostedMode(mode)?.initialData).toBe(initialData);
 

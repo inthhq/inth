@@ -8,20 +8,20 @@ import { testBackend } from '#lib/test-backend.js';
 // stores them on `event.locals.c15t`, with the mode `loadConsent` resolves
 // with. Each area of this app talks to its own backend, so each gets its own
 // handle.
-const { backendURL = 'https://your-project.inth.app' } =
-	testBackend('backendURL');
+const { projectUrl = 'https://your-project.inth.app' } =
+	testBackend('projectUrl');
 
 // `/consent-example` and `/experiment-example`: the server asks the
 // backend's `/init`. A prerendered page carries no visitor's consent, so the
 // browser asks the backend there.
-const hostedHandle = c15tHandle({ backendURL, mode: hosted() });
+const hostedHandle = c15tHandle({ mode: hosted(), projectUrl });
 
 // `/manifest-example`: the server resolves from the backend's cached policy
 // manifest, and the browser re-inits through the route in
 // `src/routes/api/c15t`.
 const manifestHandle = c15tHandle({
-	backendURL,
 	mode: manifest(),
+	projectUrl,
 	routePrefix: '/api/c15t',
 });
 

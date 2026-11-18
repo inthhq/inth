@@ -62,7 +62,7 @@ describe('ConsentRoot offline mode', () => {
 						<PolicyStatus />
 					</ConsentRoot>
 				)
-			).rejects.toThrow('`backendURL` is required');
+			).rejects.toThrow('`projectUrl` is required');
 		} finally {
 			error.mockRestore();
 		}

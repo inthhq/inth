@@ -99,7 +99,7 @@ const createApp = async (): Promise<string> => {
 	await write(join(root, 'baseline.html'), page('/src/baseline.js'));
 	await write(
 		join(root, 'src/app.js'),
-		"import { banner } from '@c15t/react/banner';\nimport { backendURL } from '@c15t/core/generated';\nconsole.log(banner(), backendURL);\n"
+		"import { banner } from '@c15t/react/banner';\nimport { projectUrl } from '@c15t/core/generated';\nconsole.log(banner(), projectUrl);\n"
 	);
 	await write(join(root, 'src/baseline.js'), "console.log('no consent');\n");
 	return root;
@@ -196,7 +196,7 @@ describe('consentManifest staticBanner', () => {
 		const fetch = fetchManifest(CHOICE_MANIFEST);
 		const { code, pages } = await buildApp(
 			root,
-			consentManifest({ backendURL: 'https://consent.example.com', fetch })
+			consentManifest({ fetch, projectUrl: 'https://consent.example.com' })
 		);
 		const html = pages['index.html'] ?? '';
 		expect(fetch).toHaveBeenCalledWith(
@@ -221,13 +221,13 @@ describe('consentManifest staticBanner', () => {
 		const root = await createApp();
 		await write(
 			join(root, 'src/app.js'),
-			"import { banner } from '@c15t/react/part';\nimport { backendURL } from '@c15t/core/generated';\nconsole.log(banner, backendURL);\n"
+			"import { banner } from '@c15t/react/part';\nimport { projectUrl } from '@c15t/core/generated';\nconsole.log(banner, projectUrl);\n"
 		);
 		const { code, pages } = await buildApp(
 			root,
 			consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch: fetchManifest(CHOICE_MANIFEST),
+				projectUrl: 'https://consent.example.com',
 			})
 		);
 		expect(pages['index.html']).toContain(
@@ -243,13 +243,13 @@ describe('consentManifest staticBanner', () => {
 		const root = await createApp();
 		await write(
 			join(root, 'src/app.js'),
-			"import { banner } from '@c15t/react/part';\nimport { backendURL } from '@c15t/core/generated';\nconsole.log(banner(), backendURL);\n"
+			"import { banner } from '@c15t/react/part';\nimport { projectUrl } from '@c15t/core/generated';\nconsole.log(banner(), projectUrl);\n"
 		);
 		const { code } = await buildApp(
 			root,
 			consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch: fetchManifest(CHOICE_MANIFEST),
+				projectUrl: 'https://consent.example.com',
 				staticBanner: false,
 			})
 		);
@@ -261,8 +261,8 @@ describe('consentManifest staticBanner', () => {
 		const { code, pages } = await buildApp(
 			root,
 			consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch: fetchManifest(NO_BANNER_MANIFEST),
+				projectUrl: 'https://consent.example.com',
 			})
 		);
 		expect(pages['index.html']).not.toContain(BANNER_TAG);
@@ -276,10 +276,10 @@ describe('consentManifest staticBanner', () => {
 		const { pages } = await buildApp(
 			root,
 			consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch: vi
 					.fn<typeof globalThis.fetch>()
 					.mockImplementation(() => Promise.reject(new TypeError('offline'))),
+				projectUrl: 'https://consent.example.com',
 			}),
 			warn
 		);
@@ -298,8 +298,8 @@ describe('consentManifest staticBanner', () => {
 		const { code, pages } = await buildApp(
 			root,
 			consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch,
+				projectUrl: 'https://consent.example.com',
 				staticBanner: false,
 			})
 		);
@@ -323,7 +323,7 @@ describe('consentManifest staticBanner', () => {
 			configFile: false,
 			logLevel: 'silent',
 			plugins: [
-				consentManifest({ backendURL: 'https://consent.example.com', fetch }),
+				consentManifest({ fetch, projectUrl: 'https://consent.example.com' }),
 			],
 			root,
 		})) as Rollup.RollupOutput | Rollup.RollupOutput[];
@@ -341,9 +341,9 @@ describe('consentManifest staticBanner', () => {
 		const { pages } = await buildApp(
 			root,
 			consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch,
 				initPrefetch: false,
+				projectUrl: 'https://consent.example.com',
 			})
 		);
 		expect(fetch).not.toHaveBeenCalled();

@@ -7,7 +7,7 @@ import { createConsentRoute } from '@c15t/angular/ssr';
  * in for Inth and sleeps for the bench's backend latency.
  */
 export const consentRoute = createConsentRoute({
-	backendURL:
+	projectUrl:
 		process.env['C15T_BACKEND_URL'] ??
 		'http://127.0.0.1:4339/api/bench-consent',
 	proxy: true,

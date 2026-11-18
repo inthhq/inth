@@ -174,10 +174,10 @@ describe('provideC15tServer', () => {
 		});
 		const request = () =>
 			new Request(`${SITE}/`, { headers: { 'x-vercel-ip-country': 'DE' } });
-		const mode = hosted({ backendURL: '/api/c15t' });
+		const mode = hosted({ projectUrl: '/api/c15t' });
 
 		const html = await render(
-			{ backendURL: '/api/c15t', mode },
+			{ mode, projectUrl: '/api/c15t' },
 			{ route },
 			request()
 		);
@@ -190,7 +190,7 @@ describe('provideC15tServer', () => {
 		// Without the route the render never fetches its own origin: the
 		// browser resolves the policy after hydration.
 		const alone = await render(
-			{ backendURL: '/api/c15t', mode },
+			{ mode, projectUrl: '/api/c15t' },
 			{},
 			request()
 		);
@@ -210,14 +210,14 @@ describe('provideC15tServer', () => {
 				)
 			);
 		const route = createConsentRoute({
-			backendURL: '/api/c15t-upstream',
 			fetch: upstream,
+			projectUrl: '/api/c15t-upstream',
 		});
 		const request = new Request(`${SITE}/`, {
 			headers: { 'x-vercel-ip-country': 'DE' },
 		});
 
-		const html = await render({ backendURL: '/api/c15t' }, { route }, request);
+		const html = await render({ projectUrl: '/api/c15t' }, { route }, request);
 
 		expect(String(upstream.mock.calls[0]?.[0])).toBe(
 			`${SITE}/api/c15t-upstream/manifest`
@@ -239,8 +239,8 @@ describe('provideC15tServer', () => {
 				)
 			);
 		const route = createConsentRoute({
-			backendURL: '/api/c15t-upstream',
 			fetch: upstream,
+			projectUrl: '/api/c15t-upstream',
 			trustForwardedHeaders: true,
 		});
 		const request = new Request('http://internal:4000/', {
@@ -252,7 +252,7 @@ describe('provideC15tServer', () => {
 		});
 
 		const html = await render(
-			{ backendURL: '/api/c15t' },
+			{ projectUrl: '/api/c15t' },
 			{ route, trustForwardedHeaders: true },
 			request
 		);

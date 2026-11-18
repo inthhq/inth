@@ -163,12 +163,12 @@ describe('c15tHandle', () => {
 describe('c15tHandle mode', () => {
 	test('stores manifest() by default, with the route prefix and backend', async () => {
 		const { locals } = await runHandle(createEvent(), {
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			routePrefix: '/api/c15t',
 		});
 		expect(locals).toMatchObject({
-			backendURL: 'https://consent.example.com',
 			mode: { type: 'manifest' },
+			projectUrl: 'https://consent.example.com',
 			routePrefix: '/api/c15t',
 		});
 	});
@@ -182,10 +182,10 @@ describe('c15tHandle mode', () => {
 
 	test('keeps only the data of a transport factory', async () => {
 		const { locals } = await runHandle(createEvent(), {
-			mode: browserManifest({ backendURL: 'https://consent.example.com' }),
+			mode: browserManifest({ projectUrl: 'https://consent.example.com' }),
 		});
 		expect(locals.mode).toMatchObject({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			type: 'manifest',
 		});
 		expect(typeof locals.mode).toBe('object');
@@ -236,12 +236,12 @@ describe('c15tHandle on the consent route', () => {
 				url: `https://shop.example${prefix}/manifest`,
 			});
 			const { GET } = createConsentRoute({
-				backendURL: 'https://consent.example.com',
 				fetch: vi.fn<typeof globalThis.fetch>().mockResolvedValue(
 					Response.json(MANIFEST_FIXTURE, {
 						headers: { 'cache-control': 'public, s-maxage=120' },
 					})
 				),
+				projectUrl: 'https://consent.example.com',
 			});
 			const response = await c15tHandle(options)({
 				event,

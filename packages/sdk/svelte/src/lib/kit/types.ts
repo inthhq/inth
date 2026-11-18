@@ -32,7 +32,7 @@ export interface C15tLocals {
 	/** How `loadConsent` resolves the visitor. */
 	mode: KitMode;
 	/** The c15t backend, when the handle was given one. */
-	backendURL?: string;
+	projectUrl?: string;
 	/** Prefix of the app's consent route, such as `/api/c15t`. */
 	routePrefix?: string;
 	/** A manifest that replaces the one the build downloaded. */

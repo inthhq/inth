@@ -24,7 +24,7 @@ import type { C15tResolvedOptions } from './types';
 /** The options a transport is built from. */
 type TransportOptions = Pick<
 	C15tResolvedOptions,
-	'backendURL' | 'mode' | 'routePrefix'
+	'projectUrl' | 'mode' | 'routePrefix'
 >;
 
 /**
@@ -98,7 +98,7 @@ export const testingTransport: ResolveTransport = ({ mode }) =>
  */
 export const lazyTransport: ResolveTransport = (options) =>
 	clientMode(options.mode, {
-		backendURL: options.backendURL,
+		projectUrl: options.projectUrl,
 		routePrefix: options.routePrefix,
 	});
 
@@ -113,8 +113,8 @@ export const lazyTransport: ResolveTransport = (options) =>
  * @returns A transport factory for `createConsentKernel`.
  * @internal
  */
-export const hostedTransport: ResolveTransport = ({ backendURL }) => {
-	const options = { backendURL: backendURL ?? '' };
+export const hostedTransport: ResolveTransport = ({ projectUrl }) => {
+	const options = { projectUrl: projectUrl ?? '' };
 	return Object.assign(() => createHostedTransport(options), {
 		kind: 'hosted' as const,
 	});

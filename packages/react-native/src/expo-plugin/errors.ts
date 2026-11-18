@@ -1,4 +1,4 @@
-import type { ProjectURLReason } from './project-url';
+import type { ProjectUrlReason } from './project-url';
 
 /**
  * The single error type the plugin raises.
@@ -9,19 +9,19 @@ import type { ProjectURLReason } from './project-url';
  */
 export class InthPluginError extends Error {
 	/**
-	 * Why `backendURL` was refused, in the reason codes of
+	 * Why `projectUrl` was refused, in the reason codes of
 	 * `packages/native-protocol/project-url/cases.json`. Unset for every other error.
 	 */
-	readonly reason?: ProjectURLReason;
+	readonly reason?: ProjectUrlReason;
 
 	/**
 	 * @param message - Actionable detail, without the package prefix.
-	 * @param reason - The project URL reason code, for a refused `backendURL`.
+	 * @param reason - The project URL reason code, for a refused `projectUrl`.
 	 * @param options - The underlying error, as `cause`.
 	 */
 	constructor(
 		message: string,
-		reason?: ProjectURLReason,
+		reason?: ProjectUrlReason,
 		options?: ErrorOptions
 	) {
 		super(`@inth/react-native config plugin: ${message}`, options);

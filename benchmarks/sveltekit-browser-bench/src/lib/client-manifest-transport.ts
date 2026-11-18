@@ -53,7 +53,7 @@ const fetchManifest = async function fetchManifest(): Promise<ConsentManifest> {
  */
 export const createBrowserManifestTransport =
 	function createBrowserManifestTransport(): KernelTransport {
-		const hostedTransport = createHostedTransport({ backendURL: BACKEND_URL });
+		const hostedTransport = createHostedTransport({ projectUrl: BACKEND_URL });
 		let manifestTransport: KernelTransport | undefined;
 
 		// Started eagerly so the resolver, the catalogue and the manifest
@@ -83,9 +83,9 @@ export const createBrowserManifestTransport =
 				const [{ createManifestTransport }, { baseTranslations }, manifest] =
 					loaded.value;
 				manifestTransport ??= createManifestTransport({
-					backendURL: BACKEND_URL,
 					baseTranslations,
-					manifestURL: MANIFEST_URL,
+					manifestUrl: MANIFEST_URL,
+					projectUrl: BACKEND_URL,
 					snapshot: manifest,
 				});
 				return (await manifestTransport.init?.(context)) ?? {};

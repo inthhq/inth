@@ -71,7 +71,6 @@ const C15T_KEY_PREFIX = 'com.inth.';
  */
 const EVERY_KEY_PROPS = {
 	autoBootstrap: false,
-	backendURL: 'https://acme.inth.app',
 	consentCategories: ['necessary', 'functionality', 'measurement', 'marketing'],
 	domain: 'app.example.com',
 	dryRun: true,
@@ -88,6 +87,7 @@ const EVERY_KEY_PROPS = {
 		publisherCountryCode: 'DE',
 	},
 	policyResource: './inth-policy.json',
+	projectUrl: 'https://acme.inth.app',
 	vendors: [8, 42, 755],
 } as const;
 

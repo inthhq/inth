@@ -1,6 +1,6 @@
 /**
  * `@c15t/core/testing` and how a runtime picks its transport from
- * `backendURL` and `mode`.
+ * `projectUrl` and `mode`.
  *
  * @vitest-environment jsdom
  */
@@ -150,17 +150,17 @@ describe('testing()', () => {
 		vi.stubEnv('NODE_ENV', 'production');
 
 		expect(() => runtimeFor({ country: 'DE' })).toThrow(
-			'testing() from @c15t/core/testing is for tests and does not run in production. Set `backendURL` on the provider and remove `mode: testing()`.'
+			'testing() from @c15t/core/testing is for tests and does not run in production. Set `projectUrl` on the provider and remove `mode: testing()`.'
 		);
 	});
 
-	test('needs no backendURL and ignores one', async () => {
+	test('needs no projectUrl and ignores one', async () => {
 		const fetchSpy = vi.fn();
 		vi.stubGlobal('fetch', fetchSpy);
 		const runtime = createConsentRuntime({
-			backendURL: 'https://backend.example',
 			mode: testing(),
 			persistence: false,
+			projectUrl: 'https://backend.example',
 			windowDebug: false,
 		});
 
@@ -171,15 +171,15 @@ describe('testing()', () => {
 	});
 });
 
-describe('backendURL', () => {
+describe('projectUrl', () => {
 	test('alone selects the hosted backend', async () => {
 		const fetchSpy = vi.fn<typeof globalThis.fetch>(() =>
 			Promise.reject(new Error('offline'))
 		);
 		vi.stubGlobal('fetch', fetchSpy);
 		const runtime = createConsentRuntime({
-			backendURL: 'https://backend.example',
 			persistence: false,
+			projectUrl: 'https://backend.example',
 		});
 		runtime.start();
 
@@ -198,9 +198,9 @@ describe('backendURL', () => {
 		);
 		vi.stubGlobal('fetch', fetchSpy);
 		const runtime = createConsentRuntime({
-			backendURL: 'https://backend.example',
 			mode: hosted(),
 			persistence: false,
+			projectUrl: 'https://backend.example',
 		});
 		runtime.start();
 
@@ -213,13 +213,13 @@ describe('backendURL', () => {
 	});
 
 	test('a runtime with no backend URL throws one error that says what to set', () => {
-		// @ts-expect-error -- `backendURL` is required by the type as well.
+		// @ts-expect-error -- `projectUrl` is required by the type as well.
 		expect(() => createConsentRuntime({})).toThrow(
-			'`backendURL` is required. Set it to your Inth project URL, or use `mode: testing()` from a /testing entry in tests.'
+			'`projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from a /testing entry in tests.'
 		);
 		// @ts-expect-error -- `hosted()` still needs the backend URL.
 		expect(() => createConsentRuntime({ mode: hosted() })).toThrow(
-			'`backendURL` is required'
+			'`projectUrl` is required'
 		);
 	});
 
@@ -232,7 +232,7 @@ describe('backendURL', () => {
 		const result = await runtime.kernel.commands.init();
 
 		expect(String((result as { error?: unknown }).error)).toContain(
-			'`backendURL` is required'
+			'`projectUrl` is required'
 		);
 		runtime.dispose();
 	});

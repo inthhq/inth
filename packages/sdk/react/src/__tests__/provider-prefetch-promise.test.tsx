@@ -91,7 +91,7 @@ describe('ConsentProvider prefetch promise', () => {
 		const { getByTestId } = await render(
 			<ConsentProvider
 				options={{
-					mode: hosted({ backendURL: '/api/c15t', fetch: fetchSpy }),
+					mode: hosted({ fetch: fetchSpy, projectUrl: '/api/c15t' }),
 					persistence: false,
 					prefetch: prefetch.promise,
 				}}
@@ -161,9 +161,9 @@ describe('a streamed policy', () => {
 				options={{
 					mode: hosted({
 						assertDecisionInputs: true,
-						backendURL: '/api/c15t',
 						fetch,
-						initURL: '/api/consent/init',
+						initUrl: '/api/consent/init',
+						projectUrl: '/api/c15t',
 					}),
 					persistence: false,
 					prefetch: prefetch.promise,

@@ -17,7 +17,6 @@ import { theme } from './theme';
 export const ConsentManager = ({ children }: { children: ReactNode }) => (
 	<ConsentManagerProvider
 		options={{
-			backendURL: '/mock-backend',
 			consentCategories: [
 				'necessary',
 				'functionality',
@@ -26,6 +25,7 @@ export const ConsentManager = ({ children }: { children: ReactNode }) => (
 				'marketing',
 			],
 			mode: 'hosted',
+			projectUrl: '/mock-backend',
 			theme,
 		}}
 	>

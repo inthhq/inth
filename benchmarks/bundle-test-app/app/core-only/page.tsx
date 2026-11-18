@@ -13,7 +13,7 @@ const CoreOnlyPage = () => {
 	const kernel = useMemo(
 		() =>
 			createConsentKernel({
-				transport: createHostedTransport({ backendURL: '/api/bench-consent' }),
+				transport: createHostedTransport({ projectUrl: '/api/bench-consent' }),
 			}),
 		[]
 	);

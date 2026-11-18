@@ -3,7 +3,7 @@
  *
  * ```html
  * <script src=".../c15t.gpp.js"></script>
- * <script src=".../c15t.js" data-backend-url="..." defer></script>
+ * <script src=".../c15t.js" data-project-url="..." defer></script>
  * ```
  *
  * Works with `c15t.js`, `c15t.headless.js` and `c15t.iab.js`, in either

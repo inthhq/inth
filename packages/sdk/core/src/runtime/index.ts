@@ -28,7 +28,7 @@ import type {
  * import { createConsentRuntime } from '@c15t/core/runtime';
  *
  * const runtime = createConsentRuntime({
- *   backendURL: '/api/c15t',
+ *   projectUrl: '/api/c15t',
  *   pkg: '@c15t/astro',
  * });
  * runtime.start();
@@ -52,7 +52,7 @@ import type {
 	ConsentRuntime,
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,
-	WithBackendURL,
+	WithProjectUrl,
 } from './types';
 
 export { createConsentProviderRuntime } from './provider-runtime';
@@ -83,7 +83,7 @@ export type {
 	RuntimePrefetch,
 	StreamedPrefetch,
 	RuntimeScriptLoaderOptions,
-	WithBackendURL,
+	WithProjectUrl,
 } from './types';
 export type { WireRuntimeCallbacksOptions } from './callbacks';
 export { wireRuntimeCallbacks } from './callbacks';
@@ -140,7 +140,7 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
 	createPersistence,
 	createScriptLoader,
 	createWindowDebug,
-	hostedMode: (backendURL) => hosted({ backendURL }),
+	hostedMode: (projectUrl) => hosted({ projectUrl }),
 	mountIAB: mountRuntimeIAB,
 	watchRevocationReload,
 };
@@ -167,7 +167,7 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
  * ```ts
  * const runtime = createConsentRuntime({
  *   createIAB,
- *   backendURL: '/api/c15t',
+ *   projectUrl: '/api/c15t',
  *   iab: { cmpId: 123 },
  *   scripts: [{ category: 'measurement', id: 'ga', src: '...' }],
  * });
@@ -177,7 +177,7 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
  * ```
  */
 export const createConsentRuntime = function createConsentRuntime(
-	options: WithBackendURL<ConsentRuntimeOptions>
+	options: WithProjectUrl<ConsentRuntimeOptions>
 ): ConsentRuntime {
 	return assembleConsentRuntime(options, defaultRuntimeModules).runtime;
 };

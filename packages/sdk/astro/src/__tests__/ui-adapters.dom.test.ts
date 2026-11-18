@@ -33,8 +33,8 @@ const hosts: HTMLElement[] = [];
 
 const createRuntime = function createRuntime(): ConsentRuntime {
 	const runtime = createConsentRuntime({
-		backendURL: 'https://consent.example.test',
 		pkg: '@c15t/astro-test',
+		projectUrl: 'https://consent.example.test',
 	});
 	runtimes.push(runtime);
 	return runtime;

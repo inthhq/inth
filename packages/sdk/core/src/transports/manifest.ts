@@ -28,7 +28,7 @@ import { isValidSubjectId } from '../libs/generate-subject-id';
 import { createUnreportedJourneys } from '../libs/journey';
 import {
 	reportConsentSession,
-	resolveSessionReportBackendURL,
+	resolveSessionReportProjectUrl,
 } from '../libs/session-report';
 import type { SessionReportHeaders } from '../libs/session-report';
 import type {
@@ -83,20 +83,20 @@ export interface ManifestTransportOptions {
 	baseTranslations?: BaseTranslations;
 
 	/**
-	 * URL for `GET /manifest`. Either `manifestURL` or `snapshot` is required.
+	 * URL for `GET /manifest`. Either `manifestUrl` or `snapshot` is required.
 	 */
-	manifestURL?: string;
+	manifestUrl?: string;
 
 	/**
-	 * The manifest itself. Either `manifestURL` or `snapshot` is required.
+	 * The manifest itself. Either `manifestUrl` or `snapshot` is required.
 	 */
 	snapshot?: ConsentManifest;
 
 	/**
-	 * Backend URL used for `POST /subjects`. Defaults to `manifestURL` with a
+	 * Backend URL used for `POST /subjects`. Defaults to `manifestUrl` with a
 	 * trailing `/manifest` segment removed.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 
 	/**
 	 * Fetch implementation. Defaults to `globalThis.fetch`.
@@ -125,7 +125,7 @@ export interface ManifestTransportOptions {
 	initialInit?: InitOutput;
 
 	/**
-	 * Request headers for fetching `manifestURL`.
+	 * Request headers for fetching `manifestUrl`.
 	 */
 	headers?: Record<string, string>;
 
@@ -162,11 +162,11 @@ export interface ManifestTransportReportOptions {
 	source: ConsentSessionSource;
 	/**
 	 * Backend URL as configured, not resolved against the request. Defaults
-	 * to the transport's `backendURL`. Only an absolute URL is reported to;
+	 * to the transport's `projectUrl`. Only an absolute URL is reported to;
 	 * a relative one resolved to the app's own origin would be its proxy,
 	 * and nothing is inferred from the manifest URL.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/** Package that resolved init, for example `@c15t/nextjs`. */
 	adapter?: string;
 	/**
@@ -201,18 +201,18 @@ const trimSlash = function trimSlash(url: string): string {
 	return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
-const deriveBackendURL = function deriveBackendURL(
+const deriveProjectUrl = function deriveProjectUrl(
 	options: ManifestTransportOptions
 ): string {
-	if (options.backendURL) {
-		return trimSlash(options.backendURL);
+	if (options.projectUrl) {
+		return trimSlash(options.projectUrl);
 	}
-	if (!options.manifestURL) {
+	if (!options.manifestUrl) {
 		return '';
 	}
 
 	const withoutQuery =
-		options.manifestURL.split(/[?#]/u)[0] ?? options.manifestURL;
+		options.manifestUrl.split(/[?#]/u)[0] ?? options.manifestUrl;
 	const trimmed = trimSlash(withoutQuery);
 	return trimmed.endsWith('/manifest')
 		? trimmed.slice(0, -'/manifest'.length)
@@ -240,7 +240,7 @@ const resolveEndpoint = function resolveEndpoint(
 };
 
 const resolveDomain = function resolveDomain(
-	backendURL: string,
+	projectUrl: string,
 	explicit: string | undefined
 ): string {
 	if (explicit) {
@@ -250,7 +250,7 @@ const resolveDomain = function resolveDomain(
 		return window.location.hostname;
 	}
 	try {
-		return new URL(backendURL).hostname;
+		return new URL(projectUrl).hostname;
 	} catch {
 		return 'localhost';
 	}
@@ -340,14 +340,14 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
  *
  * @param options - Manifest source, backend URL, and resolver inputs.
  * @returns A kernel transport backed by local manifest resolution.
- * @throws {Error} When neither `snapshot` nor `manifestURL` is provided, or no
+ * @throws {Error} When neither `snapshot` nor `manifestUrl` is provided, or no
  * `fetch` implementation is available.
  * @example
  * ```ts
  * import { createManifestTransport } from '@c15t/core/transports/manifest';
  *
  * const transport = createManifestTransport({
- *   manifestURL: 'https://api.example.com/c15t/manifest',
+ *   manifestUrl: 'https://api.example.com/c15t/manifest',
  *   inputs: { country: 'DE', language: 'de', region: null },
  * });
  * ```
@@ -361,31 +361,31 @@ export const createManifestTransport = function createManifestTransport(
 			'createManifestTransport: no fetch available. Pass `fetch` in options.'
 		);
 	}
-	if (!options.snapshot && !options.manifestURL) {
+	if (!options.snapshot && !options.manifestUrl) {
 		throw new Error(
-			'createManifestTransport: either `snapshot` or `manifestURL` is required.'
+			'createManifestTransport: either `snapshot` or `manifestUrl` is required.'
 		);
 	}
 
-	const backendURL = deriveBackendURL(options);
+	const projectUrl = deriveProjectUrl(options);
 	const credentials = options.credentials ?? 'include';
-	const domain = resolveDomain(backendURL, options.domain);
+	const domain = resolveDomain(projectUrl, options.domain);
 	const now = options.now ?? Date.now;
 	const jsonHeaders = {
 		accept: 'application/json',
 		'content-type': 'application/json',
 		...c15tProtocolHeaders,
 	};
-	const requireBackendURL = function requireBackendURL(what: string): string {
-		if (!backendURL) {
+	const requireProjectUrl = function requireProjectUrl(what: string): string {
+		if (!projectUrl) {
 			throw new Error(
-				`createManifestTransport: \`backendURL\` is required to ${what} when using a \`snapshot\` without \`manifestURL\`.`
+				`createManifestTransport: \`projectUrl\` is required to ${what} when using a \`snapshot\` without \`manifestUrl\`.`
 			);
 		}
-		return backendURL;
+		return projectUrl;
 	};
 	const subjectURL = (subjectId: string): string =>
-		`${requireBackendURL('read a subject')}/subjects/${encodeURIComponent(subjectId)}`;
+		`${requireProjectUrl('read a subject')}/subjects/${encodeURIComponent(subjectId)}`;
 	let manifestPromise: Promise<ConsentManifest> | undefined;
 	const unreported = createUnreportedJourneys();
 	/**
@@ -397,8 +397,8 @@ export const createManifestTransport = function createManifestTransport(
 	): void {
 		const reportsTo =
 			options.report &&
-			resolveSessionReportBackendURL({
-				backendURL: options.report.backendURL ?? options.backendURL,
+			resolveSessionReportProjectUrl({
+				projectUrl: options.report.projectUrl ?? options.projectUrl,
 			});
 		if (reportsTo) {
 			unreported.reported(journey);
@@ -420,7 +420,7 @@ export const createManifestTransport = function createManifestTransport(
 			// init retry fetches again instead of replaying the same failure.
 			manifestPromise = (async () => {
 				try {
-					const response = await fetchImpl(getDefined(options.manifestURL), {
+					const response = await fetchImpl(getDefined(options.manifestUrl), {
 						credentials,
 						headers: {
 							accept: 'application/json',
@@ -500,7 +500,7 @@ export const createManifestTransport = function createManifestTransport(
 							...reference,
 							url: resolveEndpoint(
 								reference.url,
-								options.manifestURL ?? backendURL
+								options.manifestUrl ?? projectUrl
 							),
 						},
 					})
@@ -535,10 +535,6 @@ export const createManifestTransport = function createManifestTransport(
 				// made. It never rejects, so nothing here can fail the init.
 				reportConsentSession({
 					adapter: options.report.adapter,
-					// The caller's own backend, never the derived one: for a
-					// manifest URL that is not `<backend>/manifest`, the derived
-					// value is the manifest asset itself.
-					backendURL: options.report.backendURL ?? options.backendURL,
 					experiment: ctx.experiment,
 					fetch: fetchImpl,
 					headers: options.report.headers ?? options.headers,
@@ -547,6 +543,10 @@ export const createManifestTransport = function createManifestTransport(
 					journey,
 					manifest,
 					method: options.report.method,
+					// The caller's own backend, never the derived one: for a
+					// manifest URL that is not `<backend>/manifest`, the derived
+					// value is the manifest asset itself.
+					projectUrl: options.report.projectUrl ?? options.projectUrl,
 					source: options.report.source,
 					waitUntil: options.report.waitUntil,
 				});
@@ -587,7 +587,7 @@ export const createManifestTransport = function createManifestTransport(
 		async save(saved): Promise<SaveResult> {
 			const payload = unreported.strip(saved);
 			const response = await fetchImpl(
-				subjectsURL(requireBackendURL('save'), payload.journey),
+				subjectsURL(requireProjectUrl('save'), payload.journey),
 				{
 					body: JSON.stringify({
 						...buildSubjectPostBody(payload, { domain }),

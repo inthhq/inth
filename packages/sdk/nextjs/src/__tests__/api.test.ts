@@ -42,8 +42,8 @@ describe('@c15t/nextjs/api', () => {
 	test('serves a deployment manifest and resolves each visitor without fetching policy', async () => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const { GET } = createConsentRoute({
-			backendURL: 'https://consent.example.com',
 			fetch,
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const served = await call(GET, 'https://app.example.com/api/c15t/manifest');
@@ -74,9 +74,9 @@ describe('@c15t/nextjs/api', () => {
 	test('GET answers init and the manifest, with the Data Cache hint', async () => {
 		const fetch = manifestFetch();
 		const { GET } = createConsentRoute({
-			backendURL: 'https://consent.example.com',
 			fetch,
 			manifestRevalidateSeconds: 120,
+			projectUrl: 'https://consent.example.com',
 		});
 
 		const init = await call(GET, 'https://app.example.com/api/c15t/init', {
@@ -104,11 +104,11 @@ describe('@c15t/nextjs/api', () => {
 		const fetch = manifestFetch();
 		const registered: Promise<void>[] = [];
 		const { GET } = createConsentRoute({
-			backendURL: 'https://consent.example.com',
 			fetch,
 			onBackgroundRevalidate: (task) => {
 				registered.push(task);
 			},
+			projectUrl: 'https://consent.example.com',
 		});
 		await call(GET, 'https://app.example.com/api/c15t/init');
 		expect(registered).toHaveLength(1);
@@ -119,11 +119,11 @@ describe('@c15t/nextjs/api', () => {
 		);
 	});
 
-	test('a config supplies backendURL and never fetches its own route', async () => {
+	test('a config supplies projectUrl and never fetches its own route', async () => {
 		const fetch = manifestFetch();
 		const config = defineConsentConfig({
-			backendURL: 'https://consent.example.com/api/c15t',
 			mode: manifest({ resolve: 'browser', source: 'runtime' }),
+			projectUrl: 'https://consent.example.com/api/c15t',
 			routePrefix: '/api/consent',
 		});
 		const { GET } = createConsentRoute({ config, fetch });
@@ -133,11 +133,11 @@ describe('@c15t/nextjs/api', () => {
 		);
 	});
 
-	test("a mode's absolute manifestURL is fetched instead of the backend's", async () => {
+	test("a mode's absolute manifestUrl is fetched instead of the backend's", async () => {
 		const fetch = manifestFetch();
 		const config = defineConsentConfig({
-			backendURL: 'https://consent.example.com',
-			mode: manifest({ manifestURL: 'https://cdn.example.com/policy.json' }),
+			mode: manifest({ manifestUrl: 'https://cdn.example.com/policy.json' }),
+			projectUrl: 'https://consent.example.com',
 		});
 		const { GET } = createConsentRoute({ config, fetch });
 		await call(GET, 'https://app.example.com/api/c15t/manifest');
@@ -150,7 +150,7 @@ describe('@c15t/nextjs/api', () => {
 		const { GET } = createConsentRoute({});
 		await expect(
 			call(GET, 'https://app.example.com/api/c15t/init')
-		).rejects.toThrow('@c15t/nextjs: pass backendURL or manifestURL.');
+		).rejects.toThrow('@c15t/nextjs: pass projectUrl or manifestUrl.');
 	});
 
 	test('createManifestFetchInit defaults the Data Cache lifetime to 300 seconds', () => {

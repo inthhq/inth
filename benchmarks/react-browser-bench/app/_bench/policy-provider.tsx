@@ -10,7 +10,7 @@ import {
 	ConsentProvider,
 	hosted,
 } from '@c15t/react';
-import type { ConsentProviderOptions, WithBackendURL } from '@c15t/react';
+import type { ConsentProviderOptions, WithProjectUrl } from '@c15t/react';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -81,12 +81,12 @@ const countStorageWrites = function countStorageWrites(
 const HYDRATION_ROUNDS = 5;
 
 const measureHydration = async function measureHydration(
-	backendURL: string,
+	projectUrl: string,
 	iterations: number
 ): Promise<PolicyHydrationMeasurement> {
 	// Resolve the fixture's init once; each kernel then carries that policy
 	// and pays only the synchronous storage read during hydrate().
-	const transport = createHostedTransport({ backendURL });
+	const transport = createHostedTransport({ projectUrl });
 	const response = (await transport.init?.({
 		overrides: {},
 		user: null,
@@ -172,18 +172,17 @@ export const PolicyBenchmarkProvider = ({
 	fixture: PolicyBenchFixtureName;
 	scenario: PolicyBenchScenario;
 }) => {
-	const backendURL = `/api/bench-policy/${fixture}`;
+	const projectUrl = `/api/bench-policy/${fixture}`;
 
 	useEffect(() => {
 		const state = getPolicyBenchState(scenario, fixture);
 		if (state) {
 			state.measureHydration = (iterations) =>
-				measureHydration(backendURL, iterations);
+				measureHydration(projectUrl, iterations);
 		}
-	}, [backendURL, fixture, scenario]);
+	}, [projectUrl, fixture, scenario]);
 
-	const options: WithBackendURL<ConsentProviderOptions> = {
-		backendURL,
+	const options: WithProjectUrl<ConsentProviderOptions> = {
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getPolicyBenchState(scenario, fixture);
@@ -200,6 +199,7 @@ export const PolicyBenchmarkProvider = ({
 		},
 		consentCategories,
 		mode: hosted(),
+		projectUrl,
 		theme: {
 			motion: {
 				duration: {

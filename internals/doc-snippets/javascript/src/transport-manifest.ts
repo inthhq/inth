@@ -6,7 +6,7 @@ import { createConsentRuntime } from 'c15t/runtime';
 // Saves still go to the backend. When the manifest is unavailable, the
 // runtime asks the backend's /init instead.
 export const runtime = createConsentRuntime({
-	backendURL: 'https://your-project.inth.app',
 	mode: manifest(),
+	projectUrl: 'https://your-project.inth.app',
 });
 // #endregion docs:transport-manifest

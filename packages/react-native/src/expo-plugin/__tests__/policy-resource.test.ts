@@ -48,7 +48,7 @@ describe('Expo native policy embedding', () => {
 					'https://wrong.example.test',
 					output
 				)
-			).rejects.toThrow('different backendURL');
+			).rejects.toThrow('different projectUrl');
 			await Promise.all(
 				[{ issuedAt: Date.now() + 60000 }, { schemaVersion: 2 }].map(
 					async (patch, index) => {
@@ -105,10 +105,10 @@ describe('Expo native policy embedding', () => {
 
 it('removing policyResource disables the old fallback on incremental prebuild', async () => {
 	const enabled = resolveParams({
-		backendURL: endpoint,
 		policyResource: './input.json',
+		projectUrl: endpoint,
 	});
-	const disabled = resolveParams({ backendURL: endpoint });
+	const disabled = resolveParams({ projectUrl: endpoint });
 	const firstPlist = applyInfoPlist(enabled, {
 		CFBundleDisplayName: 'Privacy demo',
 	});
@@ -143,7 +143,7 @@ it('removing policyResource disables the old fallback on incremental prebuild', 
 });
 
 it('preserves host-owned policy resources when no plugin resource is configured', async () => {
-	const params = resolveParams({ backendURL: endpoint });
+	const params = resolveParams({ projectUrl: endpoint });
 	const customResource = 'app-authored-policy.json';
 	const plist = applyInfoPlist(params, {
 		[IOS_PLIST_KEY.policyResource]: customResource,

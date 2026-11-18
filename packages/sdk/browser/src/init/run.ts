@@ -170,7 +170,7 @@ const supportsEarlyBanner = function supportsEarlyBanner(
 			options.i18n ||
 			ui?.theme ||
 			ui?.css ||
-			ui?.stylesheetURLs?.length ||
+			ui?.stylesheetUrls?.length ||
 			ui?.noStyle ||
 			ui?.styles === false ||
 			ui?.container !== undefined ||
@@ -221,10 +221,10 @@ export const runInitScript = function runInitScript(
 
 	/** Keep the last `/init` policy once the visitor has a choice. */
 	const cachePolicy = function cachePolicy(): void {
-		const backendURL =
-			options?.backendURL ?? readHostedMarker(options?.mode)?.backendURL;
-		if (lastInit && backendURL) {
-			writePolicyCache(backendURL, options?.overrides, lastInit);
+		const projectUrl =
+			options?.projectUrl ?? readHostedMarker(options?.mode)?.projectUrl;
+		if (lastInit && projectUrl) {
+			writePolicyCache(projectUrl, options?.overrides, lastInit);
 		}
 	};
 	const boot: InitBoot = {
@@ -736,7 +736,7 @@ export const runInitScript = function runInitScript(
 		);
 		options = current;
 		const hosted = readHostedMarker(current.mode);
-		const backendURL = current.backendURL ?? hosted?.backendURL;
+		const projectUrl = current.projectUrl ?? hosted?.projectUrl;
 		const gpc =
 			(navigator as Navigator & { globalPrivacyControl?: boolean })
 				.globalPrivacyControl === true;
@@ -747,17 +747,17 @@ export const runInitScript = function runInitScript(
 		};
 		snapshot = pendingSnapshot(snapshotOptions);
 		let pending: Promise<PrefetchedInitialData | undefined> | undefined;
-		if (supportsEarlyStart(current, backendURL)) {
+		if (supportsEarlyStart(current, projectUrl)) {
 			try {
 				pending = primeInitRequest({
-					backendURL,
 					overrides: current.overrides,
+					projectUrl,
 				});
 			} catch {
 				pending = undefined;
 			}
 		}
-		if (!(pending && backendURL)) {
+		if (!(pending && projectUrl)) {
 			// Nothing to show or start without the engine: load it now, as a
 			// one-file script tag would.
 			loadEngine();
@@ -791,7 +791,7 @@ export const runInitScript = function runInitScript(
 							answered || api
 								? undefined
 								: snapshotFromPrefetchedInit(
-										readPolicyCache(backendURL, current.overrides),
+										readPolicyCache(projectUrl, current.overrides),
 										snapshotOptions
 									);
 						if (cached) {
@@ -823,10 +823,10 @@ export const runInitScript = function runInitScript(
 			}
 			const config = configFromPrefetchedInit(data, current.overrides);
 			if (config) {
-				boot.prefetch = { backendURL, config, overrides: current.overrides };
+				boot.prefetch = { config, overrides: current.overrides, projectUrl };
 			}
 			if (stored) {
-				writePolicyCache(backendURL, current.overrides, data);
+				writePolicyCache(projectUrl, current.overrides, data);
 			}
 			setSnapshot(resolved);
 			startScripts(resolved);

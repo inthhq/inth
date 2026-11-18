@@ -136,7 +136,7 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 	params: ResolvedInthParams
 ): Record<string, string | number | boolean | string[]> {
 	const entries: Record<string, string | number | boolean | string[]> = {
-		[IOS_PLIST_KEY.backendURL]: params.backendURL,
+		[IOS_PLIST_KEY.projectUrl]: params.projectUrl,
 	};
 	// Only when on. Native code refuses it in a release build.
 	if (params.dryRun) {

@@ -8,7 +8,7 @@ import {
 	useActiveUI,
 	useSetActiveUI,
 } from '@c15t/react';
-import type { ConsentProviderOptions, WithBackendURL } from '@c15t/react';
+import type { ConsentProviderOptions, WithProjectUrl } from '@c15t/react';
 import { useEffect, useRef } from 'react';
 
 const Controls = () => {
@@ -31,10 +31,10 @@ const Controls = () => {
 	);
 };
 
-const options: WithBackendURL<ConsentProviderOptions> = {
-	backendURL: '/api/bench-consent',
+const options: WithProjectUrl<ConsentProviderOptions> = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 	mode: hosted(),
+	projectUrl: '/api/bench-consent',
 };
 
 const DialogFirstOpenPage = () => (

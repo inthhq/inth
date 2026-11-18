@@ -48,7 +48,7 @@ The Angular CLI installs `@c15t/angular`, then asks for your backend URL
 and whether to add the banner and dialog. With
 the default answers it makes two changes:
 
-1. It adds `provideC15t({ backendURL: '...' })` to the
+1. It adds `provideC15t({ projectUrl: '...' })` to the
    providers in `src/app/app.config.ts`, or to the `bootstrapApplication()`
    call in `src/main.ts` when the app has no config file.
 2. It adds `ConsentBanner` and `ConsentDialog` to the root component's
@@ -58,7 +58,7 @@ the default answers it makes two changes:
    Angular 20.
 
 To skip the prompts, pass the answers as flags, such as
-`ng add @c15t/angular --backend-url=https://your-project.inth.app`. If you
+`ng add @c15t/angular --project-url=https://your-project.inth.app`. If you
 leave the backend URL empty, it writes `https://your-project.inth.app` with
 a comment to replace it. `--components=false` leaves
 the root component alone. Running
@@ -156,7 +156,7 @@ not appear, check the `/init` request, then see
 ## Other setups
 
 **Tests** pass `testing()` from `@c15t/angular/testing` as the mode. It resolves a policy
-in the browser with no backend and needs no `backendURL`. It throws in
+in the browser with no backend and needs no `projectUrl`. It throws in
 production builds. With no arguments it uses the recommended rules; pass
 `testing({ policy })` to test your own.
 

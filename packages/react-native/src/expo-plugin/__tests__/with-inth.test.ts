@@ -25,7 +25,7 @@ const BACKEND = 'https://acme.inth.app';
  */
 const APPLICATION_ID_PLACEHOLDER = `${'$'}{applicationId}`;
 
-const STANDARD_PROPS = { backendURL: BACKEND };
+const STANDARD_PROPS = { projectUrl: BACKEND };
 
 const readFixtureManifest = function readFixtureManifest() {
 	return AndroidConfig.Manifest.readAndroidManifestAsync(
@@ -60,12 +60,12 @@ describe('withInth standard install', () => {
 
 		expect(config.extra).toStrictEqual({
 			inth: {
-				backendURL: BACKEND,
 				consentCategories: null,
 				domain: null,
 				dryRun: false,
 				enableAppTrackingTransparency: false,
 				forceGPC: false,
+				projectUrl: BACKEND,
 				protocol: {
 					maxSupportedProtocolVersion: 1,
 					minSupportedProtocolVersion: 1,

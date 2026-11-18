@@ -119,7 +119,7 @@ ${generateScriptsImport(options.scripts)}
 // Construction is pure; the Solid component starts this only after mounting.
 export function createSiteConsent() {
 	return createConsentRuntime({
-		mode: ${hosted ? `hosted({ backendURL: ${JSON.stringify(options.backendURL)} })` : `offline({ policyRules: ${DEFAULT_OFFLINE_RULES} })`},
+		mode: ${hosted ? `hosted({ projectUrl: ${JSON.stringify(options.backendURL)} })` : `offline({ policyRules: ${DEFAULT_OFFLINE_RULES} })`},
 		scripts: ${generateScriptsArrayValue(options.scripts)},
 	});
 }

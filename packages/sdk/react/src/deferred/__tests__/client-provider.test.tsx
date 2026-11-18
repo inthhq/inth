@@ -65,11 +65,11 @@ const fetchMock = vi.fn(() =>
 );
 
 const requestContext = {
-	backendURL: BACKEND,
 	country: null,
 	credentials: 'same-origin',
 	gpc: false,
 	language: null,
+	projectUrl: BACKEND,
 	region: null,
 };
 
@@ -116,10 +116,10 @@ const renderPage = (
 	render(
 		<ConsentProvider
 			options={{
-				backendURL: BACKEND,
 				callbacks,
 				consentCategories: [...consentCategories],
 				journey: false,
+				projectUrl: BACKEND,
 			}}
 		>
 			<Probe />
@@ -205,10 +205,10 @@ test('a network blocker turned off leaves the engine deferred', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				backendURL: BACKEND,
 				consentCategories: [...consentCategories],
 				journey: false,
 				networkBlocker: { enabled: false, rules: [] },
+				projectUrl: BACKEND,
 			}}
 		>
 			<Probe />

@@ -321,7 +321,6 @@ const buildConfig = function buildConfig(
 	const provided = (opts.providerOptions ?? {}) as ProviderOptions;
 	return {
 		...provided,
-		backendURL: 'https://consent.example',
 		consentCategories: provided.consentCategories ?? [
 			...DEFAULT_CONSENT_CATEGORIES,
 		],
@@ -331,6 +330,7 @@ const buildConfig = function buildConfig(
 		hideBranding: true,
 		// IAB is opt-in; the IAB surfaces stand for an app that turned it on.
 		iab: isIabComponent(opts.component) ? {} : provided.iab,
+		projectUrl: 'https://consent.example',
 		trapFocus: provided.trapFocus ?? false,
 	} as ConsentConfig;
 };

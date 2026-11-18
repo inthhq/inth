@@ -27,11 +27,11 @@ const installManual = function installManual(): {
 	script: HTMLScriptElement;
 } {
 	const script = scriptWith({
-		'data-backend-url': 'https://original.c15t.dev',
 		'data-categories': 'measurement',
 		'data-color-scheme': 'dark',
 		'data-country': 'DE',
 		'data-manual': '',
+		'data-project-url': 'https://original.c15t.dev',
 	});
 	document.body.append(script);
 	const currentScript = vi
@@ -61,9 +61,9 @@ describe('manual initialization', () => {
 			currentScript.mockReturnValue(
 				context === 'inline script'
 					? scriptWith({
-							'data-backend-url': 'https://unrelated.c15t.dev',
 							'data-categories': 'marketing',
 							'data-mode': 'offline',
+							'data-project-url': 'https://unrelated.c15t.dev',
 						})
 					: null
 			);
@@ -72,9 +72,9 @@ describe('manual initialization', () => {
 
 			expect(client.mode).toBe('hosted');
 			expect(client.options).toMatchObject({
-				backendURL: 'https://original.c15t.dev',
 				consentCategories: ['measurement'],
 				overrides: { country: 'DE' },
+				projectUrl: 'https://original.c15t.dev',
 				ui: { colorScheme: 'dark' },
 			});
 		}
@@ -82,17 +82,17 @@ describe('manual initialization', () => {
 
 	it('captures attributes before the bundle tag is changed and removed', () => {
 		const { api, currentScript, script } = installManual();
-		script.setAttribute('data-backend-url', 'https://changed.c15t.dev');
+		script.setAttribute('data-project-url', 'https://changed.c15t.dev');
 		script.remove();
 		currentScript.mockReturnValue(null);
 
-		expect(api.init().options.backendURL).toBe('https://original.c15t.dev');
+		expect(api.init().options.projectUrl).toBe('https://original.c15t.dev');
 	});
 
 	it('layers queued config and explicit init options over the captured tag', () => {
 		const queuedOptions: ConsentClientOptions = {
-			backendURL: 'https://queued.c15t.dev',
 			consentCategories: ['marketing'],
+			projectUrl: 'https://queued.c15t.dev',
 			ui: { trigger: true },
 		};
 		testWindow.c15t = [['config', queuedOptions]];
@@ -101,15 +101,15 @@ describe('manual initialization', () => {
 		currentScript.mockReturnValue(null);
 
 		const client = api.init({
-			backendURL: 'https://explicit.c15t.dev',
 			consentCategories: ['measurement', 'marketing'],
+			projectUrl: 'https://explicit.c15t.dev',
 		});
 
 		expect(client.mode).toBe('hosted');
 		expect(client.options).toMatchObject({
-			backendURL: 'https://explicit.c15t.dev',
 			consentCategories: ['measurement', 'marketing'],
 			overrides: { country: 'DE' },
+			projectUrl: 'https://explicit.c15t.dev',
 			ui: { colorScheme: 'dark', trigger: true },
 		});
 	});
@@ -118,8 +118,8 @@ describe('manual initialization', () => {
 		const { api, currentScript } = installManual();
 		currentScript.mockReturnValue(
 			scriptWith({
-				'data-backend-url': 'https://duplicate.c15t.dev',
 				'data-manual': '',
+				'data-project-url': 'https://duplicate.c15t.dev',
 			})
 		);
 		const duplicate = installGlobal(
@@ -129,7 +129,7 @@ describe('manual initialization', () => {
 		currentScript.mockReturnValue(null);
 
 		expect(duplicate).toBe(api);
-		expect(duplicate.init().options.backendURL).toBe(
+		expect(duplicate.init().options.projectUrl).toBe(
 			'https://original.c15t.dev'
 		);
 		expect(duplicate.init()).toBe(api.client);
@@ -140,29 +140,29 @@ describe('manual initialization', () => {
 			[
 				'config',
 				{
-					backendURL: 'https://queued.c15t.dev',
 					mode: 'hosted',
+					projectUrl: 'https://queued.c15t.dev',
 					ui: false,
 				},
 			],
 		];
 		const { api, currentScript } = installManual();
 		currentScript.mockReturnValue(null);
-		api.init({ backendURL: 'https://first.c15t.dev' });
+		api.init({ projectUrl: 'https://first.c15t.dev' });
 		api.dispose();
 
 		const restored = api.init();
 		expect(restored.options).toMatchObject({
-			backendURL: 'https://queued.c15t.dev',
 			mode: 'hosted',
+			projectUrl: 'https://queued.c15t.dev',
 			ui: false,
 		});
 		api.dispose();
 
-		const overridden = api.init({ backendURL: 'https://explicit.c15t.dev' });
+		const overridden = api.init({ projectUrl: 'https://explicit.c15t.dev' });
 		expect(overridden.options).toMatchObject({
-			backendURL: 'https://explicit.c15t.dev',
 			mode: 'hosted',
+			projectUrl: 'https://explicit.c15t.dev',
 			ui: false,
 		});
 	});

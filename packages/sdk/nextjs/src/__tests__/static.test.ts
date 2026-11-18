@@ -47,7 +47,7 @@ describe('@c15t/nextjs/static', () => {
 
 		const resolution = createStaticConsentResolver({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			geoURL: 'https://geo.example.com/context',
+			geoUrl: 'https://geo.example.com/context',
 			language: 'en',
 			manifest: MANIFEST_FIXTURE,
 		});
@@ -70,7 +70,7 @@ describe('@c15t/nextjs/static', () => {
 		};
 		const resolver = createStaticConsentResolver({
 			fetch: vi.fn().mockRejectedValue(new Error('offline')),
-			geoURL: 'https://example.com/geo',
+			geoUrl: 'https://example.com/geo',
 			manifest,
 		});
 		expect(resolver.initial.policyResolution).toMatchObject({
@@ -95,7 +95,7 @@ describe('@c15t/nextjs/static', () => {
 		const source = await createStaticManifestModule({
 			exportName: 'testManifest',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			manifestURL: 'https://consent.example.com/manifest',
+			manifestUrl: 'https://consent.example.com/manifest',
 		});
 
 		expect(source).toContain(
@@ -114,7 +114,7 @@ test.each(['bad-name', 'default', 'eval', 'arguments', 'a;throw 1'])(
 			createStaticManifestModule({
 				exportName,
 				fetch,
-				manifestURL: 'https://api.test/manifest',
+				manifestUrl: 'https://api.test/manifest',
 			})
 		).rejects.toThrow(/exportName/u);
 		expect(fetch).not.toHaveBeenCalled();
@@ -126,7 +126,7 @@ test('supports importing manifest types through the umbrella package', async () 
 			.fn<typeof globalThis.fetch>()
 			.mockResolvedValue(Response.json(MANIFEST_FIXTURE)),
 		importSource: 'c15t/next/static',
-		manifestURL: 'https://api.test/manifest',
+		manifestUrl: 'https://api.test/manifest',
 	});
 	expect(source).toContain("from 'c15t/next/static'");
 });

@@ -13,8 +13,8 @@
 	let { children } = $props();
 
 	const backend = {
-		backendURL: 'https://your-project.inth.app',
-		...testBackend('backendURL'),
+		projectUrl: 'https://your-project.inth.app',
+		...testBackend('projectUrl'),
 	};
 </script>
 

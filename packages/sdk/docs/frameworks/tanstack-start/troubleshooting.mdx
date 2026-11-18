@@ -17,7 +17,7 @@ fetches the policy at runtime.
 
 | Message | Fix |
 | --- | --- |
-| `no backend URL is set` | Set `VITE_C15T_BACKEND_URL` (or `VITE_INTH_PROJECT_URL`) in `.env` or the build environment, or pass `backendURL`. `vite build` stops on this; `vite dev` warns |
+| `no backend URL is set` | Set `VITE_C15T_BACKEND_URL` (or `VITE_INTH_PROJECT_URL`) in `.env` or the build environment, or pass `projectUrl`. `vite build` stops on this; `vite dev` warns |
 | `skipped the consent manifest fetch because ... is not an absolute http(s) URL` | Set `VITE_C15T_BACKEND_URL` to the absolute backend URL, such as `https://your-project.inth.app`, not `/api/c15t`. With `onBuildError: 'fail'`, this is the error `build-time manifests require an absolute upstream URL` |
 | `/manifest responded 404` | The URL is not a c15t backend, or it is missing a path prefix. Copy the backend URL from Inth exactly |
 | `/manifest responded` with another status | The backend refused or failed the request. Check that the project exists and that the build machine can reach it |
@@ -75,12 +75,12 @@ transport from `c15t/react`, cannot be serialized. `hosted()` from
 
 ## The same-origin setup never renders the banner on the server
 
-**Check.** Look at the `backendURL` you pass to `createConsentStateHandler`,
+**Check.** Look at the `projectUrl` you pass to `createConsentStateHandler`,
 or `VITE_C15T_BACKEND_URL`. When it is `/api/c15t`, the helper skips the fetch
 and returns only the cookie and header state, because a server that fetches
 its own route during a render can stall.
 
-**Fix.** Keep `VITE_C15T_BACKEND_URL` absolute, and don't pass `backendURL:
+**Fix.** Keep `VITE_C15T_BACKEND_URL` absolute, and don't pass `projectUrl:
 '/api/c15t'`. To send the browser's requests through the route, pass
 `routePrefix: '/api/c15t'` and `proxy: true` to `createConsentStateHandler`
 instead.
@@ -112,8 +112,8 @@ alphas sent init to `/api/c15t/init` by default; now there is no default.
 
 **Check.** The page throws one of these errors from `ConsentRoot`:
 
-- ``c15t: manifest() needs a backend URL. Set `backendURL` in your config.``
-- ``c15t: hosted() needs a backend URL. Set `backendURL` on the mode or in your config.``
+- ``c15t: manifest() needs a backend URL. Set `projectUrl` in your config.``
+- ``c15t: hosted() needs a backend URL. Set `projectUrl` on the mode or in your config.``
 
 The state names no backend URL and `consentManifest()` supplied none, for
 example on a page with `state={{}}` and no plugin in `vite.config.ts`.
@@ -175,18 +175,18 @@ component after you finish.
 
 **Check.** TypeScript or the build reports a missing export or option, such as
 `createConsentServerRoute`, `DEFAULT_INIT_ROUTE` or `ConsentRoot`'s
-`backendURL` prop. The v3 alphas removed names that never shipped in a stable
+`projectUrl` prop. The v3 alphas removed names that never shipped in a stable
 release, with no alias.
 
 **Fix.** Use the current names:
 
 | Removed | Use instead |
 | --- | --- |
-| `ConsentRoot`'s `backendURL` and `routePrefix` props | `createConsentStateHandler({ routePrefix })`. The state carries the backend URL, the mode and the route prefix. |
+| `ConsentRoot`'s `projectUrl` and `routePrefix` props | `createConsentStateHandler({ routePrefix })`. The state carries the backend URL, the mode and the route prefix. |
 | `ConsentRoot`'s `initRoute` prop, and `DEFAULT_INIT_ROUTE` | `createConsentStateHandler({ routePrefix: '/api/c15t' })`. There is no default route any more. |
 | `createConsentServerRoute`, and its `manifestGET`, `initGET` and `proxyHandler` | `createConsentRoute()`, which returns `GET`, plus the write methods with `proxy` |
-| `createConsentStateHandler({ backendURL, manifest })` | `createConsentStateHandler()`, which reads both from `consentManifest()`, or `{ snapshot }` |
-| `manifestURL` on the state handler | `mode: manifest({ manifestURL })` |
+| `createConsentStateHandler({ projectUrl, manifest })` | `createConsentStateHandler()`, which reads both from `consentManifest()`, or `{ snapshot }` |
+| `manifestUrl` on the state handler | `mode: manifest({ manifestUrl })` |
 | `ConsentManifestOptions`, `resolveStrictestDefaultInit` | `ResolveConsentOptions`; `resolveUnknownLocationInit` |
 | Falling back to local mode when no backend URL is set | `ConsentRoot` throws. Pass `mode: testing()` to run without a backend. |
 | `hosted`, `offline` and `manifest` from `c15t/tanstack-start` as transports | They are data for `createConsentStateHandler({ mode })` now. |
