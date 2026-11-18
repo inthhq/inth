@@ -43,7 +43,7 @@ The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jo
 | Product | Workflow | Checks before publishing | Publishes to | Tags | State |
 | --- | --- | --- | --- | --- | --- |
 | CLI | `release.yml` (Release CLI) | CLI jobs only | npm, with trusted publishing | `inth@<version>` | Live |
-| Web SDK | `release-sdk.yml` (Release SDK) | SDK jobs only | npm `alpha` dist-tag, with trusted publishing | `sdk@<version>` | Off until the first publish by hand |
+| Web SDK | `release-sdk.yml` (Release SDK) | SDK jobs only | npm `alpha` dist-tag, with trusted publishing | `sdk@<version>` | Disabled until `SDK_RELEASE_ENABLED` is `true`, after the first publish by hand and trusted publishing setup |
 | React Native | `release-react-native.yml` | React Native jobs | npm | `react-native@<version>` | Disabled |
 | Swift | `release-swift.yml` | Swift jobs | Git tags read by SwiftPM | `<version>`, no prefix | Disabled |
 | Android | `release-android.yml` | Android jobs | Maven Central | `android@<version>` | Disabled |

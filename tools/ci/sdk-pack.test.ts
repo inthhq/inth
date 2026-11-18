@@ -87,6 +87,49 @@ test("a tarball that would install wrong is refused", () => {
   ]);
 });
 
+test("a dependency alias to a private package is refused", () => {
+  const aliased = (target: string) =>
+    tarballProblems(
+      packed({
+        dependencies: {
+          "@inth/sdk": "0.0.0-alpha.0",
+          core: `npm:${target}@0.0.0-alpha.0`,
+        },
+      }),
+      expectations
+    );
+  expect(aliased("@inth/sdk-core")).toEqual([
+    "dependencies names the private package @inth/sdk-core",
+  ]);
+  expect(aliased("@inth/sdk")).toEqual([]);
+});
+
+test.each([
+  'import /* load on startup */ "@inth/sdk-core";',
+  'const core = import(/* webpackIgnore: true */ "@inth/sdk-core");',
+  'const core = require( // the shared core\n  "@inth/sdk-core/version");',
+  "const core = import(`@inth/sdk-core`);",
+])("an import of a private package is found past comments: %s", (code) => {
+  expect(
+    tarballProblems(packed({}, { "dist/index.js": code }), expectations)
+  ).toHaveLength(1);
+});
+
+test("a private package name in a plain string or comment is not an import", () => {
+  expect(
+    tarballProblems(
+      packed(
+        {},
+        {
+          "dist/index.js":
+            '// Wraps "@inth/sdk-core".\nexport const label = "@inth/sdk-core";',
+        }
+      ),
+      expectations
+    )
+  ).toEqual([]);
+});
+
 test("a wildcard export must match a packed file", () => {
   const exports = {
     ".": { import: "./dist/index.js", types: "./dist/index.d.ts" },
@@ -115,6 +158,9 @@ test("a stable version must not keep a prerelease dist-tag", () => {
 
 test("each package publishes after the packages it depends on", () => {
   const order = publishOrder(published).map(({ manifest }) => manifest.name);
+  expect(order.toSorted()).toEqual(
+    published.map(({ manifest }) => manifest.name).toSorted()
+  );
   expect(order[0]).toBe("@inth/sdk");
   expect(order.indexOf("@inth/react")).toBeLessThan(
     order.indexOf("@inth/nextjs")

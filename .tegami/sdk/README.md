@@ -86,7 +86,6 @@ Do this for each of the ten packages on npmjs.com:
 2. Under **Trusted Publisher**, select **GitHub Actions**.
 3. Enter organization or user `inthhq`, repository `inth`, workflow filename `release-sdk.yml` and environment `npm-sdk`.
 4. Allow it to publish with `npm publish`, not only to stage a publish. Save the connection and approve with two-factor authentication.
-5. Under **Publishing access**, select **Require two-factor authentication and disallow tokens**, then **Update Package Settings**. Trusted publishing still works, and no token can publish the package.
 
 Or connect all ten from a terminal, with npm 11.15 or later. At the first two-factor prompt, choose to skip it for five minutes, so the rest go through. The pause avoids npm's rate limit, and the loop stops at the first failure:
 
@@ -96,6 +95,8 @@ for name in sdk angular react svelte vue astro integrations nextjs nuxt tanstack
   sleep 2
 done
 ```
+
+Either way, then open each package's settings page. Under **Publishing access**, select **Require two-factor authentication and disallow tokens**, then **Update Package Settings**. Trusted publishing still works, and no token can publish the package.
 
 The workflow needs no npm token. npm exchanges GitHub's OIDC token for a short-lived publish credential, and CI releases carry provenance.
 

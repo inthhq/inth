@@ -138,8 +138,12 @@ const dependencyProblems = (
   }
   for (const field of installedFields) {
     for (const [name, range] of Object.entries(manifest[field] ?? {})) {
-      if (privateNames.has(name)) {
-        problems.push(`${field} names the private package ${name}`);
+      // pnpm packs a workspace: alias as npm:<target>@<version> under its key.
+      const target = /^npm:(?<target>@?[^@]+)/u.exec(range)?.groups?.target;
+      for (const named of new Set([name, target ?? name])) {
+        if (privateNames.has(named)) {
+          problems.push(`${field} names the private package ${named}`);
+        }
       }
       const sibling = versions.get(name);
       if (sibling && range.replace(/^[\^~]/u, "") !== sibling) {
@@ -187,13 +191,15 @@ const fileProblems = (packed: PackedPackage, source: Manifest) => {
 
 const importProblems = (packed: PackedPackage, privateNames: Set<string>) => {
   // Import and require specifiers only: a private name may also be a word in
-  // a string, such as the workspace root's "inth".
+  // a string, such as the workspace root's "inth". Comments may come before
+  // the specifier, as in import(/* webpackIgnore: true */ "name").
+  const gap = String.raw`(?:\s|/\*[\s\S]*?\*/|//[^\n]*\n)*`;
   const importsPrivate = new RegExp(
-    `(?:\\bfrom\\s*|\\bimport\\s*\\(?\\s*|\\brequire\\s*\\(\\s*)["'](?:${[
+    `(?:\\bfrom${gap}|\\bimport${gap}(?:\\(${gap})?|\\brequire${gap}\\(${gap})["'\`](?:${[
       ...privateNames,
     ]
       .map((name) => name.replaceAll(/[.*+?^${}()|[\]\\/]/gu, "\\$&"))
-      .join("|")})(?:/[^"']*)?["']`,
+      .join("|")})(?:/[^"'\`]*)?["'\`]`,
     "u"
   );
   return [...packed.code].flatMap(([file, text]) => {
