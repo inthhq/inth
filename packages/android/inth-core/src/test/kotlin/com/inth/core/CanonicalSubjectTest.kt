@@ -79,13 +79,12 @@ class CanonicalSubjectTest {
 	fun `a subject id that is not a UUIDv7 is ignored`() {
 		for (named in listOf("sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc", CANONICAL.uppercase(), "not-an-id")) {
 			val store = InthStore(InMemoryKeyValueStore())
-			val core = testKernel(
-				store = store,
-				transport = RecordingTransport().respondInit(initSuccess()).respondSave(SaveOutcome.Delivered(named)),
-			)
+			val transport = RecordingTransport().respondInit(initSuccess()).respondSave(SaveOutcome.Delivered(named))
+			val core = testKernel(store = store, transport = transport)
 			core.bootstrap()
 			val original = assertNotNull(core.snapshot().subject).id
 			core.save(CommitIntent.All)
+			assertEquals(1, transport.saveRequests.size, "$named: the save reached the response")
 			assertEquals(original, core.snapshot().subject?.id, named)
 			assertEquals(original, store.readSubject()?.id, named)
 		}
