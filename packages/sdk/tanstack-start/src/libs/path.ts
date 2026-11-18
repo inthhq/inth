@@ -8,13 +8,3 @@ export const trimTrailingSlashes = function trimTrailingSlashes(
 	}
 	return value.slice(0, end);
 };
-
-/** Removes surrounding slashes, preserving interior path segments. @internal */
-export const trimPathSlashes = function trimPathSlashes(value: string): string {
-	const trimmed = trimTrailingSlashes(value);
-	let start = 0;
-	while (start < trimmed.length && trimmed[start] === '/') {
-		start += 1;
-	}
-	return trimmed.slice(start);
-};

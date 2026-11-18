@@ -9,12 +9,12 @@
  * Nothing in the HTML decides what runs.
  */
 import { getRequestEvent } from '$app/server';
+import { SAFE_NONCE } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import { registerServerScriptStart } from '../server-script-start';
 import type { ServerStartOptions } from '../server-script-start';
 
-const NONCE = /^[\w+/=-]+$/u;
 const NONCE_ATTRIBUTE = /\snonce="(?<nonce>[\w+/=-]+)"/u;
 /**
  * A body end tag, the name in any case with space before `>`, or a comment
@@ -180,7 +180,7 @@ export const createServerStartInjector = function createServerStartInjector(
 		}
 		const nonce = start.nonce ?? pageNonce;
 		const nonceAttribute =
-			nonce && NONCE.test(nonce) ? ` nonce="${nonce}"` : '';
+			nonce && SAFE_NONCE.test(nonce) ? ` nonce="${nonce}"` : '';
 		return `${text.slice(0, end)}<script${nonceAttribute}>${start.code}</script>${text.slice(end)}`;
 	};
 };

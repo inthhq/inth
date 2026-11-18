@@ -1,3 +1,4 @@
+import { SAFE_NONCE } from '@inth/sdk/server';
 /**
  * Writes the stylesheets a server-rendered surface named into the page.
  *
@@ -43,7 +44,6 @@ const MARKER = new RegExp(
 	`<meta name="${STYLES_MARKER}" content="(?<body>[^"]*)"`,
 	'gu'
 );
-const NONCE = /^[\w+/=-]+$/u;
 const SCRIPT_NONCE = /<script\b[^>]*\snonce="(?<nonce>[\w+/=-]+)"/u;
 const HEAD_END = '</head>';
 
@@ -78,7 +78,7 @@ export const injectSurfaceStyles = function injectSurfaceStyles(
 		for (const token of body.split(' ')) {
 			if (token.startsWith('nonce=')) {
 				const own = token.slice('nonce='.length);
-				nonce ??= NONCE.test(own) ? own : undefined;
+				nonce ??= SAFE_NONCE.test(own) ? own : undefined;
 			} else if (token) {
 				wanted.add(token);
 			}

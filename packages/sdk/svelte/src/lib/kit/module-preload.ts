@@ -12,6 +12,7 @@
  * below in the server output with each chunk's URL. Without the plugin (or
  * in `vite dev`) the placeholders stay, and no link is added.
  */
+import { SAFE_NONCE } from '@inth/sdk/server';
 
 /**
  * The on-demand chunks a page can preload: the one that holds the script
@@ -36,7 +37,6 @@ const chunkHrefs = (): Readonly<Record<PreloadChunkName, string>> =>
 	MODULE_PRELOAD_PLACEHOLDERS;
 
 const MARKER = /<meta name="inth-modulepreload" content="(?<body>[^"]*)"/gu;
-const NONCE = /^[\w+/=-]+$/u;
 const SCRIPT_NONCE = /<script\b[^>]*\snonce="(?<nonce>[\w+/=-]+)"/u;
 const HEAD_END = '</head>';
 
@@ -92,7 +92,7 @@ export const injectModulePreloads = function injectModulePreloads(
 		const ownNonce = tokens
 			.find((token) => token.startsWith('nonce='))
 			?.slice('nonce='.length);
-		const nonce = ownNonce && NONCE.test(ownNonce) ? ownNonce : pageNonce;
+		const nonce = ownNonce && SAFE_NONCE.test(ownNonce) ? ownNonce : pageNonce;
 		const nonceAttribute = nonce ? ` nonce="${nonce}"` : '';
 		for (const token of tokens) {
 			const href = Object.hasOwn(hrefs, token) ? hrefs[token] : undefined;

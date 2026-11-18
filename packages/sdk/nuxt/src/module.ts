@@ -13,7 +13,11 @@ import type { ConsentMode } from '@inth/sdk/modes';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import { defaultConsentConfig } from '@inth/sdk/schema/config';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
-import { normalizeRoutePrefix, resolveServerMode } from '@inth/sdk/server';
+import {
+	DEFAULT_CONSENT_ROUTE_PREFIX,
+	normalizeRoutePrefix,
+	resolveServerMode,
+} from '@inth/sdk/server';
 import {
 	DEVTOOLS_ICON_ROUTE,
 	DEVTOOLS_PAGE_ROUTE,
@@ -22,10 +26,7 @@ import {
 	NUXT_PROJECT_URL_ENV,
 	NUXT_SERVER_PROJECT_URL_ENV,
 } from '@inth/vue/runtime/env-names.js';
-import {
-	DEFAULT_NUXT_ROUTE_PREFIX,
-	readNuxtRoutePrefix,
-} from '@inth/vue/runtime/nuxt-mode.js';
+import { readNuxtRoutePrefix } from '@inth/vue/runtime/nuxt-mode.js';
 import type { NuxtMode } from '@inth/vue/runtime/nuxt-mode.js';
 import type { BuiltOptions } from '@inth/vue/runtime/server/build-options.js';
 import type { LegacyProjectUrlEnv } from '@inth/vue/runtime/server/legacy-project-url.js';
@@ -208,7 +209,7 @@ const checkRoutePrefix = function checkRoutePrefix(
 	}
 	return normalizeRoutePrefix(
 		'@inth/nuxt',
-		options.routePrefix ?? DEFAULT_NUXT_ROUTE_PREFIX
+		options.routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX
 	);
 };
 
@@ -367,7 +368,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		...defaultConsentConfig,
 		devtools: true,
 		initPrefetch: true,
-		routePrefix: DEFAULT_NUXT_ROUTE_PREFIX,
+		routePrefix: DEFAULT_CONSENT_ROUTE_PREFIX,
 	}),
 	meta: {
 		configKey: 'inth',

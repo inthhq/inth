@@ -1,5 +1,6 @@
 import type { StorageConfig } from '@inth/sdk/engine';
 import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
+import { writeConsentInputHeaders } from '@inth/sdk/server';
 import { NextResponse } from 'next/server.js';
 import type { NextRequest } from 'next/server.js';
 
@@ -64,15 +65,8 @@ export const inthProxy = function inthProxy(
 	const requestHeaders = new Headers(request.headers);
 	const inputs = extractConsentRequestInputs(request.headers);
 
-	if (inputs.country) {
-		requestHeaders.set('x-c15t-country', inputs.country);
-	}
-	if (inputs.region) {
-		requestHeaders.set('x-c15t-region', inputs.region);
-	}
-	if (inputs.gpc !== undefined) {
-		requestHeaders.set('sec-gpc', inputs.gpc ? '1' : '0');
-	}
+	// The visitor's own `accept-language` list stays for the app to read.
+	writeConsentInputHeaders(requestHeaders, { ...inputs, language: undefined });
 
 	const response = NextResponse.next({
 		request: {

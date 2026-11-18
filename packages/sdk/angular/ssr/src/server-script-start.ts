@@ -12,8 +12,7 @@
 import type { InthProviderOptions } from '@inth/angular';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import type { serverScriptStart } from '@inth/sdk/runtime/script-server-start';
-
-const NONCE = /^[\w+/=-]+$/u;
+import { SAFE_NONCE } from '@inth/sdk/server';
 
 type ServerStartOptions = Parameters<typeof serverScriptStart>[0];
 
@@ -49,7 +48,7 @@ export const startScriptsOnServer = async function startScriptsOnServer(
 		return;
 	}
 	const script = document.createElement('script');
-	if (nonce && NONCE.test(nonce)) {
+	if (nonce && SAFE_NONCE.test(nonce)) {
 		script.setAttribute('nonce', nonce);
 	}
 	script.textContent = code;

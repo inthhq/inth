@@ -1,3 +1,4 @@
+import { SAFE_NONCE } from '@inth/sdk/server';
 /**
  * Keeps a tap on the server-rendered banner made before the app hydrates.
  *
@@ -15,8 +16,6 @@ import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	EARLY_TAP_ROOT,
 } from '@inth/sdk/surface-actions';
-
-const NONCE = /^[\w+/=-]+$/u;
 
 /** Marks the script, so a page gets it once. @internal */
 export const EARLY_TAP_SCRIPT_ATTRIBUTE = 'data-inth-early-tap';
@@ -41,7 +40,7 @@ export const addEarlyTapScript = function addEarlyTapScript(
 	}
 	const script = document.createElement('script');
 	script.setAttribute(EARLY_TAP_SCRIPT_ATTRIBUTE, '');
-	if (nonce && NONCE.test(nonce)) {
+	if (nonce && SAFE_NONCE.test(nonce)) {
 		script.setAttribute('nonce', nonce);
 	}
 	script.textContent = EARLY_CONSENT_TAP_SCRIPT;

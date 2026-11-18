@@ -18,6 +18,7 @@ import {
 	normalizeRoutePrefix,
 	readModeData,
 	readRequestConsent,
+	writeConsentInputHeaders,
 } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
@@ -125,21 +126,10 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
 	inputs: ConsentRequestHeaderInputs
 ): void {
 	try {
-		if (inputs.country) {
-			headers.set('x-c15t-country', inputs.country);
-		}
-		if (inputs.region) {
-			headers.set('x-c15t-region', inputs.region);
-		}
-		if (inputs.language) {
-			// The resolved language, not the browser's list: a downstream
-			// route re-reads `accept-language`, and an `options.language`
-			// override has to reach it too.
-			headers.set('accept-language', inputs.language);
-		}
-		if (inputs.gpc !== undefined) {
-			headers.set('sec-gpc', inputs.gpc ? '1' : '0');
-		}
+		// The resolved language, not the browser's list: a downstream route
+		// re-reads `accept-language`, and an `options.language` override has
+		// to reach it too.
+		writeConsentInputHeaders(headers, inputs);
 	} catch {
 		// Immutable headers — locals still carry the normalized inputs.
 	}

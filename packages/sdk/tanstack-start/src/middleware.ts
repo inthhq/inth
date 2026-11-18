@@ -1,6 +1,7 @@
 import type { StorageConfig } from '@inth/sdk/engine';
 import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
 import type { ConsentRequestHeaderInputs as ConsentRequestInputs } from '@inth/sdk/schema/types';
+import { writeConsentInputHeaders } from '@inth/sdk/server';
 import { createMiddleware } from '@tanstack/react-start';
 
 import {
@@ -74,18 +75,7 @@ const writeNormalizedHeaders = function writeNormalizedHeaders(
 	language: string | undefined
 ): void {
 	try {
-		if (language) {
-			headers.set('accept-language', language);
-		}
-		if (inputs.country) {
-			headers.set('x-c15t-country', inputs.country);
-		}
-		if (inputs.region) {
-			headers.set('x-c15t-region', inputs.region);
-		}
-		if (inputs.gpc !== undefined) {
-			headers.set('sec-gpc', inputs.gpc ? '1' : '0');
-		}
+		writeConsentInputHeaders(headers, { ...inputs, language });
 	} catch {
 		// Some runtimes hand middleware an immutable Request. The inputs are
 		// also remembered per request (see `rememberConsentInputs`), which is

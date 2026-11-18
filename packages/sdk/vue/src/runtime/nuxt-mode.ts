@@ -4,9 +4,7 @@
  * build and every runtime agree on them.
  */
 import type { ConsentMode, HostedMode } from '@inth/sdk/modes';
-
-/** Where the module serves its consent route unless `routePrefix` says otherwise. */
-export const DEFAULT_NUXT_ROUTE_PREFIX = '/api/inth';
+import { DEFAULT_CONSENT_ROUTE_PREFIX } from '@inth/sdk/server';
 
 /** The Nuxt module options that choose where the policy comes from. */
 export interface NuxtConsentModeConfig {
@@ -95,7 +93,9 @@ export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
 	) {
 		return undefined;
 	}
-	return trimTrailingSlashes(config.routePrefix ?? DEFAULT_NUXT_ROUTE_PREFIX);
+	return trimTrailingSlashes(
+		config.routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX
+	);
 };
 
 /**
