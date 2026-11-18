@@ -35,6 +35,7 @@ import {
 	NATIVE_EVENT_NAMES,
 	PROTOCOL_VERSION,
 } from '../index';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../vocabulary';
 
 const FIXTURE_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),
@@ -644,19 +645,32 @@ describe('protocol fixtures', () => {
 			};
 			expect(request.method).toBe('POST');
 			expect(request.path).toBe('/v1/consent/records');
+			// A /v1 save names a property and carries one lowercase UUID key on its
+			// first send and on every replay, so an absent value must not pass.
+			expect(fixture.input.property).toMatch(/\S/u);
 			expect(request.body.property).toBe(fixture.input.property);
+			expect(fixture.input.idempotencyKey).toMatch(
+				/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u
+			);
 			expect(request.body.idempotencyKey).toBe(fixture.input.idempotencyKey);
 			expect(request.body.givenAt).toBe(fixture.input.actionAt);
-			// Every confirmed category has a receipt in the answer.
-			const answer = request.body.answer as {
-				categories: Record<string, unknown>;
-			};
-			for (const category of request.body.confirmed as string[]) {
-				expect(answer.categories[category]).toBeDefined();
-			}
+			const payload = fixture.expected.savePayload as {
+				choice: { categories: Record<string, unknown> };
+				confirmed: { categories: Record<string, boolean> };
+			} & Record<string, unknown>;
+			// The answer is every receipt the queued choice holds, and nothing else.
+			expect(request.body.answer).toEqual({
+				categories: payload.choice.categories,
+			});
+			// The action confirmed exactly the categories the queued payload names, in
+			// canonical order, and an acknowledgement confirms none.
+			expect(request.body.confirmed).toEqual(
+				OPTIONAL_CONSENT_CATEGORIES.filter(
+					(category) => category in payload.confirmed.categories
+				)
+			);
 			// IAB is out of scope, so the key must stay absent, not null.
 			expect('tcString' in request.body).toBe(false);
-			const payload = fixture.expected.savePayload as Record<string, unknown>;
 			expect(payload.idempotencyKey).toBe(fixture.input.idempotencyKey);
 			expect(payload.givenAt).toBe(fixture.input.actionAt);
 			expect(payload.tcString).toBeNull();
