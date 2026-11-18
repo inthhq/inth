@@ -258,7 +258,6 @@ export const listPartFiles = function listPartFiles(part: Part): string[] {
 
 const REWRITTEN = /\.(?:[cm]?js|[cm]?ts|tsx|jsx|css|json|map|vue|svelte)$/u;
 
-/** Copies one part into `lib/<part>` and rewrites its private names. */
 /** The file an export key points at for `types` or for `import`. */
 const exportFile = function exportFile(
 	part: Part,
@@ -330,6 +329,10 @@ const writeMergedEntries = function writeMergedEntries() {
 	}
 };
 
+/**
+ * Copies one part into `lib/<part>` and rewrites its private names.
+ * Returns the number of files copied.
+ */
 export const assemblePart = function assemblePart(part: Part): number {
 	const source = join(SDK_ROOT, part);
 	const target = join(PACKAGE_ROOT, 'lib', part);
