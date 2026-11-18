@@ -4,26 +4,21 @@
 		"request": {
 			"body": {
 				"consentAction": "all",
-				"domain": "app.example.com",
 				"givenAt": 1770000000000,
 				"model": "opt-in",
 				"policySnapshotToken": "tok-nothing-declared",
-				"preferences": {
-					"necessary": true
-				},
-				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d",
-				"type": "cookie_banner",
+				"subjectId": "019c1c38-a400-7100-8000-000000000002",
 				"uiSource": "banner",
-				"choice": {
-					"categories": {},
-					"version": 3
-				}
+				"answer": {
+					"categories": {}
+				},
+				"confirmed": [],
+				"idempotencyKey": "019c1c38-a400-7100-8000-000000000105",
+				"property": "com.example.app"
 			},
-			"headers": {
-				"x-inth-policy-contract": "1"
-			},
+			"headers": {},
 			"method": "POST",
-			"path": "/subjects"
+			"path": "/v1/consent/records"
 		},
 		"savePayload": {
 			"choice": {
@@ -58,12 +53,13 @@
 			},
 			"policySnapshotToken": "tok-nothing-declared",
 			"subject": {
-				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d"
+				"subjectId": "019c1c38-a400-7100-8000-000000000002"
 			},
-			"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d",
+			"subjectId": "019c1c38-a400-7100-8000-000000000002",
 			"tcString": null,
 			"uiSource": "banner",
-			"user": null
+			"user": null,
+			"idempotencyKey": "019c1c38-a400-7100-8000-000000000105"
 		},
 		"snapshotAfter": {
 			"activeUI": "none",
@@ -113,7 +109,7 @@
 			"restrictions": {},
 			"revision": 2,
 			"subject": {
-				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d"
+				"subjectId": "019c1c38-a400-7100-8000-000000000002"
 			},
 			"translations": {
 				"language": "en",
@@ -180,7 +176,7 @@
 			"restrictions": {},
 			"revision": 1,
 			"subject": {
-				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d"
+				"subjectId": "019c1c38-a400-7100-8000-000000000002"
 			},
 			"translations": {
 				"language": "en",
@@ -219,7 +215,7 @@
 			"choice": null,
 			"noticeDismissal": null,
 			"subject": {
-				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d"
+				"subjectId": "019c1c38-a400-7100-8000-000000000002"
 			}
 		},
 		"transport": {
@@ -292,17 +288,18 @@
 				"policySnapshotToken": "tok-nothing-declared"
 			},
 			"headers": {
-				"x-inth-policy-contract": "1"
+				"x-request-id": "req_fixture_init"
 			},
 			"status": 200
 		},
 		"user": null,
 		"consentCategories": null,
 		"actionAt": 1770000000000,
-		"domain": "app.example.com",
+		"idempotencyKey": "019c1c38-a400-7100-8000-000000000105",
 		"intent": {
 			"action": "all"
-		}
+		},
+		"property": "com.example.app"
 	},
 	"kind": "save-body",
 	"notes": [
@@ -313,12 +310,13 @@
 		"there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See \"Corrections to this contract\" in packages/native-protocol/CONTRACT.md.",
 		"revision is a monotonic counter that starts at 0 and bumps once per committed mutation. It is not a count of the steps a runner took. Compare it as a number, and read the pinned value rather than deriving it.",
 		"GPC is a live signal only. Nothing records it: the gpc restriction applies while privacySignals.gpc.active is true and lifts when it is not, and no snapshot carries a stored directive for it.",
-		"evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which is a negotiated contract header over a 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that was refused or never arrived leaves it false.",
+		"evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which on /v1 is any 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that failed or never arrived leaves it false.",
 		"error is null in every fixture: no fixture exercises a transport failure or an unreadable wire.",
 		"Any field this file does not mention must not be invented. Unknown wire values fail closed.",
 		"savePayload is what the pending queue must persist before the request, byte-for-byte, and a replay must resend it unchanged after a later init changes policy.",
-		"request.headers must carry the policy contract declaration with exactly this value. x-inth-version is platform telemetry and is deliberately not pinned.",
-		"request.body is the POST /subjects body. tcString is absent because IAB is out of scope: never add the key.",
+		"request.headers is empty on purpose: a /v1 request sends no version header and no policy-contract header. Platform telemetry headers are not pinned.",
+		"request.body is the POST /v1/consent/records body. answer holds every receipt the subject has after the action, confirmed names the categories this action confirmed, and property is input.property. tcString is absent because IAB is out of scope: never add the key.",
+		"input.idempotencyKey is the key the core makes once for this action. It is part of savePayload and of the body, and a replay sends it unchanged.",
 		"the commit happens at input.now, so givenAt, every confirmedAt, and snapshotAfter.evaluatedAt all equal it.",
 		"snapshotBefore is the snapshot after init and before the commit, and snapshotAfter is the snapshot the commit leaves behind. Both are asserted.",
 		"consentAction and uiSource come from the kernel, not from the intent name: a partial save is custom even when the user turned everything on.",

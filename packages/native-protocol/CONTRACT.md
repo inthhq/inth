@@ -163,8 +163,8 @@ Rules that hold everywhere
    resolution serves `policyPending: true` with every optional category denied,
    and never invents a permission.
 6. Never read or write IDFV, ADID, or any persistent device identifier for
-   identity. The subject id is a inth-generated `sub_` identifier, described under
-   Subject identity.
+   identity. The subject id is an Inth-generated UUIDv7, described under Subject
+   identity.
 
 State model
 -----------
@@ -215,8 +215,9 @@ that only strictly necessary processing runs:
   fingerprint }`, whose fingerprint is the policy's choice fingerprint rather than the
   notice one. Any `save()` records it at the action time (keeping a stored one at
   least as new), confirms no category, leaves `explicitChoice` as it was, and sends a
-  receipt: `preferences` `{ necessary: true }`, `choice` `{ categories: {}, version:
-  3 }`, and `consentAction` `all` or `necessary` for the bulk actions.
+  record: `answer` with the receipts the subject already holds (none on a device that
+  never chose), `confirmed` `[]`, and `consentAction` `all` or `necessary` for the bulk
+  actions.
 - The prompt is answered while the acknowledgement is younger than the choice lifetime,
   or while any category decision is still valid under the current choice fingerprint.
   Otherwise the reason is `expired` when the acknowledgement or a decision made under
@@ -303,7 +304,7 @@ bumping.
 **An error is snapshot state, so it travels on a revision.** `error` is a field
 of the snapshot the way `model` and `location` are, and that settles the question
 the first draft of this file left open: there is no revision-free write. A core
-that records `unsupported-contract` has committed a change, and that change
+that records an unreadable policy has committed a change, and that change
 reaches JavaScript on the `snapshot` event, from the observers, in the persisted
 envelope. The paired `error` event is a convenience for a host that wants the
 code without pulling a snapshot. For errors recorded in the snapshot, it is never
@@ -327,7 +328,7 @@ bridge from carrying an error on a `snapshot` event at all. It fails on the
 observers: an error write that is not a mutation would still be a publication, so
 every repeated error would wake every subscriber for nothing, and "exactly one
 event per committed change" would need an exception per error path. It also is
-not what the kernel does -- `@inth/sdk-core` folds a refused `/init` into a committed
+not what the kernel does -- the web kernel folds a failed `/init` into a committed
 patch like any other.
 
 Two things this rule deliberately does not decide. Whether a re-served response
@@ -353,7 +354,7 @@ Native API (Swift and Kotlin, same shape)
     save(_ intent) -> CommitResult    // 'all' | 'necessary' | explicit map
     dismissNotice()
     refresh()
-    identify(user) / logout()
+    identify(user, identityToken?) / logout()
     setOverrides({ country, region, language, gpc })
     flushPending()                    // retry the offline queue
     reset()                           // wipe consent, keep the subject id
@@ -926,7 +927,7 @@ creates no body that a later flush could deliver.
 
 IAB decisions also store the complete IAB record in that envelope. Each new IAB
 decision supersedes older queued grants. A full denial supersedes older queued
-actions for the same subject ID, external ID and domain. Other owners' frozen
+actions for the same subject ID, external ID and property. Other owners' frozen
 withdrawals remain owed. Identity changes and reset
 persist an empty consent record while retaining frozen withdrawals and an action
 time watermark. Their failure semantics and migration rules are defined in
@@ -987,11 +988,11 @@ first send is still open, and fails if any entry reaches the transport twice for
 one queued decision.
 
 Whether to retry is decided by whether the same bytes could ever be accepted.
-The queue replays frozen bytes, so a `400 INPUT_VALIDATION_FAILED` or a contract
-declaration this build cannot speak says the same thing on the eleventh try as on
-the first. Grant entries are dropped with the backend's reason named. Full
+The queue replays frozen bytes, so a `400 invalid_request` says the same thing on the
+eleventh try as on the first. Grant entries are dropped with the backend's
+`error.code` and `requestId` named. Full
 withdrawals remain owed until delivered or superseded by a newer full denial for
-the same subject ID, external ID and domain. A `503`, a
+the same subject ID, external ID and property. A `503`, a
 timeout, a dropped socket, a rate limit, and `408`/`425` say nothing about the
 body, so the entry keeps its place. `401` and `403` are permanent for a body:
 the queue holds bodies and nothing else, and a credential that comes back later
@@ -1017,9 +1018,9 @@ union in `packages/react-native/src/protocol` and both bridges move with it.
 Transports
 ----------
 
-One mode. The mobile SDKs work only with the Inth hosted service: the same backend
-endpoints and headers as the web SDK's hosted mode, and no self-hosted, offline or
-custom mode. The web SDK keeps its three modes.
+One mode. The mobile SDKs work only with the Inth hosted service, through its `/v1`
+routes on the project URL, and no self-hosted, offline or custom mode. The web SDK
+keeps its own modes.
 
 Configuration is the project URL plus an optional `dryRun` boolean:
 
@@ -1040,32 +1041,104 @@ URL, which is how a Release fixture reaches a loopback backend. It still refuses
 `dryRun` in a release build, except Kotlin's `Inth.bootstrap` and `ConsentCore`
 constructor in `inth-core`, which have no Android context to ask.
 
-Every request carries these headers:
+### Routes
 
-    x-inth-version:            <Inth.version> on Swift, <NativeConfig.sdkVersion> on Kotlin
-    x-inth-platform:           apple-><InthApple.version> for a Swift app, android-><sdkVersion>
-                               for a Kotlin app, rn-><version> for a core either React Native
-                               binding configures
-    x-inth-policy-contract:    <POLICY_CONTRACT_VERSION from @inth/sdk-schema>
+Every path is relative to the project URL:
 
-Both cores send the unprefixed semantic version, matching the web header format.
-Each reports its host separately in `x-inth-platform`. Hosted gateways can reject
-unknown platform prefixes in `x-inth-version`, so platform attribution must not be
-prepended to either version. Kotlin reads the tag from `NativeConfig.platform`,
-which defaults to `android`; `null` sends no platform header. Swift reads it from
-`InthAppleConfiguration.platform`, which defaults to `apple`. Web clients send no
-platform header. `@c15t/backend` passes `x-inth-platform` to `sessions.onReport`.
-The policy-contract header remains the capability declaration.
+    GET  /v1/consent/init           policy, location, translations, vendor list
+    POST /v1/consent/records        one consent save: the bytes the pending queue holds
+    POST /v1/subjects/:id/link      link the device subject to a person, only with an
+                                    identity token (see "Subject identity")
 
-A backend that answers `unsupported-contract` is a hard configuration error. The
-core emits `error` and stays deny-all rather than guessing the wire.
+A device calls no other route, and never the c15t routes at the root (`/init`,
+`/subjects`, `/subjects/:id`). The consent manifest (`/v1/consent/manifest`) is
+fetched at build time by the CLI, not by a device, and `/v1/consent/sessions` is for
+server-side callers. The document routes are not part of the mobile SDKs.
+
+### No negotiation
+
+The path is the version. A `/v1` request sends no `x-inth-version` header and no
+policy-contract header or query parameter, and a core reads no contract declaration
+from a response. Every `/v1` response uses the current policy contract, so a `200`
+from `/v1/consent/init` is a definitive answer, and a policy resolution the core
+cannot read is contract rule 5, not a configuration error. There is no
+`unsupported-contract` error any more.
+
+Every request carries `accept: application/json` and, with a body,
+`content-type: application/json`, plus one telemetry header:
+
+    x-inth-platform:   apple-><InthApple.version> for a Swift app, android-><sdkVersion>
+                       for a Kotlin app, rn-><version> for a core either React Native
+                       binding configures
+
+Kotlin reads the tag from `NativeConfig.platform`, which defaults to `android`; `null`
+sends no platform header. Swift reads it from `InthAppleConfiguration.platform`, which
+defaults to `apple`. No request carries cookies, and a core stores none a response
+sets.
+
+`GET /v1/consent/init` takes its inputs in the query string: `country`, `region`,
+`language` and `gpc` (`1` or `0`), each only when the device has a value. The
+override headers that repeat them (`accept-language`, `x-inth-country`,
+`x-inth-region`, `sec-gpc`) and the vendor scope header `x-inth-vendors` are sent as
+before.
+
+### Saving: `POST /v1/consent/records`
+
+The body is built once per action, frozen, and queued before the first send:
+
+    idempotencyKey     a lowercase UUID the core makes once for the action. It is part of
+                       the frozen body, so every replay sends the same key and the
+                       backend records the action once.
+    subjectId          the stored subject id: a UUIDv7, or a c15t `sub_` id until a
+                       response replaces it (see "Subject identity")
+    property           the configured property, by default the bundle ID on iOS and the
+                       application ID on Android, lowercase
+    givenAt            the action time
+    consentAction      `all`, `necessary` or `custom`
+    model, uiSource    from the snapshot the action was made on
+    policySnapshotToken  when the core holds one
+    policyId, fingerprint, country, region, language, gpc
+                       the decision-input assertion, only when there is no token, by
+                       the same rule as before
+    tcString, addtlConsent, vendorChoice   for an IAB save
+    metadata           `{ userProperties }` when the identified user has properties
+    externalId, identityProvider   when the subject is identified
+    answer             `{ categories: { <category>: receipt } }`: every receipt the
+                       subject holds after the action, in the 3.x receipt shape
+                       `{ value, confirmedAt, basis }`. `necessary` is left out.
+    confirmed          the categories this action confirmed, sorted. Every entry is a
+                       key of `answer.categories`; it is empty for an acknowledgement.
+
+The body never carries `identityToken`. Queued bytes are written to disk and may be
+replayed long after a token expires, so the token goes only on the link request.
+Without a token the backend stores the save and leaves the `externalId` link off.
+
+A `200` is the 3.x save result with the canonical `subjectId`; a core reads that one
+field (see "Subject identity") and ignores the rest.
+
+### Errors
+
+Every `/v1` failure has one body:
+
+    { "error": { "code": "invalid_request", "message": "...", "details": { ... } },
+      "requestId": "..." }
+
+A core reads `error.code`, `error.message` and `requestId`, falling back to the
+`x-request-id` header for the request id and to the raw body text for the message
+when the body is not that shape. The HTTP error a core reports carries the status, the
+code and the request id, and the error event names all three. Whether a queued body is
+retried still follows the status: `408`, `425`, `429` and every `5xx` keep the entry,
+any other `4xx` is permanent for those bytes (see "The pending save queue").
+
+### The pending queue
 
 Writes go through a pending queue:
 
-- Persist the `SavePayload` before the request, not after.
+- Persist the `SavePayload`, its idempotency key and the body before the request,
+  not after.
 - Freeze each action's body before sending. A later init must not rewrite it.
   A full denial supersedes older queued actions for the same frozen owner and
-  domain. A grant never cancels an owed withdrawal.
+  property. A grant never cancels an owed withdrawal.
 - Retry on the next launch, on foreground, and on reachability change.
 - Keep at most 20 payloads, dropping the oldest grants when needed. Never evict a
   distinct owner's owed withdrawal to make room. If those withdrawals fill the
@@ -1100,8 +1173,9 @@ failure wins:
 9. A query or fragment is `query`.
 
 The normal form is `https://<lowercased host>` with no trailing slash. The same
-string reaches the transport, the bundled-policy endpoint binding and the save
-body `domain` on every platform.
+string reaches the transport and the bundled-policy endpoint binding on every
+platform. The save body's `property` is not derived from it: it is the app's own
+bundle or application ID unless the host configures one.
 
 The relaxed rule applies only when `dryRun` is on in a debug build. It takes any
 `https` URL, or `http` on exactly `localhost`, `127.0.0.1` or `[::1]`, with a port
@@ -1128,7 +1202,8 @@ dryRun
   and `IABGPP_*` keys, Consent Mode) behave as normal.
 - Consent records are dropped: not queued, not sent. A save reports success with
   `queued` false and emits no save-queued event.
-- `identify`, `patchIdentity` and `logout` change local state and send nothing.
+- `identify` and `logout` change local state and send nothing, with or without an
+  identity token.
 - A pending queue left by an earlier run without `dryRun` is not flushed. The
   first dry-run save drops it, so an old grant cannot replay after a newer choice.
 - `/init` is still fetched unless an in-code policy is set. With a bundled or
@@ -1211,54 +1286,74 @@ the records, and send it as the subject id. Do not derive it from any hardware
 identifier. If the app is reinstalled, the store is gone and the subject starts
 fresh, which matches the web SDK when storage is cleared.
 
-The format is the one the backend validates, so a core that invents its own gets
-every save rejected: `packages/sdk/schema/src/api/subject/post.ts` requires
-`^sub_[1-9A-HJ-NP-Za-km-z]+$`. Build it as
-`packages/sdk/core/src/libs/generate-subject-id.ts` does, byte for byte, because the
-web SDK and both native cores have to produce ids a server cannot tell apart:
+The id is a UUIDv7 in lowercase canonical text, which is what every `/v1` route
+takes. `packages/native-protocol/subject-id/uuidv7.json` pins the layout, generated
+with the fixtures, and both cores mint its `vectors` and get the same ids:
 
-- 20 bytes: the big-endian signed 64-bit count of milliseconds since
-  `1_700_000_000_000`, then 12 cryptographically random bytes. The offset may be
-  negative on a clock set before the epoch, and is encoded as two's complement
-  like any other signed value.
-- Base58 over all 20 bytes with the Bitcoin alphabet
-  `123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz`, one `1` prepended
-  per leading zero byte.
-- The `sub_` prefix.
+- bytes 0 to 5: milliseconds since the Unix epoch, big-endian. A clock below zero
+  writes zero and one past 48 bits writes the 48-bit maximum, so a device with a
+  wrong clock still writes an id the backend accepts.
+- byte 6: `0x70` or the low four bits of random byte 0; byte 7: random byte 1.
+- byte 8: `0x80` or the low six bits of random byte 2; bytes 9 to 15: random bytes
+  3 to 9.
+
+Ten bytes come from the platform CSPRNG. The same generator makes each save's
+idempotency key.
 
 A queued payload carries the id that produced it, so a subject id never changes to
 fit a payload or a policy. Frozen bytes stay frozen: a core that rewrites the id on
 a queued body has two records for one decision.
 
-The read side is the other half of the rule, and it does not say "adopt whatever
-was written". An id the producer will not accept is an identity this build cannot
-use, and the contract already says what bytes this build cannot use are worth:
-nothing, and indistinguishable from a fresh install. So a core that reads back a
-stored subject id failing `^sub_[1-9A-HJ-NP-Za-km-z]+$` adopts no identity. It
-treats the envelope as absent, comes up as a first launch, and emits
-`subject-id-unusable` so the host can see why a returning user is being asked
-again.
+### Reading a stored id
+
+The `read` cases in `uuidv7.json` are the rule, and every core answers them the same
+way:
+
+- `uuidv7`: a lowercase UUIDv7 with the RFC 4122 variant, not the nil or max UUID.
+  The core adopts it.
+- `c15t`: a `sub_` id followed by base58 text (`^sub_[1-9A-HJ-NP-Za-km-z]+$`), the form
+  a c15t client stored. The core adopts it and sends it as it is, because every `/v1`
+  route that takes a subject id also takes this form and maps it to a canonical UUID.
+- `unusable`: anything else, including uppercase text and the UUIDv4 shape an early
+  prerelease wrote. The core adopts no identity. It treats the envelope as absent,
+  comes up as a first launch, and emits `subject-id-unusable` so the host can see why a
+  returning user is being asked again.
 
 Re-minting an id underneath a decision that survived is the rejected alternative.
 It splits one subject across two ids, leaves the earlier records attributed to an id
 no query returns, and re-prompts nobody, so nobody ever notices. Discarding the
-envelope re-prompts once and leaves one complete record, and it orphans nothing:
-every save made under a refused id was already rejected by the producer, so the
-backend holds no consent for it. The cost falls on installs written by a build that
-accepted the legacy UUID shape, which is a prerelease population and no more.
+envelope re-prompts once and leaves one complete record. Both cores emit
+`subject-id-unusable` on this path, and a test per core holds the line: a stored
+envelope with a well-formed decision under an unusable subject id reads exactly like a
+first launch, records and all.
 
-Both cores emit `subject-id-unusable` on this path, and one conformance fixture per
-core holds the line: a stored envelope with a well-formed decision under a subject id
-the producer refuses must read exactly like a first launch, records and all.
+### Adopting the canonical id
 
-The encoding is pinned by a table of eight vectors -- twelve random bytes, a wall
-clock reading, and the id -- asserted identically in three places:
-`packages/react-native/scripts/__tests__/native-wire.test.ts`,
-`packages/android/.../SubjectIdGeneratorTest.kt`, and
-`packages/swift/Tests/InthCoreTests/SubjectIdTests.swift`. The clock column is
-the reading the generator is pinned to, not the offset it encodes; the epoch is
-subtracted inside, as the web SDK subtracts it from `Date.now()`. Add a row to all
-three at once.
+Every `/v1` response that names a subject carries the canonical `subjectId`: the
+`200` from `POST /v1/consent/records` and from `POST /v1/subjects/:id/link`. When it
+is a UUIDv7 and differs from the stored id, the core replaces the stored id with it,
+in the identity slot and in the envelope together, as one identity change: one
+revision, one publication, the same decision. A value that is not a UUIDv7 is
+ignored. So a c15t id is sent until the first response that names the subject, and
+the canonical UUID after that. Queued bodies keep the id they were frozen with; the
+backend maps it.
+
+### Linking a person
+
+`identify(user)` attaches the external id locally, as before: the snapshot, the
+envelope, and every later save body (`externalId`, `identityProvider`). It sends
+`POST /v1/subjects/:id/link` only when the host also passes an identity token:
+
+    { "externalId": "user_123", "identityProvider": "clerk", "identityToken": "..." }
+
+`identityProvider` is sent when the user has one. Without a token there is no
+request: a device has no secret key, and the route refuses a link without proof.
+The token is held for that one request and never written to storage or to a save
+body. A link is not queued: one that fails emits an error with the backend's
+`error.code` (`identity_token_required`, `identity_token_invalid`,
+`identity_conflict`) and keeps the local identity, and the host calls `identify`
+again with a fresh token. A `200` names the canonical subject, which the core adopts
+as above. `logout()` forgets the external id locally and sends nothing.
 
 Wiping consent (reset)
 ----------------------
@@ -1582,22 +1677,25 @@ invented. Every fixture carries `now` (the fixed clock every side must use),
 `intent`. A fixture about the host's declaration adds `consentCategories`, where `null`
 is a host that declares nothing; a fixture without the key was generated with every
 category declared, and a runner configures its core that way. Nothing is derived from a random value: the subject id is always
-supplied, so no fixture depends on a CSPRNG. The fixtures carry ids in the base58
-`sub_` shape under "Subject identity". A stored legacy UUID is refused as that section
-describes, which `UnusableSubjectIdTest` (Kotlin) and `UnusableSubjectIdTests` (Swift)
-cover rather than a shared fixture.
+supplied, so no fixture depends on a CSPRNG. The fixtures carry lowercase UUIDv7 ids,
+minted by the layout under "Subject identity". A stored unusable id is refused as that
+section describes, which `UnusableSubjectIdTest` (Kotlin) and `UnusableSubjectIdTests`
+(Swift) cover rather than a shared fixture. A save-body input also supplies the
+`idempotencyKey` and the `property`.
 
 An `expected` is what the kernel produced for that input. It is not hand-written,
 with the single exception named in "The stored envelope". `evaluation-*` pin
 `snapshot`, the subset of the mobile snapshot named above. `save-body-*` pin
 `snapshotBefore`, `snapshotAfter`, the `savePayload` the core must hold, and
-`request`: the exact `method`, `path`, `headers`, and `body` the backend receives,
-including the `x-inth-policy-contract` value. `native-envelope-*` pin `write`,
+`request`: the exact `method`, `path`, `headers`, and `body` the backend receives.
+`headers` is empty: a `/v1` request pins no header, and the telemetry header is not
+compared. `savePayload` is the kernel's payload with the `idempotencyKey` added and
+the web-only `timeToDecisionMs` left out. `native-envelope-*` pin `write`,
 `relaunch`, the field set in `fields`, and for a read case `read`.
 
 `index.json` lists every fixture with `id`, `kind`, `protocolVersion`, `file`,
-`bytes`, and `sha256`, plus the shared `clock`, `count`, `protocolVersion`, and
-`policyContractHeader`. A runner enumerates the index rather than the directory, so
+`bytes`, and `sha256`, plus the shared `clock`, `count`, and `protocolVersion`.
+A runner enumerates the index rather than the directory, so
 no platform hard-codes file names, silently skips a fixture, or reads a file that
 was edited after generation. Every runner verifies each hash, and the generator
 refuses to write a fixture whose `protocolVersion` differs from `PROTOCOL_VERSION`.
@@ -1676,8 +1774,8 @@ Kotlin core, as built
   warns once, and serves deny-all with `policyPending: true`. The SPI exposes
   `KeyValueStore.keys()` for that purge only, and defaults to `emptySet()`.
 - Every mutation in `ConsentCore` already ended in `persist()` and
-  `notifySnapshot()` together, including the failed-init path that records
-  `unsupported-contract`, so this core needed no change to satisfy "Revisions and
+  `notifySnapshot()` together, including the failed-init path that records an
+  unreadable policy, so this core needed no change to satisfy "Revisions and
   error writes". `ProtocolFixtureTest` runs the revision trace to keep it that way:
   the same four steps, the same two numbers per step, the same expectations the
   Swift runner reads.
@@ -1709,8 +1807,8 @@ Swift core, as built
   `kind`, and diffs the produced snapshot against `expected` recursively, so a
   mismatch names the field and both values. It claims every entry in `index.json`;
   an unclaimed entry fails the run.
-- Fixed while wiring the revision trace: the unsupported-contract branch of
-  `reportInitFailure` wrote `error` and announced the new revision on the core's own
+- Fixed while wiring the revision trace: the contract-refusal branch of
+  `reportInitFailure`, since removed with the `/v1` move, wrote `error` and announced the new revision on the core's own
   event hub, but never called `publish()`. The React Native pump is fed by
   `onChange`, not by that hub, so iOS bumped the revision with no observer
   notification and no envelope write: the error write was committed and unpublished,
@@ -1824,7 +1922,7 @@ prebuild cannot see the build type. `mode` and `initURL` are gone, and each
 throws an error naming its replacement. `policy` works with `backendURL`; it is
 still refused beside `policyResource`, `bundleManifest` or `iab`. There is no
 credential parameter: a project is identified
-by its backend URL, and neither core's `/init` nor its `/subjects` request carries
+by its backend URL, and no `/v1` request a core makes carries
 a key, so the plugin has nowhere honest to put one. `forceGPC` is for staged
 builds. `consentCategories` declares the categories the app offers, so the same
 backend and the same declaration list the same rows as a web app; an unknown id
@@ -1846,7 +1944,7 @@ Android through `InthAndroid` and `InthReactNativeBootstrap`:
     com.inth.backend.url                com.inth.BACKEND_URL
     com.inth.dryRun                     com.inth.DRY_RUN
     com.inth.policy.rules               com.inth.POLICY_RULES
-    com.inth.backend.domain             com.inth.BACKEND_DOMAIN
+    com.inth.backend.property           com.inth.BACKEND_PROPERTY
     com.inth.forceGPC                   com.inth.FORCE_GPC
     com.inth.categories                 com.inth.CATEGORIES
     com.inth.reactnative.AutoBootstrap  com.inth.reactnative.AUTO_BOOTSTRAP
@@ -1895,7 +1993,7 @@ gone. The init URL keys went with `initURL`: policy is fetched from the project
 URL.
 
 JavaScript reads the same values from `extra.inth`: `backendURL` in its normal
-form, `dryRun`, `domain`, `enableAppTrackingTransparency`, and the `protocol`
+form, `dryRun`, `property`, `enableAppTrackingTransparency`, and the `protocol`
 range. There is no second config source.
 
 Theme keys

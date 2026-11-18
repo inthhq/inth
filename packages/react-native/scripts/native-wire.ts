@@ -1,24 +1,18 @@
 /**
- * The save request the native cores send: `POST /subjects` with a `sub_`
- * subject ID and the policy contract header. The web SDK speaks `/v1`, so
- * this wire lives here, beside the fixtures that pin it for the Swift and
- * Kotlin cores.
+ * Wire helpers the protocol fixture generator still needs from the web SDK's
+ * retired subject route. The generator turns the subject body into the `/v1`
+ * records body the native cores send, and reads stored `sub_` subject IDs.
  */
 import { OPTIONAL_CONSENT_CATEGORIES } from '@inth/sdk/engine';
 import type { OptionalConsentCategory, SavePayload } from '@inth/sdk/engine';
-import {
-	POLICY_CONTRACT_HEADER,
-	POLICY_CONTRACT_VERSION,
-} from '@inth/sdk/schema/types';
+import { POLICY_CONTRACT_VERSION } from '@inth/sdk/schema/types';
 import type {
 	SubjectChoiceWire,
 	VendorChoiceWire,
 } from '@inth/sdk/schema/types';
 
-export { POLICY_CONTRACT_HEADER };
-
 /**
- * The policy contract the native cores declare. Read from the schema, so a
+ * The policy contract version this build reads. Read from the schema, so a
  * fixture never pins a contract the code it was generated from moved past.
  */
 export const POLICY_CONTRACT_HEADER_VALUE = String(POLICY_CONTRACT_VERSION);
@@ -26,54 +20,6 @@ export const POLICY_CONTRACT_HEADER_VALUE = String(POLICY_CONTRACT_VERSION);
 // Base58 without 0, O, I and l, as the backend encodes subject IDs.
 const BASE58_ALPHABET =
 	'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-
-// The backend's subject ID epoch, 2023-11-14T22:13:20Z.
-const EPOCH_TIMESTAMP = 1_700_000_000_000;
-
-const base58Encode = function base58Encode(
-	bytes: Uint8Array,
-	view: DataView
-): string {
-	let num = BigInt(0);
-	for (let offset = 0; offset < bytes.length; offset += 4) {
-		num = num * BigInt(2 ** 32) + BigInt(view.getUint32(offset, false));
-	}
-	const groupBase = BigInt(58 ** 5);
-	let encoded = '';
-	while (num > BigInt(0)) {
-		let group = Number(num % groupBase);
-		num /= groupBase;
-		let digits = '';
-		for (let index = 0; index < 5; index += 1) {
-			digits = BASE58_ALPHABET.charAt(group % 58) + digits;
-			group = Math.floor(group / 58);
-			if (num === BigInt(0) && group === 0) {
-				break;
-			}
-		}
-		encoded = digits + encoded;
-	}
-	for (const byte of bytes) {
-		if (byte !== 0) {
-			break;
-		}
-		encoded = BASE58_ALPHABET.charAt(0) + encoded;
-	}
-	return encoded || BASE58_ALPHABET.charAt(0);
-};
-
-/**
- * A `sub_` subject ID: 8 bytes of milliseconds since the backend's epoch
- * and 12 random bytes, base58 encoded.
- */
-export const generateSubjectId = function generateSubjectId(): string {
-	const buf = crypto.getRandomValues(new Uint8Array(20));
-	const t = Date.now() - EPOCH_TIMESTAMP;
-	const view = new DataView(buf.buffer);
-	view.setUint32(0, Math.floor(t / 2 ** 32), false);
-	view.setUint32(4, t % 2 ** 32, false);
-	return `sub_${base58Encode(buf, view)}`;
-};
 
 /** Whether `id` is a `sub_` ID the backend's `subjectIdSchema` accepts. */
 export const isValidSubjectId = function isValidSubjectId(id: string): boolean {

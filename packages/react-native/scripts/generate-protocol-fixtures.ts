@@ -19,8 +19,9 @@
  * What lands in `packages/native-protocol/`:
  *
  * - `evaluation-*.json` — init response plus stored records in, snapshot out.
- * - `save-body-*.json` — the same plus a commit, and the exact `POST /subjects`
- *   request (headers and body) the kernel puts on the wire.
+ * - `save-body-*.json` — the same plus a commit, and the exact
+ *   `POST /v1/consent/records` request (headers and body) a client puts on the wire
+ *   for the payload the kernel produced. See `buildConsentRecordBody`.
  * - `native-envelope-*.json` — what a native core keeps on the device: the field
  *   set its stored envelope must carry, the snapshot inside it, and the decision
  *   a relaunch with no backend has to reach from those bytes alone. The unreadable
@@ -126,9 +127,7 @@ import {
 } from '../src/protocol/version';
 import {
 	buildSubjectPostBody,
-	generateSubjectId,
 	isValidSubjectId,
-	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_HEADER_VALUE as CONTRACT_HEADER_VALUE,
 } from './native-wire';
 import { buildTcStringFixtures } from './tc-string-fixtures';
@@ -141,79 +140,73 @@ import type { VendorListScopeFixture } from './vendor-list-scope-fixtures';
 /** Evaluation clock for every fixture. Nothing here reads the wall clock. */
 const NOW = 1_770_000_000_000;
 
-/** Domain the `POST /subjects` body is built for. */
-const DOMAIN = 'app.example.com';
+/**
+ * The `property` a `POST /v1/consent/records` body names.
+ *
+ * On a phone it is the application or bundle ID, lowercase, which is what both cores
+ * default to. The fixtures pin one so a runner configures it rather than reading the
+ * test host's own bundle.
+ */
+const PROPERTY = 'com.example.app';
 
 /**
- * The subject ids fixtures replay, every one in the format the producer accepts.
+ * The subject ids fixtures replay: lowercase UUIDv7, the form a `/v1` route takes
+ * and the form both cores mint.
  *
- * `subjectIdSchema` in `packages/sdk/schema/src/api/subject/post.ts` requires
- * `^sub_[1-9A-HJ-NP-Za-km-z]+$` and answers anything else with
- * `INPUT_VALIDATION_FAILED`, so a UUID-shaped id in a fixture pins a `POST /subjects`
- * body that no Inth backend would ever accept, and both native cores would faithfully
- * implement a save that can only fail. These are minted by `generateSubjectId` at the
- * pinned `NOW` with the twelve random bytes noted on each, which is the encoding
- * `packages/native-protocol/CONTRACT.md` pins: eight big-endian bytes of `now - 1_700_000_000_000`, then
- * the tail, base58 over all twenty bytes with the Bitcoin alphabet. `assertSubjectIds`
- * below refuses any id here that the schema would refuse, so the shape cannot drift back.
- *
- * They are constants and not generated at write time because the expected snapshot and
- * the expected save body both carry the id, and a random one would make every
- * regeneration a diff.
- *
- * These used to be lowercase UUID v4 values, because the Swift core's `SubjectIdentity`
- * once refused to load anything else and a conformance fixture has to settle a
- * disagreement in the strict implementation's favour. That read-side rule has since been
- * inverted: an id the producer will not accept is an identity a core cannot use, so the
- * strict answer is now the `sub_` shape and a core that keeps the old one discards the
- * envelope over it. Both cores enforce that, so the fixtures have to be producible ids.
+ * Minted by `mintUuidV7` below from the clock reading and the ten random bytes in
+ * `SUBJECT_MINTS`, which is the layout `subject-id/uuidv7.json` pins for every
+ * platform. They are constants and not drawn at write time because the expected
+ * snapshot and the expected request body both carry the id, and a random one would
+ * make every regeneration a diff.
  */
 const SUBJECT = {
 	/** The subject behind the California scenarios. */
-	california: 'sub_1119tDZHoaqHUq5FWvuwaoswjM',
+	california: '019c1c38-a400-7100-8000-000000000001',
 	/** The California device on its first launch. */
-	californiaFirstLaunch: 'sub_111CP17G2b8XH3UdXwWqZZvDtD',
+	californiaFirstLaunch: '019c1c38-a400-7100-8000-000000000011',
 	/** The subject behind the Europe scenarios, and most envelope cases. */
-	europe: 'sub_1119tDZHoarNxm6kSm3BN6ze9d',
+	europe: '019c1c38-a400-7100-8000-000000000002',
 	/** The Europe device on its first launch. */
-	europeFirstLaunch: 'sub_111CP17G2VuBxuByVqaokUtDVc',
+	europeFirstLaunch: '019c1c38-a400-7100-8000-000000000012',
 	/** The subject with an active GPC signal. */
-	gpc: 'sub_1119tDZHoasUSh8FNbAR9Q7LZu',
+	gpc: '019c1c38-a400-7100-8000-000000000003',
 	/** The subject on the no-match rule. */
-	noMatch: 'sub_1119tDZHoatZvd9kJRHevhE2zB',
+	noMatch: '019c1c38-a400-7100-8000-000000000004',
 	/** The subject on the notice-only rule. */
-	notice: 'sub_1119tDZHoaufQZBFEFQthzLjQT',
+	notice: '019c1c38-a400-7100-8000-000000000005',
 } as const;
 
 /**
- * The clock reading and the twelve random bytes behind each minted id above.
+ * The clock reading and the ten random bytes behind each id above.
  *
- * The literals in `SUBJECT` stay literals so a regeneration is not a diff, and this
- * table is what keeps them honest: `assertSubjectIdsAreProducible` re-mints every id
- * here through `generateSubjectId` and refuses a literal that is not what that encoder
- * writes. Without it, an id here could drift into something no generator produces and
- * still pass the format check.
+ * `assertSubjectIdsAreProducible` re-mints every id here and refuses a literal that
+ * is not what the encoder writes, so a literal cannot drift into a string no
+ * generator produces.
  */
 const SUBJECT_MINTS: Record<string, { clock: number; randomHex: string }> = {
-	california: { clock: NOW, randomHex: '010000000000000000000000' },
-	// The two rows below were minted against a live clock rather than the pinned one, and
-	// their draw was read back out of the literal upstream committed. That makes the weaker
-	// of the two guarantees: for the rows above a draw was chosen first and the id is what
-	// minting it wrote; for these two the check proves the literal is a real encoding of
-	// twenty bytes, not an invented string in the right shape. Tightening them means
-	// minting them here, which restamps two fixtures.
-	californiaFirstLaunch: {
-		clock: 1_789_671_294_838,
-		randomHex: '1b6cf25c72dc89e45f12f012',
-	},
-	europe: { clock: NOW, randomHex: '020000000000000000000000' },
-	europeFirstLaunch: {
-		clock: 1_789_671_294_837,
-		randomHex: '0648fde8511d6d10fb5baeb3',
-	},
-	gpc: { clock: NOW, randomHex: '030000000000000000000000' },
-	noMatch: { clock: NOW, randomHex: '040000000000000000000000' },
-	notice: { clock: NOW, randomHex: '050000000000000000000000' },
+	california: { clock: NOW, randomHex: '01000000000000000001' },
+	californiaFirstLaunch: { clock: NOW, randomHex: '01000000000000000011' },
+	europe: { clock: NOW, randomHex: '01000000000000000002' },
+	europeFirstLaunch: { clock: NOW, randomHex: '01000000000000000012' },
+	gpc: { clock: NOW, randomHex: '01000000000000000003' },
+	noMatch: { clock: NOW, randomHex: '01000000000000000004' },
+	notice: { clock: NOW, randomHex: '01000000000000000005' },
+};
+
+/**
+ * The idempotency key each save-body case sends, minted the same way.
+ *
+ * A core makes one key per save action and freezes it with the payload, so a replay
+ * sends the same key. A fixture supplies it, like the subject id, so no fixture
+ * depends on a random draw.
+ */
+const IDEMPOTENCY_MINTS: Record<string, string> = {
+	all: '01000000000000000101',
+	'ccpa-gpc': '01000000000000000104',
+	'explicit-partial': '01000000000000000103',
+	necessary: '01000000000000000102',
+	'necessary-only-all': '01000000000000000105',
+	'necessary-only-necessary': '01000000000000000106',
 };
 
 /**
@@ -493,9 +486,8 @@ const decideExtra = function decideExtra(
 type InitResponseBody = InitOutput;
 
 /**
- * The `/init` response to serve: status, the producer's contract declaration,
- * and the body. A native runner answers its transport with these three values
- * and nothing else, so the header negotiation is under test too.
+ * The `/init` response to serve: status, response headers, and the body. A native
+ * runner answers its transport with these three values and nothing else.
  */
 interface InitTransport {
 	status: 200;
@@ -636,13 +628,16 @@ interface SaveBodyFixture {
 	input: FixtureInput & {
 		/** Confirmation time for the commit. Always `input.now`. */
 		actionAt: number;
-		domain: string;
+		/** The key the core makes for this action. Supplied, never drawn. */
+		idempotencyKey: string;
 		intent: CommitIntent;
+		/** The `property` the body names: an application or bundle ID. */
+		property: string;
 	};
 	expected: {
 		snapshotBefore: FixtureSnapshot;
 		snapshotAfter: FixtureSnapshot;
-		savePayload: SavePayload;
+		savePayload: NativeSavePayload;
 		request: {
 			method: 'POST';
 			path: string;
@@ -951,33 +946,36 @@ const transportFor = function transportFor(
 ): InitTransport {
 	return {
 		body,
-		// A negotiated producer declares its contract on the response. Without this
-		// header every client treats the body as pre-contract and fails closed, so
-		// the fixtures that carry a policy have to declare it.
-		headers: { [POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
+		// `/v1` has no contract negotiation: the path is the version, so the response
+		// declares nothing and every client reads the body as the current contract.
+		// The request id is what every `/v1` response carries.
+		headers: { 'x-request-id': 'req_fixture_init' },
 		status: 200,
 	};
 };
 
-/**
- * A policy contract declaration this client does not speak.
- *
- * Any number above `POLICY_CONTRACT_VERSION` would do; the smallest one above it
- * is the honest shape of the accident, which is a backend one revision ahead of
- * the SDK in the binary. Every client refuses it the same way: the declaration is
- * read before the body, and a body under an unknown contract is not evidence.
- */
-const UNSPOKEN_CONTRACT_HEADER_VALUE = '2';
+/** A policy resolution status no wire defines. */
+const UNREADABLE_POLICY_STATUS = 'unreadable';
 
-/** The same `/init` body, served by a producer this client cannot talk to. */
-const unspeakingTransportFor = function unspeakingTransportFor(
+/**
+ * A readable `/init` body whose policy resolution no client can represent.
+ *
+ * The status is not one the wire defines, so contract rule 5 applies: the core
+ * serves `policyPending` with every optional category denied. It is the `/v1`
+ * replacement for a refused contract declaration, which `/v1` no longer has.
+ */
+const unreadablePolicyTransportFor = function unreadablePolicyTransportFor(
 	body: InitResponseBody
 ): InitTransport {
 	return {
-		body,
-		headers: {
-			[POLICY_CONTRACT_HEADER]: UNSPOKEN_CONTRACT_HEADER_VALUE,
+		body: {
+			...body,
+			policyResolution: {
+				...body.policyResolution,
+				status: UNREADABLE_POLICY_STATUS,
+			} as unknown as PolicyResolutionWire,
 		},
+		headers: { 'x-request-id': 'req_fixture_init_unreadable' },
 		status: 200,
 	};
 };
@@ -985,18 +983,16 @@ const unspeakingTransportFor = function unspeakingTransportFor(
 /**
  * Fold an `InitTransport` into the response a client hands its kernel.
  *
- * The contract declaration is read out of the fixture's own headers rather than
- * assumed, so a fixture that wants a negotiated producer and one that wants a
- * refused producer travel through the same code.
+ * Every `/v1` response is read as the current policy contract, because the path
+ * is the version and there is nothing to negotiate.
  */
 const initResponseFor = function initResponseFor(
 	transport: InitTransport
 ): InitResponse {
-	const declared = transport.headers[POLICY_CONTRACT_HEADER];
 	return mapInitOutputToInitResponse(
 		transport.body,
 		{},
-		{ producerContract: declared === undefined ? undefined : Number(declared) }
+		{ producerContract: Number(CONTRACT_HEADER_VALUE) }
 	);
 };
 
@@ -1004,18 +1000,12 @@ const initResponseFor = function initResponseFor(
  * Whether an `/init` response is the definitive answer the ready latch waits for.
  *
  * `packages/native-protocol/CONTRACT.md` counts two ways to be told: an envelope at hydrate, and the
- * first init that lands a definitive answer. Only a negotiated declaration over a
- * readable body is that answer. The refused-declaration variant is a body the client
- * has already been told is not evidence, so it tells the core nothing and leaves the
- * flag exactly where it was.
+ * first init that lands a definitive answer, which on `/v1` is any `200` body.
  */
 const isDefinitiveInit = function isDefinitiveInit(
 	transport: InitTransport
 ): boolean {
-	return (
-		transport.status === 200 &&
-		transport.headers[POLICY_CONTRACT_HEADER] === CONTRACT_HEADER_VALUE
-	);
+	return transport.status === 200;
 };
 
 /**
@@ -1088,6 +1078,150 @@ const hydrationFor = function hydrationFor(
 		hydrated.subject = records.subject;
 	}
 	return hydrated;
+};
+
+// -- Subject ids -------------------------------------------------------------
+
+/** Ten hex bytes, the random part of a UUIDv7. */
+const hexBytes = function hexBytes(hex: string): number[] {
+	const bytes: number[] = [];
+	for (let index = 0; index < hex.length; index += 2) {
+		const byte = Number.parseInt(hex.slice(index, index + 2), 16);
+		if (Number.isNaN(byte)) {
+			throw new Error(`${hex} is not hex`);
+		}
+		bytes.push(byte);
+	}
+	if (bytes.length !== 10) {
+		throw new Error(`${hex} must be exactly 10 random bytes`);
+	}
+	return bytes;
+};
+
+/** The largest millisecond count 48 bits hold. */
+const UUID_V7_MAX_MS = 2 ** 48 - 1;
+
+/**
+ * Mint a lowercase UUIDv7 from a clock reading and ten random bytes.
+ *
+ * The layout `subject-id/uuidv7.json` pins for every platform:
+ *
+ * - bytes 0 to 5: the milliseconds since the Unix epoch, big-endian. A reading
+ *   below zero is written as zero and one above 48 bits as the 48-bit maximum, so
+ *   a device with a wrong clock still writes an ID the backend accepts.
+ * - byte 6: `0x70` or the low four bits of random byte 0.
+ * - byte 7: random byte 1.
+ * - byte 8: `0x80` or the low six bits of random byte 2.
+ * - bytes 9 to 15: random bytes 3 to 9.
+ */
+const mintUuidV7 = function mintUuidV7(
+	randomHex: string,
+	clock: number
+): string {
+	const random = hexBytes(randomHex);
+	const ms = Math.min(Math.max(Math.trunc(clock), 0), UUID_V7_MAX_MS);
+	const bytes: number[] = [];
+	let remaining = ms;
+	for (let index = 5; index >= 0; index -= 1) {
+		bytes[index] = remaining % 256;
+		remaining = Math.floor(remaining / 256);
+	}
+	// Arithmetic rather than bit operators: the version nibble is 7 over the low four
+	// bits of random byte 0, and the variant is binary 10 over the low six of byte 2.
+	bytes.push(
+		0x70 + ((random[0] ?? 0) % 16),
+		random[1] ?? 0,
+		0x80 + ((random[2] ?? 0) % 64),
+		...random.slice(3)
+	);
+	const hex = bytes.map((byte) => byte.toString(16).padStart(2, '0')).join('');
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+
+/**
+ * Whether an ID is a subject ID a `/v1` route takes from a client this build wrote:
+ * a lowercase UUIDv7 with the RFC 4122 variant, not the nil or max UUID.
+ */
+const isUuidV7 = function isUuidV7(candidate: string): boolean {
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(
+		candidate
+	);
+};
+
+// -- /v1 save body ------------------------------------------------------------
+
+/**
+ * The kernel's save payload as a native pending queue holds it.
+ *
+ * Two differences from the kernel's `SavePayload`. `idempotencyKey` is added: the
+ * core makes it once per action and freezes it with the payload. `timeToDecisionMs`
+ * is dropped: it is a measurement the web banner takes and the native cores do not.
+ */
+type NativeSavePayload = Omit<SavePayload, 'timeToDecisionMs'> & {
+	idempotencyKey: string;
+};
+
+const nativeSavePayload = function nativeSavePayload(
+	payload: SavePayload,
+	idempotencyKey: string
+): NativeSavePayload {
+	const { timeToDecisionMs: _measured, ...rest } = payload;
+	return { ...rest, idempotencyKey };
+};
+
+/**
+ * The `POST /v1/consent/records` body for one native save payload.
+ *
+ * Built from the kernel's 3.x cookie-banner body so every field the `/v1` contract
+ * leaves unchanged keeps the kernel's value, then renamed and trimmed as the contract
+ * says:
+ *
+ * - removed: `type`, `domain`, `preferences`, `choice`, `externalSubjectId`;
+ * - added: `idempotencyKey`, `property`, `answer`, `confirmed`, `externalId`.
+ *
+ * `answer` is every receipt the subject holds after the action, in the 3.x receipt
+ * shape. `confirmed` lists the categories this action confirmed, sorted, and every
+ * entry is a key of `answer.categories`. The decision-input assertion is not added:
+ * every save-body scenario carries a policy snapshot token, which makes it absent.
+ */
+const buildConsentRecordBody = function buildConsentRecordBody(
+	payload: NativeSavePayload,
+	property: string
+): Record<string, unknown> {
+	const {
+		choice: _confirmedReceipts,
+		domain: _domain,
+		externalSubjectId,
+		metadata,
+		preferences: _preferences,
+		type: _type,
+		...unchanged
+	} = buildSubjectPostBody(payload as SavePayload, { domain: property });
+	const categories = payload.choice.categories as Record<string, unknown>;
+	const confirmed = Object.keys(payload.confirmed.categories)
+		.filter((category) => categories[category] !== undefined)
+		.sort();
+	const body: Record<string, unknown> = {
+		...unchanged,
+		answer: { categories: { ...categories } },
+		confirmed,
+		idempotencyKey: payload.idempotencyKey,
+		property,
+	};
+	if (externalSubjectId !== undefined) {
+		body.externalId = externalSubjectId;
+	}
+	if (metadata !== undefined) {
+		const { timeToDecisionMs: _measured, ...kept } = metadata as Record<
+			string,
+			unknown
+		>;
+		if (Object.keys(kept).length > 0) {
+			body.metadata = kept;
+		}
+	}
+	// JSON has no undefined: drop the keys the kernel left unset, as a client would.
+	return JSON.parse(JSON.stringify(body)) as Record<string, unknown>;
 };
 
 // -- Kernel harness ---------------------------------------------------------
@@ -1289,7 +1423,7 @@ const NOTES = [
 	'there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See "Corrections to this contract" in packages/native-protocol/CONTRACT.md.',
 	'revision is a monotonic counter that starts at 0 and bumps once per committed mutation. It is not a count of the steps a runner took. Compare it as a number, and read the pinned value rather than deriving it.',
 	'GPC is a live signal only. Nothing records it: the gpc restriction applies while privacySignals.gpc.active is true and lifts when it is not, and no snapshot carries a stored directive for it.',
-	'evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which is a negotiated contract header over a 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that was refused or never arrived leaves it false.',
+	'evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which on /v1 is any 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that failed or never arrived leaves it false.',
 	'error is null in every fixture: no fixture exercises a transport failure or an unreadable wire.',
 	'Any field this file does not mention must not be invented. Unknown wire values fail closed.',
 ];
@@ -2016,7 +2150,7 @@ const buildEvaluationFixtures =
 		// strands the device in PENDING for the whole of its first session, which is the
 		// one session a prompt is on screen. The pinned subject id is not storage: the
 		// identity has its own slot, and packages/native-protocol/CONTRACT.md keeps an envelope refusal from
-		// costing a device its identity. It is a `sub_` id, so nothing here reads as the
+		// costing a device its identity. It is a UUIDv7, so nothing here reads as the
 		// refused-id case the Subject identity ruling sends to a first launch -- these two
 		// are a first launch because the envelope slot is empty, and for no other reason.
 		const freshCases: {
@@ -2067,8 +2201,9 @@ const buildEvaluationFixtures =
 const SAVE_NOTES = [
 	...NOTES,
 	'savePayload is what the pending queue must persist before the request, byte-for-byte, and a replay must resend it unchanged after a later init changes policy.',
-	'request.headers must carry the policy contract declaration with exactly this value. x-inth-version is platform telemetry and is deliberately not pinned.',
-	'request.body is the POST /subjects body. tcString is absent because IAB is out of scope: never add the key.',
+	'request.headers is empty on purpose: a /v1 request sends no version header and no policy-contract header. Platform telemetry headers are not pinned.',
+	'request.body is the POST /v1/consent/records body. answer holds every receipt the subject has after the action, confirmed names the categories this action confirmed, and property is input.property. tcString is absent because IAB is out of scope: never add the key.',
+	'input.idempotencyKey is the key the core makes once for this action. It is part of savePayload and of the body, and a replay sends it unchanged.',
 	'the commit happens at input.now, so givenAt, every confirmedAt, and snapshotAfter.evaluatedAt all equal it.',
 	'snapshotBefore is the snapshot after init and before the commit, and snapshotAfter is the snapshot the commit leaves behind. Both are asserted.',
 	'consentAction and uiSource come from the kernel, not from the intent name: a partial save is custom even when the user turned everything on.',
@@ -2146,16 +2281,21 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 		if (!payload) {
 			throw new Error(`No save payload captured for ${testCase.id}.`);
 		}
+		const idempotencyKey = mintUuidV7(
+			IDEMPOTENCY_MINTS[testCase.id] ?? '',
+			input.now
+		);
+		const savePayload = nativeSavePayload(payload, idempotencyKey);
 		fixtures.push({
 			description: testCase.description,
 			expected: {
 				request: {
-					body: buildSubjectPostBody(payload, { domain: DOMAIN }),
-					headers: { [POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
+					body: buildConsentRecordBody(savePayload, PROPERTY),
+					headers: {},
 					method: 'POST',
-					path: '/subjects',
+					path: '/v1/consent/records',
 				},
-				savePayload: payload,
+				savePayload,
 				snapshotAfter: toFixtureSnapshot(after, readyFor(input)),
 				snapshotBefore: toFixtureSnapshot(before, readyFor(input)),
 			},
@@ -2163,8 +2303,9 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 			input: {
 				...input,
 				actionAt: input.now,
-				domain: DOMAIN,
+				idempotencyKey,
 				intent: testCase.intent,
+				property: PROPERTY,
 			},
 			kind: 'save-body',
 			notes:
@@ -2531,8 +2672,8 @@ const TRACE_NOTES = [
 	'the trace starts after bootstrap has settled: hydration and bootstrap are mutations in some cores and not in others, so the anchor is the settled snapshot and the absolute revision a core reports is its own business. What every core must reproduce is what each step costs.',
 	'revisionDelta is the change in snapshot.revision across the step, and publications counts the snapshot listeners it woke. A committed change bumps the revision exactly once and publishes exactly once; a write that changes the committed value nowhere bumps nothing and publishes nothing. See "Revisions and error writes" in packages/native-protocol/CONTRACT.md.',
 	'two of these steps are the same answer twice on purpose. Re-serving an init that changed nothing, and re-reporting an error the snapshot already carries, are not new changes: a bridge that dedups by revision has to be able to treat them as noise.',
-	'an unsupported-contract response is refused from its header, before the body is read. The body here is the ordinary Europe one, which is the point: a core that reached into it would be reading a wire it has already been told is not evidence.',
-	'expected.trace is not about which fields the error write touches. Swift, Kotlin, and the kernel write different fields for a refused contract; what they must not disagree about is whether the write was a change at all.',
+	'the unreadable-policy steps serve the ordinary Europe body with a policy resolution status no wire defines. Contract rule 5 applies: the core serves policyPending with every optional category denied. /v1 has no contract negotiation, so this is the error write that replaces a refused contract declaration.',
+	'expected.trace is not about which fields the error write touches. Swift, Kotlin, and the kernel write different fields for an unreadable policy; what they must not disagree about is whether the write was a change at all.',
 ];
 
 /**
@@ -2549,7 +2690,7 @@ const buildRevisionTraceFixtures =
 	async function buildRevisionTraceFixtures(): Promise<RevisionTraceFixture[]> {
 		const scenario = EU_SCENARIO;
 		const resolved = transportFor(initBodyFor(scenario));
-		const refused = unspeakingTransportFor(initBodyFor(scenario));
+		const unreadable = unreadablePolicyTransportFor(initBodyFor(scenario));
 		const input: RevisionTraceFixture['input'] = {
 			...inputFor(scenario),
 			steps: [
@@ -2559,11 +2700,15 @@ const buildRevisionTraceFixtures =
 					step: 'save-all',
 				},
 				{ op: 'init', step: 'init-resolved-again', transport: resolved },
-				{ op: 'init', step: 'init-unsupported-contract', transport: refused },
 				{
 					op: 'init',
-					step: 'init-unsupported-contract-again',
-					transport: refused,
+					step: 'init-unreadable-policy',
+					transport: unreadable,
+				},
+				{
+					op: 'init',
+					step: 'init-unreadable-policy-again',
+					transport: unreadable,
 				},
 			],
 			transport: resolved,
@@ -2571,7 +2716,7 @@ const buildRevisionTraceFixtures =
 		return [
 			{
 				description:
-					'A commit, a re-served init, and a policy contract the SDK does not speak, twice. The commit and the refused contract each cost one revision and one publication; the init that changed nothing and the repeated error cost nothing.',
+					'A commit, a re-served init, and a policy resolution the SDK cannot read, twice. The commit and the unreadable policy each cost one revision and one publication; the init that changed nothing and the repeated error cost nothing.',
 				expected: { trace: await runTraceFixture(input) },
 				id: 'revision-trace-error-writes',
 				input,
@@ -2896,16 +3041,19 @@ const assertWiresReadable = function assertWiresReadable(
 	const seen = new Set<string>();
 	for (const fixture of fixtures) {
 		for (const transport of transportsIn(fixture)) {
-			// A response whose declaration this client refuses never reaches a reader at
-			// all, which is the rule under test in the revision trace. Asking a client
-			// reader to consume it would assert the opposite of the contract.
-			if (transport.headers[POLICY_CONTRACT_HEADER] !== CONTRACT_HEADER_VALUE) {
+			const { policyResolution } = transport.body;
+			// The revision trace serves one resolution no client can read, on purpose:
+			// it is the rule-5 step. Asking a client reader to consume it would assert
+			// the opposite of the contract.
+			if (
+				(policyResolution as { status: string }).status ===
+				UNREADABLE_POLICY_STATUS
+			) {
 				continue;
 			}
-			const { policyResolution } = transport.body;
 			if (policyResolution.version !== contractVersion) {
 				throw new Error(
-					`${fixture.id}: the init body declares policy contract ${String(policyResolution.version)}, but the response header declares ${CONTRACT_HEADER_VALUE}.`
+					`${fixture.id}: the init body declares policy contract ${String(policyResolution.version)}, but this build reads ${CONTRACT_HEADER_VALUE}.`
 				);
 			}
 			const wire = stableStringify(policyResolution);
@@ -3017,10 +3165,6 @@ const writeIndex = function writeIndex(
 		fixtures: entries,
 		generatedBy: 'packages/react-native/scripts/generate-protocol-fixtures.ts',
 		kinds: [...new Set(entries.map((entry) => entry.kind))].sort(),
-		policyContractHeader: {
-			name: POLICY_CONTRACT_HEADER,
-			value: CONTRACT_HEADER_VALUE,
-		},
 		protocolVersion: PROTOCOL_VERSION,
 	};
 	writeFileSync(
@@ -3031,85 +3175,87 @@ const writeIndex = function writeIndex(
 	return entries;
 };
 
-/** Twelve hex bytes, for re-minting a pinned id through the real generator. */
-const hexBytes = function hexBytes(hex: string): number[] {
-	const bytes: number[] = [];
-	for (let index = 0; index < hex.length; index += 2) {
-		const byte = Number.parseInt(hex.slice(index, index + 2), 16);
-		if (Number.isNaN(byte)) {
-			throw new Error(`${hex} is not hex`);
-		}
-		bytes.push(byte);
-	}
-	if (bytes.length !== 12) {
-		throw new Error(`${hex} must be exactly 12 random bytes`);
-	}
-	return bytes;
-};
-
 /**
- * Run the real generator against a pinned clock reading and a pinned draw.
+ * The cases `subject-id/uuidv7.json` pins: mint vectors, then the read rule.
  *
- * `generateSubjectId` fills all twenty bytes from the CSPRNG and writes the timestamp
- * over the first eight, so replacing the draw decides the identity and `Date.now` decides
- * the offset, which together are the whole encoding. Everything is restored: this runs
- * inside the same process that generates the fixtures, and a leaked clock stub there
- * would quietly restamp every timestamp in the run.
+ * Every platform mints the `vectors` and gets the same `id`, and answers `read`
+ * the same way: `uuidv7` is an ID this build writes, `c15t` is a `sub_` ID a c15t
+ * client stored, which a core keeps and sends until the backend returns the
+ * canonical UUID, and `unusable` is anything else, including the UUIDv4 shape an
+ * early prerelease wrote.
  */
-const mintFromEntropy = function mintFromEntropy(
-	randomHex: string,
-	clock: number
-): string {
-	const tail = hexBytes(randomHex);
-	const realDateNow = Date.now;
-	const cryptoObject = globalThis.crypto;
-	const realGetRandomValues = cryptoObject.getRandomValues.bind(cryptoObject);
-	Date.now = () => clock;
-	cryptoObject.getRandomValues = function getRandomValues<
-		TypeArray extends ArrayBufferView | null,
-	>(array: TypeArray): TypeArray {
-		if (array && 'length' in array) {
-			array.fill(0);
-			const view = new Uint8Array(
-				array.buffer,
-				array.byteOffset,
-				array.byteLength
-			);
-			tail.forEach((byte, index) => {
-				view[view.byteLength - 12 + index] = byte;
-			});
+const buildSubjectIdCases = function buildSubjectIdCases() {
+	const vectors = [
+		{ clock: NOW, randomHex: '00000000000000000000' },
+		{ clock: NOW, randomHex: 'ffffffffffffffffffff' },
+		{ clock: NOW, randomHex: '0123456789abcdef0123' },
+		{ clock: 0, randomHex: '0a0b0c0d0e0f10111213' },
+		{ clock: -1, randomHex: '0a0b0c0d0e0f10111213' },
+		{ clock: UUID_V7_MAX_MS, randomHex: '5a5a5a5a5a5a5a5a5a5a' },
+		{ clock: UUID_V7_MAX_MS + 1, randomHex: '5a5a5a5a5a5a5a5a5a5a' },
+		{ clock: 1_763_467_200_000, randomHex: 'c3d2e1f0a5b4c3d2e1f0' },
+	].map((vector) => ({
+		...vector,
+		id: mintUuidV7(vector.randomHex, vector.clock),
+	}));
+	const read = [
+		{ id: SUBJECT.europe, kind: 'uuidv7' },
+		{ id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c', kind: 'uuidv7' },
+		{ id: 'sub_1119tDZHoarNxm6kSm3BN6ze9d', kind: 'c15t' },
+		{ id: 'sub_2VZxR7YmNpKq3WfLs8TgHd', kind: 'c15t' },
+		{ id: '0193E5A8-6F00-7C3A-8A1B-5D2E7F9A0B1C', kind: 'unusable' },
+		{ id: '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b', kind: 'unusable' },
+		{ id: '0193e5a8-6f00-7c3a-ca1b-5d2e7f9a0b1c', kind: 'unusable' },
+		{ id: '00000000-0000-0000-0000-000000000000', kind: 'unusable' },
+		{ id: 'ffffffff-ffff-ffff-ffff-ffffffffffff', kind: 'unusable' },
+		{ id: '0193e5a86f007c3a8a1b5d2e7f9a0b1c', kind: 'unusable' },
+		{ id: 'sub_0OIl', kind: 'unusable' },
+		{ id: 'sub_', kind: 'unusable' },
+		{ id: '', kind: 'unusable' },
+	];
+	const kindOf = function kindOf(id: string): string {
+		if (isUuidV7(id)) {
+			return 'uuidv7';
 		}
-		return array;
-	} as typeof cryptoObject.getRandomValues;
-	try {
-		return generateSubjectId();
-	} finally {
-		Date.now = realDateNow;
-		cryptoObject.getRandomValues = realGetRandomValues;
+		return isValidSubjectId(id) ? 'c15t' : 'unusable';
+	};
+	for (const entry of read) {
+		const kind = kindOf(entry.id);
+		if (kind !== entry.kind) {
+			throw new Error(`${entry.id} reads as ${kind}, not ${entry.kind}`);
+		}
 	}
+	return {
+		description:
+			'Subject IDs. vectors: mint a UUIDv7 from clock (milliseconds since the Unix epoch, clamped to 0 and 2^48 - 1) and ten random bytes, and get id. read: how a core treats a stored ID. uuidv7 is the form this SDK writes; c15t is a sub_ ID a c15t client stored, which the core keeps and sends until a response carries the canonical subjectId; unusable is anything else, read as no identity at all.',
+		layout: [
+			'bytes 0-5: clock, big-endian',
+			'byte 6: 0x70 | (random[0] & 0x0f)',
+			'byte 7: random[1]',
+			'byte 8: 0x80 | (random[2] & 0x3f)',
+			'bytes 9-15: random[3..9]',
+			'text: lowercase hex, 8-4-4-4-12',
+		],
+		read,
+		vectors,
+	};
 };
 
 /**
- * Refuse a fixture that carries a subject id the producer would reject.
+ * Refuse a fixture that carries a subject id other than a minted lowercase UUIDv7.
  *
- * This is the reason the ids above are minted rather than invented. A save-body fixture
- * pins a `POST /subjects` request byte for byte, and both native cores are graded against
- * it, so a UUID-shaped id in one of these files certifies a request the backend answers
- * with `INPUT_VALIDATION_FAILED`: two cores implementing a save that can never be
- * accepted, green in CI, broken on every device. The same id is now also unreadable on
- * the read side, where a core that finds one throws the envelope stored under it.
- *
- * The check is `isValidSubjectId`, the client-side form of `subjectIdSchema`, walked over
- * every `subjectId` in every emitted fixture rather than over the `SUBJECT` table alone,
- * because an id can reach a fixture from a scenario, a stored record, or a kernel
- * response, and only the emitted bytes are what a native runner reads.
+ * A save-body fixture pins a `POST /v1/consent/records` request, and both native cores
+ * are graded against it, so every id in it has to be one a core could have minted.
+ * Walked over every `subjectId` in every emitted fixture rather than over the `SUBJECT`
+ * table alone, because an id can reach a fixture from a scenario, a stored record, or a
+ * kernel response, and only the emitted bytes are what a native runner reads.
  */
 const assertSubjectIdsAreProducible = function assertSubjectIdsAreProducible(
 	fixtures: readonly Fixture[]
 ): void {
 	for (const [name, mint] of Object.entries(SUBJECT_MINTS)) {
 		const pinned = SUBJECT[name as keyof typeof SUBJECT];
-		const minted = mintFromEntropy(mint.randomHex, mint.clock);
+		const minted = mintUuidV7(mint.randomHex, mint.clock);
 		if (pinned !== minted) {
 			throw new Error(
 				`SUBJECT.${name} is ${pinned}, but minting at clock ${String(mint.clock)} with entropy ${mint.randomHex} writes ${minted}. Mint fixture ids, do not invent them.`
@@ -3130,7 +3276,7 @@ const assertSubjectIdsAreProducible = function assertSubjectIdsAreProducible(
 			value as Record<string, unknown>
 		)) {
 			if (key === 'subjectId' && typeof item === 'string') {
-				if (!isValidSubjectId(item)) {
+				if (!isUuidV7(item)) {
 					offenders.add(`${where}.subjectId=${item}`);
 				}
 				continue;
@@ -3143,7 +3289,7 @@ const assertSubjectIdsAreProducible = function assertSubjectIdsAreProducible(
 	}
 	if (offenders.size > 0) {
 		throw new Error(
-			`Fixtures carry subject ids the backend rejects (subjectIdSchema requires ^sub_[1-9A-HJ-NP-Za-km-z]+$): ${[...offenders].sort().join(', ')}. Mint them with generateSubjectId at the pinned clock, as the SUBJECT table does. A fixture body the producer refuses certifies a save that can only fail.`
+			`Fixtures carry subject ids that are not lowercase UUIDv7: ${[...offenders].sort().join(', ')}. Mint them with mintUuidV7 at the pinned clock, as the SUBJECT table does.`
 		);
 	}
 };
@@ -3259,6 +3405,15 @@ export const writeFixtures = async function writeFixtures(
 		}
 	}
 	assertNoStaleFixtures(target, entries);
+	const subjectIdDir = resolve(target, 'subject-id');
+	mkdirSync(subjectIdDir, { recursive: true });
+	const subjectIdFile = resolve(subjectIdDir, 'uuidv7.json');
+	writeFileSync(
+		subjectIdFile,
+		`${JSON.stringify(buildSubjectIdCases(), null, '\t')}\n`,
+		'utf8'
+	);
+	formatWith([subjectIdFile], repoRoot);
 	console.log(
 		`Wrote ${String(fixtures.length)} fixtures and ${INDEX_FILE} to ${target}`
 	);

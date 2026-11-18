@@ -71,7 +71,7 @@
 			},
 			"revision": 1,
 			"subject": {
-				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d"
+				"subjectId": "019c1c38-a400-7100-8000-000000000002"
 			},
 			"translations": {
 				"language": "en",
@@ -130,7 +130,7 @@
 			},
 			"noticeDismissal": null,
 			"subject": {
-				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d"
+				"subjectId": "019c1c38-a400-7100-8000-000000000002"
 			}
 		},
 		"transport": {
@@ -198,7 +198,7 @@
 				"policySnapshotToken": "tok-narrow-permissive-opt-in"
 			},
 			"headers": {
-				"x-inth-policy-contract": "1"
+				"x-request-id": "req_fixture_init"
 			},
 			"status": 200
 		},
@@ -213,7 +213,7 @@
 		"there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See \"Corrections to this contract\" in packages/native-protocol/CONTRACT.md.",
 		"revision is a monotonic counter that starts at 0 and bumps once per committed mutation. It is not a count of the steps a runner took. Compare it as a number, and read the pinned value rather than deriving it.",
 		"GPC is a live signal only. Nothing records it: the gpc restriction applies while privacySignals.gpc.active is true and lifts when it is not, and no snapshot carries a stored directive for it.",
-		"evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which is a negotiated contract header over a 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that was refused or never arrived leaves it false.",
+		"evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which on /v1 is any 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that failed or never arrived leaves it false.",
 		"error is null in every fixture: no fixture exercises a transport failure or an unreadable wire.",
 		"Any field this file does not mention must not be invented. Unknown wire values fail closed."
 	],
