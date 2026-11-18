@@ -139,6 +139,36 @@ describe('notice banner', () => {
 		second.view.unmount();
 	});
 
+	test('a language without notice copy uses its own banner copy, and English labels it leaves out', () => {
+		const { view } = renderFixture({
+			...notice(),
+			initialTranslations: {
+				language: 'de',
+				translations: {
+					common: {},
+					consentManagerDialog: {},
+					consentTypes: {},
+					cookieBanner: {
+						description: 'Wir verwenden Cookies.',
+						title: 'Ihre Privatsphäre',
+					},
+				},
+			},
+		});
+		expect(
+			query('[data-testid="consent-banner-title"]')?.textContent?.trim()
+		).toBe('Ihre Privatsphäre');
+		expect(
+			query('[data-testid="consent-banner-description"]')?.textContent?.trim()
+		).toBe('Wir verwenden Cookies.');
+		expect(
+			query(
+				'[data-testid="consent-banner-dismiss-button"]'
+			)?.textContent?.trim()
+		).toBe('OK');
+		view.unmount();
+	});
+
 	test('a choice prompt with customize renders no rights group', () => {
 		const { view } = renderFixture(policyFixture());
 		const root = required(query('[data-testid="consent-banner-root"]'));

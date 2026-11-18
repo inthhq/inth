@@ -93,11 +93,10 @@ export const canDeferEngine = function canDeferEngine(
 };
 
 /**
- * The snapshot's copy with every key the English defaults have. Before
- * `ConsentRoot`'s engine loads, the browser's surfaces have no defaults to
- * fall back to (`../translation-defaults.ts`), so the server fills the
- * gaps of a partial bundle. An English bundle comes back unchanged. The
- * IAB copy is left out: the IAB surfaces carry their own defaults.
+ * The snapshot's copy with every key the English defaults have, so the
+ * browser's surfaces read a complete bundle before `ConsentRoot`'s engine
+ * loads. An English bundle comes back unchanged. The IAB copy is left
+ * out: the IAB surfaces fill it from English themselves.
  *
  * @param snapshot - The snapshot the server rendered with.
  * @returns The snapshot with a complete bundle.

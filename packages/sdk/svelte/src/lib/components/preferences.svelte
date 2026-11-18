@@ -5,6 +5,7 @@
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
+	import { resolveCategoryTitle } from '@inth/sdk/surface-state';
 	import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 	import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
@@ -75,14 +76,6 @@
 				nextOpen && consentType.name === name,
 			])
 		);
-	};
-
-	const formatConsentName = function formatConsentName(
-		name: AllConsentNames
-	): string {
-		return (name as string)
-			.replace(/_/gu, ' ')
-			.replace(/\b\w/gu, (c: string) => c.toUpperCase());
 	};
 
 	// Per-element theme key resolution
@@ -230,8 +223,7 @@
 								<PreferenceItem.Title
 									class={noStyle ? '' : accordionStyles.title || ''}
 								>
-									{translations.consentTypes[consentType.name]?.title ??
-										formatConsentName(consentType.name)}
+									{resolveCategoryTitle(translations, consentType.name)}
 								</PreferenceItem.Title>
 							</PreferenceItem.Header>
 						</PreferenceItem.Trigger>
@@ -240,8 +232,10 @@
 							class={noStyle ? '' : accordionStyles.control || ''}
 						>
 							<Switch.Root
-								aria-label={translations.consentTypes[consentType.name]
-									?.title ?? formatConsentName(consentType.name)}
+								aria-label={resolveCategoryTitle(
+									translations,
+									consentType.name
+								)}
 								checked={isChecked}
 								aria-describedby={restricted
 									? `${widgetId}-${consentType.name}-restriction`

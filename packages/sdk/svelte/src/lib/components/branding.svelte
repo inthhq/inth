@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/branding';
 	import { resolveTranslations } from '@inth/sdk/ui/utils';
 	import { onMount } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { fallbackTranslations } from '../translation-defaults';
 	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import C15TIconOnly from './icons/c15-t-icon-only.svelte';
 	import InthLogo from './icons/inth-logo.svelte';
@@ -42,7 +42,7 @@
 	const translations = $derived(
 		resolveTranslations(
 			consent.state.translationConfig,
-			fallbackTranslations(consent.state.translationConfig)
+			defaultTranslationConfig
 		)
 	);
 

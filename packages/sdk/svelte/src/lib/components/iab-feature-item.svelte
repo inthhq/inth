@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { ProcessedFeature } from '@inth/sdk/iab/headless';
 	/**
 	 * One informational IAB Feature row.
 	 *
@@ -10,7 +11,6 @@
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
 	import type { IABTranslations } from '../iab-translations';
-	import type { ProcessedFeature } from '../iab-types';
 	import { PreferenceItem } from '../primitives';
 	import ChevronRightIcon from './icons/chevron-right-icon.svelte';
 

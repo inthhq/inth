@@ -69,6 +69,28 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 		expect(panel()?.hidden).toBe(true);
 	});
 
+	test('moves the tab stop with the arrow keys, Home and End', async () => {
+		render(Fixture);
+		const item = await devToolsItem();
+		const toolbar = document.querySelector('[role="toolbar"]') as HTMLElement;
+		const preferences = document.querySelector(
+			'[data-inth-trigger-action="preferences"]'
+		) as HTMLElement;
+		expect(toolbar.getAttribute('aria-label')).toBe('Privacy controls');
+		expect(item.getAttribute('aria-label')).toBe('inth DevTools');
+
+		await fireEvent.keyDown(toolbar, { key: 'ArrowLeft' });
+		expect(document.activeElement).toBe(preferences);
+		await fireEvent.keyDown(toolbar, { key: 'ArrowLeft' });
+		expect(document.activeElement).toBe(item);
+		expect(item.tabIndex).toBe(0);
+		expect(preferences.tabIndex).toBe(-1);
+		await fireEvent.keyDown(toolbar, { key: 'End' });
+		expect(document.activeElement).toBe(preferences);
+		await fireEvent.keyDown(toolbar, { key: 'Home' });
+		expect(document.activeElement).toBe(item);
+	});
+
 	test('puts the DevTools item on the right in a left corner', async () => {
 		render(Fixture, { defaultPosition: 'bottom-left' });
 		await devToolsItem();

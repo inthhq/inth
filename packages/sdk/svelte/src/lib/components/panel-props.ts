@@ -1,10 +1,11 @@
 import type { LegalLinks, Model } from '@inth/sdk/engine';
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 
 /** Props for the trigger `ConsentDialog` renders when `showTrigger` is set. */
 export interface ConsentDialogTriggerProps {
 	defaultPosition?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 	persistPosition?: boolean;
-	showWhen?: 'always' | 'never';
+	showWhen?: ConsentDialogTriggerVisibility;
 	size?: 'sm' | 'md' | 'lg';
 	ariaLabel?: string;
 	noStyle?: boolean;

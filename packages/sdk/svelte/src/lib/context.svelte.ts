@@ -35,11 +35,11 @@ import {
 	saveConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
+import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { getContext, setContext } from 'svelte';
 
 import type { DialogPreload } from './dialog-warming';
-import { registeredDefaultTranslations } from './translation-defaults';
 import type { ConsentManagerOptions } from './types';
 
 const CONSENT_CONTEXT_KEY = Symbol('inth-v3-consent');
@@ -245,19 +245,10 @@ export interface ConsentControllerOptions {
 	runtime: ConsentRuntime;
 }
 
-/** Before any engine registered the defaults: no languages yet. */
-const NO_DEFAULTS: TranslationConfig = {
-	defaultLanguage: 'en',
-	disableAutoLanguageSwitch: false,
-	translations: {},
-};
-
 const toTranslationConfig = function toTranslationConfig(
 	snapshot: ConsentSnapshot
 ): TranslationConfig {
-	// The English defaults join once an engine has registered them; before
-	// `ConsentRoot`'s engine loads, the snapshot's bundle is complete.
-	const defaults = registeredDefaultTranslations() ?? NO_DEFAULTS;
+	const defaults = defaultTranslationConfig;
 	const resolved = snapshot.translations;
 	if (!resolved) {
 		return defaults;

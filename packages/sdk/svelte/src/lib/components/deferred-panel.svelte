@@ -2,6 +2,8 @@
 	lang="ts"
 	module
 >
+	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
+
 	import type PanelComponent from './panel.svelte';
 
 	let pending: Promise<typeof PanelComponent> | null = null;
@@ -30,22 +32,7 @@
 	const focusReturnTarget = function focusReturnTarget(
 		opener: HTMLElement
 	): HTMLElement | null {
-		if (opener.isConnected) {
-			return opener;
-		}
-		if (opener.id) {
-			const byId = document.getElementById(opener.id);
-			if (byId) {
-				return byId;
-			}
-		}
-		const testId = opener.getAttribute('data-testid');
-		if (testId) {
-			return document.querySelector<HTMLElement>(
-				`[data-testid="${testId.replaceAll(/["\\]/gu, '\\$&')}"]`
-			);
-		}
-		return null;
+		return opener.isConnected ? opener : findFocusRestoreEquivalent(opener);
 	};
 </script>
 

@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { countIABPartners } from '@inth/sdk/iab/headless';
+	import type {
+		HeadlessIABVendorId as VendorId,
+		ProcessedStack,
+	} from '@inth/sdk/iab/headless';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
 	import type { IABTranslations } from '../iab-translations';
-	import type { ProcessedStack, VendorId } from '../iab-types';
 	import { PreferenceItem, Switch } from '../primitives';
 	import IABPurposeItem from './iab-purpose-item.svelte';
 	import ChevronRightIcon from './icons/chevron-right-icon.svelte';

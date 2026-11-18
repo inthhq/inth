@@ -6,11 +6,16 @@
 		PromptVariant,
 	} from '@inth/sdk/engine';
 	import { resolveConsentPresentation } from '@inth/sdk/engine';
-	import type { PolicyRight } from '@inth/sdk/schema/types';
 	import {
 		EARLY_CONSENT_TAP_SCRIPT,
 		replayEarlyConsentTaps,
 	} from '@inth/sdk/surface-actions';
+	import {
+		defaultTranslationConfig,
+		resolveActionLabels,
+		resolvePreferenceControlLabels,
+		resolvePromptCopy,
+	} from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-banner';
 	import { resolveTranslations } from '@inth/sdk/ui/utils';
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
@@ -29,10 +34,6 @@
 	import { portal } from '../actions/portal';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { BANNER_SHEETS } from '../surface-styles';
-	import {
-		fallbackTranslations,
-		registeredDefaultTranslations,
-	} from '../translation-defaults';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
 	import {
 		resolveComponentStyles,
@@ -147,7 +148,7 @@
 	const translations = $derived(
 		resolveTranslations(
 			consent.state.translationConfig,
-			fallbackTranslations(consent.state.translationConfig)
+			defaultTranslationConfig
 		)
 	);
 	const textDirection = $derived(
@@ -307,7 +308,6 @@
 	// Additional buttons that open preferences, styled as underlined text.
 	const preferenceControls = $derived(presentation.preferenceControls);
 	const promptKind = $derived(consent.snapshot.policyRule.prompt);
-	const isNotice = $derived(promptKind === 'notice');
 	const direction = $derived(presentation.direction);
 	const shouldFillActions = $derived(presentation.shouldFillActions);
 	const shouldTrapFocus = $derived(presentation.trapFocus);
@@ -327,53 +327,21 @@
 		}
 	});
 
-	// Resolved texts. A notice has its own copy: it informs and points at
-	// the opt-out instead of asking for permission.
-	// Before `ConsentRoot`'s engine there are none: the server completed the
-	// snapshot's bundle with them.
-	const englishTranslations = $derived.by(() => {
-		// Read again when the engine attaches, which changes the snapshot.
-		void consent.snapshot;
-		return registeredDefaultTranslations()?.translations.en;
-	});
-	const resolvedTitle = $derived(
-		title ??
-			(isNotice
-				? (translations.cookieBanner.noticeTitle ??
-					englishTranslations?.cookieBanner?.noticeTitle)
-				: translations.cookieBanner.title)
-	);
-	const resolvedDescription = $derived(
-		description ??
-			(isNotice
-				? (translations.cookieBanner.noticeDescription ??
-					englishTranslations?.cookieBanner?.noticeDescription)
-				: translations.cookieBanner.description)
-	);
+	// A notice has its own copy: it informs and points at the opt-out
+	// instead of asking for permission.
+	const promptCopy = $derived(resolvePromptCopy(translations, promptKind));
+	const resolvedTitle = $derived(title ?? promptCopy.title);
+	const resolvedDescription = $derived(description ?? promptCopy.description);
+	const actionLabels = $derived(resolveActionLabels(translations));
+	const rightLabels = $derived(resolvePreferenceControlLabels(translations));
 	// Acknowledgement records no category choice.
 	const resolvedDismissText = $derived(
-		dismissButtonText ??
-			translations.common.acknowledge ??
-			translations.common.dismiss ??
-			englishTranslations?.common?.acknowledge
+		dismissButtonText ?? actionLabels.dismiss
 	);
-	const rightLabels = $derived<
-		Partial<Record<PolicyRight, string | undefined>>
-	>({
-		'opt-out':
-			translations.rights?.optOut ?? englishTranslations?.rights?.optOut,
-		preferences:
-			translations.rights?.preferences ??
-			englishTranslations?.rights?.preferences,
-	});
-	const resolvedRejectText = $derived(
-		rejectButtonText ?? translations.common.rejectAll
-	);
-	const resolvedAcceptText = $derived(
-		acceptButtonText ?? translations.common.acceptAll
-	);
+	const resolvedRejectText = $derived(rejectButtonText ?? actionLabels.reject);
+	const resolvedAcceptText = $derived(acceptButtonText ?? actionLabels.accept);
 	const resolvedCustomizeText = $derived(
-		customizeButtonText ?? translations.common.customize
+		customizeButtonText ?? actionLabels.customize
 	);
 </script>
 
@@ -484,7 +452,7 @@
 											data-testid={`consent-banner-right-link-${right}`}
 											onclick={openPreferences}
 										>
-											{rightLabels[right] ?? right}
+											{rightLabels[right]}
 										</button>
 									{/each}
 								</div>
