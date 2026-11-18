@@ -41,7 +41,7 @@ export const mountDevTools = async function mountDevTools(
 	const client = getConsentClient();
 	if (!client) {
 		throw new Error(
-			'@inth/astro/devtools: no consent client on this page. Mount the panel from a client script on a page that uses the inth integration.'
+			'@inth/astro/devtools: no consent client on this page. Mount the panel from a client script on a page that uses the Inth integration.'
 		);
 	}
 	await client.ready;

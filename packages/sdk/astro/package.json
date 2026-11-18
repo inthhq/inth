@@ -1,7 +1,7 @@
 {
 	"name": "@inth/astro",
 	"version": "3.2.0-canary.0",
-	"description": "Astro cookie consent banner for inth, with server-rendered markup, preference center islands and geo-aware middleware.",
+	"description": "Astro cookie consent banner for Inth, with server-rendered markup, preference center islands and geo-aware middleware.",
 	"keywords": [
 		"astro",
 		"astro-cookie-consent",

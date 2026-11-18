@@ -151,7 +151,6 @@ const UI_ADAPTER_NAMES = Object.keys(UI_ADAPTERS) as InthUIAdapterName[];
  * the site already loads. With none or several, Svelte, the smallest.
  *
  * @param installed - Names of the integrations the site registers.
- * @returns The adapter name.
  * @internal
  */
 export const inferUIAdapter = function inferUIAdapter(
@@ -209,7 +208,6 @@ const resolveRoutePrefix = function resolveRoutePrefix(
  *
  * @param mode - The configured mode, or `undefined` for the default.
  * @param projectUrl - The resolved top-level backend URL.
- * @returns The mode.
  * @throws {TypeError} When the mode is not mode data, or has nowhere to go.
  */
 const resolveMode = function resolveMode(
@@ -277,7 +275,7 @@ const assertSerializable = function assertSerializable(
 	const found = findFunction(serialized, 'inth()', new Set());
 	if (found) {
 		throw new Error(
-			`@inth/astro: ${found} is a function. inth() options are serialized into the page as JSON, which drops functions. Move it to src/inth.client.ts, whose default export (a InthClientOptionsExtension) can hold scripts with callbacks, \`callbacks\` and \`networkBlocker.onRequestBlocked\`.`
+			`@inth/astro: ${found} is a function. inth() options are serialized into the page as JSON, which drops functions. Move it to src/inth.client.ts, whose default export (an InthClientOptionsExtension) can hold scripts with callbacks, \`callbacks\` and \`networkBlocker.onRequestBlocked\`.`
 		);
 	}
 };
@@ -354,7 +352,6 @@ export const resolveOptions = function resolveOptions(
  * only the server and the build read. Every byte here is in each page's
  * boot chunk.
  *
- * @param resolved - The resolved integration options.
  * @returns The browser's copy.
  * @internal
  */
@@ -486,7 +483,6 @@ const createVirtualOptionsPlugin = function createVirtualOptionsPlugin(
  * load the consent engine (see {@link buildBootScript}).
  *
  * @param source - The module's source.
- * @returns The plugin.
  */
 const createVirtualEnginePlugin = function createVirtualEnginePlugin(
 	source: string
@@ -531,7 +527,6 @@ interface PageRuntimeModule {
  * `import()` of the statically imported script loader anywhere in the
  * page's graph would keep it in a chunk of its own.
  *
- * @param resolved - The resolved options.
  * @returns The factories to import and register.
  */
 const pageRuntimeModules = function pageRuntimeModules(
@@ -575,7 +570,6 @@ const pageRuntimeModules = function pageRuntimeModules(
  * - Otherwise the server resolved the visitor, so only the save path ships
  *   and the init path loads when a page inits again.
  *
- * @param resolved - The resolved options.
  * @param hasAdapter - Whether the site has a server adapter.
  * @returns The export name.
  */
@@ -619,7 +613,6 @@ export interface BootScripts {
  * opens a dialog. They are registered in the page script so that a tap on
  * Customize starts the adapter, the island and the engine together.
  *
- * @param resolved - The resolved options.
  * @param resolveEntry - Maps this package's specifiers to what Astro loads.
  * @param hasAdapter - Whether the site has a server adapter.
  * @returns The page script and the engine module.
@@ -708,7 +701,6 @@ export const buildBootScript = function buildBootScript(
  * Build the stylesheet imports for a Tailwind 3 site, where the host must
  * process the base and optional IAB rules instead of inlining them.
  *
- * @param resolved - The resolved integration options.
  * @param resolveEntry - Maps this package's specifiers to what Astro loads.
  * @returns The module source, or an empty string when there is nothing to
  * add or with `styles: false`.
@@ -749,7 +741,6 @@ export const buildStylesImport = function buildStylesImport(
  * With the full stylesheet injected, the islands' own component CSS would
  * be a second copy, so their class maps resolve without it.
  *
- * @param resolved - The resolved integration options.
  * @param engineSource - The `virtual:inth/engine` module from
  * {@link buildBootScript}. Without it the module is not served.
  * @returns Vite plugins to merge into the app config.
@@ -812,7 +803,6 @@ const injectsRoute = function injectsRoute(
  * Explain why a build with the injected route needs an adapter.
  *
  * @param routePrefix - The injected route's prefix.
- * @returns The error message.
  */
 const missingAdapterMessage = function missingAdapterMessage(
 	routePrefix: string
@@ -867,7 +857,7 @@ const bundleBuildManifest = async function bundleBuildManifest(
 export const LOCALS_TYPES = [
 	'declare namespace App {',
 	'	interface Locals {',
-	'		/** Consent context resolved by the inth middleware. */',
+	'		/** Consent context resolved by the Inth middleware. */',
 	"		inth: import('@inth/astro').InthLocals;",
 	'	}',
 	'}',
@@ -882,7 +872,6 @@ export const LOCALS_TYPES = [
  * @param options - The options passed to `inth()`.
  * @param config - Astro's config, as `astro:config:setup` has it.
  * @param envSource - Where the backend URL variable is read.
- * @returns The resolved options.
  * @throws {Error} When {@link resolveOptions} or
  * {@link resolveClientEntrypoint} does.
  */
@@ -1011,7 +1000,7 @@ export const inth = function inth(
 					await bundleBuildManifest(site, command, logger, envSource);
 				}
 				const resolveEntry = await createOwnEntryResolver();
-				// Tailwind 3 unwraps inth's cascade layer in the stylesheets it
+				// Tailwind 3 unwraps Inth's cascade layer in the stylesheets it
 				// builds (`@inth/react/postcss-tailwind3`). Inlined rules skip that
 				// build and would lose to its preflight.
 				if (site.inlineStyles && (await usesTailwind3(root))) {

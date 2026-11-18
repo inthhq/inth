@@ -108,7 +108,7 @@ describe.each(surfaces)('%s', (_name, component, options) => {
 		}
 		expect(html).toMatch(/<script[^>]*data-inth-config[^>]*>\{/u);
 		// The browser only moves marked elements onto a ClientRouter page's
-		// live nonce, so every inline script carries a Inth marker.
+		// live nonce, so every inline script carries an Inth marker.
 		for (const tag of tags.filter((value) => value.startsWith('<script'))) {
 			expect(tag).toMatch(/data-inth-(?:config|boot|inline)/u);
 		}

@@ -862,7 +862,7 @@ describe('astro:config:setup', () => {
 		};
 
 		it('links styles.css instead of inlining, so Tailwind builds it', async () => {
-			// Tailwind 3 unwraps inth's layer in the stylesheets it builds;
+			// Tailwind 3 unwraps Inth's layer in the stylesheets it builds;
 			// inlined rules would stay layered and lose to its preflight.
 			const { calls } = await runSetup(
 				{ mode: testingMode(), ui: 'svelte' },

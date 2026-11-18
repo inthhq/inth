@@ -32,7 +32,6 @@ export default onRequest;
  * the integration so it does not also run as the `pre` middleware.
  *
  * @param middlewareOptions - Per-request hooks such as `experimentArm`.
- * @returns The middleware handler.
  * @example
  * ```ts
  * // src/middleware.ts

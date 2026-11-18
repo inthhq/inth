@@ -88,10 +88,8 @@ const grantsOptional = function grantsOptional(
  * every declared vendor, which only the kernel records.
  *
  * @param snapshot - The snapshot the server rendered with.
- * @param options - The resolved integration options.
  * @param blocking - Whether the banner renders as a blocking dialog.
  * @param now - The clock. Defaults to `Date.now()`.
- * @returns `true` when the engine may wait.
  * @internal
  */
 export const canDeferEngine = function canDeferEngine(

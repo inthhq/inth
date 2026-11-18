@@ -53,7 +53,7 @@ export interface PromptProps {
 	disableAnimation?: boolean;
 	/** Extra class on the banner root. */
 	class?: string;
-	/** Drop the "Secured by c15t" tag. */
+	/** Drop the "Secured by" tag. */
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;
@@ -158,7 +158,6 @@ type TranslationBundle = Partial<Translations>;
  * Button and rights labels: props first, then core's copy order.
  *
  * @param bundle - The snapshot's translations.
- * @param props - The component props.
  * @returns Labels keyed by action and by right.
  */
 const resolveLabels = function resolveLabels(
@@ -184,9 +183,7 @@ const resolveLabels = function resolveLabels(
  *
  * @param bundle - The snapshot's translations.
  * @param fallback - The English translations.
- * @param props - The component props.
  * @param snapshot - The snapshot, for its policy prompt.
- * @returns The banner copy.
  */
 const resolveCopy = function resolveCopy(
 	bundle: TranslationBundle | undefined,
@@ -225,8 +222,6 @@ const PROMPT_SLOTS = {
  * apply.
  *
  * @param classNames - The stylesheet class maps.
- * @param props - The component props.
- * @param theme - The integration's `theme`.
  * @param disableAnimation - Leave out the entering classes, which mark the
  * mount. The stylesheet fades the banner in only when the client also
  * marks a late reveal with `data-entry="late"`.
@@ -287,7 +282,6 @@ const resolveClasses = function resolveClasses(
  * Resolve the banner's copy, actions, layout and class names.
  *
  * @param input - The snapshot, the component props and the site options.
- * @returns The banner model.
  */
 export const resolvePromptModel = function resolvePromptModel(
 	input: PromptModelInput

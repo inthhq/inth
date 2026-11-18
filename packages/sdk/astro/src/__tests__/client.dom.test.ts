@@ -1308,7 +1308,7 @@ describe('a CSP nonce on the page', () => {
 			'<style data-inth-styles="inth-first-paint" nonce="next-n0nce"></style>',
 			'<style data-inth-styles="inth-iab-first-paint" nonce="next-n0nce"></style>',
 			'<script nonce="unrelated">0</script>',
-			// Not inth's, so not inth's to hand the live nonce to.
+			// Not Inth's, so not Inth's to hand the live nonce to.
 			'<script id="foreign" nonce="next-n0nce">0</script>',
 		].join('');
 		incoming.body.innerHTML = [
@@ -1353,7 +1353,7 @@ describe('a CSP nonce on the page', () => {
 		renderBanner();
 		start();
 
-		// Markup injected ahead of inth's own config script, naming a nonce
+		// Markup injected ahead of Inth's own config script, naming a nonce
 		// of the attacker's choosing.
 		const incoming = document.implementation.createHTMLDocument();
 		incoming.head.innerHTML = [

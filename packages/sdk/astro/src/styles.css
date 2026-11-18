@@ -1,7 +1,7 @@
 /**
  * @inth/astro — prebuilt component styles.
  *
- * For sites that set `styles: false` and load inth's styles themselves.
+ * For sites that set `styles: false` and load Inth's styles themselves.
  * By default the integration inlines the first-paint rules and links the
  * dialog's when it opens, and this file is not used. It covers the theme
  * tokens, every Inth CSS variable, the server-rendered banner and the

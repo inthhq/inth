@@ -16,7 +16,6 @@ export const DIALOG_HOST_ID = 'inth-dialog-host';
 /**
  * The element dialog islands mount into, added to `<body>` on first use.
  *
- * @returns The host element.
  * @internal
  */
 export const ensureDialogHost = function ensureDialogHost(): HTMLElement {
@@ -58,7 +57,6 @@ export const readDialogLegalLinks = function readDialogLegalLinks():
  * Read when the island mounts, like the legal links, so it follows the
  * page a ClientRouter navigation swapped in.
  *
- * @param kind - Which dialog is opening.
  * @returns The prop, or `undefined` when the page left it unset.
  * @internal
  */

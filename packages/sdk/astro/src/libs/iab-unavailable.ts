@@ -19,7 +19,6 @@ import type { InthAstroOptions } from '../types';
 /**
  * Whether the site cannot answer for the snapshot's policy.
  *
- * @param snapshot - The kernel snapshot.
  * @param iab - The site's `iab` option.
  * @returns `true` for an `iab` policy with vendor data on a site without
  * `iab`.
@@ -34,7 +33,6 @@ export const isIABUnavailable = function isIABUnavailable(
 /**
  * Throw when the site cannot answer for the snapshot's policy.
  *
- * @param snapshot - The kernel snapshot.
  * @param iab - The site's `iab` option.
  * @throws {IABUnavailableError} When {@link isIABUnavailable} holds.
  */

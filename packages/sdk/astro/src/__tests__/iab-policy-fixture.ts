@@ -10,7 +10,7 @@ import { testWire } from './policy-fixture';
  * policy plus its vendor list and CMP ID.
  *
  * @param gvl - `'inline'` sends the list itself; `'reference'` sends the
- * reference inth's own init routes send in its place; `'null'` turns IAB
+ * reference Inth's own init routes send in its place; `'null'` turns IAB
  * off for the request.
  * @returns A fresh `/init` response.
  */

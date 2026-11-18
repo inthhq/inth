@@ -13,7 +13,6 @@ import type { Script } from '@inth/sdk/modules/script-loader';
  * consent: a choice then also decides that vendor, which only the kernel
  * records.
  *
- * @param script - A configured script.
  * @returns `true` when the script carries vendor fields.
  * @internal
  */

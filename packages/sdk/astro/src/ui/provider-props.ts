@@ -68,8 +68,6 @@ export interface DialogProviderProps {
  * Build the provider props for a dialog island.
  *
  * @param runtime - The page runtime that owns the kernel.
- * @param options - The resolved integration options.
- * @returns Props for `ConsentProvider`.
  */
 export const buildProviderProps = function buildProviderProps(
 	runtime: ConsentRuntime,

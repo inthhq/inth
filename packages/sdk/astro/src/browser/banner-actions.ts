@@ -40,7 +40,6 @@ export interface ResolvedAction {
 /**
  * The action a click or press on `target` asks for.
  *
- * @param target - The event's target.
  * @returns The action, or `null` when the target is not an action control.
  * @internal
  */
@@ -84,8 +83,6 @@ const deferredHooks = new WeakMap<AstroConsentClient, DeferredClientHooks>();
  * Register what the listener does for the first-load shell's client, which
  * has no runtime until its engine loads.
  *
- * @param client - The shell's client.
- * @param hooks - Its hooks.
  * @internal
  */
 export const registerDeferredClient = function registerDeferredClient(
@@ -107,7 +104,6 @@ export const resetDialogWarming = function resetDialogWarming(): void {
  * Download the dialog for `client` without mounting it. A failed download
  * is forgotten, so the next hover, focus or open tries again.
  *
- * @param client - The page's consent client.
  * @returns Resolves once the download settles.
  * @internal
  */

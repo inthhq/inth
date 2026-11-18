@@ -47,7 +47,6 @@ export interface AstroConsentClient {
 	 * resolves. Every other member works before then.
 	 */
 	readonly runtime: ConsentRuntime | undefined;
-	/** The resolved integration options. */
 	readonly options: InthResolvedOptions;
 	/**
 	 * Resolves once the consent engine has loaded and `runtime` is set.
@@ -60,7 +59,6 @@ export interface AstroConsentClient {
 	 * Observe consent changes.
 	 *
 	 * @param listener - Called with every new snapshot.
-	 * @returns An unsubscribe function.
 	 */
 	subscribe: (listener: (snapshot: ConsentSnapshot) => void) => Unsubscribe;
 	/**
@@ -139,8 +137,6 @@ export interface AstroConsentClient {
 	isVendorAllowed: (vendorId: string) => boolean;
 	/**
 	 * Associate this consent record with an external identity.
-	 *
-	 * @param user - The external user.
 	 */
 	identify: (user: KernelUser) => Promise<void>;
 	/** Tear the runtime down. Mainly for tests. */
