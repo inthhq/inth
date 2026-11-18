@@ -88,6 +88,7 @@ export {
 	V1_PROPERTY_MAX_LENGTH,
 	V1_PROPERTY_PATTERN,
 	V1_REQUEST_ID_HEADER,
+	V1_UUID_PATTERN,
 	V1_UUID_V7_PATTERN,
 } from './api/v1/constants';
 export type {

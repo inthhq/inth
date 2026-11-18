@@ -248,6 +248,14 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			},
 		],
 		[
+			'an uppercase key',
+			{
+				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				idempotencyKey: KEY.toUpperCase(),
+				subjectId: SUBJECT,
+			},
+		],
+		[
 			'no subject or person',
 			{
 				acceptances: [{ proofToken: 'p', type: 'terms_us' }],

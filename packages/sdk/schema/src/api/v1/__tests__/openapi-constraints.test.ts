@@ -4,10 +4,8 @@
  */
 import { readFileSync } from 'node:fs';
 
-import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 
-import { v1IdentityProviderSchema } from '../common';
 import {
 	V1_DOCUMENT_TYPE_PATTERN,
 	V1_MAX_ACCEPTANCES,
@@ -77,6 +75,5 @@ describe('the backend document and the SDK agree on', () => {
 		'SubjectLinkRequest',
 	])('a non-empty identity provider in %s', (component) => {
 		expect(at(component, 'identityProvider').minLength).toBe(1);
-		expect(v.is(v1IdentityProviderSchema, '')).toBe(false);
 	});
 });

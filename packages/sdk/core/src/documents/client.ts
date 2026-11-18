@@ -14,6 +14,7 @@
 import {
 	V1_DOCUMENT_TYPE_PATTERN,
 	V1_MAX_ACCEPTANCES,
+	V1_UUID_PATTERN,
 } from '@inth/sdk-schema/types';
 import type {
 	V1DocumentAcceptanceItem,
@@ -165,7 +166,7 @@ const readAcceptances = function readAcceptances(
  * @param input - What the caller passed.
  * @returns The body of `POST /v1/documents/acceptances`.
  * @throws {TypeError} When there are no acceptances or too many, no
- * idempotency key, no subject ID or external ID, or a document type or the
+ * lowercase UUID idempotency key, no subject ID or external ID, or a document type or the
  * property is malformed.
  */
 const buildAcceptancesBody = function buildAcceptancesBody(
@@ -179,7 +180,7 @@ const buildAcceptancesBody = function buildAcceptancesBody(
 			`${LABEL}: pass 1 to ${V1_MAX_ACCEPTANCES} acceptances.`
 		);
 	}
-	if (!input.idempotencyKey) {
+	if (!V1_UUID_PATTERN.test(input.idempotencyKey)) {
 		throw new TypeError(
 			`${LABEL}: pass an idempotencyKey from createIdempotencyKey().`
 		);
