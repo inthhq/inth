@@ -35,12 +35,14 @@
  */
 import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 
-import { displayedCategories as listDisplayed } from '../consent/consent-types';
+import {
+	displayedCategories as listDisplayed,
+	policyDefault,
+} from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { listedVendors } from '../libs/vendor-listing';
 import { vendorAxisActive } from '../libs/vendors';
 import { deniedVendorIds } from '../modules/has';
-import { policyDefault } from '../policy-choice';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,

@@ -2,8 +2,12 @@
  * @packageDocumentation
  * Provides types and constants for managing GDPR-compliant consent categories and their configurations.
  */
-import { CONSENT_CATEGORIES } from '../consent-record/types';
-import type { ConsentCategory } from '../consent-record/types';
+import type { ResolvedPolicyRule } from '@inth/sdk-schema/types';
+
+import type {
+	ConsentCategory,
+	OptionalConsentCategory,
+} from '../consent-record/types';
 
 /**
  * Defines all possible consent categories that can be managed within the application.
@@ -233,9 +237,16 @@ export const consentTypes: ConsentType[] = [
  * @see {@link consentTypes} for the full consent configurations
  * @public
  */
-// Not `consentTypes.map(...)`, so code that only needs the names does not
-// carry the descriptions. A test keeps the two in step.
-export const allConsentNames: readonly AllConsentNames[] = CONSENT_CATEGORIES;
+// A literal, not `consentTypes.map(...)` or `CONSENT_CATEGORIES`, so code
+// that only needs the names carries neither the descriptions nor an import
+// that splits a chunk. A test keeps the three in step.
+export const allConsentNames: AllConsentNames[] = [
+	'necessary',
+	'functionality',
+	'experience',
+	'measurement',
+	'marketing',
+];
 
 /**
  * The categories a preference surface lists: `necessary` plus the scope, in
@@ -318,3 +329,18 @@ export interface ConsentInfo {
 	 */
 	identityProvider?: string;
 }
+
+/**
+ * A category's value before any choice: on under opt-out and `none`, which
+ * allow it, else on when the rule preselects it.
+ */
+export const policyDefault = function policyDefault(
+	rule: Pick<ResolvedPolicyRule, 'model' | 'preselectedCategories'>,
+	category: OptionalConsentCategory
+): boolean {
+	return (
+		rule.model === 'opt-out' ||
+		rule.model === 'none' ||
+		rule.preselectedCategories.includes(category)
+	);
+};

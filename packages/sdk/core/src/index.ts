@@ -183,7 +183,7 @@ export type { NamespaceProps } from './consent/compliance';
 // -- Consent conditions --------------------------------------------------------
 export type { HasCondition } from './libs/has';
 export { has } from './libs/has';
-export { policyDefault } from './policy-choice';
+export { policyDefault } from './consent/consent-types';
 
 // -- Storage -------------------------------------------------------------------
 export type { StorageConfig } from './libs/cookie';
