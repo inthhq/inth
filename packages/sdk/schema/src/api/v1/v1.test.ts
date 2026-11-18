@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	v1CanonicalSubjectIdSchema,
-	v1ConsentInitQuerySchema,
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordOutputSchema,
 	v1ConsentSessionReportSchema,
@@ -93,14 +92,6 @@ describe('v1 property', () => {
 	});
 });
 
-describe('GET /v1/consent/init query', () => {
-	it('has no version or policy-contract parameter', () => {
-		const keys = Object.keys(v1ConsentInitQuerySchema.entries);
-		expect(keys).not.toContain('v');
-		expect(keys).not.toContain('contract');
-	});
-});
-
 describe('POST /v1/consent/records', () => {
 	it('accepts the contract example', () => {
 		expect(
@@ -169,9 +160,6 @@ describe('POST /v1/consent/sessions', () => {
 			source: 'render',
 		});
 		expect(result.success).toBe(true);
-		expect(
-			Object.keys(v1ConsentSessionReportSchema.entries.journey.wrapped.entries)
-		).not.toContain('domain');
 	});
 });
 

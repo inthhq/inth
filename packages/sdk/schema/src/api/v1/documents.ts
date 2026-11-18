@@ -20,9 +20,7 @@ import {
 	v1PropertySchema,
 	v1SubjectIdSchema,
 } from './common';
-
-/** A document type, such as `privacy_policy`, `terms_us` or `terms_eu`. */
-export const V1_DOCUMENT_TYPE_PATTERN = /^[a-z][\d_a-z]*$/u;
+import { V1_DOCUMENT_TYPE_PATTERN } from './constants';
 
 export const v1DocumentTypeSchema = v.pipe(
 	v.string(),

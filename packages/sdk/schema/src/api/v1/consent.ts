@@ -1,10 +1,6 @@
 /**
  * `/v1/consent/*` schemas: init, manifest, records, sessions and check.
  *
- * Init and the manifest answer with the same shapes as the routes they
- * replace, so their outputs reuse those schemas. Records, sessions and check
- * have shapes of their own.
- *
  * @packageDocumentation
  */
 
@@ -45,11 +41,7 @@ const plainObjectSchema = v.custom<Record<string, unknown>>(
 const optionalQueryString = (description: string) =>
 	v.optional(v.pipe(v.string(), v.description(description)));
 
-/**
- * Query of `GET /v1/consent/init`. Every input travels here, so a browser
- * sends it as a CORS simple request. There is no version or policy-contract
- * parameter: the path is the version.
- */
+/** Query of `GET /v1/consent/init`. */
 export const v1ConsentInitQuerySchema = v.object({
 	country: optionalQueryString('Country override, ISO 3166-1 alpha-2.'),
 	experiment: optionalQueryString(
@@ -76,7 +68,6 @@ export const v1ConsentInitQuerySchema = v.object({
 	),
 });
 
-/** `GET /v1/consent/init` answers with the same body as the route it replaces. */
 export const v1ConsentInitOutputSchema = initOutputSchema;
 
 // ---------------------------------------------------------------------------
@@ -246,9 +237,8 @@ export const v1ConsentRecordLinkSchema = v.variant('stored', [
 ]);
 
 /**
- * Answer of `POST /v1/consent/records`. Carries the canonical subject ID;
- * the client replaces a stored `sub_` ID with it. Other fields of the save
- * result pass through unchecked.
+ * Answer of `POST /v1/consent/records`. `subjectId` is canonical: the client
+ * stores it in place of a `sub_` ID.
  */
 export const v1ConsentRecordOutputSchema = v.looseObject({
 	link: v.optional(v1ConsentRecordLinkSchema),
@@ -310,7 +300,6 @@ export const v1ConsentCheckOutputSchema = v.object({
 
 export type V1ConsentInitQuery = v.InferOutput<typeof v1ConsentInitQuerySchema>;
 export type V1ConsentInitOutput = InitOutput;
-/** `GET /v1/consent/manifest` answers with the same manifest as before. */
 export type V1ConsentManifest = ConsentManifest;
 export type V1ConsentAnswer = v.InferOutput<typeof v1ConsentAnswerSchema>;
 export type V1ConsentRecordInput = v.InferOutput<

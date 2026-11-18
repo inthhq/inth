@@ -5,13 +5,17 @@
  */
 
 export {
-	type V1ErrorBody,
 	type V1ErrorCode,
-	type V1ValidationDetails,
+	V1_DOCUMENT_TYPE_PATTERN,
 	V1_ERROR_CODES,
 	V1_LEGACY_SUBJECT_ID_PATTERN,
 	V1_REQUEST_ID_HEADER,
 	V1_UUID_V7_PATTERN,
+} from './constants';
+
+export {
+	type V1ErrorBody,
+	type V1ValidationDetails,
 	v1CanonicalSubjectIdSchema,
 	v1EpochMillisecondsSchema,
 	v1ErrorBodySchema,
@@ -64,7 +68,6 @@ export {
 	type V1DocumentType,
 	type V1PublishedDocument,
 	type V1RecordedAcceptance,
-	V1_DOCUMENT_TYPE_PATTERN,
 	v1CurrentDocumentSchema,
 	v1DocumentAcceptanceItemSchema,
 	v1DocumentAcceptancesInputSchema,
