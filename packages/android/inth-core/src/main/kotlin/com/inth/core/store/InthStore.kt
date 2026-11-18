@@ -104,12 +104,11 @@ class InthStore(
 	/**
 	 * Read the stored subject, or `null` when absent, unparseable, or unusable.
 	 *
-	 * Unusable is the read-side half of the format rule, and it is the reason a prerelease
-	 * install sits at `INPUT_VALIDATION_FAILED` forever: an id the producer refuses can
-	 * never carry a save, so it is not an identity this build can answer with. Adopting it
-	 * again keeps the core reporting a committed save that cannot land and a subject whose
-	 * consent no query returns. Such an id reads as absent and is left in
-	 * [takeUnusableSubject] for whoever is going to say so out loud.
+	 * Unusable is the read-side half of the format rule: a stored id that is neither a
+	 * lowercase UUIDv7 nor a c15t `sub_` id (the `read` cases in
+	 * `packages/native-protocol/subject-id/uuidv7.json`) is not an identity the backend
+	 * takes, so it is not one this build can answer with. Such an id reads as absent and is
+	 * left in [takeUnusableSubject] for whoever is going to say so out loud.
 	 *
 	 * The stored value is not rewritten here. Dropping the identity is a decision with a
 	 * snapshot and a queue attached to it, and a store that quietly repaired an id would
