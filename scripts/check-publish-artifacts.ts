@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { PARTS } from '../packages/sdk/shared/sdk-parts';
 import type { PackageManifest } from './manifest-utils';
 import {
 	collectManifestTargets,
@@ -670,14 +671,15 @@ export const getBlockedReason = function getBlockedReason(
 	packageName: string,
 	path: string
 ): string | null {
-	// `@inth/sdk` ships each private part under `lib/<folder>/`: judge those
+	// `@inth/sdk` ships each private part under `lib/<part>/`: judge those
 	// files as the part's own.
-	const part =
+	const lib =
 		packageName === '@inth/sdk'
-			? /^lib\/(?<folder>[^/]+)\/(?<rest>.+)$/u.exec(path)?.groups
+			? /^lib\/(?<part>[^/]+)\/(?<rest>.+)$/u.exec(path)?.groups
 			: undefined;
-	if (part?.folder && part.rest) {
-		return blockedReasonInPackage(`@inth/sdk-${part.folder}`, part.rest);
+	const part = PARTS.find((name) => name === lib?.part);
+	if (part && lib?.rest) {
+		return blockedReasonInPackage(`@inth/sdk-${part}`, lib.rest);
 	}
 	return blockedReasonInPackage(packageName, path);
 };

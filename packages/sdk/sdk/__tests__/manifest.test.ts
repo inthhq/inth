@@ -3,13 +3,12 @@ import { join } from 'node:path';
 
 import { describe, expect, test } from 'vitest';
 
+import { toPublicSpecifier, toPublicSubpath } from '../../shared/sdk-parts';
 import {
 	computeManifestFields,
 	expectedManifest,
 	findPrivateNames,
 	PACKAGE_ROOT,
-	toPublicSpecifier,
-	toPublicSubpath,
 } from '../scripts/assemble';
 
 const manifest = JSON.parse(
