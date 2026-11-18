@@ -4,13 +4,12 @@ import { resolveTriggerLabels } from '@inth/sdk/surface-state';
 import triggerStyles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { followDevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
 import {
-	calculateCornerFromDrag,
 	createInitialDragState,
+	createTriggerDrag,
 	getPersistedPosition,
 	isTriggerVisible,
 	nextToolbarItem,
 	onSnapEnd,
-	persistPosition,
 	toolbarOrder,
 } from '@inth/sdk/ui/utils/trigger-utils';
 import type {
@@ -45,9 +44,6 @@ const config = useConsentConfig();
 const policy = usePolicyRule();
 const init = useConsentInit();
 const translations = useSurfaceTranslations();
-
-/** Movement past which a pointer sequence counts as a drag, not a click. */
-const DRAG_SLOP_PX = 5;
 
 const mounted = useMounted();
 const triggerRef = ref<HTMLElement | null>(null);
@@ -92,79 +88,23 @@ onMounted(() => {
 const dragState = ref<DragState>(createInitialDragState());
 const isDragging = computed(() => dragState.value.isDragging);
 const isSnapping = ref(false);
-let hasDragged = false;
-let dragStartTime = 0;
-let capturedElement: HTMLElement | null = null;
-
-const releaseCapture = function releaseCapture(event: PointerEvent) {
-	capturedElement?.releasePointerCapture?.(event.pointerId);
-	capturedElement = null;
-};
+const drag = createTriggerDrag({
+	corner: () => corner.value,
+	onCorner: (next) => {
+		isSnapping.value = true;
+		corner.value = next;
+	},
+	onDrag: (next) => {
+		dragState.value = next;
+	},
+	persist: () => config.value.triggerPersistPosition !== false,
+});
 
 const onPointerDown = function onPointerDown(event: PointerEvent) {
-	if (event.button !== 0) {
-		return;
+	if (event.button === 0) {
+		isSnapping.value = false;
 	}
-	capturedElement = event.target as HTMLElement;
-	capturedElement.setPointerCapture?.(event.pointerId);
-	hasDragged = false;
-	dragStartTime = Date.now();
-	isSnapping.value = false;
-	dragState.value = {
-		currentX: event.clientX,
-		currentY: event.clientY,
-		isDragging: true,
-		startX: event.clientX,
-		startY: event.clientY,
-	};
-};
-
-const onPointerMove = function onPointerMove(event: PointerEvent) {
-	const state = dragState.value;
-	if (!state.isDragging) {
-		return;
-	}
-	if (
-		Math.abs(event.clientX - state.startX) > DRAG_SLOP_PX ||
-		Math.abs(event.clientY - state.startY) > DRAG_SLOP_PX
-	) {
-		hasDragged = true;
-	}
-	dragState.value = {
-		...state,
-		currentX: event.clientX,
-		currentY: event.clientY,
-	};
-};
-
-const onPointerUp = function onPointerUp(event: PointerEvent) {
-	releaseCapture(event);
-	const state = dragState.value;
-	if (!state.isDragging) {
-		return;
-	}
-	if (hasDragged) {
-		const dragX = event.clientX - state.startX;
-		const dragY = event.clientY - state.startY;
-		const duration = Date.now() - dragStartTime;
-		const next = calculateCornerFromDrag(corner.value, dragX, dragY, {
-			velocityX: duration > 0 ? dragX / duration : 0,
-			velocityY: duration > 0 ? dragY / duration : 0,
-		});
-		if (next !== corner.value) {
-			isSnapping.value = true;
-			corner.value = next;
-			if (config.value.triggerPersistPosition !== false) {
-				persistPosition(next);
-			}
-		}
-	}
-	dragState.value = createInitialDragState();
-};
-
-const onPointerCancel = function onPointerCancel(event: PointerEvent) {
-	releaseCapture(event);
-	dragState.value = createInitialDragState();
+	drag.pointerDown(event);
 };
 
 // The snapping class stays on until the move to the new corner ends.
@@ -205,13 +145,8 @@ const motionClasses = computed(() => [
 	isSnapping.value && triggerStyles.snapping,
 ]);
 
-/** A pointer click that ends a drag; a keyboard click has `detail` 0. */
-const endsDrag = function endsDrag(event: MouseEvent): boolean {
-	return event.detail !== 0 && hasDragged;
-};
-
 const openDialog = function openDialog(event: MouseEvent) {
-	if (!endsDrag(event)) {
+	if (!drag.endsDrag(event)) {
 		activeUI.value = 'manager';
 	}
 };
@@ -292,7 +227,7 @@ const selectItem = function selectItem(
 ) {
 	if (kind === 'preferences') {
 		openDialog(event);
-	} else if (!endsDrag(event)) {
+	} else if (!drag.endsDrag(event)) {
 		devTools.instance.value?.toggle();
 	}
 };
@@ -326,9 +261,9 @@ const selectItem = function selectItem(
 			:style="[config.components?.trigger?.toolbar?.style, dragStyle]"
 			@keydown="handleToolbarKeyDown"
 			@pointerdown="onPointerDown"
-			@pointermove="onPointerMove"
-			@pointerup="onPointerUp"
-			@pointercancel="onPointerCancel"
+			@pointermove="drag.pointerMove"
+			@pointerup="drag.pointerUp"
+			@pointercancel="drag.pointerCancel"
 		>
 			<button
 				v-for="kind in toolbarItems"
@@ -405,9 +340,9 @@ const selectItem = function selectItem(
 			:aria-label="triggerLabel"
 			@click="openDialog"
 			@pointerdown="onPointerDown"
-			@pointermove="onPointerMove"
-			@pointerup="onPointerUp"
-			@pointercancel="onPointerCancel"
+			@pointermove="drag.pointerMove"
+			@pointerup="drag.pointerUp"
+			@pointercancel="drag.pointerCancel"
 		>
 			<span
 				v-bind="slotAttrs(config.components?.trigger?.icon, triggerStyles.icon)"

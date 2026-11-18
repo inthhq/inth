@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
+	createTriggerDrag,
+	getPersistedPosition,
 	isTriggerVisible,
 	nextToolbarItem,
 	onSnapEnd,
@@ -64,6 +66,69 @@ describe('nextToolbarItem', () => {
 		expect(nextToolbarItem(items, 'b', 'Home')).toBe('a');
 		expect(nextToolbarItem(items, 'b', 'End')).toBe('c');
 		expect(nextToolbarItem(items, 'b', 'Enter')).toBeUndefined();
+	});
+});
+
+describe('createTriggerDrag', () => {
+	afterEach(() => {
+		localStorage.clear();
+	});
+
+	const pointer = (clientX: number, clientY = 0) => ({
+		button: 0,
+		clientX,
+		clientY,
+		currentTarget: null,
+		pointerId: 1,
+		target: null,
+	});
+	const setup = (persist = true) => {
+		let corner: 'bottom-right' | 'bottom-left' = 'bottom-right';
+		const onCorner = vi.fn((next: typeof corner) => {
+			corner = next;
+		});
+		const drag = createTriggerDrag({
+			corner: () => corner,
+			onCorner,
+			persist: () => persist,
+		});
+		return { drag, onCorner };
+	};
+
+	test('a drag past the slop snaps to the corner it moves toward', () => {
+		const { drag, onCorner } = setup();
+		drag.pointerDown(pointer(500));
+		drag.pointerMove(pointer(440));
+		drag.pointerUp(pointer(440));
+		expect(onCorner).toHaveBeenCalledWith('bottom-left');
+		expect(getPersistedPosition()).toBe('bottom-left');
+	});
+
+	test('a press that stays within the slop is a click', () => {
+		const { drag, onCorner } = setup();
+		drag.pointerDown(pointer(500));
+		drag.pointerMove(pointer(503));
+		drag.pointerUp(pointer(503));
+		expect(onCorner).not.toHaveBeenCalled();
+		expect(drag.endsDrag({ detail: 1 })).toBe(false);
+	});
+
+	test('only the pointer click ending a drag is ignored', () => {
+		const { drag } = setup(false);
+		drag.pointerDown(pointer(500));
+		drag.pointerMove(pointer(440));
+		drag.pointerUp(pointer(440));
+		expect(getPersistedPosition()).toBeNull();
+		expect(drag.endsDrag({ detail: 1 })).toBe(true);
+		expect(drag.endsDrag({ detail: 1 })).toBe(false);
+	});
+
+	test('a keyboard click right after a drag is a request', () => {
+		const { drag } = setup();
+		drag.pointerDown(pointer(500));
+		drag.pointerMove(pointer(440));
+		drag.pointerUp(pointer(440));
+		expect(drag.endsDrag({ detail: 0 })).toBe(false);
 	});
 });
 

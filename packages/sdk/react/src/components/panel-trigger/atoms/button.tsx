@@ -87,7 +87,7 @@ export const TriggerButton = createForwardRef<
 			corner,
 			isDragging,
 			isSnapping,
-			wasDragged,
+			endsDrag,
 			handlers,
 			dragStyle,
 			openDialog,
@@ -98,9 +98,7 @@ export const TriggerButton = createForwardRef<
 		useIdleDialogWarming(true);
 
 		const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-			// The click that ends a drag doesn't open the dialog. Keyboard clicks
-			// have `detail` 0, so a stale drag flag can't swallow them.
-			if (event.detail !== 0 && wasDragged()) {
+			if (endsDrag(event)) {
 				return;
 			}
 			openDialog();

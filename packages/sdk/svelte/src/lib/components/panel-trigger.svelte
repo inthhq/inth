@@ -6,13 +6,12 @@
 	} from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 	import {
-		calculateCornerFromDrag,
 		createInitialDragState,
+		createTriggerDrag,
 		getPersistedPosition,
 		isTriggerVisible,
 		nextToolbarItem,
 		onSnapEnd,
-		persistPosition as persistToStorage,
 		resolveBrandMark,
 		resolveStyles,
 		toStyleAttributeValue,
@@ -78,9 +77,6 @@
 
 	let dragState: DragState = $state(createInitialDragState());
 	let isSnapping = $state(false);
-	let hasDragged = $state(false);
-	let dragStartTime = $state(0);
-	let capturedElement: HTMLElement | null = null;
 
 	onMount(() => {
 		if (persistPosition) {
@@ -197,95 +193,28 @@
 			: 'transform: none;'
 	);
 
-	const updateCorner = function updateCorner(newCorner: CornerPosition) {
-		corner = newCorner;
-		if (persistPosition) {
-			persistToStorage(newCorner);
-		}
-		onPositionChange?.(newCorner);
-	};
+	const drag = createTriggerDrag({
+		corner: () => corner,
+		onCorner: (next) => {
+			isSnapping = true;
+			corner = next;
+			onPositionChange?.(next);
+		},
+		onDrag: (next) => {
+			dragState = next;
+		},
+		persist: () => persistPosition,
+	});
 
 	const handlePointerDown = function handlePointerDown(e: PointerEvent) {
-		if (e.button !== 0) {
-			return;
+		if (e.button === 0) {
+			isSnapping = false;
 		}
-
-		(e.target as HTMLElement).setPointerCapture(e.pointerId);
-		capturedElement = e.target as HTMLElement;
-		hasDragged = false;
-		dragStartTime = Date.now();
-
-		dragState = {
-			currentX: e.clientX,
-			currentY: e.clientY,
-			isDragging: true,
-			startX: e.clientX,
-			startY: e.clientY,
-		};
-
-		isSnapping = false;
+		drag.pointerDown(e);
 	};
 
-	const handlePointerMove = function handlePointerMove(e: PointerEvent) {
-		if (!dragState.isDragging) {
-			return;
-		}
-
-		const dx = Math.abs(e.clientX - dragState.startX);
-		const dy = Math.abs(e.clientY - dragState.startY);
-		if (dx > 5 || dy > 5) {
-			hasDragged = true;
-		}
-
-		dragState = {
-			...dragState,
-			currentX: e.clientX,
-			currentY: e.clientY,
-		};
-	};
-
-	const handlePointerUp = function handlePointerUp(e: PointerEvent) {
-		if (capturedElement) {
-			capturedElement.releasePointerCapture(e.pointerId);
-			capturedElement = null;
-		}
-
-		if (!dragState.isDragging) {
-			return;
-		}
-
-		if (hasDragged) {
-			const dragX = e.clientX - dragState.startX;
-			const dragY = e.clientY - dragState.startY;
-			const dragDuration = Date.now() - dragStartTime;
-
-			const velocityX = dragDuration > 0 ? dragX / dragDuration : 0;
-			const velocityY = dragDuration > 0 ? dragY / dragDuration : 0;
-
-			const newCorner = calculateCornerFromDrag(corner, dragX, dragY, {
-				velocityX,
-				velocityY,
-			});
-
-			if (newCorner !== corner) {
-				isSnapping = true;
-				updateCorner(newCorner);
-			}
-		}
-
-		dragState = createInitialDragState();
-	};
-
-	const handlePointerCancel = function handlePointerCancel(e: PointerEvent) {
-		if (capturedElement) {
-			capturedElement.releasePointerCapture(e.pointerId);
-			capturedElement = null;
-		}
-		dragState = createInitialDragState();
-	};
-
-	const handleDevToolsClick = function handleDevToolsClick() {
-		if (hasDragged) {
+	const handleDevToolsClick = function handleDevToolsClick(e: MouseEvent) {
+		if (drag.endsDrag(e)) {
 			return;
 		}
 		devTools?.toggle();
@@ -316,7 +245,7 @@
 	};
 
 	const handleClick = function handleClick(e: MouseEvent) {
-		if (hasDragged) {
+		if (drag.endsDrag(e)) {
 			return;
 		}
 		onclick?.(e);
@@ -434,9 +363,9 @@
 				data-snapping={isSnapping || undefined}
 				onkeydown={handleToolbarKeyDown}
 				onpointerdown={handlePointerDown}
-				onpointermove={handlePointerMove}
-				onpointerup={handlePointerUp}
-				onpointercancel={handlePointerCancel}
+				onpointermove={drag.pointerMove}
+				onpointerup={drag.pointerUp}
+				onpointercancel={drag.pointerCancel}
 			>
 				{#each toolbarItems as item (item)}
 					{#if item === 'devtools'}
@@ -511,9 +440,9 @@
 				aria-label={preferencesLabel}
 				onclick={handleClick}
 				onpointerdown={handlePointerDown}
-				onpointermove={handlePointerMove}
-				onpointerup={handlePointerUp}
-				onpointercancel={handlePointerCancel}
+				onpointermove={drag.pointerMove}
+				onpointerup={drag.pointerUp}
+				onpointercancel={drag.pointerCancel}
 				onpointerenter={warmDialog}
 				onfocus={warmDialog}
 				data-testid="consent-dialog-trigger"

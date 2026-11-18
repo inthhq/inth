@@ -156,6 +156,49 @@ describe('ConsentDialogTrigger', () => {
 		});
 	});
 
+	test('Enter after a drag still opens the dialog; the click ending the drag does not', async () => {
+		render(FullFlowFixture, {
+			options: defaultOptions,
+			showWhen: 'always',
+		});
+		await fireEvent.click(
+			await waitFor(() =>
+				getDefined(
+					document.querySelector('[data-testid="consent-banner-accept-button"]')
+				)
+			)
+		);
+		const trigger = await waitFor(() =>
+			getDefined(
+				document.querySelector<HTMLElement>(
+					'button[aria-label="Open privacy settings"]'
+				)
+			)
+		);
+
+		// jsdom has no PointerEvent; a MouseEvent carries the coordinates.
+		const pointer = (type: string, clientX: number) =>
+			fireEvent(
+				trigger,
+				new MouseEvent(type, { bubbles: true, button: 0, clientX })
+			);
+		await pointer('pointerdown', 0);
+		await pointer('pointermove', 40);
+		await pointer('pointerup', 40);
+		await fireEvent.click(trigger, { detail: 1 });
+		expect(
+			document.querySelector('[data-testid="consent-dialog-root"]')
+		).not.toBeInTheDocument();
+
+		// A keyboard press fires a click with `detail` 0 and no pointer first.
+		await fireEvent.click(trigger, { detail: 0 });
+		await waitFor(() => {
+			expect(
+				document.querySelector('[data-testid="consent-dialog-root"]')
+			).toBeInTheDocument();
+		});
+	});
+
 	test('has correct aria-label', async () => {
 		render(FullFlowFixture, {
 			options: defaultOptions,

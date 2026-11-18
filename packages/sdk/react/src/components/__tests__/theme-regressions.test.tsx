@@ -211,12 +211,12 @@ describe('Theme regressions', () => {
 						branding: 'inth',
 						corner: 'bottom-right',
 						dragStyle: {},
+						endsDrag: () => false,
 						handlers: {},
 						isDragging: false,
 						isSnapping: false,
 						isVisible: true,
 						openDialog: vi.fn(),
-						wasDragged: () => false,
 					}}
 				>
 					<TriggerButton data-testid="nostyle-trigger">Trigger</TriggerButton>

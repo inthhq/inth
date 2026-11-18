@@ -27,70 +27,22 @@ export interface DragState {
 	currentY: number;
 }
 
-/**
- * Configuration options for the trigger positioning utilities.
- */
-export interface TriggerConfig {
-	defaultPosition: CornerPosition;
-	/** Offset from viewport edges in pixels */
-	offset: number;
-	/** Whether to persist position to localStorage */
-	persistPosition: boolean;
-	storageKey: string;
-}
-
-export const DEFAULT_TRIGGER_CONFIG: TriggerConfig = {
-	defaultPosition: 'bottom-right',
-	offset: 20,
-	persistPosition: true,
-	storageKey: 'inth-trigger-position',
-};
+const STORAGE_KEY = 'inth-trigger-position';
 
 /**
  * Minimum drag distance in pixels to trigger a corner change.
  * A small drag threshold makes the trigger feel more responsive.
  */
-export const DRAG_THRESHOLD = 30;
+const DRAG_THRESHOLD = 30;
 
 /**
  * Minimum velocity (pixels/ms) to trigger a corner change.
  * Fast swipes should trigger even with smaller distances.
  */
-export const VELOCITY_THRESHOLD = 0.15;
+const VELOCITY_THRESHOLD = 0.15;
 
-/**
- * Calculates which corner is nearest to the given coordinates.
- *
- * @param x - Current X coordinate (relative to viewport)
- * @param y - Current Y coordinate (relative to viewport)
- *
- * @example
- * ```typescript
- * // Bottom-right corner of a 1920x1080 viewport
- * const corner = calculateNearestCorner(1500, 900, 1920, 1080);
- * // Returns: 'bottom-right'
- * ```
- */
-export const calculateNearestCorner = function calculateNearestCorner(
-	x: number,
-	y: number,
-	viewportWidth: number,
-	viewportHeight: number
-): CornerPosition {
-	const isRight = x > viewportWidth / 2;
-	const isBottom = y > viewportHeight / 2;
-
-	if (isBottom && isRight) {
-		return 'bottom-right';
-	}
-	if (isBottom && !isRight) {
-		return 'bottom-left';
-	}
-	if (!isBottom && isRight) {
-		return 'top-right';
-	}
-	return 'top-left';
-};
+/** Movement past which a pointer sequence counts as a drag, not a click. */
+const DRAG_SLOP_PX = 5;
 
 /**
  * Calculates the new corner based on drag direction from the current corner.
@@ -116,7 +68,7 @@ export const calculateNearestCorner = function calculateNearestCorner(
  * // Returns: 'bottom-left' (velocity overcomes small distance)
  * ```
  */
-export const calculateCornerFromDrag = function calculateCornerFromDrag(
+const calculateCornerFromDrag = function calculateCornerFromDrag(
 	currentCorner: CornerPosition,
 	dragX: number,
 	dragY: number,
@@ -181,9 +133,9 @@ export const calculateCornerFromDrag = function calculateCornerFromDrag(
  * @remarks
  * Silently fails if localStorage is not available (e.g., in SSR or private browsing).
  */
-export const persistPosition = function persistPosition(
+const persistPosition = function persistPosition(
 	corner: CornerPosition,
-	storageKey: string = DEFAULT_TRIGGER_CONFIG.storageKey
+	storageKey: string = STORAGE_KEY
 ): void {
 	try {
 		if (typeof localStorage !== 'undefined') {
@@ -201,7 +153,7 @@ export const persistPosition = function persistPosition(
  * Returns null if localStorage is not available or the stored value is invalid.
  */
 export const getPersistedPosition = function getPersistedPosition(
-	storageKey: string = DEFAULT_TRIGGER_CONFIG.storageKey
+	storageKey: string = STORAGE_KEY
 ): CornerPosition | null {
 	try {
 		if (typeof localStorage !== 'undefined') {
@@ -231,6 +183,161 @@ export const createInitialDragState =
 			startY: 0,
 		};
 	};
+
+/** Options for {@link createTriggerDrag}. */
+export interface TriggerDragOptions {
+	/** The corner the trigger sits in now. */
+	corner: () => CornerPosition;
+	/** Whether a new corner is saved for the next page load. */
+	persist: () => boolean;
+	/** Called with the corner a drag ends in, when it differs. */
+	onCorner: (corner: CornerPosition) => void;
+	/** Called as the drag state changes, to render the drag offset. */
+	onDrag?: (state: DragState) => void;
+}
+
+/** The pointer event fields a drag reads. DOM and React events both fit. */
+export type TriggerPointerEvent = Pick<
+	PointerEvent,
+	'button' | 'clientX' | 'clientY' | 'currentTarget' | 'pointerId' | 'target'
+>;
+
+/** The pointer handlers and click guard {@link createTriggerDrag} returns. */
+export interface TriggerDrag {
+	pointerDown: (event: TriggerPointerEvent) => void;
+	pointerMove: (event: TriggerPointerEvent) => void;
+	pointerUp: (event: TriggerPointerEvent) => void;
+	/**
+	 * Drop the drag in progress, for `pointercancel` or when the element it
+	 * started on is replaced.
+	 */
+	pointerCancel: () => void;
+	/**
+	 * Whether a click is the end of a drag rather than a request. Call it
+	 * from every click handler on the trigger: it spends the guard, so only
+	 * the click that ends a drag is ignored. A keyboard click (Enter or
+	 * Space, `detail` 0) is always a request.
+	 */
+	endsDrag: (event: Pick<MouseEvent, 'detail'>) => boolean;
+}
+
+/**
+ * The trigger's drag between corners: pointer capture, the slop that
+ * separates a drag from a click, the corner a drag or swipe ends in,
+ * persistence, and the guard that keeps the click ending a drag from
+ * opening anything.
+ *
+ * @example
+ * ```ts
+ * const drag = createTriggerDrag({
+ *   corner: () => corner,
+ *   persist: () => true,
+ *   onCorner: (next) => {
+ *     corner = next;
+ *   },
+ * });
+ * button.addEventListener('pointerdown', drag.pointerDown);
+ * button.addEventListener('click', (event) => {
+ *   if (!drag.endsDrag(event)) openDialog();
+ * });
+ * ```
+ */
+export const createTriggerDrag = function createTriggerDrag(
+	options: TriggerDragOptions
+): TriggerDrag {
+	let state = createInitialDragState();
+	let dragged = false;
+	let startedAt = 0;
+	let captured: Element | null = null;
+	let pointerId = -1;
+
+	const update = (next: DragState): void => {
+		state = next;
+		options.onDrag?.(next);
+	};
+	const release = (): void => {
+		try {
+			captured?.releasePointerCapture?.(pointerId);
+		} catch {
+			// The pointer is gone, which ends its capture too.
+		}
+		captured = null;
+	};
+
+	return {
+		endsDrag(event) {
+			const ended = dragged && event.detail !== 0;
+			dragged = false;
+			return ended;
+		},
+		pointerCancel() {
+			release();
+			// No click follows a cancelled pointer to spend the guard.
+			dragged = false;
+			update(createInitialDragState());
+		},
+		pointerDown(event) {
+			if (event.button !== 0) {
+				return;
+			}
+			// Capture on the item pressed, so the click still lands on it.
+			const target = event.target instanceof Element ? event.target : null;
+			const item = target?.closest('button');
+			const root =
+				event.currentTarget instanceof Element ? event.currentTarget : null;
+			captured = item && root?.contains(item) ? item : target;
+			({ pointerId } = event);
+			captured?.setPointerCapture?.(pointerId);
+			dragged = false;
+			startedAt = Date.now();
+			update({
+				currentX: event.clientX,
+				currentY: event.clientY,
+				isDragging: true,
+				startX: event.clientX,
+				startY: event.clientY,
+			});
+		},
+		pointerMove(event) {
+			if (!state.isDragging) {
+				return;
+			}
+			if (
+				Math.abs(event.clientX - state.startX) > DRAG_SLOP_PX ||
+				Math.abs(event.clientY - state.startY) > DRAG_SLOP_PX
+			) {
+				dragged = true;
+			}
+			update({ ...state, currentX: event.clientX, currentY: event.clientY });
+		},
+		pointerUp(event) {
+			release();
+			if (!state.isDragging) {
+				return;
+			}
+			const { startX, startY } = state;
+			update(createInitialDragState());
+			if (!dragged) {
+				return;
+			}
+			const dragX = event.clientX - startX;
+			const dragY = event.clientY - startY;
+			const elapsed = Date.now() - startedAt;
+			const corner = options.corner();
+			const next = calculateCornerFromDrag(corner, dragX, dragY, {
+				velocityX: elapsed > 0 ? dragX / elapsed : 0,
+				velocityY: elapsed > 0 ? dragY / elapsed : 0,
+			});
+			if (next === corner) {
+				return;
+			}
+			if (options.persist()) {
+				persistPosition(next);
+			}
+			options.onCorner(next);
+		},
+	};
+};
 
 /** What decides whether the trigger is on screen. */
 export interface TriggerVisibilityState {

@@ -250,7 +250,7 @@ export const TriggerToolbar = ({
 		corner,
 		isDragging,
 		isSnapping,
-		wasDragged,
+		endsDrag,
 		handlers,
 		dragStyle,
 		openDialog,
@@ -347,8 +347,7 @@ export const TriggerToolbar = ({
 		event: MouseEvent<HTMLButtonElement>,
 		item: ToolbarItem
 	) => {
-		const isPointerClick = event.detail !== 0;
-		if (isPointerClick && wasDragged()) {
+		if (endsDrag(event)) {
 			return;
 		}
 

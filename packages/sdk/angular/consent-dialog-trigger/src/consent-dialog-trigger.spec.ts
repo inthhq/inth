@@ -85,8 +85,8 @@ describe('ConsentDialogTrigger', () => {
 		pointer('pointerdown', 0);
 		pointer('pointermove', 40);
 		pointer('pointerup', 40);
-		// The click that ends the drag opens nothing.
-		button.click();
+		// The pointer click that ends the drag opens nothing.
+		button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
 		await fixture.whenStable();
 		expect(consent.activeUI()).not.toBe('dialog');
 

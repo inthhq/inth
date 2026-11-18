@@ -36,13 +36,12 @@ import { resolveTriggerLabels } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
 import {
-	calculateCornerFromDrag,
 	createInitialDragState,
+	createTriggerDrag,
 	getPersistedPosition,
 	isTriggerVisible,
 	nextToolbarItem,
 	onSnapEnd,
-	persistPosition as persistToStorage,
 	resolveBrandMark,
 	resolveStyles,
 	toStyleAttributeValue,
@@ -73,9 +72,6 @@ export type ConsentDialogTriggerPosition = CornerPosition;
 export type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 
 export type ConsentDialogTriggerSize = 'sm' | 'md' | 'lg';
-
-/** Moves under this many pixels count as a click, not a drag. */
-const DRAG_THRESHOLD_PX = 5;
 
 const joinStyles = function joinStyles(
 	...parts: (string | undefined)[]
@@ -131,7 +127,7 @@ const joinStyles = function joinStyles(
 						(pointerdown)="startDrag($event)"
 						(pointermove)="drag($event)"
 						(pointerup)="endDrag($event)"
-						(pointercancel)="cancelDrag($event)"
+						(pointercancel)="cancelDrag()"
 					>
 						@for (item of toolbarItems(); track item) {
 							@if (item === 'devtools') {
@@ -144,7 +140,7 @@ const joinStyles = function joinStyles(
 									[attr.aria-expanded]="launcher().isOpen"
 									data-inth-trigger-action="devtools"
 									data-inth-trigger-item="devtools"
-									(click)="toggleDevTools()"
+									(click)="toggleDevTools($event)"
 									(focus)="focusedItem.set(item)"
 								>
 									<span
@@ -205,7 +201,7 @@ const joinStyles = function joinStyles(
 						(pointerdown)="startDrag($event)"
 						(pointermove)="drag($event)"
 						(pointerup)="endDrag($event)"
-						(pointercancel)="cancelDrag($event)"
+						(pointercancel)="cancelDrag()"
 						(pointerenter)="warm()"
 						(focus)="warm()"
 						data-testid="consent-dialog-trigger"
@@ -272,9 +268,16 @@ export class ConsentDialogTrigger {
 	readonly #dragState = signal<DragState>(createInitialDragState());
 	/** @internal */
 	protected readonly isSnapping = signal(false);
-	#hasDragged = false;
-	#dragStartTime = 0;
-	#captured: HTMLElement | null = null;
+	readonly #drag = createTriggerDrag({
+		corner: () => this.corner(),
+		onCorner: (next) => {
+			this.isSnapping.set(true);
+			this.corner.set(next);
+			this.positionChange.emit(next);
+		},
+		onDrag: (state) => this.#dragState.set(state),
+		persist: () => this.persistPosition(),
+	});
 
 	/** @internal */
 	protected readonly isDragging = computed(() => this.#dragState().isDragging);
@@ -513,9 +516,7 @@ export class ConsentDialogTrigger {
 			);
 		});
 
-		inject(DestroyRef).onDestroy(() => {
-			this.#captured = null;
-		});
+		inject(DestroyRef).onDestroy(() => this.#drag.pointerCancel());
 	}
 
 	/** @internal */
@@ -530,81 +531,30 @@ export class ConsentDialogTrigger {
 
 	/** @internal */
 	protected startDrag(event: PointerEvent): void {
-		if (event.button !== 0) {
-			return;
+		if (event.button === 0) {
+			this.isSnapping.set(false);
 		}
-		const target = event.target as HTMLElement;
-		target.setPointerCapture?.(event.pointerId);
-		this.#captured = target;
-		this.#hasDragged = false;
-		this.#dragStartTime = Date.now();
-		this.#dragState.set({
-			currentX: event.clientX,
-			currentY: event.clientY,
-			isDragging: true,
-			startX: event.clientX,
-			startY: event.clientY,
-		});
-		this.isSnapping.set(false);
+		this.#drag.pointerDown(event);
 	}
 
 	/** @internal */
 	protected drag(event: PointerEvent): void {
-		const state = this.#dragState();
-		if (!state.isDragging) {
-			return;
-		}
-		const dx = Math.abs(event.clientX - state.startX);
-		const dy = Math.abs(event.clientY - state.startY);
-		if (dx > DRAG_THRESHOLD_PX || dy > DRAG_THRESHOLD_PX) {
-			this.#hasDragged = true;
-		}
-		this.#dragState.set({
-			...state,
-			currentX: event.clientX,
-			currentY: event.clientY,
-		});
+		this.#drag.pointerMove(event);
 	}
 
 	/** @internal */
 	protected endDrag(event: PointerEvent): void {
-		this.#release(event);
-		const state = this.#dragState();
-		if (!state.isDragging) {
-			return;
-		}
-		if (this.#hasDragged) {
-			const dragX = event.clientX - state.startX;
-			const dragY = event.clientY - state.startY;
-			const duration = Date.now() - this.#dragStartTime;
-			const corner = this.corner();
-			const next = calculateCornerFromDrag(corner, dragX, dragY, {
-				velocityX: duration > 0 ? dragX / duration : 0,
-				velocityY: duration > 0 ? dragY / duration : 0,
-			});
-			if (next !== corner) {
-				this.isSnapping.set(true);
-				this.corner.set(next);
-				if (this.persistPosition()) {
-					persistToStorage(next);
-				}
-				this.positionChange.emit(next);
-			}
-		}
-		this.#dragState.set(createInitialDragState());
+		this.#drag.pointerUp(event);
 	}
 
 	/** @internal */
-	protected cancelDrag(event: PointerEvent): void {
-		this.#release(event);
-		// No click follows a cancelled pointer to spend the guard.
-		this.#hasDragged = false;
-		this.#dragState.set(createInitialDragState());
+	protected cancelDrag(): void {
+		this.#drag.pointerCancel();
 	}
 
 	/** @internal */
-	protected toggleDevTools(): void {
-		if (this.#endsDrag()) {
+	protected toggleDevTools(event: MouseEvent): void {
+		if (this.#drag.endsDrag(event)) {
 			return;
 		}
 		this.#devTools()?.toggle();
@@ -631,30 +581,12 @@ export class ConsentDialogTrigger {
 
 	/** @internal */
 	protected openDialog(event: MouseEvent): void {
-		if (this.#endsDrag()) {
+		if (this.#drag.endsDrag(event)) {
 			return;
 		}
 		this.triggerClick.emit(event);
 		if (!event.defaultPrevented) {
 			this.consent.setActiveUI('dialog');
-		}
-	}
-
-	/**
-	 * Whether this click ends a drag, which is not a click. The guard is
-	 * spent on it, so a later Enter or Space, which fires a click with no
-	 * pointer press first, still acts.
-	 */
-	#endsDrag(): boolean {
-		const dragged = this.#hasDragged;
-		this.#hasDragged = false;
-		return dragged;
-	}
-
-	#release(event: PointerEvent): void {
-		if (this.#captured) {
-			this.#captured.releasePointerCapture?.(event.pointerId);
-			this.#captured = null;
 		}
 	}
 

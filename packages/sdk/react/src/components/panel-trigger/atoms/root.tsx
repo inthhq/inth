@@ -25,8 +25,8 @@ export interface TriggerContextValue {
 	isDragging: boolean;
 	/** Whether transitioning to a new corner */
 	isSnapping: boolean;
-	/** Whether the last interaction was a drag */
-	wasDragged: () => boolean;
+	/** Whether a click ends a drag; spends the guard. */
+	endsDrag: UseDraggableReturn['endsDrag'];
 	handlers: UseDraggableReturn['handlers'];
 	/** Current transform style for drag offset */
 	dragStyle: React.CSSProperties;
@@ -117,7 +117,7 @@ export const TriggerRoot = ({
 	});
 	const isVisible = visible ?? computedVisible;
 
-	const { corner, isDragging, isSnapping, wasDragged, handlers, dragStyle } =
+	const { corner, isDragging, isSnapping, endsDrag, handlers, dragStyle } =
 		useDraggable({
 			defaultPosition,
 			onPositionChange,
@@ -138,23 +138,23 @@ export const TriggerRoot = ({
 			branding,
 			corner,
 			dragStyle,
+			endsDrag,
 			handlers,
 			isDragging,
 			isSnapping,
 			isVisible,
 			openDialog,
-			wasDragged,
 		}),
 		[
 			branding,
 			corner,
 			dragStyle,
+			endsDrag,
 			handlers,
 			isDragging,
 			isSnapping,
 			isVisible,
 			openDialog,
-			wasDragged,
 		]
 	);
 

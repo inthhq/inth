@@ -2,11 +2,10 @@ import { resolveTriggerLabels } from '@inth/sdk-core';
 import type { ConsentSnapshot, Translations } from '@inth/sdk-core';
 import { hasConsentPreferences } from '@inth/sdk-core/surface-actions';
 import {
-	calculateCornerFromDrag,
+	createTriggerDrag,
 	getPersistedPosition,
 	isTriggerVisible,
 	onSnapEnd,
-	persistPosition,
 } from '@inth/sdk-ui/utils';
 import type { CornerPosition } from '@inth/sdk-ui/utils';
 import {
@@ -31,9 +30,6 @@ const POSITION_CLASS: Record<CornerPosition, keyof typeof classes.trigger> = {
 	'top-left': 'topLeft',
 	'top-right': 'topRight',
 };
-
-/** Movement past which a pointer sequence counts as a drag, not a click. */
-const DRAG_SLOP_PX = 5;
 
 /**
  * The floating button that reopens the preference centre.
@@ -64,17 +60,11 @@ export const createTrigger = function createTrigger(
 		'bottom-right';
 
 	let dragging = false;
-	let dragged = false;
 	let visible = false;
-	let startX = 0;
-	let startY = 0;
-	let startedAt = 0;
 	// Ends the wait for the current snap; set while one runs.
 	let cancelSnap: (() => void) | undefined;
 	// The arm the slots were applied for.
 	let renderedExperiment = ctx.client.getSnapshot().experiment;
-	// The element holding the pointer, for release on drop.
-	let captured: Element | null = null;
 
 	// DevTools launcher: claimed while visible, rendered while owned.
 	const { kernel } = ctx.client;
@@ -191,9 +181,6 @@ export const createTrigger = function createTrigger(
 
 	const moveTo = function moveTo(next: CornerPosition): void {
 		corner = next;
-		if (persist) {
-			persistPosition(next);
-		}
 		toolbar?.setCorner(next);
 		applyClasses(true);
 		cancelSnap?.();
@@ -203,87 +190,44 @@ export const createTrigger = function createTrigger(
 		});
 	};
 
-	const onPointerDown = function onPointerDown(event: PointerEvent): void {
-		if (event.button !== 0) {
-			return;
-		}
-		// Capture on the item pressed, so the click still lands on it.
-		captured =
-			(event.target instanceof Element && event.target.closest('button')) ||
-			current();
-		captured.setPointerCapture(event.pointerId);
-		dragging = true;
-		dragged = false;
-		startX = event.clientX;
-		startY = event.clientY;
-		startedAt = Date.now();
-		applyClasses();
-		dock();
-	};
-	const onPointerMove = function onPointerMove(event: PointerEvent): void {
-		if (!dragging) {
-			return;
-		}
-		const dx = event.clientX - startX;
-		const dy = event.clientY - startY;
-		if (Math.abs(dx) > DRAG_SLOP_PX || Math.abs(dy) > DRAG_SLOP_PX) {
-			dragged = true;
-		}
-		const root = current();
-		root.style.transform = `translate(${dx}px, ${dy}px)`;
-		root.style.transition = 'none';
-	};
-	const endDrag = function endDrag(event: PointerEvent, cancelled: boolean) {
-		if (captured?.hasPointerCapture(event.pointerId)) {
-			captured.releasePointerCapture(event.pointerId);
-		}
-		captured = null;
-		if (!dragging) {
-			return;
-		}
-		dragging = false;
-		const root = current();
-		root.style.transform = '';
-		root.style.transition = '';
-		const dx = event.clientX - startX;
-		const dy = event.clientY - startY;
-		const elapsed = Math.max(Date.now() - startedAt, 1);
-		const next =
-			cancelled || !dragged
-				? corner
-				: calculateCornerFromDrag(corner, dx, dy, {
-						velocityX: dx / elapsed,
-						velocityY: dy / elapsed,
-					});
-		if (next === corner) {
-			applyClasses();
-		} else {
+	const drag = createTriggerDrag({
+		corner: () => corner,
+		onCorner: (next) => {
 			moveTo(next);
-		}
-		dock();
-	};
+			dock();
+		},
+		onDrag: (state) => {
+			const root = current();
+			if (!state.isDragging) {
+				dragging = false;
+				root.style.transform = '';
+				root.style.transition = '';
+				applyClasses(cancelSnap !== undefined);
+				dock();
+				return;
+			}
+			root.style.transform = `translate(${state.currentX - state.startX}px, ${state.currentY - state.startY}px)`;
+			root.style.transition = 'none';
+			if (!dragging) {
+				dragging = true;
+				applyClasses();
+				dock();
+			}
+		},
+		persist: () => persist,
+	});
 	const listen = function listen(target: HTMLElement): void {
-		target.addEventListener('pointerdown', onPointerDown);
-		target.addEventListener('pointermove', onPointerMove);
-		target.addEventListener('pointerup', (event) => {
-			endDrag(event, false);
-		});
-		target.addEventListener('pointercancel', (event) => {
-			endDrag(event, true);
-		});
+		target.addEventListener('pointerdown', drag.pointerDown);
+		target.addEventListener('pointermove', drag.pointerMove);
+		target.addEventListener('pointerup', drag.pointerUp);
+		target.addEventListener('pointercancel', drag.pointerCancel);
 	};
 	listen(element);
 
 	/** Whether a click is a request, not the end of a drag. */
-	const shouldActivate = function shouldActivate(): boolean {
-		if (dragged) {
-			dragged = false;
-			return false;
-		}
-		return true;
-	};
-	element.addEventListener('click', () => {
-		if (shouldActivate()) {
+	const shouldActivate = (event: MouseEvent): boolean => !drag.endsDrag(event);
+	element.addEventListener('click', (event) => {
+		if (shouldActivate(event)) {
 			ctx.client.openDialog();
 		}
 	});
@@ -322,9 +266,7 @@ export const createTrigger = function createTrigger(
 		if (next !== launcher) {
 			launcher = next;
 			// Swapping elements mid-drag would strand the drag state.
-			dragging = false;
-			current().style.transform = '';
-			current().style.transition = '';
+			drag.pointerCancel();
 			if (next && !toolbar) {
 				toolbar = createToolbar();
 				element.replaceWith(toolbar.element);
