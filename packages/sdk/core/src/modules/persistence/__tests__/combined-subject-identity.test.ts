@@ -20,6 +20,7 @@ import {
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
 import { generateSubjectId } from '../../../libs/generate-subject-id';
+import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
 import { resolveStorageKeys } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { ConsentKernel, ConsentSnapshot, SaveInput } from '../../../types';
@@ -147,7 +148,7 @@ const subjectIdOf = function subjectIdOf(kernel: ConsentKernel) {
 };
 
 const storedSid = function storedSid(storageConfig?: StorageConfig) {
-	const name = resolveStorageKeys(storageConfig).subject;
+	const name = legacySubjectIdKey(storageConfig);
 	const cookie = document.cookie
 		.split('; ')
 		.find((pair) => pair.startsWith(`${name}=`));
@@ -367,7 +368,6 @@ test.each(STORAGE)(
 test.each(STORAGE)(
 	'a notice record and a different legacy stored ID resolve to one ID in the server reader and the browser, with %s storage key',
 	async (_, storageConfig) => {
-		const keys = resolveStorageKeys(storageConfig);
 		const first = boot({ scope: 'necessary-only', storageConfig });
 		const recorded = subjectIdOf(first.kernel) as string;
 		await save(first.kernel, 'none');
@@ -375,8 +375,9 @@ test.each(STORAGE)(
 		// An older c15t on another tab, or a server response, stored its own
 		// ID meanwhile.
 		const other = generateSubjectId();
-		document.cookie = `${keys.subject}=${other}; path=/`;
-		localStorage.setItem(keys.subject, other);
+		const sid = legacySubjectIdKey(storageConfig);
+		document.cookie = `${sid}=${other}; path=/`;
+		localStorage.setItem(sid, other);
 
 		const server = serverRead(storageConfig);
 		const { kernel } = boot({ scope: 'necessary-only', storageConfig });
@@ -611,7 +612,9 @@ test.each(
 		for (const key of expected) {
 			expect(Object.keys(kept), key).toContain(key);
 		}
-		expect(Object.keys(kept)).not.toContain(`cookie:${keys.subject}`);
+		expect(Object.keys(kept)).not.toContain(
+			`cookie:${legacySubjectIdKey(storageConfig)}`
+		);
 
 		document.cookie = `${keys.consent}-analytics=tracking; path=/`;
 		document.cookie = '_ga=GA1.1.1; path=/';

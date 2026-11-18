@@ -16,7 +16,7 @@
  * so a streamed banner doesn't wait for one more request after the engine.
  * Both routes here mount a deferred root, so the small modules the shell
  * shares with the engine, the commit path and the other route each get a
- * file of their own: 12 files, about 13 KB after Brotli. An app whose
+ * file of their own: 11 files, about 21 KB after Brotli. An app whose
  * routes all use `ConsentRoot` loads 9.
  */
 import { dirname, join } from 'node:path';
@@ -167,7 +167,7 @@ const deferredModules = [
 
 describe('TanStack Start client chunks', () => {
 	test.each([
-		['root-route', 12],
+		['root-route', 11],
 		['provider-route', 22],
 	])(
 		'a %s loads at most %i files first',
@@ -210,8 +210,12 @@ describe('TanStack Start client chunks', () => {
 		// storage-key families and the IAB storage keys, and the window keys
 		// and priority-image wait every adapter now shares from core's
 		// page-globals sit in a file of their own: 1,477 bytes (19,370 to
-		// 20,847).
-		expect(brotli).toBeLessThanOrEqual(20_847);
+		// 20,847). Removing the subject ID key c15t 3.2 wrote adds 37, and the
+		// surface root attribute 6 (20,890). Revocation cleanup's list of
+		// owned keys, with the IAB storage keys it brought, and that c15t
+		// key now live with the code that reads them, not in the first-load
+		// storage keys: 266 fewer (20,624).
+		expect(brotli).toBeLessThanOrEqual(20_624);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

@@ -9,6 +9,7 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
+import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { createClearOnRevocation } from '../../clear-on-revocation';
@@ -349,7 +350,7 @@ test.each([
 		kernel.dispose();
 		localStorage.clear();
 		// Without `<key>-sid` only the companion could name the visitor.
-		document.cookie = `${resolveStorageKeys().subject}=; max-age=0; path=/`;
+		document.cookie = `${legacySubjectIdKey(undefined)}=; max-age=0; path=/`;
 		await vi.advanceTimersByTimeAsync(1);
 		if (change === 'absent') {
 			document.cookie = `${key}=; max-age=0; path=/`;
