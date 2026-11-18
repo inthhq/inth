@@ -48,10 +48,10 @@ all keep the same `decision` fill and `textOnDecision` label treatment.
 | `typography.fontFamily` | A bundled font for every role except the headline |
 | `typography.headlineFont` | System sans, serif, rounded or a bundled custom headline font |
 | `slots` | One part: `.consentBannerTitle`, `.consentBannerDescription`, `.buttonPrimary` or `.buttonSecondary` |
-| `branding` | `.inth`, `.inth` or `.custom(name:markImageName:)` provider attribution. `.inth` is the default |
+| `branding` | `.inth`, `.c15t` or `.custom(name:markImageName:)` provider attribution. `.inth` is the default |
 | `showsBranding` | Visibility of the provider attribution |
 | `firstLayer` | `.page`, `.sheet` or `.prompt`: how the first choice is presented |
-| `appearance` | `.system` (default) or `.inth`: where the stock colours come from |
+| `appearance` | `.system` (default) or `.c15t`: where the stock colours come from |
 | `savePlacement` | `.top` (default) or `.bottom`: where Save sits in Privacy Settings |
 
 ## Place Save Settings
@@ -87,7 +87,7 @@ scroll.
 
 `appearance` chooses the stock colours. `system`, the default, uses the
 platform's backgrounds and text colours with your app's accent colour, and
-centres the page. `inth` is warm paper and ink. The sheet and the prompt always use the system colours,
+centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
 because they sit over your app. Colours you set yourself win in every case.
 
 In an IAB TCF policy, a sheet or prompt is shown as the page in a wide window,
@@ -138,9 +138,9 @@ priority over both.
 | `com.inth.consent.headline` | First-layer headline |
 | `com.inth.consent.introduction` | First-layer introduction |
 | `com.inth.consent.firstLayer` | `page`, `sheet` or `prompt` |
-| `com.inth.consent.appearance` | `system` or `inth` |
+| `com.inth.consent.appearance` | `system` or `c15t` |
 | `com.inth.consent.savePlacement` | `top` or `bottom` |
-| `com.inth.consent.brandingProvider` | `inth` or `inth` |
+| `com.inth.consent.brandingProvider` | `inth` or `c15t` |
 | `com.inth.consent.branding` | Boolean controlling provider attribution |
 
 Use a native Boolean for `branding`, rather than the string `"false"`.

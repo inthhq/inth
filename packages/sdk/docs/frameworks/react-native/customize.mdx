@@ -17,7 +17,7 @@ theme maps onto the native screens field for field.
 | Colors, radii, spacing and type | One theme object: the Expo plugin's `theme` option for the native screens, and `createConsentTheme` for the React Native components. Bare apps write native theme metadata. |
 | One part, such as the decision buttons | The theme's `slots`. |
 | Your app's name and logo | Native app-identity settings. |
-| Inth, Inth or custom provider attribution | Native branding settings. |
+| c15t, Inth or custom provider attribution | Native branding settings. |
 | First-layer heading and introduction | Native copy settings. |
 | Entirely custom React controls | [Headless hooks and commands](/docs/frameworks/react-native/headless). |
 
@@ -203,7 +203,7 @@ scroll.
 
 `appearance` chooses the stock colours. `system`, the default, uses the
 platform's backgrounds and text colours with your app's accent colour, and
-centres the page. `inth` is warm paper and ink. The sheet and the prompt always use the system colours,
+centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
 because they sit over your app. Colours you set yourself win in every case.
 
 With the system colours, your app's own name stands in for a brand name you
@@ -224,8 +224,8 @@ such as a tablet, so the choice covers the screen.
 ## Choose the provider attribution
 
 The attribution shows the Inth wordmark by default. Set
-`com.inth.consent.brandingProvider` to `inth` in iOS `Info.plist`, or
-`com.inth.consent.BRANDING_PROVIDER` to `inth` in Android application metadata,
+`com.inth.consent.brandingProvider` to `c15t` in iOS `Info.plist`, or
+`com.inth.consent.BRANDING_PROVIDER` to `c15t` in Android application metadata,
 for the other built-in provider. Both use bundled marks.
 
 For custom attribution, set `brandingName` and optionally `brandingMark` on
