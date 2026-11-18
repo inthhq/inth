@@ -503,9 +503,9 @@ public struct InitResponse: Sendable, Equatable {
     public let extraHeaders: [String: String]
     public let client: any HTTPTransport
 
-    /// - Parameter property: the save body's `property`, lowercased. `nil` falls back
-    ///   to the project URL's host, which is all a core with no platform context
-    ///   has; the Apple installer passes the bundle identifier.
+    /// - Parameter property: the save body's `property`, trimmed and lowercased. `nil` or
+    ///   blank falls back to the project URL's host, which is all a core with no
+    ///   platform context has; the Apple installer passes the bundle identifier.
     public init(
         baseURL: URL,
         property: String? = nil,
@@ -514,7 +514,9 @@ public struct InitResponse: Sendable, Equatable {
     ) {
         let base = baseURL.trimmingTrailingSlash()
         self.baseURL = base
-        self.property = (property ?? base.host ?? base.absoluteString).lowercased()
+        let configured = property?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.property = ((configured?.isEmpty == false ? configured : nil) ?? base.host ?? base.absoluteString)
+            .lowercased()
         self.extraHeaders = extraHeaders
         self.client = client
     }

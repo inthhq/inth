@@ -27,11 +27,17 @@ struct PendingSaveEntry: Sendable, Codable, Equatable {
 /// No consent or legitimate-interest grant may use this delivery exception.
 enum ConsentDelivery {
     /// Compare frozen delivery ownership, never the currently signed-in account.
-    static func sameOwner(_ left: Data, _ right: Data) -> Bool {
+    ///
+    /// `subjectIds` are the ids of one subject: its current id and the ones a canonical
+    /// id replaced. Two bodies frozen under any of them have the same subject.
+    static func sameOwner(_ left: Data, _ right: Data, subjectIds: Set<String> = []) -> Bool {
         guard let a = InthJSON.parse(left), let b = InthJSON.parse(right),
-            a["subjectId"]?.stringValue != nil, a["property"]?.stringValue != nil
+            let leftSubject = a["subjectId"]?.stringValue, a["property"]?.stringValue != nil
         else { return false }
-        return ["subjectId", "externalId", "property"].allSatisfy {
+        let rightSubject = b["subjectId"]?.stringValue
+        let sameSubject = leftSubject == rightSubject
+            || subjectIds.contains(leftSubject) && rightSubject.map(subjectIds.contains) == true
+        return sameSubject && ["externalId", "property"].allSatisfy {
             a[$0]?.stringValue == b[$0]?.stringValue
         }
     }
@@ -357,7 +363,7 @@ final class PendingSaveQueue: @unchecked Sendable {
     /// IAB decisions supersede queued grants; category decisions retain their history.
     func commit(
         _ envelope: StoredEnvelope, body: Data, subjectId: String, actionAt: Int64,
-        supersedeGrants: Bool = true
+        supersedeGrants: Bool = true, subjectIds: Set<String> = []
     ) -> String? {
         lock.withLock {
             let entry = PendingSaveEntry(
@@ -366,7 +372,8 @@ final class PendingSaveQueue: @unchecked Sendable {
             var next = envelope
             var entries = readEntries().filter {
                 (!supersedeGrants || $0.isProtectedWithdrawal)
-                    && !(entry.isProtectedWithdrawal && ConsentDelivery.sameOwner($0.body, body))
+                    && !(entry.isProtectedWithdrawal
+                        && ConsentDelivery.sameOwner($0.body, body, subjectIds: subjectIds))
             }
             entries.sort { left, right in
                 left.actionAt == right.actionAt ? left.queuedAt < right.queuedAt : left.actionAt < right.actionAt

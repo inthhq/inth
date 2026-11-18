@@ -8,5 +8,6 @@ final class HostedTransportTests: XCTestCase {
         let endpoint = URL(string: "https://consent.example.com")!
         XCTAssertEqual(HostedTransport(baseURL: URL(string: "https://Consent.Example.com")!).property, "consent.example.com")
         XCTAssertEqual(HostedTransport(baseURL: endpoint, property: "Com.Example.App").property, "com.example.app")
+        XCTAssertEqual(HostedTransport(baseURL: endpoint, property: " \t").property, "consent.example.com")
     }
 }

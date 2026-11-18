@@ -1136,7 +1136,8 @@ public final class ConsentCore: @unchecked Sendable {
                 if dryRun { return plan.queue.persist($0, droppingQueue: true) ? "" : nil }
                 return plan.queue.commit($0, body: plan.body,
                     subjectId: plan.payload.subjectId, actionAt: actionAt,
-                    supersedeGrants: plan.isIAB)
+                    supersedeGrants: plan.isIAB,
+                    subjectIds: lock.withLock { Set([identity?.id].compactMap { $0 } + previousSubjectIds) })
             }
             guard let queuedID = queued else {
                 let changed = lock.withLock { currentSnapshot.revision != plan.baseRevision }

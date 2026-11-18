@@ -68,7 +68,7 @@ public struct InthAppleConfiguration: Sendable {
     public var dryRun: Bool
     public let storage: Storage
     /// The `property` each consent record names: the app's bundle identifier unless
-    /// set here. Sent lowercase.
+    /// set here to a non-blank value. Sent lowercase.
     public var property: String?
     public var consentCategories: [ConsentCategory]?
     public var vendors: [Int]?
@@ -147,7 +147,8 @@ public struct InthAppleConfiguration: Sendable {
         client: any HTTPTransport = URLSession.shared
     ) throws -> any InthTransport {
         HostedTransport(
-            baseURL: try normalizedBackendURL(), property: property ?? Bundle.main.bundleIdentifier,
+            baseURL: try normalizedBackendURL(), property: property?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+                ? property : Bundle.main.bundleIdentifier,
             extraHeaders: ["x-inth-platform": "\(platform)->\(InthApple.version)"],
             client: client
         )

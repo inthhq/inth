@@ -190,6 +190,25 @@ final class SubjectLinkTests: XCTestCase {
         XCTAssertEqual(core.snapshot().subject?.id, fresh, "the answer was for the subject the slot no longer holds")
     }
 
+    func testAWithdrawalSupersedesAGrantQueuedUnderAReplacedId() async throws {
+        let core = await started(subjectId: Self.c15tId)
+        let user = KernelUser(externalId: "user_123")
+        core.identify(user)
+        http.setSavesFail(true)
+        core.save(.all)
+        await core.waitUntilIdle()
+        // The link names the canonical id, so the queued grant is now under a replaced id.
+        http.linkResponse = .json(#"{"subjectId":"\#(Self.canonical)","externalId":"user_123","verifiedBy":"identity_token"}"#)
+        core.identify(user, identityToken: "token")
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().subject?.id, Self.canonical)
+
+        core.save(.necessary)
+        await core.waitUntilIdle()
+        let queued = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)?.pendingSaves)
+        XCTAssertEqual(queued.map(\.subjectId), [Self.canonical], "the grant under the replaced id is superseded")
+    }
+
     // MARK: - Idempotency key
 
     func testAReplaySendsTheSameIdempotencyKey() async throws {
