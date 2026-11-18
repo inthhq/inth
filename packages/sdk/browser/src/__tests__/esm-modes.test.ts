@@ -13,9 +13,9 @@ import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { build } from 'esbuild';
 import { describe, expect, it } from 'vitest';
 
+import { withBuildDefaults } from '../../../core/src/transports/manifest-browser';
 import { createConsentClient, hosted, manifest } from '../index';
 import { testing } from '../testing';
-import { withBuildDefaults } from '../transports/manifest';
 
 const builtManifest: ConsentManifest = {
 	branding: 'inth',
@@ -46,7 +46,7 @@ describe('init() from @inth/sdk', () => {
 				options as unknown as Parameters<typeof createConsentClient>[0]
 			)
 		).toThrow(
-			'@inth/sdk: `projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from @inth/sdk/testing in tests.'
+			'@inth/sdk: `projectUrl` is required. Set it to your Inth project URL (data-project-url on a script tag), or use testing() from @inth/sdk/testing in tests.'
 		);
 	});
 

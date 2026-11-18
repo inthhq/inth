@@ -19,6 +19,15 @@ import {
 	PENDING_SAVES_STORAGE_KEY,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../libs/storage-keys';
+import type { SavePayload } from '../../types';
+import type { PendingSaveEntry } from './supersession';
+
+/**
+ * The Web Lock every browser outbox transaction holds. Named apart from
+ * the storage keys, so tabs on builds that store under other keys still
+ * take turns.
+ */
+const OUTBOX_LOCK_NAME = 'inth-v3-pending-consent-saves:v1';
 
 /** The lists a store keeps. */
 export type OutboxSlot = 'saves' | 'reassignments';
@@ -61,6 +70,44 @@ export interface SaveOutboxStore {
 	clear: () => void;
 }
 
+/**
+ * A save as the outbox queues it.
+ *
+ * @param payload - The save.
+ * @param now - When it was queued.
+ * @returns The queue entry.
+ * @internal
+ */
+export const pendingSave = (
+	payload: SavePayload,
+	now: number
+): PendingSaveEntry => ({ attempts: 0, payload, queuedAt: now });
+
+/**
+ * Queues `payload` after the saves `store` holds, for the kernel's replay
+ * to send. The replay validates and orders every entry, so this one
+ * appends without loading the queue's code.
+ *
+ * @param store - The outbox store.
+ * @param payload - The save.
+ * @param now - When it was queued.
+ * @returns Whether the store kept it.
+ * @internal
+ */
+export const enqueueSave = function enqueueSave(
+	store: SaveOutboxStore,
+	payload: SavePayload,
+	now: number = Date.now()
+): Promise<boolean> {
+	return store.transact((tx) => {
+		const stored = tx.read('saves');
+		return tx.write('saves', [
+			...(Array.isArray(stored) ? stored : []),
+			pendingSave(payload, now),
+		]);
+	});
+};
+
 /** The part of `Storage` a store uses. */
 type TextStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>;
 
@@ -102,8 +149,8 @@ const SLOT_KEYS: Record<OutboxSlot, string> = {
  * `inth-v3-subject-reassignments:v1`, the keys earlier releases wrote, so
  * saves a visitor queued before an upgrade still replay.
  *
- * Every transaction holds the Web Lock named after the saves key, so two
- * tabs cannot overwrite each other's entries or replay one twice. Without
+ * Every transaction holds one Web Lock, so two tabs cannot overwrite each
+ * other's entries or replay one twice. Without
  * the Web Locks API, or when the lock request fails (insecure context,
  * aborted request), a transaction runs unsynchronized rather than being
  * dropped. Without localStorage (server, blocked storage) the store falls
@@ -165,7 +212,7 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 				return run(tx);
 			}
 			try {
-				return await locks.request(PENDING_SAVES_STORAGE_KEY, () => run(tx));
+				return await locks.request(OUTBOX_LOCK_NAME, () => run(tx));
 			} catch {
 				return run(tx);
 			}

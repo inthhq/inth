@@ -9,9 +9,9 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import { describe, expect, test } from 'vitest';
 
+import { withBuildDefaults } from '../../../core/src/transports/manifest-browser';
 import { manifest } from '../modes';
 import { testing } from '../testing';
-import { withBuildDefaults } from '../transports/manifest';
 import { selectedMode } from '../transports/select-mode';
 
 const built: ConsentManifest = {

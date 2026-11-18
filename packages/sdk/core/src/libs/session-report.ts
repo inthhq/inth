@@ -30,6 +30,8 @@ import {
 import type { BuildConsentSessionReportOptions } from '@inth/sdk-schema/types';
 
 import { inthProtocolHeaders } from '../transports/version-header';
+import { readHeader, toHeaders } from './headers';
+import { trimSlash } from './url';
 
 /**
  * The only request headers a report carries about the visitor: the user
@@ -64,10 +66,6 @@ export type SessionReportHeaders =
 	| Headers
 	| Record<string, string | string[] | undefined>;
 
-const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
 const ABSOLUTE_URL = /^https?:\/\//iu;
 
 /**
@@ -91,47 +89,6 @@ export const resolveSessionReportProjectUrl =
 			? trimSlash(source.projectUrl)
 			: undefined;
 	};
-
-const readHeader = function readHeader(
-	headers: SessionReportHeaders | undefined,
-	name: string
-): string | undefined {
-	if (!headers) {
-		return undefined;
-	}
-	if (headers instanceof Headers) {
-		return headers.get(name) ?? undefined;
-	}
-	const direct = headers[name] ?? headers[name.toLowerCase()];
-	if (direct !== undefined) {
-		return Array.isArray(direct) ? direct[0] : direct;
-	}
-	for (const [key, value] of Object.entries(headers)) {
-		if (key.toLowerCase() === name) {
-			return Array.isArray(value) ? value[0] : value;
-		}
-	}
-	return undefined;
-};
-
-const toHeaders = function toHeaders(
-	headers: SessionReportHeaders | undefined
-): Headers {
-	if (!headers) {
-		return new Headers();
-	}
-	if (headers instanceof Headers) {
-		return headers;
-	}
-	const result = new Headers();
-	for (const [key, value] of Object.entries(headers)) {
-		const single = Array.isArray(value) ? value[0] : value;
-		if (single) {
-			result.set(key, single);
-		}
-	}
-	return result;
-};
 
 /**
  * Whether a request is a prefetch or prerender the visitor may never open.

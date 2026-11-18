@@ -14,6 +14,7 @@
 import type { ConsentState } from '../consent/compliance';
 import { has } from '../libs/has';
 import { isProductionBuild } from '../libs/is-production';
+import { vendorAxisActive } from '../libs/vendors';
 import type { ConsentSnapshot } from '../types';
 import { isVendorDenied } from './vendor-denial';
 
@@ -57,7 +58,7 @@ export const vendorAllowedUnder = function vendorAllowedUnder(
 		}
 		return false;
 	}
-	if (snapshot.model !== 'iab' && isVendorDenied(snapshot, vendorId)) {
+	if (vendorAxisActive(snapshot) && isVendorDenied(snapshot, vendorId)) {
 		return false;
 	}
 	try {

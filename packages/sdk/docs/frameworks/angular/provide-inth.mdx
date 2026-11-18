@@ -63,7 +63,6 @@ provider. Injecting one where `provideInth()` is missing throws Angular's
 | `journey` | `'page'`, `'tab'` or `false` | `'page'` | Links each page load's `/init` to the save that follows. Read once. |
 | `consentSource` | external source | none | Hands authority to another CMP. Inth then stores nothing and shows no choice UI. |
 | `enabled` | `boolean` | `true` | `false` grants every category, hides all consent UI and skips `/init`. |
-| `windowDebug` | `boolean` | `true` | Installs `window.inth` with `{ version, pkg, mode }`. |
 | `runtime` | `ConsentRuntime` | none | A runtime created with `createConsentRuntime()`. Not allowed with `mode`. See [share one runtime](#share-one-runtime). |
 
 Tests pass `testing({ policy })` from `@inth/angular/testing` as `mode`
@@ -140,7 +139,7 @@ only `consentCategories` to it.
 
 Open the page in a private window with DevTools open:
 
-1. The banner appears once the policy resolves. `window.inth` in the console
+1. The banner appears once the policy resolves. `window.__inthDebug` in the console
    shows `pkg: '@inth/angular'`.
 2. The Network panel shows the request your mode makes: one `/init` for
    `hosted()`, none for `testing()`, and none when the page came with a

@@ -11,7 +11,7 @@ import ConsentRoot from '../../lib/components/consent-root.svelte';
 const mockFetch = vi.fn();
 window.fetch = mockFetch;
 
-type WindowWithInth = Window & { inth?: { mode: string } };
+type WindowWithInth = Window & { __inthDebug?: { mode: string } };
 
 const initResponse = () =>
 	new Response(JSON.stringify({ branding: 'inth' }), {
@@ -26,7 +26,7 @@ describe('ConsentRoot', () => {
 	});
 
 	afterEach(() => {
-		delete (window as WindowWithInth).inth;
+		delete (window as WindowWithInth).__inthDebug;
 	});
 
 	test('re-inits a manifest() page through the consent route', async () => {
@@ -44,7 +44,7 @@ describe('ConsentRoot', () => {
 				/^\/api\/inth\/init/u
 			);
 		});
-		expect((window as WindowWithInth).inth?.mode).toBe('manifest');
+		expect((window as WindowWithInth).__inthDebug?.mode).toBe('manifest');
 		result.unmount();
 	});
 
@@ -62,7 +62,7 @@ describe('ConsentRoot', () => {
 				/^https:\/\/consent\.example\.com\/init/u
 			);
 		});
-		expect((window as WindowWithInth).inth?.mode).toBe('hosted');
+		expect((window as WindowWithInth).__inthDebug?.mode).toBe('hosted');
 		result.unmount();
 	});
 

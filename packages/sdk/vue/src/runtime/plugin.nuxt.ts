@@ -1,4 +1,5 @@
 import type { HydrationRecords } from '@inth/sdk/engine';
+import { PREFETCH_WINDOW_KEY } from '@inth/sdk/runtime/page-globals';
 import type { RequestConsentState } from '@inth/sdk/server';
 import { defu } from 'defu';
 import { computed, markRaw, shallowRef, toRaw, watch } from 'vue';
@@ -52,9 +53,9 @@ const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
 ): void {
 	const stop = context.kernel.events.on('command:init:completed', () => {
 		stop();
-		// The key core's prefetch script stores its requests under.
-		const pending = (window as { __inthInitialDataPromises?: object })
-			.__inthInitialDataPromises;
+		const pending = (window as unknown as Record<string, object | undefined>)[
+			PREFETCH_WINDOW_KEY
+		];
 		if (pending && Object.keys(pending).length > 0) {
 			// oxlint-disable-next-line no-console -- Development-only diagnostic.
 			console.warn(

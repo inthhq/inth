@@ -54,6 +54,7 @@
  */
 
 import type { OptionalConsentCategory } from '../../consent-record/types';
+import { warnInDevelopment } from '../../libs/is-production';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
@@ -73,7 +74,6 @@ import {
 	withoutSuperseded,
 	withSubjectId,
 } from './supersession';
-import { warnInDevelopment } from './warn';
 
 export type { OutboxSlot, OutboxTransaction, SaveOutboxStore } from './store';
 export { createBrowserOutboxStore, createMemoryOutboxStore } from './store';

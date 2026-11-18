@@ -5,9 +5,8 @@
  * first time the engine needs it. `rslib.config.ts` swaps this in for
  * `./dialog-import.ts` in that build.
  *
- * The file's URL is the backend's `__c15tDialogSrc`, the init tag's
- * `data-dialog-src`, or `c15t.dialog.js` next to this file, at this
- * version. When the file is missing, fails to load or is from another
+ * The file's URL is the backend's, the init tag's `data-dialog-src`, or
+ * `c15t.dialog.js` next to this file, at this version (`partSrc`). When the file is missing, fails to load or is from another
  * release, the engine uses its own copy of the dialog, so a site that
  * serves only `c15t.js` and `c15t.hosted.js` still has a preference
  * centre. The file is still worth serving: the init script opens it on a
@@ -19,7 +18,7 @@
 
 import { adoptedBoot } from '../init/adopt';
 import { loadDialogFile } from '../init/dialog-file';
-import { version } from '../version';
+import { partSrc } from '../init/part-src';
 import { createDialog } from './dialog';
 import { shareLocks } from './locks';
 
@@ -29,15 +28,8 @@ const own =
 		? null
 		: (document.currentScript as HTMLScriptElement | null);
 
-const dialogSrc = function dialogSrc(): string | null {
-	const configured =
-		(window as unknown as Record<string, unknown>).__c15tDialogSrc ??
-		adoptedBoot()?.script?.getAttribute('data-dialog-src');
-	if (typeof configured === 'string' && configured) {
-		return configured;
-	}
-	return own?.src ? new URL(`c15t.dialog.js?v=${version}`, own.src).href : null;
-};
+const dialogSrc = (): string | null =>
+	partSrc('dialog', adoptedBoot()?.script, own?.src);
 
 /**
  * Load `c15t.dialog.js`, or fall back to the engine's own dialog.

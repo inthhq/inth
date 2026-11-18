@@ -50,8 +50,7 @@ Only `mode` is required.
 | `createIAB` | `createIAB` from `@inth/sdk/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
 | `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. Inth then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow a Inth mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
 | `enabled` | `boolean` | `true` | `false` grants every category, skips init and mounts no blocker, persistence or IAB. Scripts load at once. |
-| `windowDebug` | `boolean` | `true` | Install a small `window.inth` object with `version`, `pkg`, `mode` and `hosting` on `start()`. `hosting` reads the current snapshot, so it changes from `null` once `/init` reports it. |
-| `pkg` | `string` | `'@inth/sdk/engine'` | The package name `window.inth` reports. |
+| `pkg` | `string` | `'@inth/sdk/engine'` | The package name `window.__inthDebug` reports. |
 
 ## Inth script registry (experimental)
 
@@ -131,7 +130,9 @@ another list. Scripts you write yourself are not affected.
 
 `runtime.start()` mounts, in order:
 
-1. the `window.inth` debug object, unless `windowDebug: false`;
+1. the `window.__inthDebug` debug object, `{ version, pkg, mode, hosting }`.
+   `hosting` reads the current snapshot, so it changes from `null` once
+   `/init` reports it;
 2. persistence, which reads stored choices;
 3. the `/init` request. With a resolved `prefetch` it adopts that answer
    instead: the choice is evaluated at the server's clock, the banner the

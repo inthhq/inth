@@ -16,7 +16,12 @@ import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 import type { Vendor } from '@inth/sdk-schema/types';
 
 import type { AllConsentNames } from '../consent/consent-types';
-import type { ConsentKernel, ResolvedVendor, VendorSource } from '../types';
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+	ResolvedVendor,
+	VendorSource,
+} from '../types';
 import type { HasCondition } from './has';
 import { extractConsentNamesFromCondition } from './has';
 import type { VendorDetails } from './script-loader/types';
@@ -646,3 +651,14 @@ export const forgetOwnedVendors = function forgetOwnedVendors(
 		declareOwnedVendors(kernel, [], source);
 	}
 };
+
+/**
+ * Whether `snapshot` decides vendors one by one. Under the IAB model the
+ * vendor axis is inert: IAB vendor consent lives in the TC string, and
+ * the Inth vendor choice neither gates nor saves.
+ * @param snapshot - Immutable kernel snapshot.
+ * @returns `true` outside the IAB model.
+ */
+export const vendorAxisActive = (
+	snapshot: Pick<ConsentSnapshot, 'model'>
+): boolean => snapshot.model !== 'iab';

@@ -12,6 +12,11 @@
  * `persistAfterConsentRevoked` and just drops our reference), then
  * fires `onConsentChange` if wired.
  */
+import type {
+	LOADER_RAN_KEY,
+	STARTED_KEY,
+	StartedElement,
+} from '../../runtime/page-globals';
 import type { ConsentSnapshot } from '../../types';
 import { isCallbackOnly } from './callback-only';
 import { buildCallbackInfo, hasAnyCallback, invokeCallback } from './callbacks';
@@ -37,6 +42,7 @@ export interface MountDeps {
 		| 'getConsentReader'
 		| 'getLoadErrorReporter'
 		| 'registration'
+		| 'vendorAxisActive'
 	>;
 	/** Stop lifecycle callbacks when disposal is requested during mounting. */
 	isDisposed: () => boolean;
@@ -238,45 +244,28 @@ const observeElement = (
 	}
 };
 
-/**
- * An element the page's inline `serverStart` code created. `__inthInsert`
- * is set while it waits for the page's priority images; deleting it
- * cancels the insert. `__inthHeld` is set when the stored consent changed
- * during that wait: its setup ran, and only a loader that runs the script
- * inserts it. `__inthConsent` is whether its setup ran with consent,
- * `__inthScript` the id of the script whose setup ran, and `__inthAdopted`
- * that a loader took it over.
- */
-type ServerStartedElement = HTMLScriptElement & {
-	__inthAdopted?: boolean;
-	__inthConsent?: boolean;
-	__inthDone?: ElementCompletion;
-	__inthHeld?: boolean;
-	__inthInsert?: () => void;
-	__inthScript?: string;
-};
+// Written out, not imported: the loader's chunk imports nothing the first
+// load has. The types keep them equal to `../../runtime/page-globals`.
+const LOADER_RAN: typeof LOADER_RAN_KEY = '__inthLoaderRan';
+const STARTED: typeof STARTED_KEY = '__inthStarted';
 
-type ServerStartedRegistry = Record<string, ServerStartedElement>;
+const startedElements = (): Record<string, StartedElement> | undefined =>
+	(globalThis as Record<string, unknown>)[STARTED] as
+		| Record<string, StartedElement>
+		| undefined;
 
 /** A server-started element that is waiting to be inserted, or held. */
 const notYetInserted = function notYetInserted(
-	element: ServerStartedElement | null | undefined
+	element: StartedElement | null | undefined
 ): boolean {
 	return Boolean(element?.__inthInsert || element?.__inthHeld);
 };
 
-const serverStartedRegistry = function serverStartedRegistry():
-	| ServerStartedRegistry
-	| undefined {
-	return (globalThis as { __inthStarted?: ServerStartedRegistry })
-		.__inthStarted;
-};
-
 /** Drops a removed server-started element from the page's registry. */
 const forgetServerStarted = function forgetServerStarted(
-	element: ServerStartedElement
+	element: StartedElement
 ): void {
-	const started = serverStartedRegistry();
+	const started = startedElements();
 	for (const key of Object.keys(started ?? {})) {
 		if (started?.[key] === element) {
 			Reflect.deleteProperty(started, key);
@@ -286,7 +275,7 @@ const forgetServerStarted = function forgetServerStarted(
 
 /** Drop the last owner of an element, keeping it when retention applies. */
 const releaseLastOwner = (element: HTMLScriptElement, retain: boolean) => {
-	const started = element as ServerStartedElement;
+	const started = element as StartedElement;
 	delete started.__inthInsert;
 	delete started.__inthHeld;
 	forgetServerStarted(started);
@@ -390,14 +379,14 @@ const completeMount = (deps: MountDeps, pending: PendingMount): void => {
  * It may still be waiting to be inserted, or held. An element that is
  * none of these, such as one a loader removed, is dropped.
  *
- * Sets `__inthLoaderRan`, so HTML code that hasn't run yet leaves the
+ * Sets `LOADER_RAN_KEY`, so HTML code that hasn't run yet leaves the
  * script to this loader.
  */
 const serverStartedFor = function serverStartedFor(
 	script: Script
-): ServerStartedElement | undefined {
-	(globalThis as { __inthLoaderRan?: boolean }).__inthLoaderRan = true;
-	const started = serverStartedRegistry();
+): StartedElement | undefined {
+	(globalThis as Record<string, unknown>)[LOADER_RAN] = true;
+	const started = startedElements();
 	const key = script.resourceKey ?? script.id;
 	const element = started?.[key];
 	if (!(started && element)) {
@@ -426,7 +415,7 @@ const adoptServerStarted = function adoptServerStarted(
 	snapshot: ConsentSnapshot,
 	hasConsent: boolean,
 	elementId: string,
-	element: ServerStartedElement
+	element: StartedElement
 ): void {
 	const startedWithConsent = element.__inthConsent ?? true;
 	element.__inthAdopted = true;
@@ -492,7 +481,7 @@ const adoptToRevoke = function adoptToRevoke(
 	deps: MountDeps,
 	script: Script,
 	snapshot: ConsentSnapshot
-): ServerStartedElement | undefined {
+): StartedElement | undefined {
 	const started = serverStartedFor(script);
 	if (!started || started.__inthAdopted || started.__inthScript !== script.id) {
 		return;

@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-	DEFERRED_ENGINE_TIMEOUT_MS,
-	scheduleDeferredEngine,
-	takeEarlyTaps,
-} from '../browser/trigger';
+import { ENGINE_TIMEOUT_MS } from '../../../core/src/runtime/page-globals';
+import { scheduleDeferredEngine, takeEarlyTaps } from '../browser/trigger';
 
 let hero: HTMLImageElement;
 
@@ -64,7 +61,7 @@ describe('scheduleDeferredEngine', () => {
 
 		const timed = vi.fn();
 		scheduleDeferredEngine(timed, vi.fn());
-		vi.advanceTimersByTime(DEFERRED_ENGINE_TIMEOUT_MS);
+		vi.advanceTimersByTime(ENGINE_TIMEOUT_MS);
 		expect(timed).toHaveBeenCalledOnce();
 	});
 

@@ -1,6 +1,8 @@
-import { hosted } from '@inth/sdk-core/transports';
-
-import { createConsentClientWith } from './client-base';
+import {
+	createConsentClientWith,
+	factoryMode,
+	hostedMode,
+} from './client-base';
 import type { CreateConsentClientContext, ResolvedMode } from './client-base';
 import type { ConsentClient, ConsentClientOptions } from './types';
 
@@ -18,11 +20,7 @@ const resolveMode = function resolveMode(
 ): ResolvedMode {
 	const { mode } = options;
 	if (typeof mode === 'function') {
-		const { kind } = mode;
-		return {
-			factory: mode,
-			name: kind === 'hosted' || kind === 'manifest' ? kind : 'custom',
-		};
+		return factoryMode(mode);
 	}
 	// A `testing()` value carries its transport, not enumerable.
 	if (typeof mode === 'object' && 'transport' in mode && mode.transport) {
@@ -33,28 +31,20 @@ const resolveMode = function resolveMode(
 			`${pkg}: \`mode\` must be hosted() or manifest() from ${pkg}, or testing() from @inth/sdk/testing. Mode names like ${JSON.stringify(mode)} work only in the script-tag builds.`
 		);
 	}
-	if (options.projectUrl === undefined) {
-		if (options.enabled === false) {
-			// Disabled: nothing inits until the page enables it.
-			return {
-				factory: Object.assign(
-					() => ({
-						init: () =>
-							Promise.reject(new Error(`${pkg}: \`projectUrl\` is required.`)),
-					}),
-					{ kind: 'hosted' as const }
-				),
-				name: 'hosted',
-			};
-		}
-		throw new Error(
-			`${pkg}: \`projectUrl\` is required. Set it to your Inth project URL, or use \`mode: testing()\` from @inth/sdk/testing in tests.`
-		);
+	if (options.projectUrl === undefined && options.enabled === false) {
+		// Disabled: nothing inits until the page enables it.
+		return {
+			factory: Object.assign(
+				() => ({
+					init: () =>
+						Promise.reject(new Error(`${pkg}: \`projectUrl\` is required.`)),
+				}),
+				{ kind: 'hosted' as const }
+			),
+			name: 'hosted',
+		};
 	}
-	return {
-		factory: hosted({ projectUrl: options.projectUrl }),
-		name: 'hosted',
-	};
+	return hostedMode(options.projectUrl, pkg);
 };
 
 /**

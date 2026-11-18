@@ -64,8 +64,8 @@ for (const target of selectedTargets()) {
 		let context: BrowserContext | undefined;
 		let page: Page;
 		let requests: Requests;
-		// `@inth/sdk` from npm installs no `window.inth`, and its page is
-		// not hydrated, so opening preferences does not wait for it.
+		// The `@inth/sdk` page from npm is not hydrated, so opening
+		// preferences does not wait for its runtime.
 		const hasRuntimeGlobal = target.id !== 'javascript';
 
 		beforeAll(async () => {

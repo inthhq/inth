@@ -16,8 +16,8 @@ import {
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
 import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/encode';
+import { PAGE_RENDER_KEY } from '../page-globals';
 import {
-	PAGE_RENDER_KEY,
 	serverScriptStartPlan,
 	storedChoiceCheckScript,
 } from '../script-server-start';

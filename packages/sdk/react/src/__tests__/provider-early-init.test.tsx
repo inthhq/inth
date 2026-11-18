@@ -941,7 +941,7 @@ test('unmounting before the response arrives applies it nowhere', async () => {
 	expect(seen[0]).toBe(1);
 	await view.unmount();
 	await vi.waitFor(() =>
-		expect((window as { inth?: unknown }).inth).toBeUndefined()
+		expect((window as { __inthDebug?: unknown }).__inthDebug).toBeUndefined()
 	);
 	onPermissionsChanged.mockClear();
 

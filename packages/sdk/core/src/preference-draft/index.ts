@@ -38,6 +38,7 @@ import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 import { displayedCategories as listDisplayed } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { listedVendors } from '../libs/vendor-listing';
+import { vendorAxisActive } from '../libs/vendors';
 import { deniedVendorIds } from '../modules/has';
 import type {
 	ConsentKernel,
@@ -197,7 +198,7 @@ const keep = function keep<Value>(previous: Value, next: Value): Value {
 const vendorSurface = function vendorSurface(
 	snapshot: ConsentSnapshot
 ): string {
-	if (snapshot.model === 'iab') {
+	if (!vendorAxisActive(snapshot)) {
 		return '';
 	}
 	return JSON.stringify(
@@ -249,7 +250,7 @@ const recordedVendors = function recordedVendors(
 ): [Grants, Set<string>] {
 	const grants: Grants = {};
 	const toggleable = new Set<string>();
-	if (snapshot.model !== 'iab') {
+	if (vendorAxisActive(snapshot)) {
 		const denied = deniedVendorIds(snapshot);
 		for (const vendor of snapshot.vendors?.declared ?? []) {
 			setOwn(grants, vendor.id, !denied?.has(vendor.id));

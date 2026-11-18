@@ -15,7 +15,7 @@ import { createKernel } from '../kernel';
 import type { InternalKernel } from '../kernel/internals';
 import { hostExperiment, seedExperiment } from '../libs/experiment';
 import { extractConsentNamesFromCondition } from '../libs/has';
-import { isProductionBuild } from '../libs/is-production';
+import { warnInDevelopment } from '../libs/is-production';
 import { resolveVendors } from '../libs/vendors';
 import type { User } from '../options/user';
 import { disabledPolicyResolution } from '../policy';
@@ -127,14 +127,6 @@ export const hasResolvedPrefetch = function hasResolvedPrefetch(
 	return Boolean(
 		prefetch?.initialPolicyResolution && prefetch.initialPolicyPending !== true
 	);
-};
-
-const warnInDevelopment = function warnInDevelopment(
-	...message: unknown[]
-): void {
-	if (!isProductionBuild()) {
-		console.warn(...message);
-	}
 };
 
 // Typed here so core needs no Node types; see `libs/is-production.ts`.

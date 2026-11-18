@@ -82,6 +82,7 @@ export {
 	consentInputsToOverrides,
 	extractConsentRequestInputs,
 	getRegionFromHeaders,
+	GPC_HEADERS,
 	headersToRecord,
 	parseGlobalPrivacyControl,
 	REGION_HEADERS,

@@ -12,14 +12,17 @@
 
 import type { AllConsentNames } from '../../consent/consent-types';
 import type { extractConsentNamesFromCondition } from '../../libs/has';
+import type { dispatchScriptDebugEvent } from '../../libs/script-loader/debug';
 import type {
 	Script,
 	ScriptCallbackInfo,
+	ScriptDebugEvent,
 } from '../../libs/script-loader/types';
 import type {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 	isValidVendorId,
+	vendorAxisActive,
 	withoutOwnedVendors,
 } from '../../libs/vendors';
 import type {
@@ -63,6 +66,9 @@ export interface ScriptLoaderTools {
 
 	/** `extractConsentNamesFromCondition`. */
 	categoriesOf: typeof extractConsentNamesFromCondition;
+	/** Hands a debug event to the page's script debug listeners. */
+	debug: typeof dispatchScriptDebugEvent;
+	vendorAxisActive: typeof vendorAxisActive;
 	/** `declareOwnedVendors`. */
 	declareOwners: typeof declareOwnedVendors;
 	/** `deniedVendorIds`. */
@@ -82,10 +88,11 @@ export interface ScriptLoaderTools {
 
 /**
  * Structured debug event emitted at every reconcile / mount / unmount /
- * callback step. Consumed by adapter devtools and the v2 compat surface
- * (`window.__inthScriptDebugListeners`).
+ * callback step. Consumed by adapter devtools and the page's script debug
+ * listeners (`subscribeToScriptDebugEvents`), which receive it as the
+ * {@link ScriptDebugEvent} it narrows.
  */
-export interface ScriptLoaderDebugEvent {
+export interface ScriptLoaderDebugEvent extends ScriptDebugEvent {
 	source: 'script-loader';
 	scope: 'lifecycle' | 'phase' | 'step';
 	action:
@@ -145,9 +152,8 @@ export interface ScriptLoaderOptions {
 		waitForInit: boolean;
 	};
 	/**
-	 * When true, also dispatch debug events to any listeners registered
-	 * on `window.__inthScriptDebugListeners` (v2 compat). Default: true
-	 * when running in a browser.
+	 * When true, also dispatch debug events to the page's script debug
+	 * listeners (`subscribeToScriptDebugEvents`). Default: true.
 	 */
 	emitToV2DebugListeners?: boolean;
 }

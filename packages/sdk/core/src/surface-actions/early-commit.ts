@@ -23,7 +23,10 @@ import { recordCategoryPatch } from '../consent-record/record';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import { buildNextSnapshot } from '../kernel/next-snapshot';
 import type { PolicyResolvers, SnapshotPatch } from '../kernel/next-snapshot';
-import { createBrowserOutboxStore } from '../kernel/save-outbox/store';
+import {
+	createBrowserOutboxStore,
+	enqueueSave,
+} from '../kernel/save-outbox/store';
 import type { SaveOutboxStore } from '../kernel/save-outbox/store';
 import {
 	applyNoticeAcknowledgement,
@@ -36,9 +39,14 @@ import {
 import { deleteCookie, getRawCookieValue, writeCookie } from '../libs/cookie';
 import { generateSubjectId } from '../libs/generate-subject-id';
 import { resolveStorageKeys } from '../libs/storage-keys';
+import {
+	decodeNoticeDismissal,
+	decodeVendorChoice,
+	validateStoredConsentEnvelope,
+} from '../modules/persistence/record-codec';
 import type { StorageConfig } from '../modules/persistence/types';
 import { createRecordStore } from '../modules/persistence/writer/store';
-import type { PersistenceTools } from '../modules/persistence/writer/types';
+import type { RecordStoreTools } from '../modules/persistence/writer/types';
 import { buildStoredEnvelope } from '../modules/persistence/writer/write';
 import type {
 	ConsentSnapshot,
@@ -203,14 +211,15 @@ export interface EarlyCommitStorage {
 	outbox?: SaveOutboxStore;
 }
 
-const writeTools = {
+const writeTools: RecordStoreTools = {
+	decodeNotice: decodeNoticeDismissal,
+	decodeVendors: decodeVendorChoice,
 	deleteCookie,
 	keys: resolveStorageKeys,
 	rawCookie: getRawCookieValue,
-	// The envelope is built from records the kernel's own code validated.
-	validateEnvelope: (envelope: unknown) => ({ ok: true, record: envelope }),
+	validateEnvelope: validateStoredConsentEnvelope,
 	writeCookie,
-} as unknown as PersistenceTools;
+};
 
 /**
  * Writes the commit's consent record to localStorage and its cookie, then
@@ -237,11 +246,8 @@ export const storeEarlyCommit = function storeEarlyCommit(
 			console.warn('[inth] Consent record was not written.', result.issues);
 		}
 	}
-	return (storage.outbox ?? createBrowserOutboxStore()).transact((tx) => {
-		const stored = tx.read('saves');
-		return tx.write('saves', [
-			...(Array.isArray(stored) ? stored : []),
-			{ attempts: 0, payload: commit.payload, queuedAt: Date.now() },
-		]);
-	});
+	return enqueueSave(
+		storage.outbox ?? createBrowserOutboxStore(),
+		commit.payload
+	);
 };

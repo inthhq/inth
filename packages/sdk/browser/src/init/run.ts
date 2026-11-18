@@ -8,7 +8,7 @@
  * banner opens the stock preference dialog from `c15t.dialog.js` without
  * the engine. Then it loads the engine (`c15t.hosted.js`) after the page's
  * priority images, at the first input, once a tapped choice is stored or
- * the dialog is on screen, or after {@link ENGINE_TIMEOUT_MS}, and hands it
+ * the dialog is on screen, or after `ENGINE_TIMEOUT_MS`, and hands it
  * everything through the boot object (`./boot.ts`).
  *
  * It runs nothing early it cannot run the way the engine would: any option
@@ -47,6 +47,7 @@ import { mergeClientOptions, readPageOptions } from '../auto-init';
 import { activateGatedScripts } from '../gated-scripts';
 import { stylesheet } from '../generated/styles';
 import type { InthGlobalBase, QueuedCall } from '../global-base';
+import { GLOBAL_NAME } from '../global-name';
 import { hasDecided } from '../has-decided';
 import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from '../page-actions';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
@@ -69,6 +70,8 @@ import type { DialogFile } from './dialog-file';
 import type { EarlyDialog, EarlyDialogHost } from './early-dialog';
 import { supportsEarlyStart } from './eligibility';
 import { hostedMarker, readHostedMarker } from './hosted-marker';
+import { partSrc } from './part-src';
+import type { InitFile } from './part-src';
 import {
 	clearPendingTap,
 	readPendingTap,
@@ -77,14 +80,6 @@ import {
 import type { PendingTap } from './pending-tap';
 import { readPolicyCache, writePolicyCache } from './policy-cache';
 import { scheduleEngine } from './schedule';
-
-/**
- * The files `c15t.js` loads. The backend's `/c15t.js` sets each one's URL
- * on a global (`__c15tHostedSrc`, `__c15tCommitSrc`, `__c15tRecordsSrc`,
- * `__c15tDialogSrc`); a tag can set `data-hosted-src` and so on. Without
- * either, the file sits next to `c15t.js`, at the same version.
- */
-type InitFile = 'hosted' | 'commit' | 'records' | 'dialog';
 
 /**
  * How long the engine waits for the init script's `/init` answer, and the
@@ -192,7 +187,7 @@ export const runInitScript = function runInitScript(
 	script: HTMLScriptElement | null
 ): InthGlobalBase | null {
 	const target = window as unknown as Record<string, unknown>;
-	const existing = target.inth;
+	const existing = target[GLOBAL_NAME];
 	if (existing && !Array.isArray(existing)) {
 		// The engine or another init script is installed already.
 		return null;
@@ -271,23 +266,8 @@ export const runInitScript = function runInitScript(
 		version,
 	};
 
-	/**
-	 * The URL of `file`: the backend's global, the tag's `data-<file>-src`,
-	 * or the file next to `c15t.js`.
-	 */
-	const fileSrc = function fileSrc(file: InitFile): string | null {
-		const configured =
-			target[`__c15t${file[0]?.toUpperCase()}${file.slice(1)}Src`] ??
-			script?.getAttribute(`data-${file}-src`);
-		if (typeof configured === 'string' && configured) {
-			return configured;
-		}
-		const own = script?.getAttribute('src');
-		return own
-			? new URL(`c15t.${file}.js?v=${version}`, new URL(own, location.href))
-					.href
-			: null;
-	};
+	const fileSrc = (file: InitFile): string | null =>
+		partSrc(file, script, script?.getAttribute('src'));
 
 	const appendScript = function appendScript(src: string): HTMLScriptElement {
 		const element = document.createElement('script');
@@ -629,7 +609,7 @@ export const runInitScript = function runInitScript(
 			save: saveFromDialog,
 			// `window.inth`, this stand-in: once the engine has taken over, it
 			// forwards every call there.
-			standIn: target.inth as EarlyDialogHost['standIn'],
+			standIn: target[GLOBAL_NAME] as EarlyDialogHost['standIn'],
 			ui,
 		});
 		beforeDialog = shown.activeUI;
@@ -1088,7 +1068,7 @@ export const runInitScript = function runInitScript(
 			act(method, args);
 	}
 	Object.assign(standIn, { closeDialog, openDialog });
-	target.inth = standIn;
+	target[GLOBAL_NAME] = standIn;
 
 	// Calls queued on the array before this tag, in order.
 	for (const call of queued) {

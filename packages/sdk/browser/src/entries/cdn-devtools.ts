@@ -20,6 +20,7 @@ import type { DevToolsPosition, DevToolsTab } from '@inth/sdk-dev-tools';
 import { createBrowserDevTools } from '../devtools-mount';
 import type { BrowserDevToolsOptions } from '../devtools-mount';
 import type { InthGlobal, QueuedCall } from '../global';
+import { GLOBAL_NAME } from '../global-name';
 import type { ConsentClient } from '../types';
 
 const TABS: ReadonlySet<string> = new Set<DevToolsTab>([
@@ -59,11 +60,13 @@ const readOptions = function readOptions(
 	return options;
 };
 
-type GlobalWindow = Window & { inth?: InthGlobal | QueuedCall[] };
+type GlobalWindow = Window & {
+	[GLOBAL_NAME]?: InthGlobal | QueuedCall[];
+};
 
 const options = readOptions(document.currentScript);
 const mount = function mount(client: ConsentClient): void {
-	const api = (window as GlobalWindow).inth;
+	const api = (window as GlobalWindow)[GLOBAL_NAME];
 	const global = api && !Array.isArray(api) ? api : null;
 	// The headless tag has no trigger and no slot; the panel keeps its own
 	// launcher.
@@ -77,10 +80,13 @@ const mount = function mount(client: ConsentClient): void {
 	}
 };
 
-const existing = (window as GlobalWindow).inth;
+const existing = (window as GlobalWindow)[GLOBAL_NAME];
 if (existing && !Array.isArray(existing)) {
 	existing.onInit(mount);
 } else {
 	// The main tag has not run yet; it replays this once it installs.
-	(window as GlobalWindow).inth = [...(existing ?? []), ['onInit', mount]];
+	(window as GlobalWindow)[GLOBAL_NAME] = [
+		...(existing ?? []),
+		['onInit', mount],
+	];
 }

@@ -3,46 +3,18 @@
  *
  * Two paths:
  * - `onDebug` — synchronous listener supplied by the consumer.
- * - v2 compat — listeners installed on
- *   `window.__inthScriptDebugListeners` (still consumed by the v2
- *   devtools surface). Optional and browser-only.
+ * - the page's script debug listeners (`subscribeToScriptDebugEvents`),
+ *   unless `emitToV2DebugListeners` is off.
  *
- * Listener errors are swallowed on both paths so debug instrumentation
- * cannot break script loading.
+ * Listener errors never reach the loader.
  */
-import type { ScriptLoaderDebugEvent } from './types';
-
-/**
- * Dispatch a debug event to v2-compat listeners, if any are registered
- * on `window.__inthScriptDebugListeners`. No-op outside the browser.
- */
-export const emitV2Debug = function emitV2Debug(
-	event: ScriptLoaderDebugEvent
-): void {
-	if (typeof window === 'undefined') {
-		return;
-	}
-	const listeners = (window as unknown as Record<string, unknown>)
-		.__inthScriptDebugListeners as
-		| Set<(e: ScriptLoaderDebugEvent) => void>
-		| undefined;
-	if (!listeners) {
-		return;
-	}
-	for (const listener of listeners) {
-		try {
-			listener(event);
-		} catch {
-			// Listener errors are swallowed (v2 parity).
-		}
-	}
-};
+import type { ScriptLoaderDebugEvent, ScriptLoaderTools } from './types';
 
 export interface DebugEmitterOptions {
 	/** Optional consumer listener. */
 	onDebug?: (event: ScriptLoaderDebugEvent) => void;
-	/** Whether to also dispatch to v2 window listeners. */
-	emitToV2: boolean;
+	/** Dispatches to the page's script debug listeners, when they listen. */
+	dispatch?: ScriptLoaderTools['debug'];
 }
 
 /**
@@ -53,7 +25,7 @@ export interface DebugEmitterOptions {
 export const createDebugEmitter = function createDebugEmitter(
 	options: DebugEmitterOptions
 ) {
-	const { onDebug, emitToV2 } = options;
+	const { onDebug, dispatch } = options;
 	return function emit(event: ScriptLoaderDebugEvent): void {
 		if (onDebug) {
 			try {
@@ -62,8 +34,6 @@ export const createDebugEmitter = function createDebugEmitter(
 				// Swallow consumer listener errors.
 			}
 		}
-		if (emitToV2) {
-			emitV2Debug(event);
-		}
+		dispatch?.(event);
 	};
 };

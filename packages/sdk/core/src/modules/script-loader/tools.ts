@@ -10,10 +10,12 @@
  * @internal
  */
 import { extractConsentNamesFromCondition } from '../../libs/has';
+import { dispatchScriptDebugEvent } from '../../libs/script-loader/debug';
 import {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 	isValidVendorId,
+	vendorAxisActive,
 	withoutOwnedVendors,
 } from '../../libs/vendors';
 import {
@@ -27,6 +29,7 @@ import type { ScriptLoaderTools } from './types';
 /** @internal */
 export const scriptLoaderTools: ScriptLoaderTools = {
 	categoriesOf: extractConsentNamesFromCondition,
+	debug: dispatchScriptDebugEvent,
 	declareOwners: declareOwnedVendors,
 	deniedVendors: deniedVendorIds,
 	evaluate: evaluateConsent,
@@ -34,5 +37,6 @@ export const scriptLoaderTools: ScriptLoaderTools = {
 	gateState: getEffectiveGateState,
 	has,
 	isVendorId: isValidVendorId,
+	vendorAxisActive,
 	withoutOwners: withoutOwnedVendors,
 };

@@ -115,6 +115,14 @@ export default mergeConfig(
 					resolve(__dirname, '../core/src/transports/hosted-factory.ts'),
 				],
 				[
+					'@inth/sdk/runtime/script-server-start',
+					resolve(__dirname, '../core/src/runtime/script-server-start.ts'),
+				],
+				[
+					'@inth/sdk/runtime/page-globals',
+					resolve(__dirname, '../core/src/runtime/page-globals.ts'),
+				],
+				[
 					'@inth/sdk/runtime',
 					resolve(__dirname, '../core/src/runtime/index.ts'),
 				],

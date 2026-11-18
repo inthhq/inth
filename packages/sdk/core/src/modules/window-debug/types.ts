@@ -4,7 +4,7 @@
 import type { KernelHosting } from '../../types';
 
 /**
- * The transport kind reported on `window.inth`. Reflects what the
+ * The transport kind reported on `window.__inthDebug`. Reflects what the
  * adapter actually built.
  */
 export type WindowDebugMode = 'hosted' | 'offline' | 'manifest' | 'custom';
@@ -19,7 +19,7 @@ export interface WindowDebugOptions {
 	mode: WindowDebugMode;
 	/**
 	 * Reads who runs the backend, from the kernel snapshot. Called on each
-	 * read of `window.inth.hosting`, because `/init` answers after install.
+	 * read of `window.__inthDebug.hosting`, because `/init` answers after install.
 	 */
 	getHosting?: () => KernelHosting | null;
 }
@@ -29,7 +29,7 @@ export interface WindowDebugOptions {
  */
 export interface WindowDebugHandle {
 	/**
-	 * Removes `window.inth` — only when it is still the exact object this
+	 * Removes `window.__inthDebug` — only when it is still the exact object this
 	 * handle installed, so an unmounting older provider cannot clobber a
 	 * newer provider's debug object.
 	 */
@@ -37,7 +37,7 @@ export interface WindowDebugHandle {
 }
 
 /**
- * The frozen object installed at `window.inth`. Public, read-only
+ * The frozen object installed at `window.__inthDebug`. Public, read-only
  * metadata for debugging and for detecting Inth on a page — never the
  * store, consent state, or backend configuration.
  */

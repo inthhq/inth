@@ -93,7 +93,8 @@ import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 } from './consent-proxy';
-import { fetchCachedGvl } from './gvl-cache';
+import { fetchServerGvl } from './gvl-cache';
+import { IN_PROCESS_ORIGIN, toPathFetch } from './in-process';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
@@ -841,7 +842,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			}
 			const fill = options.fetchGvl
 				? options.fetchGvl({ fetch: configuredFetch(), language, reference })
-				: fetchCachedGvl({
+				: fetchServerGvl({
 						fetch: options.fetch,
 						headers: inthProtocolHeaders,
 						label: adapter,

@@ -2,22 +2,21 @@
  * When `ConsentRoot` loads the consent engine for a visitor who still has
  * to choose. On a slow connection the engine's chunks share bandwidth with
  * the page's largest image; started after it, they no longer delay Largest
- * Contentful Paint. The same rule as the server script start
- * (`AFTER_PRIORITY_IMAGES` in `@inth/sdk/runtime/script-server-start`),
- * `@inth/react`'s deferred root and `@inth/vue`'s Nuxt module.
+ * Contentful Paint (`afterPriorityImages` in
+ * `@inth/sdk/runtime/page-globals`).
  *
  * @packageDocumentation
  * @internal
  */
 
-/** The stock banner's root. @internal */
-export const BANNER_ROOT = '[data-testid="consent-banner-root"]';
+import {
+	afterPriorityImages,
+	EARLY_TAP_ROOT,
+	ENGINE_TIMEOUT_MS,
+} from '@inth/sdk/runtime/page-globals';
 
 /** The stock dialog's root. @internal */
 export const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
-
-/** Load anyway after this long. @internal */
-export const DEFERRED_ENGINE_TIMEOUT_MS = 10_000;
 
 /**
  * Input anywhere on the page that wakes the engine at once. The browser
@@ -27,71 +26,14 @@ export const DEFERRED_ENGINE_TIMEOUT_MS = 10_000;
 const PAGE_WAKE_EVENTS = ['pointerdown', 'keydown', 'scroll'] as const;
 
 /** Stock surfaces where focus alone wakes the engine. */
-const SURFACES = `${BANNER_ROOT},[data-testid="consent-banner-overlay"]`;
-
-/**
- * Calls `done` once every `img[fetchpriority=high]` still loading has
- * loaded or failed, or at the window `load` event when the page has none.
- *
- * @param done - Runs once.
- * @returns Removes the listeners, or `undefined` when `done` already ran.
- * @internal
- */
-export const whenPriorityImagesLoad = function whenPriorityImagesLoad(
-	done: () => void
-): (() => void) | undefined {
-	const images = [
-		...document.querySelectorAll<HTMLImageElement>('img[fetchpriority=high]'),
-	].filter((image) => !image.complete);
-	const cleanups: (() => void)[] = [];
-	const listen = (target: EventTarget, type: string, handler: () => void) => {
-		target.addEventListener(type, handler);
-		cleanups.push(() => target.removeEventListener(type, handler));
-	};
-	let called = false;
-	const finish = (): void => {
-		if (!called) {
-			called = true;
-			for (const cleanup of cleanups.splice(0)) {
-				cleanup();
-			}
-			done();
-		}
-	};
-	if (images.length > 0) {
-		let left = images.length;
-		const settle = (): void => {
-			left -= 1;
-			if (left === 0) {
-				finish();
-			}
-		};
-		for (const image of images) {
-			listen(image, 'load', settle);
-			listen(image, 'error', settle);
-		}
-	} else if (
-		document.querySelector('img[fetchpriority=high]') ||
-		document.readyState === 'complete'
-	) {
-		done();
-		return undefined;
-	} else {
-		listen(window, 'load', finish);
-	}
-	return () => {
-		for (const cleanup of cleanups.splice(0)) {
-			cleanup();
-		}
-	};
-};
+const SURFACES = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]`;
 
 /**
  * Calls `start` once, when the first of these happens: every
  * `img[fetchpriority=high]` that is still loading has loaded or failed (the
  * window `load` event when there is none), the visitor presses a pointer
  * or key or scrolls anywhere on the page outside the stock banner,
- * focuses a stock consent surface, or {@link DEFERRED_ENGINE_TIMEOUT_MS}
+ * focuses a stock consent surface, or `ENGINE_TIMEOUT_MS`
  * passed.
  *
  * Input inside the stock banner does not load the engine: a tap there is
@@ -132,7 +74,7 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 		cleanups.push(() => target.removeEventListener(type, handler, true));
 	};
 	const inBanner = (event: Event): boolean =>
-		Boolean((event.target as Element | null)?.closest?.(BANNER_ROOT));
+		Boolean((event.target as Element | null)?.closest?.(EARLY_TAP_ROOT));
 	const wake = (event: Event): void => {
 		if (!inBanner(event)) {
 			fire();
@@ -149,12 +91,7 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 			fire();
 		}
 	});
-	const waiting = whenPriorityImagesLoad(fire);
-	if (waiting) {
-		cleanups.push(waiting);
-		const timer = setTimeout(fire, DEFERRED_ENGINE_TIMEOUT_MS);
-		cleanups.push(() => clearTimeout(timer));
-	}
+	cleanups.push(afterPriorityImages(fire, { timeoutMs: ENGINE_TIMEOUT_MS }));
 	return stop;
 };
 

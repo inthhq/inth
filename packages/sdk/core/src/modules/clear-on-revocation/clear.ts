@@ -57,7 +57,7 @@ export const createClearOnRevocationWith = (
 			const wasGranted = previous.get(category);
 			previous.set(category, granted);
 			if (!granted && wasGranted !== false) {
-				clearTargets(targets, protectedKeys);
+				clearTargets(targets, protectedKeys, tools.cookieDomainsOf);
 			}
 		}
 	};

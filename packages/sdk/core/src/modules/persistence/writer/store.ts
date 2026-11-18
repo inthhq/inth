@@ -28,7 +28,7 @@ import {
 	encodeVendorChoice,
 	encodeVendorChoiceCompact,
 } from './encode';
-import type { PersistenceTools } from './types';
+import type { RecordStoreTools } from './types';
 
 export interface WriteStoredConsentOptions {
 	/** Current time. Rejects envelopes carrying future timestamps. */
@@ -166,7 +166,7 @@ const NO_COOKIE_TEXT: CookieWriteReport = { attempted: false, verified: false };
  * @returns The record writes.
  */
 export const createRecordStore = function createRecordStore(
-	tools: PersistenceTools
+	tools: RecordStoreTools
 ): RecordStore {
 	/** Write a cookie, unless the record has no cookie text. */
 	const writeCookieText = function writeCookieText(

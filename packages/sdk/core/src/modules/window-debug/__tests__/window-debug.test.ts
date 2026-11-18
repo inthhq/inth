@@ -7,7 +7,7 @@ import { version } from '../../../version';
 import { createWindowDebug, resolveWindowDebugMode } from '../index';
 
 type WindowWithInth = Window & {
-	inth?: {
+	__inthDebug?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -17,7 +17,7 @@ type WindowWithInth = Window & {
 
 afterEach(() => {
 	if (typeof window !== 'undefined') {
-		delete (window as WindowWithInth).inth;
+		delete (window as WindowWithInth).__inthDebug;
 	}
 });
 
@@ -30,13 +30,13 @@ describe('resolveWindowDebugMode', () => {
 });
 
 describe('window-debug', () => {
-	test('installs a frozen window.inth object with static metadata', () => {
+	test('installs a frozen window.__inthDebug object with static metadata', () => {
 		const handle = createWindowDebug({
 			mode: 'hosted',
 			pkg: '@inth/react',
 		});
 
-		const debug = (window as WindowWithInth).inth;
+		const debug = (window as WindowWithInth).__inthDebug;
 		expect(debug).toBeTruthy();
 		expect(debug).toEqual({
 			hosting: null,
@@ -56,7 +56,7 @@ describe('window-debug', () => {
 			mode: 'hosted',
 			pkg: '@inth/react',
 		});
-		const debug = (window as WindowWithInth).inth;
+		const debug = (window as WindowWithInth).__inthDebug;
 
 		expect(debug?.hosting).toBeNull();
 		hosting = 'inth';
@@ -72,9 +72,9 @@ describe('window-debug', () => {
 			pkg: '@inth/svelte',
 		});
 
-		expect((window as WindowWithInth).inth).toBeTruthy();
+		expect((window as WindowWithInth).__inthDebug).toBeTruthy();
 		handle.dispose();
-		expect((window as WindowWithInth).inth).toBeUndefined();
+		expect((window as WindowWithInth).__inthDebug).toBeUndefined();
 	});
 
 	test('dispose does not remove a newer install', () => {
@@ -86,18 +86,18 @@ describe('window-debug', () => {
 			mode: 'hosted',
 			pkg: '@inth/nextjs',
 		});
-		const latest = (window as WindowWithInth).inth;
+		const latest = (window as WindowWithInth).__inthDebug;
 
 		first.dispose();
 
-		expect((window as WindowWithInth).inth).toBe(latest);
-		expect((window as WindowWithInth).inth?.pkg).toBe('@inth/nextjs');
+		expect((window as WindowWithInth).__inthDebug).toBe(latest);
+		expect((window as WindowWithInth).__inthDebug?.pkg).toBe('@inth/nextjs');
 
 		second.dispose();
 	});
 
-	test('degrades to an inert handle when window.inth is non-writable', () => {
-		Object.defineProperty(window, 'inth', {
+	test('degrades to an inert handle when window.__inthDebug is non-writable', () => {
+		Object.defineProperty(window, '__inthDebug', {
 			configurable: true,
 			value: 'host-owned',
 			writable: false,
@@ -108,16 +108,16 @@ describe('window-debug', () => {
 			expect(() => {
 				handle = createWindowDebug({ mode: 'hosted', pkg: '@inth/vue' });
 			}).not.toThrow();
-			expect((window as WindowWithInth).inth).toBe('host-owned');
+			expect((window as WindowWithInth).__inthDebug).toBe('host-owned');
 			expect(() => handle?.dispose()).not.toThrow();
-			expect((window as WindowWithInth).inth).toBe('host-owned');
+			expect((window as WindowWithInth).__inthDebug).toBe('host-owned');
 		} finally {
-			Object.defineProperty(window, 'inth', {
+			Object.defineProperty(window, '__inthDebug', {
 				configurable: true,
 				value: undefined,
 				writable: true,
 			});
-			delete (window as WindowWithInth).inth;
+			delete (window as WindowWithInth).__inthDebug;
 		}
 	});
 

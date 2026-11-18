@@ -44,7 +44,8 @@ export {
 	resolveRequestConsent,
 } from './request-consent';
 export type { FetchCachedGvlOptions } from './gvl-cache';
-export { clearGvlCache, fetchCachedGvl } from './gvl-cache';
+export { fetchServerGvl } from './gvl-cache';
+export { clearGvlCache } from '../transports/gvl-cache';
 export type {
 	CachedManifestResponse,
 	FetchCachedManifestOptions,

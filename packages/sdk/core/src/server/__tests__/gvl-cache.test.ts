@@ -8,7 +8,8 @@
 
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { clearGvlCache, fetchCachedGvl } from '../gvl-cache';
+import { clearGvlCache } from '../../transports/gvl-cache';
+import { fetchServerGvl } from '../gvl-cache';
 
 const GVL_URL = 'https://vendorlist.example.com/v3/vendor-list.json';
 
@@ -26,10 +27,10 @@ afterEach(() => {
 	clearGvlCache();
 });
 
-describe('fetchCachedGvl', () => {
+describe('fetchServerGvl', () => {
 	test('fetches the list and returns it', async () => {
 		let calls = 0;
-		const gvl = await fetchCachedGvl({
+		const gvl = await fetchServerGvl({
 			fetch() {
 				calls += 1;
 				return Promise.resolve(jsonResponse({ vendorListVersion: 142 }));
@@ -49,8 +50,8 @@ describe('fetchCachedGvl', () => {
 			return Promise.resolve(jsonResponse({ vendorListVersion: 142 }));
 		};
 
-		await fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
-		await fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
+		await fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
+		await fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
 
 		expect(calls).toBe(1);
 	});
@@ -64,9 +65,9 @@ describe('fetchCachedGvl', () => {
 		};
 
 		await Promise.all([
-			fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL }),
-			fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL }),
-			fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL }),
+			fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL }),
+			fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL }),
+			fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL }),
 		]);
 
 		expect(calls).toBe(1);
@@ -83,8 +84,8 @@ describe('fetchCachedGvl', () => {
 			return Promise.resolve(jsonResponse({ vendorListVersion: 142 }));
 		};
 
-		await fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
-		await fetchCachedGvl({ fetch: fetchImpl, language: 'fr', url: GVL_URL });
+		await fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
+		await fetchServerGvl({ fetch: fetchImpl, language: 'fr', url: GVL_URL });
 
 		expect(seen).toEqual(['en', 'fr']);
 	});
@@ -101,14 +102,14 @@ describe('fetchCachedGvl', () => {
 			);
 		};
 
-		await fetchCachedGvl({
+		await fetchServerGvl({
 			fetch: fetchImpl,
 			language: 'en',
 			now: 0,
 			url: GVL_URL,
 		});
 		// Well past the 5s dedupe floor, well inside the hour the backend gave.
-		await fetchCachedGvl({
+		await fetchServerGvl({
 			fetch: fetchImpl,
 			language: 'en',
 			now: 60_000,
@@ -130,8 +131,8 @@ describe('fetchCachedGvl', () => {
 			);
 		};
 
-		await fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
-		await fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
+		await fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
+		await fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL });
 
 		expect(calls).toBe(2);
 	});
@@ -143,12 +144,12 @@ describe('fetchCachedGvl', () => {
 			return Promise.resolve(new Response(null, { status: 204 }));
 		};
 
-		const first = await fetchCachedGvl({
+		const first = await fetchServerGvl({
 			fetch: fetchImpl,
 			language: 'en',
 			url: GVL_URL,
 		});
-		const second = await fetchCachedGvl({
+		const second = await fetchServerGvl({
 			fetch: fetchImpl,
 			language: 'en',
 			url: GVL_URL,
@@ -169,10 +170,10 @@ describe('fetchCachedGvl', () => {
 		};
 
 		await expect(
-			fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL })
+			fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL })
 		).rejects.toThrow(/GVL responded 500/u);
 		await expect(
-			fetchCachedGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL })
+			fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL })
 		).rejects.toThrow(/GVL responded 500/u);
 
 		expect(calls).toBe(2);

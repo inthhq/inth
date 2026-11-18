@@ -72,7 +72,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.restoreAllMocks();
-	delete (window as { inth?: unknown }).inth;
+	delete (window as { __inthDebug?: unknown }).__inthDebug;
 });
 
 const RESOLVED_PREFETCH = {
@@ -597,12 +597,12 @@ describe('createConsentRuntime', () => {
 		});
 
 		runtime.start();
-		expect((window as { inth?: { pkg?: string } }).inth?.pkg).toBe(
-			'@inth/svelte'
-		);
+		expect(
+			(window as { __inthDebug?: { pkg?: string } }).__inthDebug?.pkg
+		).toBe('@inth/svelte');
 
 		runtime.dispose();
-		expect((window as { inth?: unknown }).inth).toBeUndefined();
+		expect((window as { __inthDebug?: unknown }).__inthDebug).toBeUndefined();
 	});
 
 	test('does not run init or mount modules when disabled', () => {
@@ -920,11 +920,11 @@ describe('createConsentRuntime', () => {
 	});
 });
 
-describe('windowDebug', () => {
-	type DebugWindow = Window & { inth?: unknown };
+describe('the window debug object', () => {
+	type DebugWindow = Window & { __inthDebug?: unknown };
 
 	afterEach(() => {
-		(window as DebugWindow).inth = undefined;
+		(window as DebugWindow).__inthDebug = undefined;
 	});
 
 	test('installs the debug object on start by default', () => {
@@ -934,7 +934,9 @@ describe('windowDebug', () => {
 
 		runtime.start();
 
-		expect((window as DebugWindow).inth).toMatchObject({ mode: 'hosted' });
+		expect((window as DebugWindow).__inthDebug).toMatchObject({
+			mode: 'hosted',
+		});
 		runtime.dispose();
 	});
 
@@ -948,26 +950,31 @@ describe('windowDebug', () => {
 		});
 
 		runtime.start();
-		expect((window as DebugWindow).inth).toMatchObject({ hosting: null });
+		expect((window as DebugWindow).__inthDebug).toMatchObject({
+			hosting: null,
+		});
 
 		await runtime.kernel.commands.init();
-		expect((window as DebugWindow).inth).toMatchObject({ hosting: 'inth' });
+		expect((window as DebugWindow).__inthDebug).toMatchObject({
+			hosting: 'inth',
+		});
 		runtime.dispose();
 	});
 
-	test('leaves window.inth alone when turned off', () => {
-		const owned = { mine: true };
-		(window as DebugWindow).inth = owned;
+	test('leaves window.inth, the script-tag API, to the page', () => {
+		const api = { mine: true };
+		const page = window as Window & { inth?: unknown };
+		page.inth = api;
 		const runtime = createConsentRuntime({
 			mode: transportMode(createTransport()),
-			windowDebug: false,
 		});
 
 		runtime.start();
-		expect((window as DebugWindow).inth).toBe(owned);
+		expect(page.inth).toBe(api);
 
 		runtime.dispose();
-		expect((window as DebugWindow).inth).toBe(owned);
+		expect(page.inth).toBe(api);
+		Reflect.deleteProperty(page, 'inth');
 	});
 });
 

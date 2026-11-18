@@ -13,7 +13,7 @@ import { testing } from '../../testing';
  * stand in for the backend with a fake.
  *
  * @param transport - The fake transport.
- * @param kind - The kind `window.inth.mode` reports.
+ * @param kind - The kind `window.__inthDebug.mode` reports.
  * @returns A factory for the provider's `mode`.
  */
 export const transportMode = function transportMode(

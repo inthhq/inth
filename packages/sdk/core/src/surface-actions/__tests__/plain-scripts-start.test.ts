@@ -48,6 +48,15 @@ describe('startPlainScripts', () => {
 		expect(document.head.querySelectorAll('script')).toHaveLength(1);
 	});
 
+	test('leaves an integration script to the loader', () => {
+		// The loader may load it from the script registry instead.
+		const integration: Script = { ...pixel, id: 'vendor', integration: 'x' };
+		startPlainScripts([pixel, integration], granted, undefined);
+		expect(
+			[...document.querySelectorAll('script')].map((tag) => tag.src)
+		).toEqual([pixel.src]);
+	});
+
 	test('leaves a script with anonymizeId to the loader', () => {
 		// The loader sets its element id before appending it; a script with
 		// `anonymizeId: false` may read `inth-script-<id>` as it runs.

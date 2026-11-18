@@ -339,7 +339,7 @@ export interface ConsentProviderOptions
 	 */
 	preloadDialog?: DialogPreload;
 	/**
-	 * Adapter package name reported by `window.inth`.
+	 * Adapter package name reported by `window.__inthDebug`.
 	 * @internal
 	 */
 	__debugPkg?: string;
@@ -1001,7 +1001,7 @@ const isPromiseLike = function isPromiseLike(
  *
  * Pass `runtime` to render a runtime someone else created. The provider
  * then borrows its kernel and starts nothing — no second `init()`, no
- * second persistence handle, no second `window.inth` — and does not
+ * second persistence handle, no second `window.__inthDebug` — and does not
  * dispose it on unmount. Handing it a different runtime switches the tree
  * to that runtime's kernel; switching between a borrowed runtime and a
  * provider-built one still needs a remount.

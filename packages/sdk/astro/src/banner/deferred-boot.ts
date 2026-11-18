@@ -9,8 +9,9 @@
 import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import { isRunnableNow } from '@inth/sdk/surface-actions/plain-scripts';
 
-import { declaresVendor, isRunnableNow } from '../browser/deferred-scripts';
+import { declaresVendor } from '../browser/deferred-scripts';
 import type { InthLocals, InthResolvedOptions } from '../types';
 
 type DeferOptions = Pick<

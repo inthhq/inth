@@ -93,7 +93,7 @@ describe('starting a context around an external runtime', () => {
 
 		expect(init).not.toHaveBeenCalled();
 		expect(
-			(window as Window & { inth?: { pkg: string } }).inth
+			(window as Window & { __inthDebug?: { pkg: string } }).__inthDebug
 		).toBeUndefined();
 
 		stop();

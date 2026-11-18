@@ -17,14 +17,16 @@ import {
 import { enTranslations } from '@inth/sdk-translations';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PREFETCH_WINDOW_KEY } from '../../../core/src/libs/prefetch/window-key';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
+import {
+	ENGINE_TIMEOUT_MS,
+	PREFETCH_WINDOW_KEY,
+} from '../../../core/src/runtime/page-globals';
 import { autoInit, createGlobal, installGlobal } from '../global';
 import type { InthGlobalBase } from '../global-base';
 import { releaseBoot } from '../init/adopt';
 import type { InitBoot } from '../init/boot';
 import { runInitScript } from '../init/run';
-import { ENGINE_TIMEOUT_MS } from '../init/schedule';
 import { version } from '../version';
 
 const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.js';

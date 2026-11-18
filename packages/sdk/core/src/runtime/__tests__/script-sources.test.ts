@@ -88,7 +88,7 @@ const start = (
 
 afterEach(() => {
 	document.head.innerHTML = '';
-	delete (window as { inth?: unknown }).inth;
+	delete (window as { __inthDebug?: unknown }).__inthDebug;
 });
 
 describe('scriptLoader.sources', () => {

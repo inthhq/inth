@@ -23,6 +23,7 @@ import type {
 	SaveResult,
 	SaveUISource,
 } from '@inth/sdk/engine';
+import { storageFor } from '@inth/sdk/runtime/storage-for';
 import {
 	hasStoredClearEpoch,
 	planEarlyCommit,
@@ -30,7 +31,6 @@ import {
 } from '@inth/sdk/surface-actions/early-commit';
 import type { EarlyCommit } from '@inth/sdk/surface-actions/early-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
-import { storageFor } from '@inth/sdk/surface-actions/stored-records';
 
 import type { InthResolvedOptions } from '../options';
 import { pendingIsInert } from './stand-in';

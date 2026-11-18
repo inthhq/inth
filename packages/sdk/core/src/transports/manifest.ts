@@ -31,6 +31,7 @@ import {
 	resolveSessionReportProjectUrl,
 } from '../libs/session-report';
 import type { SessionReportHeaders } from '../libs/session-report';
+import { trimSlash } from '../libs/url';
 import type {
 	InitContext,
 	KernelOverrides,
@@ -49,8 +50,10 @@ import {
 import type { RememberedDecisionInputs } from './decision-inputs';
 import { fetchCachedGvl } from './gvl-cache';
 import { deferInitGvl, deferInitGvlToRoute } from './gvl-reference';
+import { toSaveResult } from './hosted-records';
 import { mapInitOutputToInitResponse } from './init-output';
 import type { TransportInitResponse } from './init-output';
+import { projectUrlOfManifest } from './manifest-url';
 import { saveFailure } from './save-rejection';
 import { buildSubjectPostBody, subjectsURL } from './subject-body';
 import type { SubjectSavePayload } from './subject-body';
@@ -93,8 +96,9 @@ export interface ManifestTransportOptions {
 	snapshot?: ConsentManifest;
 
 	/**
-	 * Backend URL used for `POST /subjects`. Defaults to `manifestUrl` with a
-	 * trailing `/manifest` segment removed.
+	 * Backend URL used for `POST /subjects`. Defaults to `manifestUrl` without
+	 * its `/manifest` endpoint; a manifest URL that does not end in one names
+	 * no backend.
 	 */
 	projectUrl?: string;
 
@@ -197,28 +201,6 @@ export interface ManifestKernelTransport extends KernelTransport {
 	) => Promise<TransportHydrationRecords | null>;
 }
 
-const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
-const deriveProjectUrl = function deriveProjectUrl(
-	options: ManifestTransportOptions
-): string {
-	if (options.projectUrl) {
-		return trimSlash(options.projectUrl);
-	}
-	if (!options.manifestUrl) {
-		return '';
-	}
-
-	const withoutQuery =
-		options.manifestUrl.split(/[?#]/u)[0] ?? options.manifestUrl;
-	const trimmed = trimSlash(withoutQuery);
-	return trimmed.endsWith('/manifest')
-		? trimmed.slice(0, -'/manifest'.length)
-		: trimmed;
-};
-
 /**
  * Places a relative provider list endpoint on the manifest's location, the
  * way a document resolves its own links. Node's fetch rejects a bare path.
@@ -296,20 +278,6 @@ const shouldFetchGvl = function shouldFetchGvl(
 	);
 };
 
-/**
- * A `SaveResult` from the backend's answer. Success is the HTTP status; the
- * 2.x body has no `ok` and must not be read as one.
- */
-const toSaveResult = function toSaveResult(data: unknown): SaveResult {
-	const subjectId =
-		typeof data === 'object' &&
-		data !== null &&
-		typeof (data as { subjectId?: unknown }).subjectId === 'string'
-			? (data as { subjectId: string }).subjectId
-			: undefined;
-	return subjectId === undefined ? { ok: true } : { ok: true, subjectId };
-};
-
 const defaultFetchGvl = function defaultFetchGvl(input: {
 	reference: ConsentManifestGVLReference;
 	language: string;
@@ -367,7 +335,9 @@ export const createManifestTransport = function createManifestTransport(
 		);
 	}
 
-	const projectUrl = deriveProjectUrl(options);
+	const projectUrl = options.projectUrl
+		? trimSlash(options.projectUrl)
+		: (projectUrlOfManifest(options.manifestUrl) ?? '');
 	const credentials = options.credentials ?? 'include';
 	const domain = resolveDomain(projectUrl, options.domain);
 	const now = options.now ?? Date.now;
@@ -543,9 +513,8 @@ export const createManifestTransport = function createManifestTransport(
 					journey,
 					manifest,
 					method: options.report.method,
-					// The caller's own backend, never the derived one: for a
-					// manifest URL that is not `<backend>/manifest`, the derived
-					// value is the manifest asset itself.
+					// The caller's own backend, never the one derived from the
+					// manifest URL.
 					projectUrl: options.report.projectUrl ?? options.projectUrl,
 					source: options.report.source,
 					waitUntil: options.report.waitUntil,

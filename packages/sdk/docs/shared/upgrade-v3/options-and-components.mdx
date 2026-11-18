@@ -16,8 +16,8 @@
 | `ConsentButton` | Removed. Use the `ConsentBanner` and `ConsentWidget` buttons, or call `useHeadlessConsentUI()` from your own button. |
 | `@c15t/react/cookie-banner` | `inth/react/consent-banner` |
 | `retryConfig` | Removed |
-| `store`, including `namespace`, `debug`, `initialConsentCategories` and `initialTranslationConfig` | Removed. Use the top-level `consentCategories` and `i18n` options. Debug information is on `window.inth`. |
-| `window.inthStore` | `window.inth` |
+| `store`, including `namespace`, `debug`, `initialConsentCategories` and `initialTranslationConfig` | Removed. Use the top-level `consentCategories` and `i18n` options. Debug information is on `window.__inthDebug`. |
+| `window.inthStore` | `window.__inthDebug` |
 | `iab: iab({ ... })` | `IABProvider`. See [Move IAB setup](#move-iab-setup-to-iabprovider). |
 
 The `consent-provider-options` codemod renames `ConsentManagerProvider` and

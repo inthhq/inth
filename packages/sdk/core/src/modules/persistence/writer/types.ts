@@ -52,6 +52,18 @@ export interface PersistenceTools {
 	clear: typeof clearStoredRecords;
 }
 
+/** What {@link createRecordStore} calls. @internal */
+export type RecordStoreTools = Pick<
+	PersistenceTools,
+	| 'decodeNotice'
+	| 'decodeVendors'
+	| 'deleteCookie'
+	| 'keys'
+	| 'rawCookie'
+	| 'validateEnvelope'
+	| 'writeCookie'
+>;
+
 /** A record the writer stores on its own schedule. */
 export type WriteKind = 'choice' | 'notice' | 'vendors';
 

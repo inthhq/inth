@@ -31,6 +31,7 @@ export const buildCallbackInfo = function buildCallbackInfo(
 		| 'getLoadErrorReporter'
 		| 'isReplacing'
 		| 'registration'
+		| 'vendorAxisActive'
 	>,
 	script: Script,
 	snapshot: ConsentSnapshot,
@@ -73,7 +74,7 @@ export const buildCallbackInfo = function buildCallbackInfo(
 			info.source.crossorigin = crossorigin;
 		}
 	}
-	if (script.vendor && snapshot.model !== 'iab') {
+	if (script.vendor && tools.vendorAxisActive(snapshot)) {
 		info.vendor = {
 			granted: !tools.deniedVendors(snapshot)?.has(script.vendor),
 			id: script.vendor,

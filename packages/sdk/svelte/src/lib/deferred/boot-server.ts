@@ -12,6 +12,7 @@ import { defaultTranslationConfig } from '@inth/sdk/engine';
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import { isRunnableNow } from '@inth/sdk/surface-actions/plain-scripts';
 import { deepMergeTranslations } from '@inth/sdk/translations';
 import type { Translations } from '@inth/sdk/translations';
 
@@ -19,7 +20,6 @@ import { isIABConfigured } from '../iab-loader';
 import type { ProviderOptionsInput } from '../provider-options';
 import { bootMarkup } from './boot';
 import type { ConsentRootBoot } from './boot';
-import { isRunnableNow } from './scripts';
 
 /**
  * Whether the browser may start this visitor from the server's snapshot

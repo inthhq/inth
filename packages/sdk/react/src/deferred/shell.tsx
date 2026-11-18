@@ -20,6 +20,13 @@ import type { SaveResult, SaveUISource } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import {
+	EARLY_TAP_HOLD_PRESSES_KEY,
+	EARLY_TAP_ROOT,
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+	earlyTapQueue,
+} from '@inth/sdk/runtime/page-globals';
+import {
 	changedPlainScripts,
 	obsoletePlainScripts,
 	plainDeclarations,
@@ -77,14 +84,7 @@ import {
 import { acceptedPermissions, isPlainScript, isRunnableNow } from './runnable';
 import { DeferredSessionContext, read, record, recordOnce } from './session';
 import type { DeferredSession, Recorded } from './session';
-import {
-	BANNER_ROOT,
-	EARLY_TAP_HOLD_PRESSES,
-	EARLY_TAPS_KEY,
-	earlyTapQueue,
-	importDialog,
-	scheduleDeferredEngine,
-} from './trigger';
+import { importDialog, scheduleDeferredEngine } from './trigger';
 
 /** The provider options the shell itself reads. @internal */
 export type DeferredShellOptions = Pick<
@@ -217,9 +217,6 @@ const settle = async function settle(
 	}
 };
 
-/** Id of the `<style>` the early-tap script hides the banner with. */
-const EARLY_TAP_STYLE_ID = 'inth-early-tap';
-
 /** The same `<style>` once the root handles the tap. */
 const COMMITTED_STYLE_ID = 'inth-early-commit';
 
@@ -243,7 +240,7 @@ const hideBanner = function hideBanner(nonce: string | undefined): void {
 	if (nonce) {
 		style.nonce = nonce;
 	}
-	style.textContent = `${BANNER_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
+	style.textContent = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
 	document.head.append(style);
 };
 
@@ -259,7 +256,7 @@ const BANNER_LEAVE_MS = 10_000;
 const unhideWhenGone = function unhideWhenGone(
 	handle: DeferredKernelHandle
 ): void {
-	const roots = [...document.querySelectorAll(BANNER_ROOT)];
+	const roots = [...document.querySelectorAll(EARLY_TAP_ROOT)];
 	let deadline = Number.POSITIVE_INFINITY;
 	// oxlint-disable-next-line promise/prefer-await-to-then -- Starts the clock once the engine is in.
 	void handle.ready.then(() => {
@@ -510,7 +507,7 @@ const createSession = function createSession<EngineModule>(
 	const holdPresses = (hold: boolean): void => {
 		const queue = earlyTapQueue();
 		if (queue) {
-			queue[EARLY_TAP_HOLD_PRESSES] = hold ? 1 : 0;
+			queue[EARLY_TAP_HOLD_PRESSES_KEY] = hold ? 1 : 0;
 		}
 	};
 	if (typeof document !== 'undefined') {
@@ -633,9 +630,10 @@ const createSession = function createSession<EngineModule>(
 		if (stop) {
 			queue?.stop?.();
 			if (queue) {
-				queue[EARLY_TAP_HOLD_PRESSES] = 0;
+				queue[EARLY_TAP_HOLD_PRESSES_KEY] = 0;
 			}
-			(window as unknown as Record<string, unknown>)[EARLY_TAPS_KEY] = {};
+			(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] =
+				{};
 		}
 		keepHidden();
 	};

@@ -144,7 +144,7 @@ export interface VueConsentKernelContext {
 	experimentDefinition?: ConsentExperiment;
 	/**
 	 * Mount the browser side of a runtime this app owns: persistence, the
-	 * blockers, IAB, `window.inth`, and the first `/init` (or the adoption
+	 * blockers, IAB, `window.__inthDebug`, and the first `/init` (or the adoption
 	 * of a server-resolved prefetch). A no-op on the server, when already
 	 * started, and for a borrowed runtime, whose host starts it.
 	 */
@@ -324,7 +324,7 @@ const mountIABUnderIABPolicy: NonNullable<ConsentRuntimeModules['mountIAB']> = (
 
 /**
  * The runtime's modules for a Vue app. Persistence, the iframe blocker and
- * `window.inth` are static: stored choices apply on mount and gated frames
+ * `window.__inthDebug` are static: stored choices apply on mount and gated frames
  * pause as soon as the app starts. The script loader, the network blocker
  * (the runtime holds matching requests until it lands), data clearing and
  * a `consentSource` connection load only for apps that configure them,

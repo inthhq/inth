@@ -99,11 +99,6 @@
 			"import": "./lib/browser/dist/postcss-tailwind3.js",
 			"default": "./lib/browser/dist/postcss-tailwind3.js"
 		},
-		"./prefetch": {
-			"types": "./lib/browser/dist-types/prefetch.d.ts",
-			"import": "./lib/browser/dist/prefetch.js",
-			"default": "./lib/browser/dist/prefetch.js"
-		},
 		"./engine": {
 			"types": "./lib/core/dist-types/index.d.ts",
 			"import": "./lib/core/dist/index.js",
@@ -278,6 +273,16 @@
 			"types": "./lib/core/dist-types/runtime/deferred-snapshot.d.ts",
 			"import": "./lib/core/dist/runtime/deferred-snapshot.js",
 			"default": "./lib/core/dist/runtime/deferred-snapshot.js"
+		},
+		"./runtime/page-globals": {
+			"types": "./lib/core/dist-types/runtime/page-globals.d.ts",
+			"import": "./lib/core/dist/runtime/page-globals.js",
+			"default": "./lib/core/dist/runtime/page-globals.js"
+		},
+		"./runtime/storage-for": {
+			"types": "./lib/core/dist-types/runtime/storage-for.d.ts",
+			"import": "./lib/core/dist/runtime/storage-for.js",
+			"default": "./lib/core/dist/runtime/storage-for.js"
 		},
 		"./runtime/save-preload": {
 			"types": "./lib/core/dist-types/runtime/save-preload.d.ts",

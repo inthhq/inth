@@ -289,7 +289,6 @@ test('the runtime follows the app and shows no banner', () => {
 		consentSource,
 		iframeBlocker: false,
 		mode: transportMode(createOfflineTransport({ acknowledgeNoRecords: true })),
-		windowDebug: false,
 	});
 	runtime.start();
 	expect(runtime.kernel.getSnapshot().activeUI).toBe('none');

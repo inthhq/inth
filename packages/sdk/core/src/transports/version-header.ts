@@ -70,6 +70,24 @@ export const inthProtocolParams: Readonly<
 };
 
 /**
+ * A policy contract header value as {@link readProducerPolicyContract}
+ * reads it: `undefined` when absent, `null` when malformed.
+ *
+ * @param value - The header value.
+ * @returns The contract version.
+ * @internal
+ */
+export const parsePolicyContract = function parsePolicyContract(
+	value: string | null | undefined
+): number | null | undefined {
+	if (value === null || value === undefined) {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return /^\d+$/u.test(trimmed) ? Number.parseInt(trimmed, 10) : null;
+};
+
+/**
  * The policy contract a producer declared on its response, if any.
  *
  * `undefined` means the producer predates the contract (no header). A
@@ -79,10 +97,5 @@ export const inthProtocolParams: Readonly<
 export const readProducerPolicyContract = function readProducerPolicyContract(
 	headers: Pick<Headers, 'get'> | undefined
 ): number | null | undefined {
-	const value = headers?.get(INTH_POLICY_CONTRACT_HEADER);
-	if (value === null || value === undefined) {
-		return undefined;
-	}
-	const trimmed = value.trim();
-	return /^\d+$/u.test(trimmed) ? Number.parseInt(trimmed, 10) : null;
+	return parsePolicyContract(headers?.get(INTH_POLICY_CONTRACT_HEADER));
 };

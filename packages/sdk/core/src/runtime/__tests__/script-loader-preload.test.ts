@@ -87,7 +87,6 @@ const create = function create(
 			}),
 			persistence: false,
 			scripts: [pixel],
-			windowDebug: false,
 			...options,
 		},
 		{
@@ -574,7 +573,6 @@ describe('the kernel the decision builds', () => {
 					}),
 					persistence: false,
 					scripts: [pixel],
-					windowDebug: false,
 					...options,
 				},
 				{

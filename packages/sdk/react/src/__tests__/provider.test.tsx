@@ -71,7 +71,7 @@ test('offline mode without rules resolves the recommended pack: strict opt-in fo
 	expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 });
 
-test('exposes only the window.inth debug object, not the kernel', async () => {
+test('exposes only the window.__inthDebug debug object, not the kernel', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
@@ -85,7 +85,9 @@ test('exposes only the window.inth debug object, not the kernel', async () => {
 	await expect
 		.element(screen.getByTestId('consent-banner-accept-button'))
 		.toBeVisible();
-	expect((window as Window & { inth?: unknown }).inth).toMatchObject({
+	expect(
+		(window as Window & { __inthDebug?: unknown }).__inthDebug
+	).toMatchObject({
 		mode: 'offline',
 		pkg: '@inth/react',
 	});

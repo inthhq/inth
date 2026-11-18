@@ -27,7 +27,7 @@ export const buildReconcilePass = function buildReconcilePass(
 	return {
 		consents: tools.gateState(snapshot).effectivePermissions,
 		iab: snapshot.iab,
-		isIabMode: snapshot.model === 'iab',
+		isIabMode: !tools.vendorAxisActive(snapshot),
 		snapshot,
 		tools,
 		vendorDenied: tools.deniedVendors(snapshot),

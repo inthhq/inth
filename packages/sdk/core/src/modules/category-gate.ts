@@ -13,6 +13,7 @@ import { evaluateConsentRecord } from '../consent-record/evaluate';
 import type { AllConsentNames } from '../consent/consent-types';
 import { has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
+import { vendorAxisActive } from '../libs/vendors';
 import type { ConsentSnapshot } from '../types';
 import { isVendorDenied } from './vendor-denial';
 
@@ -66,7 +67,7 @@ export const evaluateCategoryGate = function evaluateCategoryGate<
 		target.category,
 		getEffectiveGateState(snapshot, now).effectivePermissions
 	);
-	if (!allowed || target.vendor === undefined || snapshot.model === 'iab') {
+	if (!allowed || target.vendor === undefined || !vendorAxisActive(snapshot)) {
 		return allowed;
 	}
 	return !isVendorDenied(snapshot, target.vendor);

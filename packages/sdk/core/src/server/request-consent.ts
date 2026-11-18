@@ -39,12 +39,14 @@ import {
 	CONSENT_EXPERIMENT_HEADER,
 	CONSENT_REQUEST_HEADER_NAMES,
 	consentInputsToOverrides,
+	COUNTRY_HEADERS,
 	extractConsentRequestInputs,
 	formatExperimentHeader,
 	getIpAddress,
 	isSpeculativeRequest,
 	journeyDomainFrom,
 	POLICY_CONTRACT_VERSION,
+	REGION_HEADERS,
 } from '@inth/sdk-schema/types';
 import type {
 	ConsentManifest,
@@ -58,6 +60,7 @@ import type { StorageConfig } from '../libs/cookie/types';
 import { experimentArmRef } from '../libs/experiment';
 import type { ExperimentState, ServerExperiment } from '../libs/experiment';
 import { failedResponseError } from '../libs/failed-response';
+import { readHeader, toHeaders } from '../libs/headers';
 import { createJourneyId } from '../libs/journey';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
 import {
@@ -72,6 +75,7 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
+import { trimSlash } from '../libs/url';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
 import { resolveStorageKeys } from '../modules/persistence/record-storage';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
@@ -98,7 +102,8 @@ import {
 	resolveConsentInit,
 } from './consent-route';
 import type { ConsentRouteFetchGvl } from './consent-route';
-import { fetchCachedGvl } from './gvl-cache';
+import { fetchServerGvl } from './gvl-cache';
+import { IN_PROCESS_ORIGIN, toPathFetch } from './in-process';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
@@ -359,41 +364,6 @@ class RequestConsentError extends Error {
 	}
 }
 
-const readHeader = function readHeader(
-	headers: RequestHeaderSource | undefined,
-	name: string
-): string | undefined {
-	if (!headers) {
-		return undefined;
-	}
-	if (typeof (headers as Headers).get === 'function') {
-		return (headers as Headers).get(name) ?? undefined;
-	}
-	// Header names are case-insensitive, and a record keeps whatever casing
-	// the runtime or the client used.
-	const lower = name.toLowerCase();
-	const value = Object.entries(
-		headers as Record<string, string | string[] | undefined>
-	).find(([key]) => key.toLowerCase() === lower)?.[1];
-	return Array.isArray(value) ? value[0] : value;
-};
-
-const toHeaders = function toHeaders(
-	headers: RequestHeaderSource | undefined
-): Headers {
-	if (headers instanceof Headers) {
-		return headers;
-	}
-	const result = new Headers();
-	for (const [name, value] of Object.entries(headers ?? {})) {
-		const first = Array.isArray(value) ? value[0] : value;
-		if (first !== undefined) {
-			result.set(name, first);
-		}
-	}
-	return result;
-};
-
 /** `country`, `region` and `language` set on `overrides`, dropping the rest. */
 const configuredOverrides = function configuredOverrides(
 	overrides: ResolveRequestConsentOptions['overrides']
@@ -582,9 +552,6 @@ const keepAlive = function keepAlive(
 
 const isPath = (url: string): boolean =>
 	url.startsWith('/') && !url.startsWith('//');
-
-const trimSlash = (url: string): string =>
-	url.endsWith('/') ? url.slice(0, -1) : url;
 
 /** Whether `pathname` is `prefix` or below it, segment-aware. */
 const isBelow = function isBelow(pathname: string, prefix: string): boolean {
@@ -867,7 +834,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		return (language: string) =>
 			options.fetchGvl
 				? options.fetchGvl({ fetch: configuredFetch(), language, reference })
-				: fetchCachedGvl({
+				: fetchServerGvl({
 						fetch: options.fetch as ManifestFetch | undefined,
 						headers: inthProtocolHeaders,
 						label: options.adapter,

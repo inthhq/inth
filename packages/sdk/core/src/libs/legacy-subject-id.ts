@@ -8,31 +8,9 @@
  */
 import type { CookieOptions, StorageConfig } from './cookie';
 import { deleteCookie, getRawCookieValue, getRootDomain } from './cookie';
+import { cookieDomainsOf } from './cookie/domain-utils';
+import { localStorageOf } from './local-storage';
 import { resolveStorageKeys } from './storage-keys';
-
-const removeLocalStorageKey = function removeLocalStorageKey(
-	key: string
-): void {
-	try {
-		window.localStorage?.removeItem(key);
-	} catch {
-		// Blocked storage holds nothing to remove.
-	}
-};
-
-/**
- * The page's host and every parent domain of it with at least two labels,
- * as cookie domains: `a.app.example.com`, `app.example.com`, `example.com`.
- * None for `localhost` or an IP address, which take host-only cookies.
- */
-const parentDomains = function parentDomains(): string[] {
-	const host = window.location.hostname;
-	if (!host.includes('.') || /^[\d.]+$/u.test(host) || host.includes(':')) {
-		return [];
-	}
-	const labels = host.split('.');
-	return labels.slice(0, -1).map((_, index) => labels.slice(index).join('.'));
-};
 
 /**
  * The ID a `<key>-sid` copy from Inth 3.2 holds, `null` for none: the cookie
@@ -61,7 +39,7 @@ export const readLegacySubjectId = function readLegacySubjectId(
 		}
 	}
 	try {
-		return window.localStorage?.getItem(key) || null;
+		return localStorageOf()?.getItem(key) || null;
 	} catch {
 		return null;
 	}
@@ -91,8 +69,9 @@ export const removeLegacySubjectId = function removeLegacySubjectId(
 	}
 	const key = resolveStorageKeys(config).subject;
 	try {
-		if (window.localStorage?.getItem(key) !== null) {
-			removeLocalStorageKey(key);
+		const storage = localStorageOf();
+		if (storage?.getItem(key) !== null) {
+			storage?.removeItem(key);
 		}
 	} catch {
 		// Blocked storage holds nothing to remove.
@@ -105,7 +84,7 @@ export const removeLegacySubjectId = function removeLegacySubjectId(
 	const domains = new Set([
 		'',
 		getRootDomain(),
-		...parentDomains(),
+		...cookieDomainsOf(window.location.hostname),
 		config?.defaultDomain ?? '',
 		cookie?.domain ?? '',
 	]);

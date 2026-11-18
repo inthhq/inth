@@ -8,6 +8,11 @@
  */
 
 import type { ConsentSnapshot } from '@inth/sdk/engine';
+import {
+	ENDED_RENDERS_KEY,
+	ENDED_RENDERS_LIMIT,
+	PAGE_RENDER_KEY,
+} from '@inth/sdk/runtime/page-globals';
 
 /** Attribute on the `<script type="application/json">` element. @internal */
 export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
@@ -53,7 +58,7 @@ export const readConsentBoot = function readConsentBoot(
 
 /**
  * What a server render's inline scripts leave for its deferred root
- * (`PAGE_RENDER_KEY` in `@inth/sdk/runtime/script-server-start`, copied).
+ * (`PAGE_RENDER_KEY` in `@inth/sdk/runtime/page-globals`).
  * @internal
  */
 export interface PageRender {
@@ -80,7 +85,7 @@ export interface PageRender {
 export const pageRender = function pageRender(
 	renderId: string | undefined = readConsentBoot()?.i
 ): PageRender | undefined {
-	const render = (globalThis as Record<string, unknown>).__inthRender as
+	const render = (globalThis as Record<string, unknown>)[PAGE_RENDER_KEY] as
 		| PageRender
 		| undefined;
 	const id = render?.id;
@@ -88,18 +93,8 @@ export const pageRender = function pageRender(
 };
 
 /**
- * How many ended render ids the page keeps (`ENDED_RENDERS_LIMIT` in
- * `@inth/sdk/runtime/script-server-start`, copied). An evicted id would
- * let that render's late start run, so the bound is far above the renders
- * one page sees; it only stops a page that never reloads from growing the
- * list without end. Each id is a short string.
- */
-const ENDED_RENDERS_LIMIT = 1000;
-
-/**
  * Ends this document's render for its inline scripts. It records the id
- * among the ended renders (`ENDED_RENDERS_KEY` in
- * `@inth/sdk/runtime/script-server-start`), which a newer render's page
+ * among the ended renders ({@link ENDED_RENDERS_KEY}), which a newer render's page
  * object never replaces, so a start script of this render that streams in
  * later installs nothing. It also renames the page object, so a server
  * start still waiting to run, or to insert a script after the page's
@@ -117,13 +112,13 @@ export const endPageRender = function endPageRender(
 		return;
 	}
 	const page = globalThis as Record<string, unknown>;
-	const recorded = page.__inthEndedRenders;
+	const recorded = page[ENDED_RENDERS_KEY];
 	const ended = Array.isArray(recorded) ? (recorded as unknown[]) : [];
 	if (!ended.includes(id)) {
 		ended.push(id);
 		ended.splice(0, Math.max(0, ended.length - ENDED_RENDERS_LIMIT));
 	}
-	page.__inthEndedRenders = ended;
+	page[ENDED_RENDERS_KEY] = ended;
 	// Only this render's own page object: a newer render's stays as it is.
 	const render = pageRender(id);
 	if (render) {

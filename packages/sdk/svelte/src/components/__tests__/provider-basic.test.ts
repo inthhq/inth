@@ -23,7 +23,7 @@ window.fetch = mockFetch;
 
 type WindowWithInth = Window & {
 	__tcfapi?: unknown;
-	inth?: {
+	__inthDebug?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -32,7 +32,7 @@ type WindowWithInth = Window & {
 
 describe('ConsentProvider Basic Request Behavior', () => {
 	beforeEach(() => {
-		delete (window as WindowWithInth).inth;
+		delete (window as WindowWithInth).__inthDebug;
 		delete (window as WindowWithInth).__tcfapi;
 		vi.resetAllMocks();
 
@@ -52,11 +52,11 @@ describe('ConsentProvider Basic Request Behavior', () => {
 
 	afterEach(() => {
 		vi.clearAllMocks();
-		delete (window as WindowWithInth).inth;
+		delete (window as WindowWithInth).__inthDebug;
 		delete (window as WindowWithInth).__tcfapi;
 	});
 
-	test('should install window.inth with Svelte offline identity', async () => {
+	test('should install window.__inthDebug with Svelte offline identity', async () => {
 		const result = render(ProviderOnlyFixture, {
 			options: {
 				mode: testOffline(),
@@ -64,15 +64,17 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		});
 
 		await vi.waitFor(() => {
-			expect((window as WindowWithInth).inth).toMatchObject({
+			expect((window as WindowWithInth).__inthDebug).toMatchObject({
 				mode: 'offline',
 				pkg: '@inth/svelte',
 			});
 		});
-		expect(typeof (window as WindowWithInth).inth?.version).toBe('string');
+		expect(typeof (window as WindowWithInth).__inthDebug?.version).toBe(
+			'string'
+		);
 
 		result.unmount();
-		expect((window as WindowWithInth).inth).toBeUndefined();
+		expect((window as WindowWithInth).__inthDebug).toBeUndefined();
 	});
 
 	test('disposes the kernel when the provider unmounts', () => {
@@ -103,7 +105,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		});
 
 		await vi.waitFor(() => {
-			expect((window as WindowWithInth).inth).toMatchObject({
+			expect((window as WindowWithInth).__inthDebug).toMatchObject({
 				mode: 'hosted',
 				pkg: '@inth/svelte',
 			});

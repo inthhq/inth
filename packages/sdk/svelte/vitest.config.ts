@@ -92,6 +92,10 @@ const workspaceAliases = [
 		),
 	},
 	{
+		find: '@inth/sdk/runtime/page-globals',
+		replacement: resolve(__dirname, '../core/src/runtime/page-globals.ts'),
+	},
+	{
 		find: '@inth/sdk/runtime',
 		replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 	},
@@ -167,6 +171,13 @@ const workspaceAliases = [
 	{
 		find: '@inth/sdk/iab-support',
 		replacement: resolve(__dirname, '../core/src/iab-support.ts'),
+	},
+	{
+		find: '@inth/sdk/surface-actions/plain-scripts',
+		replacement: resolve(
+			__dirname,
+			'../core/src/surface-actions/plain-scripts.ts'
+		),
 	},
 	{
 		find: '@inth/sdk/surface-actions',

@@ -16,6 +16,7 @@
  */
 import type { AllConsentNames } from '../../consent/consent-types';
 import { allConsentNames } from '../../consent/consent-types';
+import { vendorAxisActive } from '../../libs/vendors';
 import type { ConsentSnapshot, ConsentState } from '../../types';
 import { deniedVendorIds, getEffectiveGateState, has } from '../has';
 
@@ -53,7 +54,7 @@ export const buildReconcilePass = function buildReconcilePass(
 	return {
 		consents: getEffectiveGateState(snapshot).effectivePermissions,
 		declared: new Set(snapshot.vendors?.declared.map((vendor) => vendor.id)),
-		isIabMode: snapshot.model === 'iab',
+		isIabMode: !vendorAxisActive(snapshot),
 		storedDenied: stored && stored.length > 0 ? new Set(stored) : null,
 		vendorDenied: deniedVendorIds(snapshot),
 	};

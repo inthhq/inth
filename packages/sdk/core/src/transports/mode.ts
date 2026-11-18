@@ -42,7 +42,7 @@ export interface ProviderTransportContext {
 	translationsFor?: (language: string) => KernelTranslations | undefined;
 }
 
-/** Transport kind exposed through `window.inth.mode`. */
+/** Transport kind exposed through `window.__inthDebug.mode`. */
 export type ProviderTransportKind =
 	| 'hosted'
 	| 'manifest'
@@ -56,7 +56,7 @@ export type ProviderTransportKind =
  * A provider builds one from its options: the hosted transport for
  * `projectUrl`, or the one its `mode` carries (`manifest()`, `testing()`).
  * `kind` lets adapters report the selected transport through
- * `window.inth.mode` without importing every transport implementation.
+ * `window.__inthDebug.mode` without importing every transport implementation.
  *
  * @param context - Provider values needed to create the transport.
  * @returns A transport for the consent kernel.

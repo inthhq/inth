@@ -19,6 +19,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { clearManifestCache } from '../../libs/manifest-cache-runtime';
 import type { ManifestFetch } from '../../libs/manifest-cache-runtime';
+import { clearGvlCache } from '../../transports/gvl-cache';
 import {
 	CONSENT_ROUTE_TIMEOUT_HEADER,
 	createConsentRouteHandler,
@@ -26,7 +27,7 @@ import {
 	readWaitUntil,
 } from '../consent-route';
 import type { ConsentRouteHandlerOptions } from '../consent-route';
-import { clearGvlCache, GVL_FETCH_TIMEOUT_MS } from '../gvl-cache';
+import { GVL_FETCH_TIMEOUT_MS } from '../gvl-cache';
 
 const BACKEND = 'https://consent.example.com';
 const APP = 'https://app.example.com';

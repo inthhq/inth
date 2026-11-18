@@ -8,6 +8,7 @@
  * evidence the backend has to reject a save made against a stale policy.
  */
 
+import { GPC_HEADERS, parseGlobalPrivacyControl } from '@inth/sdk-schema/types';
 import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { KernelOverrides, SavePayload } from '../types';
@@ -130,12 +131,6 @@ export const buildDecisionAssertion = function buildDecisionAssertion(
 export const gpcFromHeaders = function gpcFromHeaders(
 	headers: Record<string, string> | undefined
 ): boolean | undefined {
-	const value = headers?.['x-c15t-gpc'] ?? headers?.['sec-gpc'];
-	if (value === '1') {
-		return true;
-	}
-	if (value === '0') {
-		return false;
-	}
-	return undefined;
+	const [override, browser] = GPC_HEADERS;
+	return parseGlobalPrivacyControl(headers?.[override] ?? headers?.[browser]);
 };

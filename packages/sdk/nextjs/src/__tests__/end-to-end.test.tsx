@@ -26,7 +26,7 @@ import { MANIFEST_FIXTURE } from './manifest-fixture';
 import { policyFixture } from './policy-fixture';
 
 type WindowWithInth = Window & {
-	inth?: {
+	__inthDebug?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -52,7 +52,7 @@ const POLICY_RESOLUTION = writePolicyResolutionWire(
 );
 
 describe('ConsentRoot: projectUrl triggers auto-init', () => {
-	test('root reports Next.js adapter identity on window.inth', async () => {
+	test('root reports Next.js adapter identity on window.__inthDebug', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ policyResolution: POLICY_RESOLUTION }), {
 				headers: { 'content-type': 'application/json' },
@@ -61,7 +61,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 		);
 		const originalFetch = globalThis.fetch;
 		globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
-		delete (window as WindowWithInth).inth;
+		delete (window as WindowWithInth).__inthDebug;
 
 		try {
 			const { unmount } = await render(
@@ -76,16 +76,18 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 			await vi.waitFor(() => {
 				// The default mode is manifest().
-				expect((window as WindowWithInth).inth).toMatchObject({
+				expect((window as WindowWithInth).__inthDebug).toMatchObject({
 					mode: 'manifest',
 					pkg: '@inth/nextjs',
 				});
 			});
-			expect(typeof (window as WindowWithInth).inth?.version).toBe('string');
+			expect(typeof (window as WindowWithInth).__inthDebug?.version).toBe(
+				'string'
+			);
 			unmount();
 		} finally {
 			globalThis.fetch = originalFetch;
-			delete (window as WindowWithInth).inth;
+			delete (window as WindowWithInth).__inthDebug;
 		}
 	});
 

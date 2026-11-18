@@ -108,6 +108,14 @@ const workspaceAliases = [
 		),
 	},
 	{
+		find: '@inth/sdk/runtime/page-globals',
+		replacement: resolve(__dirname, '../core/src/runtime/page-globals.ts'),
+	},
+	{
+		find: '@inth/sdk/runtime/storage-for',
+		replacement: resolve(__dirname, '../core/src/runtime/storage-for.ts'),
+	},
+	{
 		find: '@inth/sdk/runtime',
 		replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 	},

@@ -346,7 +346,7 @@ export interface ConsentRuntimeModules {
 	 * place before the first save: pass the real `watchRevocationReload`.
 	 */
 	watchRevocationReload: (options: RevocationReloadOptions) => () => void;
-	/** Mounted on `start()` unless `windowDebug: false`. */
+	/** Mounted on `start()`. */
 	createWindowDebug: (options: WindowDebugOptions) => WindowDebugHandle;
 	/**
 	 * Connects a `consentSource` on `start()` while enabled. Pass
@@ -580,13 +580,7 @@ export interface ConsentRuntimeOptions {
 	/** Categories to offer alongside discovered integration categories, within policy scope. */
 	consentCategories?: AllConsentNames[];
 	/**
-	 * Install the `window.inth` debug object (`{ version, pkg, mode }`) on
-	 * `start()`. Defaults to `true`. A host that owns `window.inth` itself,
-	 * such as the script-tag build, turns it off.
-	 */
-	windowDebug?: boolean;
-	/**
-	 * Package name reported through `window.inth` — for example
+	 * Package name reported through `window.__inthDebug` — for example
 	 * `'@inth/svelte'`. Defaults to `'@inth/sdk/engine'`.
 	 */
 	pkg?: string;
@@ -701,7 +695,7 @@ export interface ConsentRuntime {
 	readonly started: boolean;
 	/**
 	 * Mount every browser side effect: persistence, script loader, network
-	 * and iframe blockers, IAB, GPP, `window.inth`, and the initial
+	 * and iframe blockers, IAB, GPP, `window.__inthDebug`, and the initial
 	 * `kernel.commands.init()`, or the adoption of a resolved prefetch
 	 * (evaluated at the server's clock, marked live, GPC honoured,
 	 * `init:applied` replayed) in its place.

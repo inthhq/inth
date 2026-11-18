@@ -35,6 +35,7 @@ export type {
 // API types - Meta
 export type { StatusOutput } from './api/meta';
 // API types - Session
+export { CONSENT_MODELS } from './api/session';
 export type { ConsentSessionReport, ConsentSessionSource } from './api/session';
 // API types - Subject
 export type {
@@ -103,6 +104,7 @@ export {
 	CONSENT_SESSION_CLIENT_IP_HEADER,
 	consentInputsToOverrides,
 	COUNTRY_HEADERS,
+	GPC_HEADERS,
 	createConsentManifestPolicyPack,
 	createDeterministicFingerprint,
 	createDeterministicFingerprintSync,

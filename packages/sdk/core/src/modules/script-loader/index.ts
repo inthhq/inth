@@ -27,8 +27,8 @@ import { createScriptLoaderWith } from './loader';
  *   the existing DOM element as loaded but do not own it.
  * - Minimal module state: anonymized element IDs are cached per page so
  *   fresh loader instances resolve the same DOM IDs. Other state remains
- *   per loader, except DOM append targets and optional
- *   `window.__inthScriptDebugListeners` for v2 debug-event compatibility.
+ *   per loader, except DOM append targets and the page's script debug
+ *   listeners.
  * - `dispose()` removes every element this loader mounted and
  *   disconnects the kernel subscription. Elements mounted by other
  *   loaders (or already in the DOM) are left alone.

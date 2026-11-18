@@ -87,11 +87,11 @@ test('StrictMode starts one runtime: one /init, one hold, nothing left holding',
 	});
 	expect(trackerCalls().length).toBeGreaterThan(0);
 
-	expect((window as { inth?: unknown }).inth).toBeDefined();
+	expect((window as { __inthDebug?: unknown }).__inthDebug).toBeDefined();
 	await view.unmount();
 	// A real unmount disposes the runtime, after StrictMode's replay did not.
 	await vi.waitFor(() =>
-		expect((window as { inth?: unknown }).inth).toBeUndefined()
+		expect((window as { __inthDebug?: unknown }).__inthDebug).toBeUndefined()
 	);
 });
 

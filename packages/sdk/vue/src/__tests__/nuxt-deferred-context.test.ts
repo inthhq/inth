@@ -545,8 +545,12 @@ describe('useScriptLoader before the engine', () => {
 		expect(document.querySelector('script[src="/late.js"]')).toBeNull();
 
 		tap('accept');
-		// Same task: the registered plain script starts with the choice.
-		expect(document.querySelector('script[src="/late.js"]')).not.toBeNull();
+		// Same task: the registered plain script starts with the choice,
+		// marked as started early, so a server start leaves it to its owners
+		// instead of taking it over.
+		const late = document.querySelector('script[src="/late.js"]');
+		expect(late).not.toBeNull();
+		expect((late as { __inthEarly?: boolean } | null)?.__inthEarly).toBe(true);
 		await settle();
 		harness.releaseEngine();
 		await vi.waitFor(() => expect(harness.engine()).toBeDefined());

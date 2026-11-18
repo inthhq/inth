@@ -252,7 +252,6 @@ describe('offline transports: language changes', () => {
 			i18n: { messages } as never,
 			mode: testing(),
 			persistence: false,
-			windowDebug: false,
 		});
 		const { kernel } = runtime;
 		await kernel.commands.init();
@@ -303,7 +302,6 @@ describe('offline transports: language changes', () => {
 			mode: testing(),
 			persistence: false,
 			prefetch: { initialOverrides: { language: 'de' } },
-			windowDebug: false,
 		});
 		const { kernel } = runtime;
 		await kernel.commands.init();
@@ -346,7 +344,6 @@ describe('offline transports: language changes', () => {
 			mode: testing(),
 			persistence: false,
 			prefetch: { initialOverrides: { language: 'de' } },
-			windowDebug: false,
 		});
 		const { kernel } = runtime;
 		await kernel.commands.init();

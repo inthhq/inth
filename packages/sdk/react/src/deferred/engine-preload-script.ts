@@ -6,6 +6,8 @@
  * @internal
  */
 
+import { PAGE_RENDER_KEY } from '@inth/sdk/runtime/page-globals';
+
 import { ENGINE_CHUNKS_KEY } from './engine-preload';
 
 /**
@@ -31,7 +33,7 @@ export const enginePreloadScript = (
 	`(function(){try{${
 		storedChoiceRenderId === undefined
 			? ''
-			: `var v=window.__inthRender;if(v&&v.id===${JSON.stringify(storedChoiceRenderId).replace(/</gu, '\\u003c')}&&typeof v.current==="function"&&v.current())return;`
+			: `var v=window.${PAGE_RENDER_KEY};if(v&&v.id===${JSON.stringify(storedChoiceRenderId).replace(/</gu, '\\u003c')}&&typeof v.current==="function"&&v.current())return;`
 	}var d=JSON.parse(localStorage.getItem(${JSON.stringify(
 		ENGINE_CHUNKS_KEY
 	)})||"null");if(!d||!d.u)return;var c=${JSON.stringify(chunks).replace(

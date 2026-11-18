@@ -43,6 +43,7 @@ import {
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
 import type { ProviderOptionsInput } from '../provider-options';
 import type { ConsentRootBoot } from './boot';
@@ -52,7 +53,6 @@ import type {
 	CompleteCommitResult,
 	DeferredCommitted,
 } from './commit';
-import { startPlainScripts } from './scripts';
 import { createStandInKernel, pendingIsInert } from './stand-in';
 import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './trigger';
 
