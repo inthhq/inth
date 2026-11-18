@@ -160,6 +160,13 @@ class InthStore(
 		backend.write(InthStoreKeys.SUBJECT, json.encodeToString(ConsentSubject.serializer(), subject))
 	}
 
+	/** Write the identity slot and report whether it reached durable storage. */
+	fun writeSubjectDurably(subject: ConsentSubject): Boolean = try {
+		backend.writeDurably(InthStoreKeys.SUBJECT, json.encodeToString(ConsentSubject.serializer(), subject))
+	} catch (_: Exception) {
+		false
+	}
+
 	/**
 	 * Read the stored envelope, or `null` when absent or unparseable.
 	 *

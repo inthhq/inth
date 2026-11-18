@@ -13,8 +13,10 @@ import com.inth.core.transport.InthProtocol
 import com.inth.core.transport.HostedTransport
 import com.inth.core.transport.SaveOutcome
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -225,6 +227,66 @@ class PendingQueueTest {
 			),
 			body.keys,
 		)
+	}
+
+	@Test
+	fun `a later save sends every receipt at the time it was confirmed`() {
+		val clock = FixedClock()
+		val http = RecordingHttpClient { responseFor(it) }
+		val kernel = testKernel(
+			store = InthStore(InMemoryKeyValueStore()),
+			clock = clock,
+			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app/")),
+		)
+		kernel.bootstrap()
+		kernel.save(CommitIntent.All)
+		val grantedAt = clock.now
+		clock.now += 60_000
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false)))
+
+		val bodies = http.requests.filter { it.url.endsWith("/v1/consent/records") }
+			.map { json.parseToJsonElement(requireNotNull(it.body)).jsonObject }
+		assertEquals(2, bodies.size)
+		val first = bodies[0]["answer"]!!.jsonObject["categories"]!!.jsonObject
+		assertEquals(grantedAt, first["marketing"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long)
+		val second = bodies[1]["answer"]!!.jsonObject["categories"]!!.jsonObject
+		assertEquals(first.keys, second.keys, "the answer is complete")
+		assertEquals(grantedAt, second["marketing"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long, "not renewed")
+		assertEquals(clock.now, second["measurement"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long)
+	}
+
+	@Test
+	fun `a withdrawal that replaces a queued one still carries every denial`() {
+		val clock = FixedClock()
+		var online = true
+		val http = RecordingHttpClient { request ->
+			if (!online && request.url.endsWith("/v1/consent/records")) com.inth.core.spi.HttpResponse(status = 503, body = "") else responseFor(request)
+		}
+		val store = InthStore(InMemoryKeyValueStore())
+		val kernel = testKernel(
+			store = store,
+			clock = clock,
+			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app/")),
+		)
+		kernel.bootstrap()
+		kernel.save(CommitIntent.All)
+		online = false
+		clock.now += 1_000
+		val rejectedAt = clock.now
+		kernel.save(CommitIntent.Necessary)
+		clock.now += 1_000
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false)))
+
+		val queued = store.readPending()
+		assertEquals(1, queued.size, "the later withdrawal replaced the earlier one")
+		val answer = json.parseToJsonElement(requireNotNull(queued.single().body)).jsonObject["answer"]!!
+			.jsonObject["categories"]!!.jsonObject
+		assertEquals(setOf("experience", "functionality", "marketing", "measurement"), answer.keys)
+		for ((category, receipt) in answer) {
+			assertEquals(false, receipt.jsonObject["value"]!!.jsonPrimitive.boolean, category)
+		}
+		assertEquals(rejectedAt, answer["marketing"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long)
+		assertEquals(clock.now, answer["measurement"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long)
 	}
 
 	@Test
