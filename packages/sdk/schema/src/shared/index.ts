@@ -2,6 +2,12 @@ export { type Branding, brandingSchema, brandingValues } from './branding';
 export { parseConsentManifest } from './consent-manifest-schema';
 export { type Hosting, hostingSchema, hostingValues } from './hosting';
 export {
+	type ScriptRegistryWire,
+	type ScriptSourceWire,
+	type ScriptSourcesWire,
+	scriptRegistrySchema,
+} from './script-sources';
+export {
 	buildConsentManifestFromConfig,
 	type ConsentManifest,
 	type ConsentManifestBranding,

@@ -4,6 +4,11 @@ interface TrackingConfig {
 	accountId: string;
 	email: string | undefined;
 	scriptUrl: string;
+	/**
+	 * The URL the tracker loads from: `scriptUrl`, or the one
+	 * `scriptLoader.sources` or the script registry chose
+	 */
+	loadUrl?: string;
 }
 
 interface Registration {
@@ -47,12 +52,13 @@ const permittedRegistration = (
 	if (!first || registrations.some(({ info }) => !info.hasConsent)) {
 		return;
 	}
-	const { accountId, email, scriptUrl } = first.config;
+	const { accountId, email, loadUrl, scriptUrl } = first.config;
 	if (
 		registrations.some(
 			({ config }) =>
 				config.accountId !== accountId ||
 				config.scriptUrl !== scriptUrl ||
+				config.loadUrl !== loadUrl ||
 				config.email !== email
 		)
 	) {
@@ -62,9 +68,14 @@ const permittedRegistration = (
 	const { config: mounted } = state.runtime ?? {};
 	if (
 		mounted &&
-		(mounted.accountId !== accountId || mounted.scriptUrl !== scriptUrl)
+		(mounted.accountId !== accountId ||
+			mounted.scriptUrl !== scriptUrl ||
+			mounted.loadUrl !== loadUrl)
 	) {
-		reportProblem(state, 'changing accountId or scriptUrl requires a new page');
+		reportProblem(
+			state,
+			'changing accountId, scriptUrl or its source requires a new page'
+		);
 		return;
 	}
 	return first;
@@ -82,7 +93,13 @@ const start = (state: TrackingState, beforeAppend = false): void => {
 	const browser = document.defaultView;
 	const { config, info, script } = registration;
 	const { element } = runtime;
-	const expectedUrl = new URL(config.scriptUrl, document.baseURI).href;
+	// Another tracker may load from the vendor's URL or from the
+	// replacement this one uses.
+	const trackerUrls = new Set(
+		[config.scriptUrl, config.loadUrl ?? config.scriptUrl].map(
+			(url) => new URL(url, document.baseURI).href
+		)
+	);
 	if (
 		!browser ||
 		browser.pgo !== undefined ||
@@ -90,7 +107,7 @@ const start = (state: TrackingState, beforeAppend = false): void => {
 		Reflect.has(browser, 'visitorGlobalObjectAlias') ||
 		Reflect.has(browser, 'visitorGlobalObject') ||
 		[...document.scripts].some(
-			(existing) => existing !== element && existing.src === expectedUrl
+			(existing) => existing !== element && trackerUrls.has(existing.src)
 		)
 	) {
 		runtime.status = 'error';
@@ -103,7 +120,7 @@ const start = (state: TrackingState, beforeAppend = false): void => {
 	runtime.config = config;
 	runtime.status = 'pending';
 	script.onBeforeLoad?.({ ...info, element });
-	element.src = config.scriptUrl;
+	element.src = config.loadUrl ?? config.scriptUrl;
 };
 
 const reconcile = (state: TrackingState): void => {
@@ -174,7 +191,7 @@ export const withActiveCampaignRuntime = (
 			states.set(document, state);
 		}
 		state.registrations.set(info.registration ?? standalone, {
-			config,
+			config: info.source ? { ...config, loadUrl: info.source.src } : config,
 			info,
 			script,
 		});

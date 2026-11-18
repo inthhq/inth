@@ -142,6 +142,41 @@ describe('queued calls before the tag loads', () => {
 		});
 	});
 
+	it("loads a page's script from the source a backend's /c15t.js queued", async () => {
+		const src = 'https://acme.example/scripts/posthog@0123456789abcdef.js';
+		loadTag([
+			// The backend's `/c15t.js` prepends its config to the page's queue.
+			[
+				'config',
+				{
+					...options,
+					scriptLoader: {
+						sources: { posthog: { integrity: 'sha384-registry', src } },
+					},
+				},
+			],
+			[
+				'config',
+				{
+					scripts: [
+						{
+							category: 'measurement',
+							id: 'posthog',
+							src: 'https://eu-assets.i.posthog.com/static/array.js',
+						},
+					],
+				},
+			],
+			['acceptAll'],
+		]);
+
+		await vi.waitFor(() => {
+			const script = document.head.querySelector(`script[src="${src}"]`);
+			expect(script?.getAttribute('integrity')).toBe('sha384-registry');
+			expect(script?.getAttribute('crossorigin')).toBe('anonymous');
+		});
+	});
+
 	it('waits for a manual init before running queued actions', async () => {
 		testWindow.c15t = [['config', options], ['openDialog']];
 		const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));

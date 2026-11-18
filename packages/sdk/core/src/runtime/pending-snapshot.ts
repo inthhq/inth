@@ -150,6 +150,7 @@ export const pendingBootSnapshot = function pendingBootSnapshot(
 		resolution: UNCONFIGURED,
 		restrictions: {},
 		revision: 0,
+		scriptRegistry: null,
 		subject: null,
 		surfaceShownAt: { banner: null, dialog: null },
 		translations: null,

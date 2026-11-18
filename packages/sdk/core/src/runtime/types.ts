@@ -19,6 +19,7 @@ import type {
 } from '../libs/experiment';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
 import type { ConsentPresentation } from '../libs/policy-actions';
+import type { ScriptSource } from '../libs/script-loader/types';
 import type { HostedMode } from '../modes';
 import type {
 	ClearOnRevocationConfig,
@@ -79,6 +80,27 @@ export interface RuntimeScriptLoaderOptions {
 	 * @default true
 	 */
 	serverStart?: boolean;
+	/**
+	 * Load a script from another URL, keyed by script `id`: for example a
+	 * vetted copy of a vendor's file on your own host. Only the URL
+	 * changes; an integration's setup, attributes and callbacks still run.
+	 * An `integrity` hash makes the browser check the file and also sets
+	 * `crossorigin="anonymous"`. Scripts without an entry, and scripts
+	 * without a `src`, load as before. Read when the script loader starts.
+	 *
+	 * @example
+	 * ```ts
+	 * scriptLoader: {
+	 *   sources: {
+	 *     posthog: {
+	 *       src: 'https://cdn.example.com/posthog-array.js',
+	 *       integrity: 'sha384-…',
+	 *     },
+	 *   },
+	 * }
+	 * ```
+	 */
+	sources?: Readonly<Record<string, ScriptSource>>;
 }
 
 /** Network-blocker configuration accepted by {@link ConsentRuntimeOptions}. */
@@ -431,6 +453,20 @@ export interface ConsentRuntimeOptions {
 	 * Cleanup waits for policy resolution. Initial-only; omitted disables it.
 	 */
 	clearOnRevocation?: ClearOnRevocationConfig;
+	/**
+	 * Load `@inth/integrations` scripts from the Inth script registry, by
+	 * the sources the consent manifest lists and init carries on
+	 * `snapshot.scriptRegistry.sources`. A listed script loads from the registry's
+	 * URL with its `integrity` hash and `crossorigin="anonymous"`, so the
+	 * browser refuses any other bytes. A script the list leaves out, or
+	 * every script when init carries no list, loads from its own URL. Only
+	 * the URL and tag attributes change: an integration's setup and
+	 * callbacks still run. An entry in `scriptLoader.sources` wins.
+	 * Initial-only. Experimental: its name and behaviour can change in a
+	 * minor release.
+	 * @default false
+	 */
+	experimentalInthScriptRegistry?: boolean;
 	/**
 	 * Reload the page after an accept, reject or save turns off a category or
 	 * vendor that was granted, or after a `consentSource` withdraws one.

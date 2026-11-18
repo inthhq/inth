@@ -18,6 +18,7 @@ import type { PolicyRule, ResolvedPolicyRule } from './policy-rule';
 import { createPolicyRuleFingerprints } from './policy-rule-fingerprint';
 import type { PolicyFingerprints } from './policy-rule-fingerprint';
 import type { PolicyMatch } from './policy-runtime';
+import type { ScriptRegistryWire } from './script-sources';
 import { getTranslationsData } from './translations-runtime';
 import type { I18nOptions, LoggerLike } from './translations-runtime';
 import type { Vendor } from './vendor';
@@ -99,6 +100,12 @@ export interface ConsentManifest {
 	vendors?: Vendor[];
 	/** Version label of `vendors`, surfaced for display and audit only. */
 	vendorListVersion?: string;
+	/**
+	 * What the Inth script registry tells c15t, such as where it serves
+	 * each script. Copied onto every `/init` resolved from this manifest.
+	 * Absent from producers without a registry.
+	 */
+	scriptRegistry?: ScriptRegistryWire;
 }
 
 export interface ResolveInitFromManifestInputs {
@@ -341,6 +348,9 @@ export const resolveInitFromManifest = function resolveInitFromManifest(
 		vendors: manifest.vendors ?? [],
 		...(manifest.vendorListVersion !== undefined && {
 			vendorListVersion: manifest.vendorListVersion,
+		}),
+		...(manifest.scriptRegistry !== undefined && {
+			scriptRegistry: manifest.scriptRegistry,
 		}),
 	};
 };

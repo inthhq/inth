@@ -16,6 +16,7 @@ import {
 	policyFingerprintsSchema,
 	resolvedPolicyRuleSchema,
 } from './policy-wire-schema';
+import { scriptRegistrySchema } from './script-sources';
 import type { I18nMessageProfiles } from './translations-runtime';
 import { vendorSchema } from './vendor';
 
@@ -118,6 +119,7 @@ const manifestSchema: v.GenericSchema<unknown, ConsentManifest> = v.looseObject(
 		),
 		revision: v.string(),
 		schemaVersion: v.literal(2),
+		scriptRegistry: scriptRegistrySchema,
 		tenantId: v.optional(v.string()),
 		translations: v.optional(
 			v.looseObject({

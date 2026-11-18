@@ -58,6 +58,16 @@ export const buildCallbackInfo = function buildCallbackInfo(
 	if (tools.isReplacing?.(script)) {
 		Object.defineProperty(info, 'replacing', { value: true });
 	}
+	if (script.src) {
+		const { crossorigin, integrity } = script.attributes ?? {};
+		info.source = { src: script.src };
+		if (integrity) {
+			info.source.integrity = integrity;
+		}
+		if (crossorigin) {
+			info.source.crossorigin = crossorigin;
+		}
+	}
 	if (script.vendor && snapshot.model !== 'iab') {
 		info.vendor = {
 			granted: !tools.deniedVendors(snapshot)?.has(script.vendor),

@@ -203,8 +203,11 @@ describe('TanStack Start client chunks', () => {
 		// output is 19,228 bytes. The flat entry names (`@inth/sdk/engine` in
 		// strings where `@inth/sdk/core` was) and the minifier's new local
 		// names add 7 more, though the files' raw bytes went down. The retry
-		// adds 66 bytes upstream (19,243 to 19,309).
-		expect(brotli).toBeLessThanOrEqual(19_336);
+		// adds 66 bytes upstream (19,243 to 19,309). The plain-script checks
+		// also leave an `integration` script to the loader, which the script
+		// registry may move to another URL or hold: 34 bytes (19,336 to
+		// 19,370).
+		expect(brotli).toBeLessThanOrEqual(19_370);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

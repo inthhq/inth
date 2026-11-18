@@ -119,6 +119,21 @@ describe('mergeInitResponseIntoKernelConfig', () => {
 		);
 	});
 
+	test('the script registry list survives a prefetch round trip', () => {
+		const scriptSources = {
+			vendor: { integrity: 'sha384-x', src: 'https://acme.inth.app/v.js' },
+		};
+		const response = kernelConfigToInitResponse({
+			initialPolicyResolution: matchedResolution(optInRule({ id: 'p1' })),
+			initialScriptRegistry: { sources: scriptSources },
+		});
+		expect(response?.scriptRegistry?.sources).toEqual(scriptSources);
+		expect(
+			mergeInitResponseIntoKernelConfig({}, response).initialScriptRegistry
+				?.sources
+		).toEqual(scriptSources);
+	});
+
 	test('policy trio + subjectId fold through', () => {
 		const merged = mergeInitResponseIntoKernelConfig(
 			{},

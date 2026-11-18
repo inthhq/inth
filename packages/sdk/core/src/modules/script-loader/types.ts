@@ -34,6 +34,7 @@ import type {
 	getEffectiveGateState,
 	has,
 } from '../has';
+import type { ScriptSources } from './sources';
 
 export type { Script, ScriptCallbackInfo };
 
@@ -116,6 +117,26 @@ export interface ScriptLoaderOptions {
 	 * loader creates. A per-script `nonce` takes precedence.
 	 */
 	nonce?: string;
+	/**
+	 * URLs to load scripts from in place of their own `src`, by script
+	 * `id`. Applies to `scripts` and to every `updateScripts` list.
+	 */
+	sources?: ScriptSources;
+	/**
+	 * Load scripts by the Inth script registry's sources that init carries
+	 * on `snapshot.scriptRegistry.sources`. Until init resolves, each script that
+	 * `@inth/integrations` built, has a `src` and no entry in `sources`
+	 * waits. It then loads from the registry's entry for its `id`, or from
+	 * its own URL when there is none or init carried no list. An entry the
+	 * loader cannot check keeps the script from loading at all.
+	 */
+	registry?: {
+		/**
+		 * Whether the runtime asks `/init`. When it does not, the loader
+		 * reads only the list a prefetch carried, and never waits.
+		 */
+		waitForInit: boolean;
+	};
 	/**
 	 * When true, also dispatch debug events to any listeners registered
 	 * on `window.__c15tScriptDebugListeners` (v2 compat). Default: true

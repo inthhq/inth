@@ -38,6 +38,7 @@ import type { KernelUser } from '../types';
 import type { afterModuleLoaded } from './lazy-module';
 import type { ModuleSlot } from './provider-runtime';
 import type { normalizeKernelUser } from './runtime-kernel';
+import type { scriptRegistry } from './script-registry';
 import type {
 	ConsentProviderRuntimeOptions,
 	ConsentRuntime,
@@ -64,6 +65,7 @@ export interface ProviderUpdateTools {
 	normalizeKernelUser: typeof normalizeKernelUser;
 	notHeld: NetworkHold;
 	resolveVendors: typeof resolveVendors;
+	scriptRegistry: typeof scriptRegistry;
 }
 
 /** What the update needs from the provider runtime. */
@@ -239,7 +241,8 @@ const syncModules = function syncModules(
 	previous: ConsentRuntimeUpdate,
 	current: ConsentRuntimeUpdate
 ): void {
-	const { afterModuleLoaded, holdNetworkRequests, notHeld } = host.tools;
+	const { afterModuleLoaded, holdNetworkRequests, notHeld, scriptRegistry } =
+		host.tools;
 	const target = host.active();
 	const { enabled } = host;
 	const { kernel } = target.runtime;
@@ -252,7 +255,13 @@ const syncModules = function syncModules(
 				kernel,
 				nonce: current.nonce,
 				onDebug: current.scriptLoader?.onDebug,
+				// Initial-only, like the options it reads
+				registry: scriptRegistry(
+					host.initial,
+					enabled && !host.initial.consentSource
+				),
 				scripts: [],
+				sources: current.scriptLoader?.sources,
 			}));
 			// Data clearing subscribes after the loader, so revocation
 			// callbacks finish before browser data is removed. A loader

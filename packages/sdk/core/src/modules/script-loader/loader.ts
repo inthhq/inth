@@ -22,6 +22,9 @@ import {
 	hasSameResource,
 	normalizeScripts,
 } from './normalize';
+import { readScriptRegistry } from './registry';
+import { createScriptSourceResolver } from './sources';
+import type { HeldScript, ScriptRegistryState } from './sources';
 import type {
 	NormalizedScript,
 	PendingMount,
@@ -37,7 +40,7 @@ const MAX_RECONCILE_PASSES = 100;
 
 const validateScripts = (scripts: Script[]): void => {
 	for (const script of scripts) {
-		script.validate?.();
+		script.validate?.(script);
 	}
 };
 
@@ -90,10 +93,56 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		);
 		declareOwners(kernel, scripts, ownerSource);
 	};
-	validateScripts(options.scripts);
-	registerCategories(options.scripts);
+	// Read once init resolves; a later init's list does not move scripts.
+	const readRegistry = (snapshot: ConsentSnapshot): ScriptRegistryState =>
+		readScriptRegistry(
+			options.registry?.waitForInit
+				? snapshot
+				: { ...snapshot, policyPending: false }
+		);
+	let registryState: ScriptRegistryState = options.registry
+		? readRegistry(kernel.getSnapshot())
+		: { status: 'failed' };
+	let stopWaiting: (() => void) | undefined;
+	const withSources = createScriptSourceResolver(
+		options.sources,
+		options.registry ? () => registryState : undefined
+	);
+	/** The list as given, so the registry's list can resolve it again. */
+	let configured: readonly Script[] = options.scripts;
+	/** Scripts registered for consent but not mounted; see `HeldScript`. */
+	let held: HeldScript[] = [];
+	const refusedIds = new Set<string>();
+	/** Resolve a list and keep what it holds back; returns what mounts. */
+	const resolveSources = (scripts: readonly Script[]): Script[] => {
+		const resolved = withSources(scripts);
+		// A held script is checked once it resolves, against the URL it then
+		// loads from, so it is not compared with its vendor URL meanwhile.
+		validateScripts(resolved.scripts);
+		({ held } = resolved);
+		for (const { reason, script } of held) {
+			if (reason === 'waiting' || refusedIds.has(script.id)) {
+				continue;
+			}
+			refusedIds.add(script.id);
+			emit({
+				action: 'error',
+				message:
+					reason === 'unparsable'
+						? `scriptLoader.sources gives ${script.id} an integrity with no hash a browser can parse, so it does not load: the browser would run it unchecked.`
+						: `The script registry holds ${script.id} back, or lists it without an https src and an integrity hash, so it loads neither from the registry nor from ${script.src}.`,
+				scope: 'lifecycle',
+				scriptId: script.id,
+				source: 'script-loader',
+				timestamp: Date.now(),
+			});
+		}
+		return resolved.scripts;
+	};
+	const initialScripts = resolveSources(options.scripts);
+	registerCategories([...initialScripts, ...held.map(({ script }) => script)]);
 	let normalized: NormalizedScript[] = normalizeScripts(
-		options.scripts,
+		initialScripts,
 		isVendorId
 	);
 
@@ -119,13 +168,18 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		const declared = new Set(
 			snapshot.vendors?.declared.map((vendor) => vendor.id)
 		);
-		const missing = normalized.some(
-			({ vendor }) => vendor !== null && !declared.has(vendor)
-		);
+		const missing =
+			normalized.some(
+				({ vendor }) => vendor !== null && !declared.has(vendor)
+			) ||
+			held.some(({ script }) => script.vendor && !declared.has(script.vendor));
 		if (missing) {
 			declareOwners(
 				kernel,
-				normalized.map(({ script }) => script),
+				[
+					...normalized.map(({ script }) => script),
+					...held.map(({ script }) => script),
+				],
 				ownerSource
 			);
 		}
@@ -192,7 +246,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	let unsubscribe: (() => void) | undefined;
 	let disposed = false;
 	let processing = false;
-	let pendingScripts: Script[] | undefined;
+	let pendingScripts: readonly Script[] | undefined;
 	let reconcileRequested = false;
 	let forceReconcile = false;
 
@@ -454,8 +508,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		statuses.clear();
 	};
 
-	const replaceScripts = (next: Script[]): void => {
-		validateScripts(next);
+	const replaceScripts = (configuredNext: readonly Script[]): void => {
+		const next = resolveSources(configuredNext);
+		configured = configuredNext;
 		const nextScripts = new Set(next);
 		const nextById = new Map(next.map((script) => [script.id, script]));
 		const previous = new Set(normalized.map(({ script }) => script));
@@ -508,7 +563,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		}
 		normalized = normalizeScripts(next, isVendorId);
 		if (!disposed) {
-			registerCategories(next);
+			registerCategories([...next, ...held.map(({ script }) => script)]);
 			reconcileRequested = true;
 			forceReconcile = true;
 		}
@@ -583,6 +638,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			disposed = true;
 			unsubscribe?.();
 			unsubscribe = undefined;
+			stopWaiting?.();
 			drain();
 		},
 		getLoadedScriptIds() {
@@ -596,6 +652,40 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			drain();
 		},
 	};
+	if (options.registry && registryState.status === 'pending') {
+		const settle = (state: ScriptRegistryState): void => {
+			if (state.status === 'pending' || registryState.status !== 'pending') {
+				return;
+			}
+			registryState = state;
+			stopWaiting?.();
+			if (disposed || held.length === 0) {
+				return;
+			}
+			// Resolve the list again: waiting scripts mount now, from the
+			// registry's source or their own URL.
+			pendingScripts ??= configured;
+			try {
+				drain();
+			} catch (error) {
+				emit({
+					action: 'error',
+					message: `Applying the script registry's list failed: ${error instanceof Error ? error.message : String(error)}`,
+					scope: 'phase',
+					scriptId: '',
+					source: 'script-loader',
+					timestamp: Date.now(),
+				});
+			}
+		};
+		const offSnapshot = kernel.subscribe((snapshot) => {
+			settle(readRegistry(snapshot));
+		});
+		stopWaiting = () => {
+			offSnapshot();
+			stopWaiting = undefined;
+		};
+	}
 	try {
 		// Observe initial mounts too, including synchronous inline execution.
 		reconcileRequested = true;

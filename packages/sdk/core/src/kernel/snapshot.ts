@@ -17,7 +17,7 @@ import type {
 	OptionalConsentCategory,
 } from '../consent-record/types';
 import { deriveActiveUI } from '../derive-surface';
-import { deepFreeze } from '../libs/freeze-data';
+import { deepFreeze, ownScriptRegistry } from '../libs/freeze-data';
 import {
 	buildEvaluationPolicy,
 	deriveModel,
@@ -410,6 +410,7 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 		resolution,
 		restrictions: evaluation.restrictions,
 		revision: 0,
+		scriptRegistry: ownScriptRegistry(config.initialScriptRegistry),
 		subject,
 		surfaceShownAt: config.initialSurfaceShownAt
 			? { ...UNSHOWN_SURFACES, ...config.initialSurfaceShownAt }

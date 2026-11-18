@@ -392,9 +392,9 @@ const createGainsightPxScript = function createGainsightPxScript(
 		}
 		onConsentChange?.(info);
 	};
-	script.validate = () => {
+	script.validate = (resolved) => {
 		assertProductKey(productKey);
-		assertServerSetup(options, script);
+		assertServerSetup(options, resolved);
 		assertStartupConfig(options.config);
 	};
 	return script;

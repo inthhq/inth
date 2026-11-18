@@ -161,6 +161,9 @@ export const mapInitOutputToInitResponse = function mapInitOutputToInitResponse(
 	if (payload.hosting !== undefined) {
 		mapped.hosting = payload.hosting;
 	}
+	if (payload.scriptRegistry !== undefined) {
+		mapped.scriptRegistry = payload.scriptRegistry;
+	}
 	if (payload.policySnapshotToken !== undefined) {
 		mapped.policySnapshotToken = payload.policySnapshotToken;
 	}
@@ -252,6 +255,9 @@ export const mergeInitResponseIntoKernelConfig =
 		}
 		if (response.hosting !== undefined) {
 			merged.initialHosting = response.hosting;
+		}
+		if (response.scriptRegistry !== undefined) {
+			merged.initialScriptRegistry = response.scriptRegistry;
 		}
 		if (response.policyResolution !== undefined) {
 			// Read here, on the server, so the kernel is constructed from a
@@ -364,6 +370,7 @@ export const initResponseToKernelConfig = function initResponseToKernelConfig(
  * 	: createHostedTransport({ projectUrl });
  * ```
  */
+// oxlint-disable-next-line complexity -- One check per init-derived config field keeps the inverse of the merge visible.
 export const kernelConfigToInitResponse = function kernelConfigToInitResponse(
 	config: KernelConfig
 ): TransportInitResponse | undefined {
@@ -389,6 +396,9 @@ export const kernelConfigToInitResponse = function kernelConfigToInitResponse(
 	}
 	if (config.initialHosting !== undefined) {
 		response.hosting = config.initialHosting;
+	}
+	if (config.initialScriptRegistry !== undefined) {
+		response.scriptRegistry = config.initialScriptRegistry;
 	}
 	if (
 		config.initialOverrides !== undefined &&

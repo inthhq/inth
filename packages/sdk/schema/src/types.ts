@@ -80,6 +80,11 @@ export {
 // Shared types - derived from constants without Zod
 export type Branding = (typeof brandingValues)[number];
 export type Hosting = (typeof hostingValues)[number];
+export type {
+	ScriptRegistryWire,
+	ScriptSourceWire,
+	ScriptSourcesWire,
+} from './shared/script-sources';
 
 export type {
 	ConsentManifest,

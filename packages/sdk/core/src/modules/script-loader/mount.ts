@@ -637,7 +637,7 @@ export const mountScript = function mountScript(
 			);
 			invokeCallback(script, 'onConsentChange', info, deps.emit);
 		}
-		deps.emit({
+		const event: ScriptLoaderDebugEvent = {
 			action: 'already_loaded',
 			elementId,
 			hasConsent,
@@ -646,7 +646,19 @@ export const mountScript = function mountScript(
 			scriptId: script.id,
 			source: 'script-loader',
 			timestamp: Date.now(),
-		});
+		};
+		// Its bytes already ran or are on their way, and a second copy
+		// would run the vendor's setup twice, so the loader keeps it even
+		// when it loads from another URL or without the integrity the
+		// script asks for. It says which.
+		const existingSrc = element.getAttribute('src');
+		const existingIntegrity = element.getAttribute('integrity');
+		const wanted = script.attributes?.integrity ?? null;
+		if (existingSrc !== (script.src ?? null) || existingIntegrity !== wanted) {
+			event.data = { existingIntegrity, existingSrc };
+			event.message = `Reused the existing #${elementId}, which loads ${existingSrc ?? 'inline code'}${existingIntegrity ? ` with integrity ${existingIntegrity}` : ' without integrity'}, not ${script.src ?? 'inline code'}${wanted ? ` with integrity ${wanted}` : ''}. Remove it, or give it the same src and integrity.`;
+		}
+		deps.emit(event);
 		return;
 	}
 

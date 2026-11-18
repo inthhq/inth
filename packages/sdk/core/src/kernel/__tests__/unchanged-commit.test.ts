@@ -185,6 +185,13 @@ test('every snapshot input agrees with the full evaluator', async () => {
 			run: (k) => k.set.privacySignals({ gpc: true }),
 		},
 		resolution: initWith({ policyResolution: { ...resolution, version: 1 } }),
+		scriptRegistry: initWith({
+			scriptRegistry: {
+				sources: {
+					vendor: { integrity: 'sha384-x', src: 'https://acme.inth.app/v.js' },
+				},
+			},
+		}),
 		subject: { idempotent: true, run: (k) => k.set.subjectId('sub_test') },
 		translations: initWith({
 			translations: { language: 'en', translations: enTranslations },

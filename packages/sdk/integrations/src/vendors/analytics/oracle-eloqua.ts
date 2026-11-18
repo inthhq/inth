@@ -439,7 +439,7 @@ export const eloquaTracking = function eloquaTracking(
 			};
 			element.addEventListener('load', complete, { once: true });
 			element.addEventListener('error', complete, { once: true });
-			element.src = script.src ?? '';
+			element.src = info.source?.src ?? script.src ?? '';
 		};
 		const owner: ConsentOwner = {
 			firstPartyCookieDomain,

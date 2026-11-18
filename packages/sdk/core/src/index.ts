@@ -208,6 +208,7 @@ export type {
 	ScriptDebugSource,
 	ScriptLifecycleCallback,
 	ScriptServerStart,
+	ScriptSource,
 	ScriptUpdateResult,
 	VendorDetails,
 } from './libs/script-loader/types';

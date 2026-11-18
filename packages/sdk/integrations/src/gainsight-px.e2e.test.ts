@@ -881,6 +881,43 @@ describe('Gainsight PX production loader contract', () => {
 		}
 	});
 
+	it('hydrates a server-started PX loader that loads from its replacement source', async () => {
+		const options: GainsightPxOptions = {
+			productKey: 'AP-SOURCE-HYDRATION-2',
+			user: { id: 'same' },
+		};
+		const source = 'https://acme.example/scripts/gainsight-px.js';
+		const server = gainsightPx(options);
+		const start = server.serverStart?.(
+			{ consents: grantedConsents, hasConsent: true, id: server.id },
+			{ ...server, src: source }
+		);
+		expect(start).toBeDefined();
+		// oxlint-disable-next-line no-new-func -- Executes the generated server snippet.
+		new Function(`${start?.prelude ?? ''};${start?.code}`)();
+		const element = Object.assign(document.createElement('script'), {
+			__c15tConsent: true,
+			__c15tScript: server.id,
+			src: source,
+		});
+		document.head.appendChild(element);
+		Reflect.set(globalThis, '__c15tStarted', { [server.id]: element });
+		const kernel = createConsentKernel();
+		await kernel.commands.save(grantedConsents);
+		const loader = createScriptLoader({
+			kernel,
+			scripts: [gainsightPx(options)],
+			sources: { [server.id]: { src: source } },
+		});
+		try {
+			expect(loader.getLoadedScriptIds()).toEqual([server.id]);
+			expect(document.querySelectorAll('script[src]')).toHaveLength(1);
+		} finally {
+			loader.dispose();
+			kernel.dispose();
+		}
+	});
+
 	describe.each([
 		{ allow: true, completed: false },
 		{ allow: false, completed: false },

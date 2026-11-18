@@ -12,6 +12,7 @@
 import type {
 	LocationResponse,
 	PolicyResolution,
+	ScriptRegistryWire,
 } from '@inth/sdk-schema/types';
 
 import { evaluateConsentRecord } from '../consent-record/evaluate';
@@ -66,6 +67,7 @@ export interface SnapshotPatch {
 	translations?: KernelTranslations | null;
 	branding?: KernelBranding | null;
 	hosting?: KernelHosting | null;
+	scriptRegistry?: Readonly<ScriptRegistryWire> | null;
 
 	policySnapshotToken?: string | null;
 	activeUI?: KernelActiveUI;
@@ -126,6 +128,8 @@ export const isUnchangedPatch = function isUnchangedPatch(
 		pick(patch.translations, current.translations) === current.translations &&
 		pick(patch.branding, current.branding) === current.branding &&
 		pick(patch.hosting, current.hosting) === current.hosting &&
+		pick(patch.scriptRegistry, current.scriptRegistry) ===
+			current.scriptRegistry &&
 		pick(patch.policySnapshotToken, current.policySnapshotToken) ===
 			current.policySnapshotToken &&
 		pick(patch.activeUI, current.activeUI) === current.activeUI &&
@@ -440,6 +444,7 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		resolution,
 		restrictions,
 		revision: current.revision + 1,
+		scriptRegistry: pick(patch.scriptRegistry, current.scriptRegistry),
 		subject,
 		// Impressions are stamped by the runtime once its lifecycle started;
 		// derivation only carries the record through.
