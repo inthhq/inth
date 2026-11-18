@@ -1001,8 +1001,13 @@ class ConsentCore @InthInternalApi constructor(
 					action = action,
 					actionAt = actionAt,
 					fingerprint = policy?.choiceFingerprint,
-					confirmedAt = prior.keys.filterNot { it in confirmed }
-						.associateWith { current.explicitChoice!!.confirmedAtOf(it) },
+					// A kept value keeps its time only under the basis it was confirmed
+					// under. A choice made before the policy resolved has none, so its
+					// values are confirmed again by this action.
+					confirmedAt = current.explicitChoice
+						?.takeIf { it.fingerprint == policy?.choiceFingerprint }
+						?.let { earlier -> prior.keys.filterNot { it in confirmed }.associateWith(earlier::confirmedAtOf) }
+						.orEmpty(),
 				)
 			}
 			published = PolicyEvaluator.evaluate(
