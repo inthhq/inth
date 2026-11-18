@@ -13,7 +13,7 @@ import type { FC } from 'react';
 import { warmDialogChunk } from '~/chunk-warming';
 import { useHeadlessIABConsentUI } from '~/component-hooks/use-headless-iab-consent-ui';
 import { Box } from '~/components/shared/primitives/box';
-import { BrandingLink } from '~/components/shared/ui/branding';
+import { BrandingTag } from '~/components/shared/ui/branding';
 import * as Button from '~/components/shared/ui/button';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useIABConsentManager } from '~/hooks/use-iab-manager';
@@ -58,6 +58,12 @@ export interface IABConsentBannerProps {
 	 * @default 'customize'
 	 */
 	primaryButton?: 'reject' | 'accept' | 'customize';
+
+	/**
+	 * Hides the "Secured by" tag.
+	 * @default false
+	 */
+	hideBranding?: boolean;
 
 	/**
 	 * Which consent models this banner responds to.
@@ -105,6 +111,7 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 	scrollLock: localScrollLock,
 	trapFocus: localTrapFocus,
 	primaryButton = 'customize',
+	hideBranding = false,
 	models,
 	uiSource,
 }) => {
@@ -239,11 +246,9 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 				baseClassName={styles.cardShell}
 				slotKey="iab-banner.cardShell"
 			>
-				<BrandingLink
-					hideBranding={false}
-					variant="banner-tag"
-					slotContext="iab-banner"
-					data-testid="iab-consent-banner-branding"
+				<BrandingTag
+					surface="iab-banner"
+					hideBranding={hideBranding}
 				/>
 				<IABConsentBannerCard aria-label={iabT.banner.title}>
 					{/* Header */}

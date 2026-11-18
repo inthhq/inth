@@ -7,6 +7,7 @@
  * @packageDocumentation
  */
 
+import type { KernelBranding } from '@inth/sdk/engine';
 import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -42,7 +43,7 @@ export interface TriggerContextValue {
 	/** Current transform style for drag offset */
 	dragStyle: React.CSSProperties;
 	/** Branding from consent manager */
-	branding: string;
+	branding: KernelBranding;
 	/** Open the consent dialog */
 	openDialog: () => void;
 	/** Whether the trigger should be visible */
@@ -132,7 +133,7 @@ export const TriggerRoot = ({
 	onPositionChange,
 	onClick,
 }: TriggerRootProps): ReactNode => {
-	const branding = useBranding() ?? 'c15t';
+	const branding = useBranding();
 	const { isVisible: computedVisible, openDialog } = useConsentDialogTrigger({
 		onClick,
 		showWhen,

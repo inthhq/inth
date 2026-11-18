@@ -57,6 +57,7 @@ import type {
 	WithProjectUrl,
 } from '@inth/sdk/runtime/provider';
 import type { ConsentTesting } from '@inth/sdk/testing';
+import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
 import { applyThemeSlots } from '@inth/sdk/ui/utils';
 import type { ReactNode } from 'react';
 import {
@@ -1107,28 +1108,13 @@ export const ConsentProvider = (props: ConsentProviderProps) => {
 	// Development only: bundlers replace `process.env.NODE_ENV`, so production
 	// builds drop the check. Tokens need `ConsentTheme` or a stylesheet now.
 	useEffect(() => {
-		if (process.env.NODE_ENV === 'production') {
-			return;
+		if (process.env.NODE_ENV !== 'production') {
+			warnOnUnappliedThemeTokens(
+				userTheme,
+				document,
+				'Render <ConsentTheme theme={theme} /> on the server, or put the CSS from generateThemeCSS() in your stylesheet. See https://c15t.com/docs/frameworks/react/customize'
+			);
 		}
-		const tokenKeys = [
-			'colors',
-			'dark',
-			'motion',
-			'radius',
-			'shadows',
-			'spacing',
-			'typography',
-		];
-		if (
-			!userTheme ||
-			!tokenKeys.some((key) => key in userTheme) ||
-			document.getElementById('inth-theme')
-		) {
-			return;
-		}
-		console.warn(
-			'inth: `theme` tokens are no longer turned into CSS in the browser. Render <ConsentTheme theme={theme} /> on the server, or put the CSS from generateThemeCSS() in your stylesheet. See https://c15t.com/docs/frameworks/react/customize'
-		);
 	}, [userTheme]);
 
 	const themeContextValue = useMemo(

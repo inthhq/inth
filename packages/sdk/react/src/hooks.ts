@@ -111,7 +111,7 @@ export const useTranslations =
 	};
 
 /** Active branding identifier. */
-export const useBranding = function useBranding(): KernelBranding | null {
+export const useBranding = function useBranding(): KernelBranding {
 	return useKernelSelector((snap) => snap.branding);
 };
 

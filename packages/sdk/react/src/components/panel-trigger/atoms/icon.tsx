@@ -7,10 +7,11 @@
  */
 
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
+import { resolveBrandMark } from '@inth/sdk/ui/utils';
 import { isValidElement } from 'react';
 import type { ReactNode } from 'react';
 
-import { BrandingCompactLogo } from '~/components/shared/ui/branding';
+import { BrandMarkIcon } from '~/components/shared/ui/logo';
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/ui-config-context';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
@@ -97,8 +98,7 @@ export const TriggerIcon = ({
 			iconElement = <SettingsIcon />;
 			break;
 		default:
-			// Branding-based icon (using icon-only for compact display)
-			iconElement = <BrandingCompactLogo branding={branding} />;
+			iconElement = <BrandMarkIcon mark={resolveBrandMark(branding)} />;
 	}
 
 	return (
