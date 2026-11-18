@@ -174,6 +174,15 @@ export const EARLY_TAP_STYLE_ID = 'inth-early-tap';
 export const EARLY_TAP_ROOT = '[data-testid="consent-banner-root"]';
 
 /**
+ * The attribute every stock banner and dialog root carries, standard or
+ * IAB, valued `banner` or `dialog`. A press, key or focus inside one starts
+ * loading the persistence write code.
+ *
+ * @internal
+ */
+export const SURFACE_ROOT_ATTRIBUTE = 'data-inth-surface';
+
+/**
  * The early-tap queue, when the banner's inline script ran.
  *
  * @internal

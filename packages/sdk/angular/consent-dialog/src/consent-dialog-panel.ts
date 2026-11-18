@@ -139,6 +139,7 @@ import type {
 							[attr.dir]="textDirection()"
 							[attr.data-blocking]="preferences().blocking ? 'true' : null"
 							data-testid="consent-dialog-root"
+							data-inth-surface="dialog"
 							(keydown)="requestCloseOnEscape($event)"
 						>
 							<div

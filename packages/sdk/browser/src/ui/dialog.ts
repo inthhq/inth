@@ -1,5 +1,6 @@
 import { resolveConsentPresentation } from '@inth/sdk-core';
 import type { ConsentSnapshot } from '@inth/sdk-core';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
 
 import { classes } from '../generated/styles';
 import type { ConsentDialogOptions } from '../types';
@@ -75,6 +76,7 @@ export const createDialog = function createDialog(
 					class: noStyle ? '' : styles.container,
 					'data-state': 'open',
 					'data-testid': 'consent-dialog-root',
+					[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 					dir: copy.dir,
 					lang: copy.language,
 					onkeydown: onKeyDown as EventListener,

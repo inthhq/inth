@@ -128,6 +128,7 @@ const primaryButtonClass = buttonVariants({
 					[class]="rootStyle().className || ''"
 					[attr.style]="toStyle(rootStyle().style)"
 					data-testid="iab-consent-dialog-root"
+					data-inth-surface="dialog"
 					[attr.dir]="textDirection()"
 				>
 					<!-- A div, not a dialog: the user agent's dialog padding is

@@ -1,6 +1,7 @@
 'use client';
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import type { FC, HTMLAttributes, ReactNode, RefObject } from 'react';
@@ -303,6 +304,7 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 								aria-modal={trapFocus ? 'true' : undefined}
 								data-blocking={blockingAttribute}
 								data-testid="consent-dialog-root"
+								{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 								dir={textDirection}
 								// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- A native `dialog` is the positioning shell here, not the panel; the panel is what carries the role.
 								role="dialog"

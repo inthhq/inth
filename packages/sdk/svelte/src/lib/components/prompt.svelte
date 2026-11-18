@@ -9,6 +9,7 @@
 		actionAppearanceFromTheme,
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import {
 		EARLY_CONSENT_TAP_SCRIPT,
 		replayEarlyConsentTaps,
@@ -360,6 +361,7 @@
 				? 'late'
 				: undefined}
 			data-testid="consent-banner-root"
+			{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 			use:scrollLock={shouldScrollLock}
 		>
 			<div class={noStyle ? '' : styles.cardShell || ''}>

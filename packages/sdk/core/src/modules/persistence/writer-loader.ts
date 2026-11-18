@@ -8,6 +8,7 @@
  * @internal
  */
 import type { InternalKernel } from '../../kernel/internals';
+import { SURFACE_ROOT_ATTRIBUTE } from '../../runtime/page-globals';
 import type { createPersistenceWriter } from './writer/writer';
 
 /** The write code's module. @internal */
@@ -59,8 +60,6 @@ export const pageWriterLoader = createWriterLoader(
 // How long after the load event the write code waits before loading in
 // idle time, so it stays out of first-load JavaScript.
 const PRELOAD_DELAY_MS = 3000;
-// A press, key or focus that lands in one of these loads it at once.
-const SURFACE_ROOT = /consent-(?:banner|dialog)-root$/u;
 const INTENT_EVENTS = ['pointerdown', 'keydown', 'focusin'] as const;
 
 /**
@@ -106,7 +105,7 @@ export const preloadWriter = function preloadWriter(
 			event
 				.composedPath()
 				.some((node) =>
-					SURFACE_ROOT.test((node as HTMLElement).dataset?.testid as string)
+					(node as Partial<Element>).hasAttribute?.(SURFACE_ROOT_ATTRIBUTE)
 				)
 		) {
 			preload();

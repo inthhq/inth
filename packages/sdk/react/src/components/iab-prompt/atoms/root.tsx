@@ -1,6 +1,7 @@
 'use client';
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { forwardRef as createForwardRef, useMemo } from 'react';
 import type { CSSProperties, FC, HTMLAttributes, ReactNode } from 'react';
@@ -106,6 +107,7 @@ const IABConsentBannerRootChildren = createForwardRef<
 					data-position="bottom-left"
 					data-entry={lateEntry ? 'late' : undefined}
 					data-testid="iab-consent-banner-root"
+					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 					data-inth-streamed=""
 					dir={textDirection}
 					tabIndex={-1}

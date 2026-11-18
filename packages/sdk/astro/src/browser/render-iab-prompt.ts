@@ -18,6 +18,7 @@ import type {
 	ConsentPresentation,
 	ConsentSnapshot,
 } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import type { IABPromptClassNames } from '../banner/class-names';
@@ -222,6 +223,7 @@ export const buildIABPrompt = function buildIABPrompt(
 			'data-blocking': model.blocking ? 'true' : undefined,
 			'data-position': model.position,
 			'data-testid': 'iab-consent-banner-root',
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			'data-variant': model.variant,
 			dir: model.textDirection,
 			lang: model.language,

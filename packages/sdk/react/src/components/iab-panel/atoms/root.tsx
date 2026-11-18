@@ -1,6 +1,7 @@
 'use client';
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { useEffect, useMemo, useState } from 'react';
@@ -159,6 +160,7 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 				<div
 					{...themedStyle}
 					data-testid="iab-consent-dialog-root"
+					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 					dir={textDirection}
 				>
 					{children}

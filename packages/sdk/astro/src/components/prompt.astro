@@ -33,6 +33,7 @@
  * ```
  */
 import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { applyExperimentAssignment, applyExperimentTheme } from '@inth/sdk/engine';
 import {
 	buildBannerRevealScript,
@@ -241,6 +242,7 @@ const earlyTaps =
 			data-position={model.position}
 			data-prompt={model.prompt}
 			data-testid="consent-banner-root"
+			{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 			data-variant={model.variant}
 			dir={model.textDirection}
 			hidden={hidden ? true : undefined}

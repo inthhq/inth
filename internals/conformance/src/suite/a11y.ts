@@ -5,6 +5,8 @@
  * dismissal behavior for the consent banner/dialog flow.
  */
 
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
+
 import { TEST_IDS } from '../contract/test-ids';
 import type { MountResult, TestDriver } from '../driver';
 import { conformanceTest } from './helpers';
@@ -308,6 +310,13 @@ export const runA11yConformance = function runA11yConformance(
 					api
 						.expect(byTestId(body, TEST_IDS.consentBanner.root))
 						.not.toBeNull();
+					api
+						.expect(
+							byTestId(body, TEST_IDS.consentBanner.root)?.getAttribute(
+								SURFACE_ROOT_ATTRIBUTE
+							)
+						)
+						.toBe('banner');
 				} finally {
 					await mounted.unmount();
 				}
@@ -336,6 +345,13 @@ export const runA11yConformance = function runA11yConformance(
 
 					api.expect(hasRoleDialog(dialog)).toBe(true);
 					api.expect(dialog.getAttribute('aria-modal')).toBe('true');
+					api
+						.expect(
+							byTestId(body, TEST_IDS.consentDialog.root)?.getAttribute(
+								SURFACE_ROOT_ATTRIBUTE
+							)
+						)
+						.toBe('dialog');
 					const labelledBy = dialog.getAttribute('aria-labelledby');
 					api.expect(Boolean(labelledBy)).toBe(true);
 					if (labelledBy) {

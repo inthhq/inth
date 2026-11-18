@@ -9,11 +9,12 @@ import type {
 	HeadlessIABDisplayRow,
 	HeadlessIABDisplayStackRow,
 } from '@inth/sdk/iab/headless';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
-import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
 import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
+import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { getTextDirection } from '@inth/sdk/ui/utils';
 import { computed, ref, Teleport, Transition, toValue, watch } from 'vue';
 
@@ -425,6 +426,7 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 					])
 				"
 				data-testid="iab-consent-dialog-root"
+				:[SURFACE_ROOT_ATTRIBUTE]="'dialog'"
 				:dir="textDirection"
 			>
 				<Transition

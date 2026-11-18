@@ -19,6 +19,7 @@ import type {
 	ConsentSnapshot,
 	LegalLinks,
 } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import type { PromptClassNames } from '../banner/class-names';
@@ -270,6 +271,7 @@ export const buildPrompt = function buildPrompt(
 			'data-position': model.position,
 			'data-prompt': model.prompt,
 			'data-testid': 'consent-banner-root',
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			'data-variant': model.variant,
 			dir: model.textDirection,
 			lang: model.language,
