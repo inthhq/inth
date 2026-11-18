@@ -25,6 +25,7 @@ const groupDescriptions = [
   ["inbox", "Review and update Inbox findings"],
   ["vendor", "List, read, approve, or ignore vendors seen on a project"],
   ["mcp", "Configure Inth MCP in your coding client"],
+  ["mobile", "Set up Inth consent in a mobile app"],
 ];
 const authenticationDescription = (value: string): string => {
   if (value === "agent") {

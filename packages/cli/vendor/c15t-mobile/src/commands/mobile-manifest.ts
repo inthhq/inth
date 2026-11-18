@@ -5,7 +5,11 @@ import { CliError } from '../core/errors';
 import { bundleMobileManifest } from '../mobile/bundle-manifest';
 import type { BundleManifestResult } from '../mobile/bundle-manifest';
 import { ManifestUnreachableError } from '../mobile/export-manifest';
-import { normalizeProjectURL, ProjectURLError } from '../mobile/project-url';
+// The project URL rule moved into the CLI with `inth mobile setup`.
+import {
+	normalizeProjectUrl,
+	ProjectUrlError,
+} from '../../../../src/native/mobile/project-url.ts';
 
 const text = (value: unknown): string | undefined =>
 	typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
@@ -22,12 +26,9 @@ const list = (value: unknown): string[] | undefined =>
  */
 const readBackendURL = (value: string, dryRun: boolean): string => {
 	try {
-		return normalizeProjectURL(value, {
-			option: '--backend-url',
-			relaxed: dryRun,
-		});
+		return normalizeProjectUrl(value, '--backend-url', dryRun);
 	} catch (error) {
-		if (error instanceof ProjectURLError) {
+		if (error instanceof ProjectUrlError) {
 			throw new CliError('FLAG_INVALID', {
 				details: dryRun
 					? error.message

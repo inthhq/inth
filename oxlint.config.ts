@@ -22,7 +22,8 @@ export default defineConfig({
     "packages/native-protocol/**",
     "oxlint.sdk.config.ts",
     "oxfmt.sdk.config.ts",
-    // c15t CLI mobile code, kept as imported until it is wired into the CLI.
+    // c15t CLI mobile manifest code, kept as imported until Scriptc can compile
+    // it; see packages/cli/vendor/c15t-mobile/README.md.
     "packages/cli/vendor/c15t-mobile/**",
     // Unmodified upstream source; see packages/cli/vendor/c15t/UPSTREAM.md.
     "packages/cli/vendor/c15t/**",

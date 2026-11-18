@@ -1165,7 +1165,7 @@ export default defineDocsConfig({
 			base: 'cli',
 			children: [
 				{
-					pages: ['commands/mobile-manifest', 'commands/mobile-setup'],
+					pages: ['commands/mobile-manifest'],
 					slug: 'commands',
 					title: 'Commands',
 				},

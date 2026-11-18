@@ -8,6 +8,7 @@ const pages = [
   "commands",
   "automation",
   "mcp",
+  "mobile",
   "skills",
   "global-flags",
   "telemetry",

@@ -4,6 +4,7 @@ import { C15T_CODEMODS_USAGE } from "./c15t-codemods.ts";
 import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
+import { MOBILE_SETUP_USAGE } from "./mobile.ts";
 import { RESOURCE_COMMANDS, acceptsData } from "./resource-commands.ts";
 import type { ResourceCommand } from "./resource-commands.ts";
 
@@ -1014,6 +1015,68 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     paginated: false,
     scopes: [],
     usage: C15T_CODEMODS_USAGE.slice(7),
+  },
+  {
+    action: "setup",
+    authentication: "none",
+    command: "mobile",
+    description:
+      "Set up Inth consent in an Expo, React Native, Swift or Android app",
+    effects: [
+      "Finds the app from its directory or any directory inside it. Expo and bare React Native apps are read from package.json; Swift and Android apps from their Xcode or Gradle project.",
+      "Expo: adds the config plugin entry to app.json and writes the provider file. Bare React Native: writes the provider file and prints the Info.plist and AndroidManifest.xml entries. Swift and Android: prints the package, dependencies and code to add.",
+      "Never edits an Xcode project, a Gradle file, a native manifest or a dynamic app.config file. Keeps an existing plugin entry and provider file unless --overwrite is given.",
+      "Needs no sign-in, and never prompts. --dry-run reports the files and steps without writing.",
+    ],
+    examples: [
+      "inth mobile setup --backend-url https://your-project.inth.app --privacy-policy-url https://your-app.example/privacy",
+      "inth mobile setup --backend-url https://your-project.inth.app --privacy-policy-url https://your-app.example/privacy --categories measurement,marketing --dry-run --json",
+    ],
+    options: [
+      {
+        ...option(
+          "backend-url",
+          "string",
+          "Project URL from your Inth dashboard, such as https://your-project.inth.app"
+        ),
+        required: true,
+      },
+      {
+        ...option(
+          "privacy-policy-url",
+          "string",
+          "Your privacy policy, an https URL the consent screens link to"
+        ),
+        required: true,
+      },
+      option(
+        "categories",
+        "string",
+        "Comma-separated categories the app offers; necessary is always included",
+        [],
+        "measurement,marketing"
+      ),
+      option(
+        "overwrite",
+        "boolean",
+        "Replace an existing plugin entry and provider file"
+      ),
+      option(
+        "dry-run",
+        "boolean",
+        "Report the files and steps without writing"
+      ),
+      option("json", "boolean", "Print the result as JSON"),
+      option(
+        "non-interactive",
+        "boolean",
+        "Accepted; mobile setup never prompts"
+      ),
+      option("help", "boolean", "Show help for this command"),
+    ],
+    paginated: false,
+    scopes: [],
+    usage: MOBILE_SETUP_USAGE.slice(7),
   },
   {
     action: "",
