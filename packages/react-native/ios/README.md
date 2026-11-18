@@ -129,13 +129,14 @@ A missing or refused `com.inth.backend.url`, or `com.inth.dryRun` in a release b
 leaves the core uninstalled. The console line starting with `Inth:` says why, and every
 read answers deny-all.
 
-Three keys are retired. The launch hook refuses to start a core from a plist that still
+Four keys are retired. The launch hook refuses to start a core from a plist that still
 declares one, and the console names the key and what to do instead:
 
 | Retired key | Instead |
 | --- | --- |
 | `com.inth.backend.mode` | Remove it. Hosted is the only mode. Mobile works only with Inth, so there is no self-hosted mode. Use `com.inth.dryRun` for development and CI in place of `offline` or `none`. To install Inth yourself, set `com.inth.reactnative.AutoBootstrap` to `false`. |
 | `com.inth.backend.initUrl` | Remove it. Policy is fetched from `com.inth.backend.url`. |
+| `com.inth.backend.domain` | Rename it to `com.inth.backend.property`. |
 | `com.inth.test` | Remove it. There is no test-mode override. `com.inth.forceGPC` reports a Global Privacy Control signal. |
 
 ## Integrating
