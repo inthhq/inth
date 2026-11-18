@@ -384,7 +384,8 @@ export const createWebConsentClient = function createWebConsentClient(
 	const projectUrl = normalizeProjectUrl(options.projectUrl, {
 		relaxed: dryRun,
 	});
-	const domain = options.domain ?? undefined;
+	// The browser engine still names this option `domain`.
+	const domain = options.property ?? undefined;
 
 	const bootstrap: BootstrapPayload = {
 		commitRevision: true,

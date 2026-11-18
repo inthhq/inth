@@ -77,8 +77,8 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	if (params.dryRun) {
 		pairs.push({ name: ANDROID_META.dryRun, value: 'true' });
 	}
-	if (params.domain !== null) {
-		pairs.push({ name: ANDROID_META.domain, value: params.domain });
+	if (params.property !== null) {
+		pairs.push({ name: ANDROID_META.property, value: params.property });
 	}
 	// The comma-separated spelling `InthAndroid.declaredCategories` parses; iOS
 	// gets the same list as a plist array. An empty declaration stays unwritten,

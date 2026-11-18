@@ -344,24 +344,24 @@ describe('the native keys', () => {
 		});
 	});
 
-	it('keeps the domain on both platforms', async () => {
+	it('keeps the property on both platforms', async () => {
 		const config = applyToFixture({
-			domain: 'app.example.com',
 			projectUrl: BACKEND,
+			property: 'com.acme.app',
 		});
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
 		).modResults as AndroidConfig.Manifest.AndroidManifest;
 
 		expect((await runInfoPlist(config)).ios?.infoPlist).toMatchObject({
-			'com.inth.backend.domain': 'app.example.com',
+			'com.inth.backend.property': 'com.acme.app',
 		});
 		expect(
 			AndroidConfig.Manifest.getMainApplicationOrThrow(manifest)['meta-data']
 		).toContainEqual({
 			$: {
-				'android:name': 'com.inth.BACKEND_DOMAIN',
-				'android:value': 'app.example.com',
+				'android:name': 'com.inth.BACKEND_PROPERTY',
+				'android:value': 'com.acme.app',
 			},
 		});
 	});

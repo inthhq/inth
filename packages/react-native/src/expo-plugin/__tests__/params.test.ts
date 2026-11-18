@@ -16,10 +16,10 @@ describe('resolveParams', () => {
 			},
 			autoBootstrap: true,
 			backendHost: 'acme.inth.app',
-			domain: null,
 			dryRun: false,
 			forceGPC: false,
 			projectUrl: BACKEND,
+			property: null,
 			skipNativeBuildCheck: false,
 		});
 	});
@@ -274,10 +274,10 @@ describe('resolveParams', () => {
 		).toThrowError(message);
 	});
 
-	it('refuses a domain with a space in it', () => {
+	it('refuses a property with a space in it', () => {
 		expect(() =>
-			resolveParams({ domain: 'two words', projectUrl: BACKEND })
-		).toThrowError(/domain must be a single non-empty token/u);
+			resolveParams({ projectUrl: BACKEND, property: 'two words' })
+		).toThrowError(/property must be a single non-empty token/u);
 	});
 
 	it('refuses a tracking domain spelled as a URL', () => {
