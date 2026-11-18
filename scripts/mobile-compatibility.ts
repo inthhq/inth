@@ -196,9 +196,11 @@ const main = function main(): void {
 		}
 	};
 	const archive = join(output, 'c15t-react-native.tgz');
+	// pnpm, not `bun pm pack`: the workspace is a pnpm install, so only pnpm
+	// can resolve the package's `workspace:` dependency versions.
 	run(
-		'bun',
-		['pm', 'pack', '--ignore-scripts', '--filename', archive],
+		'pnpm',
+		['--config.ignore-scripts=true', 'pack', '--out', archive],
 		PACKAGE
 	);
 	writeFileSync(

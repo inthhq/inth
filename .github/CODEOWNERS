@@ -1,0 +1,5 @@
+* @BurnedChris @KayleeWilliams
+
+# Workflow code runs with repository credentials, so it needs review from a
+# repository owner.
+.github/ @BurnedChris @KayleeWilliams

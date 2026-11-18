@@ -219,7 +219,9 @@ export C15T_E2E_POLICY="${OUT}/policy-assets/c15t-policy.json"
 if [[ -n "${CELL}" ]]; then
   # A packed consumer at the cell's versions, outside the checkout.
   CONSUMER="$(mktemp -d "${C15T_EXPO_CONSUMER_ROOT:-${HOME}}/c15t-expo-${CELL}.XXXXXX")/app"
-  (cd "${REPO_ROOT}/packages/react-native" && bun pm pack --ignore-scripts --filename "${OUT}/c15t-react-native.tgz") > "${OUT}/pack.log" 2>&1
+  # pnpm, not `bun pm pack`: the workspace is a pnpm install, so only pnpm can
+  # resolve the package's `workspace:` dependency versions.
+  (cd "${REPO_ROOT}/packages/react-native" && pnpm --config.ignore-scripts=true pack --out "${OUT}/c15t-react-native.tgz") > "${OUT}/pack.log" 2>&1
   python3 "${APP_DIR}/scripts/prepare-packed-consumer.py" --package "${OUT}/c15t-react-native.tgz" --output "${CONSUMER}" --cell "${CELL}" > "${OUT}/consumer.json"
   APP="${CONSUMER}"
   (cd "${APP}" && bun install) > "${OUT}/install.log" 2>&1

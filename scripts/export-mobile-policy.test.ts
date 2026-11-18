@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
@@ -125,4 +127,34 @@ describe('native build policy export', () => {
 		).toEqual([1, 2]);
 		expect(body.requiresAtp).toBe(true);
 	});
+});
+
+// This config aliases @c15t/schema and @c15t/translations to their sources,
+// which hides whether the exporter can find them outside Vitest. The Android
+// emulator jobs run this script with tsx, where Node resolves each bare import
+// from the importing file's own folder.
+describe('exporter dependencies outside Vitest', () => {
+	it.each(['export-manifest.ts', 'resource-check.ts'])(
+		'%s can resolve every package it imports',
+		(file) => {
+			const url = new URL(
+				`../packages/cli/vendor/c15t-mobile/src/mobile/${file}`,
+				import.meta.url
+			);
+			const packages = [
+				...readFileSync(url, 'utf8').matchAll(
+					/^import[^;]*?from '(?<specifier>[^.][^']*)'/gmu
+				),
+			]
+				.map((match) => match.groups?.specifier ?? '')
+				.filter((specifier) => !specifier.startsWith('node:'));
+			expect(packages.length).toBeGreaterThan(0);
+			const lookup = createRequire(url).resolve.paths('') ?? [];
+			const missing = packages.filter(
+				(name) =>
+					!lookup.some((dir) => existsSync(join(dir, name, 'package.json')))
+			);
+			expect(missing).toEqual([]);
+		}
+	);
 });

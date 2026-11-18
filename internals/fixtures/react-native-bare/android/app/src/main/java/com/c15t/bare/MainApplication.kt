@@ -32,11 +32,27 @@ class MainApplication : Application(), ReactApplication {
     return result.get(5, java.util.concurrent.TimeUnit.SECONDS)
   }
 
+  // Android can block a new process's network until it sees the process in the
+  // foreground, and Application.onCreate can run first. The resolver then fails
+  // even for localhost ("network access blocked"), so retry until it is lifted.
+  private fun startupControl(): org.json.JSONObject {
+    val deadline = android.os.SystemClock.elapsedRealtime() + 5000
+    while (true) {
+      try {
+        return fixtureControl()
+      } catch (failure: java.util.concurrent.ExecutionException) {
+        if (failure.cause !is java.io.IOException || android.os.SystemClock.elapsedRealtime() > deadline) throw failure
+        android.util.Log.w("C15tFixture", "Retrying the startup control read after ${failure.cause}")
+        android.os.SystemClock.sleep(100)
+      }
+    }
+  }
+
   override fun onCreate() {
     super.onCreate()
     val metadata = packageManager.getApplicationInfo(packageName, android.content.pm.PackageManager.GET_META_DATA).metaData
     if (metadata?.getBoolean("com.c15t.APP_E2E", false) == true) {
-      val control = fixtureControl()
+      val control = startupControl()
       val clock = java.util.concurrent.atomic.AtomicLong(control.optLong("now", System.currentTimeMillis()))
       val declared = control.optJSONArray("categories")?.let { values ->
         (0 until values.length()).map { name -> com.c15t.core.model.ConsentCategory.entries.first { it.wireName == values.getString(name) } }

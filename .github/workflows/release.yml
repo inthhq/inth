@@ -1,5 +1,9 @@
-name: Release
+name: Release CLI
 
+# Releases @inth/cli and its native npm packages, tagged inth@<version>.
+# Keep this file name: npm trusted publishing for @inth/cli names release.yml
+# (packages/cli/scripts/tegami.ts), so a rename would make npm reject the
+# publish. The SDK and mobile products release from their own workflows.
 on:
   push:
     branches: [main]
@@ -15,6 +19,9 @@ jobs:
   verify:
     if: github.repository == 'inthhq/inth' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
+    # CLI checks only. A failing SDK or mobile check must not block a CLI release.
+    with:
+      products: cli
     permissions:
       contents: read
 
