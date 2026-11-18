@@ -11,7 +11,7 @@ const { log } = console;
 const { error } = console;
 
 /**
- * Clones the private docs template (consentdotio/inth-docs) into `.docs`,
+ * Clones the private docs template (consentdotio/c15t-docs) into `.docs`,
  * installs its dependencies and processes the MDX content.
  *
  * By default it reads CONSENT_GIT_TOKEN from `.env` for local development.
@@ -70,7 +70,7 @@ class FetchScriptError extends Error {
 const FETCH_CONFIG: FetchConfiguration = {
 	DEFAULT_BRANCH: 'main',
 	DOCS_APP_DIR: '.docs',
-	DOCS_REPO_URL: 'https://github.com/consentdotio/inth-docs.git',
+	DOCS_REPO_URL: 'https://github.com/consentdotio/c15t-docs.git',
 	TEMP_DOCS_DIR: join(tmpdir(), 'inth-docs'),
 } as const;
 
@@ -206,7 +206,7 @@ const cloneDocumentationRepository = function cloneDocumentationRepository(
 	buildMode: BuildMode,
 	branch: GitBranch
 ): void {
-	const repoUrl = 'https://github.com/consentdotio/inth-docs.git';
+	const repoUrl = 'https://github.com/consentdotio/c15t-docs.git';
 	const basicAuth = Buffer.from(
 		`x-access-token:${authenticationToken}`
 	).toString('base64');

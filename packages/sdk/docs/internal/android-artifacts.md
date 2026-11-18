@@ -77,7 +77,7 @@ use fixture CMP ID 28 as a production identity.
 ## Configure a real consumer repository
 
 The private pilot publication target is
-`https://maven.pkg.github.com/inthhq/inth-private`. Its availability and package
+`https://maven.pkg.github.com/inthhq/c15t-private`. Its availability and package
 access must be checked through the secure account/CI flow before use. A GitHub
 repository token without `read:packages` cannot establish whether the Maven
 packages exist. Repository access alone is insufficient.
@@ -168,7 +168,7 @@ checks packed bridge compilation against the Expo toolchain; it is not a full
 Expo or RN app launch.
 
 For external resolution proof, replace `--staging-repository` with
-`--repository https://maven.pkg.github.com/inthhq/inth-private` after the
+`--repository https://maven.pkg.github.com/inthhq/c15t-private` after the
 version exists there and read credentials are available. This mode rejects
 file URLs and embedded credentials. The runner records `remote-resolution`
 only after the build succeeds using that repository. Local mode copies the

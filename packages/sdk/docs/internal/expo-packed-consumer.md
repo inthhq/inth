@@ -60,7 +60,7 @@ URL, or the `C15T_MAVEN_URL` environment override at prebuild time:
 
 ```ts
 androidMavenRepository: {
-  url: 'https://maven.pkg.github.com/inthhq/inth-private',
+  url: 'https://maven.pkg.github.com/inthhq/c15t-private',
   credentials: {
     usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
     passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',

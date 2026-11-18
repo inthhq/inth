@@ -263,7 +263,7 @@ test.each(['0', '1'])(
 				pom,
 				original.replaceAll(
 					'github.com/c15t/c15t',
-					'github.com/inthhq/inth-private'
+					'github.com/inthhq/c15t-private'
 				)
 			);
 			seal(pom);

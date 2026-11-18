@@ -93,9 +93,9 @@ resource. Standalone CocoaPods publication is outside this setup. RN CocoaPods
 continues to compile its vendored sources.
 
 For private testing, a teammate with GitHub read access can install directly
-from `inthhq/inth-private` at a branch or commit that contains the root
+from `inthhq/c15t-private` at a branch or commit that contains the root
 manifest. Normal GitHub authentication controls access to the package source.
-The public release workflow still admits only `inth/Inth`; this setup does not
+The public release workflow still admits only `inthhq/inth`; this setup does not
 enable automated private releases or claim that the mobile acceptance gates
 have passed. Keep public publication disabled while private testing continues.
 
@@ -106,7 +106,7 @@ verifier requires signatures, checksums, public SCM metadata, source and API
 documentation artifacts for all three modules before upload. Central's
 `USER_MANAGED` upload validates the bundle before an explicit publish request.
 
-Create the `mobile-release` GitHub environment in `inth/Inth`. Configure its
+Create the `mobile-release` GitHub environment in `inthhq/inth`. Configure its
 reviewers and branch restrictions to match the team's release policy. Set:
 
 | Kind | Name | Value |
@@ -125,7 +125,7 @@ cannot establish those permissions.
 ## Run the workflow
 
 `.github/workflows/release-mobile.yml` runs on every push to
-`canary` or `main` in `inth/Inth`. It requires CI, uses the `mobile-release`
+`canary` or `main` in `inthhq/inth`. It requires CI, uses the `mobile-release`
 environment, and opens a version PR on `tegami/version-mobile-<branch>` when
 notes are pending. Merging that version PR attempts the release. Publication
 fails before upload unless the native release flag and destination credentials
@@ -201,14 +201,14 @@ locked version and source digest. Once it matches, later source edits can procee
 without rebuilding the completed SDK. A conflicting published tag stops the
 release and must never be replaced.
 If a pending SDK's source has changed on the branch, rerun a workflow whose
-checkout still matches the lock with `gh run rerun RUN_ID --repo inth/Inth`.
+checkout still matches the lock with `gh run rerun RUN_ID --repo inthhq/inth`.
 GitHub permits reruns for 30 days. A stale version PR can also merge after a
 native fix, leaving no matching workflow run at all. In either case, recover
 from the version PR's original head commit:
 
 ```sh
-gh pr view VERSION_PR --repo inth/Inth --json headRefOid --jq .headRefOid
-gh workflow run release-mobile.yml --repo inth/Inth --ref canary \
+gh pr view VERSION_PR --repo inthhq/inth --json headRefOid --jq .headRefOid
+gh workflow run release-mobile.yml --repo inthhq/inth --ref canary \
   -f source_commit=FULL_VERSION_PR_HEAD_SHA \
   -f previous_run_id=RUN_WITH_ORIGINAL_CENTRAL_STATE
 ```

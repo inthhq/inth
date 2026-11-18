@@ -100,7 +100,7 @@ services. Do not add a separate `InthCore` pod to this app. The checkout-only
 `INTH_LOCAL_PODS` flag now controls Android source substitution only.
 
 For Android, `app.config.ts` explicitly passes `androidMavenRepository` to the
-shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/inth-private`
+shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/c15t-private`
 unless `C15T_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
 come from `C15T_MAVEN_USERNAME` and `C15T_MAVEN_TOKEN` when Gradle runs. No fixture
 plugin adds a Maven repository. See the maintained

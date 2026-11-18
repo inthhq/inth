@@ -117,7 +117,7 @@ const inthPluginProps: InthPluginProps = {
 				},
 				url:
 					process.env.C15T_MAVEN_URL ??
-					'https://maven.pkg.github.com/inthhq/inth-private',
+					'https://maven.pkg.github.com/inthhq/c15t-private',
 			},
 	consentCategories,
 	// `INTH_DRY_RUN=1` drops consent records and lets a debug build use a staging

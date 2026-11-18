@@ -87,7 +87,7 @@ anonymous `distinct_id` under the `inth-vendor-evidence` logcat tag.
 Run it by dispatching the Depot CI workflow on `canary`:
 
 ```sh
-depot ci dispatch --org YOUR_DEPOT_ORG_ID --repo inthhq/inth-private \
+depot ci dispatch --org YOUR_DEPOT_ORG_ID --repo inthhq/c15t-private \
   --workflow android-posthog-live.yml --ref canary
 ```
 

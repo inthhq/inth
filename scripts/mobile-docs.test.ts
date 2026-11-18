@@ -189,19 +189,19 @@ test('mobile comparison claims say what ships today, not what is coming', () => 
 /**
  * Pages on the private repository: the repository itself and any pull request or
  * issue in the `inthhq` organisation. The Maven package host
- * (`maven.pkg.github.com/inthhq/inth-private`) is a dependency source, not a page,
+ * (`maven.pkg.github.com/inthhq/c15t-private`) is a dependency source, not a page,
  * so a host label before `github.com` does not count.
  */
 const PRIVATE_REPO_PAGE =
-	/(?<![\w.-])github\.com\/inthhq\/(?:inth-private\b|[\w.-]+\/(?:pull|issues)\/\d)/iu;
+	/(?<![\w.-])github\.com\/inthhq\/(?:c15t-private\b|[\w.-]+\/(?:pull|issues)\/\d)/iu;
 
 test('docs never link to the private repository, which c15t.com readers cannot open', async () => {
 	expect(
-		PRIVATE_REPO_PAGE.test('https://github.com/inthhq/inth-private/pull/1')
+		PRIVATE_REPO_PAGE.test('https://github.com/inthhq/c15t-private/pull/1')
 	).toBe(true);
 	expect(PRIVATE_REPO_PAGE.test('github.com/inthhq/other/issues/2')).toBe(true);
 	expect(
-		PRIVATE_REPO_PAGE.test('https://maven.pkg.github.com/inthhq/inth-private')
+		PRIVATE_REPO_PAGE.test('https://maven.pkg.github.com/inthhq/c15t-private')
 	).toBe(false);
 	const files = await fg('docs/**/*.{md,mdx}', { cwd: root });
 	expect(files.length).toBeGreaterThan(0);
