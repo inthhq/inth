@@ -68,7 +68,7 @@ describe('workspaceDependencyClosure', () => {
 describe('packedTarballName', () => {
 	it('matches pack output for scoped and unscoped names', () => {
 		expect(packedTarballName('@inth/sdk-core', '3.0.0-alpha.2')).toBe(
-			'c15t-core-3.0.0-alpha.2.tgz'
+			'inth-sdk-core-3.0.0-alpha.2.tgz'
 		);
 		expect(packedTarballName('c15t', '3.0.0-alpha.2')).toBe(
 			'c15t-3.0.0-alpha.2.tgz'
@@ -131,7 +131,7 @@ describe('consumerGlobalStyles', () => {
 		'utf8'
 	);
 	const imports = (css: string) =>
-		css.match(/@import\s[^;]*c15t[^;]*;/gu) ?? [];
+		css.match(/@import\s[^;]*(?:c15t|@inth\/)[^;]*;/gu) ?? [];
 
 	it('loads c15t only through the components when they deliver styles', () => {
 		expect(imports(consumerGlobalStyles(template, 'automatic'))).toEqual([]);

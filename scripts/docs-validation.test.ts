@@ -37,6 +37,7 @@ const DOCUMENTED_PACKAGES: Record<string, string> = {
 	'@inth/nextjs': 'packages/sdk/nextjs',
 	'@inth/nuxt': 'packages/sdk/nuxt',
 	'@inth/react': 'packages/sdk/react',
+	'@inth/react-native': 'packages/react-native',
 	'@inth/sdk': 'packages/sdk/sdk',
 	'@inth/svelte': 'packages/sdk/svelte',
 	'@inth/tanstack-start': 'packages/sdk/tanstack-start',

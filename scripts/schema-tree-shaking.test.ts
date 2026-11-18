@@ -8,7 +8,8 @@ import { describe, expect, it } from 'vitest';
 const schemaDirectory = fileURLToPath(
 	new URL('../packages/sdk/schema/', import.meta.url)
 );
-const external = ['@inth/sdk/translations', '@inth/sdk/translations/en'];
+// Schema's source imports the translations by their private workspace name.
+const external = ['@inth/sdk-translations', '@inth/sdk-translations/en'];
 
 const bundleSchemaConsumer = async (entry: string) => {
 	// Publish-style concatenation puts schemas and policy helpers in one module.
@@ -34,7 +35,7 @@ const bundleSchemaConsumer = async (entry: string) => {
 				setup(builder) {
 					// Translation packages are side-effect-free, as their manifests declare.
 					builder.onResolve(
-						{ filter: /^@inth\/sdk\/translations/ },
+						{ filter: /^@inth\/sdk-translations/ },
 						({ path }) => ({
 							external: true,
 							path,

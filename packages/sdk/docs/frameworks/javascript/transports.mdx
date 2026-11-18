@@ -146,8 +146,8 @@ so a test configuration that reaches production fails on load.
 
 ```ts title="src/consent.test.ts"
 import { init } from '@inth/sdk';
-import { testing } from '@inth/sdk/testing';
 import { policyRulePresets } from '@inth/sdk/engine';
+import { testing } from '@inth/sdk/testing';
 
 init({
 	mode: testing({

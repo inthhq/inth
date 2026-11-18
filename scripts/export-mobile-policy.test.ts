@@ -147,7 +147,14 @@ describe('exporter dependencies outside Vitest', () => {
 				),
 			]
 				.map((match) => match.groups?.specifier ?? '')
-				.filter((specifier) => !specifier.startsWith('node:'));
+				.filter((specifier) => !specifier.startsWith('node:'))
+				// The package a specifier such as `@inth/sdk/schema` names.
+				.map((specifier) =>
+					specifier
+						.split('/')
+						.slice(0, specifier.startsWith('@') ? 2 : 1)
+						.join('/')
+				);
 			expect(packages.length).toBeGreaterThan(0);
 			const lookup = createRequire(url).resolve.paths('') ?? [];
 			const missing = packages.filter(

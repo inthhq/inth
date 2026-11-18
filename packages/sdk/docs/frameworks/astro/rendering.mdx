@@ -50,8 +50,8 @@ your project's manifest, with no request to the backend's `/init`:
 
 ```js title="astro.config.mjs"
 import svelte from '@astrojs/svelte';
-import { defineConfig } from 'astro/config';
 import c15t, { manifest } from '@inth/astro';
+import { defineConfig } from 'astro/config';
 
 export default defineConfig({
 	integrations: [svelte(), c15t({ mode: manifest({ resolve: 'browser' }) })],

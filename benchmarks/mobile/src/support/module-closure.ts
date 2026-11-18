@@ -180,7 +180,11 @@ export const resolveWorkspaceEntry = function resolveWorkspaceEntry(
 	subpath: string,
 	workspaceRoot: string
 ): string | undefined {
-	const shortName = packageName.split('/').at(-1) ?? packageName;
+	// A private part such as `@inth/sdk-core` lives in `packages/sdk/core`.
+	const shortName = (packageName.split('/').at(-1) ?? packageName).replace(
+		/^sdk-(?=.)/u,
+		''
+	);
 	const packageDir = resolve(workspaceRoot, 'packages', 'sdk', shortName);
 	const manifestPath = resolve(packageDir, 'package.json');
 
