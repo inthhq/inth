@@ -218,7 +218,6 @@ const keepVisitorRenderPrivate = function keepVisitorRenderPrivate<
  *   .handler(createConsentStateHandler());
  * ```
  *
- * @param options - Overrides and header-normalization behavior.
  * @returns A TanStack Start request middleware.
  */
 export const consentRequestMiddleware = function consentRequestMiddleware(

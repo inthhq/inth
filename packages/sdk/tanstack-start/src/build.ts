@@ -9,7 +9,7 @@ export type {
 
 /**
  * Serves the deployment's consent manifest and backend URL as the virtual
- * module `@inth/sdk/generated` (also `@inth/sdk/generated`). `vite build`
+ * module `@inth/sdk/generated`. `vite build`
  * fetches the manifest once the server bundle is known to read it, which
  * `createConsentStateHandler()` and `createConsentRoute()` do; `vite dev`
  * fetches when the server first loads the module.

@@ -50,10 +50,6 @@ const render = async (
 };
 
 /**
- * `html` without the boot data a deferred root reads: the snapshot and
- * the engine-preload script after it, which carry no start script.
- */
-/**
  * The HTML without the boot data a deferred root reads, its empty preload
  * slot, and the stored-choice check, which starts nothing itself.
  */

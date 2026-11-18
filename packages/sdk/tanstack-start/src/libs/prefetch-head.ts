@@ -25,9 +25,6 @@ const prefetchBaseFor = function prefetchBaseFor(
  * this root's init endpoint, so the provider can consume it instead of
  * issuing a second `/init` request. Client only; `undefined` on the server
  * or when no matching prefetch exists.
- *
- * @param input - The root's backend URL, route prefix, and overrides.
- * @returns The prefetched initial data promise, if one matches.
  */
 export const readPrefetchedInitialData =
 	function readPrefetchedInitialData(input: {
@@ -58,7 +55,6 @@ export const readPrefetchedInitialData =
  * otherwise the backend URL. `ConsentRoot` looks the response up by that
  * base and hands it to the provider as its first init.
  *
- * @param options - Prefetch options plus an optional script element id.
  * @returns A fragment with a `scripts` array to spread into `head()`.
  * @example
  * ```tsx
