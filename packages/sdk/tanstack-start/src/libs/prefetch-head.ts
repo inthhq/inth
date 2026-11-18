@@ -6,18 +6,18 @@ import {
 } from '@inth/sdk/engine';
 
 import type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from '../types';
-import { trimTrailingSlashes } from './path';
 
 /**
  * Base URL the head prefetch script keyed its request on: the route prefix
  * when the root sends init through the consent route, or the backend itself
  * when it calls the backend directly. The script requests `${base}/init`.
+ * The prefix comes from the state, which `resolveConsent` normalized.
  */
 const prefetchBaseFor = function prefetchBaseFor(
 	projectUrl: string,
 	routePrefix: string | undefined
 ): string {
-	return routePrefix ? trimTrailingSlashes(routePrefix) : projectUrl;
+	return routePrefix ?? projectUrl;
 };
 
 /**
