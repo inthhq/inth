@@ -100,7 +100,7 @@ for a working `app.config.ts`. The plugin accepts:
 | --- | --- |
 | `projectUrl` | Required. The project URL from your Inth dashboard. See [Set your Inth project URL](#set-your-inth-project-url). |
 | `dryRun` | Development and CI switch that drops consent records. Defaults to false. See [Use dryRun in development and CI](#use-dryrun-in-development-and-ci). |
-| `domain` | Domain value sent with subject writes. |
+| `property` | The `property` each consent record names. Defaults to the iOS bundle identifier and the Android application ID. Sent lowercase. |
 | `consentCategories` | Optional app category declaration. |
 | `vendors` | Optional IAB disclosure scope. |
 | `iab` | Optional IAB TCF CMP identity and publisher settings. See [Turn on IAB TCF](#turn-on-iab-tcf). |
@@ -131,7 +131,7 @@ Use these keys when configuring the same engine without Expo:
 | --- | --- | --- |
 | `projectUrl` | `com.inth.backend.url` | `com.inth.BACKEND_URL` |
 | `dryRun` | `com.inth.dryRun`, boolean | `com.inth.DRY_RUN` |
-| `domain` | `com.inth.backend.domain` | `com.inth.BACKEND_DOMAIN` |
+| `property` | `com.inth.backend.property` | `com.inth.BACKEND_PROPERTY` |
 | `consentCategories` | `com.inth.categories`, string array | `com.inth.CATEGORIES`, comma-separated |
 | `vendors` | `com.inth.vendors` | `com.inth.VENDORS`, comma-separated |
 | `policyResource` | `com.inth.policy.resource` | `com.inth.POLICY_RESOURCE` |
