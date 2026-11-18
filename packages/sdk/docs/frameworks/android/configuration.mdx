@@ -136,7 +136,7 @@ initializers. Configure each optional SDK's startup separately.
 | --- | --- |
 | `backendUrl` | Required. The project URL from your Inth dashboard. |
 | `dryRun` | Development and CI switch that drops consent records. Defaults to false. A build that is not debuggable refuses it. |
-| `domain` | Domain reported with consent records; defaults to the project URL's host. |
+| `property` | Property each consent record names. Defaults to the application ID, and is sent in lowercase. |
 | `consentCategories` | App category scope. |
 | `vendors` | Optional IAB vendor scope. Absent or empty keeps the served list. |
 | `iab` | Registered CMP identity and publisher settings for an IAB policy. |
@@ -157,7 +157,7 @@ app that keeps the automatic startup already sends `rn`. Set `null` to send no
 platform header. The value is attribution only and changes no consent decision.
 
 The corresponding manifest keys are `com.inth.BACKEND_URL`, `DRY_RUN`,
-`BACKEND_DOMAIN`, `CATEGORIES`, `POLICY_RESOURCE` and `POLICY_RULES`, with the
+`BACKEND_PROPERTY`, `CATEGORIES`, `POLICY_RESOURCE` and `POLICY_RULES`, with the
 same `com.inth.` prefix. `POLICY_RESOURCE` names a bundled manifest in app
 assets, and `POLICY_RULES` names an asset holding in-code policy rules as
 JSON. Declare one of the two, never both. Native configuration supports more
