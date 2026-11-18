@@ -22,7 +22,11 @@ import { readBuildEnv } from '@inth/sdk/build';
 import type { BuildEnvSource } from '@inth/sdk/build';
 import type { ConsentMode } from '@inth/sdk/modes';
 import { isIABConfigured } from '@inth/sdk/runtime';
-import { normalizeRoutePrefix } from '@inth/sdk/server';
+import {
+	DEFAULT_CONSENT_ROUTE_PREFIX,
+	normalizeRoutePrefix,
+	resolveServerMode,
+} from '@inth/sdk/server';
 import type { AstroIntegration } from 'astro';
 
 import { createClassMapPlugin } from './libs/class-map-plugin';
@@ -40,9 +44,6 @@ const RESOLVED_ENGINE_ID = `\0${ENGINE_ID}`;
 
 /** The variable the top-level `projectUrl` defaults to. */
 const PROJECT_URL_ENV = 'PUBLIC_INTH_PROJECT_URL';
-
-/** Where the injected route lives unless `routePrefix` says otherwise. */
-const DEFAULT_ROUTE_PREFIX = '/api/inth';
 
 /** Files tried, in order, when `clientEntrypoint` is unset. */
 const CLIENT_ENTRYPOINT_CANDIDATES = [
@@ -191,9 +192,8 @@ const resolveMiddleware = function resolveMiddleware(
  *
  * @param routePrefix - The configured `routePrefix`.
  * @returns The prefix, or `undefined` for `routePrefix: false`.
- * @throws {Error} When the prefix is not a root-relative path.
- * @throws {TypeError} When the prefix is `/`: a catch-all route at the site
- * root would catch every page.
+ * @throws {TypeError} When the prefix is not a root-relative path, or is
+ * `/`: a catch-all route at the site root would catch every page.
  */
 const resolveRoutePrefix = function resolveRoutePrefix(
 	routePrefix: InthAstroOptions['routePrefix']
@@ -201,72 +201,34 @@ const resolveRoutePrefix = function resolveRoutePrefix(
 	if (routePrefix === false) {
 		return undefined;
 	}
-	const prefix = routePrefix ?? DEFAULT_ROUTE_PREFIX;
-	if (typeof prefix !== 'string' || !prefix.startsWith('/')) {
-		throw new Error(
-			`@inth/astro: \`routePrefix\` must be a path that starts with "/", such as '/api/inth', or false. Got ${JSON.stringify(prefix)}.`
-		);
-	}
-	return normalizeRoutePrefix('@inth/astro', prefix);
+	return normalizeRoutePrefix(
+		'@inth/astro',
+		routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX
+	);
 };
-
-/** Every `type` a mode can carry. */
-const MODE_TYPES = new Set(['manifest', 'hosted', 'testing']);
 
 /**
  * Check the mode is plain data from `manifest()`, `hosted()` or
- * `testing()`, and that it has a backend to talk to.
- *
- * `manifest()` reads `${projectUrl}/manifest` on the server and the
- * browser saves consent at `${projectUrl}/subjects`, so without a backend
- * URL it fails here, whatever `routePrefix` is. A `snapshot` replaces the
- * manifest fetch only: the injected consent route answers `GET`, so saves
- * still need the backend. `projectUrl: ''` saves on this origin but gives
- * the server no manifest, so without a snapshot it also needs a
- * `manifestUrl`.
+ * `testing()`, and that it has a backend to talk to: the browser saves
+ * consent at `${projectUrl}/subjects`, and the injected route answers `GET`
+ * only, whatever `routePrefix` is.
  *
  * @param mode - The configured mode, or `undefined` for the default.
  * @param projectUrl - The resolved top-level backend URL.
  * @returns The mode.
- * @throws {Error} When the mode is not mode data, or has nowhere to go.
+ * @throws {TypeError} When the mode is not mode data, or has nowhere to go.
  */
 const resolveMode = function resolveMode(
 	mode: InthAstroOptions['mode'],
 	projectUrl: string | undefined
 ): ConsentMode {
-	if (mode === undefined) {
-		return resolveMode({ type: 'manifest' }, projectUrl);
-	}
-	if (
-		typeof mode !== 'object' ||
-		mode === null ||
-		!MODE_TYPES.has((mode as { type?: unknown }).type as string)
-	) {
-		throw new Error(
-			'@inth/astro: `mode` must be manifest() or hosted() from @inth/astro, or testing() from @inth/astro/testing. A transport function cannot be serialized into the page.'
-		);
-	}
-	const envHint = `Set ${PROJECT_URL_ENV} in .env, or pass \`projectUrl\` to inth().`;
-	if (mode.type === 'hosted' && projectUrl === undefined) {
-		throw new Error(
-			`@inth/astro: hosted() needs a backend URL to ask for each visitor's policy. ${envHint}`
-		);
-	}
-	if (mode.type === 'manifest' && projectUrl === undefined) {
-		throw new Error(
-			mode.snapshot
-				? `@inth/astro: manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest fetch, but the browser saves consent with POST \${projectUrl}/subjects, and the consent route only answers GET. ${envHint}`
-				: `@inth/astro: manifest() needs a backend URL: the server reads its policy from \${projectUrl}/manifest, and the browser saves consent there with POST /subjects. ${envHint}`
-		);
-	}
-	if (mode.type === 'manifest' && !mode.snapshot) {
-		if (projectUrl === '' && !mode.manifestUrl) {
-			throw new Error(
-				"@inth/astro: `projectUrl: ''` saves consent on this origin but gives the server no manifest to fetch. Pass manifest({ manifestUrl }) or manifest({ snapshot })."
-			);
-		}
-	}
-	return mode;
+	return resolveServerMode({
+		adapter: '@inth/astro',
+		backendHint: `Set ${PROJECT_URL_ENV} in .env, or pass \`projectUrl\` to inth().`,
+		checkBackend: true,
+		mode,
+		projectUrl,
+	}).mode;
 };
 
 /**
@@ -866,9 +828,8 @@ const missingAdapterMessage = function missingAdapterMessage(
 
 /**
  * Fetch the manifest for `astro build` or `astro dev` and put it in the
- * resolved mode as its `snapshot`. `hosted()` and `local()` have no
- * manifest to fetch, a `snapshot` is already one, and
- * `manifest({ source: 'runtime' })` always fetches at runtime.
+ * resolved mode as its `snapshot`, for a mode that reads one
+ * (`needsBuildSnapshot` in `@inth/sdk/server`).
  *
  * @param resolved - The resolved options; its mode gains the snapshot.
  * @param command - `build` or `dev`.
@@ -883,22 +844,20 @@ const bundleBuildManifest = async function bundleBuildManifest(
 	envSource: BuildEnvSource
 ): Promise<void> {
 	const { mode } = resolved;
-	if (mode.type !== 'manifest' || mode.snapshot || mode.source === 'runtime') {
-		return;
-	}
 	const { loadManifestForBuild } = await import('@inth/sdk/build');
 	const snapshot = await loadManifestForBuild(
-		{ manifestUrl: mode.manifestUrl, projectUrl: resolved.projectUrl },
+		{ projectUrl: resolved.projectUrl },
 		{
 			command,
 			envNames: [PROJECT_URL_ENV],
 			envSource,
 			label: '@inth/astro',
 			logger,
+			mode,
 			onBuildError: resolved.onBuildError,
 		}
 	);
-	if (snapshot) {
+	if (snapshot && mode.type === 'manifest') {
 		// A snapshot is its own source.
 		const { source: _source, ...rest } = mode;
 		resolved.mode = { ...rest, snapshot };

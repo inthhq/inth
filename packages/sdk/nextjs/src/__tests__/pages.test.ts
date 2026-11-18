@@ -310,7 +310,7 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 		expect(config.initialPolicyResolution?.policy?.id).toBe('eu-opt-in');
 	});
 
-	test('a /api/inth backend prefix is asked for /init from getServerSideProps', async () => {
+	test('a relative backend prefix is asked for /init from getServerSideProps', async () => {
 		const fetchSpy = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
 			new Response(
 				JSON.stringify(
@@ -326,7 +326,10 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 		);
 
 		const config = await resolveConsent({
-			config: defineConsentConfig({ mode: hosted(), projectUrl: '/api/inth' }),
+			config: defineConsentConfig({
+				mode: hosted(),
+				projectUrl: '/api/backend',
+			}),
 			fetch: fetchSpy,
 			req: {
 				headers: {
@@ -338,7 +341,7 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 		});
 
 		expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'https://app.example.com/api/inth/init'
+			'https://app.example.com/api/backend/init'
 		);
 		expect(config.initialPolicyResolution?.status).toBe('matched');
 	});

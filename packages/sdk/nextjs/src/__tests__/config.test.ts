@@ -46,7 +46,7 @@ describe('defineConsentConfig', () => {
 	test('names NEXT_PUBLIC_INTH_PROJECT_URL in the missing-URL error', () => {
 		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', '');
 		expect(() => defineConsentConfig()).toThrow(
-			'@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_INTH_PROJECT_URL set at build time.'
+			/^@inth\/nextjs: manifest\(\) needs a backend URL: .* Set NEXT_PUBLIC_INTH_PROJECT_URL at build time, or `projectUrl` in inth.config.ts.$/u
 		);
 	});
 

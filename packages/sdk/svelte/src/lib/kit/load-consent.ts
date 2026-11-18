@@ -14,12 +14,15 @@ import {
 	projectUrl as builtProjectUrl,
 	snapshot as builtSnapshot,
 } from '@inth/sdk/generated';
-import { readWaitUntil, resolveRequestConsent } from '@inth/sdk/server';
-import type { ResolveRequestConsentOptions } from '@inth/sdk/server';
+import {
+	readWaitUntil,
+	resolveRequestConsent,
+	resolveServerMode,
+} from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import type { ConsentRootState } from '../types';
-import type { InthLocals, ConsentRequestOptions, KitMode } from './types';
+import type { InthLocals, ConsentRequestOptions } from './types';
 
 /** Options for {@link loadConsent}, when you call it from your own `load`. */
 export interface LoadConsentOptions extends ConsentRequestOptions {
@@ -99,61 +102,6 @@ const backgroundWorkFor = (
 	);
 };
 
-/** How the server resolves each mode. */
-const serverResolution = function serverResolution(
-	mode: KitMode,
-	locals: InthLocals | undefined,
-	projectUrl: string | undefined
-): Pick<
-	ResolveRequestConsentOptions,
-	| 'projectUrl'
-	| 'gvlRoute'
-	| 'initHeaders'
-	| 'manifest'
-	| 'manifestUrl'
-	| 'mode'
-> {
-	if (mode.type === 'testing') {
-		// The browser resolves it, with the transport that refuses to run
-		// in production.
-		return {};
-	}
-	if (mode.type === 'hosted') {
-		return { mode: 'hosted', projectUrl };
-	}
-	if (mode.resolve === 'browser') {
-		// The browser resolves; the server reads the cookie only.
-		return {};
-	}
-	return {
-		// The catch-all serves deferred vendor lists only on its init path.
-		gvlRoute:
-			locals?.routePrefix === undefined
-				? undefined
-				: `${locals.routePrefix}/init`,
-		manifest:
-			mode.snapshot ??
-			(mode.source === 'runtime'
-				? undefined
-				: (locals?.snapshot ?? builtSnapshot)),
-		manifestUrl: mode.manifestUrl,
-		mode: 'manifest',
-		projectUrl,
-	};
-};
-
-/**
- * The mode as the browser receives it. A manifest resolved on the server
- * needs no snapshot there.
- */
-const browserMode = function browserMode(mode: KitMode): KitMode {
-	if (mode.type !== 'manifest' || mode.resolve === 'browser') {
-		return mode;
-	}
-	const { snapshot: _snapshot, source: _source, ...data } = mode;
-	return data;
-};
-
 /**
  * The request as `inthHandle` left it: its inputs, unless this call
  * overrides them.
@@ -205,8 +153,14 @@ export const loadConsent = async function loadConsent(
 	options: LoadConsentOptions = {}
 ): Promise<{ consent: ConsentRootState }> {
 	const locals = readLocals(event);
-	const mode: KitMode = locals?.mode ?? { type: 'manifest' };
 	const projectUrl = locals?.projectUrl ?? builtProjectUrl;
+	const server = resolveServerMode({
+		adapter: '@inth/svelte',
+		buildSnapshot: locals?.snapshot ?? builtSnapshot,
+		mode: locals?.mode,
+		projectUrl,
+		routePrefix: locals?.routePrefix,
+	});
 	// Per-call inputs beat the handle's: a route that passes `country` is
 	// naming the country for that page. The handle's cookie name is part of
 	// the request context, so a per-call `country` keeps it.
@@ -217,8 +171,8 @@ export const loadConsent = async function loadConsent(
 	const cookieName = options.cookieName ?? locals?.cookieName;
 	const shared = building || locals?.shared === true;
 	const state = await resolveRequestConsent({
+		...server.consent,
 		adapter: '@inth/svelte',
-		...serverResolution(mode, locals, projectUrl),
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
 		// SvelteKit answers this app's own routes in-process, so the consent
@@ -239,7 +193,7 @@ export const loadConsent = async function loadConsent(
 		waitUntil: backgroundWorkFor(event, options.onBackgroundRevalidate),
 	});
 	const consent: ConsentRootState = {
-		mode: browserMode(mode),
+		mode: server.browser.mode,
 		prefetch: state,
 	};
 	if (projectUrl !== undefined) {

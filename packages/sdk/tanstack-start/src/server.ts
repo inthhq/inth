@@ -72,14 +72,11 @@ import {
 import type { ConsentMode } from '@inth/sdk/modes';
 import type { ConsentManifest, InitOutput } from '@inth/sdk/schema/types';
 import {
-	DEFAULT_CONSENT_ROUTE_PREFIX,
 	normalizeRoutePrefix,
 	resolveRequestConsent,
+	resolveServerMode,
 } from '@inth/sdk/server';
-import type {
-	ManifestCache,
-	ResolveRequestConsentOptions,
-} from '@inth/sdk/server';
+import type { ManifestCache } from '@inth/sdk/server';
 
 import { handledRequestFor } from './libs/handled-request';
 import { isPrerendering } from './libs/prerendering';
@@ -362,78 +359,6 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	shared?: boolean;
 }
 
-/** What the server resolves for each mode. */
-const serverModeOptions = function serverModeOptions(
-	options: ResolveConsentOptions,
-	projectUrl: string | undefined
-): Pick<
-	ResolveRequestConsentOptions,
-	'projectUrl' | 'manifest' | 'manifestUrl' | 'mode'
-> {
-	const { mode: selected } = options;
-	if (selected?.type === 'testing') {
-		// The browser resolves it, with the transport that refuses to run in
-		// production.
-		return {};
-	}
-	// A snapshot passed in is a manifest to resolve from, as in Next.js.
-	if (selected?.type === 'hosted' && options.snapshot === undefined) {
-		return {
-			mode: projectUrl ? 'hosted' : undefined,
-			projectUrl,
-		};
-	}
-	const mode = selected?.type === 'manifest' ? selected : undefined;
-	if (mode?.resolve === 'browser') {
-		// The browser resolves the visitor; the render reads cookies and
-		// headers only.
-		return {};
-	}
-	let snapshot = mode?.snapshot;
-	if (!snapshot && mode?.source !== 'runtime') {
-		snapshot = 'snapshot' in options ? options.snapshot : generatedSnapshot;
-	}
-	const manifestUrl = mode?.manifestUrl;
-	return {
-		manifest: snapshot,
-		manifestUrl,
-		mode: projectUrl || manifestUrl || snapshot ? 'manifest' : undefined,
-		projectUrl,
-	};
-};
-
-/**
- * The browser's half of the options. A mode's `snapshot` stays on the
- * server unless the browser resolves the policy itself.
- */
-const clientConfigFor = function clientConfigFor(
-	options: ResolveConsentOptions,
-	projectUrl: string | undefined,
-	routePrefix: string | undefined
-): ConsentClientConfig {
-	if (options.proxy && routePrefix === undefined) {
-		throw new Error(
-			'@inth/tanstack-start: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
-		);
-	}
-	const config: ConsentClientConfig = {};
-	const clientProjectUrl = options.proxy ? routePrefix : projectUrl;
-	if (clientProjectUrl !== undefined) {
-		config.projectUrl = clientProjectUrl;
-	}
-	const { mode } = options;
-	if (mode?.type === 'manifest' && mode.resolve !== 'browser') {
-		const { snapshot: _snapshot, ...data } = mode;
-		config.mode = data;
-	} else if (mode !== undefined) {
-		config.mode = mode;
-	}
-	if (routePrefix !== undefined) {
-		config.routePrefix = routePrefix;
-	}
-	return config;
-};
-
 /** The options' route prefix, checked; `undefined` when unset. */
 const readRoutePrefix = function readRoutePrefix(
 	options: ResolveConsentOptions
@@ -446,34 +371,43 @@ const readRoutePrefix = function readRoutePrefix(
 const resolveConsentState = async function resolveConsentState(
 	options: ResolveConsentOptions
 ): Promise<ConsentState> {
-	const projectUrl = options.projectUrl ?? generatedProjectUrl;
 	const routePrefix = readRoutePrefix(options);
-	const client = clientConfigFor(options, projectUrl, routePrefix);
+	const server = resolveServerMode({
+		adapter: '@inth/tanstack-start',
+		buildSnapshot: 'snapshot' in options ? options.snapshot : generatedSnapshot,
+		mode: options.mode,
+		projectUrl: options.projectUrl ?? generatedProjectUrl,
+		proxy: options.proxy,
+		routePrefix,
+	});
+	const client: ConsentClientConfig = {};
+	if (server.browser.projectUrl !== undefined) {
+		client.projectUrl = server.browser.projectUrl;
+	}
+	if (options.mode !== undefined) {
+		client.mode = server.browser.mode;
+	}
+	if (routePrefix !== undefined) {
+		client.routePrefix = routePrefix;
+	}
 	const request = await readCurrentRequest(options.request);
 	const handled = await handledRequestFor(request);
-	const server = serverModeOptions(options, projectUrl);
 	const shared = options.shared ?? isPrerendering();
 	if (!shared) {
 		// The middleware keeps this HTML out of shared caches.
 		rememberVisitorRender(handled);
 	}
 	const state = await resolveRequestConsent({
-		...server,
+		...server.consent,
 		adapter: '@inth/tanstack-start',
 		cache: options.cache,
 		cookieNames: options.cookieNames,
 		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
-		gvlRoute: routePrefix === undefined ? undefined : `${routePrefix}/init`,
 		journey: options.journey,
 		now: options.now,
 		overrides: { country: options.country, language: options.language },
-		// The app's own consent route: a render fetching it would call
-		// itself. Other relative URLs, such as a backend mounted elsewhere
-		// on this origin, are fetched. Without a prefix, the conventional
-		// mount is guarded.
-		ownRoutes: [routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX],
 		request: {
 			headers: request.headers,
 			// What `consentRequestMiddleware` normalized for this request, so

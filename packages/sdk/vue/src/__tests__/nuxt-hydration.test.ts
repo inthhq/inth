@@ -6,7 +6,11 @@ import {
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
-import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
+import type {
+	ConsentManifest,
+	InitOutput,
+	PolicyRule,
+} from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
 import { resolveManifestInit } from '@inth/sdk/transports/manifest-cache';
 import { afterEach, expect, test, vi } from 'vitest';
@@ -38,6 +42,7 @@ const nuxt = vi.hoisted(() => ({
 	fetchHeaders: [] as Record<string, string>[],
 	headers: {} as Record<string, string | undefined>,
 	manifest: false as boolean | 'client',
+	manifestDocument: undefined as ConsentManifest | undefined,
 	requests: 0,
 	response: undefined as InitOutput | undefined,
 	state: new Map<string, ShallowRef<unknown>>(),
@@ -64,17 +69,24 @@ vi.mock('#imports', async () => {
 			return cookie;
 		},
 		useHead: () => undefined,
-		// Nitro's in-process fetch on the event answers the app's own routes.
+		// Nitro's in-process fetch on the event answers the app's own routes:
+		// the backend's manifest in manifest mode, its `/init` otherwise.
 		useRequestEvent: () => ({
 			context: {},
-			fetch: (_input: string, init?: RequestInit) => {
+			fetch: (input: string, init?: RequestInit) => {
 				const headers = Object.fromEntries(new Headers(init?.headers));
 				nuxt.fetchHeaders.push(headers);
 				expect(headers[INTH_POLICY_CONTRACT_HEADER]).toBe('1');
 				nuxt.requests += 1;
+				const body = input.split('?')[0]?.endsWith('/manifest')
+					? nuxt.manifestDocument
+					: nuxt.response;
 				return Promise.resolve(
-					new Response(JSON.stringify(nuxt.response), {
-						headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
+					new Response(JSON.stringify(body), {
+						headers: {
+							'content-type': 'application/json',
+							[INTH_POLICY_CONTRACT_HEADER]: '1',
+						},
 					})
 				);
 			},
@@ -150,25 +162,26 @@ test.each([false, true])('Nuxt hydrates GPC: manifest=%s', async (manifest) => {
 	nuxt.requests = 0;
 	nuxt.headers = { 'accept-language': 'en', cookie: '', 'sec-gpc': '1' };
 	if (manifest) {
-		nuxt.response = resolveManifestInit({
-			headers: nuxt.headers,
-			manifest: {
-				branding: 'none',
-				policyPacks: [createConsentManifestPolicyPack(rule)],
-				revision: 'nuxt-ssr',
-				schemaVersion: 2,
-				translations: {
-					i18n: {
-						defaultProfile: 'default',
-						messages: {
-							default: {
-								fallbackLanguage: 'en',
-								translations: { en: nuxt.response.translations.translations },
-							},
+		nuxt.manifestDocument = {
+			branding: 'none',
+			policyPacks: [createConsentManifestPolicyPack(rule)],
+			revision: 'nuxt-ssr',
+			schemaVersion: 2,
+			translations: {
+				i18n: {
+					defaultProfile: 'default',
+					messages: {
+						default: {
+							fallbackLanguage: 'en',
+							translations: { en: nuxt.response.translations.translations },
 						},
 					},
 				},
 			},
+		} as ConsentManifest;
+		nuxt.response = resolveManifestInit({
+			headers: nuxt.headers,
+			manifest: nuxt.manifestDocument,
 		});
 	}
 	const { default: plugin } = await vi.importActual<{

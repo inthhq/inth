@@ -223,38 +223,6 @@ const loadUserConfig = async function loadUserConfig(
 };
 
 /**
- * Why the config's mode needs no build-time manifest, as Nuxt and Astro
- * decide: `hosted()` and `testing()` have none to fetch, a `snapshot` is
- * already one, and `manifest({ source: 'runtime' })` always fetches at
- * runtime. `undefined` when the build should fetch it, as for the default
- * `manifest()`.
- */
-const modeSkipReason = function modeSkipReason(
-	config: ConsentConfig | undefined
-): string | undefined {
-	const mode = config?.mode;
-	if (mode?.type === 'testing') {
-		return 'inth.config.ts sets testing(), which needs no backend';
-	}
-	if (mode?.type === 'hosted') {
-		return 'inth.config.ts sets hosted(), which asks the backend for each visitor';
-	}
-	if (mode?.snapshot) {
-		return 'inth.config.ts passes manifest({ snapshot })';
-	}
-	if (mode?.source === 'runtime') {
-		return "inth.config.ts sets manifest({ source: 'runtime' })";
-	}
-	// The server fetches an absolute manifestUrl at runtime and ignores a
-	// build snapshot. A `/` path is the browser's, so it still needs one.
-	const url = mode?.manifestUrl;
-	if (url !== undefined && (!url.startsWith('/') || url.startsWith('//'))) {
-		return 'inth.config.ts passes an absolute manifest({ manifestUrl })';
-	}
-	return undefined;
-};
-
-/**
  * The URL from the c15t name of {@link BACKEND_URL_ENV} when only that is
  * set, copied to the Inth name in the process environment.
  * `inth.config.ts`, evaluated next, reads the Inth name, and the caller also
@@ -387,8 +355,10 @@ const withConsentAliases = function withConsentAliases(
  * `INTH_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
  * for a `projectUrl` that is not absolute http(s), for `output: 'export'`,
  * which has no server, and when `inth.config.ts` sets a mode that reads no
- * build-time manifest: `hosted()`, `testing()`, `manifest({ snapshot })` or
- * `manifest({ source: 'runtime' })`. The wrapper evaluates the file with the
+ * build-time manifest (`needsBuildSnapshot` in `@inth/sdk/server`):
+ * `hosted()`, `testing()`, `manifest({ snapshot })`,
+ * `manifest({ source: 'runtime' })` or an absolute
+ * `manifest({ manifestUrl })`. The wrapper evaluates the file with the
  * loader Next.js uses for `next.config.ts` to read its `mode` and
  * `projectUrl`.
  *
@@ -471,10 +441,11 @@ export const withConsentManifest =
 				envNames: [BACKEND_URL_ENV],
 				importSource: '@inth/nextjs/static',
 				label: '@inth/nextjs/build',
+				mode: userConfig?.mode,
 				skipReason:
 					resolved.output === 'export'
 						? "a static export (`output: 'export'`) has no server to use it"
-						: modeSkipReason(userConfig),
+						: undefined,
 			}
 		);
 		return withConsentAliases(resolved, files, userConfigFile);

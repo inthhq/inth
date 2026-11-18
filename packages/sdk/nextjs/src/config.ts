@@ -11,7 +11,7 @@
 
 import type { ConsentJourneyOption } from '@inth/sdk/engine';
 import type { ConsentMode } from '@inth/sdk/modes';
-import { normalizeRoutePrefix } from '@inth/sdk/server';
+import { normalizeRoutePrefix, resolveServerMode } from '@inth/sdk/server';
 
 import type { ConsentClientOptions } from './types';
 
@@ -170,8 +170,6 @@ export const checkRoutePrefix = function checkRoutePrefix(
 	return routePrefix.replace(/\/+$/u, '');
 };
 
-const MODE_TYPES = new Set(['manifest', 'hosted', 'testing']);
-
 /**
  * The checks `defineConsentConfig` runs on the server.
  *
@@ -184,26 +182,19 @@ const assertConsentConfig = function assertConsentConfig(
 		throw new TypeError('@inth/nextjs: defineConsentConfig expects an object.');
 	}
 	const projectUrl = config.projectUrl ?? readProjectUrlFromEnv();
-	const { mode } = config;
-	if (mode !== undefined && !MODE_TYPES.has(mode.type)) {
-		throw new TypeError(
-			'@inth/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from @inth/nextjs, or testing() from @inth/nextjs/testing. Pass a transport through ConsentRoot `options.mode`.'
-		);
-	}
-	if (projectUrl === undefined && mode?.type !== 'testing') {
-		throw new TypeError(
-			`@inth/nextjs: defineConsentConfig needs \`projectUrl\`, or ${BACKEND_URL_ENV} set at build time.`
-		);
-	}
+	const { mode } = resolveServerMode({
+		adapter: '@inth/nextjs',
+		backendHint: `Set ${BACKEND_URL_ENV} at build time, or \`projectUrl\` in inth.config.ts.`,
+		checkBackend: true,
+		mode: config.mode,
+		projectUrl,
+		proxy: config.proxy,
+		routePrefix:
+			config.routePrefix === undefined
+				? undefined
+				: checkRoutePrefix(config.routePrefix),
+	});
 	assertConsentURL('projectUrl', projectUrl);
-	if (config.routePrefix !== undefined) {
-		checkRoutePrefix(config.routePrefix);
-	}
-	if (config.proxy && config.routePrefix === undefined) {
-		throw new TypeError(
-			'@inth/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
-		);
-	}
 	if (mode?.type === 'manifest') {
 		assertConsentURL('mode.manifestUrl', mode.manifestUrl);
 		assertConsentURL('mode.geoUrl', mode.geoUrl);

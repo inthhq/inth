@@ -207,7 +207,7 @@ describe('inthHandle mode', () => {
 	test('rejects transportMode(), which cannot reach the browser as data', () => {
 		const mode = transportMode({ init: () => Promise.resolve({}) });
 		expect(() => inthHandle({ mode: mode as never })).toThrow(
-			/Pass a transport to <ConsentRoot mode>/u
+			/cannot reach the browser/u
 		);
 	});
 });

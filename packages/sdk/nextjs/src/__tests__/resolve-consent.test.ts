@@ -186,18 +186,16 @@ describe('resolveConsent wiring', () => {
 		expect(state.initialPolicyResolution?.status).toBe('matched');
 	});
 
-	test('a /api/inth backend prefix (rewrite or mounted backend) is asked for /init', async () => {
-		// Next.js mounts no Inth handler at /api/inth: the docs use it as the
-		// backend prefix, through a rewrite or a backend catch-all route.
+	test('a relative backend prefix (rewrite or mounted backend) is asked for /init', async () => {
 		const fetch = backend();
 		const state = await resolveConsent({
-			config: hostedAt('/api/inth'),
+			config: hostedAt('/api/backend'),
 			fetch,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(
 			fetch.mock.calls.map(([input]) => String(input).split('?')[0])
-		).toEqual(['https://app.example.com/api/inth/init']);
+		).toEqual(['https://app.example.com/api/backend/init']);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		expect(headers.get('x-c15t-country')).toBe('DE');
 		expect(state.initialPolicyResolution?.status).toBe('matched');
@@ -206,7 +204,7 @@ describe('resolveConsent wiring', () => {
 	test('a render reached by another render’s own request does not fetch its origin again', async () => {
 		const fetch = backend();
 		const first = await resolveConsent({
-			config: hostedAt('/api/inth'),
+			config: hostedAt('/api/backend'),
 			fetch,
 			request: requestOf({}),
 		});
@@ -216,14 +214,29 @@ describe('resolveConsent wiring', () => {
 		const sent = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const nested = await resolveConsent({
-			config: hostedAt('/api/inth'),
+			config: hostedAt('/api/backend'),
 			fetch,
 			request: requestOf(Object.fromEntries(sent)),
 		});
 		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(nested.initialPolicyResolution).toBeUndefined();
 		expect(String(warn.mock.calls[0]?.[0])).toContain(
-			'https://app.example.com/api/inth/init'
+			'https://app.example.com/api/backend/init'
+		);
+	});
+
+	test('never fetches the default /api/inth route, with no routePrefix set', async () => {
+		const fetch = backend();
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const state = await resolveConsent({
+			config: hostedAt('/api/inth'),
+			fetch,
+			request: requestOf({}),
+		});
+		expect(fetch).not.toHaveBeenCalled();
+		expect(state.initialPolicyResolution).toBeUndefined();
+		expect(String(warn.mock.calls[0]?.[0])).toContain(
+			"this app's own consent route"
 		);
 	});
 

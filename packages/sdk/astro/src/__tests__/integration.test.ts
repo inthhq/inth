@@ -446,7 +446,7 @@ describe('resolveOptions', () => {
 		}
 	);
 
-	it("onBuildError: 'fail' still needs an absolute upstream URL", async () => {
+	it("onBuildError: 'fail' stops a build whose projectUrl gives it nothing to fetch", async () => {
 		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		await expect(
 			runSetup({
@@ -454,7 +454,7 @@ describe('resolveOptions', () => {
 				onBuildError: 'fail',
 				projectUrl: '',
 			})
-		).rejects.toThrow('absolute upstream URL');
+		).rejects.toThrow('no backend URL is set');
 	});
 
 	it('defaults the ui adapter to svelte', () => {
@@ -479,7 +479,7 @@ describe('resolveOptions', () => {
 		).not.toHaveProperty('routePrefix');
 		expect(() =>
 			resolveOptions({ mode: testingMode(), routePrefix: 'api/inth' })
-		).toThrowError(/must be a path that starts with "\/"/u);
+		).toThrowError(/must be a path that starts with '\/'/u);
 	});
 
 	it.each(['/', '//'])('rejects a routePrefix of %s', (routePrefix) => {

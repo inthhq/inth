@@ -9,10 +9,11 @@ import {
 	readBuildEnvEntry,
 } from '@inth/sdk/build';
 import type { BuildEnvSource } from '@inth/sdk/build';
+import type { ConsentMode } from '@inth/sdk/modes';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import { defaultConsentConfig } from '@inth/sdk/schema/config';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
-import { normalizeRoutePrefix } from '@inth/sdk/server';
+import { normalizeRoutePrefix, resolveServerMode } from '@inth/sdk/server';
 import {
 	DEVTOOLS_ICON_ROUTE,
 	DEVTOOLS_PAGE_ROUTE,
@@ -23,7 +24,6 @@ import {
 } from '@inth/vue/runtime/env-names.js';
 import {
 	DEFAULT_NUXT_ROUTE_PREFIX,
-	readNuxtMode,
 	readNuxtRoutePrefix,
 } from '@inth/vue/runtime/nuxt-mode.js';
 import type { NuxtMode } from '@inth/vue/runtime/nuxt-mode.js';
@@ -195,23 +195,6 @@ const legacyProjectUrlEnv = (source: ProjectUrlSource): LegacyProjectUrlEnv[] =>
 	});
 
 /**
- * The `mode` option, checked. It reaches the browser as JSON through the
- * public runtime config, so it must be the data `manifest()` or `hosted()`
- * from `@inth/nuxt`, or `testing()` from `@inth/nuxt/testing`, not a
- * transport.
- */
-const readModuleMode = function readModuleMode(
-	options: ModuleOptions
-): NuxtMode {
-	if (typeof options.mode === 'function') {
-		throw new TypeError(
-			"@inth/nuxt: `inth.mode` in nuxt.config.ts is a transport. Import `manifest` or `hosted` from '@inth/nuxt', which return plain data, or omit `mode` to read the manifest."
-		);
-	}
-	return readNuxtMode(options);
-};
-
-/**
  * The configured `routePrefix`, checked here so a bad prefix stops the build
  * and the runtime config only ever holds a checked one.
  *
@@ -230,78 +213,17 @@ const checkRoutePrefix = function checkRoutePrefix(
 };
 
 /**
- * `manifest()` saves consent at `${projectUrl}/subjects` from the browser.
- * The consent route answers `GET` only, so without a backend URL every save
- * would fail after the visitor chose. A `snapshot` replaces the manifest
- * download, not the save endpoint. `nuxt prepare` runs during dependency
- * installation, where the variable is often unset, so it is not checked.
- *
- * @throws {Error} When `manifest()` has no backend URL.
- */
-const assertManifestBackend = function assertManifestBackend(
-	mode: NuxtMode,
-	projectUrl: string | undefined,
-	nuxt: Nuxt
-): void {
-	if (
-		mode.type !== 'manifest' ||
-		projectUrl !== undefined ||
-		nuxt.options._prepare
-	) {
-		return;
-	}
-	const reason = mode.snapshot
-		? `manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest download, but the browser saves consent with POST \${projectUrl}/subjects`
-		: `manifest() needs a backend URL: the browser saves consent with POST \${projectUrl}/subjects`;
-	throw new Error(
-		`@inth/nuxt: ${reason}, and the consent route only answers GET. Set ${NUXT_PROJECT_URL_ENV}, or \`inth.projectUrl\` in nuxt.config.ts.`
-	);
-};
-
-/**
- * Downloads the manifest during `nuxt build` and `nuxt dev` setup, for
- * `manifest()` without a `snapshot` or `source: 'runtime'`. `onBuildError`
- * decides what a failed download or a missing backend URL does. `nuxt
- * prepare` writes types during dependency installation and never
- * downloads.
- */
-const loadNuxtBuildManifest = function loadNuxtBuildManifest(
-	mode: NuxtMode,
-	projectUrl: string | undefined,
-	onBuildError: ModuleOptions['onBuildError'],
-	nuxt: Nuxt
-): Promise<ConsentManifest | undefined> | undefined {
-	if (
-		mode.type !== 'manifest' ||
-		mode.snapshot ||
-		mode.source === 'runtime' ||
-		nuxt.options._prepare
-	) {
-		return undefined;
-	}
-	const logger = useLogger('@inth/nuxt');
-	return loadManifestForBuild(
-		{ manifestUrl: mode.manifestUrl, projectUrl },
-		{
-			command: nuxt.options.dev ? 'dev' : 'build',
-			envNames: [NUXT_PROJECT_URL_ENV],
-			envSource: nuxtEnvSource(nuxt),
-			label: '@inth/nuxt',
-			logger: {
-				info: (message) => logger.info(message),
-				warn: (message) => logger.warn(message),
-			},
-			onBuildError,
-		}
-	);
-};
-
-/**
  * The snapshot the server reads, and the one the browser bundle holds. A
- * `snapshot` the mode names wins over the download. Neither travels through
- * runtime config, where Nitro would replace every `null` in it with `''`
- * during the build. Only browser resolution ships a snapshot to the
- * browser: every other mode resolves on the server or asks the backend.
+ * `snapshot` the mode names wins over the download, which happens during
+ * `nuxt build` and `nuxt dev` setup for a mode that reads one
+ * (`needsBuildSnapshot` in `@inth/sdk/server`). `onBuildError` decides what
+ * a failed download or a missing backend URL does. `nuxt prepare` writes
+ * types during dependency installation and never downloads.
+ *
+ * Neither snapshot travels through runtime config, where Nitro would
+ * replace every `null` in it with `''` during the build. Only browser
+ * resolution ships a snapshot to the browser: every other mode resolves on
+ * the server or asks the backend.
  */
 const resolveSnapshots = async function resolveSnapshots(
 	mode: NuxtMode,
@@ -312,12 +234,29 @@ const resolveSnapshots = async function resolveSnapshots(
 	clientSnapshot: ConsentManifest | undefined;
 	serverSnapshot: ConsentManifest | undefined;
 }> {
-	if (mode.type !== 'manifest' || mode.source === 'runtime') {
+	if (mode.type !== 'manifest') {
 		return { clientSnapshot: undefined, serverSnapshot: undefined };
 	}
+	const logger = useLogger('@inth/nuxt');
 	const serverSnapshot =
 		mode.snapshot ??
-		(await loadNuxtBuildManifest(mode, projectUrl, onBuildError, nuxt));
+		(nuxt.options._prepare
+			? undefined
+			: await loadManifestForBuild(
+					{ projectUrl },
+					{
+						command: nuxt.options.dev ? 'dev' : 'build',
+						envNames: [NUXT_PROJECT_URL_ENV],
+						envSource: nuxtEnvSource(nuxt),
+						label: '@inth/nuxt',
+						logger: {
+							info: (message) => logger.info(message),
+							warn: (message) => logger.warn(message),
+						},
+						mode,
+						onBuildError,
+					}
+				));
 	return {
 		clientSnapshot: mode.resolve === 'browser' ? serverSnapshot : undefined,
 		serverSnapshot,
@@ -346,12 +285,24 @@ const warnStaticServerResolution = function warnStaticServerResolution(
 	}
 };
 
-/** The mode as the browser and the server read it: without its snapshot. */
-const withoutSnapshot = function withoutSnapshot(mode: NuxtMode): NuxtMode {
-	if (mode.type !== 'manifest' || !mode.snapshot) {
-		return mode;
+/**
+ * The mode as the browser and the server read it from runtime config: the
+ * browser's copy, by the rule `resolveServerMode` applies in every adapter,
+ * and never a snapshot, which the snapshot templates carry instead.
+ */
+const publishedMode = function publishedMode(
+	mode: NuxtMode,
+	projectUrl: string | undefined
+): NuxtMode {
+	const browser = resolveServerMode({
+		adapter: '@inth/nuxt',
+		mode: mode as ConsentMode,
+		projectUrl,
+	}).browser.mode as NuxtMode;
+	if (browser.type !== 'manifest' || !browser.snapshot) {
+		return browser;
 	}
-	const { snapshot: _snapshot, ...rest } = mode;
+	const { snapshot: _snapshot, ...rest } = browser;
 	return rest;
 };
 
@@ -372,7 +323,7 @@ const publishOptions = function publishOptions(
 		| Record<string, unknown>
 		| undefined;
 	const built: BuiltOptions = {
-		mode: withoutSnapshot(mode),
+		mode: publishedMode(mode, options.projectUrl),
 		routePrefix: options.routePrefix ?? false,
 	};
 	for (const name of ['mode', 'routePrefix'] as const) {
@@ -439,10 +390,19 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		const runtime = createResolver(
 			dirname(createRequire(import.meta.url).resolve('@inth/vue/vite'))
 		);
-		const mode = readModuleMode(options);
+		// `mode` reaches the browser as JSON through the public runtime
+		// config, so it must be mode data, not a transport. `nuxt prepare`
+		// runs during dependency installation, where the backend variable
+		// is often unset, so the backend is not checked then.
+		const mode = resolveServerMode({
+			adapter: '@inth/nuxt',
+			backendHint: `Set ${NUXT_PROJECT_URL_ENV}, or \`inth.projectUrl\` in nuxt.config.ts.`,
+			checkBackend: !nuxt.options._prepare,
+			mode: options.mode,
+			projectUrl: options.projectUrl,
+		}).mode as NuxtMode;
 		options.routePrefix = checkRoutePrefix(options);
 		const routePrefix = readNuxtRoutePrefix(options);
-		assertManifestBackend(mode, options.projectUrl, nuxt);
 		warnStaticServerResolution(mode, nuxt);
 		const { clientSnapshot, serverSnapshot } = await resolveSnapshots(
 			mode,
@@ -615,7 +575,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// `mode` and `routePrefix`; a runtime override such as
 		// `NUXT_PUBLIC_INTH_ROUTE_PREFIX` would make the browser disagree.
 		const built: BuiltOptions = {
-			mode: withoutSnapshot(mode),
+			mode: publishedMode(mode, options.projectUrl),
 			routePrefix: options.routePrefix ?? false,
 		};
 		nuxt.options.nitro.virtual['#@inth/sdk/build-options'] = () =>

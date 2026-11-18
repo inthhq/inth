@@ -26,24 +26,22 @@ import {
 	storedChoiceNames,
 } from '@inth/sdk/modules/persistence';
 import { inferConsentCategories, isIABConfigured } from '@inth/sdk/runtime';
-import { recommendedPolicyRules } from '@inth/sdk/schema/types';
 import type {
 	ConsentRequestHeaderInputs,
 	GlobalVendorList,
-	PolicyRule,
 } from '@inth/sdk/schema/types';
 import {
 	fetchCachedGvl,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
+	resolveServerMode,
 } from '@inth/sdk/server';
 import type {
 	ManifestFetch,
 	ResolveRequestConsentOptions,
 } from '@inth/sdk/server';
 import { hasConsentUI } from '@inth/sdk/surface-actions';
-import { assertNotProduction } from '@inth/sdk/testing';
 import { baseTranslations } from '@inth/sdk/translations/all';
 import {
 	DEFAULT_RESOLVE_TIMEOUT_MS,
@@ -167,54 +165,26 @@ export const resolveTranslations = function resolveTranslations(
 };
 
 /**
- * How the configured mode resolves through `resolveRequestConsent`. A
- * relative URL resolves against the request URL only, never a forwarded
- * header: the adapter builds `Request.url` from the deployment's own proxy
- * configuration.
+ * How the configured mode resolves through `resolveRequestConsent`, by the
+ * rule `resolveServerMode` applies in every adapter. A relative URL
+ * resolves against the request URL only, never a forwarded header: the
+ * adapter builds `Request.url` from the deployment's own proxy
+ * configuration. `testing()` resolves with this request's copy.
  */
 const modeOptions = function modeOptions(
 	options: InthResolvedOptions,
-	translations: KernelTranslations,
-	fetch: typeof globalThis.fetch | undefined
+	translations: KernelTranslations
 ): Partial<ResolveRequestConsentOptions> {
-	const { mode } = options;
-	switch (mode.type) {
-		case 'hosted':
-			return {
-				mode: 'hosted',
-				projectUrl: options.projectUrl,
-			};
-		case 'manifest':
-			return {
-				// The init route serves only lists from the shared cache; a
-				// caller's own fetch keeps its list inline.
-				gvlRoute:
-					fetch || options.routePrefix === undefined
-						? undefined
-						: `${options.routePrefix}/init`,
-				manifest: mode.snapshot,
-				manifestUrl: mode.manifestUrl,
-				mode: 'manifest',
-				projectUrl: options.projectUrl,
-			};
-		default: {
-			// `testing()`: never in production.
-			assertNotProduction('@inth/astro/testing');
-			// A pack whose model is `iab` needs a configured CMP to be eligible.
-			const iabEnabled = isIABConfigured(options.iab);
-			return {
-				mode: 'offline',
-				offline: {
-					iabEnabled,
-					policyRules:
-						mode.policy === undefined
-							? recommendedPolicyRules({ iab: mode.iab ?? iabEnabled })
-							: ([] as PolicyRule[]).concat(mode.policy),
-					translations,
-				},
-			};
-		}
-	}
+	const { consent } = resolveServerMode({
+		adapter: '@inth/astro',
+		iab: isIABConfigured(options.iab),
+		mode: options.mode,
+		projectUrl: options.projectUrl,
+		routePrefix: options.routePrefix,
+	});
+	return consent.offline
+		? { ...consent, offline: { ...consent.offline, translations } }
+		: consent;
 };
 
 /**
@@ -351,11 +321,6 @@ export const resolveConsentContext = async function resolveConsentContext(
 		adapter: '@inth/astro',
 		// An explicit `i18n.locale` outranks Accept-Language negotiation.
 		overrides: { language: options.i18n?.locale },
-		// The injected route: a render never fetches it over the network.
-		ownRoutes:
-			options.routePrefix === undefined
-				? []
-				: [`${options.routePrefix}/init`, `${options.routePrefix}/manifest`],
 		request: { headers: input.headers, url: input.url },
 		// A prerendered page is one HTML file for every visitor.
 		shared: prerendered,
@@ -367,7 +332,7 @@ export const resolveConsentContext = async function resolveConsentContext(
 
 	const { experiment: _carried, ...resolved } = await resolveRequestConsent({
 		...facts,
-		...modeOptions(options, translations, input.fetch),
+		...modeOptions(options, translations),
 		experiment: seeded ? experiment : undefined,
 		fetch: input.fetch,
 		request: { ...facts.request, inputs },

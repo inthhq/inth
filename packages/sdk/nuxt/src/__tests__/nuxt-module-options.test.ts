@@ -701,7 +701,9 @@ describe('mode and routePrefix', () => {
 		const transport = Object.assign(() => ({}), { kind: 'hosted' });
 		await expect(
 			setUpModule({ mode: transport, projectUrl: '/api/self-host' })
-		).rejects.toThrow("Import `manifest` or `hosted` from '@inth/nuxt'");
+		).rejects.toThrow(
+			/`mode` must be manifest\(\) or hosted\(\) from @inth\/nuxt/u
+		);
 	});
 
 	test('nuxt generate warns that the server cannot resolve the policy', async () => {

@@ -323,8 +323,18 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 		);
 		if (serverResolves) {
 			const { resolveNuxtConsent } = await import('./server-consent');
+			// The consent route's backend: a private `NUXT_INTH_PROJECT_URL`
+			// gives the server an address of its own.
+			const serverProjectUrl = (
+				runtimeConfig as { inth?: { projectUrl?: string } }
+			).inth?.projectUrl;
 			const state = await resolveNuxtConsent(
-				{ ...config.value, mode, routePrefix: routePrefix ?? false },
+				{
+					...config.value,
+					mode,
+					projectUrl: serverProjectUrl || config.value.projectUrl,
+					routePrefix: routePrefix ?? false,
+				},
 				request
 			);
 			// Only a resolved policy is worth the payload bytes; without one the

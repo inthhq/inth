@@ -14,7 +14,11 @@ import type {
 	ConsentManifest,
 	ConsentRequestHeaderInputs,
 } from '@inth/sdk/schema/types';
-import { normalizeRoutePrefix, readRequestConsent } from '@inth/sdk/server';
+import {
+	normalizeRoutePrefix,
+	readModeData,
+	readRequestConsent,
+} from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import { injectModulePreloads } from './module-preload';
@@ -23,7 +27,7 @@ import {
 	loadServerScriptStart,
 } from './server-script-start';
 import { injectSurfaceStyles, nonceEarlyTapScript } from './surface-styles';
-import type { InthLocals, ConsentRequestOptions, KitMode } from './types';
+import type { InthLocals, ConsentRequestOptions } from './types';
 
 /** Options for {@link inthHandle}. */
 export interface InthHandleOptions extends ConsentRequestOptions {
@@ -142,28 +146,6 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
 };
 
 /**
- * The data a handle's options resolve the visitor with. A transport
- * factory, such as `manifest()` from `@inth/svelte`, carries its options
- * as data too; only that data reaches the browser.
- */
-const modeData = function modeData(options: InthHandleOptions): KitMode {
-	const { mode } = options;
-	if (mode === undefined) {
-		return { type: 'manifest' };
-	}
-	if (typeof mode !== 'function') {
-		return mode;
-	}
-	if (!(mode as Partial<ConsentMode>).type) {
-		throw new TypeError(
-			'inth: inthHandle() takes manifest() or hosted() from @inth/svelte/kit, or testing() from @inth/svelte/testing. Pass a transport to <ConsentRoot mode> instead.'
-		);
-	}
-	const { kind: _kind, ...data } = mode as ConsentMode & { kind?: string };
-	return data as ConsentMode;
-};
-
-/**
  * Creates the Inth SvelteKit handle.
  *
  * Register it in `src/hooks.server.ts`, alone or composed with `sequence()`:
@@ -194,7 +176,7 @@ const modeData = function modeData(options: InthHandleOptions): KitMode {
 export const inthHandle = function inthHandle(
 	options: InthHandleOptions = {}
 ): InthHandle {
-	const mode = modeData(options);
+	const mode = readModeData('@inth/svelte', options.mode);
 	const routePrefix =
 		options.routePrefix === undefined
 			? undefined

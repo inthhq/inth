@@ -121,15 +121,12 @@ const createHandler = function createHandler(options: NextConsentRouteOptions) {
 		...args: Parameters<ReturnType<typeof createConsentRouteHandler>>
 	) {
 		if (!handler) {
-			const source = resolveConsentSource(options);
 			handler = createConsentRouteHandler({
+				...resolveConsentSource(options).server.route,
 				adapter: '@inth/nextjs',
 				fetch: options.fetch,
 				fetchGvl: options.fetchGvl,
-				manifest: source.snapshot,
 				manifestFetchInit: { next } as NextFetchInit,
-				manifestUrl: source.manifestUrl,
-				projectUrl: source.projectUrl,
 				proxy: options.proxy,
 				trustForwardedHeaders: options.trustForwardedHeaders,
 			});

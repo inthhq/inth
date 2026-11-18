@@ -20,18 +20,14 @@ import {
 	ɵServerStateGate,
 } from '@inth/angular';
 import type { InthProviderOptions } from '@inth/angular';
-import type { ProviderTransportFactory } from '@inth/sdk/engine';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
-import { recommendedPolicyRules } from '@inth/sdk/schema/types';
-import type { ConsentManifest, PolicyRule } from '@inth/sdk/schema/types';
-import { resolveRequestConsent } from '@inth/sdk/server';
+import { resolveRequestConsent, resolveServerMode } from '@inth/sdk/server';
 import type {
 	ManifestFetch,
 	ResolveRequestConsentOptions,
+	ServerModeInput,
 } from '@inth/sdk/server';
-import { assertNotProduction } from '@inth/sdk/testing';
-import type { TestingModeOptions } from '@inth/sdk/testing';
 
 import type { ConsentRoute } from './consent-route';
 import { addEarlyTapScript } from './early-tap-script';
@@ -97,70 +93,28 @@ export interface InthServerOptions {
 	shared?: boolean;
 }
 
-type ModeData = Partial<ProviderTransportFactory> & {
-	type?: string;
-	projectUrl?: string;
-	headers?: Record<string, string>;
-	initUrl?: string;
-	manifestUrl?: string;
-	resolve?: 'server' | 'browser';
-	snapshot?: ConsentManifest;
-};
-
 /**
- * How the server resolves the provider's options: `mode` read from its
- * data, else the backend's manifest at `projectUrl`, which falls back to
- * its `/init` with a warning when the manifest is unavailable.
+ * How the server resolves the provider's options, by the rule
+ * `resolveServerMode` applies in every adapter. A transport of the
+ * provider's own carries no mode data: nothing the server can call, so the
+ * cookie alone seeds the state.
  */
 const serverResolution = function serverResolution(
 	provider: InthProviderOptions,
 	route: ConsentRoute | undefined
 ): Partial<ResolveRequestConsentOptions> {
-	const mode = provider.mode as (ModeData & TestingModeOptions) | undefined;
-	if (mode?.type === 'testing') {
-		// The test's policy or the recommended pack, resolved here so the
-		// banner renders on the server, and never in production.
-		assertNotProduction('@inth/angular/testing');
-		const iab = mode.iab ?? isIABConfigured(provider.iab);
-		return {
-			mode: 'offline',
-			offline: {
-				iabEnabled: isIABConfigured(provider.iab),
-				policyRules:
-					mode.policy === undefined
-						? recommendedPolicyRules({ iab })
-						: ([] as PolicyRule[]).concat(mode.policy),
-			},
-		};
+	const { mode } = provider;
+	const data = mode as { type?: unknown; projectUrl?: string } | undefined;
+	if (typeof mode === 'function' && typeof data?.type !== 'string') {
+		return {};
 	}
-	const data: ModeData | undefined =
-		mode ??
-		(provider.projectUrl === undefined ? undefined : { type: 'manifest' });
-	switch (data?.type) {
-		case 'hosted':
-			return {
-				initHeaders: data.headers,
-				initUrl: data.initUrl,
-				mode: 'hosted',
-				projectUrl: data.projectUrl ?? provider.projectUrl,
-			};
-		case 'manifest':
-			// The browser resolves; the server reads the cookie only.
-			if (data.resolve === 'browser') {
-				return {};
-			}
-			return {
-				gvlRoute: route ? `${route.routePrefix}/init` : undefined,
-				manifest: data.snapshot,
-				manifestUrl: data.manifestUrl,
-				mode: 'manifest',
-				projectUrl: data.projectUrl ?? provider.projectUrl,
-			};
-		default:
-			// A transport of its own: nothing the server can call. The cookie
-			// still seeds the state.
-			return {};
-	}
+	return resolveServerMode({
+		adapter: ADAPTER,
+		iab: isIABConfigured(provider.iab),
+		mode: mode as ServerModeInput,
+		projectUrl: data?.projectUrl ?? provider.projectUrl,
+		routePrefix: route?.routePrefix,
+	}).consent;
 };
 
 /**
@@ -187,7 +141,6 @@ const resolveServerState = function resolveServerState(
 			language: options.language,
 			region: options.region,
 		},
-		ownRoutes: options.route ? [options.route.routePrefix] : undefined,
 		request: request ? { headers: request.headers, url: request.url } : {},
 		shared: options.shared === true || request === null,
 		storage: options.cookieName

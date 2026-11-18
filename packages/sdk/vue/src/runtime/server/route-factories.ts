@@ -9,7 +9,11 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  * the Inth runtime config, sends relative backend URLs through Nitro's
  * in-process fetch, and hands detached work to the preset's `waitUntil`.
  */
-import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
+import {
+	createConsentRouteHandler,
+	readWaitUntil,
+	resolveServerMode,
+} from '@inth/sdk/server';
 import type { ConsentRouteHandler, ManifestFetch } from '@inth/sdk/server';
 import { defineEventHandler, sendWebResponse, toWebRequest } from 'h3';
 import type { EventHandlerRequest, H3Event } from 'h3';
@@ -140,20 +144,20 @@ export const createConsentRoute = function createConsentRoute(
 			return current;
 		}
 		const config = readConsentConfig(runtimeConfig);
-		const mode = readNuxtMode(config);
-		const handle = createConsentRouteHandler({
-			adapter: '@inth/vue',
-			fetch: dependencies.fetch,
-			manifest: dependencies.manifest,
-			// With browser resolution, `manifestUrl` is what the browser
-			// fetches instead of this route.
-			manifestUrl:
-				mode.type === 'manifest' && mode.resolve !== 'browser'
-					? mode.manifestUrl
-					: undefined,
+		const prefix = readNuxtRoutePrefix(config);
+		const { route } = resolveServerMode({
+			adapter: '@inth/nuxt',
+			buildSnapshot: dependencies.manifest,
+			mode: readNuxtMode(config),
 			projectUrl: config.projectUrl,
+			routePrefix: prefix,
 		});
-		const next = { handle, prefix: readNuxtRoutePrefix(config), runtimeConfig };
+		const handle = createConsentRouteHandler({
+			...route,
+			adapter: '@inth/nuxt',
+			fetch: dependencies.fetch,
+		});
+		const next = { handle, prefix, runtimeConfig };
 		built.current = next;
 		return next;
 	};

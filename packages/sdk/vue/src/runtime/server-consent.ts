@@ -8,12 +8,12 @@ import type { ServerExperiment } from '@inth/sdk/engine';
  * in `resolveRequestConsent` from `@inth/sdk/server`, shared with every
  * other adapter. This module supplies what Nuxt knows about the request.
  */
-import { readWaitUntil, resolveRequestConsent } from '@inth/sdk/server';
-import type {
-	ManifestFetch,
-	RequestConsentState,
-	ResolveRequestConsentOptions,
+import {
+	readWaitUntil,
+	resolveRequestConsent,
+	resolveServerMode,
 } from '@inth/sdk/server';
+import type { ManifestFetch, RequestConsentState } from '@inth/sdk/server';
 
 import snapshot from '#@inth/sdk/server-manifest-snapshot';
 
@@ -34,44 +34,15 @@ export interface NuxtConsentRequest {
 	event?: { fetch?: unknown; waitUntil?: unknown } | null;
 }
 
-type ModeOptions = Pick<
-	ResolveRequestConsentOptions,
-	'projectUrl' | 'initHeaders' | 'initUrl' | 'manifest' | 'manifestUrl' | 'mode'
->;
-
 /**
- * Where the render asks for the policy. `manifest()` with a consent route
- * resolves through that route in-process, which keeps its fallback to the
- * backend's `/init`. Without the route it resolves from the snapshot, or
- * the manifest read at runtime. With no mode it asks the backend's `/init`.
- */
-const readModeOptions = function readModeOptions(
-	config: Partial<RuntimeConsentConfig> & NuxtResolvedModeConfig
-): ModeOptions {
-	const mode = readNuxtMode(config);
-	if (mode.type === 'hosted') {
-		return {
-			initHeaders: mode.headers,
-			mode: 'hosted',
-			projectUrl: config.projectUrl,
-		};
-	}
-	const routePrefix = readNuxtRoutePrefix(config);
-	if (routePrefix !== undefined) {
-		return { initUrl: `${routePrefix}/init`, mode: 'hosted' };
-	}
-	return {
-		manifest: snapshot,
-		manifestUrl: mode.type === 'manifest' ? mode.manifestUrl : undefined,
-		mode: 'manifest',
-		projectUrl: config.projectUrl,
-	};
-};
-
-/**
- * Resolves the visitor's consent state for a Nuxt server render.
+ * Resolves the visitor's consent state for a Nuxt server render, by the
+ * rule `resolveServerMode` applies in every adapter: `manifest()` from the
+ * snapshot, or the manifest read at runtime, falling back to the backend's
+ * `/init`; `hosted()` from the backend's `/init`.
  *
- * @param config - The merged Inth runtime config.
+ * @param config - The merged Inth runtime config. Its `projectUrl` is the
+ * server's: the private `NUXT_INTH_PROJECT_URL` over the public one, as the
+ * consent route reads it.
  * @param request - The request facts from Nuxt's composables.
  * @returns The serializable state the client hydrates from.
  */
@@ -89,9 +60,16 @@ export const resolveNuxtConsent = async function resolveNuxtConsent(
 			: undefined;
 	// The experiment rides along for the arm rule only; the Vue kernel seeds
 	// the experiment from its own config.
+	const server = resolveServerMode({
+		adapter: '@inth/nuxt',
+		buildSnapshot: snapshot,
+		mode: readNuxtMode(config),
+		projectUrl: config.projectUrl,
+		routePrefix: readNuxtRoutePrefix(config),
+	});
 	const { experiment: _carried, ...state } = await resolveRequestConsent({
-		...readModeOptions(config),
-		adapter: '@inth/vue',
+		...server.consent,
+		adapter: '@inth/nuxt',
 		experiment,
 		localFetch,
 		// Off here means the page has no journey: the state says so and the

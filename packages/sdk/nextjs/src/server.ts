@@ -295,30 +295,22 @@ export const resolveConsent = async function resolveConsent(
 	const facts = options.request
 		? await readRequestContext(options.request)
 		: await readAppRouterRequest();
-	const { routePrefix } = source;
 	return (await resolveRequestConsent({
+		...source.server.consent,
 		adapter: '@inth/nextjs',
 		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
-		gvlRoute: routePrefix ? `${routePrefix}/init` : undefined,
-		initHeaders: source.initHeaders,
 		journey: options.journey ?? source.config?.journey,
-		manifest: source.snapshot,
 		// The manifest route's Data Cache hint, so a render and the route
 		// share the Next.js Data Cache as well as the process cache.
 		manifestFetchInit: { next: createManifestFetchInit().next } as Omit<
 			RequestInit,
 			'headers' | 'method'
 		>,
-		manifestUrl: source.manifestUrl,
-		mode: source.mode,
 		now: options.now,
 		onError: (error, url) => reportPrefetchError(options, error, url),
 		overrides: { country: options.country, language: options.language },
-		// The app's own consent route: the render never fetches it.
-		ownRoutes: routePrefix ? [routePrefix] : [],
-		projectUrl: source.projectUrl,
 		request: facts,
 		storage: options.cookieName
 			? { storageKey: options.cookieName }
