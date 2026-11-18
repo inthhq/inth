@@ -6,10 +6,11 @@ These docs ship inside the package so coding agents can read them offline. Open 
 
 ## Using these docs
 
-These docs describe inth v3. Find your app's row in Choose your setup, then follow that framework guide from start to finish; it names the files to create and the backend URL to use. A visible banner does not prove anything: check that vendor requests wait for consent, that rejection survives a reload, and that preferences can be reopened.
+These docs describe Inth v3. Find your app's row in Choose your setup, then follow that framework guide from start to finish; it names the files to create and the backend URL to use. A visible banner does not prove anything: check that vendor requests wait for consent, that rejection survives a reload, and that preferences can be reopened.
 
 ## Start here
 
+- [React quickstart](./docs/frameworks/react/quickstart.md)
 - [Choose your setup](./docs/concepts/choose-your-setup.md): Pick the Inth setup for your framework, rendering mode and hosting, and decide who runs the consent backend.
 - [How consent works](./docs/concepts/how-consent-works.md): What Inth decides on each page load, the difference between a permission and a recorded choice, and what happens when a visitor saves.
 - [Customize the interface](./docs/customization/overview.md): Change inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
@@ -18,7 +19,7 @@ These docs describe inth v3. Find your app's row in Choose your setup, then foll
 
 ## More documentation
 
-[Documentation index](/docs/llms.txt) · [Full Markdown context](/llms-full.txt). Prefer the index and individual pages for focused tasks.
+[Documentation index](https://c15t.com/docs/llms.txt) · [Full Markdown context](https://c15t.com/llms-full.txt). Prefer the index and individual pages for focused tasks.
 
 ## Frameworks
 
