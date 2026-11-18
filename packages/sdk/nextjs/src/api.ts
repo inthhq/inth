@@ -87,9 +87,6 @@ export interface NextConsentRouteOptions extends ConsentSourceOptions {
 /**
  * The upstream manifest request as the App Router sees it: JSON with the
  * Inth protocol headers, and a `next.revalidate` hint for the Data Cache.
- *
- * @param options - Handler options; reads `manifestRevalidateSeconds`.
- * @returns The `fetch` init for the manifest request.
  */
 export const createManifestFetchInit = function createManifestFetchInit(
 	options: Pick<NextConsentRouteOptions, 'manifestRevalidateSeconds'> = {}

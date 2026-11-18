@@ -9,7 +9,7 @@
  * - The server renders the whole root (`EagerConsentRoot`): the banner, its
  *   styles and the scripts the server starts are in the first HTML, as
  *   before, plus the snapshots the page rendered from.
- * - The browser renders the page at once, with inth's hooks reading those
+ * - The browser renders the page at once, with Inth's hooks reading those
  *   snapshots. Hook actions ask for the engine and run when it attaches.
  * - When the visitor still has to choose and nothing optional is granted,
  *   nothing the engine does can show before a tap, so it loads after the
@@ -91,7 +91,6 @@ const loadEngine = (): Recorded<EngineModule> => {
  * once (a client-only render, or one the shell cannot stand in for) then
  * renders without suspending. Tests use it before a synchronous render.
  *
- * @returns The engine's module.
  * @internal
  */
 export const preloadConsentRoot = (): Promise<EngineModule> => loadEngine();
@@ -232,7 +231,7 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
  * merges one key at a time, and `options.callbacks` one callback at a time.
  *
  * The consent engine loads after the page. Components under the root that
- * call inth's hooks render from the server's consent state until then, and
+ * call Inth's hooks render from the server's consent state until then, and
  * their actions run once it has loaded. For a visitor the banner asks to
  * choose, it loads after the page's priority images, or at the first tap.
  *

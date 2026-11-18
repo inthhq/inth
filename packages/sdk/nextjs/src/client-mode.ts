@@ -62,7 +62,6 @@ export interface NextClientModeOptions {
  * @param selected - The mode as data, a transport factory, used as is, or
  *   `undefined` for `manifest()`.
  * @param options - Backend URL, route prefix and `proxy`.
- * @returns A provider transport factory.
  * @throws {Error} When the hosted backend or `manifest()` has no backend
  *   URL.
  * @internal

@@ -154,8 +154,6 @@ const assertConsentURL = function assertConsentURL(
  * `/`-relative path goes through the shared check, which rejects `/`; an
  * absolute `http(s)` URL is kept; anything else is rejected.
  *
- * @param routePrefix - The configured prefix.
- * @returns The prefix without a trailing slash.
  * @throws {TypeError} When the prefix is `/`, or neither a path nor an
  * absolute `http(s)` URL.
  * @internal

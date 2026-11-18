@@ -72,9 +72,6 @@ export type PagesResolveConsentOptions = Omit<
  * Builds the `request` adapter the server helpers expect from a Node
  * request. Headers convert to Web `Headers`; cookies come from the `cookie`
  * header.
- *
- * @param req - `req` from `getServerSideProps` or an API route
- * @returns A `NextRequestContext` for `@inth/nextjs/server`
  */
 export const createPagesRequestContext = function createPagesRequestContext(
 	req: NodeRequestLike
@@ -93,8 +90,6 @@ export const createPagesRequestContext = function createPagesRequestContext(
  * {@link withConsentProps}, which calls this and makes the result
  * JSON-safe.
  *
- * @param options - The Node `req`, and the server helper options
- * @returns The visitor's `ConsentState`
  * @example
  * ```ts
  * const state = await resolveConsent({ req });

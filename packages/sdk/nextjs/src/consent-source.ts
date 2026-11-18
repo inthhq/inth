@@ -57,7 +57,6 @@ export interface ConsentSource {
  * The config's route prefix, checked as `defineConsentConfig` checks it: a
  * config passed straight to a helper skips that function.
  *
- * @param config - The config the helper reads.
  * @returns The prefix without a trailing slash, or `undefined`.
  * @throws {TypeError} When the prefix is `/`, or neither a `/`-relative
  * path nor an absolute `http(s)` URL.
@@ -106,8 +105,6 @@ const modeFor = function modeFor(
  * The backend URL is the option's, then the config's, then
  * `NEXT_PUBLIC_INTH_PROJECT_URL`, then the one the build read.
  *
- * @param options - Explicit overrides of the config.
- * @returns Where to resolve from.
  * @internal
  */
 export const resolveConsentSource = function resolveConsentSource(

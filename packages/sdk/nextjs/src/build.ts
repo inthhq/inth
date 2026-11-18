@@ -134,7 +134,6 @@ type TranspileConfig = (options: {
 	nextConfigPath: string;
 }) => Promise<unknown>;
 
-/** Evaluates a config file and returns its exports. */
 const importConfigFile = async function importConfigFile(
 	file: string,
 	root: string
@@ -322,7 +321,7 @@ const withConsentAliases = function withConsentAliases(
  * The manifest is written to `node_modules/.cache/inth/manifest.js` and
  * handed to the server helpers. `resolveConsent` and the consent route handlers read
  * it by default. Server code that needs it reads `snapshot` from
- * `@inth/sdk/generated` (or `@inth/sdk/generated`). Nothing is written into the
+ * `@inth/nextjs/generated` (or `@inth/sdk/generated`). Nothing is written into the
  * app's source tree. Production server startup never fetches or rewrites the
  * snapshot.
  *
@@ -362,8 +361,7 @@ const withConsentAliases = function withConsentAliases(
  * the one in `inth.config.ts`, then `NEXT_PUBLIC_INTH_PROJECT_URL`, from
  * the environment or a `.env` file, and the build appends `/manifest`.
  * @returns An asynchronous Next.js configuration factory.
- * @throws {Error} When the fetch fails in `'fail'` mode, the default for
- * `next build`, the snapshot cannot be written, or `defineConsentConfig`
+ * @throws {Error} When the fetch fails in `'fail'` mode, the snapshot cannot be written, or `defineConsentConfig`
  * rejects `inth.config.ts`.
  * @example
  * ```ts

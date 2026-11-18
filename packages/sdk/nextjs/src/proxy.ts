@@ -31,10 +31,6 @@ const DEFAULT_REGION_COOKIE = 'inth-region';
  *
  * export const proxy = (request: NextRequest) => inthProxy(request);
  * ```
- *
- * @param request - The incoming Next.js request.
- * @param options - Header and cookie forwarding options.
- * @returns A response that forwards normalized consent headers.
  */
 export const inthProxy = function inthProxy(
 	request: NextRequest,
