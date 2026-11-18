@@ -34,6 +34,7 @@ const apps = [
 		buildOutput: 'benchmarks/nuxt-browser-bench/.output/server/index.mjs',
 		dir: 'benchmarks/nuxt-browser-bench',
 		env: { PORT: '4313' },
+		// oxlint-disable-next-line no-use-before-define -- Runs after the module loads; the check sits with the other checks below.
 		extraChecks: [(app) => verifyNuxtNitroRoutes(app)],
 		label: 'Nuxt manifest SSR',
 		path: '/ssr-manifest',
