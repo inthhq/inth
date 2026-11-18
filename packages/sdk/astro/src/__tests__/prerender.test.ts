@@ -1,3 +1,4 @@
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -220,6 +221,11 @@ describe('browser-rendered banner', () => {
 			].filter((node): node is Element => node !== null);
 			expect(expected.length).toBeGreaterThan(0);
 			expect(built.map(describeTree)).toEqual(expected.map(describeTree));
+			expect(
+				server
+					.querySelector('[data-testid="consent-banner-root"]')
+					?.getAttribute(SURFACE_ROOT_ATTRIBUTE)
+			).toBe('banner');
 		} finally {
 			vi.unstubAllGlobals();
 		}

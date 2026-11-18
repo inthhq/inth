@@ -269,6 +269,13 @@ export default mergeConfig(
 								),
 							},
 							{
+								find: '@inth/sdk-core/runtime/page-globals',
+								replacement: resolve(
+									__dirname,
+									'../core/src/runtime/page-globals.ts'
+								),
+							},
+							{
 								find: '@inth/sdk-core/runtime',
 								replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 							},
