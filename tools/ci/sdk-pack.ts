@@ -62,14 +62,14 @@ export const publishOrder = <T extends { manifest: Manifest }>(
 const distTagFor = (version = "") =>
   /^[^-+]*-(?<id>[^.+]+)/u.exec(version)?.groups?.id;
 
-/** Paths the manifest's entry points name. */
+/** Paths the manifest's entry points and package imports name. */
 const entryTargets = (manifest: Manifest) => {
   const fields = [manifest.main, manifest.module, manifest.types]
     .filter((field) => field !== undefined)
     .map((field) => (field.startsWith("./") ? field : `./${field}`));
-  // Every "./" string in the exports map that is a value, not a subpath key.
+  // Every "./" string in exports or imports that is a value, not a key.
   const exported = [
-    ...JSON.stringify(manifest.exports ?? null).matchAll(
+    ...JSON.stringify([manifest.exports, manifest.imports]).matchAll(
       /"(?<target>\.\/[^"]*)"(?!\s*:)/gu
     ),
   ].map((match) => match.groups?.target ?? "");

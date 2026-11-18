@@ -22,7 +22,7 @@ pnpm sdk:pack --out /tmp/inth-sdk-tarballs
 
 npm can only set up trusted publishing for a package that already exists, so `0.0.0-alpha.0` publishes from a maintainer's machine. It has no provenance, because npm only creates provenance in CI.
 
-1. Check out `main` with a clean working tree. Run the rehearsal above. All ten packages must pass.
+1. Check out `main`, pull it, and check that the working tree is clean. Note the commit with `git rev-parse HEAD`. Run the rehearsal above. All ten packages must pass.
 2. Run `npm login` with an account that can publish under `@inth`.
 3. Publish the tarballs in order:
 
@@ -36,7 +36,7 @@ npm can only set up trusted publishing for a package that already exists, so `0.
 
    npm can't replace a published version. If a package's contents must change after any package has published, release all ten as the next alpha: add a changelog, run `pnpm tegami:sdk version --no-checks` on a branch to replace the publish lock, merge it, then rehearse and publish by hand again.
 
-4. Run `npm view @inth/react dist-tags` for each package. `alpha` must point at `0.0.0-alpha.0`. npm also points `latest` at a package's first version, whatever tag it went to, and later alphas only move `alpha`. Until the first stable release, `npm install @inth/react` with no tag installs `0.0.0-alpha.0`.
+4. Run `npm view @inth/react dist-tags` for each package. `alpha` must point at `0.0.0-alpha.0`. npm also points `latest` at a package's first version, whatever tag it went to, and later alphas only move `alpha`. Until the first stable release, `npm install @inth/react` with no tag installs `0.0.0-alpha.0`. `npm dist-tag add @inth/react@<version> latest` moves it.
 
 ## Turn on the workflow
 
@@ -47,7 +47,12 @@ npm can only set up trusted publishing for a package that already exists, so `0.
    gh variable set SDK_RELEASE_ENABLED --body true --repo inthhq/inth
    ```
 
-3. Run **Release SDK** from the Actions tab on `main`, before anything else merges to `main`. Every version is on npm already, so it publishes nothing. It tags the commit it runs on as `sdk@0.0.0-alpha.0` and creates that GitHub release.
+3. Run **Release SDK** from the Actions tab on `main`. Every version is on npm already, so it publishes nothing. It tags the commit it runs on as `sdk@0.0.0-alpha.0` and creates that GitHub release. If `main` has moved past the commit you packed, push the tag to that commit first, and the run then only creates the release:
+
+   ```sh
+   git tag sdk@0.0.0-alpha.0 <packed commit>
+   git push origin sdk@0.0.0-alpha.0
+   ```
 
 ## Release from CI
 
@@ -83,11 +88,11 @@ Do this for each of the ten packages on npmjs.com:
 4. Allow it to publish with `npm publish`, not only to stage a publish. Save the connection and approve with two-factor authentication.
 5. Under **Publishing access**, select **Require two-factor authentication and disallow tokens**, then **Update Package Settings**. Trusted publishing still works, and no token can publish the package.
 
-Or connect all ten from a terminal, with npm 11.15 or later. npm asks for two-factor authentication once, and the pause avoids its rate limit:
+Or connect all ten from a terminal, with npm 11.15 or later. At the first two-factor prompt, choose to skip it for five minutes, so the rest go through. The pause avoids npm's rate limit, and the loop stops at the first failure:
 
 ```sh
 for name in sdk angular react svelte vue astro integrations nextjs nuxt tanstack-start; do
-  npm trust github "@inth/$name" --repo inthhq/inth --file release-sdk.yml --env npm-sdk --allow-publish --yes
+  npm trust github "@inth/$name" --repo inthhq/inth --file release-sdk.yml --env npm-sdk --allow-publish --yes || break
   sleep 2
 done
 ```

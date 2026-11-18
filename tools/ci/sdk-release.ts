@@ -23,6 +23,7 @@ export interface Manifest {
   version?: string;
   private?: boolean;
   publishConfig?: { access?: string; tag?: string };
+  imports?: unknown;
   repository?: { url?: string };
   files?: string[];
   main?: string;
@@ -94,14 +95,24 @@ export const createSdkRelease = (
   });
 };
 
+/**
+ * The Tegami command `release` runs. `tegami ci` drafts a new version before
+ * it publishes, so a pending release is finished first. `--dry-run` passes
+ * through, and only `publish` accepts it.
+ */
+export const releaseArgv = (status: string, args: string[]) => [
+  status === "pending" ? "publish" : "ci",
+  ...args,
+];
+
 if (import.meta.main) {
   const release = createSdkRelease();
+  const [command = "", ...args] = process.argv.slice(2);
   let argv = process.argv.slice(2);
-  // `tegami ci` drafts a new version before it publishes, so `release`
-  // finishes a pending release first. A failed status check fails the run.
-  if (argv[0] === "release") {
+  if (command === "release") {
+    // A failed status check throws here, so the run fails before versioning.
     const { status } = await release.getPublishStatus();
-    argv = [status === "pending" ? "publish" : "ci", ...argv.slice(1)];
+    argv = releaseArgv(status, args);
   }
   await createCli(release).parseAsync(argv);
 }

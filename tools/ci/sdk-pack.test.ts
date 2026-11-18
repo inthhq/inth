@@ -61,6 +61,7 @@ test("a tarball that would install wrong is refused", () => {
             "@inth/sdk-core": "0.0.0-alpha.0",
           },
           devDependencies: { "@c15t/vitest-config": "workspace:*" },
+          imports: { "#provider": { browser: "./dist/provider.js" } },
           peerDependencies: { "@inth/react": "<0.0.0-alpha.0" },
           publishConfig: { access: "public" },
           repository: { url: "https://github.com/c15t/c15t.git" },
@@ -81,6 +82,7 @@ test("a tarball that would install wrong is refused", () => {
     "peerDependencies asks for @inth/react@<0.0.0-alpha.0, which publishes 0.0.0-alpha.0",
     "files lists AGENTS.md, which is not in the tarball",
     "entry point dist/index.d.ts is not in the tarball",
+    "entry point dist/provider.js is not in the tarball",
     'dist/index.js imports the private package from "@inth/sdk-core/version"',
   ]);
 });

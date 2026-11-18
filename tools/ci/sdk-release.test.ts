@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 
 import { expect, test } from "vitest";
 
-import { createSdkRelease, sdkPackages } from "./sdk-release.ts";
+import { createSdkRelease, releaseArgv, sdkPackages } from "./sdk-release.ts";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
@@ -26,4 +26,13 @@ test("the SDK release versions the @inth packages in packages/sdk and nothing el
   for (const name of ["@inth/cli", "@inth/react-native", "inth"]) {
     expect(members, name).not.toContain(name);
   }
+});
+
+test("a release finishes a pending publish before it drafts a new version", () => {
+  expect(releaseArgv("pending", ["--dry-run"])).toEqual([
+    "publish",
+    "--dry-run",
+  ]);
+  expect(releaseArgv("success", [])).toEqual(["ci"]);
+  expect(releaseArgv("none", [])).toEqual(["ci"]);
 });
