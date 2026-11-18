@@ -2,22 +2,20 @@ import { fileURLToPath } from "node:url";
 
 import { expect, test } from "vitest";
 
-import {
-  publishOrder,
-  sdkDistTag,
-  sdkPackages,
-  tarballProblems,
-} from "./sdk-pack.ts";
-import type { Expectations, Manifest, PackedPackage } from "./sdk-pack.ts";
+import { publishOrder, settingProblems, tarballProblems } from "./sdk-pack.ts";
+import type { Expectations, PackedPackage } from "./sdk-pack.ts";
+import { sdkPackages } from "./sdk-release.ts";
+import type { Manifest } from "./sdk-release.ts";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const published = sdkPackages(root).filter(({ manifest }) => !manifest.private);
 
 const source: Manifest = {
   dependencies: { "@inth/sdk": "workspace:*" },
   exports: { ".": { import: "./dist/index.js", types: "./dist/index.d.ts" } },
   files: ["dist", "AGENTS.md"],
   name: "@inth/react",
-  publishConfig: { access: "public", tag: sdkDistTag },
+  publishConfig: { access: "public", tag: "alpha" },
   version: "0.0.0-alpha.0",
 };
 
@@ -82,8 +80,14 @@ test("a tarball that would install wrong is refused", () => {
   ]);
 });
 
+test("a stable version must not keep a prerelease dist-tag", () => {
+  expect(settingProblems({ ...source, version: "1.0.0" })).toEqual([
+    'publishConfig.tag is set, but 1.0.0 publishes to "latest"',
+  ]);
+});
+
 test("each package publishes after the packages it depends on", () => {
-  const order = publishOrder(sdkPackages(root).map(({ manifest }) => manifest));
+  const order = publishOrder(published).map(({ manifest }) => manifest.name);
   expect(order[0]).toBe("@inth/sdk");
   expect(order.indexOf("@inth/react")).toBeLessThan(
     order.indexOf("@inth/nextjs")
@@ -92,14 +96,10 @@ test("each package publishes after the packages it depends on", () => {
   expect(order.indexOf("@inth/svelte")).toBeLessThan(
     order.indexOf("@inth/astro")
   );
-  expect(order).not.toContain("@inth/sdk-core");
 });
 
-test("every published SDK package carries the prerelease settings", () => {
-  for (const { manifest } of sdkPackages(root)) {
-    expect(manifest.publishConfig, manifest.name).toEqual({
-      access: "public",
-      tag: sdkDistTag,
-    });
+test("every published SDK package has the publish settings its version needs", () => {
+  for (const { manifest } of published) {
+    expect(settingProblems(manifest), manifest.name).toEqual([]);
   }
 });

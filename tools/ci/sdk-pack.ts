@@ -1,15 +1,14 @@
 // Packs every SDK package that publishes to npm and checks each tarball as
 // the registry would receive it, without publishing anything. Build the SDK
 // first, then run `pnpm sdk:pack`. Pass `--out <dir>` to keep the tarballs,
-// for example to publish those exact files by hand (.tegami/sdk/README.md).
+// numbered in publish order, for the first publish by hand
+// (.tegami/sdk/README.md).
 import { execFileSync } from "node:child_process";
 import {
-  existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
-  renameSync,
   rmSync,
   statSync,
 } from "node:fs";
@@ -17,26 +16,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
-/** The npm dist-tag every SDK prerelease publishes under. */
-export const sdkDistTag = "alpha";
-
-type Dependencies = Record<string, string>;
-
-export interface Manifest {
-  name: string;
-  version?: string;
-  private?: boolean;
-  publishConfig?: { access?: string; tag?: string };
-  files?: string[];
-  main?: string;
-  module?: string;
-  types?: string;
-  exports?: unknown;
-  dependencies?: Dependencies;
-  peerDependencies?: Dependencies;
-  optionalDependencies?: Dependencies;
-  devDependencies?: Dependencies;
-}
+import { readManifest, sdkPackages } from "./sdk-release.ts";
+import type { Manifest } from "./sdk-release.ts";
 
 /** The sections a consumer's install reads. */
 const installedFields = [
@@ -45,55 +26,44 @@ const installedFields = [
   "optionalDependencies",
 ] as const;
 
-const readManifest = (dir: string): Manifest =>
-  JSON.parse(readFileSync(path.join(dir, "package.json"), "utf-8"));
-
-/** The SDK packages that publish, as directory and manifest. */
-export const sdkPackages = (root: string) => {
-  const directory = path.join(root, "packages/sdk");
-  return readdirSync(directory, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => path.join(directory, entry.name))
-    .filter((dir) => existsSync(path.join(dir, "package.json")))
-    .map((dir) => ({ dir, manifest: readManifest(dir) }))
-    .filter(({ manifest }) => !manifest.private);
-};
-
-/** Every package named in `manifest`'s install sections. */
-const installedNames = (manifest: Manifest) =>
-  installedFields.flatMap((field) => Object.keys(manifest[field] ?? {}));
-
-/** Names in the order to publish them: each after the packages it names. */
-export const publishOrder = (manifests: Manifest[]) => {
-  const byName = new Map(
-    manifests.map((manifest) => [manifest.name, manifest])
-  );
-  const order: string[] = [];
-  const visit = (name: string, trail: string[]) => {
-    if (order.includes(name)) {
+/** `packages` sorted so each comes after the ones it installs. */
+export const publishOrder = <T extends { manifest: Manifest }>(
+  packages: T[]
+) => {
+  const byName = new Map(packages.map((entry) => [entry.manifest.name, entry]));
+  const order: T[] = [];
+  const visit = (entry: T, trail: string[]) => {
+    const { name } = entry.manifest;
+    if (order.includes(entry)) {
       return;
     }
     if (trail.includes(name)) {
       throw new Error(`Dependency cycle: ${[...trail, name].join(" -> ")}`);
     }
-    const manifest = byName.get(name);
-    for (const dependency of manifest
-      ? installedNames(manifest).toSorted()
-      : []) {
-      if (byName.has(dependency)) {
-        visit(dependency, [...trail, name]);
+    for (const dependency of installedFields
+      .flatMap((field) => Object.keys(entry.manifest[field] ?? {}))
+      .toSorted()) {
+      const sibling = byName.get(dependency);
+      if (sibling) {
+        visit(sibling, [...trail, name]);
       }
     }
-    order.push(name);
+    order.push(entry);
   };
-  for (const name of [...byName.keys()].toSorted()) {
-    visit(name, []);
+  for (const entry of packages.toSorted((a, b) =>
+    a.manifest.name < b.manifest.name ? -1 : 1
+  )) {
+    visit(entry, []);
   }
   return order;
 };
 
+/** The npm dist-tag for `version`: its prerelease id, or none for `latest`. */
+const distTagFor = (version = "") =>
+  /^[^-+]*-(?<id>[^.+]+)/u.exec(version)?.groups?.id;
+
 /** Paths the manifest's entry points name, wildcards left out. */
-export const entryTargets = (manifest: Manifest) => {
+const entryTargets = (manifest: Manifest) => {
   const fields = [manifest.main, manifest.module, manifest.types]
     .filter((field) => field !== undefined)
     .map((field) => (field.startsWith("./") ? field : `./${field}`));
@@ -130,19 +100,27 @@ export interface Expectations {
   privateNames: Set<string>;
 }
 
-const settingProblems = (manifest: Manifest, source: Manifest) => [
-  ...(manifest.name === source.name && manifest.version === source.version
-    ? []
-    : [
-        `packed as ${manifest.name}@${manifest.version}, expected ${source.name}@${source.version}`,
-      ]),
-  ...(manifest.publishConfig?.access === "public"
-    ? []
-    : ['publishConfig.access is not "public"']),
-  ...(manifest.publishConfig?.tag === sdkDistTag
-    ? []
-    : [`publishConfig.tag is not "${sdkDistTag}"`]),
-];
+/** What is wrong with a manifest's publish settings, or an empty list. */
+export const settingProblems = (manifest: Manifest, source = manifest) => {
+  const tag = distTagFor(manifest.version);
+  return [
+    ...(manifest.name === source.name && manifest.version === source.version
+      ? []
+      : [
+          `packed as ${manifest.name}@${manifest.version}, expected ${source.name}@${source.version}`,
+        ]),
+    ...(manifest.publishConfig?.access === "public"
+      ? []
+      : ['publishConfig.access is not "public"']),
+    ...(manifest.publishConfig?.tag === tag
+      ? []
+      : [
+          tag
+            ? `publishConfig.tag is not "${tag}"`
+            : `publishConfig.tag is set, but ${manifest.version} publishes to "latest"`,
+        ]),
+  ];
+};
 
 const dependencyProblems = (
   manifest: Manifest,
@@ -192,9 +170,6 @@ const fileProblems = (packed: PackedPackage, source: Manifest) => {
 };
 
 const importProblems = (packed: PackedPackage, privateNames: Set<string>) => {
-  if (privateNames.size === 0) {
-    return [];
-  }
   // Import and require specifiers only: a private name may also be a word in
   // a string, such as the workspace root's "inth".
   const importsPrivate = new RegExp(
@@ -232,33 +207,38 @@ const listFiles = (dir: string, prefix = ""): string[] =>
     }
   );
 
-/** Packs `dir` with pnpm, which resolves `workspace:` ranges as publish does. */
-const pack = (dir: string, out: string, scratch: string) => {
-  const destination = mkdtempSync(path.join(scratch, "pack-"));
-  execFileSync("pnpm", ["pack", "--pack-destination", destination], {
-    cwd: dir,
-    stdio: ["ignore", "ignore", "inherit"],
-  });
-  const [tarball] = readdirSync(destination);
+/**
+ * Packs `dir` into `out` with pnpm, which resolves `workspace:` ranges as
+ * publish does. The tarball's name starts with `prefix`.
+ */
+const pack = (dir: string, out: string, prefix: string, scratch: string) => {
+  execFileSync(
+    "pnpm",
+    ["pack", "--out", path.join(out, `${prefix}-%s-%v.tgz`)],
+    {
+      cwd: dir,
+      stdio: ["ignore", "ignore", "inherit"],
+    }
+  );
+  const tarball = readdirSync(out).find((name) =>
+    name.startsWith(`${prefix}-`)
+  );
   if (!tarball) {
     throw new Error(`pnpm pack wrote nothing for ${dir}`);
   }
-  const target = path.join(out, tarball);
-  renameSync(path.join(destination, tarball), target);
-
+  const file = path.join(out, tarball);
   const extracted = mkdtempSync(path.join(scratch, "unpacked-"));
-  execFileSync("tar", ["-xzf", target, "-C", extracted]);
+  execFileSync("tar", ["-xzf", file, "-C", extracted]);
   const packageDir = path.join(extracted, "package");
   const files = listFiles(packageDir);
   const code = new Map(
     files
-      .filter((file) => codeFile.test(file))
-      .map((file) => [file, readFileSync(path.join(packageDir, file), "utf-8")])
+      .filter((name) => codeFile.test(name))
+      .map((name) => [name, readFileSync(path.join(packageDir, name), "utf-8")])
   );
   return {
+    file,
     packed: { code, files, manifest: readManifest(packageDir) },
-    size: statSync(target).size,
-    tarball: target,
   };
 };
 
@@ -280,14 +260,9 @@ const workspacePrivateNames = (root: string) => {
 const main = () => {
   const { values } = parseArgs({ options: { out: { type: "string" } } });
   const root = process.cwd();
-  const scratch = mkdtempSync(path.join(tmpdir(), "inth-sdk-pack-"));
-  const out = values.out
-    ? path.resolve(values.out)
-    : path.join(scratch, "tarballs");
-  mkdirSync(out, { recursive: true });
-
-  const packages = sdkPackages(root);
-  const byName = new Map(packages.map((entry) => [entry.manifest.name, entry]));
+  const packages = publishOrder(
+    sdkPackages(root).filter(({ manifest }) => !manifest.private)
+  );
   const versions = new Map(
     packages.map(({ manifest }) => [manifest.name, manifest.version ?? ""])
   );
@@ -300,33 +275,45 @@ const main = () => {
     );
   }
 
-  const order = publishOrder(packages.map(({ manifest }) => manifest));
+  const scratch = mkdtempSync(path.join(tmpdir(), "inth-sdk-pack-"));
+  const out = values.out
+    ? path.resolve(values.out)
+    : path.join(scratch, "tarballs");
   try {
-    for (const name of order) {
-      const entry = byName.get(name);
-      if (!entry) {
-        continue;
-      }
-      const { packed, size, tarball } = pack(entry.dir, out, scratch);
+    mkdirSync(out, { recursive: true });
+    // The first publish loops over every tarball here, so a stale one from an
+    // earlier version would publish too.
+    if (readdirSync(out).length > 0) {
+      throw new Error(`${out} is not empty. Pass a new or empty directory.`);
+    }
+    for (const [index, { dir, manifest }] of packages.entries()) {
+      const { file, packed } = pack(
+        dir,
+        out,
+        String(index + 1).padStart(2, "0"),
+        scratch
+      );
       const problems = tarballProblems(packed, {
         privateNames,
-        source: entry.manifest,
+        source: manifest,
         versions,
       });
-      const summary = `${name}@${packed.manifest.version}  ${path.basename(tarball)}  ${packed.files.length} files  ${(size / 1024).toFixed(0)} KiB`;
+      const summary = `${manifest.name}@${packed.manifest.version}  ${path.basename(file)}  ${packed.files.length} files  ${(statSync(file).size / 1024).toFixed(0)} KiB`;
       process.stdout.write(
         `${problems.length > 0 ? "FAIL" : "ok  "}  ${summary}\n`
       );
       for (const problem of problems) {
         process.stdout.write(`      ${problem}\n`);
-        failures.push(`${name}: ${problem}`);
+        failures.push(`${manifest.name}: ${problem}`);
       }
     }
   } finally {
     rmSync(scratch, { force: true, recursive: true });
   }
 
-  process.stdout.write(`\nPublish order: ${order.join(", ")}\n`);
+  process.stdout.write(
+    `\nPublish order: ${packages.map(({ manifest }) => manifest.name).join(", ")}\n`
+  );
   if (values.out) {
     process.stdout.write(`Tarballs: ${out}\n`);
   }
@@ -338,7 +325,7 @@ const main = () => {
     return;
   }
   process.stdout.write(
-    `All ${order.length} packages packed and passed for dist-tag "${sdkDistTag}".\n`
+    `All ${packages.length} packages packed and passed for dist-tag "${distTagFor(packages[0]?.manifest.version) ?? "latest"}".\n`
   );
 };
 
