@@ -4,11 +4,8 @@
  *
  * `WireDiff<Sdk, Document, Path>` is a union of strings, one per field where
  * the two differ, such as `"records body.model: only in SDK"`. It is `never`
- * when they match. Objects are compared key by key, with optionality;
- * arrays by their items; records by their values; `null` on its own; two
- * unions member by member; and anything else by assignability both ways.
- * Below `MaxDepth` levels, as in a recursive type, the rest of the shape is
- * compared by assignability alone.
+ * when they match. Below `MaxDepth` levels, as in a recursive type, the rest
+ * of the shape is compared by assignability alone.
  */
 
 type MaxDepth = 12;
@@ -117,9 +114,8 @@ type KnownDiff<A, B, Path extends string, Depth extends unknown[]> =
 	  }[keyof A & keyof B & string];
 
 /**
- * Records compare by their values. An object with known keys compares key
- * by key; an index signature beside them (a valibot loose object) only
- * says that more keys are accepted, which the document does by default.
+ * An index signature beside known keys (a valibot loose object) only says
+ * that more keys are accepted, which the document does by default.
  */
 type ObjectDiff<A, B, Path extends string, Depth extends unknown[]> =
 	IsRecord<A> extends true

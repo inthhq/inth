@@ -166,8 +166,7 @@ type Found =
 /**
  * Where the backend's document disagrees with the wire contract, or the
  * contract does not settle the field. Each entry is one field for the
- * backend to fix. When the document changes, an entry that no longer
- * matches fails below until it is removed.
+ * backend to fix.
  */
 type DocumentGaps =
 	// The contract keeps the 3.x journey query parameters on init and on

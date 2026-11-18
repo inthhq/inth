@@ -1,15 +1,5 @@
 #!/usr/bin/env bun
 
-/**
- * Generates TypeScript types from the copy of the backend's `/v1` OpenAPI
- * document in `packages/sdk/schema/vendor/backend-openapi/`.
- *
- * Run without flags after replacing `openapi.json`. `--check` compares
- * instead of writing and exits non-zero when the committed types differ;
- * `generate-v1-openapi-types.test.ts` runs the same check in
- * `bun run test:scripts`.
- */
-
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -166,27 +156,12 @@ const readDocument = (): Json =>
 /** Whether the committed types match what the document generates. */
 export const checkV1OpenApiTypes =
 	async function checkV1OpenApiTypes(): Promise<boolean> {
-		const expected = await renderTypes(readDocument());
-		try {
-			return readFileSync(TYPES_PATH, 'utf8') === expected;
-		} catch {
-			return false;
-		}
+		return (
+			readFileSync(TYPES_PATH, 'utf8') ===
+			(await renderTypes(readDocument()))
+		);
 	};
 
-const main = async function main(): Promise<void> {
-	if (process.argv.includes('--check')) {
-		if (!(await checkV1OpenApiTypes())) {
-			console.error(
-				`Out of date, run \`pnpm --dir scripts generate:v1-openapi-types\`:\n${TYPES_PATH}`
-			);
-			process.exit(1);
-		}
-		return;
-	}
-	writeFileSync(TYPES_PATH, await renderTypes(readDocument()));
-};
-
 if (import.meta.main) {
-	await main();
+	writeFileSync(TYPES_PATH, await renderTypes(readDocument()));
 }

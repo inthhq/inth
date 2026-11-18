@@ -30,9 +30,10 @@ const documentWith = (schema: Record<string, unknown>) => {
 
 describe('generate-v1-openapi-types', () => {
 	it('matches the committed types', async () => {
-		// Fails after replacing openapi.json until
-		// `pnpm --dir scripts generate:v1-openapi-types`.
-		expect(await checkV1OpenApiTypes()).toBe(true);
+		expect(
+			await checkV1OpenApiTypes(),
+			'Run `pnpm --dir scripts generate:v1-openapi-types`'
+		).toBe(true);
 	});
 
 	it('moves the listed $defs to components and follows their references', () => {
