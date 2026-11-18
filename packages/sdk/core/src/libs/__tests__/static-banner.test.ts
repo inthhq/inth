@@ -163,7 +163,7 @@ describe('static banner script', () => {
 				},
 			},
 		],
-		['other branding', { branding: 'inth' }],
+		['other branding', { branding: 'c15t' }],
 		['vendors', { vendors: [{ id: 'x' }] }],
 	])('removes the banner when /init answers with %s', async (_, changes) => {
 		const banner = mount(Promise.resolve(answer(changes)));
