@@ -13,10 +13,13 @@ import com.inth.core.transport.HostedTransport
 import com.inth.core.transport.LinkOutcome
 import com.inth.core.transport.SaveOutcome
 import com.inth.core.transport.TransportOutcome
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -209,8 +212,19 @@ class CanonicalSubjectTest {
 		)
 		val save = http.requests.single { it.url.endsWith("/v1/consent/records") }
 		assertTrue("secret-token" !in assertNotNull(save.body), "the token never goes into a save body")
-		assertTrue("\"externalId\":\"user 1\"" in save.body!!)
+		val record = kotlinx.serialization.json.Json.parseToJsonElement(save.body!!).jsonObject
+		assertEquals("user 1", record["externalId"]?.jsonPrimitive?.content)
+		assertEquals("clerk", record["identityProvider"]?.jsonPrimitive?.content, "the record names the provider")
+
+		core.logout()
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		val anonymous = kotlinx.serialization.json.Json.parseToJsonElement(
+			assertNotNull(http.requests.last { it.url.endsWith("/v1/consent/records") }.body),
+		).jsonObject
+		assertNull(anonymous["externalId"])
+		assertNull(anonymous["identityProvider"], "logout drops the provider with the external id")
 	}
+
 
 	@Test
 	fun `a save is sent even when a snapshot observer throws`() {
