@@ -384,8 +384,9 @@ export const createWebConsentClient = function createWebConsentClient(
 	const projectUrl = normalizeProjectUrl(options.projectUrl, {
 		relaxed: dryRun,
 	});
-	// The browser engine still names this option `domain`.
-	const domain = options.property ?? undefined;
+	// The browser engine still names this option `domain`. The native cores
+	// trim and lowercase it, so the same app names one property everywhere.
+	const domain = options.property?.trim().toLowerCase() || undefined;
 
 	const bootstrap: BootstrapPayload = {
 		commitRevision: true,
