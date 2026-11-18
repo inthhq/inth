@@ -175,9 +175,9 @@ export const useSaveConsents = function useSaveConsents(): (
  *
  * `externalId` is the id from the app's own account system; it goes on every
  * later consent record. `identityToken` is signed proof of that id, minted by
- * your server. On iOS and Android, without a token nothing is sent, and the
- * token is used for that one request and never stored, so pass a fresh one
- * each time.
+ * your server. On iOS and Android, without a token, or under `dryRun`, no
+ * link request is sent. The token is used for that one request and never
+ * stored, so pass a fresh one each time.
  *
  * @returns A stable function that takes the user.
  */
