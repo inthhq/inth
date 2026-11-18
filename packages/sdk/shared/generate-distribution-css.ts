@@ -7,8 +7,9 @@ import {
 	writeFileSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { toPublicSpecifier } from '../sdk/scripts/assemble';
+import { toPublicSpecifier } from './sdk-parts';
 
 /** Writes framework stylesheet entrypoints using the shared UI CSS assets. */
 export const generateDistributionCss = (packageRoot: string): void => {
@@ -124,3 +125,8 @@ export const generateDistributionCss = (packageRoot: string): void => {
 		'Generated distribution CSS entrypoints in dist/styles.css, dist/styles.tw3.css, dist/iab/styles.css, and dist/iab/styles.tw3.css'
 	);
 };
+
+// `bun ../shared/generate-distribution-css.ts` from a framework package.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+	generateDistributionCss(process.cwd());
+}

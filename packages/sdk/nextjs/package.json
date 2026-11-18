@@ -188,10 +188,10 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
+		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun ../shared/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
 		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/nextjs",
 		"check-types": "pnpm run prebuild && tsc --noEmit",
-		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun scripts/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
+		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun ../shared/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
 		"prebuild": "genversion --esm --semi src/version.ts",
