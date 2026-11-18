@@ -105,11 +105,3 @@ export interface CMPApi {
 	getTcString: () => string;
 	destroy: () => void;
 }
-
-/**
- * Result of fetching the Global Vendor List.
- */
-export interface FetchGVLResult {
-	gvl: GlobalVendorList;
-	fromCache: boolean;
-}

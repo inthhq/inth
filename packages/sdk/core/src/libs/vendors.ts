@@ -261,7 +261,7 @@ const ownerCondition = function ownerCondition(
  * entry the owners of the slug would produce. `null` when nothing else
  * declares the vendor.
  */
-export const ownerFallback = function ownerFallback(
+const ownerFallback = function ownerFallback(
 	vendor: ResolvedVendor
 ): ResolvedVendor | null {
 	if (vendor.shadowed) {

@@ -25,7 +25,6 @@ export { createHostedRecordTransport } from './hosted-records';
 export type {
 	MapInitOutputOptions,
 	TransportInitResponse,
-	TransportKernelConfig,
 } from './init-output';
 export {
 	initOutputToKernelConfig,
@@ -61,7 +60,6 @@ export type { SubjectPostBody, SubjectSavePayload } from './subject-body';
 export { buildConfirmedChoiceWire, buildSubjectPostBody } from './subject-body';
 export type {
 	MapSubjectRecordOptions,
-	SubjectRecordWire,
 	TransportHydrationRecords,
 } from './subject-record';
 export {

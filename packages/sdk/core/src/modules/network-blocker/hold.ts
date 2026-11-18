@@ -429,28 +429,3 @@ export const holdNetworkRequests = function holdNetworkRequests(
 	active = hold;
 	return joinHold(hold, rules);
 };
-
-/**
- * Stop holding for `rules` when no blocker will take over, as
- * {@link NetworkHold.block} does, for a caller that kept its rules rather
- * than its hold. Every caller that held with only these rules (matched by
- * reference) lets go; requests other callers' rules still match stay held.
- *
- * @param rules - The rules the caller held with.
- * @internal
- */
-export const blockHeldRequests = function blockHeldRequests(
-	rules: readonly NetworkBlockerRule[]
-): void {
-	const hold = active;
-	if (!hold) {
-		return;
-	}
-	const dropped = new Set(rules);
-	for (const owner of [...hold.owners]) {
-		if (owner.rules.every((rule) => dropped.has(rule))) {
-			hold.owners.delete(owner);
-		}
-	}
-	blockUnmatched(hold);
-};

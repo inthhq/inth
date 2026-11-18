@@ -10,7 +10,6 @@ export type {
 	AdditionalConsentConfig,
 	CMPApi,
 	CMPApiConfig,
-	FetchGVLResult,
 	IABConfig,
 } from './iab';
 export type {
@@ -31,6 +30,5 @@ export type {
 	SSRInitialData,
 	SSRInitRequestContext,
 	SSRInitRequestMetadata,
-	SSRSkippedReason,
 } from './ssr';
 export type { User } from './user';

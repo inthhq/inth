@@ -42,7 +42,7 @@ export const pickByLanguage = function pickByLanguage<Value>(
 };
 
 /** The overrides declared for a language, picked by {@link pickByLanguage}. */
-export const selectTranslationOverride = function selectTranslationOverride(
+const selectTranslationOverride = function selectTranslationOverride(
 	overrides: TranslationOverrides | undefined,
 	language: string
 ): Partial<Translations> | undefined {

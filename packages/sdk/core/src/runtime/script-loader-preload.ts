@@ -66,7 +66,7 @@ type PreloadScriptLoader = NonNullable<
  * through `init()`.
  * @internal
  */
-export const scriptLoaderRunsAtStart = function scriptLoaderRunsAtStart(
+const scriptLoaderRunsAtStart = function scriptLoaderRunsAtStart(
 	kernel: ConsentKernel,
 	options: ConsentRuntimeOptions,
 	createKernel: Parameters<PreloadScriptLoader>[2],

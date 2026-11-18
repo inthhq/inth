@@ -18,27 +18,26 @@ const normalizeAbsoluteURL = function normalizeAbsoluteURL(url: URL): string {
 	return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
 };
 
-export const canonicalizeBrowserProjectUrl =
-	function canonicalizeBrowserProjectUrl(
-		projectUrl: string
-	): string | undefined {
-		try {
-			const normalizedProjectUrl = trimTrailingSlash(projectUrl);
-			if (ABSOLUTE_URL_REGEX.test(normalizedProjectUrl)) {
-				return normalizeAbsoluteURL(new URL(normalizedProjectUrl));
-			}
+const canonicalizeBrowserProjectUrl = function canonicalizeBrowserProjectUrl(
+	projectUrl: string
+): string | undefined {
+	try {
+		const normalizedProjectUrl = trimTrailingSlash(projectUrl);
+		if (ABSOLUTE_URL_REGEX.test(normalizedProjectUrl)) {
+			return normalizeAbsoluteURL(new URL(normalizedProjectUrl));
+		}
 
-			if (!normalizedProjectUrl.startsWith('/')) {
-				return undefined;
-			}
-
-			return normalizeAbsoluteURL(
-				new URL(normalizedProjectUrl, window.location.origin)
-			);
-		} catch {
+		if (!normalizedProjectUrl.startsWith('/')) {
 			return undefined;
 		}
-	};
+
+		return normalizeAbsoluteURL(
+			new URL(normalizedProjectUrl, window.location.origin)
+		);
+	} catch {
+		return undefined;
+	}
+};
 
 export interface RuntimeRequestContextMatcher {
 	projectUrl: string;

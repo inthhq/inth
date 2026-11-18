@@ -31,7 +31,7 @@ import { inthVersionHeaders } from '../transports/version-header';
 import { trimPathSlashes } from './shared';
 
 /** Paths the proxy forwards when no extra `paths` are configured. */
-export const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
+const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
 	'subjects',
 	'subjects/*',
 	'init',
@@ -56,7 +56,7 @@ export const CONSENT_PROXY_DEFAULT_FORWARD_HEADERS: readonly string[] = [
 ];
 
 /** Deadline applied to upstream requests when none is configured. */
-export const CONSENT_PROXY_DEFAULT_TIMEOUT_MS = 10_000;
+const CONSENT_PROXY_DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
  * Headers that describe the hop chain. They are never copied from the
@@ -71,8 +71,9 @@ export const CONSENT_PROXY_FORWARDING_HEADERS: ReadonlySet<string> = new Set([
 ]);
 
 /** Browser headers the default allowlist forwards that carry no identity. */
-export const CONSENT_PROXY_PUBLIC_FORWARD_HEADERS: ReadonlySet<string> =
-	new Set(PUBLIC_REQUEST_HEADERS);
+const CONSENT_PROXY_PUBLIC_FORWARD_HEADERS: ReadonlySet<string> = new Set(
+	PUBLIC_REQUEST_HEADERS
+);
 
 /**
  * Headers an upstream request may carry without varying by visitor: the
@@ -366,7 +367,7 @@ export interface BuildConsentProxyRequestHeadersInput {
  *
  * @param input - Request, allowlists, forwarding values and adapter name.
  */
-export const buildConsentProxyRequestHeaders =
+const buildConsentProxyRequestHeaders =
 	function buildConsentProxyRequestHeaders({
 		adapter,
 		cookieNames,
@@ -441,7 +442,7 @@ const readSetCookies = function readSetCookies(headers: Headers): string[] {
  *
  * @returns Headers to send to the browser.
  */
-export const buildConsentProxyResponseHeaders =
+const buildConsentProxyResponseHeaders =
 	function buildConsentProxyResponseHeaders(upstream: Headers): Headers {
 		const headers = new Headers();
 		const nominated = new Set(

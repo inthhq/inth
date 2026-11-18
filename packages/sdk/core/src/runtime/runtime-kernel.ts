@@ -78,7 +78,7 @@ export const normalizeKernelUser = function normalizeKernelUser(
  * @param i18n - Locale and message overrides, if any.
  * @returns Kernel translations, or `undefined` when `i18n` says nothing.
  */
-export const resolveRuntimeTranslations = function resolveRuntimeTranslations(
+const resolveRuntimeTranslations = function resolveRuntimeTranslations(
 	i18n: Partial<I18nConfig> | undefined
 ): KernelTranslations | undefined {
 	if (!(i18n?.messages || i18n?.locale)) {
@@ -157,7 +157,7 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
  * @returns The factory, or `undefined` when the options select none.
  * @internal
  */
-export const selectTransportFactory = function selectTransportFactory(
+const selectTransportFactory = function selectTransportFactory(
 	options: Pick<ConsentRuntimeOptions, 'projectUrl' | 'mode'>,
 	hostedMode?: (projectUrl: string) => ProviderTransportFactory
 ): ProviderTransportFactory | undefined {

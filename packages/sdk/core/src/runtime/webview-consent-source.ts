@@ -13,7 +13,7 @@ import type { ConsentState, Unsubscribe } from '../types';
 import type { ExternalConsentSource } from './types';
 
 /** The global the native document-start script defines. */
-export const WEBVIEW_CONSENT_GLOBAL = '__c15tNativeConsent';
+const WEBVIEW_CONSENT_GLOBAL = '__c15tNativeConsent';
 
 /** Consent state a native app injected into its WebView. */
 export interface WebViewConsentState {
