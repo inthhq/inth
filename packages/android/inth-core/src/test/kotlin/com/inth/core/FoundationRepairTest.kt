@@ -127,6 +127,31 @@ class FoundationRepairTest {
 		assertEquals(expected, store.readPending())
 	}
 
+	@Test fun `a denial replaces a queued one only when its answer names every category`() {
+		val store = InthStore(InMemoryKeyValueStore())
+		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
+		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
+		core.bootstrap()
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		val original = store.readPending().single()
+		val envelope = store.readEnvelope()!!
+		store.writePending(emptyList())
+		fun denial(id: String, categories: List<String>, time: Long): QueuedSave {
+			val frozen = Json.parseToJsonElement(original.body!!).jsonObject.toMutableMap()
+			frozen["givenAt"] = JsonPrimitive(time)
+			frozen["answer"] = JsonObject(mapOf("categories" to JsonObject(categories.associateWith {
+				JsonObject(mapOf("value" to JsonPrimitive(false), "confirmedAt" to JsonPrimitive(time)))
+			})))
+			return original.copy(id = id, body = JsonObject(frozen).toString(), payload = original.payload.copy(givenAt = time))
+		}
+		val all = listOf("experience", "functionality", "marketing", "measurement")
+		assertTrue(store.commit(envelope, denial("all", all, vector.now)))
+		assertTrue(store.commit(envelope, denial("narrow", listOf("measurement"), vector.now + 1)))
+		assertEquals(listOf("all", "narrow"), store.readPending().map { it.id }, "the narrow denial does not carry marketing")
+		assertTrue(store.commit(envelope, denial("covering", all, vector.now + 2)))
+		assertEquals(listOf("covering"), store.readPending().map { it.id })
+	}
+
 	@Test fun `IAB configuration or owed withdrawals do not wipe category consent on identify`() {
 		for (configured in listOf(true, false)) {
 			val store = InthStore(InMemoryKeyValueStore())

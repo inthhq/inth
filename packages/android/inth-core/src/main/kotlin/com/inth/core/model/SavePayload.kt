@@ -104,6 +104,20 @@ internal fun QueuedSave.isWithdrawal(): Boolean {
  * Exact owner of an already frozen delivery obligation: the same subject, external id and
  * property. A subject id the other entry's subject replaced counts as the same subject.
  */
+/**
+ * Whether this entry's answer names every category [older]'s does, so replacing [older]
+ * with it loses no receipt the backend has not seen. A later answer can name fewer, as
+ * when a new policy fingerprint leaves the earlier receipts out of the choice.
+ */
+internal fun QueuedSave.covers(older: QueuedSave): Boolean {
+	fun categories(entry: QueuedSave): Set<String>? = entry.body
+		?.let { runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull() }
+		?.let { ((it["answer"] as? JsonObject)?.get("categories") as? JsonObject)?.keys }
+	val mine = categories(this) ?: return false
+	val theirs = categories(older) ?: return false
+	return mine.containsAll(theirs)
+}
+
 internal fun QueuedSave.sameOwner(other: QueuedSave): Boolean {
 	val left = body?.let { runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull() } ?: return false
 	val right = other.body?.let { runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull() } ?: return false

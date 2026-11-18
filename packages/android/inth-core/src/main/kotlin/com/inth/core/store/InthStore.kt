@@ -1,5 +1,6 @@
 package com.inth.core.store
 
+import com.inth.core.model.covers
 import com.inth.core.model.isWithdrawal
 import com.inth.core.model.sameOwner
 
@@ -227,7 +228,7 @@ class InthStore(
 		publishBus: Boolean,
 	): Boolean {
 		val capacity = limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)
-		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) }
+		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) && entry.covers(it) }
 		val withdrawals = current.filter { it.isWithdrawal() }
 		if (withdrawals.size >= capacity) return false
 		val grants = if (supersedeGrants) emptyList() else
