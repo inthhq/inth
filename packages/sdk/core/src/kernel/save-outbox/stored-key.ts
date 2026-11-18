@@ -1,15 +1,4 @@
-/**
- * The idempotency key of a stored save that has none. A c15t client, or a
- * release before keys, queued it.
- *
- * The key is derived from the stored entry instead of drawn at random, so
- * every read of the same entry gives the same key, also when storage refuses
- * the write that would keep it. Once the queue writes the entry back, the
- * stored key is used as it is.
- *
- * @internal
- */
-/* oxlint-disable no-bitwise -- A 128-bit string hash works on 32-bit lanes. */
+/* oxlint-disable no-bitwise -- cyrb128 and the UUID bits work on 32-bit lanes. */
 
 import type { SavePayload } from '../../types';
 
@@ -40,16 +29,20 @@ const hashLanes = function hashLanes(
 };
 
 /**
- * `payload` with an idempotency key: its own, or a UUIDv8 (the RFC 9562
- * layout for derived IDs) hashed from the payload and the time it was
- * queued. The payload holds the subject ID, so two visitors' saves do not
- * share a key.
+ * `payload` with an idempotency key. A c15t client, or a release before
+ * keys, stored saves without one.
  *
- * Returns the same object when the payload has a key.
+ * The key is a UUIDv8 hashed from the stored payload, which holds the
+ * subject ID, and the time it was queued, not a random one: a browser whose
+ * storage refuses the write-back reads the entry without a key every time,
+ * and every read must give the same key. Changing what is hashed changes
+ * that key in every such browser. The hash is fast, not cryptographic;
+ * nobody gains from forging a key.
  *
  * @param payload - A stored payload, without its identity token.
  * @param queuedAt - When the entry was queued.
  * @returns The payload to replay and store.
+ * @internal
  */
 export const withStoredIdempotencyKey = function withStoredIdempotencyKey(
 	payload: SavePayload,
@@ -58,10 +51,15 @@ export const withStoredIdempotencyKey = function withStoredIdempotencyKey(
 	if (payload.idempotencyKey !== undefined) {
 		return payload;
 	}
-	const hex = hashLanes(`${queuedAt}\n${JSON.stringify(payload)}`)
+	const [h1, h2, h3, h4] = hashLanes(`${queuedAt}\n${JSON.stringify(payload)}`);
+	const hex = [
+		h1,
+		(h2 & 0xff_ff_0f_ff) | 0x80_00,
+		(h3 & 0x3f_ff_ff_ff) | 0x80_00_00_00,
+		h4,
+	]
 		.map(toHex)
 		.join('');
-	const variant = ((Number.parseInt(hex[16] ?? '0', 16) % 4) + 8).toString(16);
-	const idempotencyKey = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+	const idempotencyKey = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 	return { ...payload, idempotencyKey };
 };

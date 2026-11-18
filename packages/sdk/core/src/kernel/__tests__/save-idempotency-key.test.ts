@@ -11,6 +11,7 @@ import type { SavePayload } from '../../types';
 import { createKernel } from '../index';
 import { createMemoryOutboxStore } from '../save-outbox';
 import type { SaveOutboxStore } from '../save-outbox';
+import { withStoredIdempotencyKey } from '../save-outbox/stored-key';
 
 interface QueuedEntry {
 	payload: SavePayload;
@@ -35,8 +36,8 @@ const queued = function queued(): Promise<QueuedEntry[]> {
 	return store.transact((tx) => (tx.read('saves') ?? []) as QueuedEntry[]);
 };
 
-const UUID_PATTERN =
-	/^[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u;
+const UUID_V8_PATTERN =
+	/^[\da-f]{8}-[\da-f]{4}-8[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u;
 
 /** A save a c15t client queued: no idempotency key. */
 const keylessEntry = function keylessEntry(): QueuedEntry {
@@ -228,7 +229,7 @@ describe('save idempotency key', () => {
 		await replayOnNewPage(store, sent);
 
 		const key = failed.mock.calls[0]?.[0].idempotencyKey;
-		expect(key).toMatch(UUID_PATTERN);
+		expect(key).toMatch(UUID_V8_PATTERN);
 		expect(sent.mock.calls[0]?.[0].idempotencyKey).toBe(key);
 		await vi.waitFor(async () => expect(await queued()).toEqual([]));
 	});
@@ -248,8 +249,33 @@ describe('save idempotency key', () => {
 		await replayOnNewPage(full, second);
 
 		const key = first.mock.calls[0]?.[0].idempotencyKey;
-		expect(key).toMatch(UUID_PATTERN);
+		expect(key).toMatch(UUID_V8_PATTERN);
 		expect(second.mock.calls[0]?.[0].idempotencyKey).toBe(key);
 		expect((await queued())[0]?.payload.idempotencyKey).toBeUndefined();
+	});
+
+	test('the key changes with the queue time, the subject and the consents', () => {
+		const { payload, queuedAt } = keylessEntry();
+		const keyOf = (entry: SavePayload, at: number) =>
+			withStoredIdempotencyKey(entry, at).idempotencyKey;
+		const keys = new Set([
+			keyOf(payload, queuedAt),
+			keyOf(payload, queuedAt + 1),
+			keyOf({ ...payload, subjectId: 'sub_other' }, queuedAt),
+			keyOf(
+				{ ...payload, consents: { ...payload.consents, marketing: false } },
+				queuedAt
+			),
+		]);
+		expect(keys.size).toBe(4);
+	});
+
+	test('a stored save keeps its key across releases', () => {
+		// A browser whose storage refuses the write-back derives the key again
+		// after every upgrade. Changing this value sends its saves twice.
+		expect(
+			withStoredIdempotencyKey(keylessEntry().payload, 1_700_000_000_000)
+				.idempotencyKey
+		).toBe('9ec1f23d-d047-870b-8e05-f75a1d90b59a');
 	});
 });
