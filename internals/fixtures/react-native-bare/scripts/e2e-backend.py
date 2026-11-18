@@ -54,11 +54,13 @@ HEADER_RULES = json.loads((root / 'packages/native-protocol/transport/cases.json
 
 
 def header_problem(headers):
-    """The first request header the transport fixture forbids, or None."""
+    """The first request header the transport fixture forbids or requires, or None."""
     for name in headers.keys():
         lowered = name.lower()
         if lowered in HEADER_RULES['forbidden'] or lowered.startswith(tuple(HEADER_RULES['forbiddenPrefixes'])):
             return lowered + ' is a forbidden request header'
+    if not headers.get(HEADER_RULES['platform']):
+        return HEADER_RULES['platform'] + ' is missing'
     return None
 
 
