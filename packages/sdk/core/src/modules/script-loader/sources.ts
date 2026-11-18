@@ -132,7 +132,13 @@ const applySource = (script: Script, source: ScriptSource): Script => {
 		return script;
 	}
 	const own = script.attributes ?? {};
-	const { integrity: pinned, ...ownWithoutPin } = own;
+	// HTML attribute names are case-insensitive: `Integrity` is the same pin
+	// as `integrity`, and a source's hash must not replace it on the element.
+	const isPin = (name: string): boolean => name.toLowerCase() === 'integrity';
+	const pinned = Object.entries(own).find(([name]) => isPin(name))?.[1];
+	const ownWithoutPin = Object.fromEntries(
+		Object.entries(own).filter(([name]) => !isPin(name))
+	);
 	const attributes = withTagAttributes(ownWithoutPin, own, source.attributes);
 	if (pinned?.trim()) {
 		// The script pins its bytes. A source whose hash the pin does not
