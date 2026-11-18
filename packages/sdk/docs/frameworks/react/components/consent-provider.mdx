@@ -46,6 +46,7 @@ the provider to change them. `scripts`, `vendors`, `networkBlocker`,
 | `persistence` | Stores the visitor's choice in a cookie and localStorage. On by default |
 | `storageConfig` | Storage key and cookie settings for the stored choice |
 | `clearOnRevocation` | Cookies and storage keys to delete when a category is denied |
+| `experimentalScriptRegistry` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Defaults to `false`; read once. See [Inth script registry](/docs/frameworks/javascript/api/runtime#inth-script-registry-experimental) |
 | `reloadOnConsentRevoked` | Reload the page after the visitor turns off a granted category or vendor. Defaults to `true` |
 | `consentCategories` | Categories the preference dialog offers alongside those your scripts use, within the policy's scope |
 | `overrides` | Force the country, region or language the policy is resolved for, for testing |
