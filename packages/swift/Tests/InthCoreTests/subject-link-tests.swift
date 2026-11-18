@@ -117,9 +117,12 @@ final class SubjectLinkTests: XCTestCase {
         let subscription = core.onChange { _ in publications.mutate { $0 += 1 } }
         defer { subscription.cancel() }
 
+        // Hold the response so the adoption cannot land before the local commit is read.
+        http.holdsSaves = true
         let committed = core.save(.necessary)
         XCTAssertEqual(committed.status, .committed)
         let decided = core.snapshot()
+        http.releaseSaves()
         await core.waitUntilIdle()
 
         let after = core.snapshot()
@@ -236,11 +239,16 @@ final class SubjectLinkTests: XCTestCase {
         }
         XCTAssertEqual(keys.count, 2)
         XCTAssertEqual(Set(keys).count, 1, "the replay must carry the first send's key")
-        XCTAssertTrue(SubjectId.isUUIDv7(keys[0]))
+        let first = try XCTUnwrap(keys.first)
+        XCTAssertTrue(SubjectId.isUUIDv7(first))
 
         core.save(.necessary)
         await core.waitUntilIdle()
-        let next = InthJSON.parse(http.lastSaveBody ?? Data())?["idempotencyKey"]?.stringValue
-        XCTAssertNotEqual(next, keys[0], "a new action gets a new key")
+        XCTAssertEqual(http.recordedSaveRequests.count, 3)
+        let next = try XCTUnwrap(
+            InthJSON.parse(http.lastSaveBody ?? Data())?["idempotencyKey"]?.stringValue,
+            "a new action sends its own key")
+        XCTAssertTrue(SubjectId.isUUIDv7(next))
+        XCTAssertNotEqual(next, first, "a new action gets a new key")
     }
 }
