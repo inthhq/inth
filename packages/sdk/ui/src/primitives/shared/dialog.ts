@@ -26,11 +26,10 @@ const openDialogs = new WeakMap<Document, OpenDialogs>();
  * (`defaultPrevented`), such as a dialog on top that listens on its own
  * element, is left alone. An Escape this handles is marked handled.
  *
- * Shared by inth's framework packages, like the other dialog helpers here;
+ * Shared by Inth's framework packages, like the other dialog helpers here;
  * not part of the documented API.
  *
  * @param element - The dialog, or any element in its document.
- * @param close - Closes the dialog.
  * @returns Removes the dialog from the stack.
  *
  * @example

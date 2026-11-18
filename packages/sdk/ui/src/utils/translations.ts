@@ -29,7 +29,6 @@ export const resolveTranslations = function resolveTranslations(
 ): Translations {
 	const { translations = {}, defaultLanguage = 'en' } = translationConfig;
 
-	// Return translations for the default language, falling back to English if needed
 	const selectedTranslations = translations[defaultLanguage];
 	if (isTranslations(selectedTranslations)) {
 		return selectedTranslations;
@@ -40,6 +39,5 @@ export const resolveTranslations = function resolveTranslations(
 		return englishTranslations;
 	}
 
-	// Fallback to core default English translations
 	return defaultTranslationConfig.translations.en as Translations;
 };

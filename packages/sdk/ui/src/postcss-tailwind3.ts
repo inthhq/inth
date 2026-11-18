@@ -96,7 +96,7 @@ export interface PostcssTailwind3PluginCreator {
 }
 
 /**
- * Whether a file is a built stylesheet from a Inth package, the files whose
+ * Whether a file is a built stylesheet from an Inth package, the files whose
  * `@layer` blocks `@inth/sdk/ui/postcss-tailwind3` unwraps.
  *
  * Installed packages match by path. A workspace path such as
@@ -123,7 +123,7 @@ export const isInthUiStylesheetPath = function isInthUiStylesheetPath(
  * Tailwind 3's PostCSS plugin hijacks `@layer components`: it errors when a
  * standalone stylesheet contains `@layer components` without a matching
  * `@tailwind components` directive in the same processing graph, and it also
- * tree-shakes layer contents against the Tailwind content scan. inth's hashed
+ * tree-shakes layer contents against the Tailwind content scan. Inth's hashed
  * CSS Module classes (`inth-ui-*`) are generated into dist class maps and never
  * appear verbatim in application source, so Tailwind 3 can purge the component
  * rules. This plugin unwraps `@layer` blocks that come from a built Inth
@@ -135,7 +135,7 @@ export const isInthUiStylesheetPath = function isInthUiStylesheetPath(
  * processed. Vite and `postcss-import` inline an app's
  * `@import '@inth/svelte/styles.css'` into the app's stylesheet, and Astro
  * processes `@inth/astro/styles.css`, which imports `@inth/sdk/ui/styles.css`;
- * in both, the root is not a Inth file but the layered rules are.
+ * in both, the root is not an Inth file but the layered rules are.
  */
 const inthTailwind3: PostcssTailwind3PluginCreator = Object.assign(
 	(): PostcssTailwind3Plugin => ({

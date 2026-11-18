@@ -1,12 +1,7 @@
-/**
- * ConsentDialogTrigger Component Styles
- *
- * A draggable floating button and an optional configurable toolbar.
- * Uses CSS variables from the Inth design system.
- */
+/* ConsentDialogTrigger: a draggable floating button and an optional
+ * configurable toolbar. */
 
 .trigger {
-	/* Component-specific variables */
 	--cdt-size-sm: 32px;
 	--cdt-size-md: 40px;
 	--cdt-size-lg: 48px;
@@ -34,7 +29,6 @@
 	--cdt-icon-color: var(--inth-text, #171717);
 	--cdt-focus-ring: var(--inth-primary, #3b82f6);
 
-	/* Base styles */
 	position: fixed;
 	z-index: 9999;
 	display: flex;
@@ -60,7 +54,6 @@
 	will-change: transform;
 }
 
-/* Only apply hover effects on devices that support hover */
 @media (hover: hover) and (pointer: fine) {
 	.trigger:hover {
 		background: var(--cdt-bg-hover);
@@ -84,7 +77,6 @@
 	outline-offset: 2px;
 }
 
-/* Size variants */
 .trigger[data-size='sm'],
 .sm {
 	width: var(--cdt-size-sm);
@@ -103,7 +95,6 @@
 	height: var(--cdt-size-lg);
 }
 
-/* Icon container */
 .icon {
 	display: flex;
 	flex-shrink: 0;
@@ -120,7 +111,6 @@
 	height: 100%;
 }
 
-/* Text label */
 .text {
 	margin-left: var(--inth-space-xs, 6px);
 	font-family: var(--inth-font-family, system-ui, sans-serif);
@@ -132,7 +122,6 @@
 	pointer-events: none;
 }
 
-/* When trigger has text, adjust sizing */
 .trigger:has(.text) {
 	width: auto;
 	height: auto;
@@ -178,7 +167,6 @@
 	font-size: var(--inth-font-size-md, 1rem);
 }
 
-/* Corner positioning utilities */
 .bottomRight {
 	right: var(--cdt-offset);
 	bottom: var(--cdt-offset);
@@ -199,7 +187,6 @@
 	left: var(--cdt-offset);
 }
 
-/* Transition state for snapping to corners */
 .snapping {
 	transition:
 		top var(--cdt-snap-duration) var(--cdt-snap-easing),
@@ -209,12 +196,10 @@
 		transform var(--cdt-snap-duration) var(--cdt-snap-easing);
 }
 
-/* Hidden state */
 .hidden {
 	display: none;
 }
 
-/* Dark mode support */
 :global(.inth-dark) .trigger {
 	--cdt-bg: var(--inth-surface, #262626);
 	--cdt-bg-hover: var(--inth-surface-hover, #404040);
@@ -226,7 +211,6 @@
 		0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
 }
 
-/* Configurable toolbar */
 .toolbar {
 	--cdtt-size-sm: 32px;
 	--cdtt-size-md: 40px;
@@ -432,7 +416,6 @@
 	transition: none;
 }
 
-/* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
 	.trigger,
 	.toolbar,

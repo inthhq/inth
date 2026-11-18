@@ -1,9 +1,4 @@
 /**
- * Whether a consent surface is arriving into a page that has already
- * painted. Framework-agnostic.
- */
-
-/**
  * How long after the first contentful paint a banner still counts as part
  * of it. Two changes within about 100ms read as one.
  */

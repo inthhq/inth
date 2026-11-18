@@ -1,7 +1,6 @@
 @import url('./animations/spin.css');
 
 :root {
-	/* Typography */
 	--iab-cd-font-family: var(--inth-font-family);
 	--iab-cd-line-height: var(--inth-line-height-tight);
 	--iab-cd-title-font-size: var(--inth-font-size-lg);
@@ -9,7 +8,6 @@
 	--iab-cd-description-font-size: 0.75rem;
 	--iab-cd-description-line-height: var(--inth-line-height-normal);
 
-	/* Colors */
 	--iab-cd-background-color: var(--inth-surface);
 	--iab-cd-background-color-dark: var(--inth-surface);
 	--iab-cd-text-color: var(--inth-text);
@@ -25,19 +23,16 @@
 	--iab-cd-surface-hover: var(--inth-surface-hover);
 	--iab-cd-surface-hover-dark: var(--inth-surface-hover);
 
-	/* Layout */
 	--iab-cd-max-width: 48rem;
 	--iab-cd-max-height: 85vh;
 	--iab-cd-border-radius: var(--inth-radius-lg);
 	--iab-cd-z-index: 999999;
 	--iab-cd-overlay-z-index: 999998;
 
-	/* Spacing */
 	--iab-cd-padding: var(--inth-space-md);
 	--iab-cd-padding-sm: var(--inth-space-sm);
 	--iab-cd-gap: var(--inth-space-sm);
 
-	/* Animation */
 	--iab-cd-animation-duration: var(--inth-duration-normal);
 	--iab-cd-animation-timing: var(--inth-easing-out);
 
@@ -48,7 +43,6 @@
 }
 
 @layer components {
-	/* Root container */
 	.root {
 		box-sizing: border-box;
 		isolation: isolate;
@@ -96,7 +90,6 @@
 			transform var(--iab-cd-animation-duration) var(--iab-cd-animation-timing);
 	}
 
-	/* Overlay */
 	.overlay {
 		position: fixed;
 		inset: 0;
@@ -129,7 +122,6 @@
 		background-color: var(--iab-cd-overlay-background-dark);
 	}
 
-	/* Card container */
 	.card {
 		position: relative;
 		width: min(100%, var(--iab-cd-max-width));
@@ -149,7 +141,6 @@
 		border-color: var(--iab-cd-border-color-dark);
 	}
 
-	/* Header */
 	.header {
 		padding: 0.75rem 1rem;
 		border-bottom: 1px solid var(--iab-cd-border-color);
@@ -221,7 +212,6 @@
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
-	/* Segmented Control Tabs */
 	.body {
 		display: flex;
 		flex: 1 1 auto;
@@ -305,7 +295,6 @@
 		color: var(--iab-cd-text-color-dark);
 	}
 
-	/* Sliding indicator */
 	.tabIndicator {
 		position: absolute;
 		inset-block: 0.25rem;
@@ -327,7 +316,6 @@
 			0 1px 3px rgb(0 0 0 / 0.3);
 	}
 
-	/* Tab indicator positions based on data attribute */
 	.tabIndicator[data-active-tab='purposes'] {
 		transform: translateX(0);
 		width: calc(50% - 0.125rem);
@@ -340,7 +328,6 @@
 		left: 0.125rem;
 	}
 
-	/* Content area */
 	.content {
 		flex: 1 1 auto;
 		min-height: 0;
@@ -355,7 +342,6 @@
 		}
 	}
 
-	/* Purpose item */
 	.purposeItem {
 		border-radius: var(--inth-radius-md);
 		border: 1px solid var(--iab-cd-border-color);
@@ -489,7 +475,6 @@
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Examples section */
 	.examplesToggle {
 		display: flex;
 		align-items: center;
@@ -532,7 +517,6 @@
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Vendors section in purpose */
 	.vendorsToggle {
 		display: flex;
 		align-items: center;
@@ -659,7 +643,6 @@
 		font-weight: 500;
 	}
 
-	/* Stack item */
 	.stackItem {
 		border-radius: var(--inth-radius-md);
 		border: 1px solid var(--iab-cd-border-color);
@@ -764,7 +747,6 @@
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
-	/* Special purposes section */
 	.specialPurposesSection {
 		border-radius: var(--inth-radius-md);
 		border: 1px solid var(--iab-cd-border-color);
@@ -885,7 +867,6 @@
 		color: var(--iab-cd-text-color-dark);
 	}
 
-	/* Vendor list tab */
 	.vendorListHeader {
 		position: sticky;
 		top: 0;
@@ -1008,7 +989,6 @@
 		height: 0.75rem;
 	}
 
-	/* Vendor list items */
 	.vendorListItem {
 		position: relative;
 		z-index: 1;
@@ -1226,7 +1206,6 @@
 		opacity: 0.7;
 	}
 
-	/* Footer */
 	.footer {
 		padding: 0.75rem 1rem;
 		border-top: 1px solid var(--iab-cd-border-color);
@@ -1242,7 +1221,6 @@
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
-	/* Consent storage notice */
 	.consentNotice {
 		text-align: center;
 		padding-top: 1.5rem;
@@ -1263,7 +1241,6 @@
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Loading state */
 	.loadingContainer {
 		display: flex;
 		flex-direction: column;
@@ -1291,7 +1268,6 @@
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Empty state */
 	.emptyState {
 		text-align: center;
 		padding: var(--inth-space-xl);
@@ -1307,7 +1283,6 @@
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Vendor sections */
 	.vendorSection {
 		position: relative;
 		z-index: 1;
@@ -1408,7 +1383,6 @@
 		border-left-color: var(--iab-cd-primary-color-dark);
 	}
 
-	/* Custom vendor section within purpose item */
 	.customVendorPurposeSection {
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
@@ -1435,7 +1409,6 @@
 		color: var(--iab-cd-primary-color-dark);
 	}
 
-	/* Legitimate Interest objection button */
 	.objectButton {
 		font-size: 0.6875rem;
 		font-weight: 500;
@@ -1486,7 +1459,6 @@
 		color: var(--iab-cd-background-color-dark);
 	}
 
-	/* Legitimate Interest explanation text */
 	.liExplanation {
 		font-size: 0.6875rem;
 		font-style: italic;
@@ -1500,7 +1472,6 @@
 		border-color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Vendor LI Section in Vendors tab */
 	.vendorLiSection {
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
@@ -1525,7 +1496,6 @@
 		align-items: center;
 	}
 
-	/* Purpose-level Legitimate Interest Section */
 	.purposeLiSection {
 		margin: 0.75rem 0;
 		padding: 0.75rem;
@@ -1564,7 +1534,6 @@
 		flex-shrink: 0;
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.dialogVisible,
 		.dialogHidden,

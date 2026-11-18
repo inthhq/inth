@@ -15,11 +15,6 @@ export type ConsentActionKey =
  * policy marks the action primary, then `default`. Without any, the button
  * is `stroke`, with the `primary` variant when the action is primary and
  * `neutral` otherwise.
- *
- * @param theme - The provider's theme.
- * @param action - The action the button performs.
- * @param isPrimary - Whether the policy marks the action primary.
- * @returns The resolved mode and variant.
  */
 export const resolveActionAppearance = function resolveActionAppearance(
 	theme: Pick<Theme, 'consentActions'> | undefined,

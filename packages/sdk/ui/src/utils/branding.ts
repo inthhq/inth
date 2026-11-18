@@ -53,9 +53,6 @@ export const BRAND_MARKS: Readonly<Record<BrandMark, BrandMarkGlyph>> = {
  * The mark a brand shows, on the tag and on the dialog trigger. Only
  * `c15t` shows the c15t mark; every other value, and a snapshot with no
  * branding, shows the INTH mark.
- *
- * @param branding - The snapshot's `branding`.
- * @returns `c15t` or `inth`.
  */
 export const resolveBrandMark = function resolveBrandMark(
 	branding: KernelBranding | null | undefined
@@ -68,7 +65,6 @@ export const resolveBrandMark = function resolveBrandMark(
  * decorative, so it has no `<title>` and no `id` that two tags on one page
  * could repeat.
  *
- * @param mark - The mark to draw.
  * @returns An `aria-hidden` `<svg>` string.
  */
 export const brandMarkSvg = function brandMarkSvg(mark: BrandMark): string {
@@ -189,7 +185,6 @@ const join = (...names: (string | undefined)[]): string =>
 /**
  * Resolve the "Secured by" tag for one surface.
  *
- * @param input - The snapshot's branding, the surface and the class names.
  * @returns The tag, or `null` when the backend sent `branding: 'none'`.
  */
 export const resolveBrandingTag = function resolveBrandingTag(

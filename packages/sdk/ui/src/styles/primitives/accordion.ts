@@ -1,9 +1,3 @@
-/**
- * @packageDocumentation
- * Accordion variant types and helper functions for generating CSS classes.
- * This module is framework-agnostic and can be used with React, Vue, Svelte, etc.
- */
-
 import styles from './accordion.module.css';
 
 /**
@@ -118,10 +112,6 @@ export type AccordionCSSVariables = AccordionRootCSSVariables;
 /**
  * Helper function to generate accordion CSS classes based on variants.
  *
- * @remarks
- * This function takes variant props and returns an object with methods
- * to generate the appropriate CSS class names for accordion elements.
- *
  * @example
  * ```ts
  * const variants = accordionVariants({ variant: 'bordered', size: 'small' });
@@ -129,9 +119,6 @@ export type AccordionCSSVariables = AccordionRootCSSVariables;
  * const itemClass = variants.item(); // Returns item CSS classes
  * const triggerClass = variants.trigger(); // Returns trigger CSS classes
  * ```
- *
- * @param props - The variant props for the accordion
- * @returns An object with methods for generating class names for each element
  *
  * @public
  */
@@ -151,11 +138,6 @@ export const accordionVariants = ({
 	};
 
 	return {
-		/**
-		 * Generates the CSS class string for the close arrow element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		arrowClose: (options?: { class?: string }) => {
 			const classes = [styles.arrowClose];
 			if (options?.class) {
@@ -163,11 +145,6 @@ export const accordionVariants = ({
 			}
 			return classes.filter(Boolean).join(' ');
 		},
-		/**
-		 * Generates the CSS class string for the open arrow element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		arrowOpen: (options?: { class?: string }) => {
 			const classes = [styles.arrowOpen];
 			if (options?.class) {
@@ -175,11 +152,6 @@ export const accordionVariants = ({
 			}
 			return classes.filter(Boolean).join(' ');
 		},
-		/**
-		 * Generates the CSS class string for the accordion content element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		content: (options?: { class?: string }) => {
 			const classes = [styles.content];
 			if (options?.class) {
@@ -187,11 +159,6 @@ export const accordionVariants = ({
 			}
 			return classes.filter(Boolean).join(' ');
 		},
-		/**
-		 * Generates the CSS class string for the content inner wrapper element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		contentInner: (options?: { class?: string }) => {
 			const classes = [styles.contentInner];
 			if (options?.class) {
@@ -199,11 +166,6 @@ export const accordionVariants = ({
 			}
 			return classes.filter(Boolean).join(' ');
 		},
-		/**
-		 * Generates the CSS class string for the accordion icon element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		icon: (options?: { class?: string }) => {
 			const classes = [styles.icon];
 			if (options?.class) {
@@ -211,11 +173,6 @@ export const accordionVariants = ({
 			}
 			return classes.filter(Boolean).join(' ');
 		},
-		/**
-		 * Generates the CSS class string for the accordion item element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		item: (options?: { class?: string }) => {
 			const classes = [styles.item];
 			if (options?.class) {
@@ -223,11 +180,6 @@ export const accordionVariants = ({
 			}
 			return classes.filter(Boolean).join(' ');
 		},
-		/**
-		 * Generates the CSS class string for the accordion root element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		root: (options?: { class?: string }) => {
 			const classes = [styles.root];
 			const variantClass = variantMap[variant];
@@ -243,11 +195,6 @@ export const accordionVariants = ({
 			}
 			return classes.filter(Boolean).join(' ');
 		},
-		/**
-		 * Generates the CSS class string for the accordion trigger element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		trigger: (options?: { class?: string }) => {
 			const classes = [styles.triggerInner];
 			if (options?.class) {

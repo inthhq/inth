@@ -160,8 +160,6 @@ export const claimDevToolsLauncher = function claimDevToolsLauncher(
 
 /**
  * Current snapshot for a kernel's slot. Stable until the slot changes.
- * @param kernel - Consent kernel.
- * @returns The latest snapshot.
  * @internal
  */
 export const getDevToolsLauncherSnapshot = function getDevToolsLauncherSnapshot(
@@ -172,7 +170,6 @@ export const getDevToolsLauncherSnapshot = function getDevToolsLauncherSnapshot(
 
 /**
  * Listen for slot changes: DevTools mounting, opening, or the owner changing.
- * @param kernel - Consent kernel.
  * @param listener - Called after each change; read the snapshot inside it.
  * @returns Unsubscribes the listener.
  * @internal

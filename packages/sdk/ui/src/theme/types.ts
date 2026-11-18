@@ -55,10 +55,6 @@ export interface CSSVariables {
 	[key: string]: string | number;
 }
 
-// =============================================================================
-// THEME 2.0 TYPES
-// =============================================================================
-
 /**
  * Color tokens for the theme.
  * @public
@@ -348,7 +344,6 @@ export type SlotStyle = string | ClassNameStyle;
  * @public
  */
 export interface ComponentSlots {
-	// --- CONSENT BANNER SLOTS ---
 	/** Root wrapper for the consent banner portal content. */
 	consentBanner?: SlotStyle;
 	/** Main card container for banner content and actions. */
@@ -372,7 +367,6 @@ export interface ComponentSlots {
 	/** Backdrop overlay rendered behind the banner when enabled. */
 	consentBannerOverlay?: SlotStyle;
 
-	// --- CONSENT DIALOG SLOTS ---
 	/** Root wrapper for the consent dialog modal. */
 	consentDialog?: SlotStyle;
 	/** Main dialog card container. */
@@ -390,7 +384,6 @@ export interface ComponentSlots {
 	/** Backdrop overlay rendered behind the dialog. */
 	consentDialogOverlay?: SlotStyle;
 
-	// --- CONSENT DIALOG TRIGGER SLOTS ---
 	/**
 	 * Floating button that reopens the preference center. The same part
 	 * React and Vue style through `components.trigger.root`.
@@ -402,7 +395,6 @@ export interface ComponentSlots {
 	 */
 	consentDialogTriggerIcon?: SlotStyle;
 
-	// --- CONSENT DIALOG TRIGGER TOOLBAR SLOTS ---
 	/** Floating consent dialog trigger toolbar. */
 	consentDialogTriggerToolbar?: SlotStyle;
 	/** Individual action button inside the trigger toolbar. */
@@ -410,7 +402,6 @@ export interface ComponentSlots {
 	/** Icon wrapper used by trigger toolbar actions. */
 	consentDialogTriggerToolbarIcon?: SlotStyle;
 
-	// --- CONSENT WIDGET SLOTS ---
 	/** Root wrapper for the consent widget/preferences panel. */
 	consentWidget?: SlotStyle;
 	/** Accordion region listing consent categories. */
@@ -422,7 +413,6 @@ export interface ComponentSlots {
 	/** Branding tag rendered below the standalone consent widget. */
 	consentWidgetTag?: SlotStyle;
 
-	// --- CONSENT GATE SLOTS ---
 	/**
 	 * Placeholder card `ConsentGate` renders while its category is denied,
 	 * `ConsentGate.Root` in React and `components['consent-gate'].root` in
@@ -437,7 +427,6 @@ export interface ComponentSlots {
 	 */
 	consentGateButton?: SlotStyle;
 
-	// --- IAB CONSENT BANNER SLOTS ---
 	/** Root wrapper for the IAB consent banner. */
 	iabConsentBanner?: SlotStyle;
 	/** Main card container for IAB banner content. */
@@ -451,7 +440,6 @@ export interface ComponentSlots {
 	/** Backdrop overlay rendered behind the IAB banner. */
 	iabConsentBannerOverlay?: SlotStyle;
 
-	// --- IAB CONSENT DIALOG SLOTS ---
 	/** Root wrapper for the IAB consent dialog. */
 	iabConsentDialog?: SlotStyle;
 	/** Main card container for IAB dialog content. */
@@ -465,7 +453,6 @@ export interface ComponentSlots {
 	/** Backdrop overlay rendered behind the IAB dialog. */
 	iabConsentDialogOverlay?: SlotStyle;
 
-	// --- SHARED SLOTS ---
 	/** Shared primary button style used across consent components. */
 	buttonPrimary?: SlotStyle;
 	/** Shared secondary button style used across consent components. */
@@ -474,10 +461,7 @@ export interface ComponentSlots {
 	toggle?: SlotStyle;
 }
 
-/**
- * All valid theme keys for the v2 system.
- * These correspond to the component slots defined in Theme.
- */
+/** The slot names of {@link ComponentSlots}. */
 export type AllThemeKeys = keyof ComponentSlots;
 
 /**

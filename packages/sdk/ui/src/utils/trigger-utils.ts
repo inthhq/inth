@@ -9,10 +9,7 @@
 
 import type { ConsentDialogTriggerVisibility } from '@inth/sdk-schema/config';
 
-/**
- * Corner position options for the trigger button.
- * The button can be positioned in any of the four viewport corners.
- */
+/** Corner position options for the trigger button. */
 export type CornerPosition =
 	| 'bottom-right'
 	| 'top-right'
@@ -23,15 +20,10 @@ export type CornerPosition =
  * State representing an ongoing drag operation.
  */
 export interface DragState {
-	/** Whether a drag operation is currently in progress */
 	isDragging: boolean;
-	/** X coordinate where the drag started */
 	startX: number;
-	/** Y coordinate where the drag started */
 	startY: number;
-	/** Current X coordinate during drag */
 	currentX: number;
-	/** Current Y coordinate during drag */
 	currentY: number;
 }
 
@@ -39,19 +31,14 @@ export interface DragState {
  * Configuration options for the trigger positioning utilities.
  */
 export interface TriggerConfig {
-	/** Default corner position */
 	defaultPosition: CornerPosition;
 	/** Offset from viewport edges in pixels */
 	offset: number;
 	/** Whether to persist position to localStorage */
 	persistPosition: boolean;
-	/** Storage key for position persistence */
 	storageKey: string;
 }
 
-/**
- * Default configuration values for the trigger.
- */
 export const DEFAULT_TRIGGER_CONFIG: TriggerConfig = {
 	defaultPosition: 'bottom-right',
 	offset: 20,
@@ -76,9 +63,6 @@ export const VELOCITY_THRESHOLD = 0.15;
  *
  * @param x - Current X coordinate (relative to viewport)
  * @param y - Current Y coordinate (relative to viewport)
- * @param viewportWidth - Width of the viewport
- * @param viewportHeight - Height of the viewport
- * @returns The nearest corner position
  *
  * @example
  * ```typescript
@@ -113,14 +97,11 @@ export const calculateNearestCorner = function calculateNearestCorner(
  * A small drag in any direction will snap to the appropriate corner.
  * Fast swipes (high velocity) can trigger with smaller distances.
  *
- * @param currentCorner - The current corner position
  * @param dragX - Horizontal drag distance (positive = right, negative = left)
  * @param dragY - Vertical drag distance (positive = down, negative = up)
- * @param options - Optional configuration
  * @param options.threshold - Minimum drag distance to trigger a change (default: DRAG_THRESHOLD)
  * @param options.velocityX - Horizontal velocity in pixels/ms (optional)
  * @param options.velocityY - Vertical velocity in pixels/ms (optional)
- * @returns The new corner position based on drag direction
  *
  * @example
  * ```typescript
@@ -147,20 +128,16 @@ export const calculateCornerFromDrag = function calculateCornerFromDrag(
 ): CornerPosition {
 	const { threshold = DRAG_THRESHOLD, velocityX = 0, velocityY = 0 } = options;
 
-	// Determine the dominant direction of the drag
 	const absDragX = Math.abs(dragX);
 	const absDragY = Math.abs(dragY);
 	const absVelocityX = Math.abs(velocityX);
 	const absVelocityY = Math.abs(velocityY);
 
-	// Check if velocity exceeds threshold (fast swipe)
 	const hasVelocityX = absVelocityX >= VELOCITY_THRESHOLD;
 	const hasVelocityY = absVelocityY >= VELOCITY_THRESHOLD;
 
-	// For velocity-based movement, use a much smaller distance threshold
 	const velocityDistanceThreshold = 10;
 
-	// Determine if we should move in each direction
 	const shouldMoveX =
 		absDragX >= threshold ||
 		(hasVelocityX && absDragX >= velocityDistanceThreshold);
@@ -168,30 +145,24 @@ export const calculateCornerFromDrag = function calculateCornerFromDrag(
 		absDragY >= threshold ||
 		(hasVelocityY && absDragY >= velocityDistanceThreshold);
 
-	// If no movement threshold met, stay in current corner
 	if (!shouldMoveX && !shouldMoveY) {
 		return currentCorner;
 	}
 
-	// Parse current corner state
 	const isCurrentlyBottom = currentCorner.includes('bottom');
 	const isCurrentlyRight = currentCorner.includes('right');
 
-	// Calculate new position based on drag direction
 	let isBottom = isCurrentlyBottom;
 	let isRight = isCurrentlyRight;
 
-	// Horizontal movement
 	if (shouldMoveX) {
 		isRight = dragX > 0;
 	}
 
-	// Vertical movement
 	if (shouldMoveY) {
 		isBottom = dragY > 0;
 	}
 
-	// Build the new corner
 	if (isBottom && isRight) {
 		return 'bottom-right';
 	}
@@ -206,9 +177,6 @@ export const calculateCornerFromDrag = function calculateCornerFromDrag(
 
 /**
  * Persists the trigger position to localStorage.
- *
- * @param corner - The corner position to persist
- * @param storageKey - The localStorage key to use
  *
  * @remarks
  * Silently fails if localStorage is not available (e.g., in SSR or private browsing).
@@ -228,9 +196,6 @@ export const persistPosition = function persistPosition(
 
 /**
  * Retrieves the persisted trigger position from localStorage.
- *
- * @param storageKey - The localStorage key to read from
- * @returns The persisted corner position, or null if not found/invalid
  *
  * @remarks
  * Returns null if localStorage is not available or the stored value is invalid.
@@ -256,11 +221,6 @@ export const getPersistedPosition = function getPersistedPosition(
 	return null;
 };
 
-/**
- * Creates an initial drag state object.
- *
- * @returns A DragState with isDragging false and all coordinates at 0
- */
 export const createInitialDragState =
 	function createInitialDragState(): DragState {
 		return {
@@ -293,9 +253,6 @@ export interface TriggerVisibilityState {
  * owed: a choice saved or a notice dismissed. Otherwise the trigger stays
  * on screen beside an open banner.
  *
- * @param state - The trigger's option and the consent state.
- * @returns `true` when the trigger should be on screen.
- *
  * @example
  * ```ts
  * isTriggerVisible({
@@ -326,10 +283,8 @@ export type TriggerToolbarItem = 'preferences' | 'devtools';
  * The toolbar's items in reading order for a corner. Preferences sits in
  * the corner; DevTools, a development aid, sits farthest from it.
  *
- * @param corner - The corner the toolbar sits in.
  * @param orientation - The toolbar's direction. A vertical toolbar puts
  * preferences first in a top corner.
- * @returns The two items in order.
  */
 export const toolbarOrder = function toolbarOrder(
 	corner: CornerPosition,
@@ -351,7 +306,6 @@ export const toolbarOrder = function toolbarOrder(
  * @param items - The focusable items in visual order.
  * @param current - The item that has the tab stop.
  * @param key - `KeyboardEvent.key`.
- * @param orientation - The toolbar's direction.
  * @returns The item to focus, or `undefined` for a key the toolbar ignores.
  *
  * @example

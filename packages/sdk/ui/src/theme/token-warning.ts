@@ -26,8 +26,6 @@ const TOKEN_KEYS = [
  * tokens into CSS in the browser. A `<style id="inth-theme">` counts as
  * applied. Call it in development only.
  *
- * @param theme - The provider's `theme` option.
- * @param document - The page's document.
  * @param fix - How to apply tokens with this adapter, with its docs link.
  */
 export const warnOnUnappliedThemeTokens = function warnOnUnappliedThemeTokens(

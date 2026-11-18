@@ -7,14 +7,12 @@
 	--consent-gate-line-height: var(--inth-line-height-normal);
 	--consent-gate-placeholder-gap: var(--inth-space-md);
 
-	/* Border */
 	/* 1.25rem with the default radius scale. */
 	--consent-gate-placeholder-border-radius: calc(var(--inth-radius-lg) * 5 / 3);
 	--consent-gate-placeholder-border-width: 1px;
 	--consent-gate-placeholder-border-color: var(--inth-border);
 	--consent-gate-placeholder-border-color-dark: var(--inth-border);
 
-	/* Colors */
 	--consent-gate-placeholder-background-color: var(--inth-surface);
 	--consent-gate-placeholder-background-color-dark: var(--inth-surface);
 	--consent-gate-placeholder-text-color: var(--inth-text);
@@ -22,7 +20,6 @@
 	--consent-gate-placeholder-title-color: var(--inth-text);
 	--consent-gate-placeholder-title-color-dark: var(--inth-text);
 
-	/* Shadow */
 	--consent-gate-placeholder-shadow: var(--inth-shadow-lg);
 	--consent-gate-placeholder-shadow-dark: var(--inth-shadow-lg);
 
@@ -77,7 +74,6 @@
 		color: var(--consent-gate-placeholder-title-color-dark);
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.placeholder {
 			animation: none;
