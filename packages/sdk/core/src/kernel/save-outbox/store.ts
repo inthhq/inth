@@ -26,7 +26,7 @@ import {
 } from '../../libs/storage-keys';
 import { decodeClearEpoch } from '../../modules/persistence/record-codec';
 import type { SavePayload } from '../../types';
-import { toStoredPayload } from './stored-payload';
+import { toStoredPayload, withoutStoredTokens } from './stored-payload';
 import type { PendingSaveEntry } from './supersession';
 
 /**
@@ -108,7 +108,7 @@ export const enqueueSave = function enqueueSave(
 	return store.transact((tx) => {
 		const stored = tx.read('saves');
 		return tx.write('saves', [
-			...(Array.isArray(stored) ? stored : []),
+			...withoutStoredTokens(stored),
 			pendingSave(payload, now),
 		]);
 	});

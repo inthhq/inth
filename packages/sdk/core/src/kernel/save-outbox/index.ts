@@ -69,7 +69,7 @@ import type { KernelRuntime } from '../runtime';
 import type { EnqueueResult, QueueWorker, QueueWorkerOptions } from './queue';
 import { queueTools } from './queue-tools';
 import type { SaveOutboxStore } from './store';
-import { toStoredPayload } from './stored-payload';
+import { toStoredPayload, withoutStoredTokens } from './stored-payload';
 import {
 	liveSupersession,
 	withoutSuperseded,
@@ -222,7 +222,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			}
 			const stored = tx.read('saves');
 			return tx.write('saves', [
-				...(Array.isArray(stored) ? stored : []),
+				...withoutStoredTokens(stored),
 				{
 					attempts: 0,
 					payload: toStoredPayload(payload),

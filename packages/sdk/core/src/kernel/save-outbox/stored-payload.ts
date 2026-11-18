@@ -24,3 +24,38 @@ export const toStoredPayload = function toStoredPayload(
 	const { identityToken: _token, ...user } = payload.user;
 	return { ...payload, user };
 };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === 'object' && value !== null;
+
+/**
+ * The queue as read from storage, ready to append to: each entry as
+ * written, less any identity token an older client stored with it. The
+ * queue module validates entries when it reads them; this runs before that
+ * module may have loaded, so an append never writes a token back.
+ *
+ * @param stored - The `saves` list as read, of any shape.
+ * @returns The entries to write back.
+ * @internal
+ */
+export const withoutStoredTokens = function withoutStoredTokens(
+	stored: unknown
+): unknown[] {
+	if (!Array.isArray(stored)) {
+		return [];
+	}
+	return stored.map((entry: unknown) => {
+		if (
+			!(
+				isRecord(entry) &&
+				isRecord(entry.payload) &&
+				isRecord(entry.payload.user) &&
+				'identityToken' in entry.payload.user
+			)
+		) {
+			return entry;
+		}
+		const { identityToken: _token, ...user } = entry.payload.user;
+		return { ...entry, payload: { ...entry.payload, user } };
+	});
+};

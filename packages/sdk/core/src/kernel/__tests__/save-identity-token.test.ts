@@ -182,6 +182,54 @@ describe('identity token in the save queue', () => {
 		next.dispose();
 	});
 
+	test('a save queued before the queue module loads removes older stored tokens', async () => {
+		const first = createKernel(
+			{
+				initialUser: USER,
+				transport: { save: () => new Promise<{ ok: boolean }>(() => {}) },
+			},
+			{ outboxStore: store }
+		);
+		void first.commands.save({ measurement: true });
+		await vi.waitFor(async () => expect(await queued()).toHaveLength(1));
+		first.dispose();
+		// An entry an older client wrote with the token.
+		await store.transact((tx) => {
+			const entries = (tx.read('saves') ?? []) as QueuedEntry[];
+			tx.write(
+				'saves',
+				entries.map((entry) => ({
+					...entry,
+					attempts: 2,
+					payload: { ...entry.payload, user: USER },
+				}))
+			);
+		});
+		expect(await storedText()).toContain('signed.identity.token');
+
+		const next = createKernel(
+			{
+				initialUser: USER,
+				transport: { save: () => Promise.reject(new Error('offline')) },
+			},
+			{
+				loadOutboxQueue: () => Promise.reject(new Error('offline')),
+				outboxStore: store,
+			}
+		);
+		await next.commands.save({ marketing: true });
+
+		const entries = await queued();
+		expect(entries).toHaveLength(2);
+		expect(entries[0]?.attempts).toBe(2);
+		expect(entries.map(({ payload }) => payload.user)).toEqual([
+			STORED_USER,
+			STORED_USER,
+		]);
+		expect(await storedText()).not.toContain('signed.identity.token');
+		next.dispose();
+	});
+
 	test('an early commit queues its save without the token', async () => {
 		vi.useFakeTimers({ toFake: ['Date'] });
 		vi.setSystemTime(NOW + 5000);
@@ -205,11 +253,26 @@ describe('identity token in the save queue', () => {
 			throw new Error('expected a commit');
 		}
 		expect(plan.payload.user).toEqual(USER);
+		// A save an older client queued with its token.
+		await store.transact((tx) => {
+			tx.write('saves', [
+				{
+					attempts: 1,
+					payload: { ...plan.payload, user: USER },
+					queuedAt: NOW,
+				},
+			]);
+		});
 
 		await expect(storeEarlyCommit(plan, { outbox: store })).resolves.toBe(true);
 
 		expect(await storedText()).not.toContain('signed.identity.token');
-		expect((await queued())[0]?.payload.user).toEqual(STORED_USER);
+		const entries = await queued();
+		expect(entries).toHaveLength(2);
+		expect(entries.map(({ payload }) => payload.user)).toEqual([
+			STORED_USER,
+			STORED_USER,
+		]);
 		localStorage.clear();
 	});
 });
