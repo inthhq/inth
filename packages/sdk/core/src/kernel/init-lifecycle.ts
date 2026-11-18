@@ -30,6 +30,7 @@ import { deepMergeTranslations } from '@inth/sdk-translations';
 
 import type { RecordIssue } from '../consent-record/validation';
 import { ownScriptRegistry } from '../libs/freeze-data';
+import { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
 import { isProductionBuild } from '../libs/is-production';
 import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 import { applyTranslationOverrides } from '../translations';
@@ -136,19 +137,6 @@ const warnInitFailure = function warnInitFailure(
 	console.warn(
 		`[inth] Backend/manifest init failed. The consent banner is withheld and optional categories stay denied. ${retryMessage}${detail}`
 	);
-};
-
-const detectBrowserGpc = function detectBrowserGpc(): boolean {
-	if (typeof navigator === 'undefined') {
-		return false;
-	}
-	try {
-		const value = (navigator as Navigator & { globalPrivacyControl?: unknown })
-			.globalPrivacyControl;
-		return value === true;
-	} catch {
-		return false;
-	}
 };
 
 const hasDocumentListeners = function hasDocumentListeners(): boolean {
@@ -517,7 +505,7 @@ export const createInitLifecycle = function createInitLifecycle({
 		timerStopped = false;
 		if (!started) {
 			started = true;
-			if (detectBrowserGpc()) {
+			if (hasGlobalPrivacyControlSignal()) {
 				commit({ privacyDetected: true });
 			}
 		}

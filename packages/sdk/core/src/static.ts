@@ -15,6 +15,7 @@ import type {
 import { resolveInitFromManifest } from '@inth/sdk-schema/types';
 import { baseTranslations } from '@inth/sdk-translations/all';
 
+import { hasGlobalPrivacyControlSignal } from './libs/global-privacy-control';
 import {
 	fetchGeoInputs,
 	readGeoInputs,
@@ -83,16 +84,6 @@ const readBrowserLanguage = function readBrowserLanguage(): string | undefined {
 	return navigator.languages?.[0] ?? navigator.language;
 };
 
-const readBrowserGpc = function readBrowserGpc(): boolean | undefined {
-	if (typeof navigator === 'undefined') {
-		return undefined;
-	}
-	return (
-		(navigator as Navigator & { globalPrivacyControl?: unknown })
-			.globalPrivacyControl === true
-	);
-};
-
 /**
  * Resolves the init payload for a visitor whose location is unknown.
  *
@@ -150,7 +141,7 @@ export const createStaticConsentResolver = function createStaticConsentResolver(
 	options: StaticConsentResolverOptions
 ): StaticConsentResolution {
 	const language = options.language ?? readBrowserLanguage() ?? 'en';
-	const gpc = options.gpc ?? readBrowserGpc();
+	const gpc = options.gpc ?? hasGlobalPrivacyControlSignal();
 	const commonInputs = { gpc, language };
 	const initialGeo = readGeoInputs(options.geo);
 	const hasGeo = Boolean(initialGeo.country || initialGeo.region);

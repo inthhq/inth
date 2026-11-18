@@ -5,29 +5,41 @@
  * GPC is a browser-level signal that indicates a user's preference to opt out
  * of the sale or sharing of their personal data (e.g. CCPA/CPRA).
  *
- * This helper is intentionally conservative and only checks for the presence
- * of the client-side `navigator.globalPrivacyControl` flag.
+ * These helpers only read the client-side `navigator.globalPrivacyControl`
+ * flag.
  *
  * @see https://globalprivacycontrol.org/ for the GPC specification.
+ */
+
+/**
+ * The browser's GPC flag as it stands, or `undefined` without a browser,
+ * without a boolean flag, or when reading it throws.
+ *
+ * @internal
+ */
+export const readGlobalPrivacyControl = function readGlobalPrivacyControl():
+	| boolean
+	| undefined {
+	try {
+		// The page's navigator; the global one outside a window.
+		const reader = (
+			typeof window === 'undefined' ? globalThis.navigator : window.navigator
+		) as (Navigator & { globalPrivacyControl?: unknown }) | undefined;
+		const value = reader?.globalPrivacyControl;
+		return typeof value === 'boolean' ? value : undefined;
+	} catch {
+		// A getter that throws reads as no signal.
+		return undefined;
+	}
+};
+
+/**
+ * Whether the browser sends the GPC signal: `false` without a browser, a
+ * flag, or when reading it throws.
  *
  * @internal
  */
 export const hasGlobalPrivacyControlSignal =
 	function hasGlobalPrivacyControlSignal(): boolean {
-		if (typeof window === 'undefined') {
-			return false;
-		}
-
-		try {
-			const navigatorWithGPC = window.navigator as Navigator & {
-				globalPrivacyControl?: unknown;
-			};
-
-			const value = navigatorWithGPC.globalPrivacyControl;
-
-			return value === true;
-		} catch {
-			// If anything goes wrong while reading the signal, fail closed
-			return false;
-		}
+		return readGlobalPrivacyControl() === true;
 	};

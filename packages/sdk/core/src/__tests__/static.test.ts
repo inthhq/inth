@@ -170,6 +170,38 @@ describe('createStaticConsentResolver', () => {
 		await expect(fetched.resolved).resolves.toBe(fetched.initial);
 	});
 
+	test('reads a GPC getter that throws as no signal', () => {
+		const throwing = {
+			get globalPrivacyControl(): boolean {
+				throw new Error('blocked');
+			},
+		};
+		const saved = ['navigator', 'window'].map(
+			(name) =>
+				[name, Object.getOwnPropertyDescriptor(globalThis, name)] as const
+		);
+		for (const [name, descriptor] of saved) {
+			Object.defineProperty(globalThis, name, {
+				configurable: true,
+				value:
+					name === 'window'
+						? { ...descriptor?.value, navigator: throwing }
+						: throwing,
+			});
+		}
+		try {
+			expect(() =>
+				createStaticConsentResolver({ language: 'en', manifest })
+			).not.toThrow();
+		} finally {
+			for (const [name, descriptor] of saved) {
+				if (descriptor) {
+					Object.defineProperty(globalThis, name, descriptor);
+				}
+			}
+		}
+	});
+
 	test('reads a lower-case location the way the browser manifest resolver does', async () => {
 		const fetch = geoResponse({ country: 'us', region: 'ca' });
 		const resolution = createStaticConsentResolver({
