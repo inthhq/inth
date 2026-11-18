@@ -374,6 +374,24 @@ describe('scriptLoader.sources', () => {
 		runtime.dispose();
 	});
 
+	test("takes the later value when a source spells an attribute's name twice", () => {
+		const runtime = start({
+			scriptLoader: {
+				sources: {
+					vendor: {
+						attributes: { 'DATA-MODE': 'registry', 'data-mode': null },
+						integrity: REGISTRY_INTEGRITY,
+						src: REGISTRY_SRC,
+					},
+				},
+			},
+			scripts: [vendorScript()],
+		});
+
+		expect(element('vendor')?.hasAttribute('data-mode')).toBe(false);
+		runtime.dispose();
+	});
+
 	test('applies only data-* attributes from a source', () => {
 		const runtime = start({
 			scriptLoader: {

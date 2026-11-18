@@ -101,16 +101,23 @@ const withTagAttributes = (
 		return attributes;
 	}
 	const ownNames = new Set(Object.keys(own).map((name) => name.toLowerCase()));
-	const removed = new Set<string>();
-	const added: [string, string][] = [];
+	// One value per name: with two spellings of a name, the later one wins.
+	const effective = new Map<string, string | null>();
 	for (const [rawName, value] of Object.entries(tagAttributes)) {
 		const name = rawName.toLowerCase();
-		if (!DATA_ATTRIBUTE.test(name)) {
-			continue;
+		if (
+			DATA_ATTRIBUTE.test(name) &&
+			(value === null || typeof value === 'string')
+		) {
+			effective.set(name, value);
 		}
+	}
+	const removed = new Set<string>();
+	const added: [string, string][] = [];
+	for (const [name, value] of effective) {
 		if (value === null) {
 			removed.add(name);
-		} else if (typeof value === 'string' && !ownNames.has(name)) {
+		} else if (!ownNames.has(name)) {
 			added.push([name, value]);
 		}
 	}
