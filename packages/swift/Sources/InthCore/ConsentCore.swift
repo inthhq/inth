@@ -1396,7 +1396,7 @@ public final class ConsentCore: @unchecked Sendable {
                 identityToken: identityToken
             ) {
             case let .success(canonical):
-                self.adoptCanonicalSubjectId(canonical, sentFor: identity.id)
+                self.adoptCanonicalSubjectId(canonical, sentFor: identity.id, linkedExternalId: user.externalId)
             case let .failure(error):
                 // A refused link names the backend's `error.code`, such as
                 // `identity_token_invalid`, so the host can tell a stale token from a conflict.
@@ -1418,12 +1418,19 @@ public final class ConsentCore: @unchecked Sendable {
     /// a subject the core no longer holds, such as one a reset replaced while it was in
     /// flight. Queued bodies keep the id they were frozen with; the replaced id is
     /// remembered so they still count as this subject's.
-    private func adoptCanonicalSubjectId(_ candidate: String?, sentFor sentId: String) {
+    ///
+    /// A link names the canonical id of the person it linked, so with `linkedExternalId`
+    /// the id is adopted only while the core still holds that external id. An `identify`
+    /// for another person while the link was in flight keeps the local id.
+    private func adoptCanonicalSubjectId(
+        _ candidate: String?, sentFor sentId: String, linkedExternalId: String? = nil
+    ) {
         guard let candidate, SubjectId.isUUIDv7(candidate) else { return }
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
         let wired = lock.withLock { () -> (CoreConfig, SubjectIdentity, [String])? in
             guard let config, let identity, identity.id == sentId, identity.id != candidate else { return nil }
+            if let linkedExternalId, user?.externalId != linkedExternalId { return nil }
             return (config, identity, previousSubjectIds)
         }
         guard let (config, current, previous) = wired,

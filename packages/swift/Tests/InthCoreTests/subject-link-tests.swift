@@ -186,6 +186,17 @@ final class SubjectLinkTests: XCTestCase {
         XCTAssertEqual(core.snapshot().subject?.externalId, "user_123")
     }
 
+    func testALinkAnsweredAfterIdentifyMovedToAnotherPersonKeepsTheLocalId() async {
+        let core = await started(subjectId: Self.c15tId)
+        http.linkResponse = .json(#"{"subjectId":"\#(Self.canonical)","externalId":"user_123","verifiedBy":"identity_token"}"#)
+        core.identify(KernelUser(externalId: "user_123"), identityToken: "token")
+        core.identify(KernelUser(externalId: "user_456"))
+        await core.waitUntilIdle()
+        XCTAssertEqual(http.recordedIdentityRequests.count, 1)
+        XCTAssertEqual(core.snapshot().subject?.id, Self.c15tId, "user_123's canonical id is not installed under user_456")
+        XCTAssertEqual(core.snapshot().subject?.externalId, "user_456")
+    }
+
     func testAnAnswerForASubjectTheCoreNoLongerHoldsIsNotAdopted() async throws {
         let core = await started(subjectId: Self.c15tId)
         http.saveResponse = .json(#"{"subjectId":"\#(Self.canonical)","recordId":"rec_1"}"#)
