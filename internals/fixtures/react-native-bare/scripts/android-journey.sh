@@ -51,7 +51,7 @@ fi
 # 0. The backend has to be there, or nothing below means anything
 # ---------------------------------------------------------------------------
 
-curl -fsS -m 10 -o /dev/null "${BACKEND_URL}/init" ||
+curl -fsS -m 10 -o /dev/null "${BACKEND_URL}/v1/consent/init" ||
 	die "the consent backend is not answering at ${BACKEND_URL}. Start it with:
       bun run --cwd apps/playground dev:localhost --port 3000
     Without it the core resolves nothing and no prompt is ever owed, which looks exactly

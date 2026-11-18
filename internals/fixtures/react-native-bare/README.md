@@ -83,7 +83,7 @@ absent key means "not configured", so leave a value out rather than setting it t
 empty string. `internals/fixtures/expo-dev` gets the same keys written by the config plugin.
 
 There is no key to add. An Inth project is identified by its backend URL, and neither
-`/init` nor `/subjects` carries a credential, so nothing here takes one.
+`/v1/consent/init` nor `/v1/consent/records` carries a credential, so nothing here takes one.
 
 To make the ads card ask Apple for anything, add `NSUserTrackingUsageDescription` to
 `ios/InthBare/Info.plist` with a prompt App Review will accept. Add
@@ -583,7 +583,7 @@ resource. The checked-in reference defaults remain the public Inth demo.
 `INTH_APP_E2E=1` embeds a fixture-only observer that publishes the real
 TurboModule snapshot to the test backend. The test fails unless the active core
 is native. It checks effective permissions, explicit category receipts, their
-confirmation times and the actual `/subjects` bodies. The fake core cannot
+confirmation times and the actual `/v1/consent/records` bodies. The fake core cannot
 satisfy these assertions. Demo links only reset scenarios. Reject, Accept,
 Customize, category switches, Save and reopening preferences use visible controls.
 
