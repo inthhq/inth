@@ -1,4 +1,3 @@
-import { COMPAT_BACKEND_URL } from '@c15t/next-compat-shared/config';
 import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
 import { resolveConsent } from '@c15t/nextjs/server';
 import { Suspense } from 'react';
@@ -6,8 +5,10 @@ import { Suspense } from 'react';
 const ResolvedConsent = async () => {
 	const errors: unknown[] = [];
 	const state = await resolveConsent({
-		backendURL: COMPAT_BACKEND_URL,
-		manifestURL: '/api/consent/unavailable-manifest',
+		// Both the manifest and the `/init` fallback fail, so the render keeps
+		// the request-only state and reports the failure once.
+		backendURL: '/api/consent/unavailable',
+		manifestURL: '/api/consent/unavailable/manifest',
 		onError(error) {
 			errors.push(error);
 		},
