@@ -26,6 +26,7 @@ import { manifestNeedsLocation } from './transports/manifest-browser-location';
 
 export type { ConsentManifest } from '@inth/sdk-schema/types';
 export { createDialogChunkPlugin } from './build-dialog-chunk';
+export { DEFERRED_SHEET_SPECIFIERS } from './build-static-banner';
 export type { DialogChunkPlugin } from './build-dialog-chunk';
 
 const resolveBuildManifestUrl = (
@@ -637,18 +638,12 @@ export interface GeneratedManifestModule {
 }
 
 /**
- * Specifiers the build integrations answer with the fetched snapshot:
- * `@inth/sdk/generated` and the framework packages' `generated` entries,
- * which apps import so they need no direct `@inth/sdk` dependency.
+ * The module the build integrations answer with the fetched snapshot. A
+ * framework package's own `generated` entry re-exports it; the Vite plugin
+ * serves those too for the packages its adapter names.
  * @internal
  */
-export const GENERATED_MODULE_IDS = [
-	'@inth/sdk/generated',
-	'@inth/nextjs/generated',
-	'@inth/react/generated',
-	'@inth/svelte/generated',
-	'@inth/tanstack-start/generated',
-] as const;
+export const GENERATED_MODULE_ID = '@inth/sdk/generated';
 
 /** Where non-Vite builds write the snapshot, relative to the app root. */
 export const MANIFEST_CACHE_DIR = 'node_modules/.cache/inth';
@@ -808,6 +803,7 @@ export interface ManifestPluginConfig {
 	command?: 'build' | 'serve';
 	env?: Record<string, unknown>;
 	envDir?: string | false;
+	environments?: ConsentManifestUserConfig['environments'];
 	logger?: ManifestBuildLogger;
 	mode?: string;
 	plugins?: readonly { name: string }[];
@@ -1107,16 +1103,29 @@ const placeholderPattern = (token: string): RegExp =>
 	);
 
 /**
- * Packages whose modules can import `@inth/sdk/generated`. Server builds
- * bundle them, so the import reaches the plugin instead of Node.
+ * Removes {@link CONSENT_CHUNK_GROUP} from a resolved config, for an app
+ * the plugin learns only then is server-rendered.
  */
-const GENERATED_IMPORTERS = [
-	'@inth/sdk',
-	'@inth/react',
-	'@inth/svelte',
-	'@inth/tanstack-start',
-	'@inth/vue',
-];
+const dropConsentChunkGroup = function dropConsentChunkGroup(
+	config: ManifestPluginConfig
+): void {
+	const builds = [
+		config.build,
+		...Object.values(config.environments ?? {}).map(
+			(environment) => environment?.build
+		),
+	];
+	for (const build of builds) {
+		const output = build?.rolldownOptions?.output as
+			| { codeSplitting?: { groups?: unknown[] } }
+			| undefined;
+		const groups = output?.codeSplitting?.groups;
+		const index = groups?.indexOf(CONSENT_CHUNK_GROUP) ?? -1;
+		if (groups && index !== -1) {
+			groups.splice(index, 1);
+		}
+	}
+};
 
 /**
  * Builds the Vite plugin behind each `consentManifest` export. It serves
@@ -1161,15 +1170,25 @@ export const createConsentManifestPlugin = (
 		label: string;
 		serverRendered?: boolean | ((config: ManifestPluginConfig) => boolean);
 		/**
+		 * Packages whose modules import `@inth/sdk/generated`, through their
+		 * own `generated` entry or directly. The plugin serves each one's
+		 * `generated` entry and keeps it out of dependency pre-bundling, and
+		 * server builds bundle the packages so the import reaches the plugin
+		 * instead of Node. `@inth/sdk` is always included.
+		 */
+		packages?: readonly string[];
+		/**
 		 * Warn when the snapshot's policy depends on the visitor's location,
 		 * which a single-page app's `manifest()` can't resolve on its own.
 		 */
 		adviseHostedForLocation?: boolean;
 	}
 ): ConsentManifestPlugin => {
+	const importers = ['@inth/sdk', ...(defaults.packages ?? [])];
+	const generatedIds = importers.map((name) => `${name}/generated`);
 	let resolved: ManifestPluginConfig | undefined;
 	let projectUrl: string | undefined;
-	let serverRendered = false;
+	let serverRendered = defaults.serverRendered === true;
 	let generation: Promise<ConsentManifest | undefined> | undefined;
 	let missingURLReported = false;
 	let bundlesSnapshot = false;
@@ -1377,12 +1396,14 @@ export const createConsentManifestPlugin = (
 		},
 		config(this, userConfig, env) {
 			const base = {
-				optimizeDeps: { exclude: [...GENERATED_MODULE_IDS] },
-				ssr: { noExternal: [...GENERATED_IMPORTERS] },
+				optimizeDeps: { exclude: [...generatedIds] },
+				ssr: { noExternal: [...importers] },
 			};
 			// Server-rendered adapters keep their framework's chunking.
 			if (
-				defaults.serverRendered ||
+				// A function decides once the config is resolved; see
+				// `configResolved`.
+				defaults.serverRendered === true ||
 				!shouldGroupConsentChunks(
 					this as ConsentManifestConfigContext | undefined,
 					userConfig,
@@ -1420,6 +1441,10 @@ export const createConsentManifestPlugin = (
 			const { serverRendered: rendered = false } = defaults;
 			serverRendered =
 				typeof rendered === 'function' ? rendered(config) : rendered;
+			if (serverRendered && typeof rendered === 'function') {
+				// Server-rendered adapters keep their framework's chunking.
+				dropConsentChunkGroup(config);
+			}
 			if (serverRendered && options.initPrefetch) {
 				logger().warn(
 					'initPrefetch has no effect in a server-rendered app, which resolves consent on the server.'
@@ -1445,7 +1470,7 @@ export const createConsentManifestPlugin = (
 			}
 			if (!resolved) {
 				throw new Error(
-					`${defaults.label}: Vite loaded ${GENERATED_MODULE_IDS[0]} before the plugin read its configuration.`
+					`${defaults.label}: Vite loaded ${GENERATED_MODULE_ID} before the plugin read its configuration.`
 				);
 			}
 			const consumer =
@@ -1515,7 +1540,7 @@ export const createConsentManifestPlugin = (
 				Object.values(PLACEHOLDERS).some((token) => rendered.includes(token))
 			) {
 				throw new Error(
-					`${defaults.label}: the bundler rewrote the ${GENERATED_MODULE_IDS[0]} stand-ins, so the build cannot fill them in.`
+					`${defaults.label}: the bundler rewrote the ${GENERATED_MODULE_ID} stand-ins, so the build cannot fill them in.`
 				);
 			}
 			return { code: rendered, map: null };
@@ -1526,7 +1551,7 @@ export const createConsentManifestPlugin = (
 			importer?: string,
 			resolveOptions?: { ssr?: boolean }
 		): Promise<string | undefined> | string | undefined {
-			if ((GENERATED_MODULE_IDS as readonly string[]).includes(id)) {
+			if (generatedIds.includes(id)) {
 				return VIRTUAL_GENERATED_ID;
 			}
 			const context = this as ManifestPluginResolveContext | undefined;
@@ -1543,7 +1568,11 @@ export const createConsentManifestPlugin = (
 			}
 			const deferred = deferredSheetSpecifier(id, importer);
 			if (
-				!(deferred && context?.resolve && staticBannerOn()) ||
+				!(
+					deferred &&
+					context?.resolve &&
+					(serverRendered || staticBannerOn())
+				) ||
 				resolveOptions?.ssr ||
 				context.environment?.config?.consumer === 'server'
 			) {

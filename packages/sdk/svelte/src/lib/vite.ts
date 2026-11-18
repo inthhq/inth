@@ -438,6 +438,7 @@ export const consentManifest = (
 		adviseHostedForLocation: true,
 		envNames: ['PUBLIC_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
 		label: '@inth/svelte/vite',
+		packages: ['@inth/svelte'],
 		serverRendered: (config) =>
 			config.plugins?.some((plugin) => plugin.name === SVELTEKIT_PLUGIN) ??
 			false,

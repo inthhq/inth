@@ -38,21 +38,24 @@ export interface StaticBannerRenderer {
 }
 
 /**
- * Sheets `@inth/react` imports that a page with the static banner already
- * holds (`tokens`, `button`, `banner`), or that only a surface rendered
- * later needs (`trigger`, `consent-gate`). A client build gets each one's
- * `-deferred` module: the same `id`, no text, and a `load()` used only when
- * the page lacks the sheet. The Next.js adapter does the same for the sheets
- * its server HTML holds.
+ * Sheets `@inth/react` imports that a page with the static banner or a
+ * server-rendered banner already holds (`tokens`, `button`, `banner`), or
+ * that only a surface rendered later needs (`trigger`, `consent-gate`);
+ * `first-paint` is the one earlier `@inth/react` releases rendered for the
+ * IAB banner. A client build gets each one's `-deferred` module: the same
+ * `id`, no text, and a `load()` used only when the page lacks the sheet.
+ * A sheet the installed `@inth/sdk/ui` has no deferred module for keeps its
+ * text.
  */
-const DEFERRED_SHEETS = new Set([
+export const DEFERRED_SHEET_SPECIFIERS: readonly string[] = [
+	'first-paint',
 	'tokens',
 	'button',
 	'banner',
 	'trigger',
 	'consent-gate',
-]);
-const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
+].map((name) => `@inth/sdk/ui/styles/sheets/${name}`);
+const DEFERRED_SHEETS: ReadonlySet<string> = new Set(DEFERRED_SHEET_SPECIFIERS);
 
 /** A module of the installed `@inth/react`, whatever the package manager. */
 const REACT_PACKAGE = /[\\/]node_modules[\\/]@inth[\\/]react[\\/]/u;
@@ -78,12 +81,7 @@ export const deferredSheetSpecifier = function deferredSheetSpecifier(
 	id: string,
 	importer: string | undefined
 ): string | undefined {
-	if (
-		!(importer && REACT_PACKAGE.test(importer) && id.startsWith(SHEETS_PREFIX))
-	) {
-		return undefined;
-	}
-	return DEFERRED_SHEETS.has(id.slice(SHEETS_PREFIX.length))
+	return importer && REACT_PACKAGE.test(importer) && DEFERRED_SHEETS.has(id)
 		? `${id}-deferred`
 		: undefined;
 };

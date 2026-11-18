@@ -20,7 +20,7 @@ import {
 	CONSENT_CHUNK_GROUP,
 	consentManifest,
 	createConsentManifestPlugin,
-	GENERATED_MODULE_IDS,
+	GENERATED_MODULE_ID,
 	legacyEnvName,
 	loadBuildManifest,
 	MANIFEST_CACHE_DIR,
@@ -213,7 +213,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		await plugin.configResolved({ command: 'serve', root });
 		const dev = await plugin.load.call(
 			undefined,
-			plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+			plugin.resolveId(GENERATED_MODULE_ID) as string
 		);
 		expect(dev).toContain('export const snapshot = undefined;');
 		expect(options.fetch).not.toHaveBeenCalled();
@@ -259,7 +259,7 @@ describe('@inth/sdk/generated in Vite', () => {
 				serverRendered,
 			});
 			await plugin.configResolved({ command: 'serve', root });
-			const id = plugin.resolveId(GENERATED_MODULE_IDS[0]);
+			const id = plugin.resolveId(GENERATED_MODULE_ID);
 			expect(id).toBeDefined();
 			expect(plugin.resolveId('@inth/sdk/generated')).toBe(id);
 			const source = await plugin.load.call(
@@ -281,7 +281,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			serverRendered: true,
 		});
 		await plugin.configResolved({ command: 'serve', root });
-		const id = plugin.resolveId(GENERATED_MODULE_IDS[0]) as string;
+		const id = plugin.resolveId(GENERATED_MODULE_ID) as string;
 		expect(await plugin.load.call(undefined, id, { ssr: true })).toContain(
 			'build-test'
 		);
@@ -297,7 +297,7 @@ describe('@inth/sdk/generated in Vite', () => {
 				config.plugins?.some((entry) => entry.name === 'framework') ?? false,
 		});
 		await plugin.configResolved({ plugins: [{ name: 'framework' }], root });
-		const id = plugin.resolveId(GENERATED_MODULE_IDS[0]) as string;
+		const id = plugin.resolveId(GENERATED_MODULE_ID) as string;
 		expect(
 			await plugin.load.call(
 				{ environment: { config: { consumer: 'client' } } },
@@ -308,11 +308,50 @@ describe('@inth/sdk/generated in Vite', () => {
 
 	test('keeps the module out of pre-bundling and bundles inth packages on the server', () => {
 		const { optimizeDeps, ssr } = consentManifest().config();
-		expect(optimizeDeps.exclude).toEqual([...GENERATED_MODULE_IDS]);
-		expect(ssr.noExternal).toEqual(
-			expect.arrayContaining(['@inth/sdk', '@inth/react'])
+		expect(optimizeDeps.exclude).toEqual([GENERATED_MODULE_ID]);
+		expect(ssr.noExternal).toEqual(['@inth/sdk']);
+	});
+
+	test('serves the generated entry of each package an adapter names', () => {
+		const plugin = createConsentManifestPlugin(
+			{},
+			{ envNames: [], label: 'test', packages: ['@inth/example'] }
+		);
+		const { optimizeDeps, ssr } = plugin.config();
+		expect(optimizeDeps.exclude).toEqual([
+			GENERATED_MODULE_ID,
+			'@inth/example/generated',
+		]);
+		expect(ssr.noExternal).toEqual(['@inth/sdk', '@inth/example']);
+		expect(plugin.resolveId('@inth/example/generated')).toBe(
+			plugin.resolveId(GENERATED_MODULE_ID)
 		);
 	});
+
+	// A function `serverRendered` used to count as server-rendered in the
+	// `config` hook, so a single-page app it described never got the group.
+	test.each([
+		[false, [CONSENT_CHUNK_GROUP]],
+		[true, []],
+	])(
+		'decides the chunk group from a serverRendered function once the config is resolved (%s)',
+		(rendered, groups) => {
+			const plugin = createConsentManifestPlugin(
+				{ projectUrl: 'https://consent.example.com' },
+				{ envNames: [], label: 'test', serverRendered: () => rendered }
+			);
+			const rolldown = { meta: { rolldownVersion: '1.2.11' } };
+			const config = plugin.config.call(rolldown, {}, {});
+			plugin.configResolved({
+				build: config.build as never,
+				command: 'build',
+				root: '/app',
+			});
+			expect(config.build?.rolldownOptions.output.codeSplitting.groups).toEqual(
+				groups
+			);
+		}
+	);
 
 	test('puts the inth modules a client entry imports into one chunk', () => {
 		const plugin = consentManifest();
@@ -420,7 +459,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		expect(options.fetch).not.toHaveBeenCalled();
 		const source = await plugin.load.call(
 			undefined,
-			plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+			plugin.resolveId(GENERATED_MODULE_ID) as string
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringMatching(
@@ -449,7 +488,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		expect(
 			await plugin.load.call(
 				undefined,
-				plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+				plugin.resolveId(GENERATED_MODULE_ID) as string
 			)
 		).toContain('export const projectUrl = "https://env.example.com/api";');
 		expect(fetch).toHaveBeenCalledWith(
@@ -474,7 +513,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			});
 			const source = await plugin.load.call(
 				undefined,
-				plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+				plugin.resolveId(GENERATED_MODULE_ID) as string
 			);
 			return { fetch, source };
 		};
@@ -544,7 +583,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			plugin.configResolved({ command, logger: warnings, root });
 			const source = await plugin.load.call(
 				undefined,
-				plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+				plugin.resolveId(GENERATED_MODULE_ID) as string
 			);
 			await plugin.renderChunk(source as string);
 		};
@@ -576,7 +615,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		const options = optionsFor(root);
 		const plugin = consentManifest(options);
 		await plugin.configResolved({ command: 'serve', root });
-		const id = plugin.resolveId(GENERATED_MODULE_IDS[0]) as string;
+		const id = plugin.resolveId(GENERATED_MODULE_ID) as string;
 		await Promise.all([
 			plugin.load.call(undefined, id),
 			plugin.load.call(undefined, id, { ssr: true }),
@@ -592,7 +631,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		);
 		const plugin = consentManifest({ ...options, onBuildError: 'fail' });
 		await plugin.configResolved({ command: 'serve', root });
-		const id = plugin.resolveId(GENERATED_MODULE_IDS[0]) as string;
+		const id = plugin.resolveId(GENERATED_MODULE_ID) as string;
 		const results = await Promise.allSettled([
 			plugin.load.call(undefined, id),
 			plugin.load.call(undefined, id),
@@ -860,7 +899,7 @@ describe('initPrefetch', () => {
 		plugin.configResolved({ command: 'build', logger: createLogger(), root });
 		const source = await plugin.load.call(
 			undefined,
-			plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+			plugin.resolveId(GENERATED_MODULE_ID) as string
 		);
 		await plugin.renderChunk(source as string);
 		expect(await plugin.transformIndexHtml('<head></head>')).toBeUndefined();

@@ -4,7 +4,8 @@ import { basename, join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
-	GENERATED_MODULE_IDS,
+	DEFERRED_SHEET_SPECIFIERS,
+	GENERATED_MODULE_ID,
 	readBuildEnv,
 	readBuildEnvEntry,
 	writeManifestCacheModule,
@@ -39,12 +40,12 @@ export type ConsentNextConfig =
 /**
  * The specifiers aliased to the written snapshot: the one the server
  * helpers import, and `@inth/nextjs/generated` (or `@inth/sdk/generated`)
- * for app code. The
- * packages' own modules there export `undefined`.
+ * for app code. The packages' own modules there export `undefined`.
  */
 const GENERATED_SPECIFIERS = [
 	'@inth/nextjs/generated-manifest',
-	...GENERATED_MODULE_IDS,
+	'@inth/nextjs/generated',
+	GENERATED_MODULE_ID,
 ];
 
 /** The specifier the package imports the app's `inth.config.ts` through. */
@@ -67,25 +68,6 @@ const USER_CONFIG_FILES = [
 const GENERATED_IMPORTERS = ['@inth/sdk', '@inth/nextjs'];
 
 type WebpackConfigFunction = NonNullable<NextConfig['webpack']>;
-
-/**
- * The sheets server-rendered surfaces put in the HTML: `tokens`, `button`,
- * `banner`, `trigger` and `consent-gate` (the banner, the IAB banner, the
- * trigger and the ConsentGate), and `first-paint`, which earlier
- * `@inth/react` releases rendered for the IAB banner. A server-rendered page already
- * holds their text in `<style>` elements, so browser bundles get each
- * sheet's `-deferred` module, with the same `id` and a `load()` that fetches
- * the text only when a surface renders first in the browser.
- */
-const SERVER_RENDERED_SHEETS = [
-	'first-paint',
-	'tokens',
-	'button',
-	'banner',
-	'trigger',
-	'consent-gate',
-] as const;
-const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
 
 interface SheetFiles {
 	/** The sheet's specifier, as `@inth/react` imports it. */
@@ -110,8 +92,9 @@ const resolveSheetFiles = function resolveSheetFiles(): SheetFiles[] {
 	} catch {
 		return [];
 	}
-	return SERVER_RENDERED_SHEETS.flatMap((name) => {
-		const specifier = `${SHEETS_PREFIX}${name}`;
+	// A server-rendered page already holds these sheets in `<style>`
+	// elements, so browser bundles get each one's `-deferred` module.
+	return DEFERRED_SHEET_SPECIFIERS.flatMap((specifier) => {
 		try {
 			return [
 				{
