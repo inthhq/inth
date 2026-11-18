@@ -9,14 +9,9 @@ import {
 	EARLY_TAP_ROOT,
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
-} from '../../../core/src/surface-actions/early-tap-script';
+} from '../../../core/src/runtime/page-globals';
 import { startDeferredClient } from '../browser/shell';
 import type { EngineModule } from '../browser/shell';
-import {
-	BANNER_ROOT,
-	EARLY_TAPS_KEY,
-	EARLY_TAP_STYLE_ID as SHELL_EARLY_TAP_STYLE_ID,
-} from '../browser/trigger';
 import {
 	getConsentClient,
 	getEventDispatcher,
@@ -170,7 +165,7 @@ beforeEach(() => {
 	globals.__inthAstro = undefined;
 	globals.__inthAstroConfig = undefined;
 	globals.__inthStarted = undefined;
-	globals[EARLY_TAPS_KEY] = undefined;
+	globals[EARLY_TAPS_WINDOW_KEY] = undefined;
 	// The delegated listener stays installed across tests: it reads the
 	// page's client at each click.
 	vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -192,12 +187,6 @@ afterEach(() => {
 });
 
 describe('the first-load shell', () => {
-	it('keeps the early-tap names equal to core', () => {
-		expect(EARLY_TAPS_KEY).toBe(EARLY_TAPS_WINDOW_KEY);
-		expect(BANNER_ROOT).toBe(EARLY_TAP_ROOT);
-		expect(SHELL_EARLY_TAP_STYLE_ID).toBe(EARLY_TAP_STYLE_ID);
-	});
-
 	it('answers from the server snapshot and waits for the hero before the engine', async () => {
 		renderPage();
 		const { client: shell, loadEngine } = startShell();
@@ -247,7 +236,7 @@ describe('the first-load shell', () => {
 		click('accept');
 
 		// All of this before any chunk loaded.
-		const banner = document.querySelector(BANNER_ROOT) as HTMLElement;
+		const banner = document.querySelector(EARLY_TAP_ROOT) as HTMLElement;
 		expect(banner.hidden).toBe(true);
 		expect(shell.getConsent().effectivePermissions.measurement).toBe(true);
 		expect(shell.getConsent().activeUI).toBe('none');
@@ -294,7 +283,7 @@ describe('the first-load shell', () => {
 	it('replays a tap the early-tap script held before the shell ran', async () => {
 		renderPage();
 		const stop = vi.fn();
-		(window as unknown as Record<string, unknown>)[EARLY_TAPS_KEY] = {
+		(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] = {
 			stop,
 			taps: [
 				{ action: 'customize', at: Date.now() - 20 },
@@ -302,7 +291,7 @@ describe('the first-load shell', () => {
 			],
 		};
 		const style = document.createElement('style');
-		style.id = SHELL_EARLY_TAP_STYLE_ID;
+		style.id = EARLY_TAP_STYLE_ID;
 		document.head.append(style);
 
 		const { client: shell } = startShell();
@@ -311,7 +300,7 @@ describe('the first-load shell', () => {
 		expect(shell.getConsent().effectivePermissions.marketing).toBe(false);
 		await shell.ready;
 		await settle();
-		expect(document.getElementById(SHELL_EARLY_TAP_STYLE_ID)).toBeNull();
+		expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
 	});
 
 	it('a save the outbox cannot keep goes to the engine, which records it once', async () => {
@@ -416,7 +405,7 @@ describe('the first-load shell', () => {
 		const { client: shell, loadEngine } = startShell();
 		const accepted = shell.acceptAll();
 		expect(shell.getConsent().explicitChoice).toBeNull();
-		expect((document.querySelector(BANNER_ROOT) as HTMLElement).hidden).toBe(
+		expect((document.querySelector(EARLY_TAP_ROOT) as HTMLElement).hidden).toBe(
 			false
 		);
 		await accepted;
@@ -489,7 +478,7 @@ describe('the first-load shell', () => {
 			renderBannerPage();
 			const island = registerIsland();
 			const { client: shell, loadEngine } = startShell();
-			const banner = document.querySelector(BANNER_ROOT) as HTMLElement;
+			const banner = document.querySelector(EARLY_TAP_ROOT) as HTMLElement;
 
 			await shell.openDialog();
 
@@ -530,9 +519,9 @@ describe('the first-load shell', () => {
 			shell.closeDialog();
 
 			expect(shell.getConsent().activeUI).toBe('banner');
-			expect((document.querySelector(BANNER_ROOT) as HTMLElement).hidden).toBe(
-				false
-			);
+			expect(
+				(document.querySelector(EARLY_TAP_ROOT) as HTMLElement).hidden
+			).toBe(false);
 			expect(loadEngine).not.toHaveBeenCalled();
 		});
 

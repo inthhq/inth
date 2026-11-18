@@ -11,9 +11,9 @@
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import { isRunnableNow } from '@inth/sdk/surface-actions/plain-scripts';
 
 import type { RuntimeConsentConfig } from '../kernel';
-import { isRunnableNow } from './scripts';
 
 /**
  * Key of the engine chunk in the client manifest the module adds at build

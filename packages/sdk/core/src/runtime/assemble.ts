@@ -84,8 +84,6 @@ const isRecordSeed = function isRecordSeed(
 	);
 };
 
-export { storageFor } from './storage-for';
-
 /**
  * Build a runtime from options and module factories.
  *

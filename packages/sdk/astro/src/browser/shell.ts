@@ -40,11 +40,16 @@
 
 import type { ConsentSnapshot, ResolvedVendor } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
+import { EARLY_TAP_ROOT } from '@inth/sdk/runtime/page-globals';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
+import {
+	isRunnableNow,
+	startPlainScripts,
+} from '@inth/sdk/surface-actions/plain-scripts';
 
 import type {
 	AstroConsentClient,
@@ -59,11 +64,7 @@ import {
 	warmDialog,
 } from './banner-actions';
 import type { CompleteCommitInput, DeferredCommitted } from './commit';
-import {
-	declaresVendor,
-	isRunnableNow,
-	startPlainScripts,
-} from './deferred-scripts';
+import { declaresVendor } from './deferred-scripts';
 import {
 	ensureDialogHost,
 	readDialogDisableAnimation,
@@ -80,7 +81,6 @@ import {
 import type * as StandInModule from './stand-in';
 import type { DialogStandIn } from './stand-in';
 import {
-	BANNER_ROOT,
 	scheduleDeferredEngine,
 	takeEarlyTaps,
 	unhideEarlyTap,
@@ -173,7 +173,7 @@ const canWait = function canWait(
 		!scripts.some((script) => isRunnableNow(script, snapshot)) &&
 		// An inline tag gated on `necessary` runs at once under the engine.
 		!document.querySelector('script[data-inth-category="necessary"]') &&
-		document.querySelectorAll(BANNER_ROOT).length === 1 &&
+		document.querySelectorAll(EARLY_TAP_ROOT).length === 1 &&
 		window.location.hash !== '#inth-preferences'
 	);
 };

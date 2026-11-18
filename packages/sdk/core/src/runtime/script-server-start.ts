@@ -36,8 +36,17 @@ import {
 	scriptsNeedEngine,
 } from '../surface-actions/plain-scripts';
 import type { ConsentSnapshot } from '../types';
-import { storageFor } from './assemble';
+import {
+	ENDED_RENDERS_KEY,
+	LOADER_RAN_KEY,
+	newRenderId,
+	PAGE_RENDER_KEY,
+	SERVER_START_FAILED_EVENT,
+	STARTED_KEY,
+} from './page-globals';
+import { PRIORITY_IMAGE_SELECTOR } from './priority-images';
 import { createRuntimeKernel } from './runtime-kernel';
+import { storageFor } from './storage-for';
 import type { ConsentRuntimeOptions, RuntimePrefetch } from './types';
 
 type ServerScriptOptions = ConsentRuntimeOptions & {
@@ -125,11 +134,13 @@ const PRIORITY_IMAGE_WAIT_MS = 3000;
 
 /**
  * Calls `f` once every `<img fetchpriority="high">` still loading has
- * finished, or after {@link PRIORITY_IMAGE_WAIT_MS}. Vendor downloads
- * share the connection with the page's LCP image and push it back;
- * request priority doesn't help across origins.
+ * finished, or after {@link PRIORITY_IMAGE_WAIT_MS}: `afterPriorityImages`
+ * in `./priority-images`, except that a page without a priority image
+ * starts at once. Vendor downloads share the connection with the page's
+ * LCP image and push it back; request priority doesn't help across
+ * origins.
  */
-const AFTER_PRIORITY_IMAGES = `function(f){var h=[].filter.call(document.querySelectorAll('img[fetchpriority=high]'),function(x){return!x.complete}),l=h.length,d=function(){if(f){var g=f;f=null;g()}};if(!l)return d();setTimeout(d,${PRIORITY_IMAGE_WAIT_MS});h.forEach(function(x){var c=function(){if(!--l)d()};x.addEventListener('load',c);x.addEventListener('error',c)})}`;
+const AFTER_PRIORITY_IMAGES = `function(f){var h=[].filter.call(document.querySelectorAll('${PRIORITY_IMAGE_SELECTOR}'),function(x){return!x.complete}),l=h.length,d=function(){if(f){var g=f;f=null;g()}};if(!l)return d();setTimeout(d,${PRIORITY_IMAGE_WAIT_MS});h.forEach(function(x){var c=function(){if(!--l)d()};x.addEventListener('load',c);x.addEventListener('error',c)})}`;
 
 /**
  * Creates one script the way the loader does and leaves the element for
@@ -340,58 +351,6 @@ const serverStartCandidates = function serverStartCandidates(
 };
 
 /**
- * The one page global the inline scripts a server render leaves for a
- * deferred root write: `{ id, starts, current?, failed? }`, for the render
- * whose boot data carries the same `id` (`i`).
- *
- * - `starts`: the resource key (`resourceKey ?? id`) of each script the
- *   server start emits, marked as the page parses. A deferred root counts
- *   a `serverStart` entry as started only when it is marked here.
- * - `current`: from the stored-choice check, a function that runs the
- *   check again and returns `true` while the browser's records still agree
- *   with the state the server read.
- * - `failed`: set when a marked script's setup, or the shared prelude,
- *   throws in the browser and inserts nothing.
- *
- * The first script of a render replaces the whole object, so nothing from
- * an earlier render in the same document, after a client-side navigation
- * or a remount, survives into this one; a later script of the same render
- * joins it. A root reads it only when its `id` matches its own boot data.
- *
- * @internal
- */
-export const PAGE_RENDER_KEY = '__inthRender';
-
-/**
- * The ids of the renders a deferred root ended (`endPageRender` in
- * `@inth/react`), newest last, at most {@link ENDED_RENDERS_LIMIT}. Kept
- * apart from {@link PAGE_RENDER_KEY}, which a newer render replaces, so a
- * render's start script that streams in late still finds it ended.
- *
- * @internal
- */
-export const ENDED_RENDERS_KEY = '__inthEndedRenders';
-
-/**
- * How many ended render ids {@link ENDED_RENDERS_KEY} keeps. An evicted id
- * would let that render's late start run, so the bound is far above the
- * renders one page sees; it only stops a page that never reloads from
- * growing the list without end. @internal
- */
-export const ENDED_RENDERS_LIMIT = 1000;
-
-/**
- * Event the server start dispatches on `window` when a marked script's
- * setup, or the shared prelude, throws: a deferred root that hears it
- * loads the engine at once. @internal
- */
-export const SERVER_START_FAILED_EVENT = '__inthServerStartFailed';
-
-/** A new id for one server render's inline scripts and boot data. @internal */
-export const newRenderId = (): string =>
-	Math.random().toString(36).slice(2, 10);
-
-/**
  * Takes this render's page object (`g`): joins it when an earlier script
  * of the same render made it, and replaces it otherwise. For a render its
  * deferred root already ended ({@link ENDED_RENDERS_KEY}) it installs
@@ -506,7 +465,7 @@ const startCode = function startCode({
 	starts: string[];
 }): string {
 	const id = inlineJSON(renderId);
-	const marks = `(function(){${pageRenderFor(renderId)}if(window.__inthLoaderRan)return;${check}${startedKeys.map((key) => `g.starts[${inlineJSON(key)}]=1`).join(';')}})();`;
+	const marks = `(function(){${pageRenderFor(renderId)}if(window.${LOADER_RAN_KEY})return;${check}${startedKeys.map((key) => `g.starts[${inlineJSON(key)}]=1`).join(';')}})();`;
 	const fail = `E=function(k){var g=window.${PAGE_RENDER_KEY};if(g&&g.id===${id}){delete g.starts[k];g.failed=1}try{window.dispatchEvent(new Event(${inlineJSON(SERVER_START_FAILED_EVENT)}))}catch(x){}}`;
 	const prelude = preludes.length
 		? `try{${preludes.join(';')}}catch(x){${startedKeys.map((key) => `E(${inlineJSON(key)})`).join(';')};return}`
@@ -516,7 +475,7 @@ const startCode = function startCode({
 	// an earlier render, so only this render's root releases it.
 	// `q` is true once another render's page object replaced this one's, as
 	// after a client-side navigation: that render's state decides what runs.
-	return `${marks}(function(){var n=document.currentScript&&document.currentScript.nonce,R=${id},${fail},q=function(){var g=window.${PAGE_RENDER_KEY};return!g||g.id!==${id}},r=function(){if(window.__inthLoaderRan||q())return;${check}var s=window.__inthStarted=window.__inthStarted||{},w=${AFTER_PRIORITY_IMAGES},a=${ARM_INSERT},i=${INSERT_SCRIPT};${prelude}${starts.join('')}};${AFTER_FIRST_PAINT}})()`;
+	return `${marks}(function(){var n=document.currentScript&&document.currentScript.nonce,R=${id},${fail},q=function(){var g=window.${PAGE_RENDER_KEY};return!g||g.id!==${id}},r=function(){if(window.${LOADER_RAN_KEY}||q())return;${check}var s=window.${STARTED_KEY}=window.${STARTED_KEY}||{},w=${AFTER_PRIORITY_IMAGES},a=${ARM_INSERT},i=${INSERT_SCRIPT};${prelude}${starts.join('')}};${AFTER_FIRST_PAINT}})()`;
 };
 
 /**
@@ -663,8 +622,8 @@ const SNAPSHOT_PROBE = {
 } as Script;
 
 /**
- * An inline script that sets `window.__inthStoredChoiceCurrent` when the
- * browser holds nothing that would change the server's consent state: the
+ * An inline script that sets `current` on the render's page object
+ * (`PAGE_RENDER_KEY` in `./page-globals`) when the browser holds nothing that would change the server's consent state: the
  * same test the server start makes (`newerStoredDecision`). The value is a
  * function that runs the test again, so a root that starts a returning
  * visitor's scripts without the engine sees a decision that expired, or a

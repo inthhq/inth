@@ -2,12 +2,23 @@
  * When a deferred root loads the consent engine for a visitor who still
  * has to choose. On a slow connection the engine's chunks share bandwidth
  * with the page's largest image; started after it, they no longer delay
- * Largest Contentful Paint. The same rule as the server script start
- * (`AFTER_PRIORITY_IMAGES` in `@inth/sdk/runtime/script-server-start`).
+ * Largest Contentful Paint (`afterPriorityImages` in
+ * `@inth/sdk/runtime/priority-images`).
  *
  * @packageDocumentation
  * @internal
  */
+
+import {
+	EARLY_TAP_NOTIFY_KEY,
+	EARLY_TAP_ROOT,
+	earlyTapQueue,
+	SERVER_START_FAILED_EVENT,
+} from '@inth/sdk/runtime/page-globals';
+import {
+	afterPriorityImages,
+	ENGINE_TIMEOUT_MS,
+} from '@inth/sdk/runtime/priority-images';
 
 import { pageRender } from './boot';
 import type * as DialogModule from './dialog';
@@ -28,56 +39,6 @@ export const importDialog = (): Promise<typeof DialogModule> =>
 	import('./dialog');
 
 /**
- * `EARLY_TAPS_WINDOW_KEY` and `EARLY_TAP_ROOT` from
- * `@inth/sdk/surface-actions/early-tap-script`, copied: that module also
- * holds the inline script's text, which the first-load chunk can do
- * without. A test keeps them equal.
- */
-export const EARLY_TAPS_KEY = '__inthEarlyTaps';
-export const BANNER_ROOT = '[data-testid="consent-banner-root"]';
-
-/**
- * Property of the early-tap queue the inline script calls after it
- * records a tap (`EARLY_TAP_NOTIFY_KEY` in core, copied for the same
- * reason; a test keeps them equal).
- */
-export const EARLY_TAP_NOTIFY = 'n';
-
-/**
- * Property of the early-tap queue that holds presses on the banner's
- * buttons (`EARLY_TAP_HOLD_PRESSES_KEY` in core, copied for the same
- * reason; a test keeps them equal).
- */
-export const EARLY_TAP_HOLD_PRESSES = 'b';
-
-/** The queue the early-tap script leaves on `window`. @internal */
-export interface EarlyTapQueue {
-	taps?: { action: string; at: number }[];
-	stop?: () => void;
-	n?: () => void;
-	b?: number;
-}
-
-/** The early-tap queue, when the banner's inline script ran. @internal */
-export const earlyTapQueue = function earlyTapQueue():
-	| EarlyTapQueue
-	| undefined {
-	return (window as unknown as Record<string, EarlyTapQueue | undefined>)[
-		EARLY_TAPS_KEY
-	];
-};
-
-/**
- * `SERVER_START_FAILED_EVENT` in core; a test keeps them equal. A failure
- * before the root scheduled its engine is `failed` in the render's page
- * object. @internal
- */
-export const SERVER_START_FAILED = '__inthServerStartFailed';
-
-/** Load anyway after this long. */
-export const DEFERRED_ENGINE_TIMEOUT_MS = 10_000;
-
-/**
  * Input anywhere on the page that wakes the engine at once. The browser
  * stops looking for a larger contentful paint at the first input or
  * scroll, so loading then costs Largest Contentful Paint nothing, and the
@@ -86,67 +47,7 @@ export const DEFERRED_ENGINE_TIMEOUT_MS = 10_000;
 const PAGE_WAKE_EVENTS = ['pointerdown', 'keydown', 'scroll'] as const;
 
 /** Stock surfaces where focus alone wakes the engine. */
-const SURFACES = `${BANNER_ROOT},[data-testid="consent-banner-overlay"]`;
-
-/**
- * Calls `done` once every `img[fetchpriority=high]` still loading has loaded
- * or failed, or at the window `load` event when the page has none. On a
- * slow connection anything downloaded before then shares bandwidth with the
- * page's largest image.
- *
- * @param done - Runs once.
- * @returns Removes the listeners, or `undefined` when `done` already ran.
- * @internal
- */
-export const whenPriorityImagesLoad = function whenPriorityImagesLoad(
-	done: () => void
-): (() => void) | undefined {
-	const images = [
-		...document.querySelectorAll<HTMLImageElement>('img[fetchpriority=high]'),
-	].filter((image) => !image.complete);
-	const cleanups: (() => void)[] = [];
-	const listen = (target: EventTarget, type: string, handler: () => void) => {
-		target.addEventListener(type, handler);
-		cleanups.push(() => target.removeEventListener(type, handler));
-	};
-	let called = false;
-	const finish = (): void => {
-		if (!called) {
-			called = true;
-			for (const cleanup of cleanups.splice(0)) {
-				cleanup();
-			}
-			done();
-		}
-	};
-	if (images.length) {
-		let left = images.length;
-		const settle = (): void => {
-			left -= 1;
-			if (!left) {
-				finish();
-			}
-		};
-		for (const image of images) {
-			listen(image, 'load', settle);
-			listen(image, 'error', settle);
-		}
-	} else if (
-		document.querySelector('img[fetchpriority=high]') ||
-		document.readyState === 'complete'
-	) {
-		// The priority images are in already.
-		done();
-		return undefined;
-	} else {
-		listen(window, 'load', finish);
-	}
-	return () => {
-		for (const cleanup of cleanups.splice(0)) {
-			cleanup();
-		}
-	};
-};
+const SURFACES = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]`;
 
 /**
  * Calls `start` once, when the first of these happens: every
@@ -154,7 +55,7 @@ export const whenPriorityImagesLoad = function whenPriorityImagesLoad(
  * window `load` event when there is none), the visitor presses a pointer
  * or key or scrolls anywhere on the page, focuses a stock consent surface,
  * already tapped one before hydration, or
- * {@link DEFERRED_ENGINE_TIMEOUT_MS} passed.
+ * `ENGINE_TIMEOUT_MS` passed.
  *
  * With `onTap`, a banner tap is the root's to route: input inside the
  * stock banner no longer loads the engine, and `onTap` runs for a tap the
@@ -213,13 +114,15 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 
 	/** Input the root routes itself: on the stock banner. */
 	const routed = (event: Event): boolean =>
-		Boolean(onTap && (event.target as Element | null)?.closest?.(BANNER_ROOT));
+		Boolean(
+			onTap && (event.target as Element | null)?.closest?.(EARLY_TAP_ROOT)
+		);
 	const queue = earlyTapQueue();
 	if (onTap) {
 		if (queue?.taps) {
-			queue[EARLY_TAP_NOTIFY] = () => onTap();
+			queue[EARLY_TAP_NOTIFY_KEY] = () => onTap();
 			routes.push(() => {
-				Reflect.deleteProperty(queue, EARLY_TAP_NOTIFY);
+				Reflect.deleteProperty(queue, EARLY_TAP_NOTIFY_KEY);
 			});
 		}
 		listen(
@@ -247,7 +150,7 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 	}
 	// A server start that failed in the browser left its script to the
 	// loader, before this ran or while the engine waits.
-	listen(window, SERVER_START_FAILED, fire);
+	listen(window, SERVER_START_FAILED_EVENT, fire);
 	if (
 		window.scrollY > 0 ||
 		pageRender(renderId)?.failed ||
@@ -278,12 +181,6 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 		true
 	);
 
-	const waiting = whenPriorityImagesLoad(fire);
-	if (!waiting) {
-		return dispose;
-	}
-	cleanups.push(waiting);
-	const timer = setTimeout(fire, DEFERRED_ENGINE_TIMEOUT_MS);
-	cleanups.push(() => clearTimeout(timer));
+	cleanups.push(afterPriorityImages(fire, { timeoutMs: ENGINE_TIMEOUT_MS }));
 	return dispose;
 };

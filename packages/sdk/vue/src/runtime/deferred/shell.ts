@@ -27,6 +27,12 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
+import {
+	EARLY_TAP_ROOT,
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+	earlyTapQueue,
+} from '@inth/sdk/runtime/page-globals';
 import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 import type { ConsentActiveUI } from '@inth/sdk/schema/config';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
@@ -36,6 +42,10 @@ import {
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import {
+	isRunnableNow,
+	startPlainScripts,
+} from '@inth/sdk/surface-actions/plain-scripts';
 import { computed, ref, shallowRef } from 'vue';
 import type { Ref } from 'vue';
 
@@ -58,19 +68,9 @@ import type {
 	CompleteCommitResult,
 	DeferredCommitted,
 } from './commit';
-import {
-	isRunnableNow,
-	removePlainScripts,
-	startPlainScripts,
-} from './scripts';
+import { removePlainScripts } from './scripts';
 import { createStandInKernel, pendingIsInert } from './stand-in';
-import {
-	BANNER_ROOT,
-	EARLY_TAP_STYLE_ID,
-	EARLY_TAPS_KEY,
-	earlyTapQueue,
-	scheduleDeferredEngine,
-} from './trigger';
+import { scheduleDeferredEngine } from './trigger';
 
 /** Builds the engine's context, from a commit made before it, if any. @internal */
 export type DeferredEngineFactory = (
@@ -251,7 +251,7 @@ export const createDeferredContext = function createDeferredContext(
 		if (nonce) {
 			style.nonce = nonce;
 		}
-		style.textContent = `${BANNER_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
+		style.textContent = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
 		document.head.append(style);
 	};
 	/**
@@ -266,7 +266,7 @@ export const createDeferredContext = function createDeferredContext(
 		}
 		claimed = true;
 		style.id = COMMITTED_STYLE_ID;
-		const roots = [...document.querySelectorAll(BANNER_ROOT)];
+		const roots = [...document.querySelectorAll(EARLY_TAP_ROOT)];
 		let deadline = Number.POSITIVE_INFINITY;
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Starts the clock once the engine is in.
 		void handle.ready.then(() => {
@@ -295,7 +295,8 @@ export const createDeferredContext = function createDeferredContext(
 		queue?.taps?.splice(0);
 		if (stop) {
 			queue?.stop?.();
-			(window as unknown as Record<string, unknown>)[EARLY_TAPS_KEY] = {};
+			(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] =
+				{};
 		}
 		keepHidden();
 	};

@@ -16,9 +16,9 @@
  * aggregate exports (no context change, tree-shakes with the aggregate).
  */
 
+import { afterPriorityImages } from '@inth/sdk/runtime/priority-images';
 import { useEffect } from 'react';
 
-import { whenPriorityImagesLoad } from './deferred/trigger';
 import { useUIConfig } from './ui-config-context';
 
 type Warmer = () => void;
@@ -121,7 +121,7 @@ const scheduleIdleWarm = function scheduleIdleWarm(): void {
 		}
 	};
 	const afterLoad = () => {
-		whenPriorityImagesLoad(idle);
+		afterPriorityImages(idle);
 	};
 	if (document.readyState === 'complete') {
 		afterLoad();

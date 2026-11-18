@@ -6,8 +6,8 @@
  * leave at the tap, or at once for a returning visitor. These helpers
  * decide which of the page's `scripts` that is safe for and insert them
  * the way the loader would. The loader adopts each element when it
- * mounts, as it adopts one a server start inserted (`__inthStarted`, see
- * `../runtime/script-server-start`).
+ * mounts, as it adopts one a server start inserted (`STARTED_KEY` in
+ * `../runtime/page-globals`).
  *
  * Small and free of the kernel, so a first-load chunk can carry them.
  *
@@ -17,6 +17,8 @@
 
 import type { HasCondition } from '../libs/has';
 import type { Script } from '../libs/script-loader/types';
+import { STARTED_KEY, startedElements } from '../runtime/page-globals';
+import type { StartedElement } from '../runtime/page-globals';
 import type { ConsentSnapshot } from '../types';
 
 export { evaluateCategoryGate } from '../modules/category-gate';
@@ -310,28 +312,6 @@ const elementDeclarationOf = (script: Script): string =>
 	declarationOf({ ...script, id: '', resourceKey: undefined });
 
 /**
- * A script element the loader adopts when it mounts the script, as it
- * adopts one the server's inline start inserted.
- */
-type StartedElement = HTMLScriptElement & {
-	__inthAdopted?: boolean;
-	/** Inserted by {@link startPlainScripts}, so its owners may release it. */
-	__inthEarly?: boolean;
-	/** How many owners declare it ({@link claimPlainScripts}). */
-	__inthOwners?: number;
-	/**
-	 * What {@link startPlainScripts} inserted it for: its script's
-	 * declaration without its identity ({@link elementDeclarationOf}).
-	 */
-	__inthPlainDeclaration?: string;
-	/** The server render whose start inserted it, or took it over last. */
-	__inthStartRender?: string;
-	__inthScript?: string;
-	__inthConsent?: boolean;
-	__inthDone?: 'load' | 'error';
-};
-
-/**
  * Inserts the plain scripts `snapshot` grants, as the loader would, and
  * registers each for the loader to adopt once it mounts. A script already
  * started is left alone, and so is one whose resource `reserved` names:
@@ -354,11 +334,9 @@ export const startPlainScripts = function startPlainScripts(
 	nonce: string | undefined,
 	reserved: Readonly<Record<string, unknown>> = {}
 ): string[] {
-	const host = window as unknown as {
-		__inthStarted?: Record<string, StartedElement>;
-	};
-	host.__inthStarted ??= {};
-	const started = host.__inthStarted;
+	const host = window as unknown as Record<string, unknown>;
+	host[STARTED_KEY] ??= {};
+	const started = host[STARTED_KEY] as Record<string, StartedElement>;
 	const inserted: string[] = [];
 	for (const script of scripts) {
 		const key = script.resourceKey ?? script.id;
@@ -406,11 +384,6 @@ export const startPlainScripts = function startPlainScripts(
 	}
 	return inserted;
 };
-
-/** The registry the loader adopts started elements from. */
-const startedElements = (): Record<string, StartedElement> | undefined =>
-	(window as unknown as { __inthStarted?: Record<string, StartedElement> })
-		.__inthStarted;
 
 /**
  * An owner's declarations, one per resource: the scripts that share a key

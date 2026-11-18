@@ -17,17 +17,15 @@ import { createKernel } from '../../kernel/index';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox/store';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { readStoredRecords } from '../../modules/persistence/hydrate';
+import { EARLY_TAPS_WINDOW_KEY } from '../../runtime/page-globals';
+import type { EarlyConsentTapQueue } from '../../runtime/page-globals';
 import type { KernelConfig, KernelEvent, SavePayload } from '../../types';
 import {
 	hasStoredClearEpoch,
 	planEarlyCommit,
 	storeEarlyCommit,
 } from '../early-commit';
-import {
-	EARLY_CONSENT_TAP_SCRIPT,
-	EARLY_TAPS_WINDOW_KEY,
-} from '../early-tap-script';
-import type { EarlyConsentTapQueue } from '../early-tap-script';
+import { EARLY_CONSENT_TAP_SCRIPT } from '../early-tap-script';
 
 const TAP_AT = NOW + 4000;
 const CLOCK = NOW + 5000;

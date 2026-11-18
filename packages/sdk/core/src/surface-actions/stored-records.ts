@@ -1,6 +1,6 @@
 /**
- * Stored records for a host whose runtime has not loaded yet: where they
- * live and how to clear them.
+ * Stored records for a host whose runtime has not loaded yet: how to clear
+ * them.
  *
  * An entry of its own, not part of `instant-commit`: the clear brings the
  * record storage code with it, and a host that never clears before its
@@ -13,8 +13,6 @@
 import { clearStoredRecords } from '../modules/persistence/clear';
 import { storageFor } from '../runtime/storage-for';
 import type { ConsentRuntimeOptions } from '../runtime/types';
-
-export { storageFor } from '../runtime/storage-for';
 
 /**
  * Clears stored records as a runtime's `clearRecords()` does, for a host

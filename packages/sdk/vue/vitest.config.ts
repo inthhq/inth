@@ -166,6 +166,12 @@ export default mergeConfig(
 					),
 				},
 				{
+					'@inth/sdk/surface-actions/plain-scripts': resolve(
+						__dirname,
+						'../core/src/surface-actions/plain-scripts.ts'
+					),
+				},
+				{
 					'@inth/sdk/surface-actions': resolve(
 						__dirname,
 						'../core/src/surface-actions/index.ts'
@@ -196,6 +202,16 @@ export default mergeConfig(
 					'@inth/sdk/preference-draft': resolve(
 						__dirname,
 						'../core/src/preference-draft/index.ts'
+					),
+				},
+				{
+					'@inth/sdk/runtime/page-globals': resolve(
+						__dirname,
+						'../core/src/runtime/page-globals.ts'
+					),
+					'@inth/sdk/runtime/priority-images': resolve(
+						__dirname,
+						'../core/src/runtime/priority-images.ts'
 					),
 				},
 				{

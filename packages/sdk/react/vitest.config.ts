@@ -115,6 +115,14 @@ export default mergeConfig(
 					resolve(__dirname, '../core/src/transports/hosted-factory.ts'),
 				],
 				[
+					'@inth/sdk/runtime/page-globals',
+					resolve(__dirname, '../core/src/runtime/page-globals.ts'),
+				],
+				[
+					'@inth/sdk/runtime/priority-images',
+					resolve(__dirname, '../core/src/runtime/priority-images.ts'),
+				],
+				[
 					'@inth/sdk/runtime',
 					resolve(__dirname, '../core/src/runtime/index.ts'),
 				],

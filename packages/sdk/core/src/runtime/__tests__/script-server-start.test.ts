@@ -25,9 +25,8 @@ import {
 	encodeVendorChoice,
 } from '../../modules/persistence/writer/encode';
 import { releaseServerStartedScripts } from '../../surface-actions/plain-scripts';
+import { SERVER_START_FAILED_EVENT } from '../page-globals';
 import {
-	PAGE_RENDER_KEY,
-	SERVER_START_FAILED_EVENT,
 	serverScriptStart,
 	serverScriptStartPlan,
 	storedChoiceCheckScript,
@@ -1547,13 +1546,6 @@ describe('the scripts a root can count as started', () => {
 			serverScriptStart({ mode, prefetch, scripts }, 'render')
 		);
 		expect(marked(plan.code)).toEqual([...plan.started]);
-	});
-
-	test('names the failure as the deferred root reads it', () => {
-		// `SERVER_START_FAILED` in react's `deferred/trigger.ts`, copied.
-		expect(SERVER_START_FAILED_EVENT).toBe('__inthServerStartFailed');
-		// `PAGE_RENDER_KEY` in react's `deferred/boot.ts`, copied.
-		expect(PAGE_RENDER_KEY).toBe('__inthRender');
 	});
 
 	test.each([

@@ -1,11 +1,4 @@
-/**
- * Window property where `buildPrefetchScript()` stores its in-flight init
- * requests. In its own module so a caller can tell whether one exists
- * without loading the prefetch reader.
- *
- * @internal
- */
-export const PREFETCH_WINDOW_KEY = '__inthInitialDataPromises';
+import { PREFETCH_WINDOW_KEY } from '../../runtime/page-globals';
 
 /**
  * Whether an inline prefetch script stored any init request on `window`.

@@ -16,11 +16,12 @@ import { describe, expect, it } from 'vitest';
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 /**
- * The one writer and the one reader, and the engine preload: an inline
- * script that runs before any module can, so it repeats `pageRender()`'s
- * id check in its own source.
+ * The names' definition, the one writer and the one reader, and the engine
+ * preload: an inline script that runs before any module can, so it repeats
+ * `pageRender()`'s id check in its own source.
  */
 const ALLOWED = new Set([
+	'packages/sdk/core/src/runtime/page-globals.ts',
 	'packages/sdk/core/src/runtime/script-server-start.ts',
 	'packages/sdk/react/src/deferred/boot.ts',
 	'packages/sdk/react/src/deferred/engine-preload-script.ts',

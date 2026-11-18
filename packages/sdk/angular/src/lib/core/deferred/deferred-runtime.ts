@@ -36,6 +36,7 @@ import type {
 	ConsentProviderRuntime,
 	ConsentRuntimeUpdate,
 } from '@inth/sdk/runtime/provider';
+import { storageFor } from '@inth/sdk/runtime/storage-for';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
@@ -43,10 +44,7 @@ import {
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
-import {
-	clearStoredRecordsFor,
-	storageFor,
-} from '@inth/sdk/surface-actions/stored-records';
+import { clearStoredRecordsFor } from '@inth/sdk/surface-actions/stored-records';
 import {
 	allConsentNames,
 	hasGlobalPrivacyControlSignal,

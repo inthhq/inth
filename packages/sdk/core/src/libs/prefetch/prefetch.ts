@@ -9,6 +9,7 @@ import {
 import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { SSRInitialData } from '../../options/ssr';
+import { PREFETCH_WINDOW_KEY } from '../../runtime/page-globals';
 import { inthProtocolParams } from '../../transports/version-header';
 import type { InitContext, KernelJourney } from '../../types';
 import {
@@ -40,7 +41,6 @@ import {
 	storedChoiceNames,
 } from '../storage-keys';
 import type { PrefetchOptions } from './types';
-import { PREFETCH_WINDOW_KEY } from './window-key';
 
 const WINDOW_PROMISES_KEY = PREFETCH_WINDOW_KEY;
 
