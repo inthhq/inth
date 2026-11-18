@@ -203,6 +203,13 @@ it('records a /v1 body once per idempotency key, as the backend does', async () 
 		expect(refused.status).toBe(400);
 		expect((await refused.json()).error.code).toBe('invalid_request');
 
+		const malformed = await post({
+			...body,
+			confirmed: [{}],
+			idempotencyKey: '019c1c38-a400-7100-8000-0000000002ff',
+		});
+		expect(malformed.status).toBe(400);
+
 		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([
 			body,
 		]);
