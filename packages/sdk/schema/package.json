@@ -56,6 +56,11 @@
 			"types": "./dist-types/shared/canonical-order.d.ts",
 			"import": "./dist/canonical-order.js",
 			"default": "./dist/canonical-order.js"
+		},
+		"./v1": {
+			"types": "./dist-types/api/v1/index.d.ts",
+			"import": "./dist/api/v1/index.js",
+			"default": "./dist/api/v1/index.js"
 		}
 	},
 	"scripts": {
