@@ -315,17 +315,6 @@ export const resolvePromptModel = function resolvePromptModel(
 
 	const { position } = presentation;
 
-	// A notice offers no customize, so the resolver's default primary drops
-	// out. When dismiss is the only button it is the primary one, as in the
-	// React and Svelte banners.
-	const orderedActions = actionGroups.flat();
-	const primaries =
-		primaryActions.length === 0 &&
-		orderedActions.length === 1 &&
-		orderedActions[0] === 'dismiss'
-			? orderedActions
-			: primaryActions;
-
 	const classesAndStyles = resolveClasses(
 		input.classNames,
 		props,
@@ -335,7 +324,7 @@ export const resolvePromptModel = function resolvePromptModel(
 	return {
 		actionGroups: actionGroups.map((group) =>
 			group.map((action) => {
-				const primary = primaries.includes(action);
+				const primary = primaryActions.includes(action);
 				const style = props.noStyle
 					? undefined
 					: resolveActionAppearance(input.theme, action, primary);
