@@ -140,6 +140,7 @@ export {
 	isPolicyRight,
 	isPolicyRuleModel,
 	isSpeculativeRequest,
+	SPECULATION_HEADERS,
 	isValidPolicyPromptForModel,
 	journeyDomainFrom,
 	listProfiles,

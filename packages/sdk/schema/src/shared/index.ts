@@ -41,6 +41,7 @@ export {
 	deriveJourneyPrompt,
 	formatExperimentHeader,
 	isSpeculativeRequest,
+	SPECULATION_HEADERS,
 	journeyDomainFrom,
 	parseExperimentHeader,
 	parseJourneyId,

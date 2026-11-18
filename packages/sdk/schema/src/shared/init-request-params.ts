@@ -23,7 +23,7 @@
  */
 
 import { POLICY_CONTRACT_HEADER } from './policy-contract';
-import { appendSearchParams } from './search-params';
+import { appendSearchParams, readSearchParams } from './search-params';
 import {
 	CONSENT_EXPERIMENT_HEADER,
 	formatExperimentHeader,
@@ -115,22 +115,6 @@ export const appendInitParams = function appendInitParams(
 	return appendSearchParams(url, search);
 };
 
-const toSearchParams = function toSearchParams(
-	source: string | URL
-): URLSearchParams {
-	if (source instanceof URL) {
-		return source.searchParams;
-	}
-	// A `?` inside a fragment is not a query.
-	const fragment = source.indexOf('#');
-	const base = fragment === -1 ? source : source.slice(0, fragment);
-	const query = base.indexOf('?');
-	if (query === -1) {
-		return new URLSearchParams();
-	}
-	return new URLSearchParams(base.slice(query + 1));
-};
-
 /**
  * The request headers with the init query parameters folded onto their
  * legacy header names.
@@ -148,7 +132,7 @@ export const applyInitParamsToHeaders = function applyInitParamsToHeaders(
 	url: string | URL,
 	headers: Headers
 ): Headers {
-	const params = toSearchParams(url);
+	const params = readSearchParams(url);
 	const merged = new Headers(headers);
 	for (const [param, header] of INIT_PARAM_HEADERS) {
 		const value = params.get(param);

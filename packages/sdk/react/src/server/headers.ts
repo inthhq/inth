@@ -1,15 +1,8 @@
 import {
 	CONSENT_REQUEST_HEADER_NAMES,
 	extractConsentRequestInputs,
+	SPECULATION_HEADERS,
 } from '@inth/sdk/schema/types';
-
-/** Headers that mark a prefetch or prerender rather than a page view. */
-export const SPECULATION_HEADERS = [
-	'purpose',
-	'sec-purpose',
-	'next-router-prefetch',
-	'x-middleware-prefetch',
-] as const;
 
 const REACT_EXTRA_HEADERS = [
 	'x-c15t-version',
