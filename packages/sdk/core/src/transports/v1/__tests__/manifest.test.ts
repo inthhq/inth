@@ -205,13 +205,13 @@ describe('POST /v1/consent/sessions', () => {
 		});
 	});
 
-	test('names the journey site property, in lowercase', () => {
+	test('names the journey site property, in lowercase with no trailing dot', () => {
 		const report = buildV1ConsentSessionReport({
 			init: {
 				location: { countryCode: null, regionCode: null },
 				translations: { language: 'en' },
 			} as never,
-			journey: { ...JOURNEY, domain: 'WWW.Example.com' },
+			journey: { ...JOURNEY, domain: 'WWW.Example.com.' },
 			manifest: MANIFEST,
 			source: 'route',
 		});

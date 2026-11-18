@@ -164,9 +164,12 @@ export const createV1RecordTransport = function createV1RecordTransport(
 				| { subjectId?: unknown }
 				| undefined;
 			const canonical = answer?.subjectId;
-			if (typeof canonical === 'string' && isUuidV7(canonical)) {
-				reportSubjectId(canonical, subjectId);
+			if (typeof canonical !== 'string' || !isUuidV7(canonical)) {
+				throw new Error(
+					`Inth transport: ${V1_ROUTES.subjectLink} answered ${response.status} without a canonical subject ID`
+				);
 			}
+			reportSubjectId(canonical, subjectId);
 		},
 
 		async save(payload): Promise<V1SaveResult> {

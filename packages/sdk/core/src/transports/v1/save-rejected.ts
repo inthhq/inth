@@ -41,7 +41,6 @@ export type InthApiFailure = InthApiError | InthConsentSaveRejectedError;
  */
 const PERMANENT_SAVE_CODES: ReadonlySet<string> = new Set<V1ErrorCode>([
 	'conflict',
-	'identity_conflict',
 	'policy_snapshot_expired',
 	'policy_snapshot_invalid',
 	'policy_snapshot_required',

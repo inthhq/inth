@@ -298,6 +298,25 @@ describe('save: the answer', () => {
 		expect(isConsentSaveRejection(error)).toBe(false);
 		expect(error).toMatchObject({ code, requestId: 'req_123', status });
 	});
+
+	test('reports the canonical ID a save answers for a stored sub_ ID', async () => {
+		const { fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const seen: [string, string][] = [];
+		const transport = createV1RecordTransport({
+			fetch,
+			onSubjectId: (subjectId, previous) => seen.push([subjectId, previous]),
+			projectUrl: PROJECT_URL,
+		});
+
+		await transport.save(
+			savePayload({
+				subject: { subjectId: LEGACY_SUBJECT },
+				subjectId: LEGACY_SUBJECT,
+			})
+		);
+
+		expect(seen).toEqual([[SUBJECT, LEGACY_SUBJECT]]);
+	});
 });
 
 describe('identify: POST /v1/subjects/:id/link', () => {
@@ -350,25 +369,6 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 		});
 	});
 
-	test('reports the canonical ID a save answers for a stored sub_ ID', async () => {
-		const { fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
-		const seen: [string, string][] = [];
-		const transport = createV1RecordTransport({
-			fetch,
-			onSubjectId: (subjectId, previous) => seen.push([subjectId, previous]),
-			projectUrl: PROJECT_URL,
-		});
-
-		await transport.save(
-			savePayload({
-				subject: { subjectId: LEGACY_SUBJECT },
-				subjectId: LEGACY_SUBJECT,
-			})
-		);
-
-		expect(seen).toEqual([[SUBJECT, LEGACY_SUBJECT]]);
-	});
-
 	test('reports the canonical ID for a stored sub_ ID', async () => {
 		const { fetch } = stubFetch(() =>
 			json(200, {
@@ -390,6 +390,19 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 		);
 
 		expect(seen).toEqual([[SUBJECT, LEGACY_SUBJECT]]);
+	});
+
+	test('rejects a link answer without a canonical subject ID', async () => {
+		const { fetch } = stubFetch(
+			() => new Response('<html>ok</html>', { status: 200 })
+		);
+
+		await expect(
+			transportWith(fetch).identify(
+				{ ...user, identityToken: 'token' },
+				SUBJECT
+			)
+		).rejects.toThrow(/without a canonical subject ID/u);
 	});
 
 	test('a refused link throws the code and request ID', async () => {

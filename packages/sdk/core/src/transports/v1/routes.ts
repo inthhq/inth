@@ -54,7 +54,8 @@ export const readJson = async function readJson(
 	}
 };
 
-const toProperty = (host: string): string =>
+/** A host name or app ID as a property: lowercase, with no trailing dot. */
+export const toProperty = (host: string): string =>
 	host.toLowerCase().replace(/\.+$/u, '');
 
 /**

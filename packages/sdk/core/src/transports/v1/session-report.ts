@@ -20,7 +20,7 @@ import {
 	resolveSessionReportProjectUrl,
 } from '../../libs/session-report';
 import type { SessionReportHeaders } from '../../libs/session-report';
-import { V1_ROUTES } from './routes';
+import { toProperty, V1_ROUTES } from './routes';
 
 /** How long a report may take before it is abandoned. */
 const REPORT_TIMEOUT_MS = 3000;
@@ -85,7 +85,7 @@ export const buildV1ConsentSessionReport = function buildV1ConsentSessionReport(
 	const { domain, ...rest } = journey;
 	return {
 		...report,
-		journey: domain ? { ...rest, property: domain.toLowerCase() } : rest,
+		journey: domain ? { ...rest, property: toProperty(domain) } : rest,
 	};
 };
 
