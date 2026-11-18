@@ -24,7 +24,11 @@ import { clearManifestCache } from '../../libs/manifest-cache-runtime';
 import type { ManifestFetch } from '../../libs/manifest-cache-runtime';
 import { clearGvlCache } from '../../transports/gvl-cache';
 import { CONSENT_ROUTE_TIMEOUT_HEADER } from '../consent-route';
-import { readRequestConsent, resolveRequestConsent } from '../request-consent';
+import {
+	fetchRequestInit,
+	readRequestConsent,
+	resolveRequestConsent,
+} from '../request-consent';
 import type { ResolveRequestConsentOptions } from '../request-consent';
 
 const BACKEND = 'https://consent.example.com';
@@ -1211,5 +1215,61 @@ describe('shared renders', () => {
 		expect(state.initialOverrides?.language).toBe('fr');
 		expect(state.initialOverrides?.country).toBeUndefined();
 		expect(state.initialPolicyResolution?.status).toBe('matched');
+	});
+});
+
+describe('fetchRequestInit', () => {
+	const ask = (
+		options: Partial<ResolveRequestConsentOptions> & {
+			headers?: Record<string, string>;
+		} = {}
+	) => {
+		const { headers, ...rest } = options;
+		return fetchRequestInit({
+			adapter: '@c15t/test',
+			now: NOW,
+			request: { headers: new Headers(headers), url: `${APP}/` },
+			...rest,
+		});
+	};
+
+	test('returns the hosted answer as received, vendor list included', async () => {
+		const withGvl = { ...INIT, gvl: GVL } as unknown as InitOutput;
+		const fetch = upstream(MANIFEST, withGvl);
+		const answer = await ask({
+			fetch,
+			headers: { 'cf-ipcountry': 'DE', 'user-agent': 'UA' },
+			journey: false,
+			projectUrl: BACKEND,
+		});
+		expect(answer?.init).toEqual(withGvl);
+		expect(answer?.url).toBe(`${BACKEND}/init`);
+		expect(answer?.requestHeaders).toMatchObject({
+			'user-agent': 'UA',
+			'x-c15t-country': 'DE',
+		});
+		expect(answer?.responseHeaders.get('content-type')).toContain('json');
+		expect(callsTo(fetch, '/manifest')).toHaveLength(0);
+	});
+
+	test('returns undefined and tells onError when the request fails', async () => {
+		const onError = vi.fn();
+		const answer = await ask({
+			fetch: vi.fn<typeof globalThis.fetch>(() =>
+				Promise.resolve(new Response('nope', { status: 500 }))
+			),
+			onError,
+			projectUrl: BACKEND,
+		});
+		expect(answer).toBeUndefined();
+		expect(onError).toHaveBeenCalledWith(expect.any(Error), `${BACKEND}/init`);
+	});
+
+	test('a shared render asks nothing', async () => {
+		const fetch = upstream();
+		expect(await ask({ fetch, projectUrl: BACKEND, shared: true })).toBe(
+			undefined
+		);
+		expect(fetch).not.toHaveBeenCalled();
 	});
 });

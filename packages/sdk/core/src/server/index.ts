@@ -5,7 +5,8 @@
  * (`createConsentRouteHandler`) answers `/manifest` and `/init` for every
  * host integration (Next.js, Nuxt, SvelteKit, Astro, TanStack Start), and
  * `resolveRequestConsent` / `readRequestConsent` resolve the consent state a
- * server render hands the client, and `fetchCachedManifest` is the one
+ * server render hands the client, `fetchRequestInit` returns a hosted
+ * `/init` answer as received, and `fetchCachedManifest` is the one
  * process cache for the backend's manifest. Resolving `/init` from a
  * manifest, which imports every translation, is at
  * `@inth/sdk/transports/manifest-cache`.
@@ -33,12 +34,15 @@ export {
 } from './consent-route';
 export type {
 	ConsentRequestFacts,
+	FetchRequestInitOptions,
 	RequestConsentMode,
 	RequestConsentRead,
 	RequestConsentState,
+	RequestInitAnswer,
 	ResolveRequestConsentOptions,
 } from './request-consent';
 export {
+	fetchRequestInit,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
