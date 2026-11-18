@@ -6,9 +6,9 @@
  *
  * The registry is served from memory on a local port, so nothing needs
  * deploying first. Projects live in the system temp folder, outside the
- * monorepo, so its node_modules can't hide a missing dependency. c15t comes
- * from the workspace: the script packs it and the @c15t packages it
- * depends on, which must be built, and the project installs the tarballs
+ * monorepo, so its node_modules can't hide a missing dependency. The SDK
+ * comes from the workspace: the script packs each framework's package and
+ * the packages it depends on, which must be built, and the project installs the tarballs
  * the way it would install a release.
  *
  * After `shadcn add`, the script makes the changes the install notes ask
@@ -45,7 +45,14 @@ import { chromium } from 'playwright';
 import type { RegistryOutput } from '../src/build-registry';
 import { buildRegistry } from '../src/build-registry';
 import type { Base, Framework } from '../src/items';
-import { bases, frameworks, itemName, setupItems, uiItems } from '../src/items';
+import {
+	bases,
+	c15tEntryByFramework,
+	frameworks,
+	itemName,
+	setupItems,
+	uiItems,
+} from '../src/items';
 import { checkInBrowser } from './fixture-browser';
 import { run } from './fixture-process';
 
@@ -262,7 +269,8 @@ const readWorkspace = (packagesDir: string) => {
 };
 
 /**
- * Packs c15t and every workspace package it depends on, directly or not.
+ * Packs each framework's SDK package and every workspace package they depend
+ * on, directly or not.
  *
  * @returns The tarball for each package name. File names include a content hash, so Bun never installs a stale copy.
  * @throws {Error} When a package isn't built or doesn't pack.
@@ -287,9 +295,11 @@ const packWorkspace = async (
 			}
 		}
 	};
-	visit('c15t');
-	if (!names.has('c15t')) {
-		throw new Error(`${path.dirname(c15tDir)} has no c15t package.`);
+	for (const entry of Object.values(c15tEntryByFramework)) {
+		visit(entry);
+		if (!names.has(entry)) {
+			throw new Error(`${path.dirname(c15tDir)} has no ${entry} package.`);
+		}
 	}
 
 	rmSync(packsDir, { force: true, recursive: true });
@@ -299,7 +309,7 @@ const packWorkspace = async (
 			const dir = workspace.get(name)?.dir ?? '';
 			if (!existsSync(path.join(dir, 'dist'))) {
 				throw new Error(
-					`${name} has no dist folder. Build it first: bun turbo run build --filter=c15t`
+					`${name} has no dist folder. Build it first: pnpm turbo run build --filter=${name}`
 				);
 			}
 			const slug = name.replace('@', '').replace('/', '-');
@@ -329,7 +339,7 @@ const packWorkspace = async (
 	return new Map(packed);
 };
 
-/** Points the project's @c15t packages at the tarballs, before `shadcn add` installs c15t. */
+/** Points the project's SDK packages at the tarballs, before `shadcn add` installs its framework's package. */
 const installFromTarballs = (dir: string, tarballs: Map<string, string>) => {
 	const manifestFile = path.join(dir, 'package.json');
 	const manifest = JSON.parse(readFileSync(manifestFile, 'utf8')) as Record<
@@ -338,12 +348,15 @@ const installFromTarballs = (dir: string, tarballs: Map<string, string>) => {
 	>;
 	manifest.overrides = Object.fromEntries(
 		[...tarballs]
-			.filter(([name]) => name !== 'c15t')
+			// The items install the framework packages themselves.
+			.filter(
+				([name]) =>
+					!(Object.values(c15tEntryByFramework) as string[]).includes(name)
+			)
 			.map(([name, tarball]) => [name, `file:${tarball}`])
 	);
 	writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
-	rmSync(path.join(dir, 'node_modules/c15t'), { force: true, recursive: true });
-	rmSync(path.join(dir, 'node_modules/@c15t'), {
+	rmSync(path.join(dir, 'node_modules/@inth'), {
 		force: true,
 		recursive: true,
 	});
@@ -567,7 +580,7 @@ try {
 	registry = buildRegistry({
 		appDir,
 		baseUrl: registryUrl,
-		c15tDependency: `c15t@file:${tarballs.get('c15t')}`,
+		c15tDependency: (name) => `${name}@file:${tarballs.get(name)}`,
 	});
 	if (args.browser) {
 		browser = await chromium.launch();

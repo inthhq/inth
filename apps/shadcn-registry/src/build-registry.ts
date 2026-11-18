@@ -21,8 +21,11 @@ export interface BuildOptions {
 	appDir: string;
 	/** Where `{style}/{name}.json` is served, such as `https://c15t.com/r`. */
 	baseUrl: string;
-	/** The c15t dependency items install. Defaults to `c15t@` plus {@link c15tRange}. */
-	c15tDependency?: string;
+	/**
+	 * What a dependency on an SDK package installs, given its name. Defaults
+	 * to the package at {@link c15tRange}.
+	 */
+	c15tDependency?: (packageName: string) => string;
 }
 
 /** Output files keyed by path under `dist/r`. */
@@ -48,7 +51,10 @@ const providedPackages: Record<Framework, string[]> = {
 };
 
 const isC15tSpecifier = (spec: string): boolean =>
-	spec === 'c15t' || spec.startsWith('c15t/') || spec.startsWith('@c15t/');
+	spec === 'c15t' ||
+	spec.startsWith('c15t/') ||
+	spec.startsWith('@c15t/') ||
+	spec.startsWith('@inth/');
 
 const packageName = (spec: string): string => {
 	const parts = spec.split('/');
@@ -101,7 +107,7 @@ export const toFrameworkSource = (
 interface ItemContext {
 	appDir: string;
 	base: Base;
-	c15tDependency: string;
+	c15tDependency: (packageName: string) => string;
 	framework: Framework;
 	itemUrl: (name: string) => string;
 	style: string;
@@ -179,7 +185,7 @@ const collectDependencies = (
 					`${file} imports ${spec}. Use @/components/ui, @/components/c15t or @/lib/utils, which shadcn rewrites to the project's aliases.`
 				);
 			} else if (isC15tSpecifier(spec)) {
-				dependencies.add(context.c15tDependency);
+				dependencies.add(context.c15tDependency(packageName(spec)));
 			} else if (
 				!providedPackages[context.framework].includes(packageName(spec))
 			) {
@@ -278,7 +284,8 @@ const buildItem = (
  */
 export const buildRegistry = (options: BuildOptions): RegistryOutput => {
 	const baseUrl = options.baseUrl.replace(/\/+$/u, '');
-	const c15tDependency = options.c15tDependency ?? `c15t@${c15tRange}`;
+	const c15tDependency =
+		options.c15tDependency ?? ((name: string) => `${name}@${c15tRange}`);
 	const output: RegistryOutput = new Map();
 
 	for (const { base, name: style } of styles) {

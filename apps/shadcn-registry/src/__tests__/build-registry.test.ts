@@ -53,7 +53,7 @@ describe('toFrameworkSource', () => {
 
 	it.each([
 		'@inth/react/iab',
-		'@inth/react',
+		'@inth/sdk',
 		'@inth/nextjs',
 		'@inth/tanstack-start/server',
 	])('rejects %s, which some framework has no twin for', (spec) => {
@@ -133,7 +133,7 @@ describe('buildRegistry', () => {
 				const built = item('radix-nova', itemName(framework, name));
 				for (const { content } of built?.files ?? []) {
 					const c15t = scanImports(content).filter((spec) =>
-						spec.startsWith('c15t')
+						spec.startsWith('@inth/')
 					);
 					expect(c15t.length).toBeGreaterThan(0);
 					for (const spec of c15t) {
@@ -179,7 +179,9 @@ describe('buildRegistry', () => {
 		expect(manager?.files[0]?.content).toContain(
 			'from "@tanstack/react-start"'
 		);
-		expect(manager?.dependencies).toEqual([`c15t@${c15tRange}`]);
+		expect(manager?.dependencies).toEqual([
+			`@inth/tanstack-start@${c15tRange}`,
+		]);
 	});
 
 	it('marks every UI file as a client component', () => {
