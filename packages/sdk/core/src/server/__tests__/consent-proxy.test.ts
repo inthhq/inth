@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { inthVersionHeaders } from '../../transports/version-header';
+import { inthVersionHeaders } from '../../libs/version-header';
 import {
 	forwardConsentRequest,
 	isConsentProxyPathAllowed,

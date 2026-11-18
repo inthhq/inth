@@ -33,6 +33,7 @@ import {
 } from '../libs/session-report';
 import type { SessionReportHeaders } from '../libs/session-report';
 import { trimSlash } from '../libs/url';
+import { inthProtocolHeaders } from '../libs/version-header';
 import type {
 	InitContext,
 	KernelOverrides,
@@ -63,7 +64,6 @@ import {
 	reviveSubjectRecord,
 } from './subject-record';
 import type { TransportHydrationRecords } from './subject-record';
-import { inthProtocolHeaders } from './version-header';
 
 const getDefined = <Value>(
 	value: Value,

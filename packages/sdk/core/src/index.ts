@@ -115,7 +115,7 @@ export {
 	inthProtocolHeaders,
 	inthProtocolParams,
 	inthVersionHeaders,
-} from './transports/version-header';
+} from './libs/version-header';
 export type {
 	AdTechProvider,
 	ConfirmedCoverage,

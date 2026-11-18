@@ -12,8 +12,8 @@
 
 import { createBrowserOutboxStore } from '../kernel/save-outbox/store';
 import type { SaveOutboxStore } from '../kernel/save-outbox/store';
+import { storageFor } from '../libs/storage-for';
 import { clearStoredRecords } from '../modules/persistence/clear';
-import { storageFor } from '../runtime/storage-for';
 import type { ConsentRuntimeOptions } from '../runtime/types';
 
 /**

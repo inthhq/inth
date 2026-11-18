@@ -15,10 +15,10 @@ import {
 import { displayedCategories } from '../../consent/consent-types';
 import { createKernel } from '../../kernel/index';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox/store';
+import { EARLY_TAPS_WINDOW_KEY } from '../../libs/page-globals';
+import type { EarlyConsentTapQueue } from '../../libs/page-globals';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { readStoredRecords } from '../../modules/persistence/hydrate';
-import { EARLY_TAPS_WINDOW_KEY } from '../../runtime/page-globals';
-import type { EarlyConsentTapQueue } from '../../runtime/page-globals';
 import type { KernelConfig, KernelEvent, SavePayload } from '../../types';
 import {
 	hasStoredClearEpoch,

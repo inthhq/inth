@@ -2,7 +2,7 @@
  * The inline script a server-rendered banner runs before hydration. Apart
  * from the replay, so the banner's bundle carries the script text and the
  * runtime's does not. The names it shares with the runtime are in
- * `../runtime/page-globals`.
+ * `../libs/page-globals`.
  */
 
 import {
@@ -11,7 +11,7 @@ import {
 	EARLY_TAP_ROOT,
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
-} from '../runtime/page-globals';
+} from '../libs/page-globals';
 
 /**
  * Attribute on a banner button whose click the stock action does not

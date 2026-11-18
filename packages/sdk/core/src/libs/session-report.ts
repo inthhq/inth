@@ -29,9 +29,9 @@ import {
 } from '@inth/sdk-schema/types';
 import type { BuildConsentSessionReportOptions } from '@inth/sdk-schema/types';
 
-import { inthProtocolHeaders } from '../transports/version-header';
 import { readHeader, toHeaders } from './headers';
 import { trimSlash } from './url';
+import { inthProtocolHeaders } from './version-header';
 
 /**
  * The only request headers a report carries about the visitor: the user

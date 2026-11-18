@@ -73,7 +73,7 @@ export {
 	inthProtocolParams,
 	inthVersionHeaders,
 	readProducerPolicyContract,
-} from './version-header';
+} from '../libs/version-header';
 export {
 	deferInitGvl,
 	createGvlReferenceUrl,

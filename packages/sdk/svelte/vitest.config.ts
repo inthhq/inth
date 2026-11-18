@@ -93,7 +93,7 @@ const workspaceAliases = [
 	},
 	{
 		find: '@inth/sdk/runtime/page-globals',
-		replacement: resolve(__dirname, '../core/src/runtime/page-globals.ts'),
+		replacement: resolve(__dirname, '../core/src/libs/page-globals.ts'),
 	},
 	{
 		find: '@inth/sdk/runtime',

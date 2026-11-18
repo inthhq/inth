@@ -14,9 +14,9 @@ import {
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import { PAGE_RENDER_KEY } from '../../libs/page-globals';
 import type { Script } from '../../libs/script-loader/types';
 import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/encode';
-import { PAGE_RENDER_KEY } from '../page-globals';
 import {
 	serverScriptStartPlan,
 	storedChoiceCheckScript,

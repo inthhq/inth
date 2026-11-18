@@ -20,12 +20,12 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createKernel as createConsentKernel } from '../../../kernel';
 import type { InternalKernel } from '../../../kernel/internals';
+import { SURFACE_ROOT_ATTRIBUTE } from '../../../libs/page-globals';
 import {
 	C15T_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	STORAGE_KEY_V2,
 } from '../../../libs/storage-keys';
-import { SURFACE_ROOT_ATTRIBUTE } from '../../../runtime/page-globals';
 import type { SaveResult } from '../../../types';
 import { watchRevocationReload } from '../../revocation-reload';
 import { createScriptLoader } from '../../script-loader';

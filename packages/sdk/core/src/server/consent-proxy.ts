@@ -27,7 +27,7 @@ import {
 	markResponsePrivate,
 	PUBLIC_REQUEST_HEADERS,
 } from '../libs/identity-headers';
-import { inthVersionHeaders } from '../transports/version-header';
+import { inthVersionHeaders } from '../libs/version-header';
 import { trimPathSlashes } from './shared';
 
 /** Paths the proxy forwards when no extra `paths` are configured. */

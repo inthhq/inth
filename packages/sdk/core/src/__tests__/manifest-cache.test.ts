@@ -36,13 +36,13 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { INTH_VERSION_HEADER } from '../libs/version-header';
 import * as server from '../server';
 import { stripIdentityForCleartext } from '../server/consent-proxy';
 import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
 } from '../transports/manifest-cache';
-import { INTH_VERSION_HEADER } from '../transports/version-header';
 
 const SOURCE_URL = 'https://backend.example/manifest';
 

@@ -1,7 +1,7 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 import { failedResponseError } from '../libs/failed-response';
-import { inthProtocolHeaders } from '../transports/version-header';
+import { inthProtocolHeaders } from '../libs/version-header';
 
 /** Names that parse but cannot be bound with `export const`. */
 const RESERVED_EXPORT_NAMES = new Set([

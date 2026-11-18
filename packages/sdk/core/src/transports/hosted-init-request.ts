@@ -11,8 +11,8 @@ import {
 	DEFAULT_INIT_CREDENTIALS,
 } from '../libs/request-context-headers';
 import { trimSlash } from '../libs/url';
+import { inthProtocolParams } from '../libs/version-header';
 import type { InitContext } from '../types';
-import { inthProtocolParams } from './version-header';
 
 /** The `GET /init` request the hosted transport sends. */
 export interface HostedInitRequest {

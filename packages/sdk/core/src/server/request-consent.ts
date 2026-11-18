@@ -76,6 +76,10 @@ import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
 import { resolveStorageKeys } from '../libs/storage-keys';
 import { trimSlash } from '../libs/url';
+import {
+	inthProtocolHeaders,
+	readProducerPolicyContract,
+} from '../libs/version-header';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
 import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
@@ -85,10 +89,6 @@ import {
 } from '../transports/init-output';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
-import {
-	inthProtocolHeaders,
-	readProducerPolicyContract,
-} from '../transports/version-header';
 import type { KernelConfig } from '../types';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,

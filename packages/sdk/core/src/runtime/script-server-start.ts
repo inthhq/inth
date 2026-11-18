@@ -15,7 +15,17 @@
  */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
+import {
+	ENDED_RENDERS_KEY,
+	LOADER_RAN_KEY,
+	newRenderId,
+	PAGE_RENDER_KEY,
+	PRIORITY_IMAGE_SELECTOR,
+	SERVER_START_FAILED_EVENT,
+	STARTED_KEY,
+} from '../libs/page-globals';
 import type { Script } from '../libs/script-loader/types';
+import { storageFor } from '../libs/storage-for';
 import { resolveStorageKeys, STORED_NAMES_CHECK } from '../libs/storage-keys';
 import { vendorAxisActive } from '../libs/vendors';
 import {
@@ -36,17 +46,7 @@ import {
 	scriptsNeedEngine,
 } from '../surface-actions/plain-scripts';
 import type { ConsentSnapshot } from '../types';
-import {
-	ENDED_RENDERS_KEY,
-	LOADER_RAN_KEY,
-	newRenderId,
-	PAGE_RENDER_KEY,
-	PRIORITY_IMAGE_SELECTOR,
-	SERVER_START_FAILED_EVENT,
-	STARTED_KEY,
-} from './page-globals';
 import { createRuntimeKernel } from './runtime-kernel';
-import { storageFor } from './storage-for';
 import type { ConsentRuntimeOptions, RuntimePrefetch } from './types';
 
 type ServerScriptOptions = ConsentRuntimeOptions & {

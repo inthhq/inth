@@ -67,6 +67,10 @@ import type {
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { reportConsentSession } from '../libs/session-report';
 import {
+	inthProtocolHeaders,
+	readProducerPolicyContract,
+} from '../libs/version-header';
+import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
 } from '../transports/ad-tech-provider-cache';
@@ -80,10 +84,6 @@ import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
 } from '../transports/manifest-cache';
-import {
-	inthProtocolHeaders,
-	readProducerPolicyContract,
-} from '../transports/version-header';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,

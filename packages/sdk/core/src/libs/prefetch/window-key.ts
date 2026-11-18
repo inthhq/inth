@@ -1,4 +1,4 @@
-import { PREFETCH_WINDOW_KEY } from '../../runtime/page-globals';
+import { PREFETCH_WINDOW_KEY } from '../page-globals';
 
 /**
  * Whether an inline prefetch script stored any init request on `window`.

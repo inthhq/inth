@@ -1,7 +1,6 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
-import { inthProtocolHeaders } from '../transports/version-header';
 import { boundedSet, mapFor } from './bounded-map';
 import {
 	forbidsReuse,
@@ -15,6 +14,7 @@ import {
 	PUBLIC_REQUEST_HEADERS,
 } from './identity-headers';
 import { trimSlash } from './url';
+import { inthProtocolHeaders } from './version-header';
 
 /**
  * Just the call signature the manifest cache needs.

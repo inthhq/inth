@@ -14,6 +14,7 @@
 import { failedResponseError } from '../libs/failed-response';
 import { isValidSubjectId } from '../libs/generate-subject-id';
 import { trimSlash } from '../libs/url';
+import { inthProtocolHeaders } from '../libs/version-header';
 import type { KernelTransport, KernelUser, SaveResult } from '../types';
 import { buildDecisionAssertion } from './decision-inputs';
 import type { RememberedDecisionInputs } from './decision-inputs';
@@ -21,7 +22,6 @@ import { saveFailure } from './save-rejection';
 import { buildSubjectPostBody, subjectsURL } from './subject-body';
 import type { SubjectSavePayload } from './subject-body';
 import type { TransportHydrationRecords } from './subject-record';
-import { inthProtocolHeaders } from './version-header';
 
 /** Options for {@link createHostedRecordTransport}. */
 export interface HostedRecordTransportOptions {

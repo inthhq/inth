@@ -236,14 +236,14 @@
 			"default": "./dist/runtime/deferred-snapshot.js"
 		},
 		"./runtime/page-globals": {
-			"types": "./dist-types/runtime/page-globals.d.ts",
-			"import": "./dist/runtime/page-globals.js",
-			"default": "./dist/runtime/page-globals.js"
+			"types": "./dist-types/libs/page-globals.d.ts",
+			"import": "./dist/libs/page-globals.js",
+			"default": "./dist/libs/page-globals.js"
 		},
 		"./runtime/storage-for": {
-			"types": "./dist-types/runtime/storage-for.d.ts",
-			"import": "./dist/runtime/storage-for.js",
-			"default": "./dist/runtime/storage-for.js"
+			"types": "./dist-types/libs/storage-for.d.ts",
+			"import": "./dist/libs/storage-for.js",
+			"default": "./dist/libs/storage-for.js"
 		},
 		"./runtime/save-preload": {
 			"types": "./dist-types/runtime/save-preload.d.ts",

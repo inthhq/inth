@@ -23,4 +23,4 @@ export {
 	subscribeIABControls,
 } from './modules/iab-controls';
 export type { KernelIABControls } from './modules/iab-controls';
-export { inthProtocolParams } from './transports/version-header';
+export { inthProtocolParams } from './libs/version-header';

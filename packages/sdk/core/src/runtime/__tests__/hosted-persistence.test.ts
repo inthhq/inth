@@ -9,10 +9,10 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
-import { inthProtocolHeaders } from '../../transports/version-header';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 

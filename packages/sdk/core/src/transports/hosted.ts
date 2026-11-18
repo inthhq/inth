@@ -47,6 +47,10 @@ import { failedResponseError } from '../libs/failed-response';
 import { consumePrefetchedInitialData } from '../libs/prefetch/prefetch';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers';
 import { trimSlash } from '../libs/url';
+import {
+	parsePolicyContract,
+	readProducerPolicyContract,
+} from '../libs/version-header';
 import type { SSRInitialData } from '../options/ssr';
 import type { KernelOverrides, InitContext } from '../types';
 import {
@@ -60,10 +64,6 @@ import { createHostedRecordTransport, resolveFetch } from './hosted-records';
 import type { HostedRecordTransport } from './hosted-records';
 import { mapInitOutputToInitResponse } from './init-output';
 import type { TransportInitResponse } from './init-output';
-import {
-	parsePolicyContract,
-	readProducerPolicyContract,
-} from './version-header';
 
 export interface HostedTransportOptions {
 	/**
