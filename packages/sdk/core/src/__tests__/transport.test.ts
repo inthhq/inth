@@ -9,14 +9,11 @@ import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import {
-	createHostedInitRequest,
-	createHostedTransport,
-	isConsentSaveRejection,
-} from '../index';
+import { createHostedTransport, isConsentSaveRejection } from '../index';
 import type { InitResponse, KernelConfig, KernelTransport } from '../index';
 import { createKernel } from '../kernel';
 import { createMemoryOutboxStore } from '../kernel/save-outbox';
+import { createHostedInitRequest } from '../transports/hosted-init-request';
 import { createManifestTransport } from '../transports/manifest';
 import { corsPreflightReasons } from './fixtures/cors-safelist';
 import {

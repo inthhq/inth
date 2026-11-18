@@ -79,8 +79,6 @@ export type {
 } from './transports/hosted-records';
 export { createHostedRecordTransport } from './transports/hosted-records';
 export type { HostedInitRequest } from './transports/hosted-init-request';
-export { createHostedInitRequest } from './transports/hosted-init-request';
-export { hasPrefetchedInitialData } from './libs/prefetch/window-key';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,
@@ -110,11 +108,6 @@ export type {
 } from './modes';
 export { hosted } from './modes';
 export type { ConsentTesting } from './transports/testing';
-export {
-	NO_RECORDS_WARNING,
-	warnNoConsentRecords,
-	warnNoConsentRecordsInDevelopment,
-} from './libs/no-records-warning';
 export { buildSubjectPostBody } from './transports/subject-body';
 export {
 	INTH_POLICY_CONTRACT_HEADER,
@@ -172,13 +165,8 @@ export type {
 } from './types';
 
 // -- Consent categories --------------------------------------------------------
-export type {
-	AllConsentNames,
-	ConsentInfo,
-	ConsentType,
-} from './consent/consent-types';
+export type { AllConsentNames, ConsentType } from './consent/consent-types';
 export { allConsentNames, consentTypes } from './consent/consent-types';
-export type { NamespaceProps } from './consent/compliance';
 
 // -- Consent conditions --------------------------------------------------------
 export type { HasCondition } from './libs/has';
@@ -334,7 +322,6 @@ export type {
 	StartExperimentOptions,
 } from './libs/experiment';
 export type { ConsentJourneyOption, JourneyState } from './libs/journey';
-export { createUnreportedJourneys } from './libs/journey';
 export {
 	EXPERIMENT_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
