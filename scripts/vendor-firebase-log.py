@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check Firebase Analytics against the c15t decision from its own debug log.
+"""Check Firebase Analytics against the Inth decision from its own debug log.
 
 Firebase cannot be pointed at the capture server, so the iOS vendor journey
 (``examples/native/consent-demo/ios/run-vendor-e2e.sh``) streams the simulator's

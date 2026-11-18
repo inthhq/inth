@@ -18,13 +18,11 @@ export const tabSwitching: PlayFunction = async ({ canvasElement }) => {
 	const canvas = within(canvasElement);
 	const tabs = canvas.getAllByRole('tab');
 
-	// First tab should be selected by default
 	await expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
 	await expect(tabs[0]).toHaveAttribute('data-state', 'active');
 	await expect(tabs[1]).toHaveAttribute('aria-selected', 'false');
 	await expect(tabs[1]).toHaveAttribute('data-state', 'inactive');
 
-	// Click second tab
 	await userEvent.click(getDefined(tabs[1]));
 	await expect(tabs[0]).toHaveAttribute('aria-selected', 'false');
 	await expect(tabs[0]).toHaveAttribute('data-state', 'inactive');
@@ -43,15 +41,12 @@ export const keyboardNavigation: PlayFunction = async ({ canvasElement }) => {
 	const canvas = within(canvasElement);
 	const tabs = canvas.getAllByRole('tab');
 
-	// Focus first tab
 	await userEvent.click(getDefined(tabs[0]));
 	await expect(tabs[0]).toHaveFocus();
 
-	// Arrow right → second tab
 	await userEvent.keyboard('{ArrowRight}');
 	await expect(tabs[1]).toHaveFocus();
 
-	// Arrow right → third tab
 	await userEvent.keyboard('{ArrowRight}');
 	await expect(tabs[2]).toHaveFocus();
 
@@ -67,7 +62,6 @@ export const arrowLeftNavigation: PlayFunction = async ({ canvasElement }) => {
 	const canvas = within(canvasElement);
 	const tabs = canvas.getAllByRole('tab');
 
-	// Focus first tab
 	await userEvent.click(getDefined(tabs[0]));
 	await expect(tabs[0]).toHaveFocus();
 
@@ -75,11 +69,9 @@ export const arrowLeftNavigation: PlayFunction = async ({ canvasElement }) => {
 	await userEvent.keyboard('{ArrowLeft}');
 	await expect(tabs[2]).toHaveFocus();
 
-	// Arrow left → second tab
 	await userEvent.keyboard('{ArrowLeft}');
 	await expect(tabs[1]).toHaveFocus();
 
-	// Arrow left → first tab
 	await userEvent.keyboard('{ArrowLeft}');
 	await expect(tabs[0]).toHaveFocus();
 };
@@ -91,16 +83,13 @@ export const homeAndEndKeys: PlayFunction = async ({ canvasElement }) => {
 	const canvas = within(canvasElement);
 	const tabs = canvas.getAllByRole('tab');
 
-	// Focus first tab
 	await userEvent.click(getDefined(tabs[0]));
 	await expect(tabs[0]).toHaveFocus();
 
-	// End → last tab
 	await userEvent.keyboard('{End}');
 	await expect(tabs[2]).toHaveFocus();
 	await expect(tabs[2]).toHaveAttribute('aria-selected', 'true');
 
-	// Home → first tab
 	await userEvent.keyboard('{Home}');
 	await expect(tabs[0]).toHaveFocus();
 	await expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
@@ -116,7 +105,6 @@ export const tabKeySkipsInactiveTabs: PlayFunction = async ({
 	const canvas = within(canvasElement);
 	const tabs = canvas.getAllByRole('tab');
 
-	// Focus first tab (which is selected)
 	await userEvent.click(getDefined(tabs[0]));
 	await expect(tabs[0]).toHaveFocus();
 

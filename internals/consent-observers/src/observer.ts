@@ -32,9 +32,7 @@ export interface ConsentObserver {
 	 * may run now. An elapsed grant is denied even if the deadline timer has
 	 * not fired yet.
 	 *
-	 * @param category - Category the gated feature needs.
 	 * @param now - Evaluation time; defaults to the kernel clock.
-	 * @returns Whether the category is permitted after the refresh.
 	 */
 	allows: (category: AllConsentNames, now?: number) => boolean;
 	/** Stops observing. Safe to call more than once. */
@@ -55,7 +53,6 @@ const observe = function observe(snapshot: ConsentSnapshot): ObservedConsent {
  * observer reads it once on attach.
  *
  * @param kernel - Kernel from `createConsentRuntime().kernel` or `KernelContext`.
- * @returns The observer handle.
  */
 export const observeConsent = function observeConsent(
 	kernel: ConsentKernel

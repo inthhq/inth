@@ -10,14 +10,11 @@ export const toggleOpenClose: PlayFunction = async ({ canvasElement }) => {
 	const trigger = canvas.getByRole('button');
 	const content = canvasElement.querySelector('[data-state]');
 
-	// Should be open by default
 	await expect(content).toHaveAttribute('data-state', 'open');
 
-	// Click to close
 	await userEvent.click(trigger);
 	await expect(content).toHaveAttribute('data-state', 'closed');
 
-	// Click to reopen
 	await userEvent.click(trigger);
 	await expect(content).toHaveAttribute('data-state', 'open');
 };
@@ -31,7 +28,6 @@ export const startsClosedByDefault: PlayFunction = async ({
 	const content = canvasElement.querySelector('[data-state]');
 	await expect(content).toHaveAttribute('data-state', 'closed');
 
-	// Click to open
 	const canvas = within(canvasElement);
 	const trigger = canvas.getByRole('button');
 	await userEvent.click(trigger);

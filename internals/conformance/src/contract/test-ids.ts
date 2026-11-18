@@ -1,6 +1,6 @@
 /**
  * Canonical data-testid contract. Every test-id emitted by prebuilt UI in any
- * framework (@inth/react, @inth/svelte, @inth/vue, @c15t/solid) MUST appear in
+ * framework (@inth/react, @inth/svelte, @inth/vue, @inth/ui) MUST appear in
  * this file. The `testid-lint` rule enforces this at build time.
  *
  * Naming rules:
@@ -157,9 +157,6 @@ export const TEST_ID_PATTERNS = [
 	/^vendor-[a-z0-9][a-z0-9-]*$/u,
 ] as const;
 
-/**
- * Flat list of every literal test-id. Computed at module load for lint lookup.
- */
 const flatten = function flatten(value: unknown, out: Set<string>): void {
 	if (typeof value === 'string') {
 		out.add(value);
@@ -177,10 +174,6 @@ flatten(TEST_IDS, allIds);
 
 export const ALL_TEST_IDS: ReadonlySet<string> = allIds;
 
-/**
- * Returns true if `id` matches a canonical constant or an interpolated pattern.
- * Used by the static lint.
- */
 export const isCanonicalTestId = function isCanonicalTestId(
 	id: string
 ): boolean {

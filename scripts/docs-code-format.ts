@@ -68,9 +68,6 @@ const fencePattern =
 
 /**
  * Formats every top-level code fence in an MDX document.
- *
- * @param text - The MDX source.
- * @returns The document with formatted fences.
  */
 export const formatMdxFences = async (text: string): Promise<string> => {
 	const matches = [...text.matchAll(fencePattern)];

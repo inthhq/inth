@@ -1,4 +1,4 @@
-// Refuses an SDK or mobile release while it would publish Inth artifacts.
+// Refuses an SDK or mobile release while it would publish c15t artifacts.
 // The SDK, React Native, Swift and Android release workflows run this before
 // any publish step. They stay off until the packages carry Inth names and the
 // owner sets the product's release variable and registry credentials.

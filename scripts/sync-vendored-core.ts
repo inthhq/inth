@@ -71,9 +71,6 @@ export interface VendoredCoreFile {
  *
  * Sorted so a regenerated tree is stable, which is what makes `git diff` on `vendor/` a
  * meaningful review signal rather than noise from readdir order.
- *
- * @param directory - The directory to walk.
- * @returns One entry per file, relative to `directory`.
  */
 export const listFiles = function listFiles(directory: string): string[] {
 	if (!existsSync(directory)) {
@@ -98,13 +95,7 @@ export const listFiles = function listFiles(directory: string): string[] {
 	return found.sort();
 };
 
-/**
- * The file-by-file mapping from a native source tree to its generated copy.
- *
- * @param sourceDir - The source of truth. Defaults to the repository's Swift core.
- * @param targetDir - Where the copy lives. Defaults to the package's vendor directory.
- * @returns One entry per file under `sourceDir`, in sorted order.
- */
+/** The file-by-file mapping from a native source tree to its generated copy. */
 export const vendoredCorePlan = function vendoredCorePlan(
 	sourceDir = coreSourceDir,
 	targetDir = vendoredCoreDir
@@ -128,10 +119,6 @@ export type VendoredCoreDrift =
  * An orphan counts as drift in its own direction: a file deleted upstream that survives in the
  * copy keeps compiling, so the published pod carries a type the source of truth no longer has,
  * and nothing downstream would ever notice.
- *
- * @param sourceDir - The source of truth.
- * @param targetDir - The generated copy.
- * @returns Every difference, in path order.
  */
 export const compareTrees = function compareTrees(
 	sourceDir: string,
@@ -167,11 +154,7 @@ export const compareTrees = function compareTrees(
 	return drift;
 };
 
-/**
- * Compare the vendored copy in this repository against the core it comes from.
- *
- * @returns Every difference, in path order.
- */
+/** Compare the vendored copy in this repository against the core it comes from. */
 export const checkVendoredCore =
 	function checkVendoredCore(): VendoredCoreDrift[] {
 		return compareTrees(coreSourceDir, vendoredCoreDir);
@@ -181,7 +164,6 @@ export const checkVendoredCore =
  * The words a stale copy is reported in. Shared with the release gate so one copy of the
  * remedy is written down.
  *
- * @param drift - One difference between the two trees.
  * @returns A line that names the file and the command that repairs it.
  */
 export const describeDrift = function describeDrift(
@@ -203,8 +185,6 @@ export const describeDrift = function describeDrift(
  *
  * @param options.check - Compare instead of write, so the release gate can call the same code
  * that produces the tree rather than a second implementation of the comparison.
- * @param options.sourceDir - The source of truth, for a copy of something other than the core.
- * @param options.targetDir - Where to write the copy.
  * @returns The drift found in check mode, and an empty list after a write.
  */
 export const syncVendoredCore = function syncVendoredCore(

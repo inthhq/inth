@@ -48,7 +48,6 @@ export interface GeometryDiff {
  * Runs in the page rather than over a serialized DOM: the boxes only
  * exist once the browser has laid the surface out.
  *
- * @param page - The page showing a story.
  * @returns Every visible slot, in document order.
  */
 export const captureGeometry = function captureGeometry(
@@ -116,7 +115,6 @@ export const captureGeometry = function captureGeometry(
  * @param a - Baseline capture (React).
  * @param b - The framework under comparison.
  * @param tolerance - Largest difference, in px, that is not a diff.
- * @returns Every slot that differs, empty when the two agree.
  */
 export const diffGeometry = function diffGeometry(
 	a: readonly SlotBox[],
@@ -151,12 +149,7 @@ export const diffGeometry = function diffGeometry(
 	);
 };
 
-/**
- * Render diffs as one line each, for a test failure message.
- *
- * @param diffs - The diffs to describe.
- * @returns One line per diff.
- */
+/** Render diffs as one line each, for a test failure message. */
 export const formatGeometryDiffs = function formatGeometryDiffs(
 	diffs: readonly GeometryDiff[]
 ): string[] {

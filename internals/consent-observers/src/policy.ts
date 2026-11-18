@@ -45,7 +45,6 @@ export const observedPolicy = function observedPolicy() {
 	});
 };
 
-/** Options for {@link createObservedRuntime}. */
 export interface ObservedRuntimeOptions {
 	/** A choice recorded in an earlier session, restored as prefetch. */
 	choice?: ExplicitChoice | null;
@@ -87,7 +86,6 @@ export const createObservedRuntime = function createObservedRuntime(
  * choice, the way a previous page view would have left it.
  *
  * @param action - `all` to accept, `none` to reject.
- * @returns The explicit choice the kernel recorded.
  */
 export const recordChoice = async function recordChoice(
 	action: 'all' | 'none'

@@ -63,10 +63,6 @@ const normalizeAttrValue = function normalizeAttrValue(
 	return value;
 };
 
-/**
- * Recursively serialize an element to a canonical HTML-like string.
- * Sorts attributes alphabetically, normalizes class and auto-ids.
- */
 const canonicalize = function canonicalize(el: Element): string {
 	const tag = el.tagName.toLowerCase();
 	const attrs: string[] = [];
@@ -99,7 +95,6 @@ const canonicalize = function canonicalize(el: Element): string {
 			}
 			continue;
 		}
-		// other node types (comments, etc.) are ignored
 	}
 
 	const close = `</${tag}>`;

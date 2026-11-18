@@ -566,9 +566,6 @@ const LIST_FIELDS = new Set([
  * evaluating Ruby is not an option on a Linux runner. A field the reader does not understand is
  * not a failure here; the two that decide what an app compiles are enough to catch a `files`
  * list that stopped matching the shipped surface.
- *
- * @param podspecSource - The podspec, as text.
- * @returns Every declared path pattern.
  */
 export const podspecPathDeclarations = function podspecPathDeclarations(
 	podspecSource: string
@@ -621,8 +618,6 @@ export const podspecPathDeclarations = function podspecPathDeclarations(
 /**
  * Check the podspec against the files actually in the tarball.
  *
- * @param podspecSource - The packed podspec, as text.
- * @param packedPaths - Every path in the same tarball.
  * @returns Every declaration that matches nothing, or points outside the package. A podspec
  * whose patterns resolve is one `pod install` can build from what it was shipped with.
  */
@@ -677,7 +672,6 @@ const SPEC_FILE_PATTERN = /\.(?:js|jsx|ts|tsx)$/u;
  * This is the half a workspace install cannot show: the fixtures reach the checkout through a
  * symlink, so every file in the repository looks published from here.
  *
- * @param packed - The packed package to inspect.
  * @returns Every way the tarball falls short of what the two native builds open.
  */
 export const checkPackedPackageSurface = function checkPackedPackageSurface(
@@ -733,11 +727,10 @@ export const checkPackedPackageSurface = function checkPackedPackageSurface(
  * `--ignore-scripts` skips the package's `prepack`, which is `verify-package-artifacts.ts` and
  * asks for `dist/`. That guard belongs to publishing, and the release flow keeps it; this check
  * asks a different question -- does the tree that ships contain what a host app opens -- and it
- * has to be answerable in a fresh checkout, because `bun run test:scripts` runs before anything
+ * has to be answerable in a fresh checkout, because `test:scripts` runs before anything
  * is built. A missing `dist/` shows up as a missing JS entry, not as a failure here.
  *
  * @param workDir - A directory to pack into; the caller owns it.
- * @returns The tarball, its extracted contents, and the listing inside it.
  */
 export const packReactNativePackage = function packReactNativePackage(
 	workDir: string
@@ -791,10 +784,6 @@ export const packReactNativePackage = function packReactNativePackage(
  * check has to move it aside: a symlink resolves to the checkout, and the checkout has the
  * files the tarball leaves out. The previous entry is renamed rather than deleted so the
  * restore is a rename back, symlink and all.
- *
- * @param packedDir - The extracted tarball root.
- * @param exampleDir - The fixture app to install into.
- * @returns A function that puts the fixture back the way it was.
  */
 const installIntoExample = function installIntoExample(
 	packedDir: string,
@@ -835,10 +824,6 @@ const installIntoExample = function installIntoExample(
  * The swap is real and it is undone in the same call, which is also the whole reason the two
  * fixtures cannot be checked in parallel: only one install of `@inth/react-native` exists in
  * each of them at a time.
- *
- * @param packed - The packed package to install.
- * @param exampleDirs - The fixtures to install into, in the order the linkers are asked.
- * @returns Every way the packed tree fails to autolink.
  */
 export const checkPackedAutolinking = function checkPackedAutolinking(
 	packed: PackedPackage,
@@ -875,12 +860,7 @@ export const checkPackedAutolinking = function checkPackedAutolinking(
 	}
 };
 
-/**
- * Pack, install, and check, in a temporary directory the caller does not have to manage.
- *
- * @param body - Runs with the packed tree, and returns whatever the caller wants back.
- * @returns Whatever `body` returned.
- */
+/** Pack into a temporary directory, run `body` against it, and remove the directory. */
 export const withPackedPackage = function withPackedPackage<T>(
 	body: (packed: PackedPackage) => T
 ): T {

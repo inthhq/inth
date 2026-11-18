@@ -177,7 +177,7 @@ test('AGENTS.md root-relative links resolve beside the docs directory', () => {
 });
 
 test('unbundled pages use the docs site of the package release', () => {
-	// The @c15t/cli bundle holds upgrade-v3.md but not the framework guides,
+	// The @inth/cli bundle holds upgrade-v3.md but not the framework guides,
 	// and c15t.com documents v2 during the v3 prereleases.
 	const cliFiles = new Set(['upgrade-v3.md']);
 	const v3 = docsOriginForVersion('3.0.0-alpha.9');

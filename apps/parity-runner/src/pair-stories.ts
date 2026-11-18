@@ -37,18 +37,11 @@ export const frameworkOf = function frameworkOf(title: string): string | null {
 	return match?.[1]?.toLowerCase() ?? null;
 };
 
-/**
- * Compute a framework-neutral key from a story by stripping the framework
- * segment from its title and appending the story name.
- */
 export const storyKey = function storyKey(entry: StoryEntry): string {
 	const stripped = entry.title.replace(FRAMEWORK_SEGMENT, '').trim();
 	return `${stripped}/${entry.name}`;
 };
 
-/**
- * Pair stories across frameworks by their framework-neutral key.
- */
 export const pairStories = function pairStories(
 	entriesByFramework: Readonly<Record<string, readonly StoryEntry[]>>
 ): PairedStory[] {
@@ -121,10 +114,6 @@ export interface ComparablePairOptions {
  * Both gates used to filter their own way — one required two entries and
  * dropped DevTools, the other required React — so a change to one silently
  * changed what the other compared. They call this instead.
- *
- * @param entriesByFramework - Story entries per framework code.
- * @param options - Enabled frameworks, optional baseline and exclusions.
- * @returns Comparable pairs, each carrying the frameworks it is missing.
  */
 export const selectComparablePairs = function selectComparablePairs(
 	entriesByFramework: Readonly<Record<string, readonly StoryEntry[]>>,
@@ -159,7 +148,6 @@ export const STORY_VISIT_BUDGET_MS = 3000;
  * framework. Such a test grows with the catalogue, so a fixed timeout
  * fails on whichever story is open when the catalogue outgrows it.
  *
- * @param pairs - The pairs the test visits.
  * @param floorMs - The configured timeout, kept for a small catalogue.
  * @returns The test's timeout, in ms.
  */

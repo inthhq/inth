@@ -321,7 +321,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// dash-case) renders `inth-consent-button=""`, and
 		// `<button inthConsentDialogLink>` (a directive, camelCase) renders
 		// `inthconsentdialoglink=""`. The marker carries no state. Every
-		// @inth/angular attribute selector starts with `c15t`, and no other
+		// @inth/angular attribute selector starts with `inth`, and no other
 		// adapter renders an attribute named that way (theirs are
 		// `data-inth-*`), so the rule applies only on an Angular page and only
 		// to empty values.

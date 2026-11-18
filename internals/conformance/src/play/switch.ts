@@ -8,20 +8,17 @@ export const toggleOnOff: PlayFunction = async ({ canvasElement }) => {
 	const canvas = within(canvasElement);
 	const switchEl = canvas.getByRole('switch');
 
-	// Should start unchecked
 	await waitFor(() => {
 		expect(switchEl).toHaveAttribute('aria-checked', 'false');
 		expect(switchEl).toHaveAttribute('data-state', 'unchecked');
 	});
 
-	// Click to check
 	await userEvent.click(switchEl);
 	await waitFor(() => {
 		expect(switchEl).toHaveAttribute('aria-checked', 'true');
 		expect(switchEl).toHaveAttribute('data-state', 'checked');
 	});
 
-	// Click to uncheck
 	await userEvent.click(switchEl);
 	await waitFor(() => {
 		expect(switchEl).toHaveAttribute('aria-checked', 'false');
@@ -41,7 +38,6 @@ export const controlledToggle: PlayFunction = async ({ canvasElement }) => {
 		expect(switchEl).toHaveAttribute('aria-checked', 'true');
 	});
 
-	// Click to uncheck
 	await userEvent.click(switchEl);
 	await waitFor(() => {
 		expect(switchEl).toHaveAttribute('aria-checked', 'false');

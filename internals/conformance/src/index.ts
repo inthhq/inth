@@ -31,7 +31,7 @@
  *
  * - Dialog currently renders as `<div role="dialog" aria-modal="true">` with
  *   `<div role="presentation">` backdrop. A future cross-framework migration
- *   will flip to native `<dialog>`; until then both frameworks must emit the
+ *   will flip to native `<dialog>`; until then every framework must emit the
  *   div-based shape byte-for-byte.
  * - Accordion content must be wrapped in `<div data-slot="accordion-content-viewport">`
  *   for the grid-collapse animation selector in `accordion.module.css` to apply.

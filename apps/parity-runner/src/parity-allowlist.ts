@@ -130,10 +130,6 @@ export interface ParityFinding {
 
 /**
  * Whether a finding is covered by an allowlist entry.
- *
- * @param finding - The difference the check found.
- * @param allowlist - The entries to test against.
- * @returns The matching entry, or undefined.
  */
 export const findAllowEntry = function findAllowEntry(
 	finding: ParityFinding,
@@ -162,10 +158,6 @@ export const findAllowEntry = function findAllowEntry(
  * one signal this check exists to give. A `'*'` entry is in scope whenever
  * any framework is.
  *
- * @param used - The entries that did match.
- * @param checks - The checks whose entries this run is responsible for.
- * @param frameworks - The frameworks this run enabled.
- * @param allowlist - The full allowlist.
  * @returns Entries that can be deleted.
  */
 export const unusedAllowlistEntries = function unusedAllowlistEntries(

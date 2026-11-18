@@ -120,7 +120,7 @@ test.each(PACKAGE_DOCS_CONFIGS.filter((config) => config.skillDirectory))(
 		};
 		expect(manifest.files).toContain('skills');
 		// Expo links the `skills/` directory of transitive dependencies too, so
-		// a Inth dependency that also ships one would link a second Inth skill
+		// an Inth dependency that also ships one would link a second Inth skill
 		// into every app that installs this package. A dependency without a
 		// `skills/` directory (such as the web engine, an optional peer) links
 		// nothing.

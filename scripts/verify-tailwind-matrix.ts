@@ -4,16 +4,16 @@
  * Serves every built fixture in `benchmarks/tailwind-matrix/{v3,v4}` and
  * checks, in Chromium, the contract the shared Tailwind docs page states:
  *
- * - inth's component styles survive Tailwind's preflight: the banner card
+ * - Inth's component styles survive Tailwind's preflight: the banner card
  *   keeps its background and border, the header, footer and buttons keep
  *   their padding, and the lazily loaded dialog is styled too. On Tailwind 3
  *   this also proves the Inth rules were not purged.
- * - A utility passed to a Inth part wins over inth's own rule for the same
+ * - A utility passed to an Inth part wins over Inth's own rule for the same
  *   property: a bare utility on Tailwind 4, an important one (`!p-[7px]`)
  *   on Tailwind 3. The fixtures put padding on the banner root, which Inth
  *   also sets, so the check fails if the utility loses.
  * - A `dark` class on `<html>` turns on Tailwind's `dark:` variant for that
- *   utility and, where the fixture says Inth follows it, inth's dark tokens.
+ *   utility and, where the fixture says Inth follows it, Inth's dark tokens.
  *   The script tag's shadow root follows its own `colorScheme` option.
  *   This is checked on the early frame below and again once settled.
  * - Opening the dialog loads its stylesheet, which is styled too.
@@ -33,11 +33,11 @@
  *   already carried the banner. A cell with nothing held proves nothing
  *   about the engine: all the banner needed came with it.
  *
- * Build first: `bun run compat:styles:build`.
+ * Build first: `pnpm sdk:compat:styles:build`.
  *
  * ```sh
- * bun run compat:styles:matrix
- * TAILWIND_MATRIX_VERSIONS=v3 TAILWIND_MATRIX_FIXTURES=vue,nuxt bun run compat:styles:matrix
+ * pnpm --dir scripts run compat:styles:matrix
+ * TAILWIND_MATRIX_VERSIONS=v3 TAILWIND_MATRIX_FIXTURES=vue,nuxt pnpm --dir scripts run compat:styles:matrix
  * ```
  */
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -209,13 +209,13 @@ const checkBanner = function checkBanner(
 	if (options.slots) {
 		expect(
 			root.padding === SLOT_PADDING.light,
-			`utility on the banner root lost to inth: padding ${root.padding}, expected ${SLOT_PADDING.light}`
+			`utility on the banner root lost to Inth: padding ${root.padding}, expected ${SLOT_PADDING.light}`
 		);
 	}
 };
 
 /**
- * Puts `dark` on `<html>`, checks the `dark:` utility and inth's dark
+ * Puts `dark` on `<html>`, checks the `dark:` utility and Inth's dark
  * tokens the page declares, and takes the class off again.
  */
 const checkDark = async function checkDark(
@@ -238,7 +238,7 @@ const checkDark = async function checkDark(
 	if (options.darkTokens) {
 		expect(
 			darkTitle.color !== lightTitle.color,
-			`inth ignored the dark class: title color stayed ${darkTitle.color}`
+			`Inth ignored the dark class: title color stayed ${darkTitle.color}`
 		);
 	}
 	if (options.slots) {
@@ -252,9 +252,6 @@ const checkDark = async function checkDark(
 	});
 };
 
-/**
- * Checks one page and returns the failed expectations, empty on success.
- */
 const checkPage = async function checkPage(
 	page: Page,
 	url: string,
