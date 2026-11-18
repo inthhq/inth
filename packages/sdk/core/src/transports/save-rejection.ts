@@ -117,7 +117,10 @@ export const isConsentSaveRejection = function isConsentSaveRejection(
 export const isSubjectConflict = function isSubjectConflict(
 	error: unknown
 ): boolean {
-	return isConsentSaveRejection(error) && error.code === 'SUBJECT_CONFLICT';
+	return (
+		isConsentSaveRejection(error) &&
+		(error.code === 'SUBJECT_CONFLICT' || error.code === 'subject_conflict')
+	);
 };
 
 /**
