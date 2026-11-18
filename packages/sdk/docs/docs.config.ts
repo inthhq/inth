@@ -38,7 +38,7 @@ export default defineDocsConfig({
 	llms: {
 		sections: [
 			{
-				body: "These docs describe inth v3. Find your app's row in Choose your setup, then follow that framework guide from start to finish; it names the files to create and the backend URL to use. A visible banner does not prove anything: check that vendor requests wait for consent, that rejection survives a reload, and that preferences can be reopened.",
+				body: "These docs describe Inth v3. Find your app's row in Choose your setup, then follow that framework guide from start to finish; it names the files to create and the backend URL to use. A visible banner does not prove anything: check that vendor requests wait for consent, that rejection survives a reload, and that preferences can be reopened.",
 				heading: 'Using these docs',
 				type: 'markdown',
 			},
@@ -73,14 +73,14 @@ export default defineDocsConfig({
 				type: 'links',
 			},
 			{
-				heading: 'Compare inth',
+				heading: 'Compare Inth',
 				links: [
 					{
 						urlPath: '/docs/comparisons',
 					},
 					{
 						title:
-							'inth vs CookieConsent v3, the vanilla-cookieconsent package',
+							'Inth vs CookieConsent v3, the vanilla-cookieconsent package',
 						urlPath: '/docs/comparisons/cookieconsent-v3',
 					},
 					{
