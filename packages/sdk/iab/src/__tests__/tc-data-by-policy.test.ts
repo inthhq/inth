@@ -4,11 +4,7 @@
  * TCF, only the base fields when it does not.
  */
 import { createConsentKernel } from '@inth/sdk-core';
-import type {
-	ConsentKernel,
-	TCData,
-	TCDataOutsideTCF,
-} from '@inth/sdk-core';
+import type { ConsentKernel, TCData, TCDataOutsideTCF } from '@inth/sdk-core';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
