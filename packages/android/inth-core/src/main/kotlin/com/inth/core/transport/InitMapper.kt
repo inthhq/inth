@@ -89,8 +89,8 @@ data class MappedInit(
 /**
  * Reads a `GET /v1/consent/init` response.
  *
- * A `200` is a definitive answer: `/v1` has no contract negotiation, so no response
- * header is read, and a policy resolution this build cannot parse is contract rule 5.
+ * A `200` is a definitive answer, and a policy resolution this build cannot parse is
+ * contract rule 5.
  */
 object InitMapper {
 	/** Map [outcome], never throwing; every unparseable path yields a failure. */

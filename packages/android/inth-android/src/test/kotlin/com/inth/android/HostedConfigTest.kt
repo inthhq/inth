@@ -121,16 +121,16 @@ class HostedConfigTest {
 	}
 
 	@Test
-	fun `property defaults to the application ID and is lowercased`() {
+	fun `a blank property defaults to the application ID`() {
 		fun property(configured: String?, applicationId: String?) = InthAndroid.checkedConfig(
 			NativeConfig(url, property = configured),
 			debuggable = false,
 			enforceProjectUrl = true,
 			applicationId = applicationId,
 		).property
-		assertEquals("com.example.myapp", property(null, "com.Example.MyApp"))
-		assertEquals("com.example.myapp", property(" ", "com.Example.MyApp"))
-		assertEquals("www.example.com", property("WWW.Example.com", "com.example.myapp"))
+		assertEquals("com.Example.MyApp", property(null, "com.Example.MyApp"))
+		assertEquals("com.Example.MyApp", property(" ", "com.Example.MyApp"))
+		assertEquals("WWW.Example.com", property("WWW.Example.com", "com.example.myapp"))
 		assertNull("no application ID: the core falls back to the project URL host", property(null, null))
 
 		val declared = InthAndroid.checkedDeclaration(
@@ -139,7 +139,7 @@ class HostedConfigTest {
 			debuggable = false,
 			applicationId = "com.example.myapp",
 		)
-		assertEquals("shop.example.com", (declared as DeclaredConfig.Valid).config.property)
+		assertEquals("Shop.Example.com", (declared as DeclaredConfig.Valid).config.property)
 	}
 
 	@Test

@@ -8,6 +8,7 @@ import com.inth.core.store.InthStore
 import com.inth.core.store.InthStoreKeys
 import com.inth.core.store.PendingSaveQueue
 import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome.HttpFailure
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -163,7 +164,7 @@ class SaveOrderingTest {
 	@Test
 	fun `a body the backend refuses on its own terms is dropped and the reason named`() {
 		val store = InthStore(InMemoryKeyValueStore())
-		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(400))
+		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(HttpFailure(400)))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
@@ -186,7 +187,7 @@ class SaveOrderingTest {
 	@Test
 	fun `a rate limited send keeps the entry and spends one attempt`() {
 		val store = InthStore(InMemoryKeyValueStore())
-		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(429))
+		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(HttpFailure(429)))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
@@ -203,7 +204,7 @@ class SaveOrderingTest {
 	fun `a dropped grant names the backend code and request id`() {
 		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(
-			SaveOutcome.Rejected(400, code = "invalid_request", requestId = "req_42", message = "answer is required"),
+			SaveOutcome.Rejected(HttpFailure(400, code = "invalid_request", requestId = "req_42", message = "answer is required")),
 		)
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -221,7 +222,7 @@ class SaveOrderingTest {
 	@Test
 	fun `a body runs out at the attempt ceiling and says which ceiling`() {
 		val store = InthStore(InMemoryKeyValueStore())
-		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(503))
+		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(HttpFailure(503)))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
@@ -252,7 +253,7 @@ class SaveOrderingTest {
 		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport()
 			.respondSave(SaveOutcome.Unavailable("offline"))
-			.respondSave(SaveOutcome.Rejected(503))
+			.respondSave(SaveOutcome.Rejected(HttpFailure(503)))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, clock = clock, logger = { errors += it })
 		// Script a policy so bootstrap() does not emit an init failure, which would land in

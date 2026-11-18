@@ -46,7 +46,6 @@ import java.security.MessageDigest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -153,7 +152,6 @@ class ProtocolFixtureTest {
 		// Kotlin carries no protocol constant of its own yet; the fixtures and this
 		// build must agree on one number, so it is pinned here until the core has one.
 		assertEquals(1L, indexProtocol, "index.json is protocol $indexProtocol and this build was written against 1")
-		assertNull(index["policyContractHeader"], "a /v1 request sends no policy-contract header")
 		val listed = index.fixtures.map { it["file"]!!.jsonPrimitive.content }.toSet()
 		listed.forEach { file ->
 			assertTrue(File(directory, file).isFile, "index.json lists $file, which is not on disk")
@@ -324,13 +322,8 @@ class ProtocolFixtureTest {
 			put("method", request.method)
 			put("path", java.net.URI(request.url).rawPath)
 		}
-		// `x-inth-platform` is telemetry, and the contract says the fixtures deliberately
-		// leave it unpinned, so extra header keys are not a difference. The retired ones are.
-		for (retired in listOf("x-inth-version", "x-inth-policy-contract")) {
-			if (request.headers.keys.any { it.equals(retired, ignoreCase = true) }) {
-				record(id(entry), "expected.request.headers", "a /v1 request must not send $retired")
-			}
-		}
+		// These fixtures pin no request header (`transport/cases.json` does), so extra
+		// keys are not a difference.
 		record(
 			id(entry),
 			"expected.request",

@@ -1,10 +1,7 @@
 package com.inth.core.transport
 
 /**
- * Routes and headers of the Inth backend's `/v1` consent API.
- *
- * The path is the version: a `/v1` request sends no version or policy-contract header,
- * and the core reads no contract declaration from a response. See "Transports" in
+ * Routes and headers of the Inth backend's `/v1` consent API. See "Transports" in
  * `packages/native-protocol/CONTRACT.md`.
  */
 object InthProtocol {
