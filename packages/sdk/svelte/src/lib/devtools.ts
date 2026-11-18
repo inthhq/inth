@@ -3,7 +3,7 @@ import ConsentDevTools from './components/consent-dev-tools.svelte';
 /** Compatible short name for {@link ConsentDevTools}. */
 const DevTools = ConsentDevTools;
 
-/** Backward-compatible name for {@link ConsentDevTools}. */
+/** Another name for {@link ConsentDevTools}. */
 const InthDevTools = ConsentDevTools;
 
 export { InthDevTools, ConsentDevTools, DevTools };

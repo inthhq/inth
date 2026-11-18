@@ -47,7 +47,6 @@ export interface StandInHandle {
 	readonly kernel: ConsentKernel;
 	/** Resolves when the engine first attaches. */
 	readonly ready: Promise<void>;
-	/** Whether the engine has attached. */
 	readonly attached: () => boolean;
 	/** The engine's kernel, once attached. */
 	readonly engine: () => ConsentKernel | undefined;
@@ -108,10 +107,9 @@ const functionTable = function functionTable<Table extends object>(
  * Creates the stand-in kernel.
  *
  * `set.activeUI` before the engine shows the surface at once, without
- * loading the engine: `ConsentDialog` renders against the stand-in. The engine takes the surface over when it attaches.
+ * loading the engine: `ConsentDialog` renders against the stand-in. The
+ * engine takes the surface over when it attaches.
  *
- * @param options - The server snapshot and the engine trigger.
- * @returns The handle the root provides and attaches the engine to.
  * @internal
  */
 export const createStandInKernel = function createStandInKernel(
@@ -345,8 +343,6 @@ export const createStandInKernel = function createStandInKernel(
  * Whether setters queued for the engine leave the snapshot as a commit
  * reads it: only category registrations the snapshot already holds.
  *
- * @param handle - The stand-in.
- * @returns `true` when a commit may read the stand-in's snapshot.
  * @internal
  */
 export const pendingIsInert = function pendingIsInert(

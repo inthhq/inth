@@ -133,7 +133,6 @@
 	{:else if placeholder}
 		{@render placeholder()}
 	{:else}
-		<!-- Default placeholder -->
 		<SurfaceStyles
 			sheets={CONSENT_GATE_SHEETS}
 			{noStyle}

@@ -39,7 +39,6 @@ export interface ReadBoot {
  * and what the browser renders over it, so hydration adopts it unchanged.
  *
  * @param json - The boot, as JSON with `<` escaped.
- * @returns The markup.
  * @internal
  */
 export const bootMarkup = (json: string): string =>

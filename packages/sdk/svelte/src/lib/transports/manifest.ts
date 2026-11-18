@@ -1,10 +1,8 @@
-// After the resolver, so bundlers place the snapshot next to the code and
-// the English copy it shares the most strings with.
-import { projectUrl, snapshot } from '@inth/sdk/generated';
 /**
  * The single-page app `manifest()`: resolve init in the browser from the
  * consent manifest the build downloaded.
  */
+import { projectUrl, snapshot } from '@inth/sdk/generated';
 import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import type {
 	BrowserManifestModeFactory,
@@ -19,8 +17,7 @@ export type ManifestModeOptions = BrowserManifestOptions;
  *
  * With no options it uses what `consentManifest()` from
  * `@inth/svelte/vite` downloaded: the snapshot, and the backend URL it
- * read from `VITE_INTH_PROJECT_URL`. Saves
- * still go to that backend.
+ * read from `VITE_INTH_PROJECT_URL`. Saves still go to that backend.
  * With `manifestUrl`, that URL is fetched when the page loads and the
  * build's snapshot is not used. Without a snapshot, as after
  * `source: 'runtime'` or a dev server that could not reach the backend,

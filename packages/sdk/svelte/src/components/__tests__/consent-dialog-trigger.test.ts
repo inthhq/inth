@@ -1,10 +1,3 @@
-/**
- * Tests for ConsentDialogTrigger component.
- *
- * Tests visibility logic (showWhen prop), keyboard interaction,
- * and aria attributes.
- */
-
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -65,7 +58,6 @@ describe('ConsentDialogTrigger', () => {
 			expect(banner).not.toBeInTheDocument();
 		});
 
-		// Trigger should NOT appear even after consent
 		await new Promise<void>((resolve) => {
 			setTimeout(resolve, 300);
 		});
@@ -108,7 +100,6 @@ describe('ConsentDialogTrigger', () => {
 			showWhen: 'always',
 		});
 
-		// Banner is visible
 		await waitFor(() => {
 			const banner = document.querySelector(
 				'[data-testid="consent-banner-root"]'
@@ -142,7 +133,6 @@ describe('ConsentDialogTrigger', () => {
 		);
 		await fireEvent.click(acceptButton);
 
-		// Wait for trigger
 		await waitFor(() => {
 			const trigger = document.querySelector(
 				'button[aria-label="Open privacy settings"]'
@@ -150,13 +140,11 @@ describe('ConsentDialogTrigger', () => {
 			expect(trigger).toBeInTheDocument();
 		});
 
-		// Press Enter on trigger
 		const trigger = getDefined(
 			document.querySelector('button[aria-label="Open privacy settings"]')
 		);
 		await fireEvent.click(trigger, { detail: 0 });
 
-		// Dialog should open
 		await waitFor(() => {
 			expect(
 				document.querySelector('button[aria-label="Open privacy settings"]')

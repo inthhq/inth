@@ -2,7 +2,7 @@
 // requires the @sveltejs/vite-plugin-svelte transform pipeline for component
 // compilation.
 //
-// Two projects, because Svelte 5 dual-compiles components:
+// Three projects, because Svelte 5 dual-compiles components:
 // - `client` resolves the `browser` condition and gets client-compiled
 //   components, which is what `mount` and @testing-library/svelte need.
 // - `ssr` resolves `svelte`/`node` and gets server-compiled components, which

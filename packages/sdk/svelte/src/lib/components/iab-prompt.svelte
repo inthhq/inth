@@ -69,16 +69,13 @@
 	const shouldTrapFocus = $derived(presentation.blocking);
 	const shouldScrollLock = $derived(presentation.blocking);
 
-	// IAB state
 	const iabState = $derived(consent.state.iab);
 
-	// Translations
 	const iabT = $derived(getIABTranslations(consent.state.translationConfig));
 	const textDirection = $derived(
 		getTextDirection(consent.state.translationConfig?.defaultLanguage)
 	);
 
-	// Visibility logic
 	const shouldShowBanner = $derived(
 		consent.state.hasConsentUi &&
 			consent.state.activeUI === 'banner' &&
@@ -99,7 +96,6 @@
 		remainingCount: summary.remainingCount,
 	});
 
-	// Handlers
 	const handleSave = async function handleSave() {
 		if (!iabState) {
 			return;
@@ -154,7 +150,6 @@
 		} as const;
 	};
 
-	// Styling
 	const rootStyle = $derived(
 		resolveStyles(
 			'iabConsentBanner',
@@ -201,7 +196,6 @@
 			: `${rootStyle.className || ''} ${visibility.isVisible ? `${styles.bannerVisible}${disableAnimation ? '' : ` ${styles.bannerEntering}`}` : styles.bannerHidden}`
 	);
 
-	// Resolved texts
 	const descriptionText = $derived(
 		iabT.banner.description.replace('{partnerCount}', String(vendorCount))
 	);
@@ -210,7 +204,6 @@
 	);
 	const scopeNotice = $derived(iabT.banner.scopeServiceSpecific);
 
-	// Split description around partners link
 	const descriptionParts = $derived(descriptionText.split(partnersLinkText));
 </script>
 
@@ -257,7 +250,6 @@
 					aria-label={iabT.banner.title}
 					use:focusTrap={shouldTrapFocus}
 				>
-					<!-- Header -->
 					<div
 						class={headerStyle.className || ''}
 						style={toStyleAttributeValue(headerStyle.style)}
@@ -294,7 +286,6 @@
 						</p>
 					</div>
 
-					<!-- Footer with buttons -->
 					<div
 						class={footerStyle.className || ''}
 						style={toStyleAttributeValue(footerStyle.style)}

@@ -1,7 +1,7 @@
 /**
  * Tailwind 3 PostCSS plugin for Inth stylesheets, re-exported from
  * `@inth/sdk/ui/postcss-tailwind3` so an app that installs `@inth/svelte` can list
- * `@inth/svelte/postcss-tailwind3` without installing `@inth/sdk/ui`.
+ * `@inth/svelte/postcss-tailwind3` without installing `@inth/sdk`.
  * See `@inth/sdk/ui/postcss-tailwind3` for what the plugin does. It must come
  * before `tailwindcss`.
  *

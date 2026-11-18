@@ -31,10 +31,6 @@ import type { ConsentRootBoot } from './boot';
  * `persistence: false`, or a configured script that may run now and the
  * server did not start). The same rule as `@inth/vue`'s Nuxt module.
  *
- * @param snapshot - The snapshot the server rendered with.
- * @param options - The root's options.
- * @param now - The clock. Defaults to `Date.now()`.
- * @returns `true` when the engine may wait.
  * @internal
  */
 export const canDeferEngine = function canDeferEngine(
@@ -98,8 +94,6 @@ export const canDeferEngine = function canDeferEngine(
  * loads. An English bundle comes back unchanged. The IAB copy is left
  * out: the IAB surfaces fill it from English themselves.
  *
- * @param snapshot - The snapshot the server rendered with.
- * @returns The snapshot with a complete bundle.
  * @internal
  */
 export const withCompleteTranslations = function withCompleteTranslations(
@@ -134,7 +128,6 @@ export interface ServerBoot {
  *
  * @param runtime - The server's runtime, not started.
  * @param options - The root's options, with its `prefetch`.
- * @returns The boot's markup and whether the engine may wait.
  * @internal
  */
 export const planServerBoot = function planServerBoot(

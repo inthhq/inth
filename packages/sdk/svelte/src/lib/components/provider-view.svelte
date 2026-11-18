@@ -44,7 +44,6 @@
 		children?: Snippet;
 		/** The provider's resolved options. */
 		options: ProviderOptionsInput;
-		/** The runtime to render. */
 		runtime: ConsentRuntime;
 		/**
 		 * The same runtime when the provider owns it: this component starts,

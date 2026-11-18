@@ -57,7 +57,6 @@
 		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 
-	// Translations
 	const translations = $derived(
 		resolveTranslations(
 			consent.state.translationConfig,
@@ -68,7 +67,7 @@
 		getTextDirection(consent.state.translationConfig?.defaultLanguage)
 	);
 
-	// Open state. With `open` set the parent owns visibility, as in React:
+	// With `open` set the parent owns visibility, as in React:
 	// Escape still asks the consent manager to close (`activeUI` becomes
 	// `'none'`), but the dialog stays until `open` turns false.
 	const controlled = $derived(openProp !== undefined);
@@ -80,7 +79,6 @@
 	let dialogOpen = $state(false);
 	let lastResolvedOpen = $state(false);
 
-	// Per-element theme key styling
 	const rootStyle = $derived(
 		resolveStyles('consentDialog', theme.theme, { className, noStyle }, noStyle)
 	);
@@ -139,7 +137,6 @@
 		)
 	);
 
-	// Trigger props
 	const triggerProps = $derived.by(() => {
 		if (showTrigger === true) {
 			return {};
@@ -218,7 +215,6 @@
 				data-testid="consent-dialog-root"
 				onkeydown={handleControlledDismiss}
 			>
-				<!-- Card -->
 				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 				<div
 					class={cardStyle.className || ''}
@@ -226,7 +222,6 @@
 					data-testid="consent-dialog-card"
 					tabindex={-1}
 				>
-					<!-- Header -->
 					<div
 						class={headerStyle.className || ''}
 						style={toStyleAttributeValue(headerStyle.style)}
@@ -255,7 +250,6 @@
 						</div>
 					</div>
 
-					<!-- Content: ConsentWidget -->
 					<div
 						class={contentStyle.className || ''}
 						style={toStyleAttributeValue(contentStyle.style)}

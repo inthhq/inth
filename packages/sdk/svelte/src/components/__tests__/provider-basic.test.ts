@@ -1,9 +1,3 @@
-/**
- * Tests for ConsentProvider basic request behavior.
- *
- * Mirrors: packages/sdk/react/src/providers/__tests__/provider-basic.test.tsx
- */
-
 import { IAB_FIXTURE_CMP_ID, MINIMAL_GVL } from '@inth/conformance';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
@@ -226,7 +220,6 @@ describe('ConsentProvider Basic Request Behavior', () => {
 			setTimeout(resolve, 100);
 		});
 
-		// No fetch in offline mode
 		expect(mockFetch).not.toHaveBeenCalled();
 	});
 

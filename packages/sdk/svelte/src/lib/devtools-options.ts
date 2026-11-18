@@ -6,7 +6,7 @@ export type ConsentDevToolsProps = Omit<
 	'container' | 'kernel'
 >;
 
-/** Backward-compatible props name for the ConsentDevTools component. */
+/** Another props name for the ConsentDevTools component. */
 export type InthDevToolsProps = ConsentDevToolsProps;
 
 /** Compatible props name for the DevTools component alias. */

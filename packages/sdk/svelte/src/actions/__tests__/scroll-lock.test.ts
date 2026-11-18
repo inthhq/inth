@@ -35,10 +35,8 @@ describe('scrollLock action', () => {
 			const node = document.createElement('div');
 			const result = scrollLock(node, false);
 
-			// Enable lock
 			result.update(true);
 			expect(document.body.style.overflow).toBe('hidden');
-			// Disable lock
 			result.update(false);
 			expect(document.body.style.overflow).not.toBe('hidden');
 
