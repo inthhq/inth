@@ -1050,10 +1050,14 @@ Every path is relative to the project URL:
     POST /v1/subjects/:id/link      link the device subject to a person, only with an
                                     identity token (see "Subject identity")
 
-A device calls no other route, and never the c15t routes at the root (`/init`,
-`/subjects`, `/subjects/:id`). The consent manifest (`/v1/consent/manifest`) is
+A device calls no other route. The consent manifest (`/v1/consent/manifest`) is
 fetched at build time by the CLI, not by a device, and `/v1/consent/sessions` is for
 server-side callers. The document routes are not part of the mobile SDKs.
+
+`packages/native-protocol/transport/cases.json` pins the init URL for a set of
+overrides, the records route, the link URL and body, the `subjectId` a core reads
+from a `2xx`, and how it reads a failure, including whether the status makes a queued
+body permanent. Both cores run it.
 
 ### No negotiation
 
@@ -1061,10 +1065,10 @@ The path is the version. A `/v1` request sends no `x-inth-version` header and no
 policy-contract header or query parameter, and a core reads no contract declaration
 from a response. Every `/v1` response uses the current policy contract, so a `200`
 from `/v1/consent/init` is a definitive answer, and a policy resolution the core
-cannot read is contract rule 5, not a configuration error. No transport error
-reports a refused contract any more. `unsupported-contract` survives only as a value
-of a policy resolution's failure `reason`, which is the web kernel's vocabulary and
-reaches a device the same way as any other unreadable policy.
+cannot read is contract rule 5, not a configuration error. The policy reader names a
+resolution from a newer schema (an unknown `version`, right or field)
+`unsupported-contract`, the web kernel's reason for it, and treats it like any other
+unreadable policy.
 
 Every request carries `accept: application/json` and, with a body,
 `content-type: application/json`, plus one telemetry header:
@@ -1159,6 +1163,9 @@ Writes go through a pending queue:
   distinct owner's owed withdrawal to make room. If those withdrawals fill the
   queue, refuse actions that cannot fit with `queue-write-failed`. A repeated
   denial for an existing owner can still replace its slot.
+- Do not migrate a body a prerelease build queued in the c15t shape. No build that
+  wrote one shipped. The backend refuses it with `400 invalid_request`, and the queue
+  drops it as it drops any body the backend refuses.
 
 IAB disclosure bindings use the `gvl-v2:` format. Older projected bindings require
 a fresh decision because their stored lists may have discarded unknown fields.
@@ -1364,8 +1371,7 @@ envelope under a previous id, which reads as the same subject rather than as
 
 ### Linking a person
 
-`identify(user)` attaches the external id locally, as before: the snapshot, the
-envelope, and every later save body (`externalId`, `identityProvider`). It sends
+`identify(user)` attaches the external id locally: the snapshot, the envelope, and every later save body (`externalId`, `identityProvider`). It sends
 `POST /v1/subjects/:id/link` only when the host also passes an identity token:
 
     { "externalId": "user_123", "identityProvider": "clerk", "identityToken": "..." }
@@ -1712,8 +1718,7 @@ with the single exception named in "The stored envelope". `evaluation-*` pin
 `snapshot`, the subset of the mobile snapshot named above. `save-body-*` pin
 `snapshotBefore`, `snapshotAfter`, the `savePayload` the core must hold, and
 `request`: the exact `method`, `path`, `headers`, and `body` the backend receives.
-`headers` is empty: a `/v1` request pins no header, and the telemetry header is not
-compared. `savePayload` is the kernel's payload with the `idempotencyKey` added and
+`headers` is empty: `transport/cases.json` pins the request headers. `savePayload` is the kernel's payload with the `idempotencyKey` added and
 the web-only `timeToDecisionMs` left out. `native-envelope-*` pin `write`,
 `relaunch`, the field set in `fields`, and for a read case `read`.
 
@@ -1831,15 +1836,6 @@ Swift core, as built
   `kind`, and diffs the produced snapshot against `expected` recursively, so a
   mismatch names the field and both values. It claims every entry in `index.json`;
   an unclaimed entry fails the run.
-- Fixed while wiring the revision trace: the contract-refusal branch of
-  `reportInitFailure`, since removed with the `/v1` move, wrote `error` and announced the new revision on the core's own
-  event hub, but never called `publish()`. The React Native pump is fed by
-  `onChange`, not by that hub, so iOS bumped the revision with no observer
-  notification and no envelope write: the error write was committed and unpublished,
-  exactly what "Revisions and error writes" forbids. It goes through `publish` now.
-  The `revision-trace-*` fixture is what catches it, and only on the `publications`
-  column: the revision deltas agree either way, which is why the fixture observes
-  both.
 - Fixed while wiring the fixtures: `save()` reported `uiSource` from the snapshot
   published after the commit, so a save made from the dialog after the banner had
   already cleared said `banner`. The surface the subject acted on is now captured

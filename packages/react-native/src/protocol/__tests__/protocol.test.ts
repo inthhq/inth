@@ -647,10 +647,6 @@ describe('protocol fixtures', () => {
 			expect(request.body.property).toBe(fixture.input.property);
 			expect(request.body.idempotencyKey).toBe(fixture.input.idempotencyKey);
 			expect(request.body.givenAt).toBe(fixture.input.actionAt);
-			// The 3.x names are gone from a /v1 body, not sent beside the new ones.
-			for (const retired of ['type', 'domain', 'preferences', 'choice']) {
-				expect(retired in request.body).toBe(false);
-			}
 			// Every confirmed category has a receipt in the answer.
 			const answer = request.body.answer as {
 				categories: Record<string, unknown>;

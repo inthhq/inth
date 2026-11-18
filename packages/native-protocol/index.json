@@ -227,52 +227,52 @@
 			"sha256": "a5d51a93b4b8bc75b236abbd085a8ff53e57fbcd700162d6659a26e1ed1fabf9"
 		},
 		{
-			"bytes": 13513,
+			"bytes": 13489,
 			"file": "save-body-all.json",
 			"id": "save-body-all",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "d430cb28efb0e8182dff0f8dd32a9b06e3c7820fcdbfa2894bf9e41527723e8a"
+			"sha256": "3ac0dd1febcb19753c6dc8bf891eda10cab007ff0d7acf8d76b714ebf19c77c8"
 		},
 		{
-			"bytes": 13651,
+			"bytes": 13627,
 			"file": "save-body-necessary.json",
 			"id": "save-body-necessary",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "89e403b267110ed8cba5b46536dad72054be88937cc05d5c0c73df6ba54a180c"
+			"sha256": "6fd1462fa4b75232696315679fd3a4294ce24b82d2e8b47331e6ee935b14e7a7"
 		},
 		{
-			"bytes": 12141,
+			"bytes": 12117,
 			"file": "save-body-explicit-partial.json",
 			"id": "save-body-explicit-partial",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "2f045bc578fe5022bcdba770ce531c9d0d6210d97a7aa86f098fe2a1caca6d73"
+			"sha256": "07523de48d4ba1653ad800f3ea6262f9a255efc395c83014161917430cdfec91"
 		},
 		{
-			"bytes": 13613,
+			"bytes": 13589,
 			"file": "save-body-ccpa-gpc.json",
 			"id": "save-body-ccpa-gpc",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "4baa7f7f6340f18723cd7f3c0e70dfb204594d9c85cd504340537218152451a2"
+			"sha256": "9a077fc27f690bb1ba802593e8fe1fb9f7a6fc0da9495323503a5d3a3dfd79e0"
 		},
 		{
-			"bytes": 11513,
+			"bytes": 11489,
 			"file": "save-body-necessary-only-all.json",
 			"id": "save-body-necessary-only-all",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "87b7bad8cf73677cdce11b64ed90b36443d7459c7c859f551d42a53ba14cd9b8"
+			"sha256": "7ac89098a89f1707d0ca3e12499eda0dea069bb90740cf47aac91d8e462f58a7"
 		},
 		{
-			"bytes": 11357,
+			"bytes": 11333,
 			"file": "save-body-necessary-only-necessary.json",
 			"id": "save-body-necessary-only-necessary",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "a6a035dfd57d28e130bb7c393e6c5088816ff7562382962dfbd2f1025fce2299"
+			"sha256": "3677acd81a227d32740ae38f016864eb6e2f4b4cb6104c865a4328edd8a48890"
 		},
 		{
 			"bytes": 11815,
@@ -363,12 +363,12 @@
 			"sha256": "1e7617d172f3b247c92db22ed0626a3d0adc442d759b66758e9a730e0b3b2206"
 		},
 		{
-			"bytes": 13036,
+			"bytes": 12930,
 			"file": "revision-trace-error-writes.json",
 			"id": "revision-trace-error-writes",
 			"kind": "revision-trace",
 			"protocolVersion": 1,
-			"sha256": "d17e53d46edf2a3c6bd1a7673728be7868cc9a0ff24d7fd07598615bd43ec46d"
+			"sha256": "b1927f7dfebe49398f5b998da1f4458d4241984fe11111139ddaaaef5422463d"
 		},
 		{
 			"bytes": 8942,

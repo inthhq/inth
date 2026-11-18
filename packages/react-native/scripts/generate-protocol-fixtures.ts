@@ -946,9 +946,6 @@ const transportFor = function transportFor(
 ): InitTransport {
 	return {
 		body,
-		// `/v1` has no contract negotiation: the path is the version, so the response
-		// declares nothing and every client reads the body as the current contract.
-		// The request id is what every `/v1` response carries.
 		headers: { 'x-request-id': 'req_fixture_init' },
 		status: 200,
 	};
@@ -961,8 +958,7 @@ const UNREADABLE_POLICY_STATUS = 'unreadable';
  * A readable `/init` body whose policy resolution no client can represent.
  *
  * The status is not one the wire defines, so contract rule 5 applies: the core
- * serves `policyPending` with every optional category denied. It is the `/v1`
- * replacement for a refused contract declaration, which `/v1` no longer has.
+ * serves `policyPending` with every optional category denied.
  */
 const unreadablePolicyTransportFor = function unreadablePolicyTransportFor(
 	body: InitResponseBody
@@ -983,8 +979,7 @@ const unreadablePolicyTransportFor = function unreadablePolicyTransportFor(
 /**
  * Fold an `InitTransport` into the response a client hands its kernel.
  *
- * Every `/v1` response is read as the current policy contract, because the path
- * is the version and there is nothing to negotiate.
+ * Every `/v1` response is read under the current policy contract.
  */
 const initResponseFor = function initResponseFor(
 	transport: InitTransport
@@ -1187,8 +1182,8 @@ const CANONICAL_OPTIONAL_CATEGORIES = [
  * - removed: `type`, `domain`, `preferences`, `choice`, `externalSubjectId`;
  * - added: `idempotencyKey`, `property`, `answer`, `confirmed`, `externalId`.
  *
- * `answer` is every receipt the subject holds after the action, in the 3.x receipt
- * shape. `confirmed` lists the categories this action confirmed, in the canonical
+ * `answer` is every receipt the subject holds after the action, each
+ * `{ value, confirmedAt, basis }`. `confirmed` lists the categories this action confirmed, in the canonical
  * order the web transport uses, and every entry is a key of `answer.categories`. The decision-input assertion is not added:
  * every save-body scenario carries a policy snapshot token, which makes it absent.
  */
@@ -2211,7 +2206,7 @@ const buildEvaluationFixtures =
 const SAVE_NOTES = [
 	...NOTES,
 	'savePayload is what the pending queue must persist before the request, byte-for-byte, and a replay must resend it unchanged after a later init changes policy.',
-	'request.headers is empty on purpose: a /v1 request sends no version header and no policy-contract header. Platform telemetry headers are not pinned.',
+	'request.headers is empty: these fixtures pin no request header. transport/cases.json pins the headers every request carries.',
 	'request.body is the POST /v1/consent/records body. answer holds every receipt the subject has after the action, confirmed names the categories this action confirmed, and property is input.property. tcString is absent because IAB is out of scope: never add the key.',
 	'input.idempotencyKey is the key the core makes once for this action. It is part of savePayload and of the body, and a replay sends it unchanged.',
 	'the commit happens at input.now, so givenAt, every confirmedAt, and snapshotAfter.evaluatedAt all equal it.',
@@ -2682,7 +2677,7 @@ const TRACE_NOTES = [
 	'the trace starts after bootstrap has settled: hydration and bootstrap are mutations in some cores and not in others, so the anchor is the settled snapshot and the absolute revision a core reports is its own business. What every core must reproduce is what each step costs.',
 	'revisionDelta is the change in snapshot.revision across the step, and publications counts the snapshot listeners it woke. A committed change bumps the revision exactly once and publishes exactly once; a write that changes the committed value nowhere bumps nothing and publishes nothing. See "Revisions and error writes" in packages/native-protocol/CONTRACT.md.',
 	'two of these steps are the same answer twice on purpose. Re-serving an init that changed nothing, and re-reporting an error the snapshot already carries, are not new changes: a bridge that dedups by revision has to be able to treat them as noise.',
-	'the unreadable-policy steps serve the ordinary Europe body with a policy resolution status no wire defines. Contract rule 5 applies: the core serves policyPending with every optional category denied. /v1 has no contract negotiation, so this is the error write that replaces a refused contract declaration.',
+	'the unreadable-policy steps serve the ordinary Europe body with a policy resolution status no wire defines. Contract rule 5 applies: the core serves policyPending with every optional category denied.',
 	'expected.trace is not about which fields the error write touches. Swift, Kotlin, and the kernel write different fields for an unreadable policy; what they must not disagree about is whether the write was a change at all.',
 ];
 
@@ -3219,6 +3214,8 @@ const buildSubjectIdCases = function buildSubjectIdCases() {
 		{ id: '00000000-0000-0000-0000-000000000000', kind: 'unusable' },
 		{ id: 'ffffffff-ffff-ffff-ffff-ffffffffffff', kind: 'unusable' },
 		{ id: '0193e5a86f007c3a8a1b5d2e7f9a0b1c', kind: 'unusable' },
+		// An Arabic-Indic zero where a hex digit belongs: only ASCII hex is a UUID.
+		{ id: '\u0660193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c', kind: 'unusable' },
 		{ id: 'sub_0OIl', kind: 'unusable' },
 		{ id: 'sub_', kind: 'unusable' },
 		{ id: '', kind: 'unusable' },

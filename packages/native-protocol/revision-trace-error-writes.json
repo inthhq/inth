@@ -385,7 +385,7 @@
 		"the trace starts after bootstrap has settled: hydration and bootstrap are mutations in some cores and not in others, so the anchor is the settled snapshot and the absolute revision a core reports is its own business. What every core must reproduce is what each step costs.",
 		"revisionDelta is the change in snapshot.revision across the step, and publications counts the snapshot listeners it woke. A committed change bumps the revision exactly once and publishes exactly once; a write that changes the committed value nowhere bumps nothing and publishes nothing. See \"Revisions and error writes\" in packages/native-protocol/CONTRACT.md.",
 		"two of these steps are the same answer twice on purpose. Re-serving an init that changed nothing, and re-reporting an error the snapshot already carries, are not new changes: a bridge that dedups by revision has to be able to treat them as noise.",
-		"the unreadable-policy steps serve the ordinary Europe body with a policy resolution status no wire defines. Contract rule 5 applies: the core serves policyPending with every optional category denied. /v1 has no contract negotiation, so this is the error write that replaces a refused contract declaration.",
+		"the unreadable-policy steps serve the ordinary Europe body with a policy resolution status no wire defines. Contract rule 5 applies: the core serves policyPending with every optional category denied.",
 		"expected.trace is not about which fields the error write touches. Swift, Kotlin, and the kernel write different fields for an unreadable policy; what they must not disagree about is whether the write was a change at all."
 	],
 	"protocolVersion": 1
