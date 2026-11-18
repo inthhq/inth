@@ -18,12 +18,12 @@ import type {
 	ConsentSnapshot,
 	KernelConfig,
 	KernelOverrides,
-} from '@c15t/core';
-import type { readStoredRecords } from '@c15t/core/modules/persistence';
+} from '@inth/sdk-core';
+import type { readStoredRecords } from '@inth/sdk-core/modules/persistence';
 import type {
 	planEarlyCommit,
 	storeEarlyCommit,
-} from '@c15t/core/surface-actions/early-commit';
+} from '@inth/sdk-core/surface-actions/early-commit';
 
 import type { C15tGlobalBase, QueuedCall } from '../global-base';
 import type { ConsentClient } from '../types';

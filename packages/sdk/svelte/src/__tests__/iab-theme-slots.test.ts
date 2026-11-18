@@ -3,10 +3,10 @@
  * Astro and the script tag apply it: classes and `style` on the part the
  * slot names.
  */
-import { resolvePolicyRules } from '@c15t/schema/types';
-import bannerStyles from '@c15t/ui/styles/components/iab-consent-banner';
-import dialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
-import type { ComponentSlots } from '@c15t/ui/theme';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
+import bannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
+import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
+import type { ComponentSlots } from '@inth/sdk/ui/theme';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 

@@ -257,11 +257,19 @@ ${[
     </picture>
   </a>
 </p>`;
-	const bannerBlock = `${bannerImage}
+	// A published @inth package opens with what it is and its install line.
+	const plainOpening =
+		config.packageName.startsWith('@inth/') && !config.privatePackage;
+	const bannerBlock = plainOpening
+		? `# ${config.packageName}`
+		: `${bannerImage}
 
 # ${config.title}
 
 ${badgeBlock}`;
+	const installLine = plainOpening
+		? `\`\`\`bash\npnpm add ${config.packageName}\n\`\`\``
+		: '';
 
 	let featuresBlock = '';
 	if (config.features && config.features.length > 0) {
@@ -407,7 +415,8 @@ On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown 
 	const readmeContent = [
 		bannerBlock,
 		config.description,
-		SOCIAL_PROOF_LINE,
+		installLine,
+		plainOpening ? '' : SOCIAL_PROOF_LINE,
 		featuresBlock,
 		leadSectionsBlock,
 		config.showHosting === 'lead' ? hostingBlock : '',

@@ -3,8 +3,8 @@
  * marker for a tap that was never stored, and whether `/init` sent enough
  * copy for the init script's banner.
  */
-import type { ConsentSnapshot } from '@c15t/core';
-import { enTranslations } from '@c15t/translations';
+import type { ConsentSnapshot } from '@inth/sdk-core';
+import { enTranslations } from '@inth/sdk-translations';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { hasBannerCopy, resolveCopy } from '../init/copy';

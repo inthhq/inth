@@ -16,7 +16,7 @@ a rebuild. Set the mode in `c15t.config.ts`:
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig, manifest } from 'c15t/next';
+import { defineConsentConfig, manifest } from '@inth/nextjs';
 
 export default defineConsentConfig({ mode: manifest({ source: 'runtime' }) });
 ```
@@ -83,7 +83,7 @@ absolute:
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig } from 'c15t/next';
+import { defineConsentConfig } from '@inth/nextjs';
 
 export default defineConsentConfig({ proxy: true, routePrefix: '/api/c15t' });
 ```
@@ -94,7 +94,7 @@ backend. In the App Router:
 {/* example: fragment */}
 
 ```ts title="app/api/c15t/[...c15t]/route.ts"
-import { createConsentRoute } from 'c15t/next/api';
+import { createConsentRoute } from '@inth/nextjs/api';
 
 export const { DELETE, GET, OPTIONS, PATCH, POST, PUT } = createConsentRoute({
 	proxy: true,
@@ -106,7 +106,7 @@ In the Pages Router:
 {/* example: fragment */}
 
 ```ts title="pages/api/c15t/[...c15t].ts"
-import { createPagesConsentRoute } from 'c15t/next/pages';
+import { createPagesConsentRoute } from '@inth/nextjs/pages';
 
 export default createPagesConsentRoute({ proxy: true });
 ```
@@ -128,7 +128,7 @@ Keep these details right:
   `NEXT_PUBLIC_C15T_BACKEND_URL`, so the server never fetches its own route
   and `withConsentManifest` still downloads the manifest from the backend.
 - `proxy` needs `routePrefix`. Without it, `defineConsentConfig` throws
-  ``@c15t/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.``
+  ``@inth/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.``
 - Set `proxy: true` in both places. With it only in the config, saves reach a
   route that answers them with 404 or 405. To send only init through the route
   and keep saves going straight to the backend, drop `proxy` from both and keep
@@ -185,7 +185,7 @@ Pass `onBackgroundRevalidate` to the route; it is called inside the handler
 with the refresh promise, which never rejects:
 
 ```ts title="app/api/c15t/[...c15t]/route.ts"
-import { createConsentRoute } from 'c15t/next/api';
+import { createConsentRoute } from '@inth/nextjs/api';
 import { after } from 'next/server';
 
 export const { GET } = createConsentRoute({
@@ -376,7 +376,7 @@ again.
 
 The larger the tree inside `ConsentRoot`, the more of that request hydration
 covers. There is nothing to configure. The code that decides ships with
-`ConsentRoot` only: a `ConsentProvider` from `@c15t/react` rendered without
+`ConsentRoot` only: a `ConsentProvider` from `@inth/react` rendered without
 `ConsentRoot` loads the chunk when it mounts.
 
 Next.js assigns chunk file names in the browser build, and the server

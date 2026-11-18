@@ -3,13 +3,13 @@ import {
 	createConsentKernel,
 	deferInitGvl,
 	resolveIABBannerSummary,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { InitOutput } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { InitOutput } from '@inth/sdk-schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createIAB } from '../index';

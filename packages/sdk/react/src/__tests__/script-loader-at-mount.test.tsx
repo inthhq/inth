@@ -9,8 +9,8 @@
  * provider ships its static module graph, so one value import of that
  * module would put those bytes into every React first load.
  */
-import type * as ScriptLoaderModule from '@c15t/core/modules/script-loader';
-import type { Script } from '@c15t/core/modules/script-loader';
+import type * as ScriptLoaderModule from '@inth/sdk/modules/script-loader';
+import type { Script } from '@inth/sdk/modules/script-loader';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -22,7 +22,7 @@ import { policyFixture } from './policy-fixture';
 const loads = vi.hoisted(() => ({ created: 0, evaluated: 0 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is when this module loads; counting its evaluation is the only view of that from a test.
-vi.mock('@c15t/core/modules/script-loader', async (importOriginal) => {
+vi.mock('@inth/sdk/modules/script-loader', async (importOriginal) => {
 	loads.evaluated += 1;
 	const module = await importOriginal<typeof ScriptLoaderModule>();
 	return {
@@ -51,10 +51,14 @@ const rawSources = import.meta.glob(
 
 const CORE_SOURCE = '../../../core/src/';
 
-/** `@c15t/core` subpaths whose file name differs from the subpath. */
+/** `@inth/sdk/engine` subpaths whose file name differs from the subpath. */
 const CORE_ENTRY_ALIASES: Record<string, string> = {
 	'modules/network-hold': 'modules/network-blocker/hold.ts',
 };
+
+/** `@inth/sdk` entries that are not the engine's: UI, schema, IAB and the rest. */
+const NON_ENGINE_ENTRY =
+	/^@inth\/sdk\/(?:ui|schema|translations|iab|iab-client|devtools|gpp|headless|hosted)(?:\/|$)/u;
 
 /** Value imports and re-exports; `import type` and `export type` erase. */
 const STATIC_IMPORT =
@@ -95,11 +99,11 @@ const resolveImport = function resolveImport(
 		}
 		return file;
 	}
-	if (specifier === '@c15t/core') {
+	if (specifier === '@inth/sdk/engine') {
 		return `${CORE_SOURCE}index.ts`;
 	}
-	if (specifier.startsWith('@c15t/core/')) {
-		const subpath = specifier.slice('@c15t/core/'.length);
+	if (specifier.startsWith('@inth/sdk/') && !NON_ENGINE_ENTRY.test(specifier)) {
+		const subpath = specifier.slice('@inth/sdk/'.length);
 		const alias = CORE_ENTRY_ALIASES[subpath];
 		const file = alias
 			? `${CORE_SOURCE}${alias}`

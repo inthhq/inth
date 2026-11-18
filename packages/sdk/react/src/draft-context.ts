@@ -7,9 +7,9 @@ import type {
 	SaveInput,
 	SaveResult,
 	SaveUISource,
-} from '@c15t/core';
-import type { PreferenceDraft } from '@c15t/core/preference-draft';
-import { saveConsentSurface } from '@c15t/core/surface-actions';
+} from '@inth/sdk/engine';
+import type { PreferenceDraft } from '@inth/sdk/preference-draft';
+import { saveConsentSurface } from '@inth/sdk/surface-actions';
 import { createContext, useCallback, useContext } from 'react';
 
 import { KernelContext, ProviderServicesContext } from './context';
@@ -64,7 +64,7 @@ const saveFreshDraft = async function saveFreshDraft(
 	categories: readonly AllConsentNames[] | undefined,
 	uiSource: SaveUISource | undefined
 ): Promise<SaveResult> {
-	const { createPreferenceDraft } = await import('@c15t/core/preference-draft');
+	const { createPreferenceDraft } = await import('@inth/sdk/preference-draft');
 	return createPreferenceDraft(kernel, { defaults }).save({
 		categories,
 		uiSource,

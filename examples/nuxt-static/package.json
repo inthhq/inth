@@ -9,8 +9,8 @@
 		"start": "vite preview --outDir .output/public --host 127.0.0.1"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
-		"c15t": "workspace:*",
+		"@inth/integrations": "workspace:*",
+		"@inth/nuxt": "workspace:*",
 		"nuxt": "^4.5.1"
 	},
 	"devDependencies": {

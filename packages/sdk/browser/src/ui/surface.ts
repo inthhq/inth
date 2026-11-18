@@ -1,5 +1,5 @@
-import type { ConsentSnapshot, LegalLinks } from '@c15t/core';
-import type { LegalLinksTranslations } from '@c15t/translations';
+import type { ConsentSnapshot, LegalLinks } from '@inth/sdk-core';
+import type { LegalLinksTranslations } from '@inth/sdk-translations';
 
 import { classes } from '../generated/styles';
 import type { ConsentClient } from '../types';

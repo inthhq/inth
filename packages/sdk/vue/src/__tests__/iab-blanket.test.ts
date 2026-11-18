@@ -1,17 +1,17 @@
 /**
  * "Accept all" and "Reject all" on the Vue IAB banner and dialog must record
- * the same selection, and encode the same TC string, as the `@c15t/iab`
+ * the same selection, and encode the same TC string, as the `@inth/sdk/iab`
  * handle's own `acceptAll()` / `rejectAll()`, which React and Svelte call.
  *
  * @vitest-environment jsdom
  */
-import type { ConsentKernel, NonIABVendor } from '@c15t/core';
+import type { ConsentKernel, NonIABVendor } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { GlobalVendorList, InitOutput } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { GlobalVendorList, InitOutput } from '@inth/sdk/schema/types';
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
 import { createApp } from 'vue';
 import type { Component } from 'vue';

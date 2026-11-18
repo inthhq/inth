@@ -8,7 +8,7 @@
 import type {
 	ConsentManifest,
 	ConsentManifestPolicyPack,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 /** Whether any pack is keyed by country or region. */
 export const hasLocationMatchers = function hasLocationMatchers(

@@ -1,5 +1,5 @@
 // #region docs:branded-layout
-import { ConsentTheme } from 'c15t/next';
+import { ConsentTheme } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { brandTheme } from '@/lib/theme';

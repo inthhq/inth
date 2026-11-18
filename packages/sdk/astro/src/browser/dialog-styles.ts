@@ -2,7 +2,7 @@
  * Stylesheets the deferred dialogs need beyond the first-paint rules.
  *
  * The preference dialog and IAB panel have separate sheets. The Svelte
- * dialog also renders the `@c15t/ui/styles/primitives` class maps, whose
+ * dialog also renders the `@inth/sdk/ui/styles/primitives` class maps, whose
  * rules ship separately. The islands cannot bring them along
  * themselves: Astro's production build drops the CSS a page script reaches
  * through a dynamic import, so the Svelte and Vue islands arrive with none.

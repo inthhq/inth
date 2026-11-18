@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/generated` — what the build integration fetched.
+ * `@inth/sdk/generated` — what the build integration fetched.
  *
  * The `consentManifest()` Vite plugins replace this module with a virtual
  * one, and `withConsentManifest()` aliases it to a file under
@@ -13,10 +13,10 @@
  *
  * @example
  * ```ts
- * import { projectUrl, snapshot } from '@c15t/core/generated';
+ * import { projectUrl, snapshot } from '@inth/sdk-core/generated';
  * ```
  */
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 /**
  * The backend URL the build read the manifest from, or `undefined` when no

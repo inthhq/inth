@@ -1,4 +1,4 @@
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
@@ -8,7 +8,7 @@ import {
 } from '../static';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
-describe('@c15t/tanstack-start/static', () => {
+describe('@inth/tanstack-start/static', () => {
 	test('unknown geography uses the configured fallback, not a stricter pack', () => {
 		// The fixture's `notice-default` fallback is opt-out; `eu-opt-in` is
 		// stricter but only matches DE and must not apply to everyone.
@@ -81,7 +81,7 @@ describe('@c15t/tanstack-start/static', () => {
 		});
 
 		expect(source).toContain(
-			"import type { ConsentManifest } from '@c15t/tanstack-start/static';"
+			"import type { ConsentManifest } from '@inth/tanstack-start/static';"
 		);
 		expect(source).toContain('export const testManifest = {');
 		expect(source).toContain('satisfies ConsentManifest');
@@ -135,11 +135,11 @@ describe('createStaticManifestModule: importSource', () => {
 	test('imports the type from the entry the app declares', async () => {
 		const source = await createStaticManifestModule({
 			fetch: fetchManifest(),
-			importSource: 'c15t/tanstack-start/static',
+			importSource: '@inth/tanstack-start/static',
 			manifestUrl: 'https://consent.example.com/manifest',
 		});
 		expect(source).toContain(
-			"import type { ConsentManifest } from 'c15t/tanstack-start/static';"
+			"import type { ConsentManifest } from '@inth/tanstack-start/static';"
 		);
 	});
 

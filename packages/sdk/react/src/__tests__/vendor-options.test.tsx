@@ -4,7 +4,7 @@
  * hook follows the kernel's gate semantics for a vendor declared `disabled`
  * and reads an undeclared vendor as not allowed.
  */
-import type { Script, Vendor } from '@c15t/core';
+import type { Script, Vendor } from '@inth/sdk/engine';
 import { useContext, useEffect, useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

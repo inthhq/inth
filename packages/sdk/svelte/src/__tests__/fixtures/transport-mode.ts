@@ -3,8 +3,8 @@ import type {
 	PolicyRule,
 	ProviderTransportFactory,
 	ProviderTransportKind,
-} from '@c15t/core';
-import type { ConsentTesting } from '@c15t/core/testing';
+} from '@inth/sdk/engine';
+import type { ConsentTesting } from '@inth/sdk/testing';
 
 import { testing } from '../../lib/testing';
 

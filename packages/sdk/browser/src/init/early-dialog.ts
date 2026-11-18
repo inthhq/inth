@@ -16,7 +16,7 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 
 import { stylesheet } from '../generated/dialog-styles';
 import type { C15tGlobalBase } from '../global-base';

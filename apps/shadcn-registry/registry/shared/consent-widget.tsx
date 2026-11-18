@@ -4,8 +4,8 @@ import {
   ConsentDraftProvider,
   useHasConsentUI,
   useTranslations,
-} from "c15t/react"
-import { useConsentTextDirection } from "c15t/react/headless"
+} from "@inth/react"
+import { useConsentTextDirection } from "@inth/react/headless"
 
 import {
   ConsentPreferences,

@@ -1,6 +1,6 @@
 // #region docs:consent-buttons
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ConsentButton } from '@c15t/angular';
+import { ConsentButton } from '@inth/angular';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

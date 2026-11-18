@@ -2,8 +2,8 @@
 <script setup lang="ts">
 // The module registers ConsentDialogTrigger globally. It does not register
 // the banner or the dialog, so import them.
-import ConsentBanner from 'c15t/vue/runtime/components/consent-banner.vue';
-import ConsentManager from 'c15t/vue/runtime/components/consent-manager.vue';
+import ConsentBanner from '@inth/nuxt/components/consent-banner';
+import ConsentManager from '@inth/nuxt/components/consent-manager';
 </script>
 
 <template>

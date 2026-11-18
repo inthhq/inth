@@ -2,7 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 
 const HomePage = () => (
 	<main style={{ fontFamily: 'system-ui', padding: '2rem' }}>
-		<h1>@c15t/tanstack-start Browser Bench</h1>
+		<h1>@inth/tanstack-start Browser Bench</h1>
 		<ul>
 			<li>
 				<Link to="/baseline">/baseline</Link>

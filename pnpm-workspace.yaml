@@ -11,7 +11,7 @@ packages:
   # Repository tooling for the SDK, with the tools its scripts use.
   - scripts
   # The c15t CLI's mobile code, parked under the CLI. scripts/export-mobile-policy.ts
-  # imports its exporter, which needs @c15t/schema. @inth/cli does not use it.
+  # imports its exporter, which needs @inth/sdk/schema. @inth/cli does not use it.
   - packages/cli/vendor/c15t-mobile
   - "!**/dist/**"
   - "!**/.next/**"

@@ -5,7 +5,7 @@ import {
 	applyExperimentTheme,
 	hostExperiment,
 	watchRevocationReload,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
 	Callbacks,
@@ -30,14 +30,14 @@ import type {
 	StorageConfig,
 	User,
 	Vendor,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import {
 	createPersistence,
 	readStoredRecords,
-} from '@c15t/core/modules/persistence';
-import type { Script } from '@c15t/core/modules/script-loader';
-import { createWindowDebug } from '@c15t/core/modules/window-debug';
-import type { ConsentControlOptions } from '@c15t/core/runtime';
+} from '@inth/sdk/modules/persistence';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import { createWindowDebug } from '@inth/sdk/modules/window-debug';
+import type { ConsentControlOptions } from '@inth/sdk/runtime';
 import {
 	claimEarlyJourney,
 	createConsentProviderRuntime,
@@ -46,7 +46,7 @@ import {
 	lazyStreamPrefetch,
 	readHostedMode,
 	streamPrefetchWith,
-} from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/provider';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
@@ -55,9 +55,9 @@ import type {
 	EarlyInitMode,
 	ResolveStreamedInit,
 	WithProjectUrl,
-} from '@c15t/core/runtime/provider';
-import type { ConsentTesting } from '@c15t/core/testing';
-import { applyThemeSlots } from '@c15t/ui/utils';
+} from '@inth/sdk/runtime/provider';
+import type { ConsentTesting } from '@inth/sdk/testing';
+import { applyThemeSlots } from '@inth/sdk/ui/utils';
 import type { ReactNode } from 'react';
 import {
 	useCallback,
@@ -193,10 +193,10 @@ export interface ConsentProviderOptions
 	 * How the visitor's policy is resolved. Initial-only.
 	 *
 	 * - Omitted, or `hosted()`: ask `${projectUrl}/init`.
-	 * - `manifest()` from `c15t/react`: resolve from the backend's consent
+	 * - `manifest()` from `@inth/react`: resolve from the backend's consent
 	 *   manifest in the browser, falling back to `/init` with a warning
 	 *   when the manifest is unavailable.
-	 * - `testing()` from `@c15t/react/testing`: resolve a policy with no
+	 * - `testing()` from `@inth/react/testing`: resolve a policy with no
 	 *   backend, for tests. It sends nothing and throws in production
 	 *   builds.
 	 *
@@ -206,7 +206,7 @@ export interface ConsentProviderOptions
 	 *
 	 * @example
 	 * ```tsx
-	 * import { testing } from '@c15t/react/testing';
+	 * import { testing } from '@inth/react/testing';
 	 *
 	 * <ConsentProvider
 	 *   options={{ overrides: { country: 'DE' }, mode: testing() }}
@@ -311,7 +311,7 @@ export interface ConsentProviderOptions
 	i18n?: Partial<I18nConfig>;
 	/** Categories to offer alongside discovered integration categories, within policy scope. */
 	consentCategories?: AllConsentNames[];
-	/** Per-component slot attribute overrides (shared contract with @c15t/vue). */
+	/** Per-component slot attribute overrides (shared contract with @inth/vue). */
 	components?: ReactComponentSlots;
 	legalLinks?: LegalLinks;
 	/**
@@ -336,7 +336,7 @@ export interface ConsentProviderOptions
 	__debugPkg?: string;
 	/**
 	 * The code that applies a `prefetch` promise, from
-	 * `@c15t/core/runtime/streamed-init`. Without it the provider loads that
+	 * `@inth/sdk/runtime/streamed-init`. Without it the provider loads that
 	 * code once `prefetch` is a promise, so an app that never streams one
 	 * doesn't download it. A framework root whose state is usually streamed
 	 * (`ConsentRoot`) passes it, so the state applies as soon as it arrives
@@ -346,7 +346,7 @@ export interface ConsentProviderOptions
 	__resolveStreamedInit?: ResolveStreamedInit;
 	/**
 	 * `preloadScriptLoaderWith` from
-	 * `@c15t/core/runtime/script-loader-preload`. With it the runtime starts
+	 * `@inth/sdk/runtime/script-loader-preload`. With it the runtime starts
 	 * the script loader's download during the first render when consent
 	 * already lets a script run, instead of from the mount effect. A
 	 * framework root whose state usually holds a returning visitor's choice
@@ -434,7 +434,7 @@ const connectConsentSourceOnDemand: ConsentRuntimeModules['connectConsentSource'
 		void (async () => {
 			try {
 				const { connectConsentSource } =
-					await import('@c15t/core/runtime/controls');
+					await import('@inth/sdk/runtime/controls');
 				if (!stopped) {
 					disconnect = connectConsentSource(kernel, source);
 				}
@@ -450,7 +450,7 @@ const connectConsentSourceOnDemand: ConsentRuntimeModules['connectConsentSource'
 
 /** The script loader's module, behind one `import()` for every caller. */
 const loadScriptLoader = async () =>
-	(await import('@c15t/core/modules/script-loader')).createScriptLoader;
+	(await import('@inth/sdk/modules/script-loader')).createScriptLoader;
 
 const reactRuntimeModules = function reactRuntimeModules(
 	options: ConsentProviderOptions
@@ -460,14 +460,13 @@ const reactRuntimeModules = function reactRuntimeModules(
 		connectConsentSource: connectConsentSourceOnDemand,
 		createClearOnRevocation: lazyRuntimeModule(
 			async () =>
-				(await import('@c15t/core/modules/clear-on-revocation'))
+				(await import('@inth/sdk/modules/clear-on-revocation'))
 					.createClearOnRevocation
 		),
 		createIframeBlocker: createIframeBlockerOnDemand,
 		createNetworkBlocker: lazyRuntimeModule(
 			async () =>
-				(await import('@c15t/core/modules/network-blocker'))
-					.createNetworkBlocker
+				(await import('@inth/sdk/modules/network-blocker')).createNetworkBlocker
 		),
 		createPersistence,
 		createScriptLoader: lazyRuntimeModule(loadScriptLoader),
@@ -499,7 +498,7 @@ const treeIABModes = new WeakMap<
 /**
  * The mode an early `/init` was sent for: the `hosted()` options, or a
  * mode that registered in `earlyInitModes` (such as `manifest()` from
- * `c15t/react`) and the global `fetch` its transport would use.
+ * `@inth/react`) and the global `fetch` its transport would use.
  */
 type EarlySource =
 	| { readonly hosted: HostedModeOptions }
@@ -577,7 +576,7 @@ const toRuntimeOptions = function toRuntimeOptions(
 	return {
 		...options,
 		mode: mode && withTreeIAB(mode),
-		pkg: options.__debugPkg ?? '@c15t/react',
+		pkg: options.__debugPkg ?? '@inth/react',
 	};
 };
 
@@ -737,7 +736,7 @@ let entrySequence = 0;
  * did not return itself: a custom transport's `init()` may expect a
  * mounted page, and a wrapper's transport may not be swapped for another.
  * The exception is a mode registered in `earlyInitModes`, such as
- * `manifest()` from `c15t/react`. It sends early only when it says its
+ * `manifest()` from `@inth/react`. It sends early only when it says its
  * first `init()` would request the backend (its bundled manifest cannot
  * answer for an unknown location) and the visitor has no stored choice.
  */
@@ -1000,7 +999,7 @@ const isPromiseLike = function isPromiseLike(
  *
  * @example
  * ```tsx
- * import { createConsentRuntime } from '@c15t/core/runtime';
+ * import { createConsentRuntime } from '@inth/sdk/runtime';
  *
  * const runtime = createConsentRuntime({ projectUrl: '/api/c15t' });
  * runtime.start();

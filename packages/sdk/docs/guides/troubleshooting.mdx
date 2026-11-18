@@ -10,7 +10,7 @@ Most problems show up in one of these places. Run them before changing code.
 
 1. **Which c15t is running.** In the browser console, run `window.c15t`. v3
    prints `{ version, pkg, mode, hosting }`, for example `mode: 'manifest'`
-   from `@c15t/nextjs`. `hosting` is `'inth'` or `'self-hosted'` once the
+   from `@inth/nextjs`. `hosting` is `'inth'` or `'self-hosted'` once the
    backend has answered `/init`, and `null` before then or without a backend. `undefined` means no c15t provider has mounted on this
    page. A `window.c15tStore` object means the page runs v2. With the script
    tag, `window.c15t` is the full browser API instead.
@@ -24,19 +24,14 @@ Most problems show up in one of these places. Run them before changing code.
 Your framework's troubleshooting page covers adapter-specific failures, such
 as Next.js prerendering errors or SvelteKit hydration.
 
-## "Can't resolve 'c15t/next'" or a missing export
+## "Can't resolve '@inth/nextjs'" or a missing export
 
-npm's `latest` tag still points to c15t v2, which has no framework entry
-points. A plain `npm install c15t` therefore installs v2, and imports such as
-`c15t/next`, `c15t/react` or `ConsentRoot` fail with "Package subpath is not
-defined by exports" or "Module not found".
+Each framework has its own package: `@inth/nextjs`, `@inth/react`,
+`@inth/vue`, `@inth/svelte`, `@inth/angular`, `@inth/astro` or
+`@inth/tanstack-start`. Plain JavaScript and script-tag sites use `@inth/sdk`.
+Install the one for your framework and check the lockfile.
 
-Install the v3 release and check the lockfile:
-
-<CommandTabs command="c15t" mode="install" />
-
-Keep every c15t package, including `@c15t/integrations`, on the same release.
-Mixing v2 and v3 packages is not supported.
+Keep every package, including `@inth/integrations`, on the same release.
 
 ## Why is there no banner?
 
@@ -119,9 +114,9 @@ framework guides do.
 `${projectUrl}/manifest`. A production build stops when the download fails,
 and dev logs the same message as a warning. Every framework uses the same
 messages, prefixed with the integration's name, such as
-`@c15t/nextjs/build`, `@c15t/core/build` (for `c15t/build`),
-`@c15t/tanstack-start/build`, `@c15t/vue/vite`, `@c15t/svelte/vite`,
-`@c15t/vue` (Nuxt) or `@c15t/astro`:
+`@inth/nextjs/build`, `@inth/sdk/build` (for React and JavaScript),
+`@inth/tanstack-start/build`, `@inth/vue/vite`, `@inth/svelte/vite`,
+`@inth/nuxt` or `@inth/astro`:
 
 | Message | Cause | Fix |
 | --- | --- | --- |
@@ -151,11 +146,11 @@ describes the policy and when the build skips the download.
 
 ### A single-page app warns that the policy depends on location
 
-`consentManifest()` from `c15t/build` logs this warning when it downloads a
+`consentManifest()` from `@inth/sdk/build` logs this warning when it downloads a
 policy with location rules:
 
 ```txt
-@c15t/core/build: the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider `mode: hosted()` instead.
+@inth/sdk/build: the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider `mode: hosted()` instead.
 ```
 
 Pass the visitor's `{ country, region }` as `manifest({ inputs })` when your
@@ -169,10 +164,10 @@ instead of a factory:
 
 | Message | Fix |
 | --- | --- |
-| ``@c15t/react ConsentProvider: `mode` is required. Use manifest() or hosted().`` | Pass `mode`, such as `manifest()` from the same package. The start of the message names the package and the API that got no mode, such as `@c15t/svelte ConsentProvider` or `@c15t/core createConsentRuntime()`. Production builds name the package only: ``@c15t/react: `mode` is required.`` |
-| ``@c15t/browser: `mode` must be a factory, such as manifest(), hosted() or testing() from @c15t/browser. Mode names like "hosted" work only in the script-tag builds.`` | Import the factory and call it: `init({ mode: hosted() })`. |
-| ``c15t: hosted() needs `projectUrl`. Pass it, or add consentManifest() from c15t/build to your Vite config and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).`` | The React `hosted()` found no backend URL. `@c15t/browser` throws the same message prefixed `@c15t/browser:`. A production build prints only the first sentence. |
-| ``c15t: `mode` is the hosted() transport itself, so its code ships in the client bundle. Pass the hosted() your framework package exports instead: it is plain data, and the root loads the code only when it runs.`` | A warning outside production. A server-rendered root got a transport from `c15t/react`. Import the mode from your framework package. Next.js has its own wording; see [Next.js troubleshooting](/docs/frameworks/next/troubleshooting). |
+| ``@inth/react ConsentProvider: `mode` is required. Use manifest() or hosted().`` | Pass `mode`, such as `manifest()` from the same package. The start of the message names the package and the API that got no mode, such as `@inth/svelte ConsentProvider` or `@inth/sdk/engine createConsentRuntime()`. Production builds name the package only: ``@inth/react: `mode` is required.`` |
+| ``@inth/sdk: `mode` must be a factory, such as manifest(), hosted() or testing() from @inth/sdk. Mode names like "hosted" work only in the script-tag builds.`` | Import the factory and call it: `init({ mode: hosted() })`. |
+| ``c15t: hosted() needs `projectUrl`. Pass it, or add consentManifest() from @inth/sdk/build to your Vite config and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).`` | The React `hosted()` found no backend URL. `@inth/sdk` throws the same message prefixed `@inth/sdk:`. A production build prints only the first sentence. |
+| ``c15t: `mode` is the hosted() transport itself, so its code ships in the client bundle. Pass the hosted() your framework package exports instead: it is plain data, and the root loads the code only when it runs.`` | A warning outside production. A server-rendered root got a transport from `@inth/react`. Import the mode from your framework package. Next.js has its own wording; see [Next.js troubleshooting](/docs/frameworks/next/troubleshooting). |
 
 ## Why does the static build fail when development works?
 

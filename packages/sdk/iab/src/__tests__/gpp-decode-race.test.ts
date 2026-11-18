@@ -1,10 +1,10 @@
 /** @vitest-environment jsdom */
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentKernel, KernelIABAuthority } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk-core';
+import type { ConsentKernel, KernelIABAuthority } from '@inth/sdk-core';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import type { GPPEventData, GPPPingData } from '../gpp';

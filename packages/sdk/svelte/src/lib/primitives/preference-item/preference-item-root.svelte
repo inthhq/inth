@@ -4,8 +4,8 @@
 		getPreferenceItemState,
 		PREFERENCE_ITEM_SLOTS,
 		togglePreferenceItemValue,
-	} from '@c15t/ui/primitives';
-	import { preferenceItemVariants } from '@c15t/ui/styles/primitives';
+	} from '@inth/sdk/ui/primitives';
+	import { preferenceItemVariants } from '@inth/sdk/ui/styles/primitives';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 

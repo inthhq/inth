@@ -13,7 +13,7 @@ import type { BoilerplateOptions, BoilerplateTemplate } from './types.ts';
 
 const nextConfig = (options: BoilerplateOptions): string => {
 	const build = buildOptions(options);
-	return `import { withConsentManifest } from 'c15t/next/build';
+	return `import { withConsentManifest } from '@inth/nextjs/build';
 import type { NextConfig } from 'next';
 
 const nextConfig = {} satisfies NextConfig;
@@ -32,7 +32,7 @@ const consentConfig = (
 	}${scriptsProperty(options.scripts, '\t')}`;
 	return `${sortImports([
 		...scriptImports(options.scripts),
-		`import { defineConsentConfig${offline ? ', offline' : ''} } from 'c15t/next';`,
+		`import { defineConsentConfig${offline ? ', offline' : ''} } from '@inth/nextjs';`,
 	])}
 
 export default defineConsentConfig(${body ? `{\n${body}}` : '{}'});
@@ -44,10 +44,10 @@ const components = `import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentRoot,
-} from 'c15t/next';`;
+} from '@inth/nextjs';`;
 
 const appLayout = `${components}
-import { resolveConsent } from 'c15t/next/server';
+import { resolveConsent } from '@inth/nextjs/server';
 import type { ReactNode } from 'react';
 
 import './globals.css';
@@ -72,7 +72,7 @@ export default RootLayout;
 `;
 
 const pagesApp = `${components}
-import type { ConsentPageProps } from 'c15t/next/pages';
+import type { ConsentPageProps } from '@inth/nextjs/pages';
 import type { AppProps } from 'next/app';
 
 import '@/styles/globals.css';
@@ -92,13 +92,13 @@ const App = ({ Component, pageProps }: AppProps<ConsentPageProps>) => (
 export default App;
 `;
 
-const pagesRoute = `import { createPagesConsentRoute } from 'c15t/next/pages';
+const pagesRoute = `import { createPagesConsentRoute } from '@inth/nextjs/pages';
 
 export default createPagesConsentRoute();
 `;
 
 /** The `getServerSideProps` lines a page adds to render consent on the server. */
-export const NEXT_PAGES_SSR = `import { withConsentProps } from 'c15t/next/pages';
+export const NEXT_PAGES_SSR = `import { withConsentProps } from '@inth/nextjs/pages';
 
 export const getServerSideProps = withConsentProps();`;
 
@@ -141,11 +141,11 @@ export const generateNextBoilerplate = (
 		files['app/layout.tsx'] = appLayout;
 	}
 	return {
-		dependencies: ['c15t', ...integrationDependencies(options)],
+		dependencies: ['@inth/nextjs', ...integrationDependencies(options)],
 		files,
 		instructions: [
 			pages
-				? 'Add `export const getServerSideProps = withConsentProps();` (from c15t/next/pages) to each page that should render the banner on the server. Pages without it resolve consent in the browser.'
+				? 'Add `export const getServerSideProps = withConsentProps();` (from @inth/nextjs/pages) to each page that should render the banner on the server. Pages without it resolve consent in the browser.'
 				: 'app/layout.tsx imports ./globals.css. Keep your existing fonts and metadata when you merge it with your layout.',
 			...vendorInstruction(options, 'c15t.config.ts'),
 			...offlineInstruction(options),

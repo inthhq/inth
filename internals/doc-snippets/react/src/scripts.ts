@@ -1,4 +1,4 @@
-import { posthog } from '@c15t/integrations/posthog';
+import { posthog } from '@inth/integrations/posthog';
 
 export const scripts = [
 	posthog({

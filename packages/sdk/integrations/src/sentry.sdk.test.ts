@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 import process from 'node:process';
 
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentState } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentState } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import * as sentry10 from 'sentry-browser-v10';
 // oxlint-disable-next-line import/no-duplicates -- Range and minimum fixtures may resolve to the same release.
 import * as sentry10Min from 'sentry-browser-v10-min';

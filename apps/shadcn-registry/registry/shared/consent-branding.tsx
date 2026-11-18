@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { useBranding } from "c15t/react"
-import { useTranslations } from "c15t/react/headless"
+import { useBranding } from "@inth/react"
+import { useTranslations } from "@inth/react/headless"
 
 import { cn } from "@/lib/utils"
 

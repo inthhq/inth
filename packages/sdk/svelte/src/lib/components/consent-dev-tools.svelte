@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { createDevTools } from '@c15t/dev-tools';
-	import { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
+	import { createDevTools } from '@inth/sdk/devtools';
+	import { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 	import { untrack } from 'svelte';
 
 	import { getConsentContext } from '../context.svelte';

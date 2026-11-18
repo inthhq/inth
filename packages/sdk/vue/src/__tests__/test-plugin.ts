@@ -1,4 +1,4 @@
-import { hosted } from '@c15t/core/transports';
+import { hosted } from '@inth/sdk/transports';
 /**
  * The `c15tVue` plugin for tests whose subject is not the mode. Their
  * options name a backend the way older tests did, with `projectUrl`; this

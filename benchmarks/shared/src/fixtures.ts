@@ -1,4 +1,4 @@
-import type { Script, Translations } from '@c15t/core';
+import type { Script, Translations } from '@inth/sdk/engine';
 
 import type { BenchmarkFixtureDescriptor } from './schema';
 

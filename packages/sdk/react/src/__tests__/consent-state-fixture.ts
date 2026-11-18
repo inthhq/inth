@@ -8,7 +8,7 @@ import type {
 	PreferencesPresentation,
 	PromptPresentation,
 	TranslationConfig,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 
 /**
  * State a component test turns into provider options: the policy, the

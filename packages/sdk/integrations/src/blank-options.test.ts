@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 import { describe, expect, it } from 'vitest';
 
 import { expectSkippedScript } from './__tests__/helpers';

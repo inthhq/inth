@@ -18,10 +18,10 @@ Enable Web Analytics for the project in Vercel. Remove the `Analytics`
 component or `inject()` call from `@vercel/analytics` so c15t loads the
 script once.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { vercelAnalytics } from '@c15t/integrations/vercel-analytics';
+import { vercelAnalytics } from '@inth/integrations/vercel-analytics';
 
 export const scripts = [vercelAnalytics()];
 ```

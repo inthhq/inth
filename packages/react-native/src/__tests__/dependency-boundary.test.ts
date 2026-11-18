@@ -3,7 +3,7 @@
  *
  * This package renders what a native core decides and hands it back over the
  * TurboModule bridge. That boundary is the reason the SDK exists, and it is
- * easy to lose quietly: `@c15t/core` is a devDependency, so a stray runtime
+ * easy to lose quietly: `@inth/sdk/engine` is a devDependency, so a stray runtime
  * import type-checks, lints, and passes tests on a desktop before anyone notices
  * a JavaScript consent engine shipped inside the app bundle. The TC String
  * fixtures lane adds `@iabtechlabtcf/core` as a devDependency for the same
@@ -16,9 +16,9 @@
  *
  * Web is the one exception, and it is a platform, not a loophole. A web build
  * has no native core, so the `.web` twins (`native/client.web.ts` and the
- * files under `web/`) run the browser engine from `@c15t/core`. Metro picks a
+ * files under `web/`) run the browser engine from `@inth/sdk/engine`. Metro picks a
  * `.web` file on web only, so the rule holds for every file an iOS or Android
- * bundle can read, and the twins may reach `@c15t/core` and nothing else.
+ * bundle can read, and the twins may reach `@inth/sdk/engine` and nothing else.
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -38,13 +38,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, '..');
 
 /** Specifiers that must never reach the app bundle as a runtime dependency. */
-const FORBIDDEN = [
-	'c15t',
-	'@c15t/core',
-	'@c15t/iab',
-	'@c15t/backend',
-	'@iabtechlabtcf/core',
-];
+const FORBIDDEN = ['c15t', '@inth/sdk', '@c15t/backend', '@iabtechlabtcf/core'];
 
 /**
  * Every `import`/`re-export … from '…'` statement, so the specifier and its
@@ -152,8 +146,8 @@ test('the kernel and the codec stay devDependencies, and only web may peer on th
 	// A native app installs nothing for web: the kernel is an optional peer.
 	expect(
 		Object.keys(manifest.peerDependencies ?? {}).filter(isForbiddenModule)
-	).toEqual(['@c15t/core']);
-	expect(manifest.peerDependenciesMeta?.['@c15t/core']?.optional).toBe(true);
+	).toEqual(['@inth/sdk']);
+	expect(manifest.peerDependenciesMeta?.['@inth/sdk']?.optional).toBe(true);
 });
 
 test('source declarations and lazy imports cannot name web packages either', () => {

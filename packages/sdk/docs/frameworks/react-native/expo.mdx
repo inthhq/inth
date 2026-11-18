@@ -106,7 +106,7 @@ Pass the object as `theme` in the `consent` options above:
 
 <include src="../../shared/examples/expo-dev/expo-theme.mdx" />
 
-Field names follow the web theme from `@c15t/ui`. `colors` holds the light
+Field names follow the web theme. `colors` holds the light
 values and `dark` overrides them in dark mode. Each color the native screens
 draw is `#RRGGBB`. A native `dark` value needs the same field in `colors`.
 
@@ -181,7 +181,7 @@ Privacy settings action reachable after the first prompt closes.
 
 A universal app can also run on web with `npx expo start --web`. The same
 import then uses the Inth browser engine instead of the native core and reads
-this plugin's configuration. Install `@c15t/core` for web and mount
+this plugin's configuration. Install `@inth/sdk` for web and mount
 `ConsentBanner` there, since web has no native screens. See
 [Expo web](/docs/frameworks/react-native/web) for the setup and for which
 features stay native-only.

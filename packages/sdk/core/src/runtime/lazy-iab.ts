@@ -1,8 +1,8 @@
 /**
- * A `createIAB` factory that loads `@c15t/iab` on demand.
+ * A `createIAB` factory that loads `@inth/sdk/iab` on demand.
  *
- * The runtime takes `createIAB` as an injected factory — `@c15t/iab`
- * depends on `@c15t/core`, so core cannot import it — and calls it
+ * The runtime takes `createIAB` as an injected factory — `@inth/sdk/iab`
+ * depends on `@inth/sdk/engine`, so core cannot import it — and calls it
  * synchronously while mounting. A framework package that imports
  * `createIAB` statically puts the whole TCF implementation in the chunk
  * every app loads, including the sites that never turn IAB on. Wrapping
@@ -16,7 +16,7 @@
  *
  * @example
  * ```ts
- * const iab = createLazyIABFactory(() => import('@c15t/iab'));
+ * const iab = createLazyIABFactory(() => import('@inth/sdk-iab'));
  * const runtime = createConsentRuntime({
  *   createIAB: iab.create,
  *   iab: { cmpId: 123 },
@@ -35,7 +35,7 @@ import type {
 /**
  * Resolves the `createIAB` export.
  *
- * Normally `() => import('@c15t/iab')`; injected so tests and alternative
+ * Normally `() => import('@inth/sdk/iab')`; injected so tests and alternative
  * CMP implementations can supply their own.
  */
 export type IABModuleLoader = () => Promise<{

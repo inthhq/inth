@@ -1,5 +1,5 @@
 /* oxlint-disable react/iframe-missing-sandbox -- The fixed cross-origin YouTube player needs scripts and its own origin for playback. */
-import { ConsentDialogLink, ConsentGate } from 'c15t/react';
+import { ConsentDialogLink, ConsentGate } from '@inth/react';
 
 export const VideoEmbed = () => (
 	<ConsentGate

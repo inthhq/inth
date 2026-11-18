@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/consent-record`
+ * `@inth/sdk/consent-record`
  *
  * The consent-record model the kernel runs on: one latest decision per
  * optional category, a separate local notice dismissal, a validated

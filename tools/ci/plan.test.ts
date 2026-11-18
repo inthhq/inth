@@ -229,10 +229,11 @@ describe("browser groups", () => {
     expect(groups.parity).toBe("react,svelte,vue,astro,angular");
   });
 
-  test("a Vue change reaches every fixture through the c15t umbrella", () => {
+  test("a Vue change runs the fixtures built on Vue, and not React's", () => {
     const groups = kinds(["packages/sdk/vue/src/index.ts"]);
     expect(groups.examples?.split(",")).toContain("nuxt");
-    expect(groups.examples?.split(",")).toContain("react");
+    expect(groups.examples?.split(",")).toContain("astro");
+    expect(groups.examples?.split(",")).not.toContain("react");
   });
 
   test("the acceptance harness runs every example", () => {

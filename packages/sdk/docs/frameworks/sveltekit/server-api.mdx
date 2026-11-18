@@ -1,29 +1,29 @@
 ---
 title: Server API
-description: Reference for c15tHandle, loadConsent, createConsentRoute and resolveConsent from c15t/svelte/kit and c15t/svelte/server, with every option and default.
+description: Reference for c15tHandle, loadConsent, createConsentRoute and resolveConsent from @inth/svelte/kit and @inth/svelte/server, with every option and default.
 group: frameworks
 ---
 
 ## Import server helpers only in server files
 
-`c15t/svelte/kit` holds the SvelteKit helpers and `c15t/svelte/server` the
+`@inth/svelte/kit` holds the SvelteKit helpers and `@inth/svelte/server` the
 framework-free `resolveConsent`. Import them from `hooks.server.ts`,
 `+layout.server.ts`, `+page.server.ts` and `+server.ts` only. Imported into a
 component, they add the manifest resolver and every bundled translation to
-the browser bundle. Components import from `c15t/svelte`.
+the browser bundle. Components import from `@inth/svelte`.
 
 | Export | From | Use it in | Page |
 | --- | --- | --- | --- |
-| `c15tHandle(options)` | `c15t/svelte/kit` | `hooks.server.ts` | [c15tHandle](#c15thandle) |
-| `loadConsent` | `c15t/svelte/kit` | `+layout.server.ts`, as `load` | [loadConsent](#loadconsent) |
-| `createConsentRoute(options)` | `c15t/svelte/kit` | `+server.ts` | [createConsentRoute](#createconsentroute) |
-| `manifest()`, `hosted()`, `testing()` | `c15t/svelte/kit` | `hooks.server.ts`, as `c15tHandle({ mode })` | [Rendering](./rendering#pick-a-rendering-path) |
-| `resolveConsent(options)` | `c15t/svelte/server` | Any server code | [resolveConsent](#resolveconsent) |
-| `consentManifest(options)` | `c15t/svelte/vite` | `vite.config.ts` | [consentManifest](#consentmanifest) |
+| `c15tHandle(options)` | `@inth/svelte/kit` | `hooks.server.ts` | [c15tHandle](#c15thandle) |
+| `loadConsent` | `@inth/svelte/kit` | `+layout.server.ts`, as `load` | [loadConsent](#loadconsent) |
+| `createConsentRoute(options)` | `@inth/svelte/kit` | `+server.ts` | [createConsentRoute](#createconsentroute) |
+| `manifest()`, `hosted()`, `testing()` | `@inth/svelte/kit` | `hooks.server.ts`, as `c15tHandle({ mode })` | [Rendering](./rendering#pick-a-rendering-path) |
+| `resolveConsent(options)` | `@inth/svelte/server` | Any server code | [resolveConsent](#resolveconsent) |
+| `consentManifest(options)` | `@inth/svelte/vite` | `vite.config.ts` | [consentManifest](#consentmanifest) |
 
-The modes from `c15t/svelte/kit` return plain data that reaches the browser
-through `loadConsent`. `c15t/svelte/server` re-exports the browser
-transports `hosted`, `local` and `custom` from `@c15t/core`, for code that
+The modes from `@inth/svelte/kit` return plain data that reaches the browser
+through `loadConsent`. `@inth/svelte/server` re-exports the browser
+transports `hosted`, `local` and `custom` from the engine, for code that
 builds a provider itself.
 
 ## c15tHandle
@@ -47,8 +47,8 @@ headers either: the page goes to every visitor.
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `c15t/svelte/kit`. A `custom()` transport throws; pass it to `ConsentRoot`'s `mode` prop instead. |
-| `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/c15t`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/init`. `'/'` throws ``@c15t/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` when the hook is created. |
+| `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. A `custom()` transport throws; pass it to `ConsentRoot`'s `mode` prop instead. |
+| `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/c15t`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/init`. `'/'` throws ``@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` when the hook is created. |
 | `projectUrl` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here. |
 | `snapshot` | `ConsentManifest` | the manifest `consentManifest()` downloaded | A manifest to resolve with. `createConsentRoute()` reads it too. |
 | `cookieName` | `string` | `c15t` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
@@ -69,7 +69,7 @@ Some runtimes refuse to change request headers. The handle then skips step
 2, and `event.locals.c15t.inputs` still carries the values. Compose it with
 your own handles through `sequence()` from `@sveltejs/kit/hooks`. Type
 `event.locals.c15t` by adding
-`/// <reference types="c15t/svelte/kit/locals" />` to `src/app.d.ts`.
+`/// <reference types="@inth/svelte/kit/locals" />` to `src/app.d.ts`.
 
 ## loadConsent
 
@@ -105,7 +105,7 @@ To pass options, call it from your own `load`:
 {/* example: fragment */}
 
 ```ts title="src/routes/+layout.server.ts"
-import { loadConsent } from 'c15t/svelte/kit';
+import { loadConsent } from '@inth/svelte/kit';
 
 export const load = (event) => loadConsent(event, { timeoutMs: 1000 });
 ```
@@ -199,7 +199,7 @@ looks like a language tag; the visitor's other parameters never reach the
 backend. When the manifest cannot be read and `projectUrl` is set, `init` asks
 the backend's own `/init`, which covers backends without `/manifest`.
 
-These handlers are built on the consent route handler in `@c15t/core/server`,
+These handlers are built on the consent route handler in `@inth/sdk/server`,
 shared with the Next.js, TanStack Start, Astro and Nuxt adapters. `init`
 answers with `x-c15t-policy-contract: 1`. A browser that declares another
 policy contract gets a failed `unsupported-contract` resolution, and a
@@ -278,7 +278,7 @@ manifest refreshes need separate instrumentation.
 
 ## resolveConsent
 
-`resolveConsent(options)` from `c15t/svelte/server` does what `loadConsent`
+`resolveConsent(options)` from `@inth/svelte/server` does what `loadConsent`
 does without a SvelteKit event. Pass `snapshot` to resolve a build-time snapshot
 with each visitor's request inputs.
 
@@ -286,7 +286,7 @@ with each visitor's request inputs.
 | --- | --- | --- | --- |
 | `headers` | `Headers` | required | The incoming request's headers. |
 | `projectUrl` | `string` | none | Calls `<projectUrl>/init` when no snapshot is supplied. With `snapshot`, an absolute URL receives session reports. Without either, only the cookie and headers are read. A relative URL resolves against `requestUrl`, or the `host` header when there is none. |
-| `snapshot` | `ConsentManifest` | none | Build-time snapshot, such as `snapshot` from `c15t/generated`. Resolves locally using this visitor's inputs and takes precedence over backend policy fetching. |
+| `snapshot` | `ConsentManifest` | none | Build-time snapshot, such as `snapshot` from `@inth/svelte/generated`. Resolves locally using this visitor's inputs and takes precedence over backend policy fetching. |
 | `onBackgroundRevalidate` | `(promise) => void` | none | Pass the host's `waitUntil` to keep session reports alive after a serverless response. |
 | `requestUrl` | `string` or `URL` | none | The URL the framework resolved the request under, such as SvelteKit's `event.url`. `loadConsent` passes it for you. |
 | `trustForwardedHeaders` | `boolean` | `false` | Resolves a relative `projectUrl` against `forwarded`, `x-forwarded-host` and `x-forwarded-proto`, and sends the visitor IP to the backend as `x-forwarded-for`. |
@@ -303,9 +303,9 @@ policy.
 
 ## consentManifest
 
-`consentManifest(options)` from `c15t/svelte/vite` returns the Vite plugins
+`consentManifest(options)` from `@inth/svelte/vite` returns the Vite plugins
 that download `<projectUrl>/manifest` during the build. `loadConsent`,
-`createConsentRoute()` and `manifest()` from `c15t/svelte` read the result
+`createConsentRoute()` and `manifest()` from `@inth/svelte` read the result
 without an import. The plugin writes no file into your project.
 
 | Option | Type | Default | Behavior |
@@ -334,7 +334,7 @@ config sets `manualChunks` or `advancedChunks` or turns code splitting off,
 and it adds its group after any `codeSplitting.groups` of yours.
 
 Server code that needs the manifest itself, such as a `resolveConsent` call,
-imports `snapshot` and `projectUrl` from `@c15t/core/generated`. Without the
+imports `snapshot` and `projectUrl` from `@inth/svelte/generated`. Without the
 plugin, that module still resolves and exports `undefined` for both. It ships
 its own types, so `svelte-check` passes on a fresh checkout without running
 Vite first.

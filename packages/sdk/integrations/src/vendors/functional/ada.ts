@@ -1,4 +1,4 @@
-import type { Script, ScriptCallbackInfo } from '@c15t/core';
+import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';

@@ -11,8 +11,8 @@ import {
 	untracked,
 } from '@angular/core';
 import type { Signal } from '@angular/core';
-import type { ActiveUI } from '@c15t/core';
-import { firstTabbable } from '@c15t/ui/utils';
+import type { ActiveUI } from '@inth/sdk/engine';
+import { firstTabbable } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 

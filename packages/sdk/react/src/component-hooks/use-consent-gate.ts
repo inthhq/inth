@@ -1,6 +1,6 @@
 'use client';
 
-import type { AllConsentNames, Translations } from '@c15t/core';
+import type { AllConsentNames, Translations } from '@inth/sdk/engine';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { useRegisterConsentCategories, useSetActiveUI } from '../hooks';
@@ -117,7 +117,7 @@ export const resolveConsentGateCopy = function resolveConsentGateCopy(
  *
  * @example
  * ```tsx
- * import { useConsentGate } from 'c15t/react/headless';
+ * import { useConsentGate } from '@inth/react/headless';
  * import type { ReactNode } from 'react';
  *
  * function VideoGate({ children }: { children: ReactNode }) {

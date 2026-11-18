@@ -1,4 +1,4 @@
-import type { TabsOrientation } from '@c15t/ui/primitives';
+import type { TabsOrientation } from '@inth/sdk/ui/primitives';
 import { getContext, setContext } from 'svelte';
 
 const TABS_ROOT_CONTEXT_KEY = Symbol('c15t-svelte-tabs-root');

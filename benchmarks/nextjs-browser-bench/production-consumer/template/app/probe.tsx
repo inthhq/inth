@@ -1,6 +1,6 @@
 'use client';
 
-import { useActiveUI, useSetActiveUI, useSnapshot } from 'c15t/react';
+import { useActiveUI, useSetActiveUI, useSnapshot } from '@inth/react';
 import { useEffect } from 'react';
 
 /** Page state the harness reads through `window.__c15tConsumerBench`. */

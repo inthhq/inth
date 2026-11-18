@@ -1,7 +1,7 @@
-import type { ConsentKernel } from '@c15t/core';
-import { createConsentRuntime } from '@c15t/core/runtime';
-import type { ConsentRuntime } from '@c15t/core/runtime';
-import type * as IABModule from '@c15t/iab';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import type * as IABModule from '@inth/sdk/iab';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import {
 	Component,
 	StrictMode,
@@ -35,7 +35,7 @@ const iab = vi.hoisted(() => ({
 // only that factory with one fake CMP per kernel, so a test can tell which
 // runtime an action reached; the rest of the module stays real.
 // oxlint-disable-next-line anti-slop/no-module-mocking
-vi.mock('@c15t/iab', async (importOriginal) => ({
+vi.mock('@inth/sdk/iab', async (importOriginal) => ({
 	...(await importOriginal<typeof IABModule>()),
 	createIAB: ({ kernel }: { kernel: unknown }) => {
 		if (iab.failing.has(kernel)) {

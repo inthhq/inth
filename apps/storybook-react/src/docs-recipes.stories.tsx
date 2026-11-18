@@ -3,8 +3,8 @@ import {
 	recipeRejects,
 	recipeRenders,
 } from '@c15t/conformance/play/docs-recipes';
+import { ConsentDialog } from '@inth/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ConsentDialog } from 'c15t/react';
 import type { ComponentType } from 'react';
 
 import { RecipePage } from './docs-recipe-page';

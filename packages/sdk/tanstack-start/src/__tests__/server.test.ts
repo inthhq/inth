@@ -198,7 +198,7 @@ describe('resolveConsent with an inline manifest: session reports', () => {
 			'203.0.113.42'
 		);
 		expect(JSON.parse(init.body as string)).toMatchObject({
-			adapter: '@c15t/tanstack-start',
+			adapter: '@inth/tanstack-start',
 			country: 'DE',
 			source: 'render',
 		});

@@ -364,7 +364,7 @@ export interface BuildConsentSessionReportOptions {
 	/** The geo and GPC inputs the resolution ran with. */
 	inputs?: SessionReportInputs;
 	source: ConsentSessionSource;
-	/** Package that resolved init, for example `@c15t/nextjs`. */
+	/** Package that resolved init, for example `@inth/nextjs`. */
 	adapter?: string;
 	/**
 	 * The banner-experiment arm the visitor runs, when they have no stored

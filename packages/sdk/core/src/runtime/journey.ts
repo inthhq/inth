@@ -4,7 +4,7 @@
  * one. `'tab'` keeps the id in `sessionStorage` only while a prompt is due.
  */
 
-import { parseJourneyId } from '@c15t/schema/types';
+import { parseJourneyId } from '@inth/sdk-schema/types';
 
 import {
 	openJourney,

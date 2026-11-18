@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentGate } from '@c15t/svelte';
+	import { ConsentGate } from '@inth/svelte';
 
 	import { editableConsentOptions } from './storybook-consent-fixtures';
 	import StorybookConsentProvider from './StorybookConsentProvider.svelte';

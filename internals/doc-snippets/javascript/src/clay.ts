@@ -1,5 +1,5 @@
 // #region docs:clay-scripts title="src/consent-scripts.ts"
-import { clay } from '@c15t/integrations/clay';
+import { clay } from '@inth/integrations/clay';
 
 export const scripts = [clay({ siteId: 'YOUR_SITE_ID' })];
 // #endregion docs:clay-scripts

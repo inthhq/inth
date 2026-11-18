@@ -4,9 +4,9 @@ import node from '@astrojs/node';
 import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
 import vue from '@astrojs/vue';
+import c15t, { hosted } from '@inth/astro';
+import { testing } from '@inth/astro/testing';
 import { defineConfig } from 'astro/config';
-import c15t, { hosted } from 'c15t/astro';
-import { testing } from 'c15t/astro/testing';
 
 import { demoGvl, demoIabPolicy } from './demo-gvl.mjs';
 import { testBackend } from './test-backend.mjs';
@@ -25,7 +25,7 @@ import { testBackend } from './test-backend.mjs';
 const ui = process.env.C15T_UI ?? 'svelte';
 
 // Banner-shape experiment. The banner is server-rendered, so
-// `@c15t/astro` has no built-in assignment and the arm is resolved per
+// `@inth/astro` has no built-in assignment and the arm is resolved per
 // request: `src/experiment-middleware.ts` replaces the integration's
 // middleware and reads `?experiment=1&arm=wall`, the way a flag provider
 // would. `src/experiment-client.ts` pushes each impression and choice to

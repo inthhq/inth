@@ -7,7 +7,7 @@
  */
 
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import iabBannerStyles from '@c15t/ui/styles/components/iab-consent-banner';
+import iabBannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 

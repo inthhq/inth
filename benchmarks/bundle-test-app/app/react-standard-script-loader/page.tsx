@@ -1,18 +1,18 @@
 'use client';
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import type { AllConsentNames } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
-import { ConsentBanner } from '@c15t/react/consent-banner';
-import { ConsentDialog } from '@c15t/react/consent-dialog';
-import { ConsentWidget } from '@c15t/react/consent-widget';
-import { ConsentDraftProvider, useConsentDraft } from '@c15t/react/draft';
+import { ConsentBanner } from '@inth/react/consent-banner';
+import { ConsentDialog } from '@inth/react/consent-dialog';
+import { ConsentWidget } from '@inth/react/consent-widget';
+import { ConsentDraftProvider, useConsentDraft } from '@inth/react/draft';
 import {
 	useEffectivePermissions,
 	useExplicitChoice,
 	useSaveConsents,
-} from '@c15t/react/hooks';
-import { ConsentProvider } from '@c15t/react/provider';
+} from '@inth/react/hooks';
+import { ConsentProvider } from '@inth/react/provider';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
 
 const DEMO_SCRIPTS: Script[] = [
 	{

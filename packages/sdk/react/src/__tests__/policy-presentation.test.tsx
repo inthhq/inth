@@ -1,12 +1,12 @@
 // Layout assertions below need the documented app-level stylesheet: class
 // maps carry no CSS of their own.
-import '@c15t/ui/styles.css';
-import type { ConsentKernel, KernelConfig } from '@c15t/core';
+import '@inth/sdk/ui/styles.css';
+import type { ConsentKernel, KernelConfig } from '@inth/sdk/engine';
 import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
-} from '@c15t/schema/types';
-import type { PolicyResolution, PolicyRule } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { PolicyResolution, PolicyRule } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -256,7 +256,7 @@ it('hydrates prepared server HTML without a prompt flash, callback, request or r
 	const { renderToString } = await import('react-dom/server');
 	const { hydrateRoot } = await import('react-dom/client');
 	const { readStoredRecordsFromCookieHeader } =
-		await import('@c15t/core/modules/persistence');
+		await import('@inth/sdk/modules/persistence');
 	const clock = Date.now();
 	const initialPolicyResolution = resolution({
 		model: 'opt-out',

@@ -20,10 +20,10 @@ Copy the numeric tag ID from Pinterest Ads Manager. Remove Pinterest's base
 code and its `<noscript>` image. The helper does not emit that image, because
 it fires without JavaScript and c15t cannot gate it.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { pinterestTag } from '@c15t/integrations/pinterest-tag';
+import { pinterestTag } from '@inth/integrations/pinterest-tag';
 
 export const scripts = [pinterestTag({ tagId: '2613654212508' })];
 ```
@@ -77,7 +77,7 @@ set `event_id` to deduplicate against the Conversions API. Pinterest reports
 conversions only for its 20 event types. It keeps other event names for
 audience targeting.
 
-`@c15t/integrations/pinterest-tag` also exports `pinterestTagEvent`, a typed wrapper
+`@inth/integrations/pinterest-tag` also exports `pinterestTagEvent`, a typed wrapper
 around `pintrk('track', ...)`. It does nothing until `pintrk` exists and does
 not check permission, so apply the same guard before calling it. Its optional
 third argument receives Pinterest's `(didInit, error)` result.

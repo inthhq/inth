@@ -11,14 +11,14 @@
 import type { Type } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { createConsentKernel, evaluateConsent } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
-import { createIAB } from '@c15t/iab';
-import type { IABHandle } from '@c15t/iab';
+import { createConsentKernel, evaluateConsent } from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { createIAB } from '@inth/sdk/iab';
+import type { IABHandle } from '@inth/sdk/iab';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

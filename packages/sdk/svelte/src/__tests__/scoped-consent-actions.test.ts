@@ -1,5 +1,5 @@
-import type { ConsentKernel } from '@c15t/core';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';

@@ -29,9 +29,9 @@ or vendors.
 
 ## Install c15t
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/nuxt @inth/integrations" mode="install" />
 
-`c15t/vue` is the Nuxt module. You do not install a separate Nuxt package.
+`@inth/nuxt` is the Nuxt module. You do not install a separate Nuxt package.
 
 ## Add the Nuxt module
 
@@ -66,7 +66,7 @@ calling the backend on every request.
 
 To apply policy edits without rebuilding, set
 `c15t: { mode: manifest({ source: 'runtime' }) }`, with `manifest` imported
-from `c15t/vue`. The server then fetches and caches the policy at runtime.
+from `@inth/nuxt`. The server then fetches and caches the policy at runtime.
 [Rendering and deployment](/docs/frameworks/nuxt/rendering) covers the other
 modes.
 

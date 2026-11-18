@@ -19,15 +19,15 @@ import type {
 	KernelTransport,
 	ProviderTransportContext,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import type { HostedMode } from '@c15t/core/modes';
-import type { ConsentTesting } from '@c15t/core/testing';
-import type { HostedTransportOptions } from '@c15t/core/transports';
-import { createHostedModeFactory } from '@c15t/core/transports/hosted-factory';
+} from '@inth/sdk/engine';
+import type { HostedMode } from '@inth/sdk/modes';
+import type { ConsentTesting } from '@inth/sdk/testing';
+import type { HostedTransportOptions } from '@inth/sdk/transports';
+import { createHostedModeFactory } from '@inth/sdk/transports/hosted-factory';
 import type {
 	BrowserManifestModeFactory,
 	BrowserManifestOptions,
-} from '@c15t/core/transports/manifest-browser';
+} from '@inth/sdk/transports/manifest-browser';
 
 /** Builds a hosted transport. @internal */
 export type BuildHostedTransport = (
@@ -45,7 +45,7 @@ let provided: ModeTransports | undefined;
  * Hands the mode factories their transport code. The engine's chunk calls
  * it before it builds a runtime.
  *
- * @param transports - `createHostedTransport` from `@c15t/core/transports`.
+ * @param transports - `createHostedTransport` from `@inth/sdk/transports`.
  * @internal
  */
 export const provideModeTransports = function provideModeTransports(
@@ -104,7 +104,7 @@ export const hostedFor = function hostedFor(
 			provided
 				? provided.hosted(transport)
 				: lazyTransport(async () =>
-						(await import('@c15t/core/transports')).createHostedTransport(
+						(await import('@inth/sdk/transports')).createHostedTransport(
 							transport
 						)
 					)
@@ -159,7 +159,7 @@ export const manifest = function manifest(
 		(context?: ProviderTransportContext): KernelTransport =>
 			lazyTransport(async () => {
 				core ??= (async () =>
-					(await import('@c15t/core/transports/manifest-browser')).manifest(
+					(await import('@inth/sdk/transports/manifest-browser')).manifest(
 						settings
 					))();
 				try {

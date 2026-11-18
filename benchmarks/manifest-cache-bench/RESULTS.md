@@ -7,7 +7,7 @@ Captured 2026-09-14 on an Apple M5 Pro laptop, Node 24.19, against commit
 `Cache-Control: public, s-maxage=300, stale-while-revalidate=86400`.
 
 "Before" is the committed runtime rebuilt without the change; "after" is
-the same harness against the changed runtime. Only `@c15t/core`'s `dist`
+the same harness against the changed runtime. Only `@inth/sdk/engine`'s `dist`
 differed between the two runs. In the "before" table the warmed scenarios'
 CDN counter columns still include the warm-up request; the harness now
 resets those counters after warming, so the "after" columns exclude it.

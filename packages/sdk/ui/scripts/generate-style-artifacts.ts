@@ -1,5 +1,5 @@
 /**
- * Post-build script for @c15t/ui component styles.
+ * Post-build script for @inth/sdk-ui component styles.
  *
  * Rslib already compiles CSS Modules to hashed class maps, but it emits
  * implementation-shaped filenames (`*.module.js`, `*_module.css`) and leaves

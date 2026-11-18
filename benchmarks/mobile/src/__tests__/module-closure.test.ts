@@ -5,7 +5,7 @@
  * packages an app was going to carry anyway out of the total.
  *
  * It is also what keeps the boundary narrow. An `import type` costs nothing, so the
- * type surface of `@c15t/core` can grow freely here, while one runtime import to it
+ * type surface of `@inth/sdk/engine` can grow freely here, while one runtime import to it
  * puts the kernel, the schema, and the translations back into every app. That edge
  * earns no compiler error, so the expected file list below is what fails instead:
  * the entry reaches nothing outside its own package, and the walk is still priced
@@ -68,10 +68,10 @@ describe('walking the built entry', () => {
 		expect(own.length).toBeGreaterThan(0);
 	});
 
-	it('takes nothing from @c15t/core, because the vocabulary is local now', () => {
+	it('takes nothing from @inth/sdk/engine, because the vocabulary is local now', () => {
 		// The barrel was the expensive edge and the category subpath was the cheap
 		// one, allowed here for years. The package owns both category tables itself
-		// now, so there is no permitted file left in `@c15t/core`: whatever the walk
+		// now, so there is no permitted file left in `@inth/sdk/engine`: whatever the walk
 		// reaches here is an edge somebody put back.
 		const core = closure.files
 			.filter((file) =>
@@ -122,18 +122,18 @@ describe('walking the built entry', () => {
 	it('follows subpath exports, not just the package root', () => {
 		// The entry no longer takes this edge, so the live closure cannot prove the
 		// walker reads subpaths at all. It still has to be able to price one: the
-		// file `@c15t/core/consent-categories` resolves to pulls a graph that sits
+		// file `@inth/sdk/consent-categories` resolves to pulls a graph that sits
 		// under directories the subpath never names, and a walk that stopped at main
 		// entries would report an edge put back as two string arrays.
 		const subpathEntry = resolveWorkspaceEntry(
-			'@c15t/core',
+			'@inth/sdk-core',
 			'./consent-categories',
 			REPO_ROOT
 		);
 
 		if (subpathEntry === undefined) {
 			throw new Error(
-				'@c15t/core/consent-categories resolves to nothing, so the walk has no subpath left to be priced against'
+				'@inth/sdk/consent-categories resolves to nothing, so the walk has no subpath left to be priced against'
 			);
 		}
 

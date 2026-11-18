@@ -1,6 +1,6 @@
 'use client';
 
-import { useActiveUI } from '@c15t/nextjs';
+import { useActiveUI } from '@inth/nextjs';
 
 import { Root } from './consent-api/root';
 import type { RootState } from './consent-api/root';

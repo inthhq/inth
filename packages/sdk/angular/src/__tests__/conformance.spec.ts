@@ -28,20 +28,20 @@ import type {
 	SuiteApi,
 	TestDriver,
 } from '@c15t/conformance';
-import { deferInitGvl } from '@c15t/core';
+import { deferInitGvl } from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
 	ConsentKernel,
 	InitResponse,
 	KernelActiveUI,
 	KernelConfig,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { GlobalVendorList } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { testing } from '../../testing/src/testing-mode';
@@ -133,7 +133,7 @@ const buildProviderOptions = function buildProviderOptions(
 		...(provided.prefetch ?? {}),
 		initialBranding: 'c15t',
 		// A server that resolved an IAB policy ships the vendor list in the
-		// state; the lazy `@c15t/iab` factory only seeds it on the client.
+		// state; the lazy `@inth/sdk/iab` factory only seeds it on the client.
 		initialIab:
 			isIabComponent(opts.component) && authoritative
 				? {
@@ -253,7 +253,7 @@ const driver: TestDriver = {
 		lastApp = app;
 
 		if (isIabComponent(opts.component)) {
-			// `@c15t/iab` loads on demand, so an IAB surface only has a live
+			// `@inth/sdk/iab` loads on demand, so an IAB surface only has a live
 			// handle once that import has settled.
 			await whenIABReady();
 		}

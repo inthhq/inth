@@ -7,7 +7,7 @@ import {
 	useSetLanguage,
 	useSetOverrides,
 	useSnapshot,
-} from 'c15t/react';
+} from '@inth/react';
 import { useEffect, useState } from 'react';
 
 import { Badge } from '../ui/badge';

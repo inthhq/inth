@@ -121,9 +121,9 @@ describe('packageOf and moduleOf', () => {
 	it('names scoped, unscoped, app, and runtime sources', () => {
 		expect(
 			packageOf(
-				'turbopack:///[project]/node_modules/@c15t/react/dist/provider.js'
+				'turbopack:///[project]/node_modules/@inth/react/dist/provider.js'
 			)
-		).toBe('@c15t/react');
+		).toBe('@inth/react');
 		expect(
 			packageOf('turbopack:///[project]/node_modules/c15t/shims/next.js')
 		).toBe('c15t');
@@ -139,7 +139,9 @@ describe('packageOf and moduleOf', () => {
 			'(turbopack runtime)'
 		);
 		expect(
-			moduleOf('turbopack:///[project]/node_modules/@c15t/ui/dist/theme.js')
-		).toBe('@c15t/ui/dist/theme.js');
+			moduleOf(
+				'turbopack:///[project]/node_modules/@inth/sdk/lib/ui/dist/theme.js'
+			)
+		).toBe('@inth/sdk/lib/ui/dist/theme.js');
 	});
 });

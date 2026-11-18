@@ -1,8 +1,8 @@
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
 import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
 import { describe, expect, test } from 'vitest';
 import { defineComponent, h, ref } from 'vue';

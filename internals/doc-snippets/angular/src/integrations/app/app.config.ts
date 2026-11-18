@@ -1,7 +1,7 @@
 // #region docs:integration-register title="src/app/app.config.ts"
 import { provideZonelessChangeDetection } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
-import { hosted, provideC15t } from '@c15t/angular';
+import { hosted, provideC15t } from '@inth/angular';
 
 import { scripts } from '../consent-scripts';
 

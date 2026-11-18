@@ -12,7 +12,11 @@
  * mounts the API with the page's `gpp` options. `gpp: false` turns it off.
  */
 
-import { createGPP, destroyGPPStub, initializeGPPStub } from '@c15t/iab/gpp';
+import {
+	createGPP,
+	destroyGPPStub,
+	initializeGPPStub,
+} from '@inth/sdk-iab/gpp';
 
 import type { C15tGlobal, QueuedCall } from '../global';
 import type { ConsentClient } from '../types';
@@ -38,7 +42,7 @@ if (existing && !Array.isArray(existing)) {
 	} else {
 		// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 		console.warn(
-			'@c15t/browser: c15t.gpp.js needs a newer c15t.js. Load both from the same version.'
+			'@inth/sdk: c15t.gpp.js needs a newer c15t.js. Load both from the same version.'
 		);
 	}
 } else {

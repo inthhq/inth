@@ -3,7 +3,7 @@
  * `main.tsx`, `scripts.ts` and `video-embed.tsx`; this file only shows the
  * consent state, a gated video and the design switch.
  */
-import { useConsent } from 'c15t/react';
+import { useConsent } from '@inth/react';
 import { lazy, Suspense } from 'react';
 
 import './style.css';
@@ -12,7 +12,7 @@ import { VideoEmbed } from './video-embed';
 // DevTools loads in development builds only.
 const DevTools = import.meta.env.DEV
 	? lazy(async () => {
-			const module = await import('c15t/react/devtools');
+			const module = await import('@inth/react/devtools');
 			return { default: module.DevTools };
 		})
 	: null;

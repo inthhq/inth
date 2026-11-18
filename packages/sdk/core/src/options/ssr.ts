@@ -1,4 +1,4 @@
-import type { InitOutput } from '@c15t/schema/types';
+import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { GlobalVendorList, InitContext, KernelJourney } from '../types';
 

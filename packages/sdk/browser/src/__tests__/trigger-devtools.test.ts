@@ -2,7 +2,7 @@
  * With DevTools mounted for the same client, the stock trigger carries the
  * DevTools launcher and docks the panel, so one control sits in the corner.
  */
-import type { DevToolsInstance } from '@c15t/dev-tools';
+import type { DevToolsInstance } from '@inth/sdk-dev-tools';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mountDevTools } from '../devtools';
@@ -39,7 +39,7 @@ const start = async function start(): Promise<{
 }> {
 	const client = createConsentClient(options, {
 		mountUI: mountConsentUI,
-		pkg: '@c15t/browser/test',
+		pkg: '@inth/sdk/test',
 	});
 	clients.push(client);
 	client.start();
@@ -117,7 +117,7 @@ describe('trigger with DevTools', () => {
 	it('docks DevTools mounted before it', async () => {
 		const client = createConsentClient(
 			{ ...options, ui: false },
-			{ mountUI: mountConsentUI, pkg: '@c15t/browser/test' }
+			{ mountUI: mountConsentUI, pkg: '@inth/sdk/test' }
 		);
 		clients.push(client);
 		client.start();

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 import { createDialogChunkPlugin } from './build-dialog-chunk';
 import type { DialogChunkPlugin } from './build-dialog-chunk';
@@ -22,7 +22,7 @@ import type { PrefetchOptions } from './libs/prefetch/types';
 import { loadStaticManifest } from './server/static-manifest';
 import { manifestNeedsLocation } from './transports/manifest-browser-location';
 
-export type { ConsentManifest } from '@c15t/schema/types';
+export type { ConsentManifest } from '@inth/sdk-schema/types';
 export { createDialogChunkPlugin } from './build-dialog-chunk';
 export type { DialogChunkPlugin } from './build-dialog-chunk';
 
@@ -492,7 +492,7 @@ export interface ManifestBuildOptions {
 /** Options of the `consentManifest()` Vite plugins. */
 export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	/**
-	 * `'runtime'` never downloads a snapshot: `@c15t/core/generated`
+	 * `'runtime'` never downloads a snapshot: `@inth/sdk/generated`
 	 * exports `snapshot: undefined` and the app reads the manifest at
 	 * runtime. Set it when the app's `manifest()` passes `manifestUrl` or
 	 * `source: 'runtime'`. Those discard the build's snapshot, but the
@@ -522,7 +522,7 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	 */
 	initPrefetch?: boolean | InitPrefetchOptions;
 	/**
-	 * Puts `@c15t/react`'s stock banner in `index.html`, so it shows as soon
+	 * Puts `@inth/react`'s stock banner in `index.html`, so it shows as soon
 	 * as the `initPrefetch` request answers instead of after the app's
 	 * JavaScript has run.
 	 *
@@ -538,7 +538,7 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	 * for every page whose entry imports `ConsentBanner`, banner or not.
 	 *
 	 * Only a production build of a page whose entry imports `ConsentBanner`
-	 * from `@c15t/react` or `c15t/react` gets it, and only with the
+	 * from `@inth/react` or `@inth/react` gets it, and only with the
 	 * `initPrefetch` script. A failed manifest fetch leaves the banner out
 	 * with a warning; it never fails the build. The build cannot read the
 	 * provider's options, so set `false` when the app's banner differs from
@@ -556,7 +556,7 @@ export type InitPrefetchOptions = Pick<
 	'credentials' | 'experiment' | 'journey' | 'overrides' | 'storageKey'
 >;
 
-/** What `@c15t/core/generated` exports. */
+/** What `@inth/sdk/generated` exports. */
 export interface GeneratedManifestModule {
 	/** The backend URL the build read the manifest from. */
 	projectUrl: string | undefined;
@@ -566,19 +566,23 @@ export interface GeneratedManifestModule {
 
 /**
  * Specifiers the build integrations answer with the fetched snapshot:
- * `@c15t/core/generated` and its `c15t/generated` re-export.
+ * `@inth/sdk/generated` and the framework packages' `generated` entries,
+ * which apps import so they need no direct `@inth/sdk` dependency.
  * @internal
  */
 export const GENERATED_MODULE_IDS = [
-	'@c15t/core/generated',
-	'c15t/generated',
+	'@inth/sdk/generated',
+	'@inth/nextjs/generated',
+	'@inth/react/generated',
+	'@inth/svelte/generated',
+	'@inth/tanstack-start/generated',
 ] as const;
 
 /** Where non-Vite builds write the snapshot, relative to the app root. */
 export const MANIFEST_CACHE_DIR = 'node_modules/.cache/c15t';
 
 /**
- * Renders the module behind `@c15t/core/generated`. With `serverOnly`, it
+ * Renders the module behind `@inth/sdk/generated`. With `serverOnly`, it
  * imports `server-only`, so a bundler that knows the marker (Next.js) fails
  * the build when client code imports it. With `clientStub`, `snapshot` is
  * `undefined` whatever the build fetched.
@@ -610,7 +614,7 @@ export const renderGeneratedModule = (
 };
 
 /**
- * Renders declarations for a written `@c15t/core/generated` module.
+ * Renders declarations for a written `@inth/sdk/generated` module.
  * @param importSource - Module the `ConsentManifest` type is imported from.
  * @returns TypeScript declarations.
  * @internal
@@ -797,8 +801,11 @@ export interface ConsentChunkGroup {
 	includeDependenciesRecursively: boolean;
 }
 
-/** Every c15t package under `node_modules`, whatever the package manager. */
-const C15T_MODULE = /[\\/]node_modules[\\/](?:@c15t|c15t)[\\/]/u;
+/**
+ * Every SDK package under `node_modules`, whatever the package manager:
+ * `@inth/sdk` and the framework packages, not the CLI.
+ */
+const C15T_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
 
 /**
  * Puts the c15t modules a page's entry imports statically into one chunk.
@@ -1000,8 +1007,8 @@ const PREFETCH_ANCHORS = [
 	/<!doctype[^>]*>/iu,
 ] as const;
 
-/** The resolved id of the virtual `@c15t/core/generated` module. */
-const VIRTUAL_GENERATED_ID = '\0@c15t/core/generated';
+/** The resolved id of the virtual `@inth/sdk/generated` module. */
+const VIRTUAL_GENERATED_ID = '\0@inth/sdk/generated';
 
 /**
  * Stand-ins a production build gives the generated module's exports until
@@ -1024,22 +1031,20 @@ const placeholderPattern = (token: string): RegExp =>
 	);
 
 /**
- * Packages whose modules can import `@c15t/core/generated`. Server builds
+ * Packages whose modules can import `@inth/sdk/generated`. Server builds
  * bundle them, so the import reaches the plugin instead of Node.
  */
 const GENERATED_IMPORTERS = [
-	'c15t',
-	'@c15t/browser',
-	'@c15t/core',
-	'@c15t/react',
-	'@c15t/svelte',
-	'@c15t/tanstack-start',
-	'@c15t/vue',
+	'@inth/sdk',
+	'@inth/react',
+	'@inth/svelte',
+	'@inth/tanstack-start',
+	'@inth/vue',
 ];
 
 /**
  * Builds the Vite plugin behind each `consentManifest` export. It serves
- * the virtual `@c15t/core/generated` module, so no file is written into the
+ * the virtual `@inth/sdk/generated` module, so no file is written into the
  * app. Preview uses the existing build. Without `projectUrl`, the first of
  * `envNames` that is set supplies it; the first `VITE_` variable, when
  * unset or empty, is then set to the URL used, so app code reads the same
@@ -1065,7 +1070,7 @@ const GENERATED_IMPORTERS = [
  *
  * The plugin keeps the virtual module out of dependency pre-bundling and
  * bundles the c15t packages in server builds, so a c15t package can import
- * `@c15t/core/generated` as app code does.
+ * `@inth/sdk/generated` as app code does.
  *
  * @param options - Backend URL and `onBuildError`.
  * @param defaults - Framework label, backend URL variables, and whether the
@@ -1212,7 +1217,7 @@ export const createConsentManifestPlugin = (
 	};
 	/**
 	 * Whether this build puts the stock banner's stylesheets in its pages,
-	 * and so gives `@c15t/react` the sheets' deferred modules: a production
+	 * and so gives `@inth/react` the sheets' deferred modules: a production
 	 * client build of HTML pages that get the `/init` script.
 	 */
 	const staticBannerOn = (): boolean => {
@@ -1483,7 +1488,7 @@ export const createConsentManifestPlugin = (
 			) {
 				return undefined;
 			}
-			// A `@c15t/ui` without the deferred module keeps the sheet's text.
+			// A `@inth/sdk/ui` without the deferred module keeps the sheet's text.
 			return (async () =>
 				(await context.resolve?.(deferred, importer, { skipSelf: true }))
 					?.id)();
@@ -1504,7 +1509,7 @@ export const createConsentManifestPlugin = (
 };
 
 /**
- * Serves the deployment's consent manifest as `@c15t/core/generated`, for
+ * Serves the deployment's consent manifest as `@inth/sdk/generated`, for
  * single-page apps (React, Solid, plain JavaScript). Import `snapshot` from
  * there; no file is written into the app. The manifest is fetched only when
  * the bundle reads `snapshot`, as `manifest()` does, so hosted and
@@ -1525,7 +1530,7 @@ export const createConsentManifestPlugin = (
  * @throws {Error} When the fetch fails in `'fail'` mode, stopping Vite.
  * @example
  * ```ts
- * import { consentManifest } from 'c15t/build';
+ * import { consentManifest } from '@inth/sdk/build';
  * // Reads VITE_C15T_BACKEND_URL, for example from `.env`.
  * export default { plugins: [consentManifest()] };
  * ```
@@ -1536,5 +1541,5 @@ export const consentManifest = (
 	createConsentManifestPlugin(options, {
 		adviseHostedForLocation: true,
 		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
-		label: '@c15t/core/build',
+		label: '@inth/sdk/build',
 	});

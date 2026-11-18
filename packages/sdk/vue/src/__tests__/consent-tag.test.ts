@@ -4,7 +4,7 @@
  * client render disagree, which Vue reports as a hydration mismatch — so the
  * hostname has to land after mount.
  */
-import type { InitOutput } from '@c15t/schema/types';
+import type { InitOutput } from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, test } from 'vitest';
 import { computed, createSSRApp, ref } from 'vue';

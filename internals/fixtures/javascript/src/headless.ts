@@ -1,5 +1,9 @@
-import { resolveConsentPresentation } from 'c15t';
-import type { ConsentSnapshot, ConsentState, PresentationAction } from 'c15t';
+import { resolveConsentPresentation } from '@inth/sdk/engine';
+import type {
+	ConsentSnapshot,
+	ConsentState,
+	PresentationAction,
+} from '@inth/sdk/engine';
 
 import { runtime } from './consent-runtime';
 
@@ -181,7 +185,7 @@ window.addEventListener('pagehide', (event) => {
 });
 
 if (import.meta.env.DEV) {
-	const { createDevTools } = await import('@c15t/dev-tools');
+	const { createDevTools } = await import('@inth/sdk/devtools');
 	const tools = createDevTools({ kernel });
 	import.meta.hot?.dispose(() => tools.destroy());
 }

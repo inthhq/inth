@@ -33,10 +33,10 @@ import {
 	toStyleAttribute,
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolveNoStyle as resolveNoStyle,
-} from '@c15t/angular';
-import type { AllConsentNames } from '@c15t/core';
-import styles from '@c15t/ui/styles/components/consent-gate';
-import { resolveTranslations } from '@c15t/ui/utils';
+} from '@inth/angular';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import styles from '@inth/sdk/ui/styles/components/consent-gate';
+import { resolveTranslations } from '@inth/sdk/ui/utils';
 
 /** What a gate's placeholder template receives. */
 export interface ConsentGatePlaceholderContext {

@@ -1,6 +1,6 @@
 // #region docs:main title="src/main.ts"
-import { posthog } from '@c15t/integrations/posthog';
-import { c15tVue, hosted } from 'c15t/vue/vue-plugin';
+import { posthog } from '@inth/integrations/posthog';
+import { c15tVue, hosted } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';

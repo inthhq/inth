@@ -3,7 +3,7 @@
  * the slot's classes and its `style`, with camelCase style keys, and only
  * on the part the slot names.
  */
-import type { ComponentSlots } from '@c15t/ui/theme';
+import type { ComponentSlots } from '@inth/sdk/ui/theme';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 

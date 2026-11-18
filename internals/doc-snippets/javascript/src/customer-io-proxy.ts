@@ -1,5 +1,5 @@
 // #region docs:customer-io-proxy
-import { customerIo } from '@c15t/integrations/customer-io';
+import { customerIo } from '@inth/integrations/customer-io';
 
 export const proxiedScripts = [
 	customerIo({

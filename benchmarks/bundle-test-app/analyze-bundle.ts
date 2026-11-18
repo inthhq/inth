@@ -355,10 +355,10 @@ const main = async function main() {
 				nextjsIncludesDialogRules: nextjsTarball.includesDialogRules,
 			},
 			metrics: [
-				// packages/sdk/core is @c15t/core; the c15t umbrella is a separate package.
-				summarizeMetric('@c15t/core', 'bytes', [coreTarball.size]),
-				summarizeMetric('@c15t/react', 'bytes', [reactTarball.size]),
-				summarizeMetric('@c15t/nextjs', 'bytes', [nextjsTarball.size]),
+				// packages/sdk/core is @inth/sdk/engine; the c15t umbrella is a separate package.
+				summarizeMetric('@inth/sdk-core', 'bytes', [coreTarball.size]),
+				summarizeMetric('@inth/react', 'bytes', [reactTarball.size]),
+				summarizeMetric('@inth/nextjs', 'bytes', [nextjsTarball.size]),
 			],
 			notes: [
 				'Tarball sizes are captured with npm pack --json and exclude bundled docs (docs/, AGENTS.md, SKILL.md); failed or invalid packs fail the run.',

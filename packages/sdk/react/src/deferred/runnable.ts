@@ -6,9 +6,9 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
-import { scriptsNeedEngine as coreScriptsNeedEngine } from '@c15t/core/surface-actions/plain-scripts';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import { scriptsNeedEngine as coreScriptsNeedEngine } from '@inth/sdk/surface-actions/plain-scripts';
 
 import { pageRender, readConsentBoot } from './boot';
 
@@ -16,7 +16,7 @@ export {
 	isPlainScript,
 	isRunnableNow,
 	observesConsent,
-} from '@c15t/core/surface-actions/plain-scripts';
+} from '@inth/sdk/surface-actions/plain-scripts';
 
 /**
  * Whether this render's server start marked `script` as one it starts

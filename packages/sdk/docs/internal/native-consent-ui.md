@@ -167,7 +167,7 @@ minimum target, and on iOS 17 and later sections sit 24pt apart.
 
 `ConsentTheme` (Swift, `InthConsentUI`) and `com.inth.consentui.ConsentTheme`
 (Kotlin) are the one customization surface. Names with a web token follow
-`--c15t-*` in `@c15t/ui`. Each holds nine semantic colours (`canvas`,
+`--c15t-*` in `@inth/sdk/ui`. Each holds nine semantic colours (`canvas`,
 `surface`, `surfaceMuted`, `text`, `textMuted`, `primary`, `textOnPrimary`,
 `decision`, `textOnDecision`), radii (`sm`, `md`, `lg`), spacing (`xs` to `xl`),
 typography (`fontFamily`, `fontSize` `sm`/`base`/`lg`, and the headline

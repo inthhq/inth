@@ -1,6 +1,6 @@
 /**
  * A mode registered in `earlyInitModes` (as `manifest()` from
- * `@c15t/browser` registers) gets the same render-time `/init` as
+ * `@inth/sdk` registers) gets the same render-time `/init` as
  * `hosted()`, but only when it says its first `init()` would ask the
  * backend and the visitor has no stored choice. These tests stand in for
  * `manifest()` with a mode built the way it is: one hosted transport per
@@ -10,10 +10,10 @@ import {
 	createConsentKernel,
 	createHostedTransport,
 	earlyInitModes,
-} from '@c15t/core';
-import type { EarlyInitMode, ProviderTransportFactory } from '@c15t/core';
-import { createPersistence } from '@c15t/core/modules/persistence';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+} from '@inth/sdk/engine';
+import type { EarlyInitMode, ProviderTransportFactory } from '@inth/sdk/engine';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { StrictMode, useEffect } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

@@ -1,6 +1,6 @@
 'use client';
 
-import type { Translations } from '@c15t/core';
+import type { Translations } from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
 import { useTranslations as useKernelTranslations } from '../hooks';

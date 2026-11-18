@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { ConsentLegalLinkKey } from '@c15t/schema/config';
+import type { ConsentLegalLinkKey } from '@inth/sdk/schema/config';
 
-import '@c15t/ui/styles/components/legal-links.css';
+import '@inth/sdk/ui/styles/components/legal-links.css';
 import { computed } from 'vue';
 
 import { useConsentConfig, useConsentInit } from '#c15t/composables';

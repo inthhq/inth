@@ -1,4 +1,3 @@
-import { translations } from '@c15t/translations/en';
 // #region docs:iab-preferences title="iab-settings.tsx"
 import {
 	useAdTechProviderConsent,
@@ -14,6 +13,7 @@ import type {
 	NativeAdTechProvider,
 	NativeIABDisclosure,
 } from '@inth/react-native';
+import { translations } from '@inth/sdk/translations/en';
 import { useState } from 'react';
 import { Button, Linking, ScrollView, Switch, Text, View } from 'react-native';
 

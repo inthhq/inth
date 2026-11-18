@@ -1,4 +1,4 @@
-import type { AllConsentNames, HasCondition, Script } from '@c15t/core';
+import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -160,7 +160,7 @@ export const klaviyoFormsOnlyManifest = {
  *
  * @example
  * ```ts
- * import { klaviyo } from '@c15t/integrations/klaviyo';
+ * import { klaviyo } from '@inth/integrations/klaviyo';
  *
  * klaviyo({ publicApiKey: 'AbC123' });
  * ```

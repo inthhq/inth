@@ -4,8 +4,8 @@
  * `banner-css` page renders the full default theme through ConsentTheme,
  * keeping tokens identical to the aggregate arm.
  */
-import '@c15t/ui/styles/components/consent-banner.css';
-import '@c15t/ui/styles/components/consent-actions.css';
-import '@c15t/ui/styles/components/button.css';
-import '@c15t/ui/styles/components/legal-links.css';
-import '@c15t/ui/styles/components/branding.css';
+import '@inth/sdk/ui/styles/components/consent-banner.css';
+import '@inth/sdk/ui/styles/components/consent-actions.css';
+import '@inth/sdk/ui/styles/components/button.css';
+import '@inth/sdk/ui/styles/components/legal-links.css';
+import '@inth/sdk/ui/styles/components/branding.css';

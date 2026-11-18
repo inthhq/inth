@@ -1,7 +1,10 @@
 'use client';
 
-import type { OnChoiceRecordedPayload, OnSurfaceShownPayload } from 'c15t';
-import { useExperiment } from 'c15t/react';
+import { useExperiment } from '@inth/react';
+import type {
+	OnChoiceRecordedPayload,
+	OnSurfaceShownPayload,
+} from '@inth/sdk/engine';
 import { useMemo, useState } from 'react';
 
 import { Badge } from '../ui/badge';

@@ -23,10 +23,10 @@ loads Klaviyo, so it is safe in browser code. Never put a private key
 (`pk_...`) in the browser. If you pass one, the helper logs an error and
 Klaviyo does not load.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { klaviyo } from '@c15t/integrations/klaviyo';
+import { klaviyo } from '@inth/integrations/klaviyo';
 
 export const scripts = [klaviyo({ publicApiKey: 'YOUR_PUBLIC_API_KEY' })];
 ```

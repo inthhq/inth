@@ -1,6 +1,6 @@
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
-import type { ConsentBannerButton } from '@c15t/angular';
+import type { ConsentBannerButton } from '@inth/angular';
 
 import { clickAction } from './click-action';
 

@@ -7,9 +7,9 @@
  * that is off in the draft disables its vendor switches. Accept all clears
  * the denial. The markup mirrors the React rows so parity holds.
  */
-import type { Vendor } from '@c15t/core';
-import accordionStyles from '@c15t/ui/styles/components/accordion';
-import switchStyles from '@c15t/ui/styles/components/switch';
+import type { Vendor } from '@inth/sdk/engine';
+import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 

@@ -35,12 +35,12 @@ import type {
 	PolicyScopeMode,
 	ResolvedVendor,
 	VendorChoice,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import {
 	hasConsentPreferences,
 	hasConsentUI,
 	showConsentSurface,
-} from '@c15t/core/surface-actions';
+} from '@inth/sdk/surface-actions';
 import { useCallback, useContext, useSyncExternalStore } from 'react';
 
 import { ProviderServicesContext } from './context';

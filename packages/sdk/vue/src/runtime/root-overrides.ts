@@ -1,4 +1,4 @@
-import type { KernelOverrides } from '@c15t/core';
+import type { KernelOverrides } from '@inth/sdk/engine';
 
 import type { VueConsentKernelContext } from './kernel';
 

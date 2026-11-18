@@ -1,4 +1,4 @@
-import { hosted } from '@c15t/core/transports';
+import { hosted } from '@inth/sdk-core/transports';
 
 import { createConsentClientWith } from './client-base';
 import type { CreateConsentClientContext, ResolvedMode } from './client-base';
@@ -30,7 +30,7 @@ const resolveMode = function resolveMode(
 	}
 	if (mode !== undefined && mode.type !== 'hosted') {
 		throw new Error(
-			`${pkg}: \`mode\` must be hosted() or manifest() from ${pkg}, or testing() from @c15t/browser/testing. Mode names like ${JSON.stringify(mode)} work only in the script-tag builds.`
+			`${pkg}: \`mode\` must be hosted() or manifest() from ${pkg}, or testing() from @inth/sdk/testing. Mode names like ${JSON.stringify(mode)} work only in the script-tag builds.`
 		);
 	}
 	if (options.projectUrl === undefined) {
@@ -48,7 +48,7 @@ const resolveMode = function resolveMode(
 			};
 		}
 		throw new Error(
-			`${pkg}: \`projectUrl\` is required. Set it to your Inth project URL, or use \`mode: testing()\` from @c15t/browser/testing in tests.`
+			`${pkg}: \`projectUrl\` is required. Set it to your Inth project URL, or use \`mode: testing()\` from @inth/sdk/testing in tests.`
 		);
 	}
 	return {
@@ -72,7 +72,7 @@ export const createConsentClient = function createConsentClient(
 ): ConsentClient {
 	return createConsentClientWith(
 		options,
-		resolveMode(options, context.pkg ?? '@c15t/browser'),
+		resolveMode(options, context.pkg ?? '@inth/sdk'),
 		context
 	);
 };

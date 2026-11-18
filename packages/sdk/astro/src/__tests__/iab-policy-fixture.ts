@@ -1,5 +1,5 @@
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import { deferInitGvl } from '@c15t/core';
+import { deferInitGvl } from '@inth/sdk/engine';
 
 import { hosted as hostedMode } from '../mode';
 import type { C15tAstroOptions } from '../types';

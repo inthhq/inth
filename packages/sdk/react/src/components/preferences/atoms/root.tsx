@@ -1,6 +1,6 @@
 'use client';
 
-import styles from '@c15t/ui/styles/components/consent-manager';
+import styles from '@inth/sdk/ui/styles/components/consent-manager';
 /**
  * @packageDocumentation
  * Provides the root component for the consent management interface.

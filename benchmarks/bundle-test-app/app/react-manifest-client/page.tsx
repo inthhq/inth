@@ -1,14 +1,14 @@
 'use client';
 
-import type { Script } from '@c15t/core/modules/script-loader';
-import { createManifestTransport } from '@c15t/core/transports/manifest';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDraftProvider,
 	ConsentProvider,
 	ConsentWidget,
-} from '@c15t/react';
+} from '@inth/react';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import { createManifestTransport } from '@inth/sdk/transports/manifest';
 import { lazy, Suspense, useMemo } from 'react';
 
 /** A transport factory that hands the provider `transport`. */

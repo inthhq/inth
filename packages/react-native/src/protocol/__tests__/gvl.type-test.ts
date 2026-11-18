@@ -8,7 +8,7 @@
  * nullability, a key one side grew, the pair of them, which is how a vendor list
  * ends up rendering a blank row over a bridge that reported nothing.
  *
- * `@c15t/core` is the oracle here, exactly as `packages/native-protocol/CONTRACT.md` rule 4 makes
+ * `@inth/sdk/engine` is the oracle here, exactly as `packages/native-protocol/CONTRACT.md` rule 4 makes
  * it the oracle for both native cores, and exactly as
  * `vocabulary.type-test.ts` already uses it. Vitest does not check types, so
  * this file runs through `tsc -p tsconfig.type-tests.json`, which the package's
@@ -22,7 +22,7 @@
 import type {
 	GlobalVendorList as KernelGlobalVendorList,
 	KernelIABState,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import { expectTypeOf } from 'vitest';
 
 import type { GlobalVendorList, GVLVendor, NativeIABState } from '../index';
@@ -31,7 +31,7 @@ import type { ConsentSnapshot } from '../snapshot';
 /**
  * The kernel's view of one vendor entry.
  *
- * `@c15t/core` exports the document type rather than the entries inside it, so
+ * `@inth/sdk/engine` exports the document type rather than the entries inside it, so
  * the entry is read out of the map that holds it. That is the same type the
  * mirror's `GVLVendor` has to match.
  */

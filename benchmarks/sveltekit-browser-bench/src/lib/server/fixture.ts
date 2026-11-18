@@ -6,7 +6,7 @@
  * a pre-resolved init payload, with per-endpoint execution counters and an
  * injectable latency so the runner can model a real consent backend.
  *
- * The app's own `/api/c15t/*` routes are the *shipped* `@c15t/svelte/kit`
+ * The app's own `/api/c15t/*` routes are the *shipped* `@inth/svelte/kit`
  * handlers pointed at this fixture; nothing here re-implements them.
  */
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -15,8 +15,8 @@ import {
 	createConsentManifestPolicyPack,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 /** Fixture endpoints the runner counts executions for. */
 export type BenchConsentFixtureEndpoint = 'init' | 'manifest' | 'subjects';

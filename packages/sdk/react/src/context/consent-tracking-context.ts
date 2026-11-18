@@ -1,6 +1,6 @@
 'use client';
 
-import type { SaveUISource } from '@c15t/core';
+import type { SaveUISource } from '@inth/sdk/engine';
 import { createContext, useContext } from 'react';
 
 /**

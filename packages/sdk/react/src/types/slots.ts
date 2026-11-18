@@ -1,4 +1,4 @@
-import type { ConsentComponentSlots } from '@c15t/schema/config';
+import type { ConsentComponentSlots } from '@inth/sdk/schema/config';
 import type { HTMLAttributes } from 'react';
 
 /** Framework-native attribute bag bound to a themable slot. */

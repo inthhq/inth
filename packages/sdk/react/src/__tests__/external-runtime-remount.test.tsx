@@ -1,4 +1,4 @@
-import { createConsentRuntime } from '@c15t/core/runtime';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 

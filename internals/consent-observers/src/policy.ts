@@ -2,11 +2,15 @@
  * The policy and runtimes the observer tests share, built from public
  * exports only.
  */
-import type { ExplicitChoice, KernelConfig, PolicyRule } from 'c15t';
-import { resolvePolicyRules } from 'c15t';
-import { createConsentRuntime } from 'c15t/runtime';
-import type { ConsentRuntime } from 'c15t/runtime';
-import { createOfflineTransport } from 'c15t/transports';
+import type {
+	ExplicitChoice,
+	KernelConfig,
+	PolicyRule,
+} from '@inth/sdk/engine';
+import { resolvePolicyRules } from '@inth/sdk/engine';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
+import { createOfflineTransport } from '@inth/sdk/transports';
 
 /** A transport factory that hands the provider `transport`. */
 const customMode = <Transport>(transport: Transport) =>

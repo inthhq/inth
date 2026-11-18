@@ -7,7 +7,7 @@
  * @packageDocumentation
  * @internal
  */
-import type { Script } from '@c15t/core/modules/script-loader';
+import type { Script } from '@inth/sdk/modules/script-loader';
 
 import type { RuntimeConsentConfig } from './kernel';
 

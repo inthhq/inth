@@ -17,7 +17,7 @@
  *
  * The fragments are static server output, so `<script>` tags are stripped:
  * Astro's build pipeline is what would normally bundle them, and the story
- * boots `@c15t/astro/client` itself instead. The JSON config block the
+ * boots `@inth/astro/client` itself instead. The JSON config block the
  * banner emits is captured separately and replayed as
  * `window.__c15tAstroConfig`, which the client reads before the block.
  */

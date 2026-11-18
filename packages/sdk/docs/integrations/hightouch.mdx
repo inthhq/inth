@@ -18,10 +18,10 @@ element. By default, c15t also reloads the page.
 Copy the write key from your Hightouch Event Source. Remove the original
 Hightouch snippet.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { hightouch } from '@c15t/integrations/hightouch';
+import { hightouch } from '@inth/integrations/hightouch';
 
 export const scripts = [hightouch({ writeKey: 'YOUR_WRITE_KEY' })];
 ```

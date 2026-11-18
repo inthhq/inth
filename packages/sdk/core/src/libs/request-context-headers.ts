@@ -1,4 +1,4 @@
-import type { InitRequestParams } from '@c15t/schema/types';
+import type { InitRequestParams } from '@inth/sdk-schema/types';
 
 import type { Overrides } from '../options/overrides';
 

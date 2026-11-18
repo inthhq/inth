@@ -1,4 +1,4 @@
-import styles from '@c15t/ui/styles/components/consent-dialog-trigger';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

@@ -19,6 +19,8 @@ import { playwright } from '@vitest/browser-playwright';
 import { transformWithEsbuild } from 'vite';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 const tracingRecipePath = resolve(
 	__dirname,
 	'../../../internals/doc-snippets/sveltekit/src/lib/server/trace-consent.ts'
@@ -36,173 +38,173 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, 'src/lib/kit/__tests__/app-server.ts'),
 	},
 	{
-		find: '@c15t/core/build',
+		find: '@inth/sdk/build',
 		replacement: resolve(__dirname, '../core/src/build.ts'),
 	},
 	{
-		find: '@c15t/core/generated',
+		find: '@inth/sdk/generated',
 		replacement: resolve(__dirname, 'src/lib/__tests__/generated.ts'),
 	},
 	{
-		find: '@c15t/core/events',
+		find: '@inth/sdk/events',
 		replacement: resolve(__dirname, '../core/src/events.ts'),
 	},
 	{
-		find: '@c15t/core/modes',
+		find: '@inth/sdk/modes',
 		replacement: resolve(__dirname, '../core/src/modes.ts'),
 	},
 	{
-		find: '@c15t/core/testing',
+		find: '@inth/sdk/testing',
 		replacement: resolve(__dirname, '../core/src/testing.ts'),
 	},
 	{
-		find: '@c15t/core/transports/manifest-browser',
+		find: '@inth/sdk/transports/manifest-browser',
 		replacement: resolve(
 			__dirname,
 			'../core/src/transports/manifest-browser.ts'
 		),
 	},
 	{
-		find: '@c15t/core/transports',
+		find: '@inth/sdk/transports',
 		replacement: resolve(__dirname, '../core/src/transports/index.ts'),
 	},
 	{
-		find: '@c15t/core/runtime/client-mode',
+		find: '@inth/sdk/runtime/client-mode',
 		replacement: resolve(__dirname, '../core/src/runtime/client-mode.ts'),
 	},
 	{
-		find: '@c15t/core/runtime/provider',
+		find: '@inth/sdk/runtime/provider',
 		replacement: resolve(__dirname, '../core/src/runtime/provider.ts'),
 	},
 	{
-		find: '@c15t/core/runtime/on-demand',
+		find: '@inth/sdk/runtime/on-demand',
 		replacement: resolve(__dirname, '../core/src/runtime/on-demand.ts'),
 	},
 	{
-		find: '@c15t/core/runtime/save-preload',
+		find: '@inth/sdk/runtime/save-preload',
 		replacement: resolve(__dirname, '../core/src/runtime/save-preload.ts'),
 	},
 	{
-		find: '@c15t/core/runtime/script-server-start',
+		find: '@inth/sdk/runtime/script-server-start',
 		replacement: resolve(
 			__dirname,
 			'../core/src/runtime/script-server-start.ts'
 		),
 	},
 	{
-		find: '@c15t/core/runtime',
+		find: '@inth/sdk/runtime',
 		replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 	},
 	{
-		find: '@c15t/core/modules/iframe-blocker',
+		find: '@inth/sdk/modules/iframe-blocker',
 		replacement: resolve(
 			__dirname,
 			'../core/src/modules/iframe-blocker/index.ts'
 		),
 	},
 	{
-		find: '@c15t/core/modules/network-blocker',
+		find: '@inth/sdk/modules/network-blocker',
 		replacement: resolve(
 			__dirname,
 			'../core/src/modules/network-blocker/index.ts'
 		),
 	},
 	{
-		find: '@c15t/core/modules/network-hold',
+		find: '@inth/sdk/modules/network-hold',
 		replacement: resolve(
 			__dirname,
 			'../core/src/modules/network-blocker/hold.ts'
 		),
 	},
 	{
-		find: '@c15t/core/modules/persistence',
+		find: '@inth/sdk/modules/persistence',
 		replacement: resolve(__dirname, '../core/src/modules/persistence/index.ts'),
 	},
 	{
-		find: '@c15t/core/modules/clear-on-revocation',
+		find: '@inth/sdk/modules/clear-on-revocation',
 		replacement: resolve(
 			__dirname,
 			'../core/src/modules/clear-on-revocation/index.ts'
 		),
 	},
 	{
-		find: '@c15t/core/modules/script-loader',
+		find: '@inth/sdk/modules/script-loader',
 		replacement: resolve(
 			__dirname,
 			'../core/src/modules/script-loader/index.ts'
 		),
 	},
 	{
-		find: '@c15t/core/modules/window-debug',
+		find: '@inth/sdk/modules/window-debug',
 		replacement: resolve(
 			__dirname,
 			'../core/src/modules/window-debug/index.ts'
 		),
 	},
 	{
-		find: '@c15t/core/preference-draft',
+		find: '@inth/sdk/preference-draft',
 		replacement: resolve(__dirname, '../core/src/preference-draft/index.ts'),
 	},
 	{
-		find: '@c15t/core/server',
+		find: '@inth/sdk/server',
 		replacement: resolve(__dirname, '../core/src/server/index.ts'),
 	},
 	// The deferred root's subpaths, before their prefixes.
 	{
-		find: '@c15t/core/surface-actions/early-commit',
+		find: '@inth/sdk/surface-actions/early-commit',
 		replacement: resolve(
 			__dirname,
 			'../core/src/surface-actions/early-commit.ts'
 		),
 	},
 	{
-		find: '@c15t/core/surface-actions/instant-commit',
+		find: '@inth/sdk/surface-actions/instant-commit',
 		replacement: resolve(
 			__dirname,
 			'../core/src/surface-actions/instant-commit.ts'
 		),
 	},
 	{
-		find: '@c15t/core/iab-support',
+		find: '@inth/sdk/iab-support',
 		replacement: resolve(__dirname, '../core/src/iab-support.ts'),
 	},
 	{
-		find: '@c15t/core/surface-actions',
+		find: '@inth/sdk/surface-actions',
 		replacement: resolve(__dirname, '../core/src/surface-actions/index.ts'),
 	},
 	// Before the bare specifier: Vite matches string aliases by prefix, so
-	// `@c15t/iab` alone would rewrite `@c15t/iab/headless` into a path that
+	// `@inth/sdk/iab` alone would rewrite `@inth/sdk/iab/headless` into a path that
 	// does not exist.
 	{
-		find: '@c15t/iab/headless',
+		find: '@inth/sdk/iab/headless',
 		replacement: resolve(__dirname, '../iab/src/headless.ts'),
 	},
 	{
-		find: '@c15t/iab/gpp',
+		find: '@inth/sdk/iab/gpp',
 		replacement: resolve(__dirname, '../iab/src/gpp.ts'),
 	},
 	{
-		find: '@c15t/iab',
+		find: '@inth/sdk/iab',
 		replacement: resolve(__dirname, '../iab/src/index.ts'),
 	},
 	{
-		find: '@c15t/schema/types',
+		find: '@inth/sdk/schema/types',
 		replacement: resolve(__dirname, '../schema/src/types.ts'),
 	},
 	{
-		find: '@c15t/schema/config',
+		find: '@inth/sdk/schema/config',
 		replacement: resolve(__dirname, '../schema/src/config/index.ts'),
 	},
 	{
-		find: '@c15t/schema/canonical-order',
+		find: '@inth/sdk/schema/canonical-order',
 		replacement: resolve(__dirname, '../schema/src/shared/canonical-order.ts'),
 	},
 	{
-		find: '@c15t/schema',
+		find: '@inth/sdk/schema',
 		replacement: resolve(__dirname, '../schema/src/index.ts'),
 	},
 	{
-		find: '@c15t/core',
+		find: '@inth/sdk/engine',
 		replacement: resolve(__dirname, '../core/src/index.ts'),
 	},
 	{
@@ -235,6 +237,7 @@ export default mergeConfig(
 					oxc: { exclude: [tracingRecipePath] },
 					plugins: [
 						svelte(),
+						privateSdkNames(import.meta.dirname),
 						{
 							enforce: 'pre',
 							name: 'tracing-recipe-without-sveltekit-sync',
@@ -274,7 +277,7 @@ export default mergeConfig(
 					},
 				},
 				{
-					plugins: [svelte()],
+					plugins: [svelte(), privateSdkNames(import.meta.dirname)],
 					resolve: {
 						alias: [
 							{
@@ -302,7 +305,7 @@ export default mergeConfig(
 						// two Svelte runtimes; a cold CI cache hits this every run.
 						include: ['base-x', 'esm-env', 'valibot'],
 					},
-					plugins: [svelte()],
+					plugins: [svelte(), privateSdkNames(import.meta.dirname)],
 					resolve: {
 						alias: [
 							{

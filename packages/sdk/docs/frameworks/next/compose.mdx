@@ -1,6 +1,6 @@
 ---
 title: Compose your own banner
-description: Build a Next.js consent banner as a Client Component from the ConsentBanner parts in c15t/next, with your own markup and buttons, rendered inside ConsentRoot.
+description: Build a Next.js consent banner as a Client Component from the ConsentBanner parts in @inth/nextjs, with your own markup and buttons, rendered inside ConsentRoot.
 group: frameworks
 ---
 
@@ -22,7 +22,7 @@ for that button:
 
 <include src="../../shared/examples/nextjs/compose-banner.mdx" />
 
-`c15t/next` re-exports every `c15t/react` component, so `ConsentBanner` and
+`@inth/nextjs` re-exports every `@inth/react` component, so `ConsentBanner` and
 its parts come from the same import as `ConsentRoot`. The file starts with
 `'use client'` because a Server Component can neither read a property of a
 client component, such as `ConsentBanner.Root`, nor pass a function, such as
@@ -63,9 +63,9 @@ stock banner's props, variants and data attributes.
 
 <import src="../../shared/react/compose.mdx#dialog" />
 
-`c15t/next` exports `ConsentDialog` and `ConsentWidget` with their parts.
+`@inth/nextjs` exports `ConsentDialog` and `ConsentWidget` with their parts.
 It has no `components/consent-dialog` subpath, so import the parts without
-the deferral from `c15t/react/components/consent-dialog`, in a Client
+the deferral from `@inth/react/components/consent-dialog`, in a Client
 Component. [ConsentDialog](/docs/frameworks/next/components/consent-dialog)
 and [ConsentWidget](/docs/frameworks/next/components/consent-widget) list
 every part and its slots.

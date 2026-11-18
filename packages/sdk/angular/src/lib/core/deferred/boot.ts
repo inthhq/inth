@@ -10,7 +10,7 @@
  */
 
 import { makeStateKey } from '@angular/core';
-import type { ConsentExperiment, ConsentSnapshot } from '@c15t/core';
+import type { ConsentExperiment, ConsentSnapshot } from '@inth/sdk/engine';
 
 /** What the server leaves. Short keys: it travels in every page. @internal */
 export interface ConsentBoot {

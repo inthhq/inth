@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular/iab`: the IAB TCF banner and preference dialog, their
+ * `@inth/angular/iab`: the IAB TCF banner and preference dialog, their
  * stylesheets and copy.
  *
  * @packageDocumentation

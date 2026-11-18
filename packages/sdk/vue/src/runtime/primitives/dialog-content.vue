@@ -4,7 +4,10 @@
  * `role="dialog"` container with Escape-to-close and shared focus trap +
  * restore when modal.
  */
-import { getDialogState, isDialogDismissKey } from '@c15t/ui/primitives/dialog';
+import {
+	getDialogState,
+	isDialogDismissKey,
+} from '@inth/sdk/ui/primitives/dialog';
 import { inject, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { dialogContextKey } from './keys';

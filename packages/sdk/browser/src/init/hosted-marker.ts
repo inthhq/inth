@@ -10,7 +10,10 @@
  * @internal
  */
 
-import type { HostedModeOptions, ProviderTransportFactory } from '@c15t/core';
+import type {
+	HostedModeOptions,
+	ProviderTransportFactory,
+} from '@inth/sdk-core';
 
 /** Property of a marker that holds its `hosted()` options. */
 export const HOSTED_OPTIONS = '__c15tHosted';
@@ -33,7 +36,7 @@ export const hostedMarker = function hostedMarker(
 ): HostedMarker {
 	const marker = (() => {
 		throw new Error(
-			'@c15t/browser: c15t.hosted() from c15t.js runs once c15t.hosted.js has loaded.'
+			'@inth/sdk: c15t.hosted() from c15t.js runs once c15t.hosted.js has loaded.'
 		);
 	}) as unknown as HostedMarker;
 	marker.kind = 'hosted';

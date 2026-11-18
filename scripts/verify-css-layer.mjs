@@ -246,7 +246,7 @@ const verifyBanner = async function verifyBanner(page, app) {
 };
 
 /**
- * Loads `@c15t/ui/styles.css` as its own stylesheet at the top of `<head>`,
+ * Loads `@inth/sdk/ui/styles.css` as its own stylesheet at the top of `<head>`,
  * ahead of the app's Tailwind 4 CSS, the way Astro's `page-ssr` injection
  * orders them. Cascade layers rank by first mention, so unless c15t's sheet
  * declares Tailwind's full layer order, `components` ranks below `base` and

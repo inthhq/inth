@@ -9,7 +9,7 @@
  *
  * @internal
  */
-import type { ScriptServerStart } from '@c15t/core';
+import type { ScriptServerStart } from '@inth/sdk/engine';
 
 import { RUNTIME_VALUE_KIND } from '../types';
 import type { ManifestStep } from '../types';

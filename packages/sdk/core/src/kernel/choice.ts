@@ -19,7 +19,7 @@
 import {
 	AD_TECH_PROVIDER_PURPOSES,
 	ADDITIONAL_CONSENT_V2_PATTERN,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import { recordCategoryPatch } from '../consent-record/record';
 import type { AllConsentNames } from '../consent/consent-types';

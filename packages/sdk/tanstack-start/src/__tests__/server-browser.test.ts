@@ -1,5 +1,5 @@
 /**
- * The browser build of `@c15t/tanstack-start/server`. Route files import
+ * The browser build of `@inth/tanstack-start/server`. Route files import
  * `consentLoaderOptions` from the server entry and route definitions ship
  * to the browser, so whatever this build imports joins the client module
  * graph, and Rolldown splits chunks by that graph.

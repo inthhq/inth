@@ -10,18 +10,19 @@
  * The modules that open the stock dialog: what each adapter's `import()`
  * for it loads. React's deferred root and aggregate `ConsentDialog`
  * (`deferred/dialog`), and Vue's (`components/manager.vue`). Installed
- * packages under `node_modules/@c15t/…`, and the real path
- * `packages/<name>/dist/…` from a workspace or linked install.
+ * packages under `node_modules/@inth/…`, and the real path
+ * `packages/<name>/dist/…` from a workspace or linked install. `@inth/sdk`
+ * ships the engine under `lib/core/dist/…`.
  */
 const DIALOG_ROOT =
-	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]dialog\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]manager\.vue)$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]dialog\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]manager\.vue)$/u;
 
 /**
  * What an accept or reject before the engine loads: the commit chunk of
  * React's and Vue's deferred roots and core's script loader.
  */
 const TAP_ROOT =
-	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]commit|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]commit|core[\\/]dist[\\/]modules[\\/]script-loader[\\/]index)\.js$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]commit|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]commit|(?:sdk[\\/]lib[\\/])?core[\\/]dist[\\/]modules[\\/]script-loader[\\/]index)\.js$/u;
 
 /**
  * The consent engine each deferred root loads after the page: React's
@@ -29,7 +30,7 @@ const TAP_ROOT =
  * Start's (`root-engine`) and Vue's (`runtime/deferred/engine`).
  */
 const ENGINE_ROOT =
-	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/](?:client-)?engine|(?:nextjs|tanstack-start)[\\/]dist[\\/]root-engine|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]engine)\.js$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/](?:client-)?engine|(?:nextjs|tanstack-start)[\\/]dist[\\/]root-engine|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]engine)\.js$/u;
 
 /**
  * The stock banner a deferred root's engine renders, which loads with the
@@ -37,7 +38,7 @@ const ENGINE_ROOT =
  * (`components/prompt.vue`). It counts as the engine's.
  */
 const ENGINE_BANNER =
-	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]components[\\/]prompt[\\/]index\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]prompt\.vue)$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]components[\\/]prompt[\\/]index\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]prompt\.vue)$/u;
 
 /**
  * c15t's chunks that load only when a visitor asks for them: the standalone
@@ -47,7 +48,7 @@ const ENGINE_BANNER =
  * loaders counts as loaded with the page.
  */
 const ON_DEMAND =
-	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/](?:components[\\/](?:preferences|iab-panel)[\\/]index\.js|aggregate-components\.js)|vue[\\/]dist[\\/]runtime[\\/]components[\\/](?:preferences|iab-panel)\.vue|core[\\/]dist[\\/]preference-draft\.js)$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/](?:components[\\/](?:preferences|iab-panel)[\\/]index\.js|aggregate-components\.js)|vue[\\/]dist[\\/]runtime[\\/]components[\\/](?:preferences|iab-panel)\.vue|(?:sdk[\\/]lib[\\/])?core[\\/]dist[\\/]preference-draft\.js)$/u;
 
 /** Stylesheets, and the style blocks of Vue and Svelte components. */
 const STYLE_MODULE =
@@ -202,6 +203,42 @@ const packageOf = function packageOf(specifier: string): string {
 		: (parts[0] ?? '');
 };
 
+/** Parts whose `@inth/sdk` entries keep the part's name as a prefix. */
+const PREFIXED_PARTS = new Set(['iab', 'schema', 'translations', 'ui']);
+
+/**
+ * The files an `@inth/sdk` subpath may name, most likely first. The root
+ * is the browser client, `engine` the engine's root, `devtools` the merged
+ * entry and `iab-client` the client's IAB build. `iab/*`, `schema/*`,
+ * `translations/*` and `ui/*` keep their part's prefix. Every other entry
+ * is the engine's, or else the client's.
+ */
+const sdkFiles = function sdkFiles(subpath: string): string[] {
+	if (!subpath) {
+		return ['lib/browser/dist/index'];
+	}
+	if (subpath === 'engine') {
+		return ['lib/core/dist/index'];
+	}
+	if (subpath === 'devtools') {
+		return ['lib/entries/devtools'];
+	}
+	if (subpath === 'iab-client') {
+		return ['lib/browser/dist/iab'];
+	}
+	const [part = '', ...rest] = subpath.split('/');
+	if (PREFIXED_PARTS.has(part)) {
+		const inner = rest.join('/') || 'index';
+		return part === 'translations'
+			? [
+					`lib/translations/dist/languages/${inner}`,
+					`lib/translations/dist/${inner}`,
+				]
+			: [`lib/${part}/dist/${inner}`];
+	}
+	return [`lib/core/dist/${subpath}`, `lib/browser/dist/${subpath}`];
+};
+
 /**
  * Which of `candidates` the specifier names, or `undefined` when that is
  * not certain.
@@ -238,8 +275,15 @@ const resolveSpecifier = function resolveSpecifier(
 		? name.split('/')
 		: [undefined, name];
 	const roots = [`/node_modules/${name}/`];
-	if (scope === '@c15t') {
-		roots.push(`/packages/${unscoped}/`, `/packages/sdk/${unscoped}/`);
+	if (scope === '@inth') {
+		// A workspace folder: `@inth/react` in `packages/sdk/react`, the
+		// private `@inth/sdk-core` in `packages/sdk/core`, and `@inth/sdk`
+		// in `packages/sdk/sdk`.
+		const folder = unscoped.startsWith('sdk-') ? unscoped.slice(4) : unscoped;
+		roots.push(`/packages/sdk/${folder}/`);
+		if (folder !== 'sdk') {
+			roots.push(`/packages/${folder}/`);
+		}
 	}
 	const inPackage = candidates.filter((candidate) => {
 		const plain = bare(candidate).replace(/\\/gu, '/');
@@ -250,14 +294,21 @@ const resolveSpecifier = function resolveSpecifier(
 	}
 	// Several files of one package: c15t's packages publish `dist/<subpath>`
 	// for `<name>/<subpath>`, and `dist/index` for the package itself.
-	const subpath = specifier.slice(name.length + 1) || 'index';
-	const exact = inPackage.filter((candidate) => {
-		const plain = bare(candidate).replace(/\\/gu, '/');
-		return [`/dist/${subpath}.js`, `/dist/${subpath}/index.js`].some((end) =>
-			plain.endsWith(end)
-		);
-	});
-	return exact.length === 1 ? exact[0] : undefined;
+	const subpath = specifier.slice(name.length + 1);
+	const files =
+		name === '@inth/sdk' ? sdkFiles(subpath) : [`dist/${subpath || 'index'}`];
+	for (const file of files) {
+		const exact = inPackage.filter((candidate) => {
+			const plain = bare(candidate).replace(/\\/gu, '/');
+			return [`/${file}.js`, `/${file}/index.js`].some((end) =>
+				plain.endsWith(end)
+			);
+		});
+		if (exact.length > 0) {
+			return exact.length === 1 ? exact[0] : undefined;
+		}
+	}
+	return undefined;
 };
 
 /**

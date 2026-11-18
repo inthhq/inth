@@ -1,4 +1,4 @@
-import type { ConsentKernel, ConsentState } from '@c15t/core';
+import type { ConsentKernel, ConsentState } from '@inth/sdk/engine';
 import { useContext, useEffect, StrictMode } from 'react';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

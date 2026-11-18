@@ -17,10 +17,10 @@ c15t removes the script element. By default, c15t also reloads the page.
 Copy the identification code from your Pirsch installation snippet. The helper
 passes it to the script as `data-code`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { pirsch } from '@c15t/integrations/pirsch';
+import { pirsch } from '@inth/integrations/pirsch';
 
 export const scripts = [
 	pirsch({ identificationCode: 'YOUR_IDENTIFICATION_CODE' }),

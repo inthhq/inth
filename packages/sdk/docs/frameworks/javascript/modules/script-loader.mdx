@@ -8,12 +8,12 @@ group: frameworks
 
 The script loader adds a vendor's `<script>` to the page once the script's
 category is allowed, and removes the element again when the visitor withdraws
-it. `@c15t/browser` and `createConsentRuntime` create one from their `scripts`
+it. `@inth/sdk` and `createConsentRuntime` create one from their `scripts`
 option. Create one yourself only for a kernel you built with
 `createConsentKernel`.
 
 The [scripts guide](/docs/frameworks/javascript/scripts) shows where the list
-goes in each setup. The helpers in `@c15t/integrations` return `Script` objects for
+goes in each setup. The helpers in `@inth/integrations` return `Script` objects for
 common vendors; each [integration guide](/docs/integrations/overview) covers
 one.
 
@@ -114,7 +114,7 @@ persistence, before initialization:
 `createScriptLoader({ kernel, scripts, nonce?, onDebug? })` returns the
 handle. `onDebug` receives every lifecycle step, for logging. Dispose the
 loader before the kernel. Do not attach a loader to a kernel that
-`@c15t/browser` or `createConsentRuntime` owns; each already has one.
+`@inth/sdk` or `createConsentRuntime` owns; each already has one.
 
 ## Check it works
 

@@ -1,4 +1,4 @@
-import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
+import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 

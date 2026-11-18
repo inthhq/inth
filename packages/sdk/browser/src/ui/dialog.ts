@@ -1,5 +1,5 @@
-import { resolveConsentPresentation } from '@c15t/core';
-import type { ConsentSnapshot } from '@c15t/core';
+import { resolveConsentPresentation } from '@inth/sdk-core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 
 import { classes } from '../generated/styles';
 import type { ConsentDialogOptions } from '../types';

@@ -4,7 +4,7 @@
  * notifies nobody. The kernel skips derivation for unchanged inputs; these
  * tests pin that the shortcut is never observable.
  */
-import { enTranslations } from '@c15t/translations';
+import { enTranslations } from '@inth/sdk-translations';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { createKernel as createConsentKernel } from '..';

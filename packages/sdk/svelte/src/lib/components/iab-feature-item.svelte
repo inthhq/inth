@@ -7,7 +7,7 @@
 	 * per-vendor toggles. It shows the name, the description, the
 	 * illustrations and the names of the vendors that use the feature.
 	 */
-	import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
 	import type { IABTranslations } from '../iab-translations';
 	import type { ProcessedFeature } from '../iab-types';

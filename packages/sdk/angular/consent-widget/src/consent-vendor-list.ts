@@ -10,7 +10,7 @@ import {
 	ConsentManager,
 	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
-} from '@c15t/angular';
+} from '@inth/angular';
 import {
 	PreferenceItemContent,
 	PreferenceItem,
@@ -20,10 +20,10 @@ import {
 	Switch,
 	SwitchThumb,
 	uniqueId,
-} from '@c15t/angular/primitives';
-import type { AllConsentNames, ResolvedVendor } from '@c15t/core';
-import switchStyles from '@c15t/ui/styles/components/switch';
-import vendorListStyles from '@c15t/ui/styles/components/vendor-list';
+} from '@inth/angular/primitives';
+import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
+import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 
 const DEFAULT_COPY = {
 	disabledByCategory: 'Turn on this category to choose vendors.',

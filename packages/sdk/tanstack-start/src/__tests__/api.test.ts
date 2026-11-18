@@ -1,9 +1,9 @@
 /**
- * Wiring of `@c15t/tanstack-start/api` onto the core consent route handler.
+ * Wiring of `@inth/tanstack-start/api` onto the core consent route handler.
  * The route behaviour itself is pinned once, in
  * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
  */
-import { createManifestCache } from '@c15t/core/server';
+import { createManifestCache } from '@inth/sdk/server';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../api';
@@ -137,7 +137,7 @@ describe('createConsentRoute', () => {
 		expect(response.status).toBe(201);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
-		expect(headers.get('x-c15t-proxy')).toBe('@c15t/tanstack-start');
+		expect(headers.get('x-c15t-proxy')).toBe('@inth/tanstack-start');
 		expect(headers.get('x-forwarded-host')).toBe('public.example');
 	});
 

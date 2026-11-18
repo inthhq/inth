@@ -1,7 +1,7 @@
 'use client';
 
-import { ConsentGate, useSaveConsents, useTranslations } from 'c15t/next';
-import type { AllConsentNames } from 'c15t/next';
+import { ConsentGate, useSaveConsents, useTranslations } from '@inth/nextjs';
+import type { AllConsentNames } from '@inth/nextjs';
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 

@@ -1,5 +1,5 @@
 /**
- * `@c15t/nextjs/generated-manifest` — the build-time manifest the server
+ * `@inth/nextjs/generated-manifest` — the build-time manifest the server
  * helpers fall back to.
  *
  * `withConsentManifest` writes the snapshot to
@@ -12,7 +12,7 @@
  *
  * @internal
  */
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 export const projectUrl: string | undefined = undefined;
 export const snapshot: ConsentManifest | undefined = undefined;

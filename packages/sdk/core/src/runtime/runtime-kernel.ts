@@ -7,8 +7,8 @@
  * experiment seed) applies identically on both sides.
  *
  */
-import { deepMergeTranslations } from '@c15t/translations';
-import type { I18nConfig } from '@c15t/translations';
+import { deepMergeTranslations } from '@inth/sdk-translations';
+import type { I18nConfig } from '@inth/sdk-translations';
 
 import type { AllConsentNames } from '../consent/consent-types';
 import { createKernel } from '../kernel';
@@ -145,16 +145,16 @@ declare const process: { env: { NODE_ENV?: string } };
  * the component or function a developer would look for in their code.
  */
 const runtimeOwner = function runtimeOwner(pkg: string): string {
-	if (pkg === '@c15t/core') {
+	if (pkg === '@inth/sdk/engine') {
 		return 'createConsentRuntime()';
 	}
-	if (pkg.startsWith('@c15t/browser')) {
+	if (pkg.startsWith('@inth/sdk')) {
 		return 'init()';
 	}
-	if (pkg === '@c15t/vue') {
+	if (pkg === '@inth/vue') {
 		return 'the c15tVue plugin';
 	}
-	return pkg === '@c15t/nextjs' || pkg === '@c15t/tanstack-start'
+	return pkg === '@inth/nextjs' || pkg === '@inth/tanstack-start'
 		? 'ConsentRoot'
 		: 'ConsentProvider';
 };
@@ -196,7 +196,7 @@ export const selectTransportFactory = function selectTransportFactory(
 const missingBackendError = function missingBackendError(
 	pkg: string | undefined
 ): Error {
-	let caller = pkg ?? '@c15t/core';
+	let caller = pkg ?? '@inth/sdk/engine';
 	let hint = '';
 	try {
 		if (process.env.NODE_ENV !== 'production') {

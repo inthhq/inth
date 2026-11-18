@@ -3,8 +3,8 @@ import type {
 	ConsentKernel,
 	ConsentPresentation,
 	ConsentSnapshot,
-} from '@c15t/core';
-import type { ConsentRuntime, StreamedPrefetch } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+import type { ConsentRuntime, StreamedPrefetch } from '@inth/sdk/runtime';
 import { createContext } from 'react';
 
 /**

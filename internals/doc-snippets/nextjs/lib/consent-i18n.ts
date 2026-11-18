@@ -1,5 +1,5 @@
 // #region docs:i18n
-import type { ConsentProviderOptions } from 'c15t/next';
+import type { ConsentProviderOptions } from '@inth/nextjs';
 
 // Keys you leave out keep the copy from your Inth project.
 export const i18n = {

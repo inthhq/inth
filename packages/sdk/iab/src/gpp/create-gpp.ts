@@ -8,8 +8,8 @@ import type {
 	AllConsentNames,
 	ConsentKernel,
 	ConsentSnapshot,
-} from '@c15t/core';
-import type { ConsentRuntimeGPPFactoryOptions } from '@c15t/core/runtime';
+} from '@inth/sdk-core';
+import type { ConsentRuntimeGPPFactoryOptions } from '@inth/sdk-core/runtime';
 
 import { isValidCmpId, MAX_CMP_ID } from '../tcf/cmp-id';
 import { createGPPCmpApi } from './cmp-api';
@@ -100,7 +100,7 @@ export interface GPPRuntimeDependencies {
 const assertGPPCmpId = function assertGPPCmpId(value: number): number {
 	if (value !== UNREGISTERED_CMP_ID && !isValidCmpId(value)) {
 		throw new Error(
-			`@c15t/iab/gpp: cmpId must be 1 (no registered CMP ID) or a registered CMP ID up to ${MAX_CMP_ID}. Received: ${String(value)}.`
+			`@inth/sdk/iab/gpp: cmpId must be 1 (no registered CMP ID) or a registered CMP ID up to ${MAX_CMP_ID}. Received: ${String(value)}.`
 		);
 	}
 	return value;
@@ -338,7 +338,7 @@ export const createGPPRuntime = function createGPPRuntime(
  *
  * @example
  * ```ts
- * import { createGPP } from '@c15t/iab/gpp';
+ * import { createGPP } from '@inth/sdk-iab/gpp';
  *
  * const gpp = createGPP({ kernel: runtime.kernel });
  * // later

@@ -8,14 +8,14 @@ group: frameworks
 
 The Vue plugin runs in the browser only. The `mode` option of
 `app.use(c15tVue, { mode })` decides where each visitor's policy comes from.
-Import the mode from `c15t/vue/vue-plugin`:
+Import the mode from `@inth/vue/vue-plugin`:
 
 | Your app | `mode` |
 | --- | --- |
 | Vue with Vite, served as static files | [`hosted()`](#ask-the-backend-for-each-visitors-policy), as in the [quickstart](/docs/frameworks/vue/quickstart). The backend resolves each visitor's policy from their location. |
 | A policy without location rules, or a page that already knows the visitor's location | [`manifest()`](#bundle-the-manifest-during-builds). The build bundles the policy and the browser resolves it. |
 | Browser resolution, with policy edits that apply without a rebuild | [`manifest({ source: 'runtime' })`](#fetch-the-manifest-at-runtime) |
-| Tests with no backend | [`testing()`](#test-without-a-backend) from `c15t/vue/testing`. Throws in production builds. |
+| Tests with no backend | [`testing()`](#test-without-a-backend) from `@inth/vue/testing`. Throws in production builds. |
 | Vue rendered on the server without Nuxt | Any of the above; the banner mounts after hydration. For the banner in server HTML, [use Nuxt](#server-rendering-without-nuxt). |
 
 `mode` is required. Without it, `app.use()` throws and asks for one. Each
@@ -32,7 +32,7 @@ resolves the current policy and returns the text in the visitor's language:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { c15tVue, hosted } from 'c15t/vue/vue-plugin';
+import { c15tVue, hosted } from '@inth/vue/vue-plugin';
 
 app.use(c15tVue, { mode: hosted(), scripts });
 ```
@@ -101,7 +101,7 @@ policy from it, so policy edits apply without a rebuild:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
+import { c15tVue, manifest } from '@inth/vue/vue-plugin';
 
 app.use(c15tVue, { mode: manifest({ source: 'runtime' }), scripts });
 ```
@@ -124,15 +124,15 @@ still go to the backend.
 
 ## Test without a backend
 
-`testing()` from `c15t/vue/testing` resolves policy rules in the browser and
+`testing()` from `@inth/vue/testing` resolves policy rules in the browser and
 stores choices in the visitor's cookie and localStorage. It is for tests only
 and throws in production builds.
 
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { testing } from 'c15t/vue/testing';
-import { c15tVue } from 'c15t/vue/vue-plugin';
+import { testing } from '@inth/vue/testing';
+import { c15tVue } from '@inth/vue/vue-plugin';
 
 app.use(c15tVue, { mode: testing(), scripts });
 ```
@@ -148,14 +148,14 @@ server-rendered page renders without the banner, and the banner appears after
 hydration.
 
 Your theme tokens can still be in the first HTML. `generateTokensCSS()` from
-`c15t/vue/vue-plugin` returns the CSS the plugin applies. Put it in a
+`@inth/vue/vue-plugin` returns the CSS the plugin applies. Put it in a
 `<style id="c15t-css-vars">` element in your server HTML, and the plugin
 reuses that element in the browser:
 
 {/* example: fragment */}
 
 ```ts
-import { generateTokensCSS } from 'c15t/vue/vue-plugin';
+import { generateTokensCSS } from '@inth/vue/vue-plugin';
 
 const tokensStyle = `<style id="c15t-css-vars">${generateTokensCSS(tokens)}</style>`;
 ```

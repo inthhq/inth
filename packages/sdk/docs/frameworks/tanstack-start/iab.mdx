@@ -1,6 +1,6 @@
 ---
 title: IAB TCF
-description: Show the IAB TCF banner and dialog in a TanStack Start app for visitors whose policy uses the IAB model, with c15t/react/iab inside ConsentRoot.
+description: Show the IAB TCF banner and dialog in a TanStack Start app for visitors whose policy uses the IAB model, with @inth/react/iab inside ConsentRoot.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ You also need a CMP ID, which IAB Europe assigns when a company registers as a
 CMP at [register.consensu.org/CMP](https://register.consensu.org/CMP). Every TC
 String names the CMP that wrote it, so do not use an ID you did not register.
 
-The IAB components ship with the `c15t` package; no extra install is needed.
+The IAB components ship with `@inth/tanstack-start`; no extra install is needed.
 With the quickstart's root loader, the server resolves IAB visitors like any
 other visitor, and the policy manifest carries the vendor list reference.
 
@@ -44,8 +44,8 @@ components use those stylesheets:
 {/* example: fragment */}
 
 ```tsx title="src/routes/__root.tsx (partial)"
-import consentCss from 'c15t/tanstack-start/styles.css?url';
-import iabCss from 'c15t/tanstack-start/iab/styles.css?url';
+import consentCss from '@inth/tanstack-start/styles.css?url';
+import iabCss from '@inth/tanstack-start/iab/styles.css?url';
 
 // In head().links:
 { href: consentCss, rel: 'stylesheet' },

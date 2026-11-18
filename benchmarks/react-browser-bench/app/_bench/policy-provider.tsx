@@ -1,16 +1,16 @@
 'use client';
 
 import type { PolicyBenchFixtureName } from '@c15t/benchmarking/policy-fixtures';
-import { createConsentKernel, createHostedTransport } from '@c15t/core';
-import type { InitResponse } from '@c15t/core';
-import { createPersistence } from '@c15t/core/modules/persistence';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentProvider,
 	hosted,
-} from '@c15t/react';
-import type { ConsentProviderOptions, WithProjectUrl } from '@c15t/react';
+} from '@inth/react';
+import type { ConsentProviderOptions, WithProjectUrl } from '@inth/react';
+import { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
+import type { InitResponse } from '@inth/sdk/engine';
+import { createPersistence } from '@inth/sdk/modules/persistence';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 

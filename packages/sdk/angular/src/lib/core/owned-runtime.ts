@@ -6,22 +6,22 @@
  * @internal
  */
 
-import { createIframeBlocker } from '@c15t/core/modules/iframe-blocker';
-import { createPersistence } from '@c15t/core/modules/persistence';
-import { createWindowDebug } from '@c15t/core/modules/window-debug';
+import { createIframeBlocker } from '@inth/sdk/modules/iframe-blocker';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { createWindowDebug } from '@inth/sdk/modules/window-debug';
 import {
 	mountRuntimeIAB,
 	onDemandRuntimeModules,
-} from '@c15t/core/runtime/on-demand';
+} from '@inth/sdk/runtime/on-demand';
 import {
 	createConsentProviderRuntime,
 	defaultTranslationConfig,
 	watchRevocationReload,
-} from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/provider';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
-} from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/provider';
 
 import { DEFAULT_TRANSLATIONS_KEY } from './translation-defaults';
 

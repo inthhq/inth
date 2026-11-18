@@ -18,10 +18,10 @@ reloads the page.
 
 Copy your TikTok Pixel ID. The helper adds it to the loader URL as `sdkid`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { tiktokPixel } from '@c15t/integrations/tiktok-pixel';
+import { tiktokPixel } from '@inth/integrations/tiktok-pixel';
 
 export const scripts = [tiktokPixel({ pixelId: 'YOUR_PIXEL_ID' })];
 ```
@@ -61,7 +61,7 @@ export function trackPurchase(marketingAllowed: boolean, value: number) {
 ```
 
 Pass the current marketing permission from your framework, for example
-`useConsent('marketing')` in React. `@c15t/integrations/tiktok-pixel` exports no
+`useConsent('marketing')` in React. `@inth/integrations/tiktok-pixel` exports no
 event wrapper.
 
 ## Verify the TikTok Pixel

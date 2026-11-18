@@ -16,8 +16,8 @@ import {
 	createConsentManifestPolicyPack,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 /** Fixture endpoints the runner counts executions for. */
 export type BenchConsentFixtureEndpoint = 'init' | 'manifest' | 'subjects';

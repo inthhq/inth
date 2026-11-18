@@ -1,6 +1,6 @@
 // #region docs:react-island title="src/components/consent-status.tsx"
-import { getConsentClient, openDialog } from 'c15t/astro/client';
-import { ConsentProvider, useConsent } from 'c15t/react';
+import { getConsentClient, openDialog } from '@inth/astro/client';
+import { ConsentProvider, useConsent } from '@inth/react';
 import { useEffect, useState } from 'react';
 
 const MeasurementStatus = () => {

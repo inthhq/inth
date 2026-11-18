@@ -1,8 +1,8 @@
 "use client"
 
 import type { ReactNode } from "react"
-import type { AllConsentNames } from "c15t/react"
-import { useConsentGate } from "c15t/react/headless"
+import type { AllConsentNames } from "@inth/react"
+import { useConsentGate } from "@inth/react/headless"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"

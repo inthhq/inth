@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Collapsible, collapsibleVariants, getOpenState } from '@c15t/svelte';
+	import { Collapsible, collapsibleVariants, getOpenState } from '@inth/svelte';
 
 	interface Props {
 		title?: string;

@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/testing` and how a runtime picks its transport from
+ * `@inth/sdk/testing` and how a runtime picks its transport from
  * `projectUrl` and `mode`.
  *
  * @vitest-environment jsdom
@@ -150,7 +150,7 @@ describe('testing()', () => {
 		vi.stubEnv('NODE_ENV', 'production');
 
 		expect(() => runtimeFor({ country: 'DE' })).toThrow(
-			'testing() from @c15t/core/testing is for tests and does not run in production. Set `projectUrl` on the provider and remove `mode: testing()`.'
+			'testing() from @inth/sdk/testing is for tests and does not run in production. Set `projectUrl` on the provider and remove `mode: testing()`.'
 		);
 	});
 

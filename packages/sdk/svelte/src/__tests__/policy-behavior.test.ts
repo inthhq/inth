@@ -1,9 +1,9 @@
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
 import {
 	createPersistence,
 	readStoredRecords,
-} from '@c15t/core/modules/persistence';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+} from '@inth/sdk/modules/persistence';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
 

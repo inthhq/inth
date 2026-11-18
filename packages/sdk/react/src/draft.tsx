@@ -5,12 +5,12 @@ import type {
 	ConsentKernel,
 	ConsentState,
 	SaveResult,
-} from '@c15t/core';
-import { createPreferenceDraft } from '@c15t/core/preference-draft';
+} from '@inth/sdk/engine';
+import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type {
 	PreferenceDraft,
 	PreferenceDraftState,
-} from '@c15t/core/preference-draft';
+} from '@inth/sdk/preference-draft';
 import {
 	useContext,
 	useEffect,

@@ -7,7 +7,7 @@ import {
 	has as evaluateHas,
 	resolveConsentPresentation,
 	vendorsListedUnder,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	ActiveUI,
 	AllConsentNames,
@@ -25,17 +25,17 @@ import type {
 	Model,
 	ResolvedVendor,
 	TranslationConfig,
-} from '@c15t/core';
-import type { createPreferenceDraft } from '@c15t/core/preference-draft';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+import type { createPreferenceDraft } from '@inth/sdk/preference-draft';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import {
 	hasConsentPreferences,
 	hasConsentUI,
 	isSnapshotVendorAllowed,
 	saveConsentSurface,
 	showConsentSurface,
-} from '@c15t/core/surface-actions';
-import type { Theme, UIOptions } from '@c15t/ui/theme';
+} from '@inth/sdk/surface-actions';
+import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { getContext, setContext } from 'svelte';
 
 import type { DialogPreload } from './dialog-warming';
@@ -554,7 +554,7 @@ export const getConsentContext =
 		);
 		if (!context) {
 			throw new Error(
-				'c15t: no v3 consent context. Wrap your app with <ConsentProvider options={...}> from c15t/svelte.'
+				'c15t: no v3 consent context. Wrap your app with <ConsentProvider options={...}> from @inth/svelte.'
 			);
 		}
 		return context;

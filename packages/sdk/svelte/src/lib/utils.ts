@@ -8,16 +8,16 @@ import type {
 	Theme,
 	ThemeCSSVariables,
 	ThemeValue,
-} from '@c15t/ui/theme';
+} from '@inth/sdk/ui/theme';
 import {
 	defaultTheme as baseDefaultTheme,
 	generateThemeCSS as baseGenerateThemeCSS,
 	themeToVars as baseThemeToVars,
-} from '@c15t/ui/theme';
+} from '@inth/sdk/ui/theme';
 import {
 	resolveStyles as baseResolveStyles,
 	toStyleAttributeValue,
-} from '@c15t/ui/utils';
+} from '@inth/sdk/ui/utils';
 
 /**
  * Default design tokens for the theme system.

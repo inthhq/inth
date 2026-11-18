@@ -7,12 +7,12 @@
  *
  * Arms (see fixture/arms):
  * - baseline: no consent library.
- * - v2: `@c15t/nextjs` 2.x, the v2 Next.js quickstart (client provider).
- * - v3: `c15t/next`, the v3 App Router guide (server `resolveConsent` in
+ * - v2: `@inth/nextjs` 2.x, the v2 Next.js quickstart (client provider).
+ * - v3: `@inth/nextjs`, the v3 App Router guide (server `resolveConsent` in
  *   Suspense, `ConsentRoot`, automatic component styles).
- * - v3-react: `c15t/react` umbrella `ConsentProvider`, as the c15t docs
+ * - v3-react: `@inth/react` umbrella `ConsentProvider`, as the c15t docs
  *   site uses it.
- * - v3-split: the same tree as v3-react through split `c15t/react/*` entries.
+ * - v3-split: the same tree as v3-react through split `@inth/react/*` entries.
  *
  * Every arm installs from npm or packed tarballs into its own directory
  * outside the workspace, so the `exports` maps and `dist/` are what a user
@@ -255,7 +255,7 @@ const prepareArm = function prepareArm(
 	}
 	let libraryDependencies: Record<string, string> = {};
 	if (definition.library === 'v2') {
-		libraryDependencies = { '@c15t/nextjs': v2Version };
+		libraryDependencies = { '@inth/nextjs': v2Version };
 	} else if (definition.library === 'v3' && v3) {
 		libraryDependencies = v3.dependencies;
 	}
@@ -505,9 +505,9 @@ const main = async function main() {
 					name,
 					routes,
 					versions: {
-						'@c15t/core': installedVersion(armDir, '@c15t/core'),
-						'@c15t/nextjs': installedVersion(armDir, '@c15t/nextjs'),
-						'@c15t/react': installedVersion(armDir, '@c15t/react'),
+						'@inth/nextjs': installedVersion(armDir, '@inth/nextjs'),
+						'@inth/react': installedVersion(armDir, '@inth/react'),
+						'@inth/sdk': installedVersion(armDir, '@inth/sdk'),
 						c15t: installedVersion(armDir, 'c15t'),
 						next: installedVersion(armDir, 'next'),
 					},

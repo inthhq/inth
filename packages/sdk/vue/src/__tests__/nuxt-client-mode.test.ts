@@ -1,10 +1,10 @@
-import type { ConsentMode } from '@c15t/core/modes';
+import type { ConsentMode } from '@inth/sdk/modes';
 /**
  * The mode the Nuxt plugin hands the browser for
  * `manifest({ resolve: 'browser' })`.
  */
-import { clientMode } from '@c15t/core/runtime/client-mode';
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import { clientMode } from '@inth/sdk/runtime/client-mode';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Nuxt supplies this virtual module; importing the plugin only needs `defineNuxtPlugin`.

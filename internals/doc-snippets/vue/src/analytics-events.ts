@@ -1,5 +1,5 @@
 // #region docs:analytics-events title="src/analytics-events.ts"
-import { useEventDispatcher } from 'c15t/vue/vue-plugin';
+import { useEventDispatcher } from '@inth/vue/vue-plugin';
 import { watch } from 'vue';
 
 /**

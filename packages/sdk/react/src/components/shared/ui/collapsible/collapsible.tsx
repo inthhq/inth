@@ -3,9 +3,9 @@
 import {
 	getCollapsibleState,
 	toggleCollapsibleValue,
-} from '@c15t/ui/primitives/collapsible';
-import { getDataDisabled } from '@c15t/ui/primitives/data-state';
-import styles from '@c15t/ui/styles/components/collapsible';
+} from '@inth/sdk/ui/primitives/collapsible';
+import { getDataDisabled } from '@inth/sdk/ui/primitives/data-state';
+import styles from '@inth/sdk/ui/styles/components/collapsible';
 import {
 	createContext,
 	forwardRef as createForwardRef,

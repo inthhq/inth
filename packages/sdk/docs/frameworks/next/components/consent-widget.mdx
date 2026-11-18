@@ -37,7 +37,7 @@ export default function PrivacyPage() {
 ```tsx title="components/cookie-preferences.tsx"
 'use client';
 
-import { ConsentWidget } from 'c15t/next';
+import { ConsentWidget } from '@inth/nextjs';
 
 export function CookiePreferences() {
 	return <ConsentWidget />;
@@ -61,13 +61,13 @@ provider, and it does not open or close the banner or dialog by itself.
 <import src="../../../shared/react/components/consent-widget.mdx#behavior" />
 
 The `useConsentDraft` hook and `ConsentDraftProvider` component import from
-`c15t/next`. Use them in Client Components.
+`@inth/nextjs`. Use them in Client Components.
 
 <import src="../../../shared/react/components/consent-widget.mdx#accessibility" />
 
 <import src="../../../shared/react/components/consent-widget.mdx#composition" />
 
-The compound parts import from `c15t/next` as properties of `ConsentWidget`.
+The compound parts import from `@inth/nextjs` as properties of `ConsentWidget`.
 Server Components cannot render them: keep the composition in a file with
 `'use client'`. See [Customize](/docs/frameworks/next/customize) for slots and tokens.
 

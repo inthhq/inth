@@ -1,7 +1,7 @@
 import { MINIMAL_GVL } from '@c15t/conformance';
-import type { ConsentKernel } from '@c15t/core';
-import type { GlobalVendorList } from '@c15t/schema/types';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import type { GlobalVendorList } from '@inth/sdk/schema/types';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount, tick, unmount } from 'svelte';
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
 

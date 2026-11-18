@@ -22,7 +22,7 @@ The feature section follows the theme's spacing and typography tokens.
 Its disclosure arrows are decorative and stay out of the accessibility tree.
 
 A custom preference UI gets the same rows from
-`resolveIABDialogDisplayModel` in `@c15t/iab/headless`. `essentialRows` holds
+`resolveIABDialogDisplayModel` in `@inth/sdk/iab/headless`. `essentialRows` holds
 the special purposes only. `featureRows` holds the features, with
 `locked: false` and `toggle: 'none'`, so render them without a control.
 `featuresStandardText` is the standard text, or `null` when you should use the
@@ -32,7 +32,7 @@ Each vendor's privacy policy and legitimate interest links come from its
 `urls[]` entry in the Global Vendor List. The stock preference centres pick
 the entry for the language the banner shows, then English. A custom UI gets
 the same links from `resolveIABVendorUrls(vendor, language)` in
-`@c15t/iab/headless`, or from `policyUrl` and `legitimateInterestUrl` on the
+`@inth/sdk/iab/headless`, or from `policyUrl` and `legitimateInterestUrl` on the
 vendors `processGVLForDialog` returns when you pass it `language`. Vendor lists
 older than GVL v3 have a single `policyUrl` field, which c15t still reads.
 

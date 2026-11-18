@@ -32,10 +32,10 @@ export const toFactoryOptions = function toFactoryOptions(
 	};
 };
 
-/** `init()` from `@c15t/browser`, with `testing()`. */
+/** `init()` from `@inth/sdk`, with `testing()`. */
 export const init = (options?: TestingScriptTagOptions): ConsentClient =>
 	initEntry(toFactoryOptions(options));
 
-/** `init()` from `@c15t/browser/iab`, with `testing()`. */
+/** `init()` from `@inth/sdk/iab-client`, with `testing()`. */
 export const initIAB = (options?: TestingScriptTagOptions): ConsentClient =>
 	initIABEntry(toFactoryOptions(options));

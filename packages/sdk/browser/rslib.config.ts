@@ -13,8 +13,8 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  * ESM entries and standalone script builds from one source tree:
  *
  * - `dist/index.js` + `dist/headless.js` — ESM for bundler users, with the
- *   workspace packages left external so they dedupe against `@c15t/core`.
- * - `dist/postcss-tailwind3.js` — a re-export of `@c15t/ui/postcss-tailwind3`
+ *   workspace packages left external so they dedupe against `@inth/sdk-core`.
+ * - `dist/postcss-tailwind3.js` — a re-export of `@inth/sdk-ui/postcss-tailwind3`
  *   for Tailwind 3 PostCSS configs.
  * - `dist/c15t.js` — the hosted script tag's init script: it starts
  *   `/init`, shows the banner with only the banner's styles, records an
@@ -50,7 +50,7 @@ const INIT_SNAPSHOT_TRANSLATIONS = fileURLToPath(
 	new URL('./src/init/snapshot-translations.ts', import.meta.url)
 );
 
-/** Script builds allowed to contain `@c15t/iab` code. */
+/** Script builds allowed to contain `@inth/sdk-iab` code. */
 const IAB_BUNDLES = new Set(['c15t.iab', 'c15t.gpp']);
 
 /** Script builds that run hosted mode only. */

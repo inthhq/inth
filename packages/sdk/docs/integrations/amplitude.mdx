@@ -24,10 +24,10 @@ reloads the page.
 Use your Amplitude project API key. The `amplitude` helper initializes Browser
 SDK 2 for you, so remove any existing Amplitude snippet or `init` call.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { amplitude } from '@c15t/integrations/amplitude';
+import { amplitude } from '@inth/integrations/amplitude';
 
 export const scripts = [amplitude({ apiKey: 'YOUR_PROJECT_API_KEY' })];
 ```

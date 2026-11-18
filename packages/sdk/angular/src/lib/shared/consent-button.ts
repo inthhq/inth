@@ -9,7 +9,7 @@ import {
 	input,
 	PLATFORM_ID,
 } from '@angular/core';
-import buttonStyles from '@c15t/ui/styles/components/button';
+import buttonStyles from '@inth/sdk/ui/styles/components/button';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';

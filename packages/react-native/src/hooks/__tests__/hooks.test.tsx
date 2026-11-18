@@ -6,7 +6,7 @@
  * counts the times React committed it, which is the thing under test.
  */
 
-import type { ConsentState } from '@c15t/core';
+import type { ConsentState } from '@inth/sdk/engine';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';

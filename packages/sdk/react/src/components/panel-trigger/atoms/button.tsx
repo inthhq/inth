@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import styles from '@c15t/ui/styles/components/consent-dialog-trigger';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { forwardRef as createForwardRef } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent, ReactNode } from 'react';
 

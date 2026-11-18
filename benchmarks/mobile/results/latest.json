@@ -166,7 +166,7 @@
 			"max": 40,
 			"unit": "ms",
 			"source": "allowance",
-			"note": "Built entry to a readable snapshot, in a process that has never seen c15t: module evaluation plus the first handshake. Measured 10.9 ms on the development machine, 10.7 ms of it evaluating the entry and what it links. It read 31-44 ms while the built barrel pulled the @c15t/core graph into every app, which is the whole argument for the js_closure_bytes ceiling above. 40 ms is a blow-up guard, not a promise: it allows a runner three times as slow, and Node's specifier resolution charges c15t for work a bundled app does not do. It is deliberately not the contract's 10 ms, which is a device-profile number."
+			"note": "Built entry to a readable snapshot, in a process that has never seen c15t: module evaluation plus the first handshake. Measured 10.9 ms on the development machine, 10.7 ms of it evaluating the entry and what it links. It read 31-44 ms while the built barrel pulled the @inth/sdk/engine graph into every app, which is the whole argument for the js_closure_bytes ceiling above. 40 ms is a blow-up guard, not a promise: it allows a runner three times as slow, and Node's specifier resolution charges c15t for work a bundled app does not do. It is deliberately not the contract's 10 ms, which is a device-profile number."
 		},
 		"cached_consent_available_ms": {
 			"max": 3,
@@ -202,7 +202,7 @@
 			"max": 131072,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Unpacked JavaScript an app carries because c15t is installed: every module reachable from the built entry. Measured 74,507 B over 48 modules, 46 of them this package and two the consent-category vocabulary it reads through @c15t/core/consent-categories. 128 KiB is the ceiling. It allows the boundary layer to grow by half again, and it fails the moment a runtime import to the @c15t/core barrel comes back: that edge measured 389,639 B over 131 modules, because behind two string arrays sits the kernel, the schema, and the translations."
+			"note": "Unpacked JavaScript an app carries because c15t is installed: every module reachable from the built entry. Measured 74,507 B over 48 modules, 46 of them this package and two the consent-category vocabulary it reads through @inth/sdk/consent-categories. 128 KiB is the ceiling. It allows the boundary layer to grow by half again, and it fails the moment a runtime import to the @inth/sdk/engine barrel comes back: that edge measured 389,639 B over 131 modules, because behind two string arrays sits the kernel, the schema, and the translations."
 		},
 		"js_closure_gzip_bytes": {
 			"max": 24576,

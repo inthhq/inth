@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/modules/network-blocker`
+ * `@inth/sdk/modules/network-blocker`
  *
  * Kernel-consuming network blocker. Patches `window.fetch` and
  * `XMLHttpRequest.prototype.{open, send}` to intercept requests and

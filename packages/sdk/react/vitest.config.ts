@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 /** `vitest run` is run mode; a bare `vitest` or `--watch` is watch mode. */
 const isVitestWatchMode = function isVitestWatchMode(): boolean {
 	const args = process.argv.slice(2);
@@ -32,7 +34,7 @@ export default mergeConfig(
 				'@rspack/resolver-binding-wasm32-wasi',
 			],
 		},
-		plugins: [react()],
+		plugins: [react(), privateSdkNames(import.meta.dirname)],
 		resolve: {
 			alias: Object.fromEntries([
 				['~', resolve(__dirname, './src')],
@@ -44,171 +46,171 @@ export default mergeConfig(
 					resolve(__dirname, './src/components/prompt/index.ts'),
 				],
 				// The showcase uses the React hooks re-exported by the Next adapter.
-				['c15t/next', resolve(__dirname, './src/index.ts')],
+				['@inth/nextjs', resolve(__dirname, './src/index.ts')],
 				// Astro's source island must share this test suite's React contexts
 				// and coverage, rather than importing a second copy from dist.
-				['@c15t/react/iab', resolve(__dirname, './src/iab.ts')],
-				['@c15t/react/context', resolve(__dirname, './src/context.ts')],
-				['@c15t/react', resolve(__dirname, './src/index.ts')],
+				['@inth/react/iab', resolve(__dirname, './src/iab.ts')],
+				['@inth/react/context', resolve(__dirname, './src/context.ts')],
+				['@inth/react', resolve(__dirname, './src/index.ts')],
 				// Resolve core package to source so Vite can handle its dynamic
 				// imports natively. rslib emits webpack-style chunks that Vite's
 				// browser bundler cannot analyse.
 				[
-					'@c15t/core/modules/clear-on-revocation',
+					'@inth/sdk/modules/clear-on-revocation',
 					resolve(
 						__dirname,
 						'../core/src/modules/clear-on-revocation/index.ts'
 					),
 				],
 				[
-					'@c15t/core/modules/script-loader',
+					'@inth/sdk/modules/script-loader',
 					resolve(__dirname, '../core/src/modules/script-loader/index.ts'),
 				],
 				[
-					'@c15t/core/modules/network-blocker',
+					'@inth/sdk/modules/network-blocker',
 					resolve(__dirname, '../core/src/modules/network-blocker/index.ts'),
 				],
 				[
-					'@c15t/core/modules/network-hold',
+					'@inth/sdk/modules/network-hold',
 					resolve(__dirname, '../core/src/modules/network-blocker/hold.ts'),
 				],
 				[
-					'@c15t/core/modules/iframe-blocker',
+					'@inth/sdk/modules/iframe-blocker',
 					resolve(__dirname, '../core/src/modules/iframe-blocker/index.ts'),
 				],
 				[
-					'@c15t/core/modules/persistence',
+					'@inth/sdk/modules/persistence',
 					resolve(__dirname, '../core/src/modules/persistence/index.ts'),
 				],
 				[
-					'@c15t/core/modules/window-debug',
+					'@inth/sdk/modules/window-debug',
 					resolve(__dirname, '../core/src/modules/window-debug/index.ts'),
 				],
-				['@c15t/core/events', resolve(__dirname, '../core/src/events.ts')],
+				['@inth/sdk/events', resolve(__dirname, '../core/src/events.ts')],
 				[
-					'@c15t/core/runtime/controls',
+					'@inth/sdk/runtime/controls',
 					resolve(__dirname, '../core/src/runtime/controls.ts'),
 				],
 				[
-					'@c15t/core/preference-draft',
+					'@inth/sdk/preference-draft',
 					resolve(__dirname, '../core/src/preference-draft/index.ts'),
 				],
 				[
-					'@c15t/core/runtime/provider',
+					'@inth/sdk/runtime/provider',
 					resolve(__dirname, '../core/src/runtime/provider.ts'),
 				],
 				[
-					'@c15t/core/runtime/deferred-boot',
+					'@inth/sdk/runtime/deferred-boot',
 					resolve(__dirname, '../core/src/runtime/deferred-boot.ts'),
 				],
 				[
-					'@c15t/core/runtime/deferred-snapshot',
+					'@inth/sdk/runtime/deferred-snapshot',
 					resolve(__dirname, '../core/src/runtime/deferred-snapshot.ts'),
 				],
 				[
-					'@c15t/core/transports/hosted-factory',
+					'@inth/sdk/transports/hosted-factory',
 					resolve(__dirname, '../core/src/transports/hosted-factory.ts'),
 				],
 				[
-					'@c15t/core/runtime',
+					'@inth/sdk/runtime',
 					resolve(__dirname, '../core/src/runtime/index.ts'),
 				],
+				['@inth/sdk/server', resolve(__dirname, '../core/src/server/index.ts')],
 				[
-					'@c15t/core/server',
-					resolve(__dirname, '../core/src/server/index.ts'),
-				],
-				[
-					'@c15t/core/surface-actions/early-commit',
+					'@inth/sdk/surface-actions/early-commit',
 					resolve(__dirname, '../core/src/surface-actions/early-commit.ts'),
 				],
 				[
-					'@c15t/core/surface-actions/instant-commit',
+					'@inth/sdk/surface-actions/instant-commit',
 					resolve(__dirname, '../core/src/surface-actions/instant-commit.ts'),
 				],
 				[
-					'@c15t/core/surface-actions/plain-scripts',
+					'@inth/sdk/surface-actions/plain-scripts',
 					resolve(__dirname, '../core/src/surface-actions/plain-scripts.ts'),
 				],
 				[
-					'@c15t/core/surface-actions',
+					'@inth/sdk/surface-actions',
 					resolve(__dirname, '../core/src/surface-actions/index.ts'),
 				],
+				['@inth/sdk/generated', resolve(__dirname, '../core/src/generated.ts')],
 				[
-					'@c15t/core/generated',
-					resolve(__dirname, '../core/src/generated.ts'),
-				],
-				[
-					'@c15t/core/transports/manifest-browser',
+					'@inth/sdk/transports/manifest-browser',
 					resolve(__dirname, '../core/src/transports/manifest-browser.ts'),
 				],
-				// After the `@c15t/core/transports/*` entries above: aliases match
+				// After the `@inth/sdk/transports/*` entries above: aliases match
 				// by prefix, in order.
 				[
-					'@c15t/core/transports',
+					'@inth/sdk/transports',
 					resolve(__dirname, '../core/src/transports/index.ts'),
 				],
 				[
-					'@c15t/core/iab-support',
+					'@inth/sdk/iab-support',
 					resolve(__dirname, '../core/src/iab-support.ts'),
 				],
-				['@c15t/core/testing', resolve(__dirname, '../core/src/testing.ts')],
-				['@c15t/core/modes', resolve(__dirname, '../core/src/modes.ts')],
-				['@c15t/core', resolve(__dirname, '../core/src/index.ts')],
-				['@c15t/schema/types', resolve(__dirname, '../schema/src/types.ts')],
+				['@inth/sdk/testing', resolve(__dirname, '../core/src/testing.ts')],
+				['@inth/sdk/modes', resolve(__dirname, '../core/src/modes.ts')],
+				['@inth/sdk/engine', resolve(__dirname, '../core/src/index.ts')],
 				[
-					'@c15t/schema/config',
+					'@inth/sdk/schema/types',
+					resolve(__dirname, '../schema/src/types.ts'),
+				],
+				[
+					'@inth/sdk/schema/config',
 					resolve(__dirname, '../schema/src/config/index.ts'),
 				],
 				[
-					'@c15t/schema/canonical-order',
+					'@inth/sdk/schema/canonical-order',
 					resolve(__dirname, '../schema/src/shared/canonical-order.ts'),
 				],
-				['@c15t/schema', resolve(__dirname, '../schema/src/index.ts')],
+				['@inth/sdk/schema', resolve(__dirname, '../schema/src/index.ts')],
 				[
-					'@c15t/translations/all',
+					'@inth/sdk/translations/all',
 					resolve(__dirname, '../translations/src/all.ts'),
 				],
 				[
-					'@c15t/translations/en',
+					'@inth/sdk/translations/en',
 					resolve(__dirname, '../translations/src/translations/en.ts'),
 				],
 				[
-					'@c15t/translations',
+					'@inth/sdk/translations',
 					resolve(__dirname, '../translations/src/index.ts'),
 				],
 				[
-					'@c15t/ui/primitives/collapsible',
+					'@inth/sdk/ui/primitives/collapsible',
 					resolve(__dirname, '../ui/src/primitives/collapsible/index.ts'),
 				],
 				[
-					'@c15t/ui/primitives/preference-item',
+					'@inth/sdk/ui/primitives/preference-item',
 					resolve(__dirname, '../ui/src/primitives/preference-item/index.ts'),
 				],
 				[
-					'@c15t/ui/primitives/tabs',
+					'@inth/sdk/ui/primitives/tabs',
 					resolve(__dirname, '../ui/src/primitives/tabs/index.ts'),
 				],
 				[
-					'@c15t/ui/styles/primitives/collapsible',
+					'@inth/sdk/ui/styles/primitives/collapsible',
 					resolve(__dirname, '../ui/src/styles/primitives/collapsible.ts'),
 				],
 				[
-					'@c15t/ui/styles/primitives/preference-item',
+					'@inth/sdk/ui/styles/primitives/preference-item',
 					resolve(__dirname, '../ui/src/styles/primitives/preference-item.ts'),
 				],
 				[
-					'@c15t/ui/styles/primitives/tabs',
+					'@inth/sdk/ui/styles/primitives/tabs',
 					resolve(__dirname, '../ui/src/styles/primitives/tabs.ts'),
 				],
-				// @c15t/iab depends on @iabtechlabtcf/core which is only
+				// @inth/sdk/iab depends on @iabtechlabtcf/core which is only
 				// installed in the iab package's node_modules.
 				[
 					'@iabtechlabtcf/core',
 					resolve(__dirname, '../iab/node_modules/@iabtechlabtcf/core'),
 				],
-				['@c15t/iab/headless', resolve(__dirname, '../iab/src/headless.ts')],
-				['@c15t/iab/gpp', resolve(__dirname, '../iab/src/gpp.ts')],
-				['@c15t/iab', resolve(__dirname, '../iab/src/index.ts')],
+				[
+					'@inth/sdk/iab/headless',
+					resolve(__dirname, '../iab/src/headless.ts'),
+				],
+				['@inth/sdk/iab/gpp', resolve(__dirname, '../iab/src/gpp.ts')],
+				['@inth/sdk/iab', resolve(__dirname, '../iab/src/index.ts')],
 				['react', resolve(__dirname, './node_modules/react')],
 				['react-dom', resolve(__dirname, './node_modules/react-dom')],
 			]),

@@ -66,77 +66,77 @@ const config: StorybookConfig = {
 						replacement: path.resolve(repoRoot, 'internals/conformance/src/$1'),
 					},
 					{
-						find: /^@c15t\/vue$/u,
+						find: /^@inth\/vue$/u,
 						replacement: vuePackage('index.ts'),
 					},
 					// Docs recipes import the umbrella paths readers install.
 					{
-						find: /^c15t\/vue\/vue-plugin$/u,
+						find: /^@inth\/vue\/vue-plugin$/u,
 						replacement: vuePackage('index.ts'),
 					},
 					{
-						find: /^c15t\/vue\/runtime\/components\/consent-banner\.vue$/u,
+						find: /^@inth\/vue\/runtime\/components\/consent-banner\.vue$/u,
 						replacement: vuePackage('runtime', 'components', 'prompt.vue'),
 					},
 					{
-						find: /^c15t\/vue\/runtime\/components\/consent-manager\.vue$/u,
+						find: /^@inth\/vue\/runtime\/components\/consent-manager\.vue$/u,
 						replacement: vuePackage('runtime', 'components', 'manager.vue'),
 					},
-					// @c15t/ui — resolve all subpath imports to source
+					// @inth/sdk/ui — resolve all subpath imports to source
 					{
-						find: /^@c15t\/ui\/primitives\/data-state$/u,
+						find: /^@inth\/sdk\/ui\/primitives\/data-state$/u,
 						replacement: ui('primitives', 'data-state.ts'),
 					},
 					{
 						// oxlint-disable-next-line prefer-named-capture-group -- Preserve declaration order, interface shape, and public compatibility.
-						find: /^@c15t\/ui\/primitives\/(.+)$/u,
+						find: /^@inth\/sdk\/ui\/primitives\/(.+)$/u,
 						replacement: ui('primitives', '$1', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/primitives$/u,
+						find: /^@inth\/sdk\/ui\/primitives$/u,
 						replacement: ui('primitives', 'index.ts'),
 					},
 					{
 						// oxlint-disable-next-line prefer-named-capture-group -- Preserve declaration order, interface shape, and public compatibility.
-						find: /^@c15t\/ui\/styles\/primitives\/(.+)$/u,
+						find: /^@inth\/sdk\/ui\/styles\/primitives\/(.+)$/u,
 						replacement: ui('styles', 'primitives', '$1.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/styles\/primitives$/u,
+						find: /^@inth\/sdk\/ui\/styles\/primitives$/u,
 						replacement: ui('styles', 'primitives', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/theme$/u,
+						find: /^@inth\/sdk\/ui\/theme$/u,
 						replacement: ui('theme', 'index.ts'),
 					},
 					{
 						// oxlint-disable-next-line prefer-named-capture-group -- Preserve declaration order, interface shape, and public compatibility.
-						find: /^@c15t\/ui\/utils\/(.+)$/u,
+						find: /^@inth\/sdk\/ui\/utils\/(.+)$/u,
 						replacement: ui('utils', '$1.ts'),
 					},
 					{
-						find: /^@c15t\/translations$/u,
+						find: /^@inth\/sdk\/translations$/u,
 						replacement: path.resolve(
 							repoRoot,
 							'packages/sdk/translations/src/index.ts'
 						),
 					},
 					{
-						find: /^@c15t\/schema\/types$/u,
+						find: /^@inth\/sdk\/schema\/types$/u,
 						replacement: path.resolve(
 							repoRoot,
 							'packages/sdk/schema/src/types.ts'
 						),
 					},
 					{
-						find: /^@c15t\/schema\/config$/u,
+						find: /^@inth\/sdk\/schema\/config$/u,
 						replacement: path.resolve(
 							repoRoot,
 							'packages/sdk/schema/src/config/index.ts'
 						),
 					},
 					{
-						find: /^@c15t\/schema$/u,
+						find: /^@inth\/sdk\/schema$/u,
 						replacement: path.resolve(
 							repoRoot,
 							'packages/sdk/schema/src/index.ts'

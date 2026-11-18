@@ -1,4 +1,4 @@
-import type { BaseTranslations, Translations } from '@c15t/translations';
+import type { BaseTranslations, Translations } from '@inth/sdk-translations';
 
 import type { InitOutput } from '../api/init';
 import {

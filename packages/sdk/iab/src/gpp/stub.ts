@@ -216,7 +216,7 @@ const addLocatorFrame = function addLocatorFrame(): void {
  *
  * @example
  * ```ts
- * import { initializeGPPStub } from '@c15t/iab/gpp';
+ * import { initializeGPPStub } from '@inth/sdk-iab/gpp';
  *
  * initializeGPPStub();
  * ```

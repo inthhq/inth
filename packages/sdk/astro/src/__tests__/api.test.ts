@@ -6,7 +6,7 @@
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

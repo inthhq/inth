@@ -1,5 +1,5 @@
 /**
- * The init script's stand-in for `@c15t/core`'s translations module inside
+ * The init script's stand-in for `@inth/sdk/engine`'s translations module inside
  * `buildInitialSnapshot`.
  *
  * Core's `applyTranslationOverrides` compares app overrides with c15t's
@@ -13,9 +13,9 @@
  * @internal
  */
 
-import type { KernelTranslations } from '@c15t/core';
-import type { Translations } from '@c15t/translations';
-import { migrateLegacyTranslationKeys } from '@c15t/translations';
+import type { KernelTranslations } from '@inth/sdk-core';
+import type { Translations } from '@inth/sdk-translations';
+import { migrateLegacyTranslationKeys } from '@inth/sdk-translations';
 
 /**
  * `applyTranslationOverrides` without overrides.
@@ -30,7 +30,7 @@ export const applyTranslationOverrides = function applyTranslationOverrides(
 	overrides: unknown
 ): KernelTranslations {
 	if (overrides) {
-		throw new Error('@c15t/browser: c15t.js does not apply i18n overrides.');
+		throw new Error('@inth/sdk: c15t.js does not apply i18n overrides.');
 	}
 	const migrated = migrateLegacyTranslationKeys(
 		resolved.translations as Partial<Translations>

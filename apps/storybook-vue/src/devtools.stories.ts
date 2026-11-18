@@ -5,9 +5,9 @@ import {
 	getDevToolsCategories,
 } from '@c15t/conformance/fixtures/devtools';
 import { devToolsFlow, devToolsReady } from '@c15t/conformance/play/devtools';
-import type { HydrationRecords, HydrationResult } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import type { HydrationRecords, HydrationResult } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { onUnmounted } from 'vue';
 

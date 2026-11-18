@@ -1,9 +1,9 @@
-import type { ConsentProviderOptions } from 'c15t/next';
+import type { ConsentProviderOptions } from '@inth/nextjs';
 // c15t bundles only English. These two imports add its built-in German and
 // French copy, so the banner and dialog can switch to them. The browser
 // doesn't download the other languages.
-import '@c15t/translations/de';
-import '@c15t/translations/fr';
+import '@inth/nextjs/translations/de';
+import '@inth/nextjs/translations/fr';
 
 type ConsentMessages = NonNullable<
 	NonNullable<ConsentProviderOptions['i18n']>['messages']

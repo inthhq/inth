@@ -1,4 +1,4 @@
-import { policyRulePresets, resolvePolicyRules } from '@c15t/schema/types';
+import { policyRulePresets, resolvePolicyRules } from '@inth/sdk/schema/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { boot } from '../client';
@@ -49,7 +49,7 @@ const ping = function ping(): PingData | undefined {
  * import, which this caches, and the microtasks after it.
  */
 const settle = async function settle(): Promise<void> {
-	await import('@c15t/iab/gpp');
+	await import('@inth/sdk/iab/gpp');
 	// oxlint-disable-next-line promise/avoid-new -- One macrotask boundary.
 	await new Promise<void>((resolve) => {
 		setTimeout(resolve, 0);

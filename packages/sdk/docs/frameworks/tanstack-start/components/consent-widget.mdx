@@ -14,8 +14,8 @@ Customize button still has a dialog to open.
 {/* example: fragment */}
 
 ```tsx title="src/routes/privacy.tsx"
+import { ConsentWidget } from '@inth/tanstack-start';
 import { createFileRoute } from '@tanstack/react-router';
-import { ConsentWidget } from 'c15t/tanstack-start';
 
 const PrivacyPage = () => (
 	<main>
@@ -32,7 +32,7 @@ export const Route = createFileRoute('/privacy')({ component: PrivacyPage });
 
 The widget uses `ConsentRoot`'s policy, translations and backend. It needs no
 second provider. `useConsentDraft` and `ConsentDraftProvider` also import from
-`c15t/tanstack-start`.
+`@inth/tanstack-start`.
 
 <import src="../../../shared/react/components/consent-widget.mdx#props" />
 

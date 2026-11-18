@@ -13,8 +13,8 @@
  *   browser saves through `/api/c15t` and re-inits through the app's own
  *   consent route (`createConsentRoute`) under the same prefix.
  */
-import { c15tHandle, hosted, manifest } from '@c15t/svelte/kit';
-import type { C15tHandle } from '@c15t/svelte/kit';
+import { c15tHandle, hosted, manifest } from '@inth/svelte/kit';
+import type { C15tHandle } from '@inth/svelte/kit';
 
 const hostedHandle = c15tHandle({
 	mode: hosted(),

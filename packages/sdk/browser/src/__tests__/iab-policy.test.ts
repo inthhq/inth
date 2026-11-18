@@ -4,10 +4,10 @@ import {
 	POLICY_NOW,
 	POLICY_SCENARIOS,
 } from '@c15t/conformance/fixtures';
-import type { ProviderTransportFactory } from '@c15t/core';
-import { evaluateConsent } from '@c15t/core';
-import { clearGVLCache } from '@c15t/iab';
-import type { PolicyRule } from '@c15t/schema/types';
+import type { ProviderTransportFactory } from '@inth/sdk-core';
+import { evaluateConsent } from '@inth/sdk-core';
+import { clearGVLCache } from '@inth/sdk-iab';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

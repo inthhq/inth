@@ -13,7 +13,7 @@ import type { GateServer } from '@c15t/benchmarking/consent-gate';
 import { baselineServerOutputDir } from '@c15t/benchmarking/nuxt-baseline';
 
 /**
- * Nuxt consent gate. The `@c15t/vue` module applies to every page of the
+ * Nuxt consent gate. The `@inth/nuxt` module applies to every page of the
  * full build, so the control page comes from the zero-consent baseline build
  * (C15T_BENCH_BASELINE=1), which omits the module. Both servers run, and a
  * small router in front of them sends the control page and the baseline's
@@ -130,9 +130,9 @@ try {
 	await runConsentGate({
 		framework: 'vue',
 		notes: [
-			'Nuxt with the @c15t/vue module in its built manifest() mode, resolved on the server; the control page comes from the zero-consent baseline build.',
+			'Nuxt with the @inth/nuxt module in its built manifest() mode, resolved on the server; the control page comes from the zero-consent baseline build.',
 		],
-		packageName: '@c15t/vue',
+		packageName: '@inth/nuxt',
 		paths: { control: '/gate/control', gate: '/gate' },
 		proxyPort: Number(process.env.C15T_GATE_PORT ?? '4433'),
 		startServer: startServers,

@@ -8,13 +8,13 @@
  * with, on `event.locals.c15t`.
  */
 import { building } from '$app/env';
-import type { StorageConfig } from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
-import { normalizeRoutePrefix, readRequestConsent } from '@c15t/core/server';
+import type { StorageConfig } from '@inth/sdk/engine';
+import type { ConsentMode } from '@inth/sdk/modes';
 import type {
 	ConsentManifest,
 	ConsentRequestHeaderInputs,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import { normalizeRoutePrefix, readRequestConsent } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import { injectModulePreloads } from './module-preload';
@@ -37,12 +37,12 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
 	 * How the visitor is resolved. Plain data; `ConsentRoot` loads the code
 	 * it needs in the browser only when it runs.
 	 *
-	 * - Omitted, or `manifest()` from `@c15t/svelte/kit`: resolve from the
+	 * - Omitted, or `manifest()` from `@inth/svelte/kit`: resolve from the
 	 *   backend's consent manifest, which the build downloads. When it is
 	 *   unavailable, ask the backend's `/init` and log a warning.
-	 * - `hosted()` from `@c15t/svelte/kit`: ask the backend's `/init` for
+	 * - `hosted()` from `@inth/svelte/kit`: ask the backend's `/init` for
 	 *   every visitor.
-	 * - `testing()` from `@c15t/svelte/testing`: the server resolves
+	 * - `testing()` from `@inth/svelte/testing`: the server resolves
 	 *   nothing, and the browser resolves a policy with no network; its
 	 *   transport throws in production builds.
 	 *
@@ -143,7 +143,7 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
 
 /**
  * The data a handle's options resolve the visitor with. A transport
- * factory, such as `manifest()` from `@c15t/svelte`, carries its options
+ * factory, such as `manifest()` from `@inth/svelte`, carries its options
  * as data too; only that data reaches the browser.
  */
 const modeData = function modeData(options: C15tHandleOptions): KitMode {
@@ -156,7 +156,7 @@ const modeData = function modeData(options: C15tHandleOptions): KitMode {
 	}
 	if (!(mode as Partial<ConsentMode>).type) {
 		throw new TypeError(
-			'c15t: c15tHandle() takes manifest() or hosted() from c15t/svelte/kit, or testing() from c15t/svelte/testing. Pass a transport to <ConsentRoot mode> instead.'
+			'c15t: c15tHandle() takes manifest() or hosted() from @inth/svelte/kit, or testing() from @inth/svelte/testing. Pass a transport to <ConsentRoot mode> instead.'
 		);
 	}
 	const { kind: _kind, ...data } = mode as ConsentMode & { kind?: string };
@@ -169,7 +169,7 @@ const modeData = function modeData(options: C15tHandleOptions): KitMode {
  * Register it in `src/hooks.server.ts`, alone or composed with `sequence()`:
  *
  * ```ts
- * import { c15tHandle } from '@c15t/svelte/kit';
+ * import { c15tHandle } from '@inth/svelte/kit';
  * import { sequence } from '@sveltejs/kit/hooks';
  *
  * export const handle = sequence(c15tHandle(), myOtherHandle);
@@ -178,7 +178,7 @@ const modeData = function modeData(options: C15tHandleOptions): KitMode {
  * Type `event.locals.c15t` with one line in `src/app.d.ts`:
  *
  * ```ts
- * /// <reference types="@c15t/svelte/kit/locals" />
+ * /// <reference types="@inth/svelte/kit/locals" />
  * ```
  *
  * While SvelteKit prerenders, every page is shared between visitors: the
@@ -198,13 +198,13 @@ export const c15tHandle = function c15tHandle(
 	const routePrefix =
 		options.routePrefix === undefined
 			? undefined
-			: normalizeRoutePrefix('@c15t/svelte', options.routePrefix);
+			: normalizeRoutePrefix('@inth/svelte', options.routePrefix);
 	return async ({ event, resolve }) => {
 		const { headers } = event.request;
 		// A prerendered page is one HTML file for every visitor: no cookie or
 		// geo header of whoever triggered the build belongs in it.
 		const { inputs, state: config } = readRequestConsent({
-			adapter: '@c15t/svelte',
+			adapter: '@inth/svelte',
 			overrides: {
 				country: options.country,
 				language: options.language,

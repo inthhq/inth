@@ -14,19 +14,22 @@
  * @internal
  */
 
-import { defaultTranslationConfig, watchRevocationReload } from '@c15t/core';
-import { createIframeBlocker } from '@c15t/core/modules/iframe-blocker';
-import { createPersistence } from '@c15t/core/modules/persistence';
-import { createWindowDebug } from '@c15t/core/modules/window-debug';
+import {
+	defaultTranslationConfig,
+	watchRevocationReload,
+} from '@inth/sdk/engine';
+import { createIframeBlocker } from '@inth/sdk/modules/iframe-blocker';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { createWindowDebug } from '@inth/sdk/modules/window-debug';
 import {
 	mountRuntimeIAB,
 	onDemandRuntimeModules,
-} from '@c15t/core/runtime/on-demand';
-import { createConsentProviderRuntime } from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/on-demand';
+import { createConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
-} from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/provider';
 
 /**
  * Creates the runtime a provider owns.

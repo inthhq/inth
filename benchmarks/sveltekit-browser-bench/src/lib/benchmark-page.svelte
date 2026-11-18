@@ -5,7 +5,7 @@
 	 * returning visitor can reach.
 	 */
 	import type { SvelteBenchScenario } from '$lib/benchmark-probe.svelte';
-	import { getConsentKernel } from '@c15t/svelte';
+	import { getConsentKernel } from '@inth/svelte';
 
 	let { scenario }: { scenario: SvelteBenchScenario } = $props();
 

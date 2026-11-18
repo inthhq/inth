@@ -2,22 +2,25 @@ import { docsOriginForVersion } from './docs-origin.ts';
 import { version as cliVersion } from './version.ts';
 
 /**
- * Whether a package belongs to c15t and should be installed from the same
- * release line as the CLI.
+ * Whether a package belongs to the consent SDK and should be installed from
+ * the same release line as the CLI.
  *
  * @param name - Bare package name, without a version specifier.
- * @returns `true` for `c15t` and every `@c15t/*` package.
+ * @returns `true` for the `@inth` SDK packages and the c15t server packages.
  */
 export const isC15tPackage = function isC15tPackage(name: string): boolean {
-	return name === 'c15t' || name.startsWith('@c15t/');
+	return (
+		(name.startsWith('@inth/') && name !== '@inth/cli') ||
+		name.startsWith('@c15t/')
+	);
 };
 
 /**
  * Strip a version specifier from a dependency request.
  *
- * @param dependency - A request such as `c15t`, `c15t@alpha` or
- * `@c15t/scripts@3.0.0`.
- * @returns The package name, such as `c15t` or `@c15t/scripts`.
+ * @param dependency - A request such as `@inth/react`, `@inth/react@alpha`
+ * or `@inth/integrations@3.0.0`.
+ * @returns The package name, such as `@inth/react`.
  */
 export const dependencyName = function dependencyName(
 	dependency: string
@@ -32,18 +35,18 @@ export const dependencyName = function dependencyName(
  * list is copied here; `c15t-release.test.ts` fails when the two drift.
  */
 export const LINKED_C15T_PACKAGES: ReadonlySet<string> = new Set([
-	'c15t',
 	'@c15t/backend',
-	'@c15t/cli',
-	'@c15t/core',
-	'@c15t/dev-tools',
-	'@c15t/iab',
-	'@c15t/integrations',
-	'@c15t/nextjs',
 	'@c15t/node-sdk',
-	'@c15t/react',
-	'@c15t/tanstack-start',
-	'@c15t/translations',
+	'@inth/angular',
+	'@inth/astro',
+	'@inth/integrations',
+	'@inth/nextjs',
+	'@inth/nuxt',
+	'@inth/react',
+	'@inth/sdk',
+	'@inth/svelte',
+	'@inth/tanstack-start',
+	'@inth/vue',
 ]);
 
 /**
@@ -65,12 +68,12 @@ export const LINKED_C15T_PACKAGES: ReadonlySet<string> = new Set([
  * ```ts
  * c15tReleaseSpecifier('3.0.0-alpha.3'); // 'alpha'
  * c15tReleaseSpecifier('3.2.1'); // '3'
- * c15tReleaseSpecifier('3.2.1', '@c15t/ui'); // 'latest'
+ * c15tReleaseSpecifier('3.2.1', '@c15t/scripts'); // 'latest'
  * ```
  */
 export const c15tReleaseSpecifier = function c15tReleaseSpecifier(
 	version: string = cliVersion,
-	name = 'c15t'
+	name = '@inth/sdk'
 ): string {
 	const separator = version.indexOf('-');
 	if (separator !== -1) {
@@ -90,7 +93,7 @@ export const c15tReleaseSpecifier = function c15tReleaseSpecifier(
  *
  * @param dependency - Package name to install.
  * @param version - CLI version. Defaults to the CLI that published this source.
- * @returns For example `c15t@alpha` for `c15t` from a `3.0.0-alpha.3` CLI.
+ * @returns For example `@inth/react@alpha` from a `3.0.0-alpha.3` CLI.
  */
 export const withC15tRelease = function withC15tRelease(
 	dependency: string,
@@ -120,12 +123,12 @@ export const withC15tRelease = function withC15tRelease(
 export const describeC15tRelease = function describeC15tRelease(
 	version: string = cliVersion
 ): string {
-	const linked = c15tReleaseSpecifier(version, 'c15t');
-	const other = c15tReleaseSpecifier(version, '@c15t/ui');
+	const linked = c15tReleaseSpecifier(version, '@inth/sdk');
+	const other = c15tReleaseSpecifier(version, '@c15t/scripts');
 	if (linked === other) {
 		return `Install every c15t package with the @${linked} dist-tag.`;
 	}
-	return `Install ${[...LINKED_C15T_PACKAGES].join(', ')} with @${linked}, and other @c15t packages with @${other}.`;
+	return `Install ${[...LINKED_C15T_PACKAGES].join(', ')} with @${linked}, and other c15t packages with @${other}.`;
 };
 
 export { C15T_DOCS_ORIGIN } from './docs-origin.ts';

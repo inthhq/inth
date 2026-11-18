@@ -1,5 +1,5 @@
 import { COMPAT_CONSENT_CONFIG } from '@c15t/next-compat-shared/config';
-import { createConsentRoute } from '@c15t/nextjs/api';
+import { createConsentRoute } from '@inth/nextjs/api';
 
 /**
  * Same-origin init: resolves `/init` from the cached manifest with this

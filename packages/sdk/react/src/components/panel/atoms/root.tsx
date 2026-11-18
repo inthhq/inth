@@ -1,14 +1,14 @@
 'use client';
 
-import type * as C15tCoreTypes from '@c15t/core';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
 /**
  * @packageDocumentation
  * Provides the root component for the Consent Dialog.
  * Implements context provider pattern with theme support, state management,
  * focus trapping, scroll locking and portal rendering.
  */
-import { isDialogDismissKey } from '@c15t/ui/primitives/dialog';
-import styles from '@c15t/ui/styles/components/consent-dialog';
+import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import type { FC, HTMLAttributes, ReactNode, RefObject } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';

@@ -1,7 +1,7 @@
 <!-- #region docs:iab-surfaces title="app/components/IabSurfaces.vue" -->
 <script setup lang="ts">
-import IABConsentBanner from 'c15t/vue/runtime/components/iab-consent-banner.vue';
-import IABConsentDialog from 'c15t/vue/runtime/components/iab-consent-dialog.vue';
+import IABConsentBanner from '@inth/nuxt/components/iab-consent-banner';
+import IABConsentDialog from '@inth/nuxt/components/iab-consent-dialog';
 </script>
 
 <template>

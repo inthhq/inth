@@ -1,6 +1,6 @@
 ---
 title: Compose your own banner
-description: Build a TanStack Start consent banner from the ConsentBanner parts in c15t/tanstack-start, with your own markup and buttons, rendered inside ConsentRoot in the root route.
+description: Build a TanStack Start consent banner from the ConsentBanner parts in @inth/tanstack-start, with your own markup and buttons, rendered inside ConsentRoot in the root route.
 group: frameworks
 ---
 
@@ -22,7 +22,7 @@ for that button:
 
 <include src="../../shared/examples/tanstack-start/compose-banner.mdx" />
 
-`c15t/tanstack-start` re-exports every `c15t/react` component, so
+`@inth/tanstack-start` re-exports every `@inth/react` component, so
 `ConsentBanner` and its parts come from the same import as `ConsentRoot`.
 
 The parts read the provider that `ConsentRoot` renders. In the
@@ -58,9 +58,9 @@ lists the stock banner's props, variants and data attributes.
 
 <import src="../../shared/react/compose.mdx#dialog" />
 
-`c15t/tanstack-start` exports `ConsentDialog` and `ConsentWidget` with their
+`@inth/tanstack-start` exports `ConsentDialog` and `ConsentWidget` with their
 parts. It has no `components/consent-dialog` subpath, so import the parts
-without the deferral from `c15t/react/components/consent-dialog`.
+without the deferral from `@inth/react/components/consent-dialog`.
 [ConsentDialog](/docs/frameworks/tanstack-start/components/consent-dialog)
 and [ConsentWidget](/docs/frameworks/tanstack-start/components/consent-widget)
 list every part and its slots.

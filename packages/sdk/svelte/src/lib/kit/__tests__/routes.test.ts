@@ -1,9 +1,9 @@
 /**
- * Wiring of `@c15t/svelte/kit` onto the core consent route handler. The
+ * Wiring of `@inth/svelte/kit` onto the core consent route handler. The
  * route behaviour itself is pinned once, in
  * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
  */
-import { clearManifestCache } from '@c15t/core/server';
+import { clearManifestCache } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -152,7 +152,7 @@ describe('createConsentRoute', () => {
 		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
 		expect(headers.get('x-forwarded-for')).toBe('203.0.113.7');
 		expect(headers.get('x-forwarded-host')).toBe('shop.example');
-		expect(headers.get('x-c15t-proxy')).toBe('@c15t/svelte');
+		expect(headers.get('x-c15t-proxy')).toBe('@inth/svelte');
 	});
 });
 

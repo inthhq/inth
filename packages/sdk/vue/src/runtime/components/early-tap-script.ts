@@ -1,4 +1,4 @@
-import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
+import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { createStaticVNode, defineComponent, onMounted, ref } from 'vue';
 
 const escapeAttribute = (value: string): string =>
@@ -10,7 +10,7 @@ const escapeAttribute = (value: string): string =>
  * A server-rendered banner shows long before Vue attaches its handlers.
  * This script records an accept, reject, dismiss or customize tap in that
  * gap and hides the banner; the banner records the choice once it mounts.
- * See `@c15t/core/surface-actions`.
+ * See `@inth/sdk/surface-actions`.
  *
  * Static markup: the server writes it as is, hydration adopts the element
  * without comparing it, and a banner Vue renders in the browser parses it

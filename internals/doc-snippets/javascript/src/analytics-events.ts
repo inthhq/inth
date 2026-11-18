@@ -1,5 +1,5 @@
 // #region docs:analytics-events title="src/main.ts"
-import { getEventDispatcher, hosted, init } from '@c15t/browser';
+import { getEventDispatcher, hosted, init } from '@inth/sdk';
 
 import { scripts } from './scripts';
 

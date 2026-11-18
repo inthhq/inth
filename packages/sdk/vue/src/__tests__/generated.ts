@@ -1,9 +1,9 @@
 /**
- * Stand-in for `@c15t/core/generated` in tests (aliased in
+ * Stand-in for `@inth/sdk/generated` in tests (aliased in
  * `vitest.config.ts`): what a `consentManifest()` build would serve. Both
  * exports are live bindings that {@link setGenerated} changes.
  */
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 // oxlint-disable-next-line import/no-mutable-exports -- Live bindings stand in for a build's values.
 export let projectUrl: string | undefined;

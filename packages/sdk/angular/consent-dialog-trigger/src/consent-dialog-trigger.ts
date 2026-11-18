@@ -30,27 +30,27 @@ import {
 	ɵBrandMarkIcon as BrandMarkIcon,
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolveNoStyle as resolveNoStyle,
-} from '@c15t/angular';
-import styles from '@c15t/ui/styles/components/consent-dialog-trigger';
-import type { ClassNameStyle } from '@c15t/ui/theme';
+} from '@inth/angular';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
+import type { ClassNameStyle } from '@inth/sdk/ui/theme';
 import {
 	calculateCornerFromDrag,
 	createInitialDragState,
 	getPersistedPosition,
 	persistPosition as persistToStorage,
-} from '@c15t/ui/utils';
-import type { CornerPosition, DragState } from '@c15t/ui/utils';
+} from '@inth/sdk/ui/utils';
+import type { CornerPosition, DragState } from '@inth/sdk/ui/utils';
 import {
 	claimDevToolsLauncher,
 	EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT,
 	followDevToolsDock,
 	getDevToolsLauncherSnapshot,
 	subscribeDevToolsLauncher,
-} from '@c15t/ui/utils/devtools-launcher';
+} from '@inth/sdk/ui/utils/devtools-launcher';
 import type {
 	DevToolsLauncherSnapshot,
 	DevToolsLauncherTarget,
-} from '@c15t/ui/utils/devtools-launcher';
+} from '@inth/sdk/ui/utils/devtools-launcher';
 
 import { ConsentIcon, DevToolsIcon } from './trigger-icons';
 

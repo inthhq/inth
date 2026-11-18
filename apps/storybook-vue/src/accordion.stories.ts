@@ -6,8 +6,8 @@ import {
 	getAccordionItemState,
 	isAccordionItemOpen,
 	toggleAccordionValue,
-} from '@c15t/ui/primitives';
-import { accordionVariants } from '@c15t/ui/styles/primitives';
+} from '@inth/sdk/ui/primitives';
+import { accordionVariants } from '@inth/sdk/ui/styles/primitives';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { ref } from 'vue';
 

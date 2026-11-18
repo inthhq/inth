@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { MODULE_PRELOAD_PLACEHOLDERS } from '../kit/module-preload';
@@ -11,7 +11,7 @@ import { consentManifest, resolveChunkHrefs } from '../vite';
 /** The module-preload plugin `consentManifest()` includes. */
 const preloadPlugin = () => consentManifest()[1];
 
-const CORE = '/app/node_modules/@c15t/core/dist/modules';
+const CORE = '/app/node_modules/@inth/sdk/lib/core/dist/modules';
 
 const chunk = (
 	fileName: string,
@@ -31,8 +31,8 @@ const CLIENT_BUNDLE = {
 		`${CORE}/loader-and-blocker.js`,
 	]),
 	'_app/immutable/chunks/e.js': chunk('_app/immutable/chunks/e.js', [
-		'/app/node_modules/@c15t/svelte/dist/deferred/engine.js',
-		'/app/node_modules/@c15t/svelte/dist/owned-runtime.js',
+		'/app/node_modules/@inth/svelte/dist/deferred/engine.js',
+		'/app/node_modules/@inth/svelte/dist/owned-runtime.js',
 	]),
 	'_app/immutable/entry/app.js': chunk(
 		'_app/immutable/entry/app.js',
@@ -80,7 +80,7 @@ describe('Svelte manifest module', () => {
 			const load = (consumer: 'client' | 'server') =>
 				plugin.load.call(
 					{ environment: { config: { consumer } } },
-					plugin.resolveId('@c15t/core/generated') as string
+					plugin.resolveId('@inth/sdk/generated') as string
 				);
 			expect((await load('client'))?.includes('svelte-build')).toBe(
 				snapshotInBrowser
@@ -130,12 +130,12 @@ describe('location advice', () => {
 			});
 			const source = await plugin.load.call(
 				{ environment: { config: { consumer: 'server' } } },
-				plugin.resolveId('@c15t/core/generated') as string
+				plugin.resolveId('@inth/sdk/generated') as string
 			);
 			await plugin.renderChunk(source as string);
 			expect(
 				warn.mock.calls.some(([message]) =>
-					/^@c15t\/svelte\/vite: .*location.*projectUrl/u.test(String(message))
+					/^@inth\/svelte\/vite: .*location.*projectUrl/u.test(String(message))
 				)
 			).toBe(warns);
 		}
@@ -295,7 +295,7 @@ describe('Svelte backend URL variables', () => {
 			const source = String(
 				await plugin.load.call(
 					{ environment: { config: { consumer: 'server' } } },
-					plugin.resolveId('@c15t/core/generated') as string
+					plugin.resolveId('@inth/sdk/generated') as string
 				)
 			);
 			return {
@@ -378,11 +378,11 @@ describe('consentManifest first-load chunk', () => {
 		expect(groups.map((group) => group.name)).toEqual(['app', 'c15t']);
 		const { test: matches } = groups[1] as Group;
 		for (const id of [
-			'/app/node_modules/@c15t/core/dist/libs/vendor-listing.js',
-			'/app/node_modules/@c15t/core/dist/libs/experiment-presentation.js',
-			'/app/node_modules/@c15t/core/dist/modules/vendor-allowed.js',
-			'/app/node_modules/@c15t/core/dist/surface-actions/instant-commit.js',
-			'C:\\app\\node_modules\\@c15t\\ui\\dist\\utils\\text-direction.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/libs/vendor-listing.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment-presentation.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/modules/vendor-allowed.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/surface-actions/instant-commit.js',
+			'C:\\app\\node_modules\\@inth\\sdk\\lib\\ui\\dist\\utils\\text-direction.js',
 			'\0vite/preload-helper.js',
 		]) {
 			expect(matches.test(id)).toBe(true);
@@ -392,15 +392,15 @@ describe('consentManifest first-load chunk', () => {
 		// the vendor resolution, experiment assignment, record evaluation and
 		// cookie writes the engine shares with the commit path stay out.
 		for (const id of [
-			'/app/node_modules/@c15t/core/dist/kernel/index.js',
-			'/app/node_modules/@c15t/core/dist/modules/persistence/index.js',
-			'/app/node_modules/@c15t/core/dist/libs/vendors.js',
-			'/app/node_modules/@c15t/core/dist/libs/experiment.js',
-			'/app/node_modules/@c15t/core/dist/libs/experiment-storage.js',
-			'/app/node_modules/@c15t/core/dist/libs/cookie/operations.js',
-			'/app/node_modules/@c15t/core/dist/modules/has.js',
-			'/app/node_modules/@c15t/core/dist/consent-record/evaluate.js',
-			'/app/node_modules/@c15t/svelte/dist/deferred/commit.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/kernel/index.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/modules/persistence/index.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/libs/vendors.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment-storage.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/libs/cookie/operations.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/modules/has.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/consent-record/evaluate.js',
+			'/app/node_modules/@inth/svelte/dist/deferred/commit.js',
 			'/app/node_modules/other/dist/libs/vendors.js',
 			'/app/node_modules/other/vite/preload-helper.js',
 		]) {

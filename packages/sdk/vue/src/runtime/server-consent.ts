@@ -1,21 +1,21 @@
-import type { ServerExperiment } from '@c15t/core';
+import type { ServerExperiment } from '@inth/sdk/engine';
 /**
  * Server-side consent resolution for the Nuxt plugin. Server-only: the
  * plugin loads it behind `import.meta.server`, so the resolver, its
  * translations and the server snapshot never reach the client bundle.
  *
  * The rules (request read, forwarding, budget, merge, experiment arm) live
- * in `resolveRequestConsent` from `@c15t/core/server`, shared with every
+ * in `resolveRequestConsent` from `@inth/sdk/server`, shared with every
  * other adapter. This module supplies what Nuxt knows about the request.
  */
-import { readWaitUntil, resolveRequestConsent } from '@c15t/core/server';
+import { readWaitUntil, resolveRequestConsent } from '@inth/sdk/server';
 import type {
 	ManifestFetch,
 	RequestConsentState,
 	ResolveRequestConsentOptions,
-} from '@c15t/core/server';
+} from '@inth/sdk/server';
 
-import snapshot from '#c15t/server-manifest-snapshot';
+import snapshot from '#@inth/sdk/server-manifest-snapshot';
 
 import type { RuntimeConsentConfig } from './kernel';
 import { readNuxtMode, readNuxtRoutePrefix } from './nuxt-mode';
@@ -91,7 +91,7 @@ export const resolveNuxtConsent = async function resolveNuxtConsent(
 	// the experiment from its own config.
 	const { experiment: _carried, ...state } = await resolveRequestConsent({
 		...readModeOptions(config),
-		adapter: '@c15t/vue',
+		adapter: '@inth/vue',
 		experiment,
 		localFetch,
 		// Off here means the page has no journey: the state says so and the

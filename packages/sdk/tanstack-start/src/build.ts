@@ -1,11 +1,11 @@
-import { createConsentManifestPlugin } from '@c15t/core/build';
-import type { ConsentManifestPluginOptions } from '@c15t/core/build';
+import { createConsentManifestPlugin } from '@inth/sdk/build';
+import type { ConsentManifestPluginOptions } from '@inth/sdk/build';
 
 export type {
 	ConsentManifestPluginOptions,
 	ManifestBuildErrorMode,
 	ManifestBuildOptions,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
 
 /**
  * The sheets a server-rendered banner, trigger and ConsentGate put in the
@@ -13,7 +13,7 @@ export type {
  * `id`, and a `load()` that fetches the text only when a surface renders
  * first in the browser. With the sheet in the page, the surface adopts the
  * server's `<style>` and the text ships once. The same list as the static
- * banner's in `@c15t/core/build`.
+ * banner's in `@inth/sdk/build`.
  */
 const SERVER_RENDERED_SHEETS = new Set([
 	'tokens',
@@ -22,12 +22,12 @@ const SERVER_RENDERED_SHEETS = new Set([
 	'trigger',
 	'consent-gate',
 ]);
-const SHEETS_PREFIX = '@c15t/ui/styles/sheets/';
+const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
 
-/** A module of the installed `@c15t/react`, whatever the package manager. */
-const REACT_PACKAGE = /[\\/]node_modules[\\/]@c15t[\\/]react[\\/]/u;
+/** A module of the installed `@inth/react`, whatever the package manager. */
+const REACT_PACKAGE = /[\\/]node_modules[\\/]@inth[\\/]react[\\/]/u;
 
-/** The `-deferred` twin of a sheet `@c15t/react` imports, else `undefined`. */
+/** The `-deferred` twin of a sheet `@inth/react` imports, else `undefined`. */
 const deferredSheet = function deferredSheet(
 	id: string,
 	importer: string | undefined
@@ -54,7 +54,7 @@ interface SheetResolveContext {
 
 /**
  * Serves the deployment's consent manifest and backend URL as the virtual
- * module `@c15t/core/generated` (also `c15t/generated`). `vite build`
+ * module `@inth/sdk/generated` (also `@inth/sdk/generated`). `vite build`
  * fetches the manifest once the server bundle is known to read it, which
  * `createConsentStateHandler()` and `createConsentRoute()` do; `vite dev`
  * fetches when the server first loads the module.
@@ -91,7 +91,7 @@ interface SheetResolveContext {
  * `vite build`.
  * @example
  * ```ts
- * import { consentManifest } from 'c15t/tanstack-start/build';
+ * import { consentManifest } from '@inth/tanstack-start/build';
  *
  * // Reads VITE_C15T_BACKEND_URL, for example from `.env`.
  * const plugins = [consentManifest()];
@@ -100,7 +100,7 @@ interface SheetResolveContext {
 export const consentManifest = (options: ConsentManifestPluginOptions = {}) => {
 	const plugin = createConsentManifestPlugin(options, {
 		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
-		label: '@c15t/tanstack-start/build',
+		label: '@inth/tanstack-start/build',
 		serverRendered: true,
 	});
 	const resolveGenerated = plugin.resolveId;
@@ -119,7 +119,7 @@ export const consentManifest = (options: ConsentManifestPluginOptions = {}) => {
 				!resolveOptions?.ssr &&
 				context.environment?.config?.consumer === 'client'
 			) {
-				// A `@c15t/ui` without the deferred module keeps the sheet's text.
+				// A `@inth/sdk/ui` without the deferred module keeps the sheet's text.
 				return (async () =>
 					(await context.resolve?.(deferred, importer, { skipSelf: true }))
 						?.id)();

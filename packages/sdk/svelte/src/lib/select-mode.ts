@@ -2,7 +2,7 @@
  * The transport a `<ConsentProvider>`'s options select: `mode` when it is
  * a factory or a `testing()` value, else the hosted backend at
  * `projectUrl`, which defaults to the URL `consentManifest()` from
- * `c15t/svelte/vite` read.
+ * `@inth/svelte/vite` read.
  *
  * Only the single-page provider imports this, so `ConsentRoot`'s first
  * load keeps the hosted transport out: it loads it on demand.
@@ -10,11 +10,11 @@
  * @packageDocumentation
  * @internal
  */
-import type { ProviderTransportFactory } from '@c15t/core';
-import { projectUrl as builtProjectUrl } from '@c15t/core/generated';
-import type { HostedMode } from '@c15t/core/modes';
-import type { ConsentTesting } from '@c15t/core/testing';
-import { hosted } from '@c15t/core/transports';
+import type { ProviderTransportFactory } from '@inth/sdk/engine';
+import { projectUrl as builtProjectUrl } from '@inth/sdk/generated';
+import type { HostedMode } from '@inth/sdk/modes';
+import type { ConsentTesting } from '@inth/sdk/testing';
+import { hosted } from '@inth/sdk/transports';
 
 /**
  * The transport factory the options select.

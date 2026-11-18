@@ -5,8 +5,8 @@
  * backend. createHostedTransport is also unit-tested against a mocked
  * fetch so we know the request shape and error handling are correct.
  */
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
-import type { ConsentManifest, InitOutput } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
+import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {

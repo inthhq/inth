@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ConsentKernel } from '@c15t/core';
+	import type { ConsentKernel } from '@inth/sdk/engine';
 	import { untrack } from 'svelte';
 
 	import {

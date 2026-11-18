@@ -1,4 +1,4 @@
-import { ConsentBanner, ConsentDialog, ConsentProvider } from 'c15t/react';
+import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 

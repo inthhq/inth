@@ -8,7 +8,7 @@ group: frameworks
 
 ## Declare the vendors
 
-Declaring a vendor turns on vendor switches. Built-in `@c15t/integrations`
+Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
 helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
@@ -19,7 +19,7 @@ already carries, and pass them to `ConsentRoot`:
 
 ```svelte title="src/routes/+layout.svelte (partial)"
 <script lang="ts">
-  import type { ConsentManagerOptions } from 'c15t/svelte';
+  import type { ConsentManagerOptions } from '@inth/svelte';
 
   const vendors: NonNullable<ConsentManagerOptions['vendors']> = [
     {
@@ -61,7 +61,7 @@ records the draft:
 
 ```svelte title="src/lib/x-pixel-switch.svelte (partial)"
 <script lang="ts">
-	import { getConsentManager } from 'c15t/svelte';
+	import { getConsentManager } from '@inth/svelte';
 
 	const consent = getConsentManager();
 </script>

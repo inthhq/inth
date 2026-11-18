@@ -1,5 +1,5 @@
 /**
- * `@c15t/astro/api` — the consent route the integration injects at
+ * `@inth/astro/api` — the consent route the integration injects at
  * `${routePrefix}/[...path]`.
  *
  * `init` resolves the visitor's policy from the build's snapshot, or a

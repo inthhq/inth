@@ -1,4 +1,4 @@
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
 /** @vitest-environment jsdom */
 import { describe, expect, test, vi } from 'vitest';
 

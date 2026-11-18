@@ -10,7 +10,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';

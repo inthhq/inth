@@ -10,9 +10,9 @@ group: frameworks
 manifest once per build, and in `vite dev` the first time the server loads
 it. When the download fails or takes longer than 10
 seconds, `vite build` stops with an error that starts with
-`@c15t/tanstack-start/build: could not fetch the consent manifest from <url>
+`@inth/tanstack-start/build: could not fetch the consent manifest from <url>
 during the build`. `vite dev` logs the same message as a warning and keeps
-going. `snapshot` from `c15t/generated` is then `undefined`, so the server
+going. `snapshot` from `@inth/tanstack-start/generated` is then `undefined`, so the server
 fetches the policy at runtime.
 
 | Message | Fix |
@@ -26,7 +26,7 @@ fetches the policy at runtime.
 
 ## snapshot is undefined
 
-**Check.** Log `snapshot` from `c15t/generated` in the server function. In the
+**Check.** Log `snapshot` from `@inth/tanstack-start/generated` in the server function. In the
 browser bundle it is always `undefined`: the plugin keeps the policy on the
 server. On the server, it is `undefined` when Vite had no policy to serve:
 `consentManifest` is missing from `plugins` in `vite.config.ts`, the fetch
@@ -67,8 +67,8 @@ at the top level of your own route module, as in the
 
 **Check.** Look at what your server functions and loaders return. Something
 with functions in it, such as vendor script configurations or a `hosted()`
-transport from `c15t/react`, cannot be serialized. `hosted()` from
-`c15t/tanstack-start` is plain data and can be returned.
+transport from `@inth/react`, cannot be serialized. `hosted()` from
+`@inth/tanstack-start` is plain data and can be returned.
 
 **Fix.** Return only the consent state from the server function. Import
 `scripts` in the root route module and pass them to `ConsentRoot` there.
@@ -92,7 +92,7 @@ server cannot solve a browser challenge, such as Vercel Attack Challenge Mode
 or Cloudflare Super Bot Fight Mode.
 
 **Fix.** Exempt the consent paths from the challenge. Requests from the route
-carry an `x-c15t-proxy: @c15t/tanstack-start` header you can match in a
+carry an `x-c15t-proxy: @inth/tanstack-start` header you can match in a
 firewall rule. If rate limits treat every visitor as one IP address, and your
 host overwrites `x-forwarded-for`, set `trustForwardedHeaders: true` on
 `createConsentRoute`.
@@ -145,7 +145,7 @@ choice:
 {/* example: fragment */}
 
 ```tsx title="src/components/consent-policy-debug.tsx"
-import { useSnapshot } from 'c15t/tanstack-start';
+import { useSnapshot } from '@inth/tanstack-start';
 
 export function ConsentPolicyDebug() {
 	const snapshot = useSnapshot();
@@ -189,7 +189,7 @@ release, with no alias.
 | `manifestUrl` on the state handler | `mode: manifest({ manifestUrl })` |
 | `ConsentManifestOptions`, `resolveStrictestDefaultInit` | `ResolveConsentOptions`; `resolveUnknownLocationInit` |
 | Falling back to local mode when no backend URL is set | `ConsentRoot` throws. Pass `mode: testing()` to run without a backend. |
-| `hosted`, `offline` and `manifest` from `c15t/tanstack-start` as transports | They are data for `createConsentStateHandler({ mode })` now. |
+| `hosted`, `offline` and `manifest` from `@inth/tanstack-start` as transports | They are data for `createConsentStateHandler({ mode })` now. |
 
 The renames shared by every framework:
 
@@ -202,6 +202,6 @@ Use `ConsentGate` instead.
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
 every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because npm installed c15t v2, choices that disappear on
+imports that fail because the wrong package is installed, choices that disappear on
 reload, server HTML that differs from the browser, static builds that fail and
 content blockers that hide the consent UI.

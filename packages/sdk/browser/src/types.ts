@@ -25,20 +25,20 @@ import type {
 	StorageConfig,
 	Unsubscribe,
 	VendorChoice,
-} from '@c15t/core';
-import type { HostedMode } from '@c15t/core/modes';
+} from '@inth/sdk-core';
+import type { HostedMode } from '@inth/sdk-core/modes';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeOptions,
 	RuntimeNetworkBlockerOptions,
-} from '@c15t/core/runtime';
-import type { ConsentTesting } from '@c15t/core/testing';
-import type { ConsentManifest } from '@c15t/schema/types';
-import type { Theme } from '@c15t/ui/theme';
+} from '@inth/sdk-core/runtime';
+import type { ConsentTesting } from '@inth/sdk-core/testing';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
+import type { Theme } from '@inth/sdk-ui/theme';
 
 /**
  * The transports a script-tag site can name without importing anything.
- * `init()` from `@c15t/browser` takes `hosted()` or a factory instead.
+ * `init()` from `@inth/sdk` takes `hosted()` or a factory instead.
  *
  * - `hosted` — `GET /init` and `POST /subjects` against `projectUrl`.
  * - `manifest` — the backend's cacheable `/manifest` inlined or fetched,
@@ -145,7 +145,7 @@ export interface ConsentUIOptions {
 	colorScheme?: 'light' | 'dark' | 'system' | null;
 	/**
 	 * Theme tokens, consent action styles and per-part `slots`, the
-	 * `@c15t/ui` theme shape `@c15t/svelte` also accepts.
+	 * `@inth/sdk/ui` theme shape `@inth/svelte` also accepts.
 	 *
 	 * A slot adds classes (a string, or `className`) and inline `style` to
 	 * one part, keyed like `consentBannerCard` or `buttonPrimary`. The
@@ -174,7 +174,7 @@ export interface ConsentUIOptions {
 	stylesheetUrls?: string[];
 	/**
 	 * Include the bundled stylesheet. Defaults to `true`. With `shadow: false`,
-	 * set `false` when the page loads `@c15t/browser/styles.css`.
+	 * set `false` when the page loads `@inth/sdk/styles.css`.
 	 */
 	styles?: boolean;
 	/** Ship the DOM without any class names, for fully custom CSS. */
@@ -214,7 +214,7 @@ export type ConsentSaveInput = Partial<ConsentState> & {
 
 /**
  * Options every client accepts, whichever entry point picks its mode. See
- * {@link ConsentClientOptions} for `init()` from `@c15t/browser` and
+ * {@link ConsentClientOptions} for `init()` from `@inth/sdk` and
  * {@link ScriptTagClientOptions} for the script-tag builds.
  */
 export interface ConsentClientBaseOptions extends Pick<
@@ -238,13 +238,13 @@ export interface ConsentClientBaseOptions extends Pick<
 	 * The configured nonce is never copied onto an inert tag.
 	 */
 	nonce?: string;
-	/** IAB configuration. Requires the `@c15t/browser/iab` entry. */
+	/** IAB configuration. Requires the `@inth/sdk/iab-client` entry. */
 	iab?: ConsentRuntimeOptions['iab'];
 	/**
 	 * IAB GPP options for `c15t.gpp.js` on a script-tag page: an object sets
 	 * `usApproach`, `usFallback`, `mspaMode`, `optOutCategories`, `cmpId`
 	 * or `tcf`, and `false` keeps GPP off although the script loaded. In a
-	 * bundled app, call `mountGPP()` from `@c15t/browser/gpp` instead.
+	 * bundled app, call `mountGPP()` from `@inth/sdk/gpp` instead.
 	 */
 	gpp?: ConsentRuntimeOptions['gpp'];
 	/** Categories the UI offers. Defaults to every category the policy allows. */
@@ -305,12 +305,12 @@ export interface ConsentClientBaseOptions extends Pick<
 }
 
 /**
- * What `init()` and `createConsentClient()` from `@c15t/browser`,
- * `@c15t/browser/headless` and `@c15t/browser/iab` accept.
+ * What `init()` and `createConsentClient()` from `@inth/sdk`,
+ * `@inth/sdk/headless` and `@inth/sdk/iab-client` accept.
  *
  * @example
  * ```ts
- * import { init } from '@c15t/browser';
+ * import { init } from '@inth/sdk-browser';
  *
  * init({ projectUrl: 'https://your-project.inth.app' });
  * ```
@@ -329,7 +329,7 @@ export interface ConsentClientOptions extends ConsentClientBaseOptions {
 	 *   browser, falling back to `/init` with a warning when it is
 	 *   unavailable. Import it only if you use it, so the bundler leaves
 	 *   it out otherwise.
-	 * - `testing()` from `@c15t/browser/testing`: resolve a policy with no
+	 * - `testing()` from `@inth/sdk/testing`: resolve a policy with no
 	 *   backend, for tests. It throws in production builds.
 	 */
 	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
@@ -362,7 +362,7 @@ export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	manifestUrl?: string;
 }
 
-/** Options for `@c15t/browser/hosted` and the default `c15t.js` bundle. */
+/** Options for `@inth/sdk/hosted` and the default `c15t.js` bundle. */
 export interface HostedConsentClientOptions extends Omit<
 	ScriptTagClientOptions,
 	'mode' | 'manifest' | 'manifestUrl'

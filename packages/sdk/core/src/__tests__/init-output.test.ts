@@ -2,7 +2,7 @@
  * Shared InitOutput/InitResponse mapping — the single fold every framework
  * server helper and transport uses (shared-logic audit #4).
  */
-import { enTranslations } from '@c15t/translations';
+import { enTranslations } from '@inth/sdk-translations';
 import { describe, expect, test } from 'vitest';
 
 import {

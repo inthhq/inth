@@ -3,8 +3,8 @@
  * and `dist/c15t.iab.css`.
  *
  * Bundler users who mount the UI into the light DOM (`shadow: false`)
- * import `@c15t/browser/styles.css`; it is the same sheet the script-tag
- * build inlines: `@c15t/ui/styles.css` plus the dialog rules, since this
+ * import `@inth/sdk-browser/styles.css`; it is the same sheet the script-tag
+ * build inlines: `@inth/sdk-ui/styles.css` plus the dialog rules, since this
  * package renders the dialog eagerly, pruned to the rules these surfaces can
  * match. Runs after `rslib build`, which cleans `dist/` first.
  */

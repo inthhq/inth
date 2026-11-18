@@ -1,5 +1,5 @@
 /**
- * Installs the built `@c15t/angular` into this app as npm would: its
+ * Installs the built `@inth/angular` into this app as npm would: its
  * `package.json` and `dist/`, in a directory of its own.
  *
  * The workspace link points at `packages/sdk/angular`, whose `node_modules`
@@ -26,7 +26,7 @@ const source = fileURLToPath(
 // `packages/sdk/angular`, and removing that path recursively would delete the
 // package source.
 const target = fileURLToPath(
-	new URL('node_modules/@c15t/angular', import.meta.url)
+	new URL('node_modules/@inth/angular', import.meta.url)
 );
 
 let stats;

@@ -22,7 +22,7 @@ import {
 	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵshouldShowBranding as shouldShowBranding,
-} from '@c15t/angular';
+} from '@inth/angular';
 import {
 	PreferenceItemContent,
 	PreferenceItemControl,
@@ -35,14 +35,14 @@ import {
 	Switch,
 	SwitchThumb,
 	uniqueId,
-} from '@c15t/angular/primitives';
-import type { AllConsentNames, ConsentType } from '@c15t/core';
-import { createPreferenceDraft } from '@c15t/core/preference-draft';
-import { resolveConsentPresentation } from '@c15t/core/surface-state';
-import accordionStyles from '@c15t/ui/styles/components/accordion';
-import managerStyles from '@c15t/ui/styles/components/consent-manager';
-import switchStyles from '@c15t/ui/styles/components/switch';
-import { getTextDirection } from '@c15t/ui/utils';
+} from '@inth/angular/primitives';
+import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
+import { createPreferenceDraft } from '@inth/sdk/preference-draft';
+import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
+import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 
 import { ConsentVendorList } from './consent-vendor-list';
 import { DIALOG_SHEETS } from './dialog-sheets';

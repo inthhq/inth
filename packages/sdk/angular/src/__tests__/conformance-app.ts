@@ -22,7 +22,7 @@ import {
 	provideServerRendering,
 	renderApplication,
 } from '@angular/platform-server';
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
 
 import { ConsentManager } from '../lib/core/consent-manager';
 import type { C15tProviderOptions } from '../lib/core/options';

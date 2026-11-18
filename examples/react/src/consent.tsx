@@ -1,11 +1,11 @@
 // #region docs:consent
-import { posthog } from '@c15t/integrations/posthog';
+import { posthog } from '@inth/integrations/posthog';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-} from 'c15t/react';
+} from '@inth/react';
 import type { ReactNode } from 'react';
 
 const options = {

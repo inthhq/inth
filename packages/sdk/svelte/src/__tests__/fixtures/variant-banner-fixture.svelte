@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PromptPosition, PromptVariant } from '@c15t/core';
+	import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
 
 	import Provider from '../../lib/components/consent-provider.svelte';
 	import Dialog from '../../lib/components/panel.svelte';

@@ -1,6 +1,6 @@
 // #region docs:runtime
-import { hosted } from 'c15t';
-import { createConsentRuntime } from 'c15t/runtime';
+import { hosted } from '@inth/sdk/engine';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 
 import { scripts } from './scripts';
 

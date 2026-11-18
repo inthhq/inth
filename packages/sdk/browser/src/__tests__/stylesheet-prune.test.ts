@@ -1,8 +1,8 @@
 /**
- * The script-tag build inlines only the `@c15t/ui` rules its surfaces can
+ * The script-tag build inlines only the `@inth/sdk/ui` rules its surfaces can
  * match.
  *
- * `@c15t/ui/styles.css` also styles the headless primitives, tabs,
+ * `@inth/sdk/ui/styles.css` also styles the headless primitives, tabs,
  * collapsibles and the ConsentGate placeholder, which the vanilla and IAB
  * surfaces never render. `scripts/build-styles.ts` prunes them; these
  * tests read what it generated (`bun prebuild` runs before the suite).
@@ -26,7 +26,7 @@ import { classes, stylesheet } from '../generated/styles';
 const require = createRequire(import.meta.url);
 const uiStylesheet = (specifier: string) =>
 	readFileSync(require.resolve(specifier), 'utf8');
-const uiMainStylesheet = () => uiStylesheet('@c15t/ui/styles.css');
+const uiMainStylesheet = () => uiStylesheet('@inth/sdk-ui/styles.css');
 
 const rendered = collectClassNames([classes, iabClasses]);
 
@@ -57,7 +57,7 @@ describe('inlined stylesheet', () => {
 		);
 		expect(iabStylesheet).toBe(
 			compactStylesheet(
-				pruneStylesheet(uiStylesheet('@c15t/ui/iab/styles.css'), rendered)
+				pruneStylesheet(uiStylesheet('@inth/sdk-ui/iab/styles.css'), rendered)
 			)
 		);
 		expect(stylesheet).not.toContain('/*');
@@ -67,7 +67,7 @@ describe('inlined stylesheet', () => {
 		expect(stylesheet).toContain(`.${classes.banner.card?.split(' ')[0]}`);
 	});
 
-	it('is smaller than the full @c15t/ui stylesheet', () => {
+	it('is smaller than the full @inth/sdk/ui stylesheet', () => {
 		// The stylesheet split already keeps the primitive rules out of both
 		// source files, and the preference centre renders the vendor list, so
 		// pruning removes the collapsible, tabs and ConsentGate rules.
@@ -85,7 +85,7 @@ describe('pruneStylesheet', () => {
 		expect(keeps('.c15t-ui-root-AAAAA:has(.c15t-ui-x-CCCCC)')).toBe(false);
 	});
 
-	it('ignores negations and classes @c15t/ui does not generate', () => {
+	it('ignores negations and classes @inth/sdk/ui does not generate', () => {
 		expect(keeps('.c15t-ui-root-AAAAA:not(.c15t-ui-x-CCCCC)')).toBe(true);
 		expect(keeps('.c15t-dark .c15t-ui-root-AAAAA')).toBe(true);
 		expect(keeps(':root,:host')).toBe(true);

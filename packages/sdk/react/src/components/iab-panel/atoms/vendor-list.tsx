@@ -1,11 +1,11 @@
 'use client';
 
-import type { AdTechProvider, GlobalVendorList } from '@c15t/core';
+import type { AdTechProvider, GlobalVendorList } from '@inth/sdk/engine';
 import {
 	permittedLegitimateInterestPurposes,
 	resolveIABVendorUrls,
-} from '@c15t/iab/headless';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+} from '@inth/sdk/iab/headless';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 

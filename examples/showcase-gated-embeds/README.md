@@ -15,7 +15,7 @@ are inline SVG, not vendor thumbnails.
 | --- | --- | --- |
 | YouTube video | Marketing | `ConsentGate` around the iframe |
 | Google Map | Experience | `ConsentGate` around the iframe |
-| Crisp chat | Functionality | `crisp()` from `@c15t/integrations`, with a `ConsentGate` card in the page |
+| Crisp chat | Functionality | `crisp()` from `@inth/integrations`, with a `ConsentGate` card in the page |
 
 The Crisp helper always uses Functionality. The map sits under Experience so
 that allowing the map does not also start the chat. Pick the category that

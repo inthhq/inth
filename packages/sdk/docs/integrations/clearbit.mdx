@@ -18,10 +18,10 @@ element. By default, c15t also reloads the page.
 Use the publishable key from your Clearbit tag installation. Do not put a
 secret Clearbit API key in browser code.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { clearbit } from '@c15t/integrations/clearbit';
+import { clearbit } from '@inth/integrations/clearbit';
 
 export const scripts = [clearbit({ publishableKey: 'YOUR_PUBLISHABLE_KEY' })];
 ```

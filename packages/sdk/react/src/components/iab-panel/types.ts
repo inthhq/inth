@@ -5,4 +5,4 @@ export type {
 	HeadlessIABProcessedStack as ProcessedStack,
 	HeadlessIABProcessedVendor as ProcessedVendor,
 	HeadlessIABVendorId as VendorId,
-} from '@c15t/iab/headless';
+} from '@inth/sdk/iab/headless';

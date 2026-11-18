@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect } from "react"
-import { ConsentDraftProvider, useModel, useTranslations } from "c15t/react"
+import { ConsentDraftProvider, useModel, useTranslations } from "@inth/react"
 import {
   useConsentTextDirection,
   useHeadlessConsentUI,
   useIABPolicyGuard,
-} from "c15t/react/headless"
+} from "@inth/react/headless"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"

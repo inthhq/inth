@@ -20,7 +20,7 @@ const getRegistry = function getRegistry(): StockRegistry {
 /**
  * Record c15t's built-in copy for some languages.
  *
- * `@c15t/translations/all` registers every bundled language when it loads,
+ * `@inth/sdk/translations/all` registers every bundled language when it loads,
  * and English is always registered. Code that merges app messages over
  * backend copy reads this to tell a stock string, which should not shadow
  * a backend edit, from a customized one.

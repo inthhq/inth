@@ -7,7 +7,7 @@ import {
 	output,
 	signal,
 } from '@angular/core';
-import { ɵresolveNoStyle as resolveNoStyle } from '@c15t/angular';
+import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import {
 	PreferenceItemAuxiliary,
 	PreferenceItemBody,
@@ -22,10 +22,10 @@ import {
 	SwitchControl,
 	Switch,
 	SwitchThumb,
-} from '@c15t/angular/primitives';
-import { countIABPartners } from '@c15t/iab/headless';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
-import switchStyles from '@c15t/ui/styles/components/switch';
+} from '@inth/angular/primitives';
+import { countIABPartners } from '@inth/sdk/iab/headless';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
 import {
 	ChevronRightIcon,

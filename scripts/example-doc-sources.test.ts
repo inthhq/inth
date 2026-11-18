@@ -289,20 +289,20 @@ describe('hand-written docs examples', () => {
 	test('counts code fences that import c15t, including indented tabs', () => {
 		const page = [
 			'```tsx title="app/layout.tsx"',
-			"import { ConsentRoot } from 'c15t/next';",
+			"import { ConsentRoot } from '@inth/nextjs';",
 			'```',
 			'',
 			'  ```ts',
-			"  import { posthog } from '@c15t/integrations/posthog';",
+			"  import { posthog } from '@inth/integrations/posthog';",
 			'  ```',
 			'',
 			'```bash',
-			'npm install c15t',
+			'npm install @inth/nextjs',
 			'```',
 			'',
 			fragmentMarker,
 			'```ts',
-			"import { hosted } from 'c15t/react';",
+			"import { hosted } from '@inth/react';",
 			'```',
 		].join('\n');
 		expect(countInDocument(page)).toBe(2);

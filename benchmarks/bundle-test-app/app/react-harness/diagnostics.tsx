@@ -1,7 +1,5 @@
 'use client';
 
-import type { AllConsentNames } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
 import {
 	ConsentDialogLink,
 	useConsent,
@@ -10,7 +8,9 @@ import {
 	useExplicitChoice,
 	useIframeBlocker,
 	useSaveConsents,
-} from '@c15t/react';
+} from '@inth/react';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 

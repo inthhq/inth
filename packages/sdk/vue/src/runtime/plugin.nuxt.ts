@@ -1,5 +1,5 @@
-import type { HydrationRecords } from '@c15t/core';
-import type { RequestConsentState } from '@c15t/core/server';
+import type { HydrationRecords } from '@inth/sdk/engine';
+import type { RequestConsentState } from '@inth/sdk/server';
 import { defu } from 'defu';
 import { computed, markRaw, shallowRef, toRaw, watch } from 'vue';
 
@@ -86,7 +86,7 @@ export const serverScriptStartHead = async function serverScriptStartHead(
 	let code: string | undefined;
 	try {
 		const { serverScriptStart } =
-			await import('@c15t/core/runtime/script-server-start');
+			await import('@inth/sdk/runtime/script-server-start');
 		code = serverScriptStart({
 			...(config as unknown as Parameters<typeof serverScriptStart>[0]),
 			prefetch: state,
@@ -316,7 +316,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 			: undefined;
 	if (SERVER_BUILD !== false && request) {
 		const { readStoredRecordsFromCookieHeader } =
-			await import('@c15t/core/modules/persistence');
+			await import('@inth/sdk/modules/persistence');
 		initialRecords.value = readStoredRecordsFromCookieHeader(
 			request.headers.cookie,
 			config.value.storageConfig,

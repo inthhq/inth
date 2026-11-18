@@ -1,6 +1,6 @@
 'use client';
 
-import { useVendorAllowed } from 'c15t/next';
+import { useVendorAllowed } from '@inth/nextjs';
 
 import { ChatPreview } from './embed-previews';
 import { GatedEmbed } from './gated-embed';

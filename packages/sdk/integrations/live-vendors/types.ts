@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 /**
  * Depth of a live vendor probe.
@@ -40,7 +40,7 @@ export interface LiveProbeCheckResult {
 }
 
 /**
- * Live probe definition for one built-in `@c15t/integrations` integration.
+ * Live probe definition for one built-in `@inth/integrations` integration.
  *
  * The same config object is imported by the Playwright runner (Node side) and
  * bundled into the browser harness, so `createScript` and the check callbacks

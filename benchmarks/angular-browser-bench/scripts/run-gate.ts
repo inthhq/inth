@@ -121,7 +121,7 @@ try {
 	await runConsentGate({
 		framework: 'angular',
 		notes: [
-			'@c15t/angular as the quickstart and rendering guide set it up: provideC15t() with hosted() on the /api/c15t consent route, provideC15tServer() with that route, and the stock banner, dialog and c15tConsentDialogLink in the root component. The control is a second Angular SSR app without c15t.',
+			'@inth/angular as the quickstart and rendering guide set it up: provideC15t() with hosted() on the /api/c15t consent route, provideC15tServer() with that route, and the stock banner, dialog and c15tConsentDialogLink in the root component. The control is a second Angular SSR app without c15t.',
 		],
 		packageName: '@c15t/angular-browser-bench',
 		paths: { control: `${CONTROL_PREFIX}/`, gate: '/gate' },

@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  *
- * Tests for @c15t/core/modules/persistence.
+ * Tests for @inth/sdk/modules/persistence.
  *
  * Covers:
  * - Hydration from cookie / localStorage through the kernel boundary

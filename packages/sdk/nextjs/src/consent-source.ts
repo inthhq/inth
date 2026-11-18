@@ -1,16 +1,16 @@
+import {
+	projectUrl as generatedProjectUrl,
+	snapshot as generatedSnapshot,
+} from '@inth/nextjs/generated-manifest';
+import userConfig from '@inth/nextjs/user-config';
 /**
  * Where the server helpers resolve consent from, read from
  * `c15t.config.ts` and the build-time snapshot.
  *
  * @internal
  */
-import type { ManifestMode } from '@c15t/core/modes';
-import {
-	projectUrl as generatedProjectUrl,
-	snapshot as generatedSnapshot,
-} from '@c15t/nextjs/generated-manifest';
-import userConfig from '@c15t/nextjs/user-config';
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ManifestMode } from '@inth/sdk/modes';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 import type { ConsentConfig } from './config';
 import { checkRoutePrefix, readProjectUrlFromEnv } from './config';

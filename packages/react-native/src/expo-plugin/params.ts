@@ -354,7 +354,7 @@ export interface InthPluginProps {
 	skipNativeBuildCheck?: boolean;
 	/**
 	 * Appearance of the native consent screens, written into the native theme
-	 * keys at prebuild. Field names follow the web `Theme` from `@c15t/ui`.
+	 * keys at prebuild. Field names follow the web `Theme` from `@inth/sdk/ui`.
 	 * Omit it to leave those keys to the app.
 	 */
 	theme?: InthThemePluginProps;
@@ -1023,7 +1023,7 @@ const OPTIONAL_CATEGORIES = new Set([
 ]);
 const DAY_MS = 86_400_000;
 
-/** Prompts each model allows, as `@c15t/schema` defines them. */
+/** Prompts each model allows, as `@inth/sdk/schema` defines them. */
 const POLICY_MODEL_PROMPTS: Readonly<Record<string, readonly string[]>> = {
 	none: ['none'],
 	'opt-in': ['choice'],
@@ -1353,7 +1353,7 @@ const reviewProblem = function reviewProblem(
 
 /**
  * Check one rule with the rules both native cores apply at launch: the backend's
- * authoring rules (`inspectPolicyRules` in `@c15t/schema`) plus the in-code
+ * authoring rules (`inspectPolicyRules` in `@inth/sdk/schema`) plus the in-code
  * limits. `packages/native-protocol/local-policy/parity.json` lists the cases all three
  * refuse, and the tests of each read it.
  *

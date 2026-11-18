@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CornerPosition } from '@c15t/ui/utils';
+	import type { CornerPosition } from '@inth/sdk/ui/utils';
 
 	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import ConsentDialogTrigger from '../../lib/components/panel-trigger.svelte';

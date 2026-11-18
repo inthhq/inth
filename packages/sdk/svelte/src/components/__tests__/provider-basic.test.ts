@@ -5,7 +5,7 @@
  */
 
 import { IAB_FIXTURE_CMP_ID, MINIMAL_GVL } from '@c15t/conformance';
-import type { ConsentKernel } from '@c15t/core';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -66,7 +66,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		await vi.waitFor(() => {
 			expect((window as WindowWithC15t).c15t).toMatchObject({
 				mode: 'offline',
-				pkg: '@c15t/svelte',
+				pkg: '@inth/svelte',
 			});
 		});
 		expect(typeof (window as WindowWithC15t).c15t?.version).toBe('string');
@@ -105,7 +105,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		await vi.waitFor(() => {
 			expect((window as WindowWithC15t).c15t).toMatchObject({
 				mode: 'hosted',
-				pkg: '@c15t/svelte',
+				pkg: '@inth/svelte',
 			});
 		});
 		await vi.waitFor(() => {
@@ -152,7 +152,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 			},
 		});
 
-		// `@c15t/iab` is loaded on demand, so this waits on a dynamic import
+		// `@inth/sdk/iab` is loaded on demand, so this waits on a dynamic import
 		// rather than a synchronous mount.
 		await vi.waitFor(
 			() => {
@@ -174,7 +174,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 				// @ts-expect-error Verify the runtime guard for untyped callers.
 				options: {},
 			})
-		).toThrow('@c15t/svelte ConsentProvider: `projectUrl` is required.');
+		).toThrow('@inth/svelte ConsentProvider: `projectUrl` is required.');
 	});
 
 	test('should not make fetch calls in offline mode', async () => {

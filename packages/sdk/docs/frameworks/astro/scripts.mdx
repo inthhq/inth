@@ -10,7 +10,7 @@ The `ConsentBanner` component does not stop a `<script>` tag you already have.
 Give c15t each vendor script to load instead, and remove the vendor's own
 snippet so it loads once.
 
-Vendor helpers from `@c15t/integrations` contain callbacks, and the integration
+Vendor helpers from `@inth/integrations` contain callbacks, and the integration
 options in `astro.config.mjs` must survive JSON serialization. So register
 helpers in `src/c15t.client.ts`, which the integration finds on its own, or
 the module its `clientEntrypoint` option names. This list loads PostHog on
@@ -80,7 +80,7 @@ c15t checks gated scripts when the page loads, after each consent change and
 after each `ClientRouter` navigation, so a script on a page you navigate to
 runs as soon as it is allowed. A script with `src` works the same way. For
 markup you insert later from your own code, call
-`activateGatedScripts(getConsent(), container)` from `c15t/astro/client`.
+`activateGatedScripts(getConsent(), container)` from `@inth/astro/client`.
 Under a nonce policy, give the inserted tags the nonce and pass it as a third
 argument.
 
@@ -114,7 +114,7 @@ from the `onPermissionsChanged` callback. See
 
 ## Send your own analytics events
 
-`getEventDispatcher()` from `c15t/astro/client` sends your own events and
+`getEventDispatcher()` from `@inth/astro/client` sends your own events and
 pageviews to these scripts while consent allows them. See
 [send analytics events after consent](./client-api#send-analytics-events-after-consent)
 for an example and where to send pageviews with `ClientRouter`.

@@ -1,6 +1,6 @@
 import { createScriptLoaderWith } from './loader';
 /**
- * `@c15t/core/modules/script-loader`
+ * `@inth/sdk/modules/script-loader`
  *
  * Kernel-consuming script loader. Subscribes to the kernel snapshot and
  * reconciles DOM: mounts scripts that pass their consent condition,

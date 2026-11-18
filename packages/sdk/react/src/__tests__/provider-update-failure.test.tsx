@@ -3,7 +3,7 @@
  * which rejects when its update module fails to load. The provider must
  * not leave that rejection unhandled: the next update loads it again.
  */
-import type * as ProviderRuntimeModule from '@c15t/core/runtime/provider';
+import type * as ProviderRuntimeModule from '@inth/sdk/runtime/provider';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -12,7 +12,7 @@ import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what the provider does with a rejected update(); the real runtime rejects only when a chunk fails to load, which a test cannot cause without mocking.
-vi.mock('@c15t/core/runtime/provider', async (importOriginal) => {
+vi.mock('@inth/sdk/runtime/provider', async (importOriginal) => {
 	const actual = await importOriginal<typeof ProviderRuntimeModule>();
 	return {
 		...actual,

@@ -5,8 +5,8 @@ import {
 	ConsentDialog,
 	ConsentProvider,
 	hosted,
-} from '@c15t/react';
-import type { ConsentProviderOptions, WithProjectUrl } from '@c15t/react';
+} from '@inth/react';
+import type { ConsentProviderOptions, WithProjectUrl } from '@inth/react';
 import type { ReactNode } from 'react';
 
 import { ReactBenchmarkProbe } from './probe';

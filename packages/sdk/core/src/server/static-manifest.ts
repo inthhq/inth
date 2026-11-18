@@ -1,4 +1,4 @@
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 import { failedResponseError } from '../libs/failed-response';
 import { c15tProtocolHeaders } from '../transports/version-header';
@@ -86,7 +86,7 @@ export const loadStaticManifest = async (
 	}
 	try {
 		// Build/static loading owns validation; request resolvers need no schemas.
-		const { parseConsentManifest } = await import('@c15t/schema');
+		const { parseConsentManifest } = await import('@inth/sdk-schema');
 		return parseConsentManifest(await response.json());
 	} catch (cause) {
 		throw new Error(

@@ -1,7 +1,7 @@
-import { init } from '@c15t/browser';
+import { init } from '@inth/sdk';
 // #region docs:translations title="src/main.ts"
-import { testing } from '@c15t/browser/testing';
-import { policyRulePresets } from 'c15t';
+import { policyRulePresets } from '@inth/sdk/engine';
+import { testing } from '@inth/sdk/testing';
 
 import { scripts } from './scripts';
 

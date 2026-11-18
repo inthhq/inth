@@ -1,6 +1,6 @@
 # Astro static starter
 
-An Astro site with static output and no adapter, using the `c15t/astro`
+An Astro site with static output and no adapter, using the `@inth/astro`
 integration in `hosted()` mode. Every page is built once. In the browser, c15t
 asks your backend whether to show the banner, and PostHog loads once the
 visitor allows measurement.

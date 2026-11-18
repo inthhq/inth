@@ -2,9 +2,9 @@
 // ends up with. `src/__tests__/astro-build.test.ts` builds it once per `ui`.
 import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
-import c15t from '@c15t/astro';
-import { testing } from '@c15t/astro/testing';
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import c15t from '@inth/astro';
+import { testing } from '@inth/astro/testing';
 import { defineConfig } from 'astro/config';
 
 const ui = process.env.C15T_UI ?? 'svelte';

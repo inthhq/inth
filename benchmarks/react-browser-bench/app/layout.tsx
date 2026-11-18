@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-	description: 'Deterministic browser runtime benchmarks for @c15t/react',
+	description: 'Deterministic browser runtime benchmarks for @inth/react',
 	title: 'c15t React Browser Bench',
 };
 

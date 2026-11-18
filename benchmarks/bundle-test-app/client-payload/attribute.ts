@@ -220,8 +220,8 @@ export const attributeChunk = function attributeChunk(
  * first-party and framework-runtime code.
  *
  * @example
- * packageOf('turbopack:///[project]/node_modules/@c15t/react/dist/index.js');
- * // => '@c15t/react'
+ * packageOf('turbopack:///[project]/node_modules/@inth/react/dist/index.js');
+ * // => '@inth/react'
  */
 export const packageOf = function packageOf(source: string): string {
 	const marker = 'node_modules/';
@@ -247,8 +247,8 @@ export const packageOf = function packageOf(source: string): string {
  * The path of a module inside its package, for module-level tables.
  *
  * @example
- * moduleOf('turbopack:///[project]/node_modules/@c15t/ui/dist/theme/index.js');
- * // => '@c15t/ui/dist/theme/index.js'
+ * moduleOf('turbopack:///[project]/node_modules/@inth/sdk/lib/ui/dist/theme/index.js');
+ * // => '@inth/sdk/lib/ui/dist/theme/index.js'
  */
 export const moduleOf = function moduleOf(source: string): string {
 	const marker = 'node_modules/';

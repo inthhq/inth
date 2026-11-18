@@ -60,7 +60,7 @@ option replaces the earlier value.
 
 With `data-manual` on the tag, the bundle installs `window.c15t` and waits.
 `c15t.js` still requires a backend URL when `init()` runs. Manifest mode
-needs the `@c15t/browser` ES module, a headless script with your own UI, or
+needs the `@inth/sdk` ES module, a headless script with your own UI, or
 the IAB script for an IAB policy. Test pages load `c15t.testing.js`.
 
 Call `c15t.init()` when your page is ready, for example once it knows the
@@ -166,8 +166,8 @@ can follow them.
 
 | Property | What it holds |
 | --- | --- |
-| `version` | The `@c15t/browser` version. |
-| `pkg` | `@c15t/browser`, `@c15t/browser/testing`, `@c15t/browser/headless` or `@c15t/browser/iab`, by bundle. `c15t.testing.js` reports `@c15t/browser/testing`. |
+| `version` | The `@inth/sdk` version. |
+| `pkg` | `@inth/sdk`, `@inth/sdk/testing`, `@inth/sdk/headless` or `@inth/sdk/iab-client`, by bundle. `c15t.testing.js` reports `@inth/sdk/testing`. |
 | `mode` | `hosted`, `manifest`, `testing` or `custom` once started, else `null`. A transport factory passed as `mode` reports `custom`, except `hosted()` and `manifest()`. |
 | `hosting` | `'inth'` or `'self-hosted'` once `/init` reports who runs the backend, else `null`. Stays `null` with `c15t.testing.js` and with backends older than the field. |
 | `client` | The started client, or `null`. It has the same methods plus `kernel`, `runtime`, `options`, `consentCategories`, `ui` and `setOverrides()`. |
@@ -175,7 +175,7 @@ can follow them.
 | `hosted`, `manifest` | Transport factories. `c15t.js` exports only `hosted`. Headless and IAB export both, for calls such as `c15t.init({ mode: c15t.manifest({ … }) })` with `data-manual`. |
 | `testing` | `c15t.testing.js` only: `c15t.testing({ policy })`, for `c15t.init({ mode })`. |
 
-`c15t.js` reports `pkg: '@c15t/browser'` and `mode: 'hosted'` once started.
+`c15t.js` reports `pkg: '@inth/sdk'` and `mode: 'hosted'` once started.
 
 `c15t.client.setOverrides({ country, region, language, gpc })` changes the
 location, language or GPC signal policy matching uses. The DevTools Location

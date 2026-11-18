@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -140,7 +140,7 @@ export interface AdobeAnalyticsOptions {
  *
  * @example
  * ```ts
- * import { adobeAnalytics } from '@c15t/integrations/adobe-analytics';
+ * import { adobeAnalytics } from '@inth/integrations/adobe-analytics';
  *
  * adobeAnalytics({
  *   scriptUrl:

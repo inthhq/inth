@@ -4,8 +4,8 @@ import {
 	input,
 	signal,
 } from '@angular/core';
-import { ɵresolveNoStyle as resolveNoStyle } from '@c15t/angular';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
 import { ChevronRightIcon } from './iab-icons';
 import { PREFERENCE_ITEM } from './iab-purpose-item';

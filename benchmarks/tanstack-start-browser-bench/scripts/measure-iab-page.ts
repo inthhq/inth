@@ -11,9 +11,9 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 	c15tProtocolHeaders,
-} from '@c15t/core';
-import type { GlobalVendorList } from '@c15t/core';
-import { createManifestTransport } from '@c15t/core/transports/manifest';
+} from '@inth/sdk/engine';
+import type { GlobalVendorList } from '@inth/sdk/engine';
+import { createManifestTransport } from '@inth/sdk/transports/manifest';
 import { chromium } from 'playwright';
 
 const [appRoot, label, output] = process.argv.slice(2);

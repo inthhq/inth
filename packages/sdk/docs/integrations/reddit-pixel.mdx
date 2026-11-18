@@ -18,10 +18,10 @@ helper calls `rdt('enableFirstPartyCookies')`.
 
 Copy your Reddit Pixel ID. The helper passes it to `rdt('init', ...)`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { redditPixel } from '@c15t/integrations/reddit-pixel';
+import { redditPixel } from '@inth/integrations/reddit-pixel';
 
 export const scripts = [redditPixel({ pixelId: 't2_YOUR_PIXEL_ID' })];
 ```
@@ -70,7 +70,7 @@ export function trackPurchase(marketingAllowed: boolean, orderId: string) {
 
 Pass the current marketing permission from your framework, for example
 `useConsent('marketing')` in React. Set `conversionId` to deduplicate against
-the Conversions API. `@c15t/integrations/reddit-pixel` also exports
+the Conversions API. `@inth/integrations/reddit-pixel` also exports
 `redditPixelEvent`, a typed wrapper around `rdt('track', ...)`. It does nothing
 until `rdt` exists and does not check permission, so apply the same guard
 before calling it.

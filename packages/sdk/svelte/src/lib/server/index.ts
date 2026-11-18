@@ -1,4 +1,4 @@
-import { resolveRequestConsent } from '@c15t/core/server';
+import { resolveRequestConsent } from '@inth/sdk/server';
 
 import type {
 	ConsentRequestOptions,
@@ -20,7 +20,7 @@ import type {
  *    correct without waiting for a client roundtrip.
  *
  * The rules (what is forwarded, the self-route guard, how the response is
- * merged) live in `resolveRequestConsent` from `@c15t/core/server`, shared
+ * merged) live in `resolveRequestConsent` from `@inth/sdk/server`, shared
  * with every other adapter. Never throws: if the backend URL cannot be
  * resolved or the call fails, the request-only state is returned and the
  * client runs init on mount.
@@ -30,7 +30,7 @@ import type {
  * @returns A serializable state for the provider's `prefetch` prop.
  * @example
  * ```ts
- * import { resolveConsent } from '@c15t/svelte/server';
+ * import { resolveConsent } from '@inth/svelte/server';
  *
  * const state = await resolveConsent({
  *   projectUrl: 'https://consent.example.com',
@@ -42,7 +42,7 @@ export const resolveConsent = function resolveConsent(
 	options: ResolveConsentOptions
 ): Promise<ConsentState> {
 	return resolveRequestConsent({
-		adapter: '@c15t/svelte',
+		adapter: '@inth/svelte',
 		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
@@ -69,5 +69,5 @@ export const resolveConsent = function resolveConsent(
 	});
 };
 
-export type { KernelConfig } from '@c15t/core';
+export type { KernelConfig } from '@inth/sdk/engine';
 export type { ConsentRequestOptions, ConsentState, ResolveConsentOptions };

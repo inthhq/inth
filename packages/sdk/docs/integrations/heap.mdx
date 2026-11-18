@@ -19,10 +19,10 @@ Copy the environment ID from your Heap installation snippet. The `heap` helper
 loads that environment's `heap_config.js`, which then loads the heap.js
 runtime. Remove the original Heap snippet.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { heap } from '@c15t/integrations/heap';
+import { heap } from '@inth/integrations/heap';
 
 export const scripts = [heap({ envId: 'YOUR_ENVIRONMENT_ID' })];
 ```

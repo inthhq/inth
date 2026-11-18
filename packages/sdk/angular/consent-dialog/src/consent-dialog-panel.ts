@@ -23,20 +23,20 @@ import {
 	ɵselectLegalLinks as selectLegalLinks,
 	ɵshouldShowBranding as shouldShowBranding,
 	ɵSURFACE_CLOSED as SURFACE_CLOSED,
-} from '@c15t/angular';
-import { ConsentDialogTrigger } from '@c15t/angular/consent-dialog-trigger';
-import { ConsentWidgetRoot, DIALOG_SHEETS } from '@c15t/angular/consent-widget';
+} from '@inth/angular';
+import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
+import { ConsentWidgetRoot, DIALOG_SHEETS } from '@inth/angular/consent-widget';
 import {
 	DialogBackdrop,
 	DialogContent,
 	Dialog,
 	DialogPositioner,
-} from '@c15t/angular/primitives';
-import { resolveConsentPresentation } from '@c15t/core/surface-state';
-import { isDialogDismissKey } from '@c15t/ui/primitives';
-import styles from '@c15t/ui/styles/components/consent-dialog';
-import type { ClassNameStyle } from '@c15t/ui/theme';
-import { getTextDirection } from '@c15t/ui/utils';
+} from '@inth/angular/primitives';
+import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+import type { ClassNameStyle } from '@inth/sdk/ui/theme';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 
 import { DEFAULT_DIALOG_MODELS } from './dialog-options';
 import type {

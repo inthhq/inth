@@ -1,8 +1,8 @@
-import { gtag } from '@c15t/integrations/google-tag';
-import { metaPixel } from '@c15t/integrations/meta-pixel';
-import { clarity } from '@c15t/integrations/microsoft-clarity';
-import { tiktokPixel } from '@c15t/integrations/tiktok-pixel';
-import type { Script } from 'c15t';
+import { gtag } from '@inth/integrations/google-tag';
+import { metaPixel } from '@inth/integrations/meta-pixel';
+import { clarity } from '@inth/integrations/microsoft-clarity';
+import { tiktokPixel } from '@inth/integrations/tiktok-pixel';
+import type { Script } from '@inth/sdk/engine';
 
 /** Optional test-account IDs that replace the demo's local vendor fixtures. */
 export interface DemoScriptIds {

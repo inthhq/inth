@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular/devtools`: the c15t DevTools panel for an Angular app.
+ * `@inth/angular/devtools`: the c15t DevTools panel for an Angular app.
  *
  * @packageDocumentation
  */
@@ -11,4 +11,4 @@ export type {
 	DevToolsOptions,
 	DevToolsPosition,
 	DevToolsTab,
-} from '@c15t/dev-tools';
+} from '@inth/sdk/devtools';

@@ -5,7 +5,7 @@
  * This module exports only TypeScript types without any Valibot runtime code,
  * making it safe to use in frontend applications without adding bundle size.
  *
- * For validation schemas with Valibot, import from '@c15t/schema'
+ * For validation schemas with Valibot, import from '@inth/sdk-schema'
  */
 
 // Import constants directly to avoid Zod

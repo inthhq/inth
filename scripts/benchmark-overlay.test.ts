@@ -146,14 +146,14 @@ it.each([
 				),
 				'utf8'
 			);
-			expect(next.includes('@c15t/nextjs/styles.css')).toBe(!automatic);
-			expect(iab.includes('@c15t/tanstack-start/styles.css')).toBe(
+			expect(next.includes('@inth/nextjs/styles.css')).toBe(!automatic);
+			expect(iab.includes('@inth/tanstack-start/styles.css')).toBe(
 				!iabAutomatic
 			);
-			expect(iab.includes('@c15t/tanstack-start/iab/styles.css')).toBe(
+			expect(iab.includes('@inth/tanstack-start/iab/styles.css')).toBe(
 				!iabAutomatic
 			);
-			expect(svelte.includes("import '@c15t/svelte/styles.css';")).toBe(
+			expect(svelte.includes("import '@inth/svelte/styles.css';")).toBe(
 				!automatic
 			);
 			expect(svelte).toContain('<p>Measured page</p>');

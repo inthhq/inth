@@ -1,4 +1,4 @@
-import { init } from '@c15t/browser';
+import { init } from '@inth/sdk';
 
 import { scripts } from './scripts';
 import { testBackend } from './test-backend';
@@ -14,6 +14,6 @@ document
 	?.addEventListener('click', () => consent.openDialog());
 
 if (import.meta.env.DEV) {
-	const { mountDevTools } = await import('@c15t/browser/devtools');
+	const { mountDevTools } = await import('@inth/sdk/devtools');
 	mountDevTools(consent, { defaultTab: 'scripts' });
 }

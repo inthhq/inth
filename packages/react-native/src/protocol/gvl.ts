@@ -16,9 +16,9 @@
  * as a disclosure row with no name behind it.
  *
  * This is a copy rather than an import for the reason `./vocabulary` gives for
- * the same choice: naming `@c15t/schema`, `@c15t/core`, or `@c15t/iab` from
+ * the same choice: naming `@inth/sdk/schema`, `@inth/sdk/engine`, or `@inth/sdk/iab` from
  * here would put a web consent dependency into every phone app's graph and into
- * every published declaration file. Two gates keep the copy honest, and `@c15t/core`
+ * every published declaration file. Two gates keep the copy honest, and `@inth/sdk/engine`
  * is a devDependency for exactly this:
  *
  * - `__tests__/gvl.type-test.ts` compares every interface below with the kernel's
@@ -37,7 +37,7 @@
 /**
  * A purpose, special purpose, feature, or special feature.
  *
- * Mirrors `GVLPurpose` in `@c15t/core`, which is `gvlPurposeSchema`. The GVL
+ * Mirrors `GVLPurpose` in `@inth/sdk/engine`, which is `gvlPurposeSchema`. The GVL
  * gives all five of those collections the same five fields, and both native
  * cores store them as one type -- `GVLDefinition` in Swift, `GvlLocalizedEntry`
  * in Kotlin -- so the four names below are the document's, not four shapes.
@@ -54,7 +54,7 @@ export interface GVLPurpose {
 }
 
 /**
- * Mirrors `GVLSpecialPurpose` in `@c15t/core`, which is `gvlSpecialPurposeSchema`.
+ * Mirrors `GVLSpecialPurpose` in `@inth/sdk/engine`, which is `gvlSpecialPurposeSchema`.
  */
 export interface GVLSpecialPurpose {
 	description: string;
@@ -65,7 +65,7 @@ export interface GVLSpecialPurpose {
 }
 
 /**
- * Mirrors `GVLFeature` in `@c15t/core`, which is `gvlFeatureSchema`.
+ * Mirrors `GVLFeature` in `@inth/sdk/engine`, which is `gvlFeatureSchema`.
  */
 export interface GVLFeature {
 	description: string;
@@ -76,7 +76,7 @@ export interface GVLFeature {
 }
 
 /**
- * Mirrors `GVLSpecialFeature` in `@c15t/core`, which is `gvlSpecialFeatureSchema`.
+ * Mirrors `GVLSpecialFeature` in `@inth/sdk/engine`, which is `gvlSpecialFeatureSchema`.
  */
 export interface GVLSpecialFeature {
 	description: string;
@@ -89,7 +89,7 @@ export interface GVLSpecialFeature {
 /**
  * A stack: a named bundle of purposes a preference centre may offer as one row.
  *
- * Mirrors `GVLStack` in `@c15t/core`, which is `gvlStackSchema`.
+ * Mirrors `GVLStack` in `@inth/sdk/engine`, which is `gvlStackSchema`.
  */
 export interface GVLStack {
 	description: string;
@@ -103,7 +103,7 @@ export interface GVLStack {
 /**
  * A data category (`gvl.dataCategories`), which vendors reference by id.
  *
- * Mirrors `GVLDataCategory` in `@c15t/core`, which is `gvlDataCategorySchema`.
+ * Mirrors `GVLDataCategory` in `@inth/sdk/engine`, which is `gvlDataCategorySchema`.
  */
 export interface GVLDataCategory {
 	description: string;
@@ -114,7 +114,7 @@ export interface GVLDataCategory {
 /**
  * One partner's privacy-page links, in the language `langId` names.
  *
- * Mirrors `GVLVendorUrl` in `@c15t/core`, which is `gvlVendorUrlSchema`.
+ * Mirrors `GVLVendorUrl` in `@inth/sdk/engine`, which is `gvlVendorUrlSchema`.
  */
 export interface GVLVendorUrl {
 	langId: string;
@@ -141,7 +141,7 @@ export interface GVLVendorOverflow {
 /**
  * One partner's entry, which is most of what a preference centre renders.
  *
- * Mirrors `GVLVendor` in `@c15t/core`, which is `gvlVendorSchema`, with one
+ * Mirrors `GVLVendor` in `@inth/sdk/engine`, which is `gvlVendorSchema`, with one
  * deliberate difference, stated on the field.
  */
 export interface GVLVendor {
@@ -203,7 +203,7 @@ export interface GVLVendor {
 /**
  * The IAB Global Vendor List as `/init` serves it.
  *
- * Mirrors `GlobalVendorList` in `@c15t/core`, which re-exports the type inferred
+ * Mirrors `GlobalVendorList` in `@inth/sdk/engine`, which re-exports the type inferred
  * from `globalVendorListSchema`.
  *
  * Both cores fold a served list into the snapshot's `iab` slot, because that is the

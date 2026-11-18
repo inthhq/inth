@@ -108,16 +108,16 @@ const preserveNextEntries = (
       continue;
     }
     let guidance =
-      "Keep your page content. For server consent, import withConsentProps from 'c15t/next/pages' and integrate it with getServerSideProps.";
+      "Keep your page content. For server consent, import withConsentProps from '@inth/nextjs/pages' and integrate it with getServerSideProps.";
     if (stem.endsWith("/layout")) {
       guidance =
-        "Keep your layout, styles, and metadata. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from 'c15t/next', and resolveConsent from 'c15t/next/server'. Inside the body, wrap children and the consent components in <ConsentRoot state={resolveConsent()}>.";
+        "Keep your layout, styles, and metadata. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs', and resolveConsent from '@inth/nextjs/server'. Inside the body, wrap children and the consent components in <ConsentRoot state={resolveConsent()}>.";
     } else if (stem.endsWith("/_app")) {
       guidance =
-        "Keep your providers and styles. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from 'c15t/next'. Wrap <Component {...pageProps} /> and the consent components in <ConsentRoot state={pageProps.consent}>.";
+        "Keep your providers and styles. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs'. Wrap <Component {...pageProps} /> and the consent components in <ConsentRoot state={pageProps.consent}>.";
     } else if (stem.endsWith("/[...c15t]")) {
       guidance =
-        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from 'c15t/next/pages' and use createPagesConsentRoute() as the default handler for /api/c15t.";
+        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from '@inth/nextjs/pages' and use createPagesConsentRoute() as the default handler for /api/c15t.";
     }
     generation.instructions.push(
       `Integrate c15t into ${existing}: ${guidance}`
@@ -201,7 +201,7 @@ export const addNextConfigInstructions = (
   }
   plan.instructions.push(
     `Update ${config.path}: wrap the exported config with withConsentManifest if it is not already wrapped. Keep your existing config object or function. In the examples below, nextConfig means your existing config.\n` +
-      `ES modules:\nimport { withConsentManifest } from 'c15t/next/build';\nexport default ${expression}\n` +
-      `CommonJS:\nconst { withConsentManifest } = require('c15t/next/build');\nmodule.exports = ${expression}`
+      `ES modules:\nimport { withConsentManifest } from '@inth/nextjs/build';\nexport default ${expression}\n` +
+      `CommonJS:\nconst { withConsentManifest } = require('@inth/nextjs/build');\nmodule.exports = ${expression}`
   );
 };

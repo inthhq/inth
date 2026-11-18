@@ -9,8 +9,8 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import type { ReactNode } from 'react';
 import { useContext, useEffect, useMemo } from 'react';
 

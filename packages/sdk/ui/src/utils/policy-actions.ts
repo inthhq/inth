@@ -1,4 +1,4 @@
-export { resolveConsentPresentation } from '@c15t/core';
+export { resolveConsentPresentation } from '@inth/sdk-core';
 export type {
 	ConsentPresentation,
 	PromptPresentation,
@@ -7,4 +7,4 @@ export type {
 	PresentationAction,
 	PresentationDiagnostic,
 	ResolvedConsentPresentation,
-} from '@c15t/core';
+} from '@inth/sdk-core';

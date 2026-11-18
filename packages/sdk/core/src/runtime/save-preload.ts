@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/runtime/save-preload`: loads the code a consent save runs
+ * `@inth/sdk/runtime/save-preload`: loads the code a consent save runs
  * before the visitor makes one.
  *
  * Recording a choice imports two code-split chunks the first time it

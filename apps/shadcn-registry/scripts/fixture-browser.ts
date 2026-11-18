@@ -27,7 +27,7 @@ export interface BrowserFixture {
 	screenshots: string;
 }
 
-// English copy from @c15t/translations.
+// English copy from @inth/sdk/translations.
 const copy = {
 	acceptAll: 'Accept All',
 	allowVendor: 'Allow X Pixel',

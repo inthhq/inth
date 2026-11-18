@@ -3,51 +3,51 @@ import {
 	applyTranslationOverrides,
 	createConsentKernel,
 	defaultTranslationConfig,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	ConsentSnapshot,
 	KernelConfig,
 	KernelTranslations,
 	TranslationOverrides,
 	TranslationsResponse,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 /**
- * Server helpers for `@c15t/astro`.
+ * Server helpers for `@inth/astro`.
  *
  * These run inside the Astro middleware and the injected API routes. They
  * read the incoming request, resolve the consent decision for it through
- * `resolveRequestConsent` from `@c15t/core/server` (shared with every other
+ * `resolveRequestConsent` from `@inth/sdk/server` (shared with every other
  * adapter), and produce the `KernelConfig` the page inlines so the browser
  * boots without an `/init` roundtrip. Translations, the offline vendor
  * list, the snapshot and the banner flags stay Astro's own.
  */
-import { resolveStorageKeys } from '@c15t/core/modules/persistence';
-import { inferConsentCategories, isIABConfigured } from '@c15t/core/runtime';
+import { resolveStorageKeys } from '@inth/sdk/modules/persistence';
+import { inferConsentCategories, isIABConfigured } from '@inth/sdk/runtime';
+import { recommendedPolicyRules } from '@inth/sdk/schema/types';
+import type {
+	ConsentRequestHeaderInputs,
+	GlobalVendorList,
+	PolicyRule,
+} from '@inth/sdk/schema/types';
 import {
 	fetchCachedGvl,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
-} from '@c15t/core/server';
+} from '@inth/sdk/server';
 import type {
 	ManifestFetch,
 	ResolveRequestConsentOptions,
-} from '@c15t/core/server';
-import { hasConsentUI } from '@c15t/core/surface-actions';
-import { assertNotProduction } from '@c15t/core/testing';
+} from '@inth/sdk/server';
+import { hasConsentUI } from '@inth/sdk/surface-actions';
+import { assertNotProduction } from '@inth/sdk/testing';
+import { baseTranslations } from '@inth/sdk/translations/all';
 import {
 	DEFAULT_RESOLVE_TIMEOUT_MS,
 	withResolutionBudget,
-} from '@c15t/core/transports/manifest-cache';
-import { recommendedPolicyRules } from '@c15t/schema/types';
-import type {
-	ConsentRequestHeaderInputs,
-	GlobalVendorList,
-	PolicyRule,
-} from '@c15t/schema/types';
-import { baseTranslations } from '@c15t/translations/all';
-import { generateThemeCSS } from '@c15t/ui/theme';
-import type { Theme } from '@c15t/ui/theme';
+} from '@inth/sdk/transports/manifest-cache';
+import { generateThemeCSS } from '@inth/sdk/ui/theme';
+import type { Theme } from '@inth/sdk/ui/theme';
 
 import { assertIABAvailable } from './libs/iab-unavailable';
 import type { C15tColorScheme, C15tLocals, C15tResolvedOptions } from './types';
@@ -196,7 +196,7 @@ const modeOptions = function modeOptions(
 			};
 		default: {
 			// `testing()`: never in production.
-			assertNotProduction('@c15t/astro/testing');
+			assertNotProduction('@inth/astro/testing');
 			// A pack whose model is `iab` needs a configured CMP to be eligible.
 			const iabEnabled = isIABConfigured(options.iab);
 			return {
@@ -345,7 +345,7 @@ export const resolveConsentContext = async function resolveConsentContext(
 		options.middleware?.timeoutMs ??
 		DEFAULT_RESOLVE_TIMEOUT_MS;
 	const facts = {
-		adapter: '@c15t/astro',
+		adapter: '@inth/astro',
 		// An explicit `i18n.locale` outranks Accept-Language negotiation.
 		overrides: { language: options.i18n?.locale },
 		// The injected route: a render never fetches it over the network.
@@ -580,7 +580,7 @@ export const buildBannerRevealScript = function buildBannerRevealScript(
 	return `(function(){try{var names=${json},cookies=[],stored;try{cookies=document.cookie.split(';').map(function(p){return p.split('=')[0].trim()})}catch(e){}stored=function(n){if(cookies.indexOf(n)>=0)return true;try{return window.localStorage.getItem(n)!==null}catch(e){return false}};if(names.some(stored))return;var root=document.querySelector('[data-testid="${testId}-root"][hidden]'),overlay=document.querySelector('[data-testid="${testId}-overlay"][hidden]');if(root){root.hidden=false;root.setAttribute('data-c15t-visible','true');if(overlay)overlay.hidden=false}}catch(e){}})();`;
 };
 
-export { buildPrefetchScript } from '@c15t/core';
+export { buildPrefetchScript } from '@inth/sdk/engine';
 export {
 	C15T_MARK_SVG,
 	INTH_LOGO_SVG,
@@ -613,7 +613,7 @@ export {
 } from './banner/deferred-boot';
 // The inline script that records banner taps before the page script runs,
 // for a banner whose engine loads after the page.
-export { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
+export { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 export {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	PROMPT_SLOT_ATTRIBUTE,
@@ -624,7 +624,7 @@ export type {
 	PromptModelInput,
 	PromptProps,
 } from './banner/prompt-model';
-export type { KernelConfig } from '@c15t/core';
+export type { KernelConfig } from '@inth/sdk/engine';
 
 /**
  * The per-request identity the emission guard keys off — in practice
@@ -685,7 +685,7 @@ export {
 // The handlers behind the injected route, for a site that sets
 // `routePrefix: false` and mounts them itself. The browser does not call
 // such a route for `/init`; see `createConsentRouteHandlers`. The manifest cache
-// lives in `@c15t/core/server`, one process cache shared with the other
+// lives in `@inth/sdk/server`, one process cache shared with the other
 // framework adapters.
 export {
 	createConsentRouteHandlers,
@@ -706,9 +706,9 @@ export {
 	getManifestStaleWhileRevalidate,
 	MANIFEST_DEDUPE_TTL_SECONDS,
 	MANIFEST_PASSTHROUGH_HEADERS,
-} from '@c15t/core/server';
+} from '@inth/sdk/server';
 export type {
 	CachedManifestResponse,
 	FetchCachedManifestOptions,
 	ManifestFetch,
-} from '@c15t/core/server';
+} from '@inth/sdk/server';

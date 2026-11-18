@@ -18,7 +18,7 @@ Start on Inth's [free plan](https://inth.com/pricing) and follow the [framework 
 | --- | --- | --- |
 | Apply different rules by region | Policy rules by country and US state. Inth or your backend finds the location | One default for each consent type, for all visitors. No location detection |
 | Keep consent records on a server | Inth hosts the backend and keeps records in its database. Self-hosting is optional | Not included. Choices stay in browser storage |
-| Use IAB TCF | TCF 2.4 with the `@c15t/iab` add-on. Inth is a registered IAB Europe CMP, ID 490 | Not documented |
+| Use IAB TCF | TCF 2.4 with the `@inth/sdk/iab` add-on. Inth is a registered IAB Europe CMP, ID 490 | Not documented |
 | Respect privacy signals | Reads Global Privacy Control. IAB GPP API for US state opt-outs | Not documented |
 | Use Google Consent Mode v2 | Google tag and GTM integrations send the default and each update | Consent Mode updates for each consent type, and a dataLayer event |
 | Use consent in framework components | Native adapters and reactive consent state | Browser global with callbacks |
@@ -29,7 +29,7 @@ Start on Inth's [free plan](https://inth.com/pricing) and follow the [framework 
 | Handle withdrawal | Reload by default. Optional cleanup of declared data | Reload after the visitor withdraws consent for injected scripts |
 | Change the interface | Themes, component parts and headless APIs | Configurable text, position and CSS variables |
 | Licence and price | Apache 2.0, with no licence fee. Inth has a free plan and paid plans | MIT and free, with no traffic or domain limits |
-| Install | `c15t` from npm, or `@c15t/browser` as a script tag | One JavaScript file and one CSS file, self-hosted or from a CDN |
+| Install | A framework package such as `@inth/react` from npm, or `@inth/sdk` as a script tag | One JavaScript file and one CSS file, self-hosted or from a CDN |
 
 Sources: [Silktide product scope](https://silktide.com/consent-manager/) and [configuration and source](https://github.com/silktide/consent-manager).
 
@@ -87,7 +87,7 @@ Not on a server. Silktide saves choices in the visitor's browser storage and doc
 
 ### Does Silktide Consent Manager support IAB TCF?
 
-Silktide documents no IAB TCF support. Its source has no TCF API. c15t supports TCF 2.4 with the [`@c15t/iab` add-on](/docs/self-host/guides/iab-tcf). IAB Europe lists Consent Management Inc., the company behind Inth, as a CMP with ID 490. IAB Europe registration is separate from Google's CMP certification.
+Silktide documents no IAB TCF support. Its source has no TCF API. c15t supports TCF 2.4 with the [`@inth/sdk/iab` add-on](/docs/self-host/guides/iab-tcf). IAB Europe lists Consent Management Inc., the company behind Inth, as a CMP with ID 490. IAB Europe registration is separate from Google's CMP certification.
 
 ### Does Silktide Consent Manager support Google Consent Mode v2?
 

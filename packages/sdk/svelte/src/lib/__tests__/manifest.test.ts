@@ -4,8 +4,8 @@
 import {
 	createConsentManifestPolicyPack,
 	policyRulePresets,
-} from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { manifest } from '../transports/manifest';

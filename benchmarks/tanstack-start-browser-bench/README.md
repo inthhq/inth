@@ -1,6 +1,6 @@
 # TanStack Start Browser Bench
 
-Playwright benchmark app for `@c15t/tanstack-start`, built to run head to head
+Playwright benchmark app for `@inth/tanstack-start`, built to run head to head
 against `benchmarks/nextjs-browser-bench`: same fixture data, same scenario
 names, same DOM hooks, same metric list, same Chromium build. The extra
 arms are `manifest-ssr-proxy`, which prices the opt-in same-origin proxy, and
@@ -270,7 +270,7 @@ imports directly, and `router` imports `provider`, which imports
 the provider two levels below the entry and its own imports three levels
 down, so none of them make the list. `provider` appears in both lists only
 because the route component chunk imports it directly. `theme` is a
-dynamic import inside `@c15t/react`'s provider, so no static walk would
+dynamic import inside `@inth/react`'s provider, so no static walk would
 ever list it.
 
 #### Metrics
@@ -357,7 +357,7 @@ first wave in both builds (index at 426/429 ms, `router` at 595 ms,
   build, and the plugin's `additionalRouteAssets` hook is internal, used
   for the single stylesheet when `cssCodeSplit` is off. An app could patch
   the manifest with its own Vite plugin, but that is app tooling. The
-  `theme` dynamic import in `@c15t/react` is a separate, smaller item
+  `theme` dynamic import in `@inth/react` is a separate, smaller item
   and does not gate banner visibility. Mounting in `__root.tsx` is still
   the right pattern for a real app, one provider for every route, but it
   is not a performance lever on Start 1.168, so the adapter's TSDoc does

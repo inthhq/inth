@@ -306,7 +306,7 @@ interface ArmProvenance {
 	buildMs: number;
 }
 
-/** Whether the arm's installed `@c15t/react` delivers its own styles. */
+/** Whether the arm's installed `@inth/react` delivers its own styles. */
 const installedStyleDelivery = function installedStyleDelivery(
 	dir: string
 ): ConsumerStyleDelivery {
@@ -315,7 +315,7 @@ const installedStyleDelivery = function installedStyleDelivery(
 		join(dir, 'node_modules', '@c15t', 'react'),
 	].find((candidate) => existsSync(join(candidate, 'package.json')));
 	if (!packageDir) {
-		throw new Error(`${dir} has no installed @c15t/react.`);
+		throw new Error(`${dir} has no installed @inth/react.`);
 	}
 	return existsSync(join(packageDir, AUTOMATIC_STYLES_MODULE))
 		? 'automatic'

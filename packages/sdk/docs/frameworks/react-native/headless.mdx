@@ -62,7 +62,7 @@ Only a category in the resolved scope appears. The example changes
 
 For a screen that collects several choices and saves them together, stage them
 in a draft with `useConsentDraft()`. It uses the same names as the web
-preference dialog's draft in `@c15t/react`. Edits stay in JavaScript until you
+preference dialog's draft in `@inth/react`. Edits stay in JavaScript until you
 call `save()`, which records every displayed category in one commit:
 
 <include src="../../shared/examples/react-native-bare/draft-preferences.mdx" />
@@ -119,7 +119,7 @@ Use this form with category policies. For a TCF policy, see
 ## Build your own IAB screen
 
 Under a TCF policy the same draft holds a purpose and vendor selection. The
-hooks use the names `@c15t/react` exports for IAB: `useIAB()` stages changes,
+hooks use the names `@inth/react` exports for IAB: `useIAB()` stages changes,
 `usePurposeConsent`, `useVendorConsent` and `useSpecialFeatureOptIn` read the
 staged selection, and `useTCString()` reads the committed TC String:
 
@@ -153,7 +153,7 @@ list. It is the native core's own disclosure, the one the stock screens draw:
 
 The native core encodes the TC String and the Additional Consent string from
 your selection exactly as it does for the stock screens, so the same choices
-write the same strings. Copy comes from `@c15t/translations`; the example below
+write the same strings. Copy comes from `@inth/sdk/translations`; the example below
 uses the English bundle.
 
 A binary built before `disclosure` existed sends `disclosure: null` and lists
@@ -194,7 +194,7 @@ without staging. `setPurposeLegitimateInterest` and
 Custom partners, the custom vendors in your policy's IAB settings, are in
 `useIABSnapshot()?.customVendors`, each with its `id`, name, privacy policy
 and purposes. Pass the `id` to `setVendorConsent`, `setVendorLegitimateInterest`
-and `useVendorConsent`, as `@c15t/react` takes it. Their choices are staged in
+and `useVendorConsent`, as `@inth/react` takes it. Their choices are staged in
 `customVendorConsents` and `customVendorLegitimateInterests`, and `acceptAll()`
 and `rejectAll()` cover them. Native keeps them beside the TC String, not in
 it, so list them apart from IAB partners and say they are not registered with
@@ -216,7 +216,7 @@ decision opens with every consent off). T5, CMP registration, is yours to
 complete with IAB Europe. A custom screen must render the rest.
 
 The first layer covers P3 to P12. This one takes its text from
-`@c15t/translations` and its numbers from `disclosure.bannerSummary`:
+`@inth/sdk/translations` and its numbers from `disclosure.bannerSummary`:
 
 <include src="../../shared/examples/react-native-bare/iab-first-layer.mdx" />
 

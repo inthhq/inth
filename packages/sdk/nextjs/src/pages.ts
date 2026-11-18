@@ -1,21 +1,21 @@
 /**
- * `@c15t/nextjs/pages` — Pages Router entry.
+ * `@inth/nextjs/pages` — Pages Router entry.
  *
- * `@c15t/nextjs/server` reads the request through `next/headers`, which only
- * exists in the App Router, and `@c15t/nextjs/api` ships App Router route
+ * `@inth/nextjs/server` reads the request through `next/headers`, which only
+ * exists in the App Router, and `@inth/nextjs/api` ships App Router route
  * handlers (Web `Request` in, `Response` out). These wrappers take the Node
  * `req`/`res` that `getServerSideProps` and API routes receive instead.
  *
  * @example
  * ```ts
  * // pages/index.tsx
- * import { withConsentProps } from 'c15t/next/pages';
+ * import { withConsentProps } from '@inth/nextjs/pages';
  *
  * export const getServerSideProps = withConsentProps();
  * ```
  */
 
-import type { StorageConfig } from '@c15t/core';
+import type { StorageConfig } from '@inth/sdk/engine';
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 
 import type {
@@ -73,7 +73,7 @@ export type PagesResolveConsentOptions = Omit<
  * header.
  *
  * @param req - `req` from `getServerSideProps` or an API route
- * @returns A `NextRequestContext` for `@c15t/nextjs/server`
+ * @returns A `NextRequestContext` for `@inth/nextjs/server`
  */
 export const createPagesRequestContext = function createPagesRequestContext(
 	req: NodeRequestLike
@@ -87,7 +87,7 @@ export const createPagesRequestContext = function createPagesRequestContext(
 
 /**
  * Resolve the visitor's consent state in `getServerSideProps`. Same
- * behaviour as `resolveConsent` from `c15t/next/server`, reading cookies
+ * behaviour as `resolveConsent` from `@inth/nextjs/server`, reading cookies
  * and geo headers from `req` instead of `next/headers`. Most pages use
  * {@link withConsentProps}, which calls this and makes the result
  * JSON-safe.
@@ -158,7 +158,7 @@ const toPagesApiHandler = function toPagesApiHandler(
  * @example
  * ```ts
  * // pages/api/c15t/[...c15t].ts
- * import { createPagesConsentRoute } from 'c15t/next/pages';
+ * import { createPagesConsentRoute } from '@inth/nextjs/pages';
  *
  * export default createPagesConsentRoute();
  * ```
@@ -176,7 +176,7 @@ export const createPagesConsentRoute = function createPagesConsentRoute(
 			const segments = req.query?.[param];
 			if (!Array.isArray(segments)) {
 				throw new TypeError(
-					`@c15t/nextjs: createPagesConsentRoute found no \`${param}\` catch-all parameter. Name the file [...${param}].ts or pass its parameter name.`
+					`@inth/nextjs: createPagesConsentRoute found no \`${param}\` catch-all parameter. Name the file [...${param}].ts or pass its parameter name.`
 				);
 			}
 			// With `proxy`, writes go to the forwarding handlers; HEAD and any
@@ -240,7 +240,7 @@ export type WithConsentPropsOptions = Omit<
  * @example
  * ```ts
  * // pages/index.tsx
- * import { withConsentProps } from 'c15t/next/pages';
+ * import { withConsentProps } from '@inth/nextjs/pages';
  *
  * export const getServerSideProps = withConsentProps();
  * ```

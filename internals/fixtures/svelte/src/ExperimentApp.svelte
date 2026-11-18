@@ -9,7 +9,7 @@
 		ConsentDialogLink,
 		ConsentProvider,
 		hosted,
-	} from '@c15t/svelte';
+	} from '@inth/svelte';
 
 	import ExamplePage from './ExamplePage.svelte';
 	import {

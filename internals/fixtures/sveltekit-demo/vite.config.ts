@@ -1,4 +1,4 @@
-import { consentManifest } from '@c15t/svelte/vite';
+import { consentManifest } from '@inth/svelte/vite';
 import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
@@ -20,6 +20,6 @@ export default defineConfig({
 	],
 	ssr: {
 		// Transform workspace CSS imports instead of passing them to Node's loader.
-		noExternal: ['@c15t/ui', '@c15t/dev-tools'],
+		noExternal: ['@inth/sdk'],
 	},
 });

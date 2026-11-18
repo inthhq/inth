@@ -1,13 +1,13 @@
 'use client';
 
-import type { ConsentKernel } from '@c15t/core';
-import { createDevTools } from '@c15t/dev-tools';
+import { createDevTools } from '@inth/sdk/devtools';
 import type {
 	DevToolsInstance,
 	DevToolsOptions,
 	DevToolsPosition,
 	DevToolsTab,
-} from '@c15t/dev-tools';
+} from '@inth/sdk/devtools';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import {
 	createElement,
 	forwardRef,
@@ -50,7 +50,7 @@ export type DevToolsProps = ConsentDevToolsProps;
 const requireKernel = (kernel: ConsentKernel | null): ConsentKernel => {
 	if (!kernel) {
 		throw new Error(
-			'c15t: DevTools must be rendered inside <ConsentProvider> from @c15t/react.'
+			'c15t: DevTools must be rendered inside <ConsentProvider> from @inth/react.'
 		);
 	}
 	return kernel;

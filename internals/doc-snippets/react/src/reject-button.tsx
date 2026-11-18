@@ -1,5 +1,5 @@
 // #region docs:reject-button
-import { useSaveConsents } from 'c15t/react';
+import { useSaveConsents } from '@inth/react';
 
 export const RejectButton = () => {
 	const save = useSaveConsents();

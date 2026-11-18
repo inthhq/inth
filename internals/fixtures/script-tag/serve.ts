@@ -2,7 +2,7 @@
  * Serves the script-tag example on http://localhost:4173.
  *
  * The hosted, offline, headless and DevTools bundles come straight
- * from the built `@c15t/browser` package, the way a CDN would serve them.
+ * from the built `@inth/sdk` package, the way a CDN would serve them.
  * The rest stands in for the third parties a real page loads: two vendor
  * scripts, two embeds and a tracking endpoint, all local so the example
  * works offline and every request is visible in the page's log.
@@ -45,7 +45,7 @@ const published = (file: string, region: string): string => {
 	const source = here(`../../doc-snippets/html/${file}`);
 	return extractRegion(readFileSync(source, 'utf8'), region, source);
 };
-const cdnPrefix = 'https://cdn.jsdelivr.net/npm/@c15t/browser@alpha/dist/';
+const cdnPrefix = 'https://cdn.jsdelivr.net/npm/@inth/sdk@alpha/dist/';
 const backendPlaceholder = 'https://your-project.inth.app';
 const projectUrl = process.env.C15T_BACKEND_URL;
 
@@ -64,7 +64,7 @@ const bundles: Record<string, string> = Object.fromEntries(
 		'c15t.testing.js',
 	].map((file) => [
 		`/${file}`,
-		fileURLToPath(import.meta.resolve(`@c15t/browser/${file}`)),
+		fileURLToPath(import.meta.resolve(`@inth/sdk/${file}`)),
 	])
 );
 
@@ -73,7 +73,7 @@ if (process.argv.includes('--check')) {
 	const missing = Object.values(bundles).filter((file) => !existsSync(file));
 	if (missing.length > 0) {
 		console.error(
-			`Missing ${missing.join(', ')}. Run bun turbo run build --filter=@c15t/browser.`
+			`Missing ${missing.join(', ')}. Run bun turbo run build --filter=@inth/sdk-browser.`
 		);
 		process.exit(1);
 	}

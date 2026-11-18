@@ -1,22 +1,22 @@
-import { createConsentManifestPlugin } from '@c15t/core/build';
+import { createConsentManifestPlugin } from '@inth/sdk/build';
 import type {
 	ConsentManifestPlugin,
 	ConsentManifestPluginOptions,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
 
 export type {
 	ConsentManifest,
 	ConsentManifestPluginOptions,
 	ManifestBuildErrorMode,
 	ManifestBuildOptions,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
 
 /**
  * Packages that ship `.vue` files. Vite's dependency pre-bundling cannot
  * load them, so they stay out of it, along with the `c15t` umbrella that
  * re-exports them.
  */
-const VUE_SOURCE_PACKAGES = ['@c15t/vue', 'c15t'];
+const VUE_SOURCE_PACKAGES = ['@inth/vue', 'c15t'];
 
 /** What {@link consentManifest} returns: one Vite plugin. */
 export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
@@ -26,9 +26,9 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
 /**
  * The c15t Vite plugin for a plain Vue app. It serves the deployment's
  * consent manifest and backend URL as the virtual module
- * `@c15t/core/generated` (also `c15t/generated`), which `manifest()` and
- * `hosted()` from `c15t/vue/vue-plugin` read. No file is written into the
- * app. It also keeps `@c15t/vue`, whose components are `.vue` files, out of
+ * `@inth/sdk/generated` (also `@inth/sdk/generated`), which `manifest()` and
+ * `hosted()` from `@inth/vue/vue-plugin` read. No file is written into the
+ * app. It also keeps `@inth/vue`, whose components are `.vue` files, out of
  * dependency pre-bundling.
  *
  * `projectUrl` defaults to `VITE_C15T_BACKEND_URL`, then
@@ -56,7 +56,7 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
  * @example
  * ```ts
  * import vue from '@vitejs/plugin-vue';
- * import { consentManifest } from 'c15t/vue/vite';
+ * import { consentManifest } from '@inth/vue/vite';
  * import { defineConfig } from 'vite';
  *
  * export default defineConfig({
@@ -70,7 +70,7 @@ export const consentManifest = (
 	const plugin = createConsentManifestPlugin(options, {
 		adviseHostedForLocation: true,
 		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
-		label: '@c15t/vue/vite',
+		label: '@inth/vue/vite',
 	});
 	return {
 		...plugin,

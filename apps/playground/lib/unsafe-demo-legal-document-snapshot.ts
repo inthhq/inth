@@ -1,4 +1,4 @@
-import type { LegalDocumentPolicyType } from '@c15t/schema/types';
+import type { LegalDocumentPolicyType } from '@inth/sdk/schema/types';
 import { SignJWT } from 'jose';
 
 import {

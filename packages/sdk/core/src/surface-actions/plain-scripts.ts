@@ -341,7 +341,7 @@ type StartedElement = HTMLScriptElement & {
  * @param nonce - The page's CSP nonce.
  * @param reserved - The resources this render's server start marked
  * (`starts`), read by the caller through the check that the page object
- * belongs to this render (`pageRender` in `@c15t/react/deferred`).
+ * belongs to this render (`pageRender` in `@inth/react/deferred`).
  * @returns The resource keys of the scripts it inserted, for their owner
  * to release ({@link releasePlainScripts}) if it goes before its loader.
  * @internal

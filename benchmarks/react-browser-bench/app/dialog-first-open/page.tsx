@@ -7,8 +7,8 @@ import {
 	hosted,
 	useActiveUI,
 	useSetActiveUI,
-} from '@c15t/react';
-import type { ConsentProviderOptions, WithProjectUrl } from '@c15t/react';
+} from '@inth/react';
+import type { ConsentProviderOptions, WithProjectUrl } from '@inth/react';
 import { useEffect, useRef } from 'react';
 
 const Controls = () => {

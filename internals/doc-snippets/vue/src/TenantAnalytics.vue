@@ -1,7 +1,7 @@
 <!-- #region docs:script-loader title="src/TenantAnalytics.vue" -->
 <script setup lang="ts">
-import { posthog } from '@c15t/integrations/posthog';
-import { useScriptLoader } from 'c15t/vue/vue-plugin';
+import { posthog } from '@inth/integrations/posthog';
+import { useScriptLoader } from '@inth/vue/vue-plugin';
 
 const props = defineProps<{ projectKey: string }>();
 

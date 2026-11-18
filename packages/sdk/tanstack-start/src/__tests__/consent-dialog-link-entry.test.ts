@@ -1,9 +1,9 @@
-import { ConsentDialogLink as ReactConsentDialogLink } from '@c15t/react';
+import { ConsentDialogLink as ReactConsentDialogLink } from '@inth/react';
 import { describe, expect, test } from 'vitest';
 
 import manifest from '../../package.json';
 
-describe('@c15t/tanstack-start/components/consent-dialog-link', () => {
+describe('@inth/tanstack-start/components/consent-dialog-link', () => {
 	test('resolves to a module that exports only the dialog link', async () => {
 		const target = manifest.exports['./components/consent-dialog-link'];
 		expect(target).toEqual({

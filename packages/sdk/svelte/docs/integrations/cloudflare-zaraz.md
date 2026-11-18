@@ -44,13 +44,13 @@ and [pageview settings](https://developers.cloudflare.com/zaraz/reference/settin
 
 | Package manager | Command                          |
 | :-------------- | :------------------------------- |
-| npm             | `npm install @c15t/integrations` |
-| pnpm            | `pnpm add @c15t/integrations`    |
-| yarn            | `yarn add @c15t/integrations`    |
-| bun             | `bun add @c15t/integrations`     |
+| npm             | `npm install @inth/integrations` |
+| pnpm            | `pnpm add @inth/integrations`    |
+| yarn            | `yarn add @inth/integrations`    |
+| bun             | `bun add @inth/integrations`     |
 
 ```ts title="src/consent-scripts.ts"
-import { cloudflareZaraz } from '@c15t/integrations/cloudflare-zaraz';
+import { cloudflareZaraz } from '@inth/integrations/cloudflare-zaraz';
 
 // Zaraz provides this global after its loader runs.
 declare const zaraz: { track: (event: string) => void };
@@ -70,7 +70,7 @@ export const scripts = [
 
 Register one bridge per app. Keep Zaraz's own loader and its dashboard tools
 when you follow the registration steps below; remove only standalone loaders
-for tools that Zaraz already runs, including a separate `@c15t/integrations` helper
+for tools that Zaraz already runs, including a separate `@inth/integrations` helper
 for the same tool. If Zaraz auto-injection is off, load
 [Zaraz manually](https://developers.cloudflare.com/zaraz/advanced/load-zaraz-manually/)
 once.
@@ -95,7 +95,7 @@ Add the configuration to `scripts` in `c15t.config.ts`, next to
 `next.config.ts`:
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig } from 'c15t/next';
+import { defineConsentConfig } from '@inth/nextjs';
 import { scripts } from './src/consent-scripts';
 
 export default defineConsentConfig({ scripts });
@@ -165,7 +165,7 @@ callbacks. Write the vendor IDs into `consent-scripts.ts`. See
 Pass the scripts to the existing `c15tVue` plugin call in `src/main.ts`:
 
 ```ts title="src/main.ts"
-import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
+import { c15tVue, manifest } from '@inth/vue/vue-plugin';
 import { scripts } from './consent-scripts';
 
 app.use(c15tVue, {
@@ -187,7 +187,7 @@ which the integration finds on its own. Keep `astro.config.mjs` as it is.
 If the module already exports scripts, combine the two arrays.
 
 ```ts title="src/c15t.client.ts"
-import type { C15tClientOptionsExtension } from 'c15t/astro';
+import type { C15tClientOptionsExtension } from '@inth/astro';
 import { scripts } from './consent-scripts';
 
 export default { scripts } satisfies C15tClientOptionsExtension;
@@ -206,7 +206,7 @@ pass them as a top-level prop:
 
 ```svelte title="src/App.svelte"
 <script lang="ts">
-  import { ConsentProvider, manifest } from 'c15t/svelte';
+  import { ConsentProvider, manifest } from '@inth/svelte';
   import { scripts } from './consent-scripts';
 </script>
 
@@ -225,7 +225,7 @@ handle and the layout load from the [SvelteKit quickstart](../frameworks/sveltek
 
 ```svelte title="src/routes/+layout.svelte"
 <script lang="ts">
-  import { ConsentRoot } from 'c15t/svelte';
+  import { ConsentRoot } from '@inth/svelte';
   import { scripts } from '../consent-scripts';
 
   let { children, data } = $props();
@@ -250,7 +250,7 @@ Pass the scripts to the existing `provideC15t()` call in
 ```ts title="src/app/app.config.ts"
 import { provideZonelessChangeDetection } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
-import { hosted, provideC15t } from '@c15t/angular';
+import { hosted, provideC15t } from '@inth/angular';
 
 import { scripts } from '../consent-scripts';
 
@@ -278,7 +278,7 @@ in a server-only file. See
 
 **HTML**
 
-The helpers in `@c15t/integrations` are ES modules that need a bundler. On a
+The helpers in `@inth/integrations` are ES modules that need a bundler. On a
 page that loads the c15t script tag, paste the vendor's own snippet instead
 and keep it inert until its category is allowed:
 
@@ -295,10 +295,10 @@ to a pasted snippet. See [HTML scripts](https://c15t.com/docs/frameworks/html/sc
 
 **JavaScript**
 
-Pass the scripts to `init()` from `@c15t/browser`, next to your mode:
+Pass the scripts to `init()` from `@inth/sdk`, next to your mode:
 
 ```ts
-import { init, manifest } from '@c15t/browser';
+import { init, manifest } from '@inth/sdk';
 import { scripts } from './consent-scripts';
 
 const consent = init({
@@ -308,9 +308,9 @@ const consent = init({
 ```
 
 Keep the mode from your quickstart. With
-`createConsentRuntime` from `c15t/runtime`, pass `scripts` to it instead.
+`createConsentRuntime` from `@inth/sdk/runtime`, pass `scripts` to it instead.
 A kernel you create yourself needs a loader from
-`c15t/modules/script-loader`. Attach one loader per kernel. See
+`@inth/sdk/modules/script-loader`. Attach one loader per kernel. See
 [JavaScript scripts](https://c15t.com/docs/frameworks/javascript/scripts).
 
 ## Options

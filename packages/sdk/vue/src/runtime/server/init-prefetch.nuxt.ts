@@ -3,7 +3,7 @@
  * `ssr: false` page (see `./init-prefetch`). The module registers it unless
  * its `initPrefetch` option is `false`.
  *
- * `app.config.ts` comes from `#c15t/server-app-config`, a Nitro virtual the
+ * `app.config.ts` comes from `#@inth/sdk/server-app-config`, a Nitro virtual the
  * module registers. `#imports` is not available to server code under Nuxt 5,
  * and `useAppConfig` from `nitropack/runtime` does not read `app.config.ts`
  * on Nuxt 4. When the virtual has no config, the plugin writes nothing.
@@ -15,7 +15,7 @@ import {
 	useRuntimeConfig,
 } from 'nitropack/runtime';
 
-import { useServerAppConfig } from '#c15t/server-app-config';
+import { useServerAppConfig } from '#@inth/sdk/server-app-config';
 
 import type { RuntimeConsentConfig } from '../kernel';
 import { fromRuntimeConfig } from '../runtime-config';

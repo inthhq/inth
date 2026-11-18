@@ -1,6 +1,9 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { resolvePolicyRules, writePolicyResolutionWire } from '@c15t/core';
+import {
+	resolvePolicyRules,
+	writePolicyResolutionWire,
+} from '@inth/sdk/engine';
 
 export type BenchConsentFixtureEndpoint = 'init' | 'manifest' | 'subjects';
 

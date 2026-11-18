@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { buttonVariants } from '@c15t/svelte';
+	import { buttonVariants } from '@inth/svelte';
 
 	const primaryFilled = buttonVariants({ mode: 'filled', variant: 'primary' });
 	const neutralFilled = buttonVariants({ mode: 'filled', variant: 'neutral' });

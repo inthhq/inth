@@ -13,8 +13,8 @@ import type {
 	AdTechProvider,
 	GlobalVendorList,
 	NonIABVendor,
-} from '@c15t/core';
-import { AD_TECH_PROVIDER_PURPOSES } from '@c15t/schema/types';
+} from '@inth/sdk-core';
+import { AD_TECH_PROVIDER_PURPOSES } from '@inth/sdk-schema/types';
 
 import {
 	applyPublisherRestrictionsToGVL,

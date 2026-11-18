@@ -1,7 +1,5 @@
 'use client';
 
-import { vendorsListedUnder } from 'c15t';
-import type { AllConsentNames, CategoryDecision, ResolvedVendor } from 'c15t';
 import {
 	ConsentWidget,
 	useConsentDraft,
@@ -11,7 +9,13 @@ import {
 	useHasConsentUI,
 	useModel,
 	useTranslations,
-} from 'c15t/next';
+} from '@inth/nextjs';
+import type {
+	AllConsentNames,
+	CategoryDecision,
+	ResolvedVendor,
+} from '@inth/nextjs';
+import { vendorsListedUnder } from '@inth/nextjs/engine';
 
 const formatTime = (epochMs: number) =>
 	new Intl.DateTimeFormat(undefined, {

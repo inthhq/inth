@@ -6,14 +6,14 @@
  * native cores consent state and leaves the JavaScript layer to render it, but
  * rendering still means naming.
  *
- * Those names exist in `@c15t/core`. Importing them there would put the web
+ * Those names exist in `@inth/sdk/engine`. Importing them there would put the web
  * consent kernel into every mobile app's dependency graph for two small tables
  * and a dozen aliases: each host app would install and type-check a browser
  * consent engine that never runs, and each published declaration file would
  * name a package a phone build has no use for. So the vocabulary lives here and
  * this package owns it.
  *
- * Two gates keep the copy honest, and both read `@c15t/core` as the oracle,
+ * Two gates keep the copy honest, and both read `@inth/sdk/engine` as the oracle,
  * which is why that package is a devDependency rather than a dependency:
  *
  * - `src/protocol/__tests__/vocabulary.test.ts` compares the tables below with
@@ -31,7 +31,7 @@
 /**
  * Every category the runtime knows about, in stable display order.
  *
- * Mirrors `CONSENT_CATEGORIES` in `@c15t/core`. Order is load bearing: it is
+ * Mirrors `CONSENT_CATEGORIES` in `@inth/sdk/engine`. Order is load bearing: it is
  * the order a preference centre lists rows in, the order a fail-closed snapshot
  * fills, and the order the native cores enumerate when they build a save body.
  */
@@ -57,7 +57,7 @@ export type OptionalConsentCategory = Exclude<AllConsentNames, 'necessary'>;
 /**
  * Optional categories, in the order receipts are enumerated in.
  *
- * Mirrors `OPTIONAL_CONSENT_CATEGORIES` in `@c15t/core`. This order is load
+ * Mirrors `OPTIONAL_CONSENT_CATEGORIES` in `@inth/sdk/engine`. This order is load
  * bearing for hashing and for the order a save body lists categories in, so a
  * core's alphabetically sorted view of the same four names is not a substitute
  * for it.
@@ -74,7 +74,7 @@ export const OPTIONAL_CONSENT_CATEGORIES = [
  * them.
  *
  * This is the readable set: what `/init` may serve a device, and what both cores
- * are graded against. `@c15t/schema` names the same four in `POLICY_RULE_MODELS`
+ * are graded against. `@inth/sdk/schema` names the same four in `POLICY_RULE_MODELS`
  * (`packages/sdk/schema/src/shared/policy-rule.ts`), and that package is not in this
  * one's graph, so `__tests__/vocabulary.type-test.ts` is the gate that keeps this
  * a copy and not a second opinion -- it pins {@link KernelModel} below to the
@@ -108,7 +108,7 @@ export type KernelModel = (typeof POLICY_MODELS)[number];
 /**
  * The surfaces a host may be asked to render, in prompt-severity order.
  *
- * Mirrors `ActiveUI` in `@c15t/core`. `none` is a decided answer; the undecided
+ * Mirrors `ActiveUI` in `@inth/sdk/engine`. `none` is a decided answer; the undecided
  * case is `null`, which only the snapshot type carries.
  */
 export const ACTIVE_SURFACES = ['none', 'banner', 'dialog'] as const;

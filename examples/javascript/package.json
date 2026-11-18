@@ -9,9 +9,8 @@
 		"start": "vite preview --host 127.0.0.1"
 	},
 	"dependencies": {
-		"@c15t/browser": "workspace:*",
-		"@c15t/integrations": "workspace:*",
-		"c15t": "workspace:*"
+		"@inth/integrations": "workspace:*",
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"typescript": "6.0.3",

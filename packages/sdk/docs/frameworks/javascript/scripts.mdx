@@ -1,18 +1,18 @@
 ---
 title: Scripts
-description: Register vendor scripts with @c15t/browser, createConsentRuntime or a consent kernel in JavaScript, and control what happens when a visitor withdraws permission.
+description: Register vendor scripts with @inth/sdk, createConsentRuntime or a consent kernel in JavaScript, and control what happens when a visitor withdraws permission.
 group: frameworks
 ---
 
 ## Register scripts where you start c15t
 
 Pass the `scripts` list to whichever API starts c15t. The list is the same in
-each case, built from `@c15t/integrations` helpers or your own script objects:
+each case, built from `@inth/integrations` helpers or your own script objects:
 
 | Setup | Where `scripts` goes |
 | --- | --- |
-| `@c15t/browser` | `init({ scripts, … })`, as in the [quickstart](/docs/frameworks/javascript/quickstart#start-c15t). |
-| `c15t/runtime` | `createConsentRuntime({ mode, scripts })`, as in [headless](/docs/frameworks/javascript/headless#create-the-runtime). |
+| `@inth/sdk` | `init({ scripts, … })`, as in the [quickstart](/docs/frameworks/javascript/quickstart#start-c15t). |
+| `@inth/sdk/runtime` | `createConsentRuntime({ mode, scripts })`, as in [headless](/docs/frameworks/javascript/headless#create-the-runtime). |
 | Your own kernel | `createScriptLoader({ kernel, scripts })`. See [script loader](/docs/frameworks/javascript/modules/script-loader#attach-the-loader-to-your-own-kernel). |
 
 The quickstart's `src/main.ts` shows PostHog:
@@ -42,7 +42,7 @@ every field and callback.
 
 ## When the script loader downloads
 
-With `@c15t/browser` from npm, the script loader and the network blocker
+With `@inth/sdk` from npm, the script loader and the network blocker
 share a separate chunk. It loads when c15t starts, and only if `scripts` is
 not empty or `networkBlocker` has rules, so a page with neither never
 downloads it. On a page with either, the browser requests it after your
@@ -51,7 +51,7 @@ held requests by one request.
 
 Your bundler names that chunk, so c15t cannot link it from your HTML. To
 start the download earlier, add a `<link rel="modulepreload">` for the chunk
-your build emits for `@c15t/core/dist/modules/loader-and-blocker.js`. With
+your build emits for `@inth/sdk/dist/modules/loader-and-blocker.js`. With
 Vite, `.vite/manifest.json` lists it under that path when `build.manifest` is
 on. Give the link `fetchpriority="low"`. c15t needs the chunk only when it
 starts, and at the default priority the preload can delay your app's own
@@ -60,20 +60,20 @@ loader.
 
 ## Gate a snippet in your HTML
 
-`@c15t/browser` also runs `<script type="text/plain" data-c15t-category>`
+`@inth/sdk` also runs `<script type="text/plain" data-c15t-category>`
 tags in your `index.html` once their category is allowed, in page order. Use
 it for a vendor snippet you would rather keep in HTML. `createConsentRuntime`
 and a plain kernel do not scan the page for these tags;
-`activateGatedScripts(snapshot)` from `@c15t/browser` runs them for you.
+`activateGatedScripts(snapshot)` from `@inth/sdk` runs them for you.
 
-With the `nonce` option set, `@c15t/browser` runs only the tags that carry the
+With the `nonce` option set, `@inth/sdk` runs only the tags that carry the
 same `nonce`, and marks the others `data-c15t-activated="untrusted"`. Pass
 `{ nonce }` as the third argument of `activateGatedScripts` for the same
 check. See [Content Security Policy](/docs/frameworks/javascript/content-security-policy).
 
 ## When a visitor withdraws permission
 
-A script that has run cannot be unloaded. `@c15t/browser` and
+A script that has run cannot be unloaded. `@inth/sdk` and
 `createConsentRuntime` reload the page after a visitor turns off a category
 they had allowed, so the new page starts without that vendor. Allowing a
 category never reloads.
@@ -83,7 +83,7 @@ example with the vendor's opt-out call in the script's `onConsentChange`.
 Until the next page load, code that already ran keeps running.
 `callbacks.onBeforeConsentRevocationReload` runs right before the reload, for
 work that must finish first. A kernel you create yourself does not reload;
-add `watchRevocationReload` from `c15t` if you want it.
+add `watchRevocationReload` from `@inth/sdk/engine` if you want it.
 
 ## Keep one owner per vendor
 
@@ -94,7 +94,7 @@ vendor's own API instead. Read the individual integration guide before
 assuming all helpers have the same network behavior.
 
 Create `init()` or the runtime once per page. A second client, or a second
-loader on a kernel that `@c15t/browser` or `createConsentRuntime` owns, loads
+loader on a kernel that `@inth/sdk` or `createConsentRuntime` owns, loads
 vendors twice.
 
 ## Let visitors turn off one vendor
@@ -102,7 +102,7 @@ vendors twice.
 Optional: a visitor can allow marketing and still switch off one vendor in it.
 Skip this unless your site needs per-vendor choices. Declare
 the vendors in the `vendors` option and render the switch yourself; helpers
-from `@c15t/integrations` already carry their vendor slug. See
+from `@inth/integrations` already carry their vendor slug. See
 [vendor consent](/docs/frameworks/javascript/vendor-consent).
 
 ## Clear stored tracking data
@@ -113,7 +113,7 @@ to delete them when their category is denied.
 
 ## Send your own events to allowed vendors
 
-`getEventDispatcher(runtime)` from `@c15t/browser` returns the client's event
+`getEventDispatcher(runtime)` from `@inth/sdk` returns the client's event
 dispatcher. It sends to the client's `scripts` and checks consent when an
 event goes out:
 

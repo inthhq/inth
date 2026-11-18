@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { KernelOverrides, KernelUser } from '@c15t/core';
-	import type { Theme } from '@c15t/ui/theme';
+	import type { KernelOverrides, KernelUser } from '@inth/sdk/engine';
+	import type { Theme } from '@inth/sdk/ui/theme';
 
 	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';

@@ -9,12 +9,12 @@ import type {
 	ConsentManifest,
 	GlobalVendorList,
 	InitOutput,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import {
 	createConsentManifestPolicyPack,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { clearManifestCache } from '../../libs/manifest-cache-runtime';

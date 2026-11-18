@@ -263,7 +263,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				const windowDebug = modules.createWindowDebug({
 					getHosting: () => kernel.getSnapshot().hosting,
 					mode: resolveWindowDebugMode(mode),
-					pkg: options.pkg ?? '@c15t/core',
+					pkg: options.pkg ?? '@inth/sdk/engine',
 				});
 				disposers.push(() => windowDebug.dispose());
 			}

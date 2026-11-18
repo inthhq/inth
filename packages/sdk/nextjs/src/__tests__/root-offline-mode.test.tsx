@@ -8,7 +8,7 @@
  * The tests share one module registry and run in order: the first checks
  * that nothing loaded, the second that offline init loads it.
  */
-import { useActiveUI, useModel } from '@c15t/react';
+import { useActiveUI, useModel } from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

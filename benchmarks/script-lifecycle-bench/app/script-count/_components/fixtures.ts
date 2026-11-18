@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core/modules/script-loader';
+import type { Script } from '@inth/sdk/modules/script-loader';
 
 export type ScriptCountVersion = 'v3';
 

@@ -5,13 +5,13 @@
 		"lib": ["dom", "esnext"],
 		"types": ["node"],
 		"paths": {
-			"@c15t/schema": ["../schema/dist-types/index.d.ts"],
-			"@c15t/schema/canonical-order": [
+			"@inth/sdk-schema": ["../schema/dist-types/index.d.ts"],
+			"@inth/sdk-schema/canonical-order": [
 				"../schema/dist-types/shared/canonical-order.d.ts"
 			],
-			"@c15t/schema/*": ["../schema/dist-types/*"],
-			"@c15t/translations": ["../translations/dist-types/index.d.ts"],
-			"@c15t/translations/*": ["../translations/dist-types/*"],
+			"@inth/sdk-schema/*": ["../schema/dist-types/*"],
+			"@inth/sdk-translations": ["../translations/dist-types/index.d.ts"],
+			"@inth/sdk-translations/*": ["../translations/dist-types/*"],
 			"~/*": ["./src/*"]
 		}
 	},

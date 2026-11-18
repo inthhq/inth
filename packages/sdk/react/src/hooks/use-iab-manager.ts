@@ -4,7 +4,7 @@ import type {
 	ActiveUI,
 	ConsentPresentation,
 	TranslationConfig,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import { useCallback, useMemo } from 'react';
 
 import { useHeadlessConsentUI } from '../component-hooks/use-headless-consent-ui';

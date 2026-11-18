@@ -5,8 +5,8 @@ import {
 	ConsentBanner,
 	ConsentProvider,
 	useEffectivePermissions,
-} from '@c15t/nextjs';
-// The provider takes a transport; `offline` from `@c15t/nextjs` is data.
+} from '@inth/nextjs';
+// The provider takes a transport; `offline` from `@inth/nextjs` is data.
 
 const BasicState = () => {
 	const consents = useEffectivePermissions();

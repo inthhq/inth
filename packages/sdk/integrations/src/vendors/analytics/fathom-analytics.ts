@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -106,7 +106,7 @@ export interface FathomAnalyticsOptions {
  *
  * @example
  * ```ts
- * import { fathomAnalytics } from '@c15t/integrations/fathom-analytics';
+ * import { fathomAnalytics } from '@inth/integrations/fathom-analytics';
  *
  * fathomAnalytics({
  *   site: 'SITE123',

@@ -1,6 +1,6 @@
 import { COMPAT_CONSENT_CONFIG } from '@c15t/next-compat-shared/config';
 import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
-import { resolveConsent } from '@c15t/nextjs/server';
+import { resolveConsent } from '@inth/nextjs/server';
 import { Suspense } from 'react';
 import type { ReactNode } from 'react';
 

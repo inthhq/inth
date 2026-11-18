@@ -1,8 +1,8 @@
 /**
  * @vitest-environment jsdom
  */
-import { policyRulePresets } from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
+import { policyRulePresets } from '@inth/sdk-schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';

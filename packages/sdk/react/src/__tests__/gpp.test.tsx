@@ -1,11 +1,11 @@
 /**
- * `ConsentGPP` from `@c15t/react/gpp`: it mounts `window.__gpp` on the
+ * `ConsentGPP` from `@inth/react/gpp`: it mounts `window.__gpp` on the
  * provider's kernel and removes it on unmount.
  */
-import type { ProviderTransportFactory } from '@c15t/core';
-import { createConsentRuntime } from '@c15t/core/runtime';
-import type { GPPPingData } from '@c15t/iab/gpp';
-import { policyRulePresets } from '@c15t/schema/types';
+import type { ProviderTransportFactory } from '@inth/sdk/engine';
+import type { GPPPingData } from '@inth/sdk/iab/gpp';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import { policyRulePresets } from '@inth/sdk/schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -93,7 +93,7 @@ test('logs a mount failure and leaves the app rendered', async () => {
 });
 
 test('installs __gpp within a microtask of the first init()', async () => {
-	// `manifest()` from `@c15t/browser` relies on this: before it answers a
+	// `manifest()` from `@inth/sdk` relies on this: before it answers a
 	// visitor whose location it does not know, it waits one microtask and
 	// asks the backend instead when `__gpp` exists by then.
 	const seen: { atInit?: boolean; afterMicrotask?: boolean } = {};

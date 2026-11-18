@@ -9,9 +9,9 @@
 		"start": "next start --port 3104"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
+		"@inth/integrations": "workspace:*",
+		"@inth/nextjs": "workspace:*",
 		"@shopify/hydrogen": "2026.10.0",
-		"c15t": "workspace:*",
 		"next": "16.2.10",
 		"react": "19.2.7",
 		"react-dom": "19.2.7"

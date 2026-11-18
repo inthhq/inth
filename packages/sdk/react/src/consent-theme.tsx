@@ -6,7 +6,7 @@
  * the default theme stay out of the browser bundle. Rendered from a client
  * component it still works, but ships the generator.
  */
-import { defaultTheme, generateThemeCSS } from '@c15t/ui/theme';
+import { defaultTheme, generateThemeCSS } from '@inth/sdk/ui/theme';
 
 import type { Theme } from './types/theme';
 
@@ -41,7 +41,7 @@ export interface ConsentThemeProps {
  * @example
  * ```tsx
  * // app/layout.tsx (Server Component)
- * import { ConsentTheme } from '@c15t/nextjs';
+ * import { ConsentTheme } from '@inth/nextjs';
  * import { theme } from './consent-theme';
  *
  * <ConsentTheme theme={theme} colorScheme="system" />

@@ -3,7 +3,7 @@
  *
  * Public types (`ScriptLoaderOptions`, `ScriptLoaderHandle`,
  * `ScriptLoaderDebugEvent`) are re-exported by `index.ts` so consumers
- * can keep importing from `@c15t/core/modules/script-loader`.
+ * can keep importing from `@inth/sdk/modules/script-loader`.
  *
  * Internal types (`NormalizedScript`, `ReconcilePass`, `PendingMount`)
  * are exported here so siblings (`eligibility.ts`, `mount.ts`, etc.)

@@ -1,4 +1,4 @@
-import type { AdTechProvider, NonIABVendor } from '@c15t/core';
+import type { AdTechProvider, NonIABVendor } from '@inth/sdk-core';
 import { describe, expect, test } from 'vitest';
 
 import {
@@ -28,7 +28,7 @@ const adTechProviders: AdTechProvider[] = [
 	{ id: 2677, name: 'Seedtag', policyUrl: 'https://www.seedtag.com/privacy' },
 ];
 
-describe('@c15t/iab headless dialog data', () => {
+describe('@inth/sdk/iab headless dialog data', () => {
 	test('derives purposes, vendors, stacks, features, and special features from a GVL', () => {
 		const data = processGVLForDialog({
 			customVendors: [customVendor],
@@ -107,7 +107,7 @@ describe('@c15t/iab headless dialog data', () => {
 	});
 });
 
-describe('@c15t/iab headless publisher restrictions', () => {
+describe('@inth/sdk/iab headless publisher restrictions', () => {
 	// Vendor 755 declares purposes 1 to 11 for consent and is flexible on
 	// 2, 7, 9, 10 and 11. Vendor 10 declares 2, 7, 9 and 10 for LI and is
 	// not flexible.
@@ -257,7 +257,7 @@ describe('@c15t/iab headless publisher restrictions', () => {
 	});
 });
 
-describe('@c15t/iab headless banner summary', () => {
+describe('@inth/sdk/iab headless banner summary', () => {
 	test('derives vendor count and display summary from stack and special-feature data', () => {
 		const summary = resolveIABBannerSummary({
 			customVendors: [customVendor],
@@ -279,7 +279,7 @@ describe('@c15t/iab headless banner summary', () => {
 	});
 });
 
-describe('@c15t/iab headless vendor counts with Google ad tech providers', () => {
+describe('@inth/sdk/iab headless vendor counts with Google ad tech providers', () => {
 	const gvlVendorCount = Object.keys(completeGVL.vendors).length;
 	const input = {
 		adTechProviders,

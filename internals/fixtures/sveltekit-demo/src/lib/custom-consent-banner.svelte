@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { getHeadlessConsent } from '@c15t/svelte';
-	import type { PresentationAction } from '@c15t/svelte';
+	import { getHeadlessConsent } from '@inth/svelte';
+	import type { PresentationAction } from '@inth/svelte';
 
 	const consent = getHeadlessConsent();
 

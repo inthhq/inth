@@ -7,6 +7,19 @@
  * here (no React) lets `policy-playground.test.ts` cover it in Node.
  */
 
+import {
+	PROMPT_VARIANT_DEFAULT_POSITION,
+	PROMPT_VARIANT_POSITIONS,
+	resolveConsentPresentation,
+} from '@inth/sdk/engine';
+import type {
+	ConsentPresentation,
+	PresentationDiagnostic,
+	PromptPosition,
+	PromptPresentation,
+	PromptVariant,
+	ResolvedConsentPresentation,
+} from '@inth/sdk/engine';
 import type {
 	PolicyFingerprints,
 	PolicyMatch,
@@ -17,7 +30,7 @@ import type {
 	PolicyRuleModel,
 	PolicyScopeMode,
 	ResolvedPolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import {
 	createPolicyRuleFingerprints,
 	inspectPolicyRules,
@@ -26,20 +39,7 @@ import {
 	POLICY_OPTIONAL_CATEGORIES,
 	policyRulePresets,
 	resolvePolicyRules,
-} from '@c15t/schema/types';
-import {
-	PROMPT_VARIANT_DEFAULT_POSITION,
-	PROMPT_VARIANT_POSITIONS,
-	resolveConsentPresentation,
-} from 'c15t';
-import type {
-	ConsentPresentation,
-	PresentationDiagnostic,
-	PromptPosition,
-	PromptPresentation,
-	PromptVariant,
-	ResolvedConsentPresentation,
-} from 'c15t';
+} from '@inth/sdk/schema/types';
 
 // ---------------------------------------------------------------------------
 // Presets
@@ -839,7 +839,7 @@ export const buildProviderSnippet = function buildProviderSnippet(
 		: indent(JSON.stringify(stripForSnippet(rule), null, 2), 2);
 	const presetImport =
 		presetId && !recommended
-			? "import { policyRulePresets } from 'c15t';\n"
+			? "import { policyRulePresets } from '@inth/sdk/engine';\n"
 			: '';
 	// Presentation is host configuration: it never touches the rule or its
 	// fingerprints, so it sits on the provider, not in the policy pack.
@@ -860,8 +860,8 @@ const policyRules = [
 ];
 `;
 	const mode = recommended ? 'testing()' : 'testing({ policy: policyRules })';
-	return `${presetImport}import { ${componentImports} } from 'c15t/react';
-import { testing } from 'c15t/react/testing';
+	return `${presetImport}import { ${componentImports} } from '@inth/react';
+import { testing } from '@inth/react/testing';
 
 ${rulesBlock}
 export const Providers = ({ children }) => (
@@ -880,7 +880,7 @@ export const buildBackendSnippet = function buildBackendSnippet(
 	options: Pick<ProviderSnippetOptions, 'recommended'> = {}
 ): string {
 	if (options.recommended && presetId) {
-		return `import { recommendedPolicyRules } from '@c15t/schema';
+		return `import { recommendedPolicyRules } from '@inth/sdk/schema';
 import { defineConfig } from '@c15t/backend';
 
 // The same pack testing() applies by default, served from the backend.
@@ -896,7 +896,7 @@ export default defineConfig({
 		? `policyRulePresets.${presetId}()`
 		: indent(JSON.stringify(stripForSnippet(rule), null, 2), 4);
 	const presetImport = presetId
-		? "import { policyRulePresets } from '@c15t/schema';\n"
+		? "import { policyRulePresets } from '@inth/sdk/schema';\n"
 		: '';
 	return `${presetImport}import { defineConfig } from '@c15t/backend';
 

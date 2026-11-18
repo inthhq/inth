@@ -1,8 +1,11 @@
 'use client';
 
-import { getDataDisabled } from '@c15t/ui/primitives/data-state';
-import { getDialogState, isDialogDismissKey } from '@c15t/ui/primitives/dialog';
-import { firstTabbable } from '@c15t/ui/utils/dom';
+import { getDataDisabled } from '@inth/sdk/ui/primitives/data-state';
+import {
+	getDialogState,
+	isDialogDismissKey,
+} from '@inth/sdk/ui/primitives/dialog';
+import { firstTabbable } from '@inth/sdk/ui/utils/dom';
 import {
 	createContext,
 	forwardRef as createForwardRef,

@@ -30,7 +30,7 @@ const resolveRelative = function resolveRelative(
 	return null;
 };
 
-/** Every `@c15t/ui/styles/components/*` class map `entry` reaches statically. */
+/** Every `@inth/sdk/ui/styles/components/*` class map `entry` reaches statically. */
 const classMapsReachedFrom = function classMapsReachedFrom(
 	entry: string
 ): Set<string> {
@@ -48,8 +48,10 @@ const classMapsReachedFrom = function classMapsReachedFrom(
 			if (!specifier) {
 				continue;
 			}
-			if (specifier.startsWith('@c15t/ui/styles/components/')) {
-				classMaps.add(specifier.slice('@c15t/ui/styles/components/'.length));
+			if (specifier.startsWith('@inth/sdk/ui/styles/components/')) {
+				classMaps.add(
+					specifier.slice('@inth/sdk/ui/styles/components/'.length)
+				);
 			} else if (specifier.startsWith('.')) {
 				const next = resolveRelative(file, specifier);
 				if (next) {

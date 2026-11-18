@@ -3,26 +3,26 @@
  * adapters that render from a cached manifest (Nuxt, TanStack Start).
  *
  * The manifest itself is read through the one process cache,
- * `fetchCachedManifest` from `@c15t/core/server`, which honours the
+ * `fetchCachedManifest` from `@inth/sdk/server`, which honours the
  * backend's `s-maxage`, revalidates with `ETag`, respects `no-store`, and
  * collapses bursts for backends that send no shared-cache TTL at all.
  *
- * Like `@c15t/core/transports/manifest`, this module resolves init with
- * `@c15t/schema` and imports every translation language. Import it from
- * `@c15t/core/transports/manifest-cache` in server code only.
+ * Like `@inth/sdk/transports/manifest`, this module resolves init with
+ * `@inth/sdk/schema` and imports every translation language. Import it from
+ * `@inth/sdk/transports/manifest-cache` in server code only.
  */
 
 import {
 	consentInputsToOverrides,
 	extractConsentRequestInputs,
 	resolveInitFromManifest,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import type {
 	ConsentManifest,
 	InitOutput,
 	ResolveInitFromManifestInputs,
-} from '@c15t/schema/types';
-import { baseTranslations } from '@c15t/translations/all';
+} from '@inth/sdk-schema/types';
+import { baseTranslations } from '@inth/sdk-translations/all';
 
 export {
 	DEFAULT_RESOLVE_TIMEOUT_MS,

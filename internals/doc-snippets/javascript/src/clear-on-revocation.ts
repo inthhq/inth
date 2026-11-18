@@ -1,6 +1,6 @@
 // #region docs:clear-on-revocation title="src/clear-on-revocation.ts"
-import type { ConsentKernel } from 'c15t';
-import { createClearOnRevocation } from 'c15t/modules/clear-on-revocation';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { createClearOnRevocation } from '@inth/sdk/modules/clear-on-revocation';
 
 export const clearTrackingData = function clearTrackingData(
 	kernel: ConsentKernel

@@ -14,12 +14,12 @@ The [quickstart](/docs/frameworks/react/quickstart) does this in
 
 <include src="../../../shared/examples/react/consent.mdx" />
 
-`hosted()` from `c15t/react` asks the backend's `/init` for the visitor's
+`hosted()` from `@inth/react` asks the backend's `/init` for the visitor's
 policy on each page load, and sends consent choices to the same backend. It
 uses the backend URL `consentManifest()` read from `VITE_C15T_BACKEND_URL` or
 `VITE_INTH_PROJECT_URL`. Set one to the backend URL from your Inth project. To
 resolve a bundled policy in the browser instead, pass `manifest()` from
-`c15t/react`; see
+`@inth/react`; see
 [rendering](/docs/frameworks/react/rendering#bundle-the-policy-at-build-time).
 The Next.js and TanStack Start adapters export `ConsentRoot` instead, which wraps
 this provider and passes it server-resolved state.
@@ -36,7 +36,7 @@ the provider to change them. `scripts`, `vendors`, `networkBlocker`,
 
 | Option | Purpose |
 | --- | --- |
-| `mode` | Optional. Omitted, or `hosted()`, asks the backend's `/init`. `manifest()` resolves a bundled policy. `testing()` from `c15t/react/testing` resolves a policy with no backend, for tests. See [consent modes](/docs/concepts/modes). |
+| `mode` | Optional. Omitted, or `hosted()`, asks the backend's `/init`. `manifest()` resolves a bundled policy. `testing()` from `@inth/react/testing` resolves a policy with no backend, for tests. See [consent modes](/docs/concepts/modes). |
 | `prefetch` | Server-resolved state, or a promise of it, from a framework adapter's server helper |
 | `scripts` | Consent-gated vendor scripts. See [scripts and embeds](/docs/frameworks/react/scripts) |
 | `vendors` | Vendors listed under their category with their own switch. See [vendor consent](/docs/frameworks/react/vendor-consent) |

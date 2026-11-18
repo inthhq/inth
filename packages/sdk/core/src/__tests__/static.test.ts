@@ -1,5 +1,5 @@
-import type { ConsentManifest } from '@c15t/schema/types';
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import {

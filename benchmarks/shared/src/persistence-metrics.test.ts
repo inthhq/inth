@@ -1,6 +1,6 @@
-import { createConsentKernel } from '@c15t/core';
-import { createPersistence } from '@c15t/core/modules/persistence';
-import { policyRulePresets, resolvePolicyRules } from '@c15t/schema/types';
+import { createConsentKernel } from '@inth/sdk/engine';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { policyRulePresets, resolvePolicyRules } from '@inth/sdk/schema/types';
 /** @vitest-environment jsdom */
 import { afterEach, expect, it, vi } from 'vitest';
 

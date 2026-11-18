@@ -8,7 +8,7 @@ group: frameworks
 
 ## Declare the vendors
 
-Declaring a vendor turns on vendor switches. Built-in `@c15t/integrations`
+Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
 helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
@@ -18,7 +18,7 @@ Declare the vendors next to the scripts in `app/consent-scripts.ts`, using the
 {/* example: fragment */}
 
 ```ts title="app/consent-scripts.ts (partial)"
-import type { Vendor } from 'c15t';
+import type { Vendor } from '@inth/nuxt';
 
 export const vendors: Vendor[] = [
 	{

@@ -13,7 +13,7 @@
  * @packageDocumentation
  */
 
-import type * as C15tCoreTypes from '@c15t/core';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
 import { useEffect, useState } from 'react';
 import type { ComponentType } from 'react';
 

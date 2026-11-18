@@ -13,13 +13,13 @@ import {
 	adTechProviderListUrl,
 	normalizeAdTechProviderIds,
 	parseAdTechProviderList,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import type {
 	AdTechProvider,
 	ConsentManifest,
 	ConsentManifestAdditionalConsent,
 	InitOutput,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 interface CachedProviders {
 	/** Absent when no list has loaded and only a failed fetch is remembered. */

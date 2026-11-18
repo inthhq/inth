@@ -10,9 +10,9 @@ import {
 	model,
 	PLATFORM_ID,
 } from '@angular/core';
-import { ɵfocusInitially as focusInitially } from '@c15t/angular';
-import { getDialogState, isDialogDismissKey } from '@c15t/ui/primitives';
-import { setupFocusTrap, setupScrollLock } from '@c15t/ui/utils';
+import { ɵfocusInitially as focusInitially } from '@inth/angular';
+import { getDialogState, isDialogDismissKey } from '@inth/sdk/ui/primitives';
+import { setupFocusTrap, setupScrollLock } from '@inth/sdk/ui/utils';
 
 import { uniqueId } from './unique-id';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { getConsentManager } from '@c15t/svelte';
-	import { DevTools } from '@c15t/svelte/devtools';
+	import { getConsentManager } from '@inth/svelte';
+	import { DevTools } from '@inth/svelte/devtools';
 
 	import ExperimentReadout from './ExperimentReadout.svelte';
 	import YouTubeEmbed from './YouTubeEmbed.svelte';

@@ -7,7 +7,7 @@ group: frameworks
 ## When to use the primitives
 
 The stock consent components are built from a set of unstyled, accessible
-directives that `@c15t/angular` also exports. Reach for them when you build
+directives that `@inth/angular` also exports. Reach for them when you build
 your own preference dialog or settings page with
 [`ConsentManager` and `HeadlessConsent`](../headless) and want the same
 keyboard and focus behavior as the stock dialog. The primitives know nothing
@@ -16,13 +16,13 @@ about consent; bind them to `ConsentManager` signals yourself.
 They are attribute directives on your own elements, so your markup, classes
 and Angular bindings stay yours. The parent directive holds the state as a
 `model()`, so `[(open)]`, `[(checked)]` and `[(value)]` work with signals.
-Import every directive you use from `@c15t/angular/primitives` into the
+Import every directive you use from `@inth/angular/primitives` into the
 component's `imports`. Each class is named for its selector without the `c15t` prefix: `[c15tSwitch]` is
 `Switch`, and `[c15t-preference-item-content]` is `PreferenceItemContent`.
 
 The primitives' rules load with the stock `<c15t-consent-dialog>`. A page that
 uses the primitives' stock classes without the stock dialog needs
-`@c15t/angular/styles.css` in `angular.json` and `styles: false` in
+`@inth/angular/styles.css` in `angular.json` and `styles: false` in
 `provideC15t()`.
 
 ## Directives

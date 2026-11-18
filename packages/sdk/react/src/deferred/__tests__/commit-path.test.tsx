@@ -6,7 +6,7 @@
  * streams a real server render into an iframe and hydrates it. React runs
  * in this window, so the tests hand it the iframe's early-tap queue.
  */
-import type { KernelConfig } from '@c15t/core';
+import type { KernelConfig } from '@inth/sdk/engine';
 import {
 	Suspense,
 	act,

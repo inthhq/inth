@@ -3,8 +3,8 @@ import {
 	IABConsentBanner,
 	IABConsentDialog,
 	IABProvider,
-} from 'c15t/react/iab';
-import { useModel } from 'c15t/tanstack-start';
+} from '@inth/react/iab';
+import { useModel } from '@inth/tanstack-start';
 
 export const IABConsent = ({ cmpId }: { cmpId: number }) => {
 	const model = useModel();

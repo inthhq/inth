@@ -1,6 +1,6 @@
 /**
  * The manifest-cache module, tested at its interface
- * (`@c15t/core/transports/manifest-cache`, re-exported by `@c15t/core/server`).
+ * (`@inth/sdk/transports/manifest-cache`, re-exported by `@inth/sdk/server`).
  *
  * Covers the caching contract every server adapter relies on: the cache key,
  * the shared process cache, TTL from `s-maxage`, ETag revalidation,
@@ -8,8 +8,8 @@
  * backoff, the per-framework fetch hint, the size bound, and the shape of a
  * locally resolved init.
  */
-import type { ConsentManifest } from '@c15t/schema/types';
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -2680,7 +2680,7 @@ describe('one cache key rule', () => {
 });
 
 describe('one process cache', () => {
-	test('@c15t/core/server and @c15t/core/transports/manifest-cache read and clear the same cache', async () => {
+	test('@inth/sdk/server and @inth/sdk/transports/manifest-cache read and clear the same cache', async () => {
 		const fetchMock = createFetchMock(() =>
 			manifestResponse({ 'cache-control': 'public, s-maxage=60' })
 		);

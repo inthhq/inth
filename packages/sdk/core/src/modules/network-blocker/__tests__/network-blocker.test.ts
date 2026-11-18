@@ -1,5 +1,5 @@
 /**
- * Tests for @c15t/core/modules/network-blocker.
+ * Tests for @inth/sdk/modules/network-blocker.
  *
  * Verifies feature parity with v2:
  * - window.fetch and XHR are patched

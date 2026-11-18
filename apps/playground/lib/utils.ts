@@ -1,5 +1,5 @@
-import { cn as baseCn } from '@c15t/ui/utils';
-import type { ClassValue } from '@c15t/ui/utils';
+import { cn as baseCn } from '@inth/sdk/ui/utils';
+import type { ClassValue } from '@inth/sdk/ui/utils';
 import { twMerge } from 'tailwind-merge';
 
 export const cn = function cn(...inputs: ClassValue[]) {

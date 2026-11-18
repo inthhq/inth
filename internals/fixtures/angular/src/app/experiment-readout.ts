@@ -4,7 +4,7 @@ import {
 	computed,
 	inject,
 } from '@angular/core';
-import { ConsentManager } from '@c15t/angular';
+import { ConsentManager } from '@inth/angular';
 
 import { ExperimentLog } from './experiment';
 

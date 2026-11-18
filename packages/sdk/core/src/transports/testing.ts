@@ -2,8 +2,8 @@
  * The transport behind `testing()`: it resolves the recommended
  * policy pack locally and sends nothing.
  *
- * Only testing entries import this module, such as `@c15t/core/testing`
- * and `@c15t/react/testing`, so the policy pack and the resolver stay out
+ * Only testing entries import this module, such as `@inth/sdk/testing`
+ * and `@inth/react/testing`, so the policy pack and the resolver stay out
  * of every app that sets `projectUrl`.
  *
  * @packageDocumentation
@@ -13,8 +13,8 @@ import {
 	recommendedPolicyRules,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 
 import type { TestingModeOptions, TestingMode } from '../modes';
 import type { InitContext, KernelTransport } from '../types';
@@ -39,7 +39,7 @@ export interface ConsentTesting extends TestingMode {
  * visitors a banner whose choices nobody records.
  *
  * @param entry - The testing entry the app imported, such as
- *   `@c15t/react/testing`.
+ *   `@inth/react/testing`.
  * @throws {Error} When `process.env.NODE_ENV` is `'production'`.
  * @internal
  */

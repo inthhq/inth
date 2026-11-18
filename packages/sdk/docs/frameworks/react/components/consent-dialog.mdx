@@ -25,7 +25,7 @@ To hide the "Secured by" tag in the dialog card, pass `hideBranding`:
 To open it from your own component, set the active surface:
 
 ```tsx
-import { useSetActiveUI } from 'c15t/react';
+import { useSetActiveUI } from '@inth/react';
 
 export function PrivacyMenuItem() {
 	const setActiveUI = useSetActiveUI();
@@ -51,7 +51,7 @@ instead; this dialog stays closed for the `iab` model.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#composition" />
 
-The compound parts import from `c15t/react` as properties of `ConsentDialog`,
+The compound parts import from `@inth/react` as properties of `ConsentDialog`,
 and `ConsentWidget` from the same module. See
 [customize](/docs/frameworks/react/customize) for slots and tokens.
 

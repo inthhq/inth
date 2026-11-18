@@ -19,9 +19,9 @@ import { describe, expect, it } from 'vitest';
 const SOURCE_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 const FRAMEWORK_SPECIFIERS = [
-	'@c15t/react',
-	'@c15t/svelte',
-	'@c15t/vue',
+	'@inth/react',
+	'@inth/svelte',
+	'@inth/vue',
 	'react',
 	'react-dom',
 	'react-dom/client',
@@ -110,7 +110,7 @@ describe('framework surfaces are reachable only through import()', () => {
 			}
 			const source = readFileSync(join(componentRoot, entry), 'utf8');
 			expect(source).not.toContain('registerDialogSurface');
-			expect(source).not.toContain('@c15t/astro/islands/');
+			expect(source).not.toContain('@inth/astro/islands/');
 		}
 	});
 });

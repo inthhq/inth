@@ -1,4 +1,4 @@
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

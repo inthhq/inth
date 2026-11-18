@@ -1,7 +1,7 @@
-import { translations } from '@c15t/translations/en';
+import { writePolicyResolutionWire } from '@inth/sdk/engine';
+import type { InitOutput } from '@inth/sdk/engine';
+import { translations } from '@inth/sdk/translations/en';
 import type { RequestHandler } from '@sveltejs/kit';
-import { writePolicyResolutionWire } from 'c15t';
-import type { InitOutput } from 'c15t';
 
 import { BENCHMARK_POLICY_RESOLUTION } from '#lib/bench/policy.js';
 

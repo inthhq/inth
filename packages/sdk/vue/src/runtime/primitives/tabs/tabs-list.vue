@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getDataDisabled } from '@c15t/ui/primitives';
+import { getDataDisabled } from '@inth/sdk/ui/primitives';
 import { computed } from 'vue';
 
 import { useTabsRootContext } from './context';

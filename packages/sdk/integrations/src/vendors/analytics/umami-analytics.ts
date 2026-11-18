@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -110,7 +110,7 @@ export interface UmamiAnalyticsOptions {
  *
  * @example
  * ```ts
- * import { umamiAnalytics } from '@c15t/integrations/umami-analytics';
+ * import { umamiAnalytics } from '@inth/integrations/umami-analytics';
  *
  * umamiAnalytics({
  *   websiteId: 'site-abc-123',

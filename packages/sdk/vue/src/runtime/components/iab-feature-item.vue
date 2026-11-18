@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import dialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
+import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
-import '@c15t/ui/styles/components/iab-consent-dialog.css';
+import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
 /**
  * One informational IAB Feature row.
  *

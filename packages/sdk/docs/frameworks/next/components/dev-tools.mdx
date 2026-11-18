@@ -20,7 +20,7 @@ import dynamic from 'next/dynamic';
 const DevTools =
 	process.env.NODE_ENV === 'development'
 		? dynamic(
-				() => import('c15t/next/devtools').then(({ DevTools }) => DevTools),
+				() => import('@inth/nextjs/devtools').then(({ DevTools }) => DevTools),
 				{ ssr: false }
 			)
 		: () => null;
@@ -35,8 +35,7 @@ Import `ConsentDevTools` into your root layout or `pages/_app.tsx` and render
 unchanged. A setup that uses `ConsentProvider`
 directly can place the same component inside that provider.
 
-The umbrella import is `c15t/next/devtools`. When installing the dedicated
-Next.js package, use `@c15t/nextjs/devtools`.
+Import it from `@inth/nextjs/devtools`.
 
 <import src="../../../shared/react/components/dev-tools.mdx#customization" />
 

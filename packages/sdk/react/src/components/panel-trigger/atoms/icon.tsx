@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import styles from '@c15t/ui/styles/components/consent-dialog-trigger';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { isValidElement } from 'react';
 import type { ReactNode } from 'react';
 

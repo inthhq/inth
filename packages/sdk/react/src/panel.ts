@@ -1,13 +1,13 @@
 'use client';
 
 /**
- * `@c15t/react/consent-dialog`: the deferred `ConsentDialog`, the same
- * component the `@c15t/react` entry exports. Its implementation and styles
+ * `@inth/react/consent-dialog`: the deferred `ConsentDialog`, the same
+ * component the `@inth/react` entry exports. Its implementation and styles
  * load when the dialog first opens, or earlier when something preloads it,
  * so importing this entry adds nothing heavy to the first load.
  *
  * The eager dialog and its individual parts (`Card`, `Header`, `Overlay`,
- * ...) are in `@c15t/react/components/consent-dialog`.
+ * ...) are in `@inth/react/components/consent-dialog`.
  *
  * @packageDocumentation
  */

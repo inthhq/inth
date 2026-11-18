@@ -14,7 +14,7 @@
 	},
 	"dependencies": {
 		"@c15t/next-compat-shared": "workspace:*",
-		"@c15t/nextjs": "workspace:*",
+		"@inth/nextjs": "workspace:*",
 		"next": "15.5.25",
 		"react": "19.2.7",
 		"react-dom": "19.2.7"

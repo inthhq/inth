@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getConsentManager } from '@c15t/svelte';
+	import { getConsentManager } from '@inth/svelte';
 
 	import { experimentEvents } from './experiment.svelte';
 

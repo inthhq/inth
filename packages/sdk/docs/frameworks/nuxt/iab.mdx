@@ -20,7 +20,7 @@ component or stylesheet is needed; the IAB components include their own
 styles.
 
 Without `iab`, or with `iab: false` or `iab: { enabled: false }`, IAB stays
-off: no `__tcfapi` is installed, the app never loads `@c15t/iab`, and pages do
+off: no `__tcfapi` is installed, the app never loads `@inth/sdk/iab`, and pages do
 not prefetch it.
 
 If a visitor's policy uses the `iab` model and the backend sends its vendor
@@ -58,7 +58,7 @@ use vendors from your list whose declarations allow each restriction.
 
 ```ts title="nuxt.config.ts (partial)"
 export default defineNuxtConfig({
-	modules: ['c15t/vue'],
+	modules: ['@inth/nuxt'],
 	c15t: {
 		iab: {
 			publisherRestrictions: [

@@ -4,12 +4,12 @@
  * until the visitor chooses. c15t picks the arm; `?arm=wall` sets it the
  * way a flag provider would.
  */
-import { init } from '@c15t/browser';
+import { init } from '@inth/sdk';
 import type {
 	ConsentExperiment,
 	OnChoiceRecordedPayload,
 	OnSurfaceShownPayload,
-} from 'c15t';
+} from '@inth/sdk/engine';
 
 import { scripts } from './scripts';
 import { testBackend } from './test-backend';
@@ -104,6 +104,6 @@ document
 	?.addEventListener('click', () => consent.openDialog());
 
 if (import.meta.env.DEV) {
-	const { mountDevTools } = await import('@c15t/browser/devtools');
+	const { mountDevTools } = await import('@inth/sdk/devtools');
 	mountDevTools(consent, { defaultTab: 'scripts' });
 }

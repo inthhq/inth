@@ -5,25 +5,31 @@
  * Each is the transport itself, imported statically: a single-page app has
  * one environment, so a bundler drops the code the app does not use. Both
  * read the backend URL, and `manifest()` the snapshot, from
- * `@c15t/core/generated`, which `consentManifest()` from `c15t/vue/vite`
+ * `@inth/sdk/generated`, which `consentManifest()` from `@inth/vue/vite`
  * fills in during the build.
  */
-import type { HostedModeFactory, ProviderTransportFactory } from '@c15t/core';
+import type {
+	HostedModeFactory,
+	ProviderTransportFactory,
+} from '@inth/sdk/engine';
 import {
 	projectUrl as builtProjectUrl,
 	snapshot as builtSnapshot,
-} from '@c15t/core/generated';
-import type { HostedMode } from '@c15t/core/modes';
-import type { ConsentTesting } from '@c15t/core/testing';
-import { hosted as coreHosted } from '@c15t/core/transports';
-import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
+} from '@inth/sdk/generated';
+import type { HostedMode } from '@inth/sdk/modes';
+import type { ConsentTesting } from '@inth/sdk/testing';
+import { hosted as coreHosted } from '@inth/sdk/transports';
+import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import type {
 	BrowserManifestModeFactory,
 	BrowserManifestOptions,
-} from '@c15t/core/transports/manifest-browser';
+} from '@inth/sdk/transports/manifest-browser';
 
-export type { HostedModeFactory, ProviderTransportFactory } from '@c15t/core';
-export type { BrowserManifestModeFactory } from '@c15t/core/transports/manifest-browser';
+export type {
+	HostedModeFactory,
+	ProviderTransportFactory,
+} from '@inth/sdk/engine';
+export type { BrowserManifestModeFactory } from '@inth/sdk/transports/manifest-browser';
 
 /**
  * Bundlers replace `process.env.NODE_ENV` at build time, so production
@@ -39,7 +45,7 @@ const missingProjectUrl = function missingProjectUrl(
 	try {
 		if (process.env.NODE_ENV !== 'production') {
 			hint =
-				' Add consentManifest() from c15t/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.';
+				' Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.';
 		}
 	} catch {
 		// No bundler and no `process`: the short message has to do.
@@ -75,7 +81,7 @@ const missingProjectUrl = function missingProjectUrl(
  * @throws {Error} When no backend URL is set or derivable.
  * @example
  * ```ts
- * import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
+ * import { c15tVue, manifest } from '@inth/vue/vue-plugin';
  *
  * app.use(c15tVue, { mode: manifest() });
  * ```

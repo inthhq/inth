@@ -22,7 +22,7 @@ shows a CSP violation for `/init`, and no banner appears.
 ## Put a nonce on created scripts and styles
 
 Pass the page's nonce once, to `init()` or `createConsentClient()` from
-`@c15t/browser`. The script loader puts it on every `<script>` it creates, and
+`@inth/sdk`. The script loader puts it on every `<script>` it creates, and
 the stock UI puts it on its `<style>` element:
 
 {/* example: fragment */}
@@ -38,7 +38,7 @@ your server puts it, such as a `<meta>` tag or a data attribute. With
 allowed, so vendor origins need no entry. Some vendors then load more scripts
 of their own, which `'strict-dynamic'` allows too.
 
-With `nonce` set, `@c15t/browser` runs only the
+With `nonce` set, `@inth/sdk` runs only the
 `<script type="text/plain" data-c15t-category>` tags in your HTML that carry
 the same nonce. c15t runs an inert tag by creating a new `<script>`, and
 `'strict-dynamic'` lets scripts that trusted code creates run without a
@@ -61,14 +61,14 @@ from your bundle, which your bundler emits as a CSS file:
 {/* example: fragment */}
 
 ```ts
-import '@c15t/browser/styles.css';
+import '@inth/sdk/styles.css';
 
 init({ mode: manifest(), ui: { shadow: false, styles: false } });
 ```
 
 With `styles: false` and no `theme` or `css` option, c15t adds no `<style>`
 element. Put token overrides in your own CSS. Under IAB, also import
-`@c15t/browser/iab/styles.css`.
+`@inth/sdk/iab/styles.css`.
 
 The headless entries, `createConsentRuntime` and the kernel add no styles.
 The DevTools panel adds a `<style>` element, which is one more reason to keep

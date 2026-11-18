@@ -194,7 +194,7 @@ curl -fsS "http://127.0.0.1:${BACKEND_PORT}/health" > "${OUT}/backend-health.jso
 cd "${REPO_ROOT}"
 git rev-parse HEAD > "${OUT}/source-head.txt"
 git diff --stat > "${OUT}/source-diff.txt"
-bun turbo run build --filter=@inth/react-native --filter=@c15t/schema > "${OUT}/dependencies.log" 2>&1
+bun turbo run build --filter=@inth/react-native --filter=@inth/sdk-schema > "${OUT}/dependencies.log" 2>&1
 
 # The URL the app dials. Android reaches the host through adb reverse on its own port 3000.
 if [[ "${PLATFORM}" == android ]]; then

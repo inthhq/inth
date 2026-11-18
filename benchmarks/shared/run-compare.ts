@@ -270,7 +270,7 @@ const applyDialogCssTarballAllowance = (
 	if (
 		!isNextjsTarballResult(head) ||
 		!isNextjsTarballResult(base) ||
-		budget.metric !== '@c15t/nextjs' ||
+		budget.metric !== '@inth/nextjs' ||
 		budget.comparator !== 'absolute-and-percent-lte' ||
 		budget.baseArm ||
 		budget.secondaryThreshold === undefined ||

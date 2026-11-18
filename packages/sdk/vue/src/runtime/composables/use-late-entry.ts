@@ -1,4 +1,4 @@
-import { isLateEntry } from '@c15t/ui/utils/late-entry';
+import { isLateEntry } from '@inth/sdk/ui/utils/late-entry';
 import { ref, watch } from 'vue';
 import type { Ref, WatchSource } from 'vue';
 

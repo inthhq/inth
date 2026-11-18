@@ -4,7 +4,7 @@
  * chunks share bandwidth with the page's largest image; started after it,
  * they no longer delay Largest Contentful Paint. The same rule as the
  * server script start (`AFTER_PRIORITY_IMAGES` in
- * `@c15t/core/runtime/script-server-start`) and `@c15t/react`'s deferred
+ * `@inth/sdk/runtime/script-server-start`) and `@inth/react`'s deferred
  * root.
  *
  * @packageDocumentation
@@ -13,7 +13,7 @@
 
 /**
  * `EARLY_TAPS_WINDOW_KEY`, `EARLY_TAP_ROOT`, `EARLY_TAP_STYLE_ID` and
- * `EARLY_TAP_NOTIFY_KEY` from `@c15t/core/surface-actions/early-tap-script`,
+ * `EARLY_TAP_NOTIFY_KEY` from `@inth/sdk/surface-actions/early-tap-script`,
  * copied: that module also holds the inline script's text, which the
  * first-load chunk does without. A test keeps them equal.
  *

@@ -1,5 +1,5 @@
-import type { Theme as NuxtTheme } from '@c15t/vue';
-import { defineTheme as defineNuxtTheme } from '@c15t/vue';
+import type { Theme as NuxtTheme } from '@inth/vue';
+import { defineTheme as defineNuxtTheme } from '@inth/vue';
 import { expect, test } from 'vitest';
 
 import type { Theme } from '../index';

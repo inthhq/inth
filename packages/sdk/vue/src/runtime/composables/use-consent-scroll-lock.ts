@@ -1,4 +1,4 @@
-import { setupScrollLock } from '@c15t/ui/utils';
+import { setupScrollLock } from '@inth/sdk/ui/utils';
 import { onMounted, onUnmounted, watch } from 'vue';
 import type { ComputedRef } from 'vue';
 

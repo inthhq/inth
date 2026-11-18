@@ -8,7 +8,7 @@
  * evidence the backend has to reject a save made against a stale policy.
  */
 
-import type { InitOutput } from '@c15t/schema/types';
+import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { KernelOverrides, SavePayload } from '../types';
 

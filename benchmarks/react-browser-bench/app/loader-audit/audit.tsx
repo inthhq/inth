@@ -1,13 +1,6 @@
 'use client';
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import { createConsentRuntime } from '@c15t/core/runtime';
-import type {
-	ConsentRuntime,
-	ConsentRuntimeOptions,
-	WithProjectUrl,
-} from '@c15t/core/runtime';
-import { createIAB } from '@c15t/iab';
 import {
 	ConsentProvider,
 	ConsentBanner,
@@ -16,7 +9,14 @@ import {
 	hosted,
 	useActiveUI,
 	useSetActiveUI,
-} from '@c15t/react';
+} from '@inth/react';
+import { createIAB } from '@inth/sdk/iab';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import type {
+	ConsentRuntime,
+	ConsentRuntimeOptions,
+	WithProjectUrl,
+} from '@inth/sdk/runtime';
 import { useEffect, useRef, useState } from 'react';
 
 // Exercise the actual Astro island with the same React renderer as the other

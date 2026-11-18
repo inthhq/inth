@@ -1,6 +1,6 @@
 import svelte from '@astrojs/svelte';
+import c15t, { hosted } from '@inth/astro';
 import { defineConfig } from 'astro/config';
-import c15t, { hosted } from 'c15t/astro';
 
 import { testBackend } from './test-backend.mjs';
 

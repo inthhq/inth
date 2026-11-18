@@ -1,13 +1,13 @@
 name: Release SDK
 
-# DISABLED. This release line turns on after its packages are renamed from
-# c15t to Inth and the owner adds registry credentials. Until then it runs
+# DISABLED. Its packages carry Inth names; this release line turns on once
+# the owner adds registry credentials. Until then it runs
 # only by hand, and tools/ci/release-guard.ts stops the publish job: it
 # refuses while the SDK_RELEASE_ENABLED repository variable is not "true", and
 # it refuses any c15t, @c15t/* or com.c15t artifact even when the variable is
 # set. The publish step is a placeholder that fails; nothing here can publish.
 #
-# Releases: npm, the packages/sdk/* packages (future @inth/sdk). Tags:
+# Releases: npm, @inth/sdk and the framework packages in packages/sdk. Tags:
 # sdk@<version>, never a bare version, which SwiftPM reads as a Swift release.
 # To enable: wire the publish step, grant it the permissions it needs, put the
 # credentials in a protected environment and set SDK_RELEASE_ENABLED to

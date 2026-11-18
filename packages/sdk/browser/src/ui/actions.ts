@@ -1,11 +1,11 @@
-import { resolveConsentPresentation } from '@c15t/core';
+import { resolveConsentPresentation } from '@inth/sdk-core';
 import type {
 	ConsentSnapshot,
 	ConsentPresentation,
 	PromptPresentation,
 	PresentationAction,
 	ResolvedConsentPresentation,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 
 import { classes } from '../generated/styles';
 import { cx, h } from './dom';

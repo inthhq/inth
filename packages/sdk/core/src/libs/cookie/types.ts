@@ -16,8 +16,8 @@
  *
  * @example
  * ```typescript
- * import { createConsentKernel } from 'c15t';
- * import { createPersistence } from 'c15t/modules/persistence';
+ * import { createConsentKernel } from '@inth/sdk/engine';
+ * import { createPersistence } from '@inth/sdk/modules/persistence';
  *
  * const kernel = createConsentKernel();
  * const persistence = createPersistence({

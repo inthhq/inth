@@ -1,4 +1,4 @@
-import { createConsentRuntime } from '@c15t/core/runtime';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import {
 	createApp,

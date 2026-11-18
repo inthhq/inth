@@ -10,7 +10,7 @@
 	@internal
 -->
 <script lang="ts">
-	import type { ConsentRuntime } from '@c15t/core/runtime/provider';
+	import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 	import type { Snippet } from 'svelte';
 
 	import { resolveProviderOptions } from '../provider-options';

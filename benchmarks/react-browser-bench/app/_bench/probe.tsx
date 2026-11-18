@@ -1,6 +1,6 @@
 'use client';
 
-import { useActiveUI, useSnapshot } from '@c15t/react';
+import { useActiveUI, useSnapshot } from '@inth/react';
 import { useEffect, useRef } from 'react';
 
 import {

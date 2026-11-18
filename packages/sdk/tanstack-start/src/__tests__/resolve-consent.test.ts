@@ -1,12 +1,12 @@
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 /**
  * Wiring tests for `resolveConsent` on top of `resolveRequestConsent` from
- * `@c15t/core/server`. The resolution rules (forwarding, budget, self-route
+ * `@inth/sdk/server`. The resolution rules (forwarding, budget, self-route
  * guard, deferral, shared renders) are pinned once in the core suite; these
  * check what the TanStack Start adapter supplies: the request, the
  * middleware's remembered inputs, the route prefix and the prerender flag.
  */
-import { createManifestCache } from '@c15t/core/server';
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import { createManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { rememberConsentInputs } from '../libs/request-inputs';
@@ -250,7 +250,7 @@ describe('resolveConsent wiring', () => {
 
 	test('rejects a route prefix of / when the handler is created', async () => {
 		const message =
-			"@c15t/tanstack-start: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.";
+			"@inth/tanstack-start: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.";
 		expect(() => createConsentStateHandler({ routePrefix: '/' })).toThrow(
 			message
 		);

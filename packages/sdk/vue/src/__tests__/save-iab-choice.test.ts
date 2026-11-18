@@ -1,4 +1,4 @@
-import { saveIABConsentSurface } from '@c15t/core/surface-actions';
+import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import { expect, onTestFinished, test } from 'vitest';
 
 import { createVueConsentKernelContext } from './test-kernel';

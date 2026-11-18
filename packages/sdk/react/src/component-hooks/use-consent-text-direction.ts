@@ -1,6 +1,6 @@
 'use client';
 
-import { getTextDirection } from '@c15t/ui/utils';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
 

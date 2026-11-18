@@ -2,7 +2,7 @@ import type {
 	DefaultComFormsSdkClient,
 	DefaultComSchedulerEventMap,
 	DefaultComSubmitFormResult,
-} from '@c15t/integrations/default-com';
+} from '@inth/integrations/default-com';
 import { expectTypeOf } from 'vitest';
 
 // The package's check-types command compiles this consumer without executing it.

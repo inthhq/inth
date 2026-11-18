@@ -18,7 +18,7 @@
  */
 
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { ɵuniqueId as uniqueId } from '@c15t/angular';
+import { ɵuniqueId as uniqueId } from '@inth/angular';
 
 /** Host attributes of the 24px outline icons. */
 const STROKE_HOST = {

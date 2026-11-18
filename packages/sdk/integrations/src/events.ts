@@ -1,7 +1,7 @@
-export { createEventDispatcher, getEventDispatcher } from '@c15t/core/events';
+export { createEventDispatcher, getEventDispatcher } from '@inth/sdk/events';
 export type {
 	EventDispatcher,
 	EventDispatcherOptions,
 	EventProperties,
 	RuntimeEventDispatcherOptions,
-} from '@c15t/core/events';
+} from '@inth/sdk/events';

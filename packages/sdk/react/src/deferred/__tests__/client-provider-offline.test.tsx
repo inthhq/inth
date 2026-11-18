@@ -4,7 +4,7 @@
  * page, and the stock surfaces under the provider find its kernel. Its own
  * file: the provider loads its engine once per page.
  */
-import { policyRulePresets } from '@c15t/schema/types';
+import { policyRulePresets } from '@inth/sdk/schema/types';
 import { afterEach, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 

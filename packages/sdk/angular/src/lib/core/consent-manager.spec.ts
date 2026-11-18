@@ -10,7 +10,7 @@ import {
 	createConsentProviderRuntime,
 	createConsentRuntime,
 	defaultRuntimeModules,
-} from '@c15t/core/runtime';
+} from '@inth/sdk/runtime';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testLocal, testOptions } from '../../__tests__/test-local';

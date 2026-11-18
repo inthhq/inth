@@ -3,13 +3,13 @@
  * rendering.
  */
 
-import { createConsentKernel } from '@c15t/core';
+import { GppModel } from '@iabgpp/cmpapi';
+import { GVL, Segment, TCModel, TCString } from '@iabtechlabtcf/core';
+import { createConsentKernel } from '@inth/sdk-core';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
-import { GppModel } from '@iabgpp/cmpapi';
-import { GVL, Segment, TCModel, TCString } from '@iabtechlabtcf/core';
+} from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { createGPP } from '../gpp';

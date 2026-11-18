@@ -6,9 +6,9 @@
  * @packageDocumentation
  */
 
-import { createDevTools } from '@c15t/dev-tools';
-import type { DevToolsInstance, DevToolsOptions } from '@c15t/dev-tools';
-import type { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
+import { createDevTools } from '@inth/sdk-dev-tools';
+import type { DevToolsInstance, DevToolsOptions } from '@inth/sdk-dev-tools';
+import type { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import type { ConsentClient } from './types';
 
@@ -18,7 +18,7 @@ export type BrowserDevToolsOptions = Omit<
 	'getConsentCategories' | 'kernel'
 >;
 
-/** Offers a DevTools launcher to the stock trigger; see `@c15t/ui`. */
+/** Offers a DevTools launcher to the stock trigger; see `@inth/sdk/ui`. */
 export type PublishDevToolsLauncher = typeof publishDevToolsLauncher;
 
 /**

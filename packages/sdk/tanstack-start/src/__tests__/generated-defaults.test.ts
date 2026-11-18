@@ -1,11 +1,11 @@
 /**
  * The quickstart passes no options: `createConsentStateHandler()` and
  * `createConsentRoute()` read the backend URL and the policy snapshot from
- * `@c15t/core/generated`, which `consentManifest()` serves, and the state
+ * `@inth/sdk/generated`, which `consentManifest()` serves, and the state
  * hands the browser everything `ConsentRoot` needs.
  */
-import { hosted } from '@c15t/core/modes';
-import { createManifestCache } from '@c15t/core/server';
+import { hosted } from '@inth/sdk/modes';
+import { createManifestCache } from '@inth/sdk/server';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../api';
@@ -14,7 +14,7 @@ import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Stands in for the virtual module the Vite plugin serves.
-vi.mock('@c15t/core/generated', async () => {
+vi.mock('@inth/sdk/generated', async () => {
 	const { MANIFEST_FIXTURE: snapshot } = await import('./manifest-fixture');
 	return { projectUrl: 'https://consent.example.com', snapshot };
 });
@@ -27,7 +27,7 @@ const offlineFetch = () =>
 		Promise.reject(new Error('no request expected'))
 	);
 
-describe('defaults from @c15t/core/generated', () => {
+describe('defaults from @inth/sdk/generated', () => {
 	test('the state handler resolves the build snapshot and carries the backend', async () => {
 		const fetch = offlineFetch();
 		const state = await createConsentStateHandler({

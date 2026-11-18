@@ -1,5 +1,5 @@
-import type { AllConsentNames } from '@c15t/core';
-import { evaluateConsent } from '@c15t/core';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import { evaluateConsent } from '@inth/sdk/engine';
 
 import { useGateSelector } from '../kernel-selector';
 

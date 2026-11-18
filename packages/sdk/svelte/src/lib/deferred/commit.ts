@@ -1,13 +1,13 @@
 /**
  * `ConsentRoot`'s commit chunk: completes a banner or dialog choice the
  * deferred runtime recorded on the stand-in kernel before the consent
- * engine loaded. The same steps as `@c15t/vue`'s Nuxt module.
+ * engine loaded. The same steps as `@inth/vue`'s Nuxt module.
  *
  * The tap's own task already changed the snapshot the page reads
  * (`planInstantCommit` in the first-load chunk), so scripts and
  * components see the choice at once. This chunk, loaded one task later,
  * does what `commands.save` would do next with core's save code
- * (`@c15t/core/surface-actions/early-commit`): it stores the record, queues
+ * (`@inth/sdk/surface-actions/early-commit`): it stores the record, queues
  * the backend save and calls the app's callbacks. The engine loads after
  * it, starts from the records and sends the queued save; it records
  * nothing again.
@@ -22,14 +22,14 @@ import type {
 	KernelEvent,
 	SaveResult,
 	SaveUISource,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import {
 	hasStoredClearEpoch,
 	planEarlyCommit,
 	storeEarlyCommit,
-} from '@c15t/core/surface-actions/early-commit';
-import type { EarlyCommit } from '@c15t/core/surface-actions/early-commit';
-import type { InstantCommit } from '@c15t/core/surface-actions/instant-commit';
+} from '@inth/sdk/surface-actions/early-commit';
+import type { EarlyCommit } from '@inth/sdk/surface-actions/early-commit';
+import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
 import type { ConsentManagerOptions } from '../types';
 import { pendingIsInert } from './stand-in';

@@ -1,4 +1,4 @@
-import { withConsentManifest } from 'c15t/next/build';
+import { withConsentManifest } from '@inth/nextjs/build';
 import type { NextConfig } from 'next';
 
 const nextConfig = {} satisfies NextConfig;

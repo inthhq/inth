@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import {

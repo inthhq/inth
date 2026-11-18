@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import type { PresentationAction } from '@c15t/core';
-import { saveIABConsentSurface } from '@c15t/core/surface-actions';
+import type { PresentationAction } from '@inth/sdk/engine';
 import {
 	applyPublisherRestrictionsToGVL,
 	resolveIABBannerSummary,
 	resolveIABDialogDisplayModel,
-} from '@c15t/iab/headless';
+} from '@inth/sdk/iab/headless';
 import type {
 	HeadlessIABDisplayRow,
 	HeadlessIABDisplayStackRow,
-} from '@c15t/iab/headless';
-import { isDialogDismissKey } from '@c15t/ui/primitives/dialog';
-import dialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
+} from '@inth/sdk/iab/headless';
+import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
+import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
-import '@c15t/ui/styles/components/iab-consent-dialog.css';
-import { getTextDirection } from '@c15t/ui/utils';
+import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 import { computed, ref, Teleport, Transition, toValue, watch } from 'vue';
 
 import {
@@ -140,7 +140,7 @@ const labels = computed(() => ({
 }));
 
 // Which rows this surface renders, and in what order, comes from the
-// shared display model in `@c15t/iab/headless` — the same one React,
+// shared display model in `@inth/sdk/iab/headless` — the same one React,
 // Svelte and the Astro server render read.
 const publisherRestrictions = computed(
 	() => snapshot.value.iab?.publisherRestrictions

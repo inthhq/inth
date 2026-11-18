@@ -1,5 +1,5 @@
 /**
- * Tests for @c15t/iab — the IAB TCF module.
+ * Tests for @inth/sdk/iab — the IAB TCF module.
  *
  * Verifies:
  * - createIAB seeds the kernel's iab slice (cmpId, customVendors).
@@ -9,8 +9,8 @@
  * - dispose cleans up the CMP API + kernel subscription.
  */
 
-import type { GlobalVendorList } from '@c15t/core';
-import { createConsentKernel } from '@c15t/core';
+import type { GlobalVendorList } from '@inth/sdk-core';
+import { createConsentKernel } from '@inth/sdk-core';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createIAB, iab as createIABConfig } from '../index';

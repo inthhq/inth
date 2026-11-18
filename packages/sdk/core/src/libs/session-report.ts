@@ -26,8 +26,8 @@ import {
 	getIpAddress,
 	isSpeculativeRequest as isSpeculativeHeaders,
 	readSessionJourney,
-} from '@c15t/schema/types';
-import type { BuildConsentSessionReportOptions } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { BuildConsentSessionReportOptions } from '@inth/sdk-schema/types';
 
 import { c15tProtocolHeaders } from '../transports/version-header';
 
@@ -56,8 +56,8 @@ const SESSION_REPORT_TIMEOUT_MS = 3000;
 export type {
 	BuildConsentSessionReportOptions,
 	SessionReportInputs,
-} from '@c15t/schema/types';
-export { buildConsentSessionReport } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+export { buildConsentSessionReport } from '@inth/sdk-schema/types';
 
 /** Headers as any server runtime hands them over. */
 export type SessionReportHeaders =
@@ -135,7 +135,7 @@ const toHeaders = function toHeaders(
 
 /**
  * Whether a request is a prefetch or prerender the visitor may never open.
- * The shared check from `@c15t/schema`, accepting any header shape a server
+ * The shared check from `@inth/sdk/schema`, accepting any header shape a server
  * runtime hands over.
  *
  * @param headers - The incoming request's headers.
@@ -228,7 +228,7 @@ export interface ReportConsentSessionOptions extends BuildConsentSessionReportOp
  * @example
  * ```ts
  * reportConsentSession({
- *   adapter: '@c15t/nextjs',
+ *   adapter: '@inth/nextjs',
  *   projectUrl: 'https://consent.example.com',
  *   headers: request.headers,
  *   init: payload,

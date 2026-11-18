@@ -2,7 +2,7 @@ import {
 	multipleModeToggle,
 	singleModeToggle,
 } from '@c15t/conformance/play/accordion';
-import { Accordion } from '@c15t/react/primitives';
+import { Accordion } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 

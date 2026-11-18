@@ -1,4 +1,8 @@
-import type { ConsentState, Script, ScriptCallbackInfo } from '@c15t/core';
+import type {
+	ConsentState,
+	Script,
+	ScriptCallbackInfo,
+} from '@inth/sdk/engine';
 import {
 	afterEach,
 	assert,

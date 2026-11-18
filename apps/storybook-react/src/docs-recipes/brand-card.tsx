@@ -1,5 +1,5 @@
 // #region docs:brand-card title="src/consent-ui.tsx"
-import { ConsentBanner, ConsentDialog, ConsentTheme } from 'c15t/react';
+import { ConsentBanner, ConsentDialog, ConsentTheme } from '@inth/react';
 
 import { brandTheme } from './consent-theme';
 

@@ -21,10 +21,10 @@ Copy the site ID and your Matomo URL from the Matomo tracking code. For Matomo
 Cloud, pass `cloudId`, for example `'your-site.matomo.cloud'`, instead of
 `matomoUrl`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { matomoAnalytics } from '@c15t/integrations/matomo-analytics';
+import { matomoAnalytics } from '@inth/integrations/matomo-analytics';
 
 export const scripts = [
 	matomoAnalytics({ matomoUrl: 'https://analytics.example.com', siteId: 1 }),

@@ -1,11 +1,11 @@
 /**
  * Keeps the dialog islands from shipping a second copy of the stylesheet.
  *
- * The islands read `@c15t/ui` class maps. In the browser build those modules
+ * The islands read `@inth/sdk/ui` class maps. In the browser build those modules
  * also import their component CSS, and Astro links every stylesheet a page
  * script can reach on every page. The page already inlines the first-paint
  * rules, and the client links the dialog's, so that CSS is a duplicate.
- * `@c15t/ui` ships each class map without its CSS import as `<name>.node.js`
+ * `@inth/sdk/ui` ships each class map without its CSS import as `<name>.node.js`
  * for runtimes that cannot load CSS; this points the browser build at those
  * instead.
  *
@@ -16,18 +16,18 @@
  * time.
  */
 
-/** `@c15t/ui/styles/components/<name>`, but not the `.css` subpaths. */
-const CLASS_MAP = /^@c15t\/ui\/styles\/components\/[a-z-]+$/u;
+/** `@inth/sdk/ui/styles/components/<name>`, but not the `.css` subpaths. */
+const CLASS_MAP = /^@inth\/sdk\/ui\/styles\/components\/[a-z-]+$/u;
 
 /**
  * Stylesheets the injected one already covers or the client links itself.
  * `dialog.css` is empty, and an import of it would still link a file.
  */
 const CLIENT_LINKED_CSS =
-	/^@c15t\/ui\/styles\/(?:dialog|primitives|components\/[a-z-]+)\.css$/u;
+	/^@inth\/sdk\/ui\/styles\/(?:dialog|primitives|components\/[a-z-]+)\.css$/u;
 
 /** The IAB components' class maps and CSS, whose rules live in the IAB stylesheet. */
-const IAB_CLASS_MAP = /^@c15t\/ui\/styles\/components\/iab-/u;
+const IAB_CLASS_MAP = /^@inth\/sdk\/ui\/styles\/components\/iab-/u;
 
 /** The module an island's client-linked stylesheet import resolves to. */
 export const EMPTY_STYLESHEET_ID = '\0c15t:client-linked-stylesheet';

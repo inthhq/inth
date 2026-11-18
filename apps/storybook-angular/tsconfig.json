@@ -7,8 +7,8 @@
 		"moduleResolution": "bundler",
 		"noPropertyAccessFromIndexSignature": false,
 		"paths": {
-			"@c15t/angular": ["../../packages/sdk/angular/src/public-api.ts"],
-			"@c15t/angular/*": ["../../packages/sdk/angular/*/src/public-api.ts"]
+			"@inth/angular": ["../../packages/sdk/angular/src/public-api.ts"],
+			"@inth/angular/*": ["../../packages/sdk/angular/*/src/public-api.ts"]
 		},
 		"useDefineForClassFields": false
 	},

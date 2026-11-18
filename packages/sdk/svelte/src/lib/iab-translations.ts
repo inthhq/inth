@@ -1,10 +1,10 @@
-import type { TranslationConfig } from '@c15t/core';
-import { defaultTranslationConfig } from '@c15t/core';
-import { resolveTranslations } from '@c15t/ui/utils';
+import type { TranslationConfig } from '@inth/sdk/engine';
+import { defaultTranslationConfig } from '@inth/sdk/engine';
+import { resolveTranslations } from '@inth/sdk/ui/utils';
 
 /**
  * IAB translations interface.
- * Matches the structure in @c15t/translations.
+ * Matches the structure in @inth/sdk/translations.
  */
 export interface IABTranslations {
 	banner: {

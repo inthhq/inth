@@ -51,7 +51,7 @@ export interface IABConfig {
 	isServiceSpecific?: boolean;
 	/**
 	 * Publisher restrictions to encode into the TC string and apply to IAB
-	 * gates. `@c15t/iab` rejects
+	 * gates. `@inth/sdk/iab` rejects
 	 * restrictions that do not match the vendor list's declarations.
 	 */
 	publisherRestrictions?: PublisherRestriction[];

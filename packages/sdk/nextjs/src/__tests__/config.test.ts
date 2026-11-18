@@ -1,4 +1,4 @@
-import { hosted, manifest } from '@c15t/core/modes';
+import { hosted, manifest } from '@inth/sdk/modes';
 /**
  * Tests for `defineConsentConfig`: validation, defaults and freezing. The
  * checks run where Next.js first evaluates the config, on the server, so
@@ -46,7 +46,7 @@ describe('defineConsentConfig', () => {
 	test('names NEXT_PUBLIC_INTH_PROJECT_URL in the missing-URL error', () => {
 		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', '');
 		expect(() => defineConsentConfig()).toThrow(
-			'@c15t/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.'
+			'@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.'
 		);
 	});
 
@@ -74,7 +74,7 @@ describe('defineConsentConfig', () => {
 				proxy: true,
 			})
 		).toThrow(
-			'@c15t/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
+			'@inth/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
 		);
 		expect(
 			defineConsentConfig({
@@ -100,7 +100,7 @@ describe('defineConsentConfig', () => {
 						routePrefix,
 					})
 				).toThrow(
-					"@c15t/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+					"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 				);
 			}
 		}

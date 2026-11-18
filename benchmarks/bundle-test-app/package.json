@@ -16,10 +16,9 @@
 	},
 	"dependencies": {
 		"@c15t/benchmarking": "workspace:*",
-		"@c15t/browser": "workspace:*",
-		"@c15t/core": "workspace:*",
-		"@c15t/nextjs": "workspace:*",
-		"@c15t/react": "workspace:*",
+		"@inth/nextjs": "workspace:*",
+		"@inth/react": "workspace:*",
+		"@inth/sdk": "workspace:*",
 		"next": "16.2.10",
 		"react": "19.2.7",
 		"react-dom": "19.2.7"

@@ -3,7 +3,7 @@
  * Additional Consent string only supplements the TC String, so a stalled
  * list endpoint gives up after the request deadline.
  */
-import { AD_TECH_PROVIDER_FETCH_TIMEOUT_MS } from '@c15t/schema/types';
+import { AD_TECH_PROVIDER_FETCH_TIMEOUT_MS } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {

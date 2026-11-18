@@ -1,5 +1,5 @@
-import { createConsentRuntime } from '@c15t/core/runtime';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vitest';
 import { defineComponent, h, ref } from 'vue';

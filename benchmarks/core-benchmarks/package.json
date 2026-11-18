@@ -13,9 +13,7 @@
 	},
 	"dependencies": {
 		"@c15t/benchmarking": "workspace:*",
-		"@c15t/core": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/translations": "workspace:*"
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "25.5.0",

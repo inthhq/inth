@@ -18,7 +18,7 @@ the `ConsentDialog` the placeholder button opens.
 ```tsx title="components/product-video.tsx"
 'use client';
 
-import { ConsentGate } from 'c15t/next';
+import { ConsentGate } from '@inth/nextjs';
 
 export function ProductVideo() {
 	return (
@@ -59,7 +59,7 @@ With the
 [awaited layout](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html),
 the server decides from the resolved rule and the request cookie whether the
 category is allowed. Pages Router works the same way when `getServerSideProps`
-awaits `resolveConsent` from `c15t/next/pages` and passes the result
+awaits `resolveConsent` from `@inth/nextjs/pages` and passes the result
 through `state` to `ConsentRoot`, as in the
 [Pages Router guide](../pages-router). A denied category gets the placeholder
 in the server HTML. A granted category gets an empty wrapper, and the embed
@@ -79,7 +79,7 @@ permission, so the iframe renders until they opt out.
 <import src="../../../shared/react/components/consent-gate.mdx#behavior" />
 
 To read the same permission in your own Client Components, use `useConsent`
-from `c15t/next`; the `useIframeBlocker` and `useNetworkBlocker` module
+from `@inth/nextjs`; the `useIframeBlocker` and `useNetworkBlocker` module
 hooks also import from there.
 
 <import src="../../../shared/react/components/consent-gate.mdx#composition" />

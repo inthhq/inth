@@ -6,7 +6,7 @@
  * a save, which is why they travel with every commit.
  *
  * `gpc` is the app's GPC override, not a detection. It is load bearing rather
- * than decorative: `decisionInputsMatchOverrides` in `@c15t/core` compares it
+ * than decorative: `decisionInputsMatchOverrides` in `@inth/sdk/engine` compares it
  * against the decision inputs remembered from the last init, and a save whose
  * inputs no longer match is rejected as stale. A native save body that drops
  * it cannot pass that check. Publisher test mode is a client option, not an
@@ -28,7 +28,7 @@ export const DEFAULT_NATIVE_LANGUAGE = 'en';
  * native core always resolves a language, falling back to the device locale,
  * because translations must resolve to one bundle.
  *
- * Mirrors `KernelOverrides` in `@c15t/core`, with the kernel's optional
+ * Mirrors `KernelOverrides` in `@inth/sdk/engine`, with the kernel's optional
  * properties normalised to explicit `null` so the native cores serialize every
  * key rather than leaving a JavaScript reader to branch on presence.
  */

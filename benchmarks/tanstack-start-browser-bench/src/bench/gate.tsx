@@ -10,8 +10,8 @@ import {
 	ConsentRoot,
 	useScriptLoader,
 	useSnapshot,
-} from '@c15t/tanstack-start';
-import type { ConsentRootProps } from '@c15t/tanstack-start';
+} from '@inth/tanstack-start';
+import type { ConsentRootProps } from '@inth/tanstack-start';
 import { useEffect } from 'react';
 
 import { GateArticle } from './gate-article';

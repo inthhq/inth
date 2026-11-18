@@ -6,7 +6,7 @@ import {
 	useConsentSave,
 	useDismissNotice,
 	usePromptRequirement,
-} from 'c15t/vue/vue-plugin';
+} from '@inth/vue/vue-plugin';
 import { computed } from 'vue';
 
 import './cookie-bar.css';

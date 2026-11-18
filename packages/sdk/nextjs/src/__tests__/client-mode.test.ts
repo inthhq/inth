@@ -2,7 +2,7 @@
  * The transport `ConsentRoot` builds for each mode. Behaviour of the lazy
  * transports themselves is pinned in core's client-mode suite.
  */
-import { hosted, manifest } from '@c15t/core/modes';
+import { hosted, manifest } from '@inth/sdk/modes';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createClientMode } from '../client-mode';
@@ -41,7 +41,7 @@ describe('createClientMode', () => {
 
 	test('throws without a backend URL instead of running offline', () => {
 		expect(() => createClientMode(manifest(), {})).toThrow(
-			'@c15t/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
+			'@inth/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
 		);
 		expect(() => createClientMode(undefined, {})).toThrow(
 			'`projectUrl` is required'

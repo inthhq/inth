@@ -2,9 +2,9 @@
 
 **Check.** `vite build` stops with an error from `consentManifest` that
 starts with the plugin's name, such as
-`@c15t/core/build: could not fetch the consent manifest from <url> during the
-build`. The name is `@c15t/core/build` for `c15t/build` and `@c15t/vue/vite`
-for `c15t/vue/vite`. `vite dev` logs the same message as a warning and keeps
+`@inth/sdk/build: could not fetch the consent manifest from <url> during the
+build`. The name is `@inth/sdk/build` for `@inth/react/build` and
+`@inth/sdk/build`, and `@inth/vue/vite` for `@inth/vue/vite`. `vite dev` logs the same message as a warning and keeps
 going. The part in parentheses names the cause:
 
 | Message | Cause | Fix |
@@ -35,13 +35,14 @@ require an absolute upstream URL`.
 
 ## Why is snapshot undefined?
 
-**Check.** `snapshot` from `c15t/generated` is `undefined`, and the browser
+**Check.** `snapshot` from the `generated` entry, such as
+`@inth/react/generated`, is `undefined`, and the browser
 requests `${projectUrl}/manifest` on page load.
 
 **Fix.** `snapshot` is `undefined` when Vite has no policy to serve:
 
 - `consentManifest` is missing from `plugins` in `vite.config.ts`. Without the
-  plugin, `c15t/generated` still resolves, but exports `undefined`.
+  plugin, the `generated` entry still resolves, but exports `undefined`.
 - The fetch failed in `vite dev`, or in a build with
   `C15T_ON_BUILD_ERROR=runtime`. The terminal shows a `could not fetch the
   consent manifest` warning.

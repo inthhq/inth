@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { AllConsentNames } from '@c15t/core';
-	import { defaultTranslationConfig } from '@c15t/core';
-	import styles from '@c15t/ui/styles/components/consent-gate';
-	import { resolveTranslations } from '@c15t/ui/utils';
+	import type { AllConsentNames } from '@inth/sdk/engine';
+	import { defaultTranslationConfig } from '@inth/sdk/engine';
+	import styles from '@inth/sdk/ui/styles/components/consent-gate';
+	import { resolveTranslations } from '@inth/sdk/ui/utils';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 

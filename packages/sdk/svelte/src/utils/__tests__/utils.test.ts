@@ -4,7 +4,7 @@
  * Mirrors: packages/sdk/react/src/hooks/__tests__/use-styles.test.tsx
  */
 
-import type { AllThemeKeys, Theme } from '@c15t/ui/theme';
+import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
 import { describe, expect, test } from 'vitest';
 
 import {

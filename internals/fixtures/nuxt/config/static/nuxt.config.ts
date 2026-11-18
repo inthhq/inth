@@ -1,4 +1,4 @@
-import { manifest } from 'c15t/vue';
+import { manifest } from '@inth/nuxt';
 import { defineNuxtConfig } from 'nuxt/config';
 
 export default defineNuxtConfig({
@@ -9,6 +9,6 @@ export default defineNuxtConfig({
 		projectUrl: 'https://your-project.inth.app',
 		routePrefix: false,
 	},
-	modules: ['c15t/vue'],
+	modules: ['@inth/nuxt'],
 	ssr: false,
 });

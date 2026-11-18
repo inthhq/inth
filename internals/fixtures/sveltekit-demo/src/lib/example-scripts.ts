@@ -1,5 +1,5 @@
-import { posthog } from '@c15t/integrations/posthog';
-import { xPixel } from '@c15t/integrations/x-pixel';
+import { posthog } from '@inth/integrations/posthog';
+import { xPixel } from '@inth/integrations/x-pixel';
 
 export const scripts = [
 	posthog({

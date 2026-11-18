@@ -1,6 +1,6 @@
 /**
- * Re-export accordion variant types from @c15t/ui for convenience.
- * The canonical definitions are in @c15t/ui/styles/primitives.
+ * Re-export accordion variant types from @inth/sdk/ui for convenience.
+ * The canonical definitions are in @inth/sdk/ui/styles/primitives.
  */
 export type {
 	AccordionColorCSSVariables,
@@ -11,4 +11,4 @@ export type {
 	AccordionLayoutCSSVariables,
 	AccordionRootCSSVariables,
 	AccordionTriggerCSSVariables,
-} from '@c15t/ui/styles/primitives';
+} from '@inth/sdk/ui/styles/primitives';

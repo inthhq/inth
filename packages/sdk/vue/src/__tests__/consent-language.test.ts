@@ -1,6 +1,6 @@
-import type { KernelOverrides, KernelTransport } from '@c15t/core';
-import type { PolicyRule } from '@c15t/schema/types';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import type { KernelOverrides, KernelTransport } from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';

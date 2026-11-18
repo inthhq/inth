@@ -1,7 +1,7 @@
 'use client';
 
 import type { PolicyBenchFixtureName } from '@c15t/benchmarking/policy-fixtures';
-import { useActiveUI, useSnapshot } from '@c15t/react';
+import { useActiveUI, useSnapshot } from '@inth/react';
 import { useEffect, useRef } from 'react';
 
 import {

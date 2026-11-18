@@ -6,7 +6,7 @@
 		benchScripts,
 	} from '$lib/fixture';
 	import ScriptProbe from '$lib/script-probe.svelte';
-	import { ConsentRoot } from '@c15t/svelte';
+	import { ConsentRoot } from '@inth/svelte';
 
 	let { children, data } = $props();
 </script>

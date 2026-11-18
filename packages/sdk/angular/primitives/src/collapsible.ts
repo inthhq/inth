@@ -3,7 +3,7 @@ import {
 	getCollapsibleState,
 	getDataDisabled,
 	toggleCollapsibleValue,
-} from '@c15t/ui/primitives';
+} from '@inth/sdk/ui/primitives';
 
 import { uniqueId } from './unique-id';
 

@@ -1,4 +1,4 @@
-import { resolveRequestProjectUrl } from '@c15t/core/server';
+import { resolveRequestProjectUrl } from '@inth/sdk/server';
 
 const ABSOLUTE_URL_REGEX = /^https?:\/\//u;
 
@@ -81,7 +81,7 @@ export const validateProjectUrl = function validateProjectUrl(
  *
  * @example
  * ```ts
- * import { normalizeProjectUrl } from '@c15t/react/server';
+ * import { normalizeProjectUrl } from '@inth/react/server';
  *
  * // Absolute URL - returns as-is
  * normalizeProjectUrl('https://api.example.com/', headers);

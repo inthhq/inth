@@ -1,6 +1,6 @@
 import type { AppProps } from 'next/app';
 
-import '@c15t/nextjs/styles.css';
+import '@inth/nextjs/styles.css';
 
 /**
  * Deliberately minimal. Each page mounts its own `ConsentShell` so the

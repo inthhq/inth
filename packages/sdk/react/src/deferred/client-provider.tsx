@@ -22,15 +22,18 @@
  * @internal
  */
 
-import type { ConsentSnapshot, ProviderTransportFactory } from '@c15t/core';
+import type {
+	ConsentSnapshot,
+	ProviderTransportFactory,
+} from '@inth/sdk/engine';
 import {
 	hasGlobalPrivacyControlSignal,
 	hasStoredConsent,
 	pendingBootSnapshot,
 	startPrefetchedHostedInit,
 	startPrefetchedInit,
-} from '@c15t/core/runtime/deferred-boot';
-import type { DeferredSnapshotOptions } from '@c15t/core/runtime/deferred-snapshot';
+} from '@inth/sdk/runtime/deferred-boot';
+import type { DeferredSnapshotOptions } from '@inth/sdk/runtime/deferred-snapshot';
 import type { ReactNode } from 'react';
 import { Suspense, useState } from 'react';
 
@@ -219,7 +222,7 @@ const plan = function plan(
 		await readOpened;
 		try {
 			const [{ snapshotFromPrefetchedInit }, init] = await Promise.all([
-				import('@c15t/core/runtime/deferred-snapshot'),
+				import('@inth/sdk/runtime/deferred-snapshot'),
 				prefetched,
 			]);
 			return snapshotFromPrefetchedInit(init, snapshotOptions);
@@ -376,7 +379,7 @@ export const createConsentProvider = function createConsentProvider(
  * engine loads at once. Every other setup renders once the engine has
  * loaded.
  *
- * See `ConsentProvider` in `@c15t/react/provider` for the options. That
+ * See `ConsentProvider` in `@inth/react/provider` for the options. That
  * entry loads the engine with the page.
  */
 export const ConsentProvider = createConsentProvider();

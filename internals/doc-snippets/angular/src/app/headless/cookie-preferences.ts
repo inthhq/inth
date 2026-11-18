@@ -6,9 +6,9 @@ import {
 	inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ConsentManager } from '@c15t/angular';
-import type { AllConsentNames } from '@c15t/angular';
-import { SwitchControl, Switch, SwitchThumb } from '@c15t/angular/primitives';
+import { ConsentManager } from '@inth/angular';
+import type { AllConsentNames } from '@inth/angular';
+import { SwitchControl, Switch, SwitchThumb } from '@inth/angular/primitives';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

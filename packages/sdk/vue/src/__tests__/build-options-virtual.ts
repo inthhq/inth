@@ -1,5 +1,5 @@
 /**
- * Stands in for the `#c15t/build-options` Nitro virtual the module
+ * Stands in for the `#@inth/sdk/build-options` Nitro virtual the module
  * registers at build time.
  */
 import type { BuiltOptions } from '../runtime/server/build-options';

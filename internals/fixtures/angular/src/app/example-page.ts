@@ -1,7 +1,7 @@
 import { PlatformLocation } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ConsentManager } from '@c15t/angular';
-import { ConsentDevTools } from '@c15t/angular/devtools';
+import { ConsentManager } from '@inth/angular';
+import { ConsentDevTools } from '@inth/angular/devtools';
 
 import { experimentFromSearch } from './experiment';
 import { ExperimentReadout } from './experiment-readout';

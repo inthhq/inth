@@ -5,9 +5,9 @@ import type {
 	KernelHosting,
 	KernelUser,
 	Unsubscribe,
-} from '@c15t/core';
-import type { ConsentRuntimeGPPFactory } from '@c15t/core/runtime';
-import type { DevToolsInstance } from '@c15t/dev-tools';
+} from '@inth/sdk-core';
+import type { ConsentRuntimeGPPFactory } from '@inth/sdk-core/runtime';
+import type { DevToolsInstance } from '@inth/sdk-dev-tools';
 
 import {
 	mergeClientOptions,
@@ -59,7 +59,7 @@ export type QueuedCall = [method: string, ...args: unknown[]];
  * policy; unsupported methods are skipped with a warning.
  * Before `init()` the read methods throw and `on()`/`ready()` wait; after
  * it everything proxies to the page's client. `version`, `pkg`, `mode` and
- * `hosting` keep the shape `@c15t/core` installs for devtools.
+ * `hosting` keep the shape `@inth/sdk/engine` installs for devtools.
  */
 export interface C15tGlobalBase {
 	/** Package version. */
@@ -105,7 +105,7 @@ export interface C15tGlobalBase {
 	 * after `init()`; the client mounts `__gpp` once it arrives unless the
 	 * page set `gpp: false`.
 	 *
-	 * @param module - The `createGPP` export of `@c15t/iab/gpp`.
+	 * @param module - The `createGPP` export of `@inth/sdk/iab/gpp`.
 	 * @internal
 	 */
 	provideGPP: (module: { createGPP: ConsentRuntimeGPPFactory }) => void;
@@ -215,7 +215,7 @@ const reportQueuedFailure = function reportQueuedFailure(
 ): void {
 	// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 	console.error(
-		`@c15t/browser: queued c15t.${queuedName(call)}() failed; continuing with the rest of the queue.`,
+		`@inth/sdk: queued c15t.${queuedName(call)}() failed; continuing with the rest of the queue.`,
 		error
 	);
 };
@@ -347,7 +347,7 @@ const replayQueue = function replayQueue(
 		if (typeof method !== 'string') {
 			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 			console.warn(
-				'@c15t/browser: skipped a queued c15t entry that is not [method, ...args].',
+				'@inth/sdk: skipped a queued c15t entry that is not [method, ...args].',
 				call
 			);
 			continue;
@@ -364,7 +364,7 @@ const replayQueue = function replayQueue(
 		} else {
 			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 			console.warn(
-				`@c15t/browser: c15t.push(['${method}', ...]) is not supported before the tag loads and was skipped. Call it from c15t.onInit() instead.`
+				`@inth/sdk: c15t.push(['${method}', ...]) is not supported before the tag loads and was skipped. Call it from c15t.onInit() instead.`
 			);
 		}
 	}
@@ -409,7 +409,7 @@ export const installGlobal = function installGlobal<Api extends C15tGlobalBase>(
 		typeof existing === 'object' &&
 		'pkg' in existing &&
 		typeof existing.pkg === 'string' &&
-		existing.pkg.startsWith('@c15t/browser') &&
+		existing.pkg.startsWith('@inth/sdk') &&
 		'init' in existing &&
 		typeof existing.init === 'function' &&
 		'client' in existing
@@ -459,7 +459,7 @@ export const createGlobalWith = function createGlobalWith(
 		explicitMode !== supportedMode
 	) {
 		throw new Error(
-			`@c15t/browser/${supportedMode}: data-mode must be '${supportedMode}' when using this bundle.`
+			`@inth/sdk/${supportedMode}: data-mode must be '${supportedMode}' when using this bundle.`
 		);
 	}
 	const scriptOptions = readOptions(script);
@@ -482,7 +482,7 @@ export const createGlobalWith = function createGlobalWith(
 	const require = function require(): ConsentClient {
 		if (!client) {
 			throw new Error(
-				'@c15t/browser: call c15t.init() first, or wait for c15t.ready().'
+				'@inth/sdk: call c15t.init() first, or wait for c15t.ready().'
 			);
 		}
 		return client;
@@ -500,7 +500,7 @@ export const createGlobalWith = function createGlobalWith(
 			if (client) {
 				// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 				console.warn(
-					'@c15t/browser: c15t.config() after init() has no effect; queue it before the tag or pass it to init().'
+					'@inth/sdk: c15t.config() after init() has no effect; queue it before the tag or pass it to init().'
 				);
 				return;
 			}
@@ -590,7 +590,7 @@ export const createGlobalWith = function createGlobalWith(
 		openDialog: () => {
 			require().openDialog();
 		},
-		pkg: context.pkg ?? '@c15t/browser',
+		pkg: context.pkg ?? '@inth/sdk',
 		processIframes: () => {
 			require().processIframes();
 		},

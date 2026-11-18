@@ -8,7 +8,7 @@
  * mounts never finishes, so the banner shows only if the root brought the
  * code with it.
  */
-import { useActiveUI, useModel } from '@c15t/react';
+import { useActiveUI, useModel } from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -19,7 +19,7 @@ import { policyFixture } from './policy-fixture';
 const streamedInit = vi.hoisted(() => ({ mounted: false }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is when the resolver module loads: one load after mount stands in for a chunk the network never delivers.
-vi.mock('@c15t/core/runtime/streamed-init', async (importOriginal) => {
+vi.mock('@inth/sdk/runtime/streamed-init', async (importOriginal) => {
 	if (streamedInit.mounted) {
 		await new Promise(() => {
 			// Never settles.

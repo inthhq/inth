@@ -1,11 +1,11 @@
 import { InjectionToken, makeStateKey } from '@angular/core';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
 
 /**
  * The `TransferState` key the visitor's server-resolved consent travels
  * under, from the server render to the browser.
  *
- * `provideC15tServer()` from `@c15t/angular/ssr` sets it before the server
+ * `provideC15tServer()` from `@inth/angular/ssr` sets it before the server
  * renders. {@link ConsentManager} reads it on both sides and hands it to
  * the runtime as `prefetch`, unless the app passed its own, so the browser
  * starts from the state the server rendered with and hydration matches.

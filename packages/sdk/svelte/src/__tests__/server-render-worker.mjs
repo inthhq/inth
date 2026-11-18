@@ -27,7 +27,7 @@ const server = await createServer({
 	root: process.cwd(),
 	server: { hmr: false, middlewareMode: true },
 	ssr: {
-		noExternal: ['@c15t/svelte'],
+		noExternal: ['@inth/svelte'],
 		resolve: { conditions: ['node', 'svelte'] },
 	},
 });

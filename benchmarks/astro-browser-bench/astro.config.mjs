@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 
 import node from '@astrojs/node';
 import svelte from '@astrojs/svelte';
-import c15t, { hosted, manifest } from '@c15t/astro';
+import c15t, { hosted, manifest } from '@inth/astro';
 import { defineConfig } from 'astro/config';
 
 /**

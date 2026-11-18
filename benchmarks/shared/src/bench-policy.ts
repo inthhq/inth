@@ -7,9 +7,9 @@
  * with the same local resolver, so a benchmark page measures the provider
  * and its surfaces, not the network.
  */
-import type { PolicyRule, ProviderTransportFactory } from '@c15t/react';
+import type { PolicyRule, ProviderTransportFactory } from '@inth/react';
 
-// By path: the benchmarks package declares no dependency on `@c15t/core`.
+// By path: the benchmarks package declares no dependency on `@inth/sdk/engine`.
 import { createOfflineTransport } from '../../../packages/sdk/core/src/transports/offline';
 
 /**

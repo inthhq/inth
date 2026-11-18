@@ -1,6 +1,10 @@
-import { createConsentKernel, getIABControls } from '@c15t/core';
-import type { ConsentKernel, GlobalVendorList, SavePayload } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
+import { createConsentKernel, getIABControls } from '@inth/sdk-core';
+import type {
+	ConsentKernel,
+	GlobalVendorList,
+	SavePayload,
+} from '@inth/sdk-core';
+import { createScriptLoader } from '@inth/sdk-core/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createIAB } from '../../../../iab/src';

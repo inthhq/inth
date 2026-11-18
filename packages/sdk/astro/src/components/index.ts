@@ -1,5 +1,5 @@
 /**
- * `c15t/astro/components`: the consent components, by name.
+ * `@inth/astro/components`: the consent components, by name.
  *
  * ```astro
  * ---
@@ -8,7 +8,7 @@
  * 	ConsentDialog,
  * 	ConsentDialogLink,
  * 	ConsentScript,
- * } from 'c15t/astro/components';
+ * } from '@inth/astro/components';
  * ---
  * ```
  *
@@ -17,7 +17,7 @@
  * `ConsentBannerDeferred` is not here. It renders a server island, and
  * Astro refuses to build a module with one on a site without an adapter,
  * even when no page renders it. Import it from
- * `c15t/astro/components/consent-banner-deferred.astro`.
+ * `@inth/astro/components/consent-banner-deferred.astro`.
  */
 
 export { default as ConsentBanner } from './prompt.astro';

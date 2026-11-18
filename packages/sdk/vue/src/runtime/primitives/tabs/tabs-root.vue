@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { getDataDisabled } from '@c15t/ui/primitives';
-import type { TabsOrientation } from '@c15t/ui/primitives';
+import { getDataDisabled } from '@inth/sdk/ui/primitives';
+import type { TabsOrientation } from '@inth/sdk/ui/primitives';
 import { computed, ref, useId, watch } from 'vue';
 
 import { provideTabsRootContext } from './context';

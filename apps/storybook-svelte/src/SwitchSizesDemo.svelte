@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Switch, switchVariants } from '@c15t/svelte';
+	import { Switch, switchVariants } from '@inth/svelte';
 
 	interface Props {
 		mediumLabel?: string;

@@ -1,8 +1,8 @@
 'use client';
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import { IABConsentDialog } from '@c15t/react/iab';
-import { ConsentProvider } from '@c15t/react/provider';
+import { IABConsentDialog } from '@inth/react/iab';
+import { ConsentProvider } from '@inth/react/provider';
 
 const CssIabModulesPage = () => (
 	<ConsentProvider

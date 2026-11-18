@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ConsentDialogLink, ConsentRoot } from 'c15t/vue/vue-plugin';
+import { ConsentDialogLink, ConsentRoot } from '@inth/vue/vue-plugin';
 
 import HomePage from './HomePage.vue';
 </script>

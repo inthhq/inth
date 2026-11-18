@@ -5,8 +5,8 @@ import {
 	ConsentDialog,
 	ConsentProvider,
 	hosted,
-} from 'c15t/react';
-import type { ConsentProviderOptions } from 'c15t/react';
+} from '@inth/react';
+import type { ConsentProviderOptions } from '@inth/react';
 import type { ReactNode } from 'react';
 
 import { ConsumerProbe, getProbeState } from './probe';

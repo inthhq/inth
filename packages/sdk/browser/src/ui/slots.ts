@@ -1,9 +1,9 @@
-import type { AllThemeKeys, ComponentSlots } from '@c15t/ui/theme';
-import { toCSSDeclarations } from '@c15t/ui/utils';
+import type { AllThemeKeys, ComponentSlots } from '@inth/sdk-ui/theme';
+import { toCSSDeclarations } from '@inth/sdk-ui/utils';
 
 /**
- * The `theme.slots` keys the stock UI renders, the same keys `@c15t/ui`
- * and `@c15t/svelte` read. Each names one element, which also carries the
+ * The `theme.slots` keys the stock UI renders, the same keys `@inth/sdk/ui`
+ * and `@inth/svelte` read. Each names one element, which also carries the
  * key as a CSS part so page CSS can reach it through `::part()`.
  */
 export type BrowserSlotKey = Extract<
@@ -66,7 +66,7 @@ export type SlotApplier = <ElementType extends HTMLElement | null>(
  * classes after the stock ones, and the slot's `style` inline. A slot with
  * `noStyle: true` replaces the stock classes of that element instead.
  * Slot classes stay when the mount's `noStyle` drops the stock ones, the
- * way `resolveStyles` in `@c15t/ui` keeps overrides.
+ * way `resolveStyles` in `@inth/sdk/ui` keeps overrides.
  *
  * @param slots - The theme's `slots`.
  * @returns The applier.

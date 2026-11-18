@@ -3,7 +3,7 @@ import {
 	getDataDisabled,
 	getNextTabValue,
 	getTabState,
-} from '@c15t/ui/primitives';
+} from '@inth/sdk/ui/primitives';
 import { computed } from 'vue';
 
 import { useTabsRootContext } from './context';

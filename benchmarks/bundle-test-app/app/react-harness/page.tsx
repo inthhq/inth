@@ -15,14 +15,14 @@
  * below for live confirmation.
  */
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import type { Script } from '@c15t/core/modules/script-loader';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDraftProvider,
 	ConsentProvider,
 	ConsentWidget,
-} from '@c15t/react';
+} from '@inth/react';
+import type { Script } from '@inth/sdk/modules/script-loader';
 import { lazy, Suspense } from 'react';
 
 const Diagnostics = lazy(() => import('./diagnostics'));

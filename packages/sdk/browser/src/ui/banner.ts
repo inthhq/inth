@@ -1,5 +1,5 @@
-import type { ConsentSnapshot, PresentationAction } from '@c15t/core';
-import { setupFocusTrap, setupScrollLock } from '@c15t/ui/utils';
+import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
+import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/styles';
 import type { AdoptedBanner } from '../init/boot';

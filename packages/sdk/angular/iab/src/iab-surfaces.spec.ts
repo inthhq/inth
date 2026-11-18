@@ -2,10 +2,10 @@
  * The IAB banner and dialog in a real application: saving, failure and
  * retry, Google Additional Consent, and the blanket actions.
  */
-import { createConsentKernel, deferInitGvl } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
-import { createIAB } from '@c15t/iab';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { createConsentKernel, deferInitGvl } from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { createIAB } from '@inth/sdk/iab';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

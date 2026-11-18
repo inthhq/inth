@@ -101,7 +101,7 @@ injection hole would run once its category was allowed.
 
 Gated tags you insert later from your own code need the nonce too. When you
 call `activateGatedScripts(snapshot, container, nonce)` from
-`c15t/astro/client` for that markup, pass the page's nonce as the third
+`@inth/astro/client` for that markup, pass the page's nonce as the third
 argument so the same check applies. Pages without a nonce activate every
 gated tag.
 

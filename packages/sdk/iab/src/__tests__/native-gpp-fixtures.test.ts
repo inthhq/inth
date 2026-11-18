@@ -10,8 +10,8 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { readPolicyResolutionWire } from '@c15t/schema/types';
 import { GppModel } from '@iabgpp/cmpapi';
+import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { encodeGPPString, encodeUSSection } from '../gpp/encoder';
@@ -235,7 +235,7 @@ const rightsCases = (
 
 describe('native policy rights fixtures', () => {
 	test.each(rightsCases.map((entry) => [entry.id, entry] as const))(
-		'%s reads as @c15t/schema reads it',
+		'%s reads as @inth/sdk/schema reads it',
 		(_, entry) => {
 			const read = readPolicyResolutionWire(entry.policyResolution);
 			expect(

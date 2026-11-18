@@ -6,7 +6,7 @@ group: frameworks
 
 ## Pick your rendering path
 
-`c15t/react` resolves consent in the browser. That works for every React app,
+`@inth/react` resolves consent in the browser. That works for every React app,
 including server-rendered ones. What changes is what the first HTML contains.
 
 | Your app | Where consent resolves | Setup |
@@ -24,7 +24,7 @@ explains the difference in general terms.
 ## Client-rendered apps
 
 The [quickstart](/docs/frameworks/react/quickstart) and `examples/react` in
-the c15t repository use `hosted()` from `c15t/react`. It reads the backend URL
+the c15t repository use `hosted()` from `@inth/react`. It reads the backend URL
 from the provider's `projectUrl` option, which the quickstart reads from
 `VITE_C15T_BACKEND_URL`.
 Policy edits apply on the next page load, without a rebuild. The page loads
@@ -112,17 +112,17 @@ The Vite setup needs no change. The banner renders in the browser and brings
 its own `<style>` element, so there is no stylesheet to import.
 
 These frameworks render their own HTML, so the Vite plugin can't add the
-early `/init` script. Put `buildPrefetchScript({ projectUrl })` from `c15t` in
+early `/init` script. Put `buildPrefetchScript({ projectUrl })` from `@inth/react/engine` in
 a `<script>` in the root `<head>` instead, unless your loader supplies
 `initialData` as described below. The two are alternatives: with
 `initialData` the provider never reads the script's response.
 
 ### Skip the browser's first init request
 
-This is optional. `fetchSSRData` from `c15t/react/server` calls the backend's
+This is optional. `fetchSSRData` from `@inth/react/server` calls the backend's
 `/init` from your server loader, forwarding the visitor's location and
 language headers. Pass the result to the browser, wrap it in a promise and give
-it to `hosted({ projectUrl, initialData })` from `c15t/transports`, passed as
+it to `hosted({ projectUrl, initialData })` from `@inth/react/transports`, passed as
 the provider's `mode`. The provider's first init then uses that
 response instead of a network request.
 

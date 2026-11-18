@@ -38,13 +38,13 @@
  * @internal
  */
 
-import type { ConsentSnapshot, ResolvedVendor } from '@c15t/core';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+import type { ConsentSnapshot, ResolvedVendor } from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
 	planInstantCommit,
-} from '@c15t/core/surface-actions/instant-commit';
+} from '@inth/sdk/surface-actions/instant-commit';
 
 import type {
 	AstroConsentClient,
@@ -255,7 +255,7 @@ export const startDeferredClient = function startDeferredClient(
 	const browserWindow = getWindow();
 	if (!browserWindow) {
 		throw new Error(
-			'@c15t/astro: the consent client requires a browser environment.'
+			'@inth/astro: the consent client requires a browser environment.'
 		);
 	}
 	const existing = browserWindow[GLOBAL_KEY];
@@ -279,7 +279,7 @@ export const startDeferredClient = function startDeferredClient(
 					module.boot(options, extension, {});
 				}
 			} catch (error) {
-				console.warn('@c15t/astro: the consent engine failed to load.', error);
+				console.warn('@inth/astro: the consent engine failed to load.', error);
 			}
 		})();
 		return null;
@@ -372,7 +372,7 @@ export const startDeferredClient = function startDeferredClient(
 					await earlyOpening;
 				} while (settled !== completing);
 				if (disposed) {
-					throw new Error('@c15t/astro: the consent client was disposed.');
+					throw new Error('@inth/astro: the consent client was disposed.');
 				}
 				const real = module.boot(options, extension, {
 					committed,
@@ -398,7 +398,7 @@ export const startDeferredClient = function startDeferredClient(
 			} catch (error) {
 				if (!disposed) {
 					console.warn(
-						'@c15t/astro: the consent engine failed to load.',
+						'@inth/astro: the consent engine failed to load.',
 						error
 					);
 				}
@@ -465,7 +465,7 @@ export const startDeferredClient = function startDeferredClient(
 					changed();
 				}
 			} catch (error) {
-				console.warn('@c15t/astro: the consent choice was not stored.', error);
+				console.warn('@inth/astro: the consent choice was not stored.', error);
 				replays.push(choice);
 			}
 		})();

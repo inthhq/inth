@@ -4,5 +4,5 @@
 
 <main>
 	<h1>c15t on Svelte 5.20</h1>
-	<p>The oldest Svelte and SvelteKit versions @c15t/svelte supports.</p>
+	<p>The oldest Svelte and SvelteKit versions @inth/svelte supports.</p>
 </main>

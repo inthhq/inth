@@ -45,46 +45,46 @@ const config: StorybookConfig = {
 						),
 					},
 					{
-						find: /^@c15t\/svelte$/u,
+						find: /^@inth\/svelte$/u,
 						replacement: path.resolve(
 							storybookDir,
 							'../../../packages/sdk/svelte/src/lib/index.ts'
 						),
 					},
 					{
-						find: /^@c15t\/ui\/primitives\/data-state$/u,
+						find: /^@inth\/sdk\/ui\/primitives\/data-state$/u,
 						replacement: ui('primitives', 'data-state.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/primitives\/(?<capture1>.+)$/u,
+						find: /^@inth\/sdk\/ui\/primitives\/(?<capture1>.+)$/u,
 						replacement: ui('primitives', '$1', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/primitives$/u,
+						find: /^@inth\/sdk\/ui\/primitives$/u,
 						replacement: ui('primitives', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/styles\/primitives\/(?<capture1>.+)\.module\.js$/u,
+						find: /^@inth\/sdk\/ui\/styles\/primitives\/(?<capture1>.+)\.module\.js$/u,
 						replacement: ui('styles', 'primitives', '$1.module.css'),
 					},
 					{
-						find: /^@c15t\/ui\/styles\/primitives\/(?<capture1>.+)$/u,
+						find: /^@inth\/sdk\/ui\/styles\/primitives\/(?<capture1>.+)$/u,
 						replacement: ui('styles', 'primitives', '$1.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/styles\/primitives$/u,
+						find: /^@inth\/sdk\/ui\/styles\/primitives$/u,
 						replacement: ui('styles', 'primitives', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/theme$/u,
+						find: /^@inth\/sdk\/ui\/theme$/u,
 						replacement: ui('theme', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/utils\/(?<capture1>.+)$/u,
+						find: /^@inth\/sdk\/ui\/utils\/(?<capture1>.+)$/u,
 						replacement: ui('utils', '$1.ts'),
 					},
 					{
-						find: /^@c15t\/translations$/u,
+						find: /^@inth\/sdk\/translations$/u,
 						replacement: path.resolve(
 							storybookDir,
 							'../../../packages/sdk/translations/src/index.ts'

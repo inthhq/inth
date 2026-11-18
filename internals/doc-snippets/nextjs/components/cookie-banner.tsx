@@ -1,7 +1,7 @@
 // #region docs:compose-banner title="components/cookie-banner.tsx"
 'use client';
 
-import { ConsentBanner, useTranslations } from 'c15t/next';
+import { ConsentBanner, useTranslations } from '@inth/nextjs';
 
 import { BrandButton } from './brand-button';
 

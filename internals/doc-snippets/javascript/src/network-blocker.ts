@@ -1,6 +1,6 @@
 // #region docs:network-blocker title="src/network-blocker.ts"
-import type { ConsentKernel } from 'c15t';
-import { createNetworkBlocker } from 'c15t/modules/network-blocker';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { createNetworkBlocker } from '@inth/sdk/modules/network-blocker';
 
 export const blockTracking = function blockTracking(kernel: ConsentKernel) {
 	return createNetworkBlocker({

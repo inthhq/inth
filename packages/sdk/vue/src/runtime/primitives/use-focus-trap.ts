@@ -1,5 +1,5 @@
-import { setupFocusTrap } from '@c15t/ui/utils';
-import type { FocusTrapOptions } from '@c15t/ui/utils';
+import { setupFocusTrap } from '@inth/sdk/ui/utils';
+import type { FocusTrapOptions } from '@inth/sdk/ui/utils';
 import { onBeforeUnmount, watch } from 'vue';
 import type { Ref } from 'vue';
 

@@ -10,7 +10,7 @@
  * attributes. Neither path adds an outer URI encoding, so the stored
  * value equals the codec string; the tests assert that equality rather
  * than assume it. Fingerprints use 64-character SHA-256 hex, matching
- * `@c15t/schema` policy fingerprints.
+ * `@inth/sdk/schema` policy fingerprints.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 

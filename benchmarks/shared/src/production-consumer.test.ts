@@ -35,19 +35,19 @@ describe('workspaceDependencyClosure', () => {
 	const packages = new Map<string, WorkspacePackageInfo>(
 		[
 			{
-				dependencies: { '@c15t/react': 'workspace:*', react: '^19' },
+				dependencies: { '@inth/react': 'workspace:*', react: '^19' },
 				dir: 'c15t',
 				name: 'c15t',
 				version: '3.0.0',
 			},
 			{
-				dependencies: { '@c15t/core': 'workspace:*' },
+				dependencies: { '@inth/sdk-core': 'workspace:*' },
 				dir: 'react',
-				name: '@c15t/react',
+				name: '@inth/react',
 				peerDependencies: { react: '^19' },
 				version: '3.0.0',
 			},
-			{ dir: 'core', name: '@c15t/core', version: '3.0.0' },
+			{ dir: 'core', name: '@inth/sdk-core', version: '3.0.0' },
 			{ dir: 'cli', name: '@c15t/cli', version: '3.0.0' },
 		].map((info) => [info.name, info])
 	);
@@ -55,7 +55,7 @@ describe('workspaceDependencyClosure', () => {
 	it('follows workspace specifiers only', () => {
 		expect(
 			workspaceDependencyClosure(packages, 'c15t').map((info) => info.name)
-		).toEqual(['c15t', '@c15t/react', '@c15t/core']);
+		).toEqual(['c15t', '@inth/react', '@inth/sdk-core']);
 	});
 
 	it('throws for an unknown root', () => {
@@ -67,8 +67,8 @@ describe('workspaceDependencyClosure', () => {
 
 describe('packedTarballName', () => {
 	it('matches pack output for scoped and unscoped names', () => {
-		expect(packedTarballName('@c15t/core', '3.0.0-alpha.2')).toBe(
-			'c15t-core-3.0.0-alpha.2.tgz'
+		expect(packedTarballName('@inth/sdk-core', '3.0.0-alpha.2')).toBe(
+			'inth-sdk-core-3.0.0-alpha.2.tgz'
 		);
 		expect(packedTarballName('c15t', '3.0.0-alpha.2')).toBe(
 			'c15t-3.0.0-alpha.2.tgz'
@@ -91,14 +91,16 @@ describe('consumerPackageJson', () => {
 			...versions,
 			tarballs: new Map([
 				['c15t', '/t/c15t.tgz'],
-				['@c15t/core', '/t/core.tgz'],
+				['@inth/sdk-core', '/t/core.tgz'],
 			]),
 		});
 		expect(manifest.dependencies).toMatchObject({
 			c15t: 'file:/t/c15t.tgz',
 			next: '16.2.10',
 		});
-		expect(manifest.overrides).toEqual({ '@c15t/core': 'file:/t/core.tgz' });
+		expect(manifest.overrides).toEqual({
+			'@inth/sdk-core': 'file:/t/core.tgz',
+		});
 	});
 
 	it('installs a published version without overrides', () => {
@@ -114,7 +116,7 @@ describe('consumerPackageJson', () => {
 		expect(() =>
 			consumerPackageJson({
 				...versions,
-				tarballs: new Map([['@c15t/core', '/t/core.tgz']]),
+				tarballs: new Map([['@inth/sdk-core', '/t/core.tgz']]),
 			})
 		).toThrow('no c15t package');
 	});
@@ -129,7 +131,7 @@ describe('consumerGlobalStyles', () => {
 		'utf8'
 	);
 	const imports = (css: string) =>
-		css.match(/@import\s[^;]*c15t[^;]*;/gu) ?? [];
+		css.match(/@import\s[^;]*(?:c15t|@inth\/)[^;]*;/gu) ?? [];
 
 	it('loads c15t only through the components when they deliver styles', () => {
 		expect(imports(consumerGlobalStyles(template, 'automatic'))).toEqual([]);
@@ -137,7 +139,7 @@ describe('consumerGlobalStyles', () => {
 
 	it('imports the aggregate stylesheet once for an older build', () => {
 		expect(imports(consumerGlobalStyles(template, 'external'))).toEqual([
-			"@import 'c15t/react/styles.css';",
+			"@import '@inth/react/styles.css';",
 		]);
 	});
 });

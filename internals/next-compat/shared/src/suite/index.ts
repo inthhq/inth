@@ -28,7 +28,7 @@ export type { RenderingMode } from './manifest';
  * - `manifest`: the browser resolves init from the same-origin manifest route
  * - `manifest-ssr`: the server resolved init from the manifest route
  * - `static-manifest`: the browser resolves init from a manifest module
- *   generated at build time (`@c15t/nextjs/static`); nothing is fetched
+ *   generated at build time (`@inth/nextjs/static`); nothing is fetched
  */
 export type InitPath =
 	| 'client'

@@ -13,7 +13,7 @@ first paint. For prerendered pages, a static site or SPA mode, follow this
 guide and then [rendering and deployment](/docs/frameworks/sveltekit/rendering).
 The `examples/sveltekit` app in the c15t repository is the finished result.
 
-`c15t/svelte` supports SvelteKit 2.63 and later, including SvelteKit 3,
+`@inth/svelte` supports SvelteKit 2.63 and later, including SvelteKit 3,
 with Svelte 5.20 and later. The examples use SvelteKit 3. On SvelteKit 2, keep
 the adapter in `svelte.config.js` instead of passing it to `sveltekit()`.
 
@@ -35,11 +35,11 @@ production setup. Rebuild after changing policies, translations or vendors.
 
 ## Install
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/svelte @inth/integrations" mode="install" />
 
-The `c15t` package exports components from `c15t/svelte`, server helpers
-from `c15t/svelte/kit` and the Vite plugin from `c15t/svelte/vite`.
-`@c15t/integrations` holds the vendor helpers.
+`@inth/svelte` exports the components, server helpers
+from `@inth/svelte/kit` and the Vite plugin from `@inth/svelte/vite`.
+`@inth/integrations` holds the vendor helpers.
 
 ## Set the backend URL
 

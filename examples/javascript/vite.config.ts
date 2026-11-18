@@ -1,5 +1,5 @@
 // #region docs:vite-config
-import { consentManifest } from 'c15t/build';
+import { consentManifest } from '@inth/sdk/build';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

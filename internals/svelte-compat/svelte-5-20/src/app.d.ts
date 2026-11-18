@@ -1,4 +1,4 @@
-/// <reference types="@c15t/svelte/kit/locals" />
+/// <reference types="@inth/svelte/kit/locals" />
 
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces

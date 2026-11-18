@@ -4,7 +4,7 @@ import {
 } from '@c15t/next-compat-shared/config';
 import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
 import { SiblingBeacon } from '@c15t/next-compat-shared/sibling-beacon';
-import { resolveConsent } from '@c15t/nextjs/server';
+import { resolveConsent } from '@inth/nextjs/server';
 import type { ReactNode } from 'react';
 
 /**

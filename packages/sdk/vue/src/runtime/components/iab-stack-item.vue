@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { countIABPartners } from '@c15t/iab/headless';
+import { countIABPartners } from '@inth/sdk/iab/headless';
 
-import '@c15t/ui/styles/components/iab-consent-dialog.css';
-import dialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
+import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
+import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
-import '@c15t/ui/styles/components/switch.css';
+import '@inth/sdk/ui/styles/components/switch.css';
 /**
  * A TCF stack: one toggle standing for the purposes it absorbed.
  *
@@ -12,7 +12,7 @@ import '@c15t/ui/styles/components/switch.css';
  * purposes it nests stay in the DOM while it is closed — which is what
  * lets the four adapters be compared row for row.
  */
-import switchStyles from '@c15t/ui/styles/components/switch';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { computed, ref, toValue } from 'vue';
 
 import {

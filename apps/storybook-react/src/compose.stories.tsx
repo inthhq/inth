@@ -2,9 +2,9 @@ import {
 	recipeAccepts,
 	recipeRejects,
 } from '@c15t/conformance/play/docs-recipes';
+import { ConsentDialog } from '@inth/react';
+import type { ConsentProviderOptions } from '@inth/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ConsentDialog } from 'c15t/react';
-import type { ConsentProviderOptions } from 'c15t/react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';

@@ -1,5 +1,5 @@
-import { createDevTools } from '@c15t/dev-tools';
-import type { DevToolsInstance, DevToolsOptions } from '@c15t/dev-tools';
+import { createDevTools } from '@inth/sdk/devtools';
+import type { DevToolsInstance, DevToolsOptions } from '@inth/sdk/devtools';
 
 import { DEVTOOLS_BRIDGE_KEY } from './constants';
 

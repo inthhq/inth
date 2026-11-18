@@ -34,7 +34,7 @@ export const placeholderProjectUrl = 'https://your-project.inth.app';
 
 /**
  * The hosted script tag the plain HTML starter loads. A real backend serves
- * it from `@c15t/browser`; the fixture does not, so the test serves it.
+ * it from `@inth/sdk`; the fixture does not, so the test serves it.
  */
 export const hostedScriptURL = `${placeholderProjectUrl}/c15t.js`;
 
@@ -144,7 +144,7 @@ export const starterTargets: StarterTarget[] = [
 		],
 	},
 	{
-		// The oldest Svelte and SvelteKit `@c15t/svelte` supports, with the
+		// The oldest Svelte and SvelteKit `@inth/svelte` supports, with the
 		// SvelteKit starter's environment. The Node adapter reads PORT and
 		// HOST.
 		directory: 'internals/svelte-compat/svelte-5-20',
@@ -154,7 +154,7 @@ export const starterTargets: StarterTarget[] = [
 		start: () => ['run', 'start'],
 	},
 	{
-		// The oldest Angular `@c15t/angular` supports. C15T_BACKEND_URL from
+		// The oldest Angular `@inth/angular` supports. C15T_BACKEND_URL from
 		// the shared environment is where the server's consent route reads
 		// the manifest and forwards saves; the browser only talks to the
 		// app. `server.ts` reads PORT and HOST.

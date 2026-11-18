@@ -1,4 +1,4 @@
-import type { PolicyRule } from '@c15t/schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 /**
  * The preference draft at its interface. Every framework adapter wraps this
  * module, so the rules where the old per-framework copies disagreed are

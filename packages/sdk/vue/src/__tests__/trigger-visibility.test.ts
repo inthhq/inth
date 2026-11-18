@@ -1,6 +1,6 @@
-import type { ConsentDialogTriggerVisibility } from '@c15t/schema/config';
-import type { PolicyRule } from '@c15t/schema/types';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
+import type { PolicyRule } from '@inth/sdk/schema/types';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test } from 'vitest';

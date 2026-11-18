@@ -1,4 +1,4 @@
-import type { ProviderTransportContext } from '@c15t/core';
+import type { ProviderTransportContext } from '@inth/sdk/engine';
 import { describe, expect, it, vi } from 'vitest';
 
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';

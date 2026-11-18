@@ -1,10 +1,10 @@
-import { c15tProtocolHeaders } from '@c15t/core';
-import { createConsentRouteHandler } from '@c15t/core/server';
+import { c15tProtocolHeaders } from '@inth/sdk/engine';
+import { createConsentRouteHandler } from '@inth/sdk/server';
 import type {
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
 	ConsentRouteName,
-} from '@c15t/core/server';
+} from '@inth/sdk/server';
 
 import type { ConsentSourceOptions } from './consent-source';
 import { readConfigRoutePrefix, resolveConsentSource } from './consent-source';
@@ -123,7 +123,7 @@ const createHandler = function createHandler(options: NextConsentRouteOptions) {
 		if (!handler) {
 			const source = resolveConsentSource(options);
 			handler = createConsentRouteHandler({
-				adapter: '@c15t/nextjs',
+				adapter: '@inth/nextjs',
 				fetch: options.fetch,
 				fetchGvl: options.fetchGvl,
 				manifest: source.snapshot,
@@ -215,7 +215,7 @@ const readCatchAllPath = async function readCatchAllPath(
  * @example
  * ```ts
  * // app/api/c15t/[...c15t]/route.ts
- * import { createConsentRoute } from 'c15t/next/api';
+ * import { createConsentRoute } from '@inth/nextjs/api';
  *
  * export const { GET } = createConsentRoute();
  * ```

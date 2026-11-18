@@ -1,5 +1,5 @@
 // #region docs:slim-bar title="src/consent-options.ts"
-import type { C15tVuePluginOptions } from 'c15t/vue/vue-plugin';
+import type { C15tVuePluginOptions } from '@inth/vue/vue-plugin';
 
 import './slim-bar.css';
 

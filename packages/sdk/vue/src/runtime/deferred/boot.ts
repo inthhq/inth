@@ -8,9 +8,9 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
-import { isIABConfigured } from '@c15t/core/runtime';
-import { planInstantCommit } from '@c15t/core/surface-actions/instant-commit';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import { isIABConfigured } from '@inth/sdk/runtime';
+import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
 import type { RuntimeConsentConfig } from '../kernel';
 import { isRunnableNow } from './scripts';

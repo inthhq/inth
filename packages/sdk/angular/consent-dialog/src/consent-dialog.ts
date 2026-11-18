@@ -23,8 +23,8 @@ import {
 	ConsentManager,
 	registerDialogWarmer,
 	ɵreturnFocusAfterDialog as returnFocusAfterDialog,
-} from '@c15t/angular';
-import type { ActiveUI } from '@c15t/core';
+} from '@inth/angular';
+import type { ActiveUI } from '@inth/sdk/engine';
 
 import type { ConsentDialogPanel } from './consent-dialog-panel';
 import { DEFAULT_DIALOG_MODELS } from './dialog-options';

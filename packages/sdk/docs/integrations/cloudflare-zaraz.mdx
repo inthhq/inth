@@ -38,10 +38,10 @@ Zaraz can still run before the bridge starts; audit them. Cloudflare documents
 [purpose assignment](https://developers.cloudflare.com/zaraz/consent-management/)
 and [pageview settings](https://developers.cloudflare.com/zaraz/reference/settings/).
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { cloudflareZaraz } from '@c15t/integrations/cloudflare-zaraz';
+import { cloudflareZaraz } from '@inth/integrations/cloudflare-zaraz';
 
 // Zaraz provides this global after its loader runs.
 declare const zaraz: { track: (event: string) => void };
@@ -61,7 +61,7 @@ export const scripts = [
 
 Register one bridge per app. Keep Zaraz's own loader and its dashboard tools
 when you follow the registration steps below; remove only standalone loaders
-for tools that Zaraz already runs, including a separate `@c15t/integrations` helper
+for tools that Zaraz already runs, including a separate `@inth/integrations` helper
 for the same tool. If Zaraz auto-injection is off, load
 [Zaraz manually](https://developers.cloudflare.com/zaraz/advanced/load-zaraz-manually/)
 once.

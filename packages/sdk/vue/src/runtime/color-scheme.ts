@@ -1,4 +1,4 @@
-import { setupColorScheme } from '@c15t/ui/utils';
+import { setupColorScheme } from '@inth/sdk/ui/utils';
 
 import type { ConsentConfig } from './config';
 

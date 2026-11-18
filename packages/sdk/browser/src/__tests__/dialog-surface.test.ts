@@ -1,5 +1,5 @@
-import { policyRulePresets } from '@c15t/core';
-import type { ConsentSnapshot } from '@c15t/core';
+import { policyRulePresets } from '@inth/sdk-core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
@@ -36,7 +36,7 @@ const setup = async function setup(): Promise<{
 			],
 			ui: false,
 		},
-		{ pkg: '@c15t/browser/test' }
+		{ pkg: '@inth/sdk/test' }
 	);
 	clients.push(client);
 	client.start();

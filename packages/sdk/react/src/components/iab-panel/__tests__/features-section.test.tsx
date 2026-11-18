@@ -7,8 +7,8 @@
  * locked section.
  */
 
-import type { GlobalVendorList } from '@c15t/core';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+import type { GlobalVendorList } from '@inth/sdk/engine';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';

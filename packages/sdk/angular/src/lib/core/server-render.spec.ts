@@ -12,7 +12,7 @@ import {
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';

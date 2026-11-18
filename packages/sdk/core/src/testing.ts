@@ -1,6 +1,6 @@
 import type { TestingModeOptions } from './modes';
 /**
- * `@c15t/core/testing` — run the consent flow in tests with no backend.
+ * `@inth/sdk/testing` — run the consent flow in tests with no backend.
  *
  * Pass `testing()` as the runtime's `mode`. It needs no `projectUrl`. It
  * resolves the recommended policy pack locally, so a test picks the
@@ -25,8 +25,8 @@ import type { TestingModeOptions } from './modes';
  *
  * @example
  * ```ts
- * import { createConsentRuntime } from '@c15t/core/runtime';
- * import { testing } from '@c15t/core/testing';
+ * import { createConsentRuntime } from '@inth/sdk-core/runtime';
+ * import { testing } from '@inth/sdk-core/testing';
  *
  * const runtime = createConsentRuntime({
  *   overrides: { country: 'DE' },
@@ -61,5 +61,5 @@ export { assertNotProduction, createTestingMode } from './transports/testing';
 export const testing = function testing(
 	options: TestingModeOptions = {}
 ): ConsentTesting {
-	return createTestingMode('@c15t/core/testing', options);
+	return createTestingMode('@inth/sdk/testing', options);
 };

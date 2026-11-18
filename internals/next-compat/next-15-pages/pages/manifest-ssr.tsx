@@ -1,7 +1,7 @@
 import { COMPAT_CONSENT_CONFIG } from '@c15t/next-compat-shared/config';
 import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
-import type { ConsentRootProps } from '@c15t/nextjs';
-import { resolveConsent } from '@c15t/nextjs/pages';
+import type { ConsentRootProps } from '@inth/nextjs';
+import { resolveConsent } from '@inth/nextjs/pages';
 import type { GetServerSideProps } from 'next';
 
 interface ManifestSSRPageProps {

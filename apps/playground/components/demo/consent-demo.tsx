@@ -6,15 +6,15 @@ import {
 	ConsentDialogTriggerToolbar,
 	ConsentProvider,
 	hosted,
-} from 'c15t/react';
-import { ConsentDevTools } from 'c15t/react/devtools';
+} from '@inth/react';
+import { ConsentDevTools } from '@inth/react/devtools';
 import {
 	IABConsentBanner,
 	IABConsentDialog,
 	IABProvider,
-} from 'c15t/react/iab';
-import type { IABProviderProps } from 'c15t/react/iab';
-import { testing } from 'c15t/react/testing';
+} from '@inth/react/iab';
+import type { IABProviderProps } from '@inth/react/iab';
+import { testing } from '@inth/react/testing';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 

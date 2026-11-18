@@ -11,9 +11,9 @@ import type {
 	HydrationRecords,
 	IABUnavailableError,
 	KernelConfig,
-} from '@c15t/core';
-import { readStoredRecordsFromCookieHeader } from '@c15t/core/modules/persistence';
-import { clientMode, lazyHosted } from '@c15t/core/runtime/client-mode';
+} from '@inth/sdk/engine';
+import { readStoredRecordsFromCookieHeader } from '@inth/sdk/modules/persistence';
+import { clientMode, lazyHosted } from '@inth/sdk/runtime/client-mode';
 
 import { withClientData } from '../client-data';
 import type { ConsentConfig } from '../config';
@@ -104,11 +104,11 @@ const nuxtClientMode = function nuxtClientMode(
 	routePrefix: string | undefined
 ) {
 	if (mode.type !== 'hosted') {
-		return clientMode(mode, { projectUrl, routePrefix }, '@c15t/vue/testing');
+		return clientMode(mode, { projectUrl, routePrefix }, '@inth/vue/testing');
 	}
 	if (projectUrl === undefined) {
 		throw new Error(
-			`@c15t/vue: \`projectUrl\` is required.${
+			`@inth/vue: \`projectUrl\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
 					: ' Set NUXT_PUBLIC_C15T_BACKEND_URL (or NUXT_PUBLIC_INTH_PROJECT_URL), or `c15t.projectUrl` in nuxt.config.ts.'

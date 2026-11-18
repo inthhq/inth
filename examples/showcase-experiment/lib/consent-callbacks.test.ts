@@ -1,5 +1,5 @@
-import { createConsentKernel } from 'c15t';
-import type { ConsentKernel, ExperimentAssignment } from 'c15t';
+import { createConsentKernel } from '@inth/nextjs';
+import type { ConsentKernel, ExperimentAssignment } from '@inth/nextjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { callbacks } from './consent-callbacks';

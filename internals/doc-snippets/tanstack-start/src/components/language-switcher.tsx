@@ -1,5 +1,5 @@
 // #region docs:language-switcher
-import { useInit, useSetLanguage, useSnapshot } from 'c15t/tanstack-start';
+import { useInit, useSetLanguage, useSnapshot } from '@inth/tanstack-start';
 
 const languages = [
 	{ code: 'en', label: 'English' },

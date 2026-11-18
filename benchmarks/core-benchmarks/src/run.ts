@@ -39,8 +39,8 @@ import {
 	summarizeMetric,
 	writeJson,
 } from '@c15t/benchmarking/utils';
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
 
 const ITERATIONS = benchmarkCount(
 	process.env.C15T_CORE_BENCH_ITERATIONS ?? process.env.BENCH_ITERATIONS,

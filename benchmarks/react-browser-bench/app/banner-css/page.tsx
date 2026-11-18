@@ -5,8 +5,8 @@
  * and disable automatic styles, so the arms differ only in external CSS.
  */
 import 'bench-css-entry';
-import { ConsentTheme } from '@c15t/react';
-import { defaultTheme } from '@c15t/ui/theme';
+import { ConsentTheme } from '@inth/react';
+import { defaultTheme } from '@inth/sdk/ui/theme';
 
 import { ReactBenchmarkProvider } from '../_bench/provider';
 

@@ -1,6 +1,6 @@
 /* #region docs:tailwind-css title="app/globals.css" */
 /* Turbopack rejects an @import below other rules, so it goes first. */
-@import 'c15t/next/styles.css';
+@import '@inth/nextjs/styles.css';
 
 @tailwind base;
 @tailwind components;

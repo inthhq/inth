@@ -19,9 +19,9 @@ export type Framework = (typeof frameworks)[number];
  * rewrites import paths.
  */
 export const c15tEntryByFramework = {
-	next: 'c15t/next',
-	react: 'c15t/react',
-	'tanstack-start': 'c15t/tanstack-start',
+	next: '@inth/nextjs',
+	react: '@inth/react',
+	'tanstack-start': '@inth/tanstack-start',
 } as const satisfies Record<Framework, string>;
 
 export const bases = ['radix', 'base', 'aria'] as const;
@@ -149,7 +149,7 @@ export const setupItems: SetupItem[] = [
 		description:
 			'Adds c15t.config.ts and a ConsentManager that renders the banner, the dialog and its trigger in the root layout.',
 		docs: [
-			'Wrap next.config.ts with withConsentManifest from c15t/next/build, then render <ConsentManager> around {children} in app/layout.tsx.',
+			'Wrap next.config.ts with withConsentManifest from @inth/nextjs/build, then render <ConsentManager> around {children} in app/layout.tsx.',
 			'NEXT_PUBLIC_C15T_BACKEND_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
 			'The components build on the headless hooks: https://c15t.com/docs/frameworks/next/headless',
 		].join('\n'),
@@ -172,7 +172,7 @@ export const setupItems: SetupItem[] = [
 		description:
 			'Adds a ConsentManager that sets up ConsentProvider and renders the banner, the dialog and its trigger.',
 		docs: [
-			'Add consentManifest() from c15t/build to vite.config.ts, then wrap your app in <ConsentManager>.',
+			'Add consentManifest() from @inth/sdk/build to vite.config.ts, then wrap your app in <ConsentManager>.',
 			'VITE_C15T_BACKEND_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
 			'The components build on the headless hooks: https://c15t.com/docs/frameworks/react/headless',
 		].join('\n'),
@@ -188,8 +188,8 @@ export const setupItems: SetupItem[] = [
 		description:
 			'Adds a getConsentState server function for the root loader and a ConsentManager that renders the banner, the dialog and its trigger.',
 		docs: [
-			'Add consentManifest() from c15t/tanstack-start/build to vite.config.ts, before tanstackStart().',
-			'In src/routes/__root.tsx, spread consentLoaderOptions from c15t/tanstack-start/server into createRootRoute, load { consent: await getConsentState() }, and render <ConsentManager state={consent}><Outlet /></ConsentManager> from the root component.',
+			'Add consentManifest() from @inth/tanstack-start/build to vite.config.ts, before tanstackStart().',
+			'In src/routes/__root.tsx, spread consentLoaderOptions from @inth/tanstack-start/server into createRootRoute, load { consent: await getConsentState() }, and render <ConsentManager state={consent}><Outlet /></ConsentManager> from the root component.',
 			'VITE_C15T_BACKEND_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
 			'The components build on the headless hooks: https://c15t.com/docs/frameworks/tanstack-start/headless',
 		].join('\n'),

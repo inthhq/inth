@@ -18,13 +18,13 @@ const EXTERNAL_STYLE_CONTRACTS = [
 	{
 		automaticEntry:
 			'packages/sdk/react/src/components/shared/surface-styles.tsx',
-		imports: ['@c15t/nextjs/styles.css'],
+		imports: ['@inth/nextjs/styles.css'],
 		owners: ['benchmarks/nextjs-browser-bench/app/_bench/with-consent.css'],
 	},
 	{
 		automaticEntry:
 			'packages/sdk/react/src/components/shared/surface-styles.tsx',
-		imports: ['@c15t/tanstack-start/styles.css'],
+		imports: ['@inth/tanstack-start/styles.css'],
 		owners: [
 			'benchmarks/tanstack-start-browser-bench/src/bench/with-consent.css',
 		],
@@ -33,8 +33,8 @@ const EXTERNAL_STYLE_CONTRACTS = [
 		automaticEntry:
 			'packages/sdk/react/src/components/shared/iab-first-paint-sheets.ts',
 		imports: [
-			'@c15t/tanstack-start/styles.css',
-			'@c15t/tanstack-start/iab/styles.css',
+			'@inth/tanstack-start/styles.css',
+			'@inth/tanstack-start/iab/styles.css',
 		],
 		owners: [
 			'benchmarks/tanstack-start-browser-bench/src/bench/with-consent-iab.css',
@@ -42,7 +42,7 @@ const EXTERNAL_STYLE_CONTRACTS = [
 	},
 	{
 		automaticEntry: 'packages/sdk/svelte/src/lib/surface-styles.ts',
-		imports: ['@c15t/svelte/styles.css'],
+		imports: ['@inth/svelte/styles.css'],
 		owners: [
 			'client-manifest',
 			'client',
@@ -112,7 +112,7 @@ const API_FALLBACKS = [
 		replace: [
 			[
 				"import { onMounted, watch } from 'vue';",
-				"import { createScriptLoader } from '@c15t/core/modules/script-loader';\nimport { onMounted, onUnmounted, watch } from 'vue';",
+				"import { createScriptLoader } from '@inth/sdk/modules/script-loader';\nimport { onMounted, onUnmounted, watch } from 'vue';",
 			],
 			[
 				"import { useConsentSnapshot, useScriptLoader } from '#c15t/composables';",

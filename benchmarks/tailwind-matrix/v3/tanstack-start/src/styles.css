@@ -1,6 +1,6 @@
 /* #region docs:tailwind-css title="src/styles.css" */
 /* Vite ignores an @import below other rules, so it goes first. */
-@import 'c15t/tanstack-start/styles.css';
+@import '@inth/tanstack-start/styles.css';
 
 @tailwind base;
 @tailwind components;

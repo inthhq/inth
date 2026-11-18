@@ -11,7 +11,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import { build, resolveConfig } from 'vite';
 import type { Rollup } from 'vite';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -92,9 +92,9 @@ const buildEntry = async (
 };
 
 const GENERATED_ENTRY =
-	"export { projectUrl, snapshot } from '@c15t/core/generated';\nexport { snapshot as umbrella } from 'c15t/generated';\n";
+	"export { projectUrl, snapshot } from '@inth/sdk/generated';\nexport { snapshot as umbrella } from '@inth/sdk/generated';\n";
 
-describe('@c15t/core/generated in Vite', () => {
+describe('@inth/sdk/generated in Vite', () => {
 	test('a single-page app build bundles the snapshot and writes no file', async () => {
 		const root = await createRoot();
 		const options = optionsFor(root);
@@ -119,7 +119,7 @@ describe('@c15t/core/generated in Vite', () => {
 		await mkdir(join(root, 'src'), { recursive: true });
 		await writeFile(
 			join(root, 'src/modes.js'),
-			"import { projectUrl, snapshot } from '@c15t/core/generated';\nexport const hosted = () => ({ projectUrl });\nexport const manifest = () => ({ projectUrl, snapshot });\n"
+			"import { projectUrl, snapshot } from '@inth/sdk/generated';\nexport const hosted = () => ({ projectUrl });\nexport const manifest = () => ({ projectUrl, snapshot });\n"
 		);
 		const code = await buildEntry(
 			root,
@@ -131,7 +131,7 @@ describe('@c15t/core/generated in Vite', () => {
 		const withoutURL = await buildEntry(
 			root,
 			consentManifest({ fetch: options.fetch }),
-			"export { projectUrl } from '@c15t/core/generated';\n"
+			"export { projectUrl } from '@inth/sdk/generated';\n"
 		);
 		expect(withoutURL).toContain('const projectUrl = void 0;');
 	});
@@ -143,7 +143,7 @@ describe('@c15t/core/generated in Vite', () => {
 		const code = await buildEntry(
 			root,
 			consentManifest(options),
-			"import { snapshot } from '@c15t/core/generated';\nexport const policy = snapshot ?? 'no snapshot';\n"
+			"import { snapshot } from '@inth/sdk/generated';\nexport const policy = snapshot ?? 'no snapshot';\n"
 		);
 		expect(code).toContain('no snapshot');
 		expect(options.fetch).toHaveBeenCalledTimes(1);
@@ -185,7 +185,7 @@ describe('@c15t/core/generated in Vite', () => {
 		const code = await buildEntry(
 			root,
 			consentManifest({ ...options, onBuildError: 'runtime' }),
-			"import { snapshot } from '@c15t/core/generated';\nexport const policy = snapshot ?? 'no snapshot';\n"
+			"import { snapshot } from '@inth/sdk/generated';\nexport const policy = snapshot ?? 'no snapshot';\n"
 		);
 		expect(code).not.toContain('__c15t_build_snapshot__');
 		expect(code).toContain('no snapshot');
@@ -202,7 +202,7 @@ describe('@c15t/core/generated in Vite', () => {
 		const code = await buildEntry(
 			root,
 			consentManifest({ ...options, source: 'runtime' }),
-			"import { projectUrl, snapshot } from '@c15t/core/generated';\nexport const mode = { projectUrl, snapshot: location.hash ? undefined : snapshot };\n"
+			"import { projectUrl, snapshot } from '@inth/sdk/generated';\nexport const mode = { projectUrl, snapshot: location.hash ? undefined : snapshot };\n"
 		);
 		expect(options.fetch).not.toHaveBeenCalled();
 		expect(code).not.toContain('__c15t_build_snapshot__');
@@ -260,7 +260,7 @@ describe('@c15t/core/generated in Vite', () => {
 			await plugin.configResolved({ command: 'serve', root });
 			const id = plugin.resolveId(GENERATED_MODULE_IDS[0]);
 			expect(id).toBeDefined();
-			expect(plugin.resolveId('c15t/generated')).toBe(id);
+			expect(plugin.resolveId('@inth/sdk/generated')).toBe(id);
 			const source = await plugin.load.call(
 				{ environment: { config: { consumer } } },
 				id as string
@@ -309,7 +309,7 @@ describe('@c15t/core/generated in Vite', () => {
 		const { optimizeDeps, ssr } = consentManifest().config();
 		expect(optimizeDeps.exclude).toEqual([...GENERATED_MODULE_IDS]);
 		expect(ssr.noExternal).toEqual(
-			expect.arrayContaining(['c15t', '@c15t/core', '@c15t/react'])
+			expect.arrayContaining(['@inth/sdk', '@inth/react'])
 		);
 	});
 
@@ -323,11 +323,11 @@ describe('@c15t/core/generated in Vite', () => {
 			tags: ['$initial'],
 		});
 		expect(
-			group?.test.test('/app/node_modules/@c15t/react/dist/index.js')
+			group?.test.test('/app/node_modules/@inth/react/dist/index.js')
 		).toBe(true);
 		expect(
 			group?.test.test(
-				'/app/node_modules/.pnpm/c15t@3/node_modules/c15t/shims/react.js'
+				'/app/node_modules/.pnpm/@inth+sdk@3/node_modules/@inth/sdk/lib/core/dist/runtime.js'
 			)
 		).toBe(true);
 		expect(group?.test.test('/app/node_modules/react/index.js')).toBe(false);
@@ -385,7 +385,7 @@ describe('@c15t/core/generated in Vite', () => {
 
 	test('leaves other modules alone', async () => {
 		const plugin = consentManifest();
-		expect(plugin.resolveId('@c15t/core')).toBeUndefined();
+		expect(plugin.resolveId('@inth/sdk/engine')).toBeUndefined();
 		expect(await plugin.load.call(undefined, '/src/app.ts')).toBeUndefined();
 	});
 
@@ -423,7 +423,7 @@ describe('@c15t/core/generated in Vite', () => {
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringMatching(
-				/^@c15t\/core\/build: could not fetch .* during dev/u
+				/^@inth\/sdk\/build: could not fetch .* during dev/u
 			)
 		);
 		expect(source).toContain('export const snapshot = undefined;');
@@ -561,7 +561,7 @@ describe('@c15t/core/generated in Vite', () => {
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringMatching(
-				/^@c15t\/core\/build: the consent policy depends on the visitor's location.*projectUrl/u
+				/^@inth\/sdk\/build: the consent policy depends on the visitor's location.*projectUrl/u
 			)
 		);
 
@@ -625,7 +625,7 @@ describe('@c15t/core/generated in Vite', () => {
 		await mkdir(join(root, 'src'), { recursive: true });
 		await writeFile(
 			join(root, 'src/entry.js'),
-			"export { projectUrl } from '@c15t/core/generated';\n"
+			"export { projectUrl } from '@inth/sdk/generated';\n"
 		);
 		await build({
 			build: {
@@ -694,7 +694,7 @@ const buildPage = async (
 };
 
 const HOSTED_ENTRY =
-	"import { projectUrl } from '@c15t/core/generated';\nconsole.log(projectUrl);\n";
+	"import { projectUrl } from '@inth/sdk/generated';\nconsole.log(projectUrl);\n";
 const PREFETCH_TAG = '<script id="c15t-initial-data-prefetch"';
 
 describe('initPrefetch', () => {
@@ -773,7 +773,7 @@ describe('initPrefetch', () => {
 		const html = await buildPage(
 			root,
 			consentManifest({ ...optionsFor(root), initPrefetch: true }),
-			"import { snapshot } from '@c15t/core/generated';\nconsole.log(snapshot);\n",
+			"import { snapshot } from '@inth/sdk/generated';\nconsole.log(snapshot);\n",
 			{ warn }
 		);
 		expect(html).not.toContain(PREFETCH_TAG);
@@ -790,7 +790,7 @@ describe('initPrefetch', () => {
 		const html = await buildPage(
 			root,
 			consentManifest(optionsFor(root)),
-			"import { snapshot } from '@c15t/core/generated';\nconsole.log(snapshot);\n",
+			"import { snapshot } from '@inth/sdk/generated';\nconsole.log(snapshot);\n",
 			{ warn }
 		);
 		expect(html).not.toContain(PREFETCH_TAG);
@@ -881,7 +881,7 @@ describe('initPrefetch', () => {
 	});
 });
 
-describe('@c15t/core/generated typings', () => {
+describe('@inth/sdk/generated typings', () => {
 	const packageRoot = resolve(__dirname, '../..');
 	const readJSON = (path: string) =>
 		JSON.parse(readFileSync(path, 'utf8')) as {
@@ -903,13 +903,10 @@ describe('@c15t/core/generated typings', () => {
 		);
 	});
 
-	test('c15t/generated re-exports them', () => {
-		const umbrella = resolve(packageRoot, '../c15t');
-		const { exports } = readJSON(join(umbrella, 'package.json'));
-		const types = exports['./generated']?.types;
-		expect(types).toBeDefined();
-		expect(readFileSync(join(umbrella, types as string), 'utf8')).toContain(
-			"export * from '@c15t/core/generated';"
+	test('@inth/sdk/generated points at them', () => {
+		const { exports } = readJSON(resolve(packageRoot, '../sdk/package.json'));
+		expect(exports['./generated']?.types).toBe(
+			'./lib/core/dist-types/generated.d.ts'
 		);
 	});
 
@@ -925,7 +922,7 @@ describe('node_modules/.cache/c15t output', () => {
 	const defaultsFor = (rootDir: string) => ({
 		command: 'build' as const,
 		envNames: ['NEXT_PUBLIC_C15T_BACKEND_URL'],
-		importSource: 'c15t/next/static',
+		importSource: '@inth/nextjs/static',
 		label: 'test/build',
 		rootDir,
 	});
@@ -954,7 +951,7 @@ describe('node_modules/.cache/c15t output', () => {
 		expect(browser).not.toContain('build-test');
 		expect(await readFile(join(directory, 'manifest.d.ts'), 'utf8')).toBe(
 			[
-				"import type { ConsentManifest } from 'c15t/next/static';",
+				"import type { ConsentManifest } from '@inth/nextjs/static';",
 				'',
 				'export declare const projectUrl: string | undefined;',
 				'export declare const snapshot: ConsentManifest | undefined;',
@@ -1031,7 +1028,7 @@ describe('build-time manifest policy', () => {
 	const defaultsFor = (rootDir: string, command: 'build' | 'dev') => ({
 		command,
 		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
-		importSource: 'c15t/build',
+		importSource: '@inth/sdk/build',
 		label: 'test/build',
 		rootDir,
 	});
@@ -1313,7 +1310,7 @@ describe('build snapshot validation', () => {
 					{ ...options, onBuildError: 'fail' },
 					{
 						command: 'build',
-						importSource: 'c15t/build',
+						importSource: '@inth/sdk/build',
 						label: 'test/build',
 						rootDir: options.rootDir,
 					},
@@ -1343,7 +1340,7 @@ describe('build snapshot validation', () => {
 				options,
 				{
 					command: 'build',
-					importSource: 'c15t/build',
+					importSource: '@inth/sdk/build',
 					label: 'test/build',
 					rootDir: options.rootDir,
 				},

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentButton, ConsentManager } from '@c15t/angular';
+import { ConsentButton, ConsentManager } from '@inth/angular';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import {

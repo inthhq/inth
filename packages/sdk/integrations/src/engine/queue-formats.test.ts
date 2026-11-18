@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createCallbackInfo } from '../__tests__/helpers';

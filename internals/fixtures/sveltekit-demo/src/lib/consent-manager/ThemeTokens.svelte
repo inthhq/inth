@@ -8,8 +8,8 @@
 	 * token sets in the browser, so it generates the CSS here and ships the
 	 * generator to the client.
 	 */
-	import { generateThemeCSS } from '@c15t/ui/theme';
-	import type { Theme } from '@c15t/ui/theme';
+	import { generateThemeCSS } from '@inth/sdk/ui/theme';
+	import type { Theme } from '@inth/sdk/ui/theme';
 
 	let { theme }: { theme: Theme | undefined } = $props();
 

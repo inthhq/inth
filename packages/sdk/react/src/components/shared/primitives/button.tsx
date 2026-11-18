@@ -1,5 +1,5 @@
-import type { AllConsentNames } from '@c15t/core';
-import { EARLY_TAP_OPT_OUT } from '@c15t/core/surface-actions';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import { EARLY_TAP_OPT_OUT } from '@inth/sdk/surface-actions';
 import { forwardRef as createForwardRef, useCallback } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent } from 'react';
 

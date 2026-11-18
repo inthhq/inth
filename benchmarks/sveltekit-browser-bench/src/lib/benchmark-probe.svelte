@@ -11,7 +11,7 @@
 	 * button laid out, painted and not animating — so the two suites'
 	 * numbers mean the same thing.
 	 */
-	import type { ConsentSnapshot } from '@c15t/svelte';
+	import type { ConsentSnapshot } from '@inth/svelte';
 
 	/** Scenario names the SvelteKit bench app implements. */
 	export type SvelteBenchScenario =
@@ -122,7 +122,7 @@
 </script>
 
 <script lang="ts">
-	import { getConsentKernel } from '@c15t/svelte';
+	import { getConsentKernel } from '@inth/svelte';
 	import { onMount } from 'svelte';
 
 	let { scenario }: { scenario: SvelteBenchScenario } = $props();

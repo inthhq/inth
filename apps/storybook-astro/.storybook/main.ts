@@ -39,18 +39,18 @@ const config: StorybookConfig = {
 						find: /^@c15t\/conformance\/(?<capture1>.*)$/u,
 						replacement: workspace('internals/conformance/src/$1'),
 					},
-					// `@c15t/astro` is consumed through its published entrypoints
+					// `@inth/astro` is consumed through its published entrypoints
 					// so the Storybook exercises the same client boot, adapter and
 					// island a real site loads.
 					{
-						find: /^@c15t\/svelte$/u,
+						find: /^@inth\/svelte$/u,
 						replacement: workspace('packages/sdk/svelte/src/lib/index.ts'),
 					},
 					// The Svelte island imports the dialog from this subpath. It has
 					// to come from the same sources as the root, or the dialog reads
 					// another copy of the consent context.
 					{
-						find: /^@c15t\/svelte\/dialog-panel$/u,
+						find: /^@inth\/svelte\/dialog-panel$/u,
 						replacement: workspace(
 							'packages/sdk/svelte/src/lib/dialog-panel.ts'
 						),
@@ -69,21 +69,21 @@ const config: StorybookConfig = {
 						),
 					},
 					{
-						find: /^@c15t\/vue\/vue-plugin$/u,
+						find: /^@inth\/vue\/vue-plugin$/u,
 						replacement: workspace('packages/sdk/vue/src/index.ts'),
 					},
 					// Vue runtime imports use the published export map, including
 					// compatibility paths whose filenames differ from the subpath.
-					// `@c15t/react` imports its own sources through `~/`.
+					// `@inth/react` imports its own sources through `~/`.
 					{
 						find: /^~\/(?<capture1>.*)$/u,
 						replacement: workspace('packages/sdk/react/src/$1'),
 					},
 					{
-						find: /^@c15t\/react$/u,
+						find: /^@inth\/react$/u,
 						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
-					// `@c15t/react`'s index reaches its provider and banner through the
+					// `@inth/react`'s index reaches its provider and banner through the
 					// package's `imports` map, which Vite resolves to `dist`: a second
 					// copy of the package next to the sources above, whose surfaces
 					// would then find no kernel in context.
@@ -98,17 +98,17 @@ const config: StorybookConfig = {
 						),
 					},
 					{
-						find: /^@c15t\/react\/iab$/u,
+						find: /^@inth\/react\/iab$/u,
 						replacement: workspace('packages/sdk/react/src/iab.ts'),
 					},
 					// Docs recipes import the umbrella package the way a reader's
 					// site does.
 					{
-						find: /^c15t\/astro(?<capture1>\/.*)?$/u,
-						replacement: '@c15t/astro$1',
+						find: /^@inth\/astro(?<capture1>\/.*)?$/u,
+						replacement: '@inth/astro$1',
 					},
 					{
-						find: /^c15t\/react$/u,
+						find: /^@inth\/react$/u,
 						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
 					{
@@ -116,7 +116,7 @@ const config: StorybookConfig = {
 						replacement: workspace('packages/sdk/core/src/index.ts'),
 					},
 					{
-						find: /^@c15t\/translations$/u,
+						find: /^@inth\/sdk\/translations$/u,
 						replacement: workspace('packages/sdk/translations/src/index.ts'),
 					},
 				],

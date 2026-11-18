@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import type { CMPApi, CMPApiConfig, GlobalVendorList } from '@c15t/core';
+import type { CMPApi, CMPApiConfig, GlobalVendorList } from '@inth/sdk-core';
 
 import { forEachSequential } from '../for-each-sequential';
 import { CMP_VERSION_NUMBER } from './cmp-defaults';

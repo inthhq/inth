@@ -16,12 +16,10 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
-		"@c15t/svelte": "workspace:*",
-		"@c15t/translations": "workspace:*",
-		"@c15t/ui": "workspace:*",
+		"@inth/integrations": "workspace:*",
+		"@inth/sdk": "workspace:*",
+		"@inth/svelte": "workspace:*",
 		"@libsql/kysely-libsql": "^0.4.1",
-		"c15t": "workspace:*",
 		"kysely": "^0.28.11"
 	},
 	"devDependencies": {

@@ -18,12 +18,12 @@ import type {
 	ConsentManifest,
 	InitOutput,
 	PolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import {
 	POLICY_CONTRACT_HEADER,
 	readPolicyResolutionWire,
 	SAFE_FALLBACK_POLICY_FINGERPRINTS,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { assert, describe, expect, test, vi } from 'vitest';
 
 import type { ExplicitChoice } from '../consent-record/types';

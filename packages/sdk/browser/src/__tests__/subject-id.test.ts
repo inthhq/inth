@@ -5,11 +5,11 @@
  * stays the same through an opt-out, so code that keys what it keeps by
  * that ID can delete it all when the visitor opts out.
  */
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 import {
 	createConsentManifestPolicyPack,
 	policyRulePresets,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';

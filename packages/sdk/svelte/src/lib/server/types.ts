@@ -2,8 +2,8 @@ import type {
 	ExperimentState,
 	KernelConfig,
 	ServerExperiment,
-} from '@c15t/core';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/engine';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 /**
  * How the request is read: the consent cookie name and explicit
@@ -55,7 +55,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	projectUrl?: string;
 	/**
 	 * The consent manifest to resolve with, such as `snapshot` from
-	 * `c15t/generated`. Resolves locally using this visitor's inputs.
+	 * `@inth/sdk/generated`. Resolves locally using this visitor's inputs.
 	 */
 	snapshot?: ConsentManifest;
 	/**

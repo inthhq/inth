@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { resolvePolicyRules } from '@c15t/schema/types';
+	import { resolvePolicyRules } from '@inth/sdk/schema/types';
 
 	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import ConsentDevToolsComponent from '../../lib/devtools';
@@ -17,14 +17,14 @@
 		position = 'top-left',
 		shadow,
 	}: {
-		categories?: import('@c15t/core').AllConsentNames[];
+		categories?: import('@inth/sdk/engine').AllConsentNames[];
 		clearRecords?: import('../../lib/devtools-options').ConsentDevToolsProps['clearRecords'];
 		getPresentation?: import('../../lib/devtools-options').ConsentDevToolsProps['getPresentation'];
-		presentation?: import('@c15t/core').ConsentPresentation;
+		presentation?: import('@inth/sdk/engine').ConsentPresentation;
 		storageKey?: string;
 		getConsentCategories?: import('../../lib/devtools-options').ConsentDevToolsProps['getConsentCategories'];
 		multiple?: boolean;
-		policyCategories?: import('@c15t/core').AllConsentNames[];
+		policyCategories?: import('@inth/sdk/engine').AllConsentNames[];
 		position?: import('../../lib/devtools-options').ConsentDevToolsProps['position'];
 		shadow?: boolean;
 	} = $props();

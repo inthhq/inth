@@ -3,7 +3,7 @@
 /**
  * React hook for drag-to-corner functionality.
  *
- * Wraps the framework-agnostic utilities from @c15t/ui with React state management.
+ * Wraps the framework-agnostic utilities from @inth/sdk/ui with React state management.
  *
  * @packageDocumentation
  */
@@ -13,8 +13,11 @@ import {
 	createInitialDragState,
 	getPersistedPosition,
 	persistPosition as persistToStorage,
-} from '@c15t/ui/utils/trigger-utils';
-import type { CornerPosition, DragState } from '@c15t/ui/utils/trigger-utils';
+} from '@inth/sdk/ui/utils/trigger-utils';
+import type {
+	CornerPosition,
+	DragState,
+} from '@inth/sdk/ui/utils/trigger-utils';
 import { useCallback, useRef, useState } from 'react';
 
 /**

@@ -1,10 +1,14 @@
 import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentRoot,
+} from '@inth/tanstack-start';
+import {
 	createRootRoute,
 	HeadContent,
 	Outlet,
 	Scripts,
 } from '@tanstack/react-router';
-import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/tanstack-start';
 
 import appCss from '../styles.css?url';
 

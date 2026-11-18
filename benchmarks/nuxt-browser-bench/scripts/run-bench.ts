@@ -839,7 +839,7 @@ const run = async function run(baseline: boolean) {
 							...visitMetricGlossary,
 							...scriptTimingGlossary,
 						],
-						package: '@c15t/vue',
+						package: '@inth/nuxt',
 						runtime: 'playwright',
 						scenario: outputScenario,
 						schemaVersion: BENCHMARK_SCHEMA_VERSION,

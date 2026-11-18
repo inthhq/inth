@@ -3,7 +3,7 @@
  * Live consent readout.
  *
  * A plain `<script>` island — no framework — reading the page-level runtime
- * through `@c15t/astro/client`. This is the pattern for wiring your own
+ * through `@inth/astro/client`. This is the pattern for wiring your own
  * markup to consent.
  */
 ---
@@ -17,7 +17,7 @@
 </section>
 
 <script>
-	import { getConsentClient, subscribe } from 'c15t/astro/client';
+	import { getConsentClient, subscribe } from '@inth/astro/client';
 
 	const render = () => {
 		const output = document.querySelector('[data-testid="consent-state"]');

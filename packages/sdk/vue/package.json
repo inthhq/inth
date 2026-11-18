@@ -1,7 +1,7 @@
 {
-	"name": "@c15t/vue",
+	"name": "@inth/vue",
 	"version": "3.2.0-canary.0",
-	"description": "Vue cookie consent banner and Nuxt cookie consent module for c15t, with a consent dialog and preference center.",
+	"description": "Vue cookie consent banner, consent dialog and preference center for c15t. Nuxt apps use @inth/nuxt.",
 	"keywords": [
 		"banner",
 		"ccpa",
@@ -20,9 +20,6 @@
 		"headless",
 		"iab-tcf",
 		"lgpd",
-		"nuxt",
-		"nuxt-cookie-consent",
-		"nuxt-module",
 		"preference-center",
 		"privacy",
 		"privacy-compliance",
@@ -44,7 +41,6 @@
 	},
 	"files": [
 		"dist",
-		"schema",
 		"docs",
 		"AGENTS.md",
 		"SKILL.md"
@@ -52,14 +48,15 @@
 	"type": "module",
 	"sideEffects": [
 		"**/*.css",
-		"**/*.vue"
+		"**/*.vue",
+		"./dist/translations/*.js"
 	],
-	"main": "./dist/module.mjs",
-	"types": "./dist/module.d.mts",
+	"main": "./dist/index.mjs",
+	"types": "./dist/index.d.mts",
 	"typesVersions": {
 		"*": {
 			".": [
-				"./dist/module.d.mts"
+				"./dist/index.d.mts"
 			],
 			"vite": [
 				"./dist/vite.d.mts"
@@ -84,9 +81,9 @@
 	},
 	"exports": {
 		".": {
-			"types": "./dist/module.d.mts",
-			"import": "./dist/module.mjs",
-			"default": "./dist/module.mjs"
+			"types": "./dist/index.d.mts",
+			"import": "./dist/index.mjs",
+			"default": "./dist/index.mjs"
 		},
 		"./testing": {
 			"types": "./dist/testing.d.mts",
@@ -209,31 +206,35 @@
 			"types": "./dist/postcss-tailwind3.d.mts",
 			"import": "./dist/postcss-tailwind3.mjs",
 			"default": "./dist/postcss-tailwind3.mjs"
+		},
+		"./gpp": {
+			"types": "./dist/gpp.d.mts",
+			"import": "./dist/gpp.mjs",
+			"default": "./dist/gpp.mjs"
+		},
+		"./engine": {
+			"types": "./dist/engine.d.mts",
+			"import": "./dist/engine.mjs",
+			"default": "./dist/engine.mjs"
+		},
+		"./translations/*": {
+			"types": "./dist/translations/*.d.ts",
+			"import": "./dist/translations/*.js",
+			"default": "./dist/translations/*.js"
 		}
 	},
 	"publishConfig": {
 		"access": "public"
 	},
 	"scripts": {
-		"build": "nuxt-module-build build",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/vue",
-		"check-types": "pnpm run check-types:nuxt && pnpm run check-types:vue",
-		"check-types:nuxt": "nuxt typecheck playground",
-		"check-types:vue": "vue-tsc -p tsconfig.vue.json --noEmit",
-		"dev": "nuxt dev playground",
-		"dev:build": "nuxt build playground",
-		"dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
+		"build": "unbuild",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/vue",
+		"check-types": "vue-tsc -p tsconfig.vue.json --noEmit",
 		"prepack": "pnpm run build:docs && pnpm run build",
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/dev-tools": "workspace:*",
-		"@c15t/iab": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/translations": "workspace:*",
-		"@c15t/ui": "workspace:*",
-		"@nuxt/kit": "^3.0.0 || ^4.0.0",
+		"@inth/sdk": "workspace:*",
 		"defu": "^6.1.4",
 		"ufo": "^1.6.1"
 	},
@@ -271,6 +272,5 @@
 			"optional": true
 		}
 	},
-	"nuxt": "./dist/module.mjs",
-	"schema": "./schema/nuxt.schema.d.ts"
+	"nuxt": "./dist/module.mjs"
 }

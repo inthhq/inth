@@ -1,5 +1,5 @@
-import { policyRulePresets } from '@c15t/core';
-import type { Vendor } from '@c15t/core';
+import { policyRulePresets } from '@inth/sdk-core';
+import type { Vendor } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { activateGatedScripts } from '../gated-scripts';
@@ -65,7 +65,7 @@ const start = async function start(
 			ui: { disableAnimation: true, styles: false },
 			...options,
 		},
-		{ mountUI: mountConsentUI, pkg: '@c15t/browser/test' }
+		{ mountUI: mountConsentUI, pkg: '@inth/sdk/test' }
 	);
 	clients.push(client);
 	client.start();
@@ -350,7 +350,7 @@ describe('reading vendor consent', () => {
 	});
 
 	it('takes vendors from a queued config call and reads them through window.c15t', async () => {
-		const api = createGlobal({ pkg: '@c15t/browser/test' });
+		const api = createGlobal({ pkg: '@inth/sdk/test' });
 		api.config({ ...baseOptions, ui: false });
 		const client = api.init();
 		clients.push(client);

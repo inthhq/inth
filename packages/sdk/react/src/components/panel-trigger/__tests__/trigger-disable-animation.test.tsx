@@ -2,7 +2,7 @@
  * `disableAnimation` on the provider stops the floating trigger's hover and
  * snap transitions, as it stops the banner's and the dialog's.
  */
-import '@c15t/ui/styles.css';
+import '@inth/sdk/ui/styles.css';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

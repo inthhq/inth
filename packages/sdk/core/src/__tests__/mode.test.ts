@@ -1,8 +1,8 @@
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 /**
  * The `hosted()` transport factory and the data factories from
- * `@c15t/core/modes`.
+ * `@inth/sdk/modes`.
  */
 import { describe, expect, test, vi } from 'vitest';
 
@@ -215,7 +215,7 @@ describe('hosted()', () => {
 	});
 });
 
-describe('@c15t/core/modes', () => {
+describe('@inth/sdk/modes', () => {
 	test('returns plain, serializable data', () => {
 		const snapshot = { revision: '1', schemaVersion: 2 } as never;
 		const all = [

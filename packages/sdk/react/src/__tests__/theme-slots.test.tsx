@@ -2,10 +2,10 @@
  * `theme.slots` styles the stock parts in React too, through the same
  * mapping onto `components` the Astro React island used to apply itself.
  */
-import { CONSENT_COMPONENT_SLOT_KEY_MAP } from '@c15t/schema/config';
-import type { ConsentComponentSlotKey } from '@c15t/schema/config';
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
-import { THEME_SLOT_COMPONENT_KEYS } from '@c15t/ui/utils';
+import { CONSENT_COMPONENT_SLOT_KEY_MAP } from '@inth/sdk/schema/config';
+import type { ConsentComponentSlotKey } from '@inth/sdk/schema/config';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import { THEME_SLOT_COMPONENT_KEYS } from '@inth/sdk/ui/utils';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

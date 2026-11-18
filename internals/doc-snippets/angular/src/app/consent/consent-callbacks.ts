@@ -1,5 +1,5 @@
 // #region docs:consent-callbacks
-import type { C15tCallbacks } from '@c15t/angular';
+import type { C15tCallbacks } from '@inth/angular';
 
 // Pass as `callbacks` to provideC15t() in app.config.ts.
 export const callbacks: C15tCallbacks = {

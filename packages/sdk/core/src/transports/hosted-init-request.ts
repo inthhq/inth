@@ -2,7 +2,7 @@ import {
 	appendInitParams,
 	appendJourneyParams,
 	applyInitParamsToHeaders,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import {
 	buildRequestContextHeaders,

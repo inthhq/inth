@@ -12,7 +12,7 @@ The [App Router](/docs/frameworks/next/app-router),
 scripts. Use this page to add vendors to an existing setup or to change how
 they load. Install the helpers if you have not:
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 Keep `next.config.ts` and the layout from your router guide. Adding a vendor
 needs no server change. Server-rendered state, a streamed promise and
@@ -31,9 +31,9 @@ Meta Pixel together:
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { googleTagManager } from '@c15t/integrations/google-tag-manager';
-import { metaPixel } from '@c15t/integrations/meta-pixel';
-import { defineConsentConfig } from 'c15t/next';
+import { googleTagManager } from '@inth/integrations/google-tag-manager';
+import { metaPixel } from '@inth/integrations/meta-pixel';
+import { defineConsentConfig } from '@inth/nextjs';
 
 export default defineConsentConfig({
 	scripts: [
@@ -88,7 +88,7 @@ Scripts cover vendor code c15t loads for you. For the rest:
 Optional: a visitor can allow marketing and still switch off one vendor in it.
 Skip this unless your site needs per-vendor choices. Declare
 the vendors and pass them to `ConsentRoot` as `vendors`; helpers from
-`@c15t/integrations` already carry their vendor slug. See
+`@inth/integrations` already carry their vendor slug. See
 [vendor consent](/docs/frameworks/next/vendor-consent).
 
 ## Clear stored tracking data
@@ -112,8 +112,8 @@ package.
 
 | `@next/third-parties/google` | c15t replacement |
 | --- | --- |
-| `<GoogleAnalytics gaId="G-XXXXXXXXXX" />` | `gtag({ id: 'G-XXXXXXXXXX', category: 'measurement' })` from `@c15t/integrations/google-tag` |
-| `<GoogleTagManager gtmId="GTM-XXXXXXX" />` | `googleTagManager({ id: 'GTM-XXXXXXX' })` from `@c15t/integrations/google-tag-manager` |
+| `<GoogleAnalytics gaId="G-XXXXXXXXXX" />` | `gtag({ id: 'G-XXXXXXXXXX', category: 'measurement' })` from `@inth/integrations/google-tag` |
+| `<GoogleTagManager gtmId="GTM-XXXXXXX" />` | `googleTagManager({ id: 'GTM-XXXXXXX' })` from `@inth/integrations/google-tag-manager` |
 | `sendGAEvent(...args)` | `window.gtag?.(...args)` |
 | `sendGTMEvent(data)` | `window.dataLayer?.push(data)` |
 | `<YouTubeEmbed videoid="VIDEO_ID" />` | `ConsentGate` around a `youtube-nocookie.com` iframe. See [YouTube](/docs/integrations/youtube). |
@@ -252,7 +252,7 @@ or Google Maps until you allow the embed's category.
 
 ## Send your own analytics events
 
-`useEventDispatcher()` from `c15t/next` returns the provider's event
+`useEventDispatcher()` from `@inth/nextjs` returns the provider's event
 dispatcher. It sends to the `scripts` you passed to `ConsentRoot` and checks
 consent when an event goes out. For App Router pageviews, render a client
 component that watches `usePathname()` and `useSearchParams()`:

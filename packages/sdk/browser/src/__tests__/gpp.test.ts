@@ -1,5 +1,5 @@
-import { policyRulePresets } from '@c15t/core';
-import type { GPPPingData } from '@c15t/iab/gpp';
+import { policyRulePresets } from '@inth/sdk-core';
+import type { GPPPingData } from '@inth/sdk-iab/gpp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
@@ -36,7 +36,7 @@ const loadAddon = async function loadAddon(): Promise<void> {
 
 /** Install the main tag over whatever the page queued. */
 const loadTag = function loadTag(): C15tGlobal {
-	return installGlobal(createGlobal({ pkg: '@c15t/browser/test' }));
+	return installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 };
 
 afterEach(() => {

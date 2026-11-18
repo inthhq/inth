@@ -1,12 +1,12 @@
 ---
 title: IAB GPP
-description: Add the IAB Global Privacy Platform API (__gpp) to a JavaScript app with mountGPP from @c15t/browser/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Add the IAB Global Privacy Platform API (__gpp) to a JavaScript app with mountGPP from @inth/sdk/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
 group: frameworks
 ---
 
 ## What GPP does
 
-`mountGPP()` from `@c15t/browser/gpp` installs `window.__gpp`, the GPP 1.1
+`mountGPP()` from `@inth/sdk/gpp` installs `window.__gpp`, the GPP 1.1
 CMP API, and keeps its GPP string in step with the visitor's choices.
 Prebid.js, Google Ad Manager and other ad tech read US privacy signals from
 it.
@@ -18,8 +18,8 @@ Pass the client from `init()` to `mountGPP()`:
 <include src="../../shared/examples/javascript/gpp.mdx" />
 
 `mountGPP()` lives in its own entry, so apps that do not import
-`@c15t/browser/gpp` bundle none of the GPP code. `@c15t/browser` already
-depends on `@c15t/iab`; nothing else to install. The second argument takes
+`@inth/sdk/gpp` bundle none of the GPP code. `@inth/sdk` already
+depends on `@inth/sdk/iab`; nothing else to install. The second argument takes
 the GPP options listed below, for example `mountGPP(consent, { usFallback:
 'none' })`. Call `gpp.dispose()` to remove `__gpp`, before
 `consent.dispose()` if you dispose the client.
@@ -39,19 +39,19 @@ To add the TCF EU section for visitors under an `iab` policy, set up
 {/* example: fragment */}
 
 ```ts title="src/consent-runtime.ts"
-import { hosted } from '@c15t/core';
-import { createConsentRuntime } from '@c15t/core/runtime';
+import { hosted } from '@inth/sdk/engine';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 
 const runtime = createConsentRuntime({
 	gpp: true,
-	loadGPP: () => import('@c15t/iab/gpp'),
+	loadGPP: () => import('@inth/sdk/iab/gpp'),
 	projectUrl: 'https://your-project.inth.app',
 });
 runtime.start();
 ```
 
 With any other consent kernel, call `createGPP({ kernel })` from
-`@c15t/iab/gpp`. It takes the options below and returns the same handle as
+`@inth/sdk/iab/gpp`. It takes the options below and returns the same handle as
 `mountGPP()`. Both throw when a CMP that has already loaded owns `__gpp`.
 
 <include src="../../shared/iab-gpp.mdx" />

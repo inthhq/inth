@@ -1,12 +1,12 @@
 'use client';
 
-import brandingStyles from '@c15t/ui/styles/components/branding';
+import brandingStyles from '@inth/sdk/ui/styles/components/branding';
 /**
  * @packageDocumentation
  * A collection of components for building privacy consent management dialogs.
  * Built with accessibility and customization in mind, following GDPR and other privacy regulation requirements.
  */
-import styles from '@c15t/ui/styles/components/consent-dialog';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { forwardRef as createForwardRef, isValidElement } from 'react';
 import type { ReactNode, Ref } from 'react';
 

@@ -5,9 +5,9 @@
  * acknowledgement that sends a receipt and is stored, and a category
  * declared later asks again.
  */
-import type { PolicyResolution } from '@c15t/schema/types';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+import type { PolicyResolution } from '@inth/sdk-schema/types';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
+import { translations } from '@inth/sdk-translations/en';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import {

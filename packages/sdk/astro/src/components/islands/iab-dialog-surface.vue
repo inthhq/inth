@@ -7,7 +7,7 @@
 	every other site downloads does not carry it.
 -->
 <script setup lang="ts">
-import IABConsentDialog from '@c15t/vue/runtime/components/iab-consent-dialog.vue';
+import IABConsentDialog from '@inth/vue/runtime/components/iab-consent-dialog.vue';
 
 const props = defineProps<{
 	/** Which preference-centre tab to open on. */

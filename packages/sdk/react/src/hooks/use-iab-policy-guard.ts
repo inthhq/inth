@@ -1,11 +1,11 @@
-import { IABUnavailableError, policyNeedsIAB } from '@c15t/core';
+import { IABUnavailableError, policyNeedsIAB } from '@inth/sdk/engine';
 import { useContext } from 'react';
 
 import { IABContext } from '~/context/iab-context-value';
 import { useKernelSelector } from '~/kernel-selector';
 
 /**
- * Marks that `@c15t/react/iab` has loaded. A registry symbol, so a copy of
+ * Marks that `@inth/react/iab` has loaded. A registry symbol, so a copy of
  * this module in another chunk reads the same mark.
  */
 const IAB_PROVIDER_LOADED = Symbol.for('c15t.react.iab-provider');
@@ -18,7 +18,7 @@ const IAB_PROVIDER_WAITERS = Symbol.for('c15t.react.iab-provider-waiters');
 
 /**
  * Record that `IABProvider` is part of the app, and run what waited for
- * it. `@c15t/react/iab` calls this when it loads.
+ * it. `@inth/react/iab` calls this when it loads.
  *
  * @internal
  */
@@ -43,7 +43,7 @@ export const missingIABProviderError =
 	function missingIABProviderError(): IABUnavailableError {
 		return new IABUnavailableError(
 			'no <IABProvider> is mounted',
-			"Wrap your IAB consent UI in <IABProvider> from '@c15t/react/iab' (or 'c15t/react/iab')"
+			"Wrap your IAB consent UI in <IABProvider> from '@inth/react/iab' (or '@inth/react/iab')"
 		);
 	};
 
@@ -59,14 +59,14 @@ export const missingIABProviderError =
  *
  * `<IABProvider>` usually sits beside the standard surfaces rather than
  * around them, so a missing IAB context alone does not prove the app has
- * none. The check also passes once `@c15t/react/iab` has loaded.
+ * none. The check also passes once `@inth/react/iab` has loaded.
  *
  * A custom banner or preference center that only handles opt-in and
  * opt-out should call this too, and render nothing when `useModel()` is
  * `'iab'`, as the standard surfaces do.
  *
  * @throws {IABUnavailableError} When the policy needs IAB and neither an
- * IAB context nor `@c15t/react/iab` is present.
+ * IAB context nor `@inth/react/iab` is present.
  *
  * @example
  * ```tsx

@@ -17,7 +17,7 @@ export type BenchOptionalCategory =
 /**
  * One per-category receipt.
  *
- * Spelled as `CategoryDecision` in `@c15t/core`: the value, when it was confirmed,
+ * Spelled as `CategoryDecision` in `@inth/sdk/engine`: the value, when it was confirmed,
  * and the policy contract it was confirmed under. A receipt without its basis is
  * a boolean, and the kernel refuses to trust one.
  */

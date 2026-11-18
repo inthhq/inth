@@ -1,4 +1,4 @@
-import { readStoredRecords } from '@c15t/core/modules/persistence';
+import { readStoredRecords } from '@inth/sdk/modules/persistence';
 /**
  * E2E tests for uiSource tracking through the consent flow.
  *

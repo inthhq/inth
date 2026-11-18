@@ -13,7 +13,7 @@ set nothing else; `mode` is optional.
 | Mode | Where the policy resolves | Backend requests on a first visit | Default in |
 | --- | --- | --- | --- |
 | `manifest()` | Your server, from the policy the build downloaded. With `resolve: 'browser'`, or in a single-page app, the browser. | None to resolve the policy, unless the browser needs a location it doesn't have. Choices post to `/subjects`. | Next.js, TanStack Start, Nuxt, SvelteKit, Astro, and Angular with `provideC15tServer()` |
-| `hosted()` | The backend's `GET /init` | One `/init` per page that resolves consent. | React, Vue, Svelte, Angular in the browser, `@c15t/browser` and the script tag |
+| `hosted()` | The backend's `GET /init` | One `/init` per page that resolves consent. | React, Vue, Svelte, Angular in the browser, `@inth/sdk` and the script tag |
 | `testing()` | The browser, from a policy you pass or the recommended rule pack | None. | Never: import it from a package's `/testing` entry, in tests only |
 
 Leave `mode` out unless you need something other than your framework's
@@ -41,16 +41,16 @@ it needs.
 
 | Framework | Import `manifest()` and `hosted()` from | `testing()` from | Pass the mode to | Kind |
 | --- | --- | --- | --- | --- |
-| Next.js | `c15t/next` | `c15t/next/testing` | `mode` in `c15t.config.ts` | Data |
-| TanStack Start | `c15t/tanstack-start` | `c15t/tanstack-start/testing` | `resolveConsent({ mode })` | Data |
-| Nuxt | `c15t/vue` | `c15t/vue/testing` | `c15t.mode` in `nuxt.config.ts` | Data |
-| Astro | `c15t/astro` | `c15t/astro/testing` | `c15t({ mode })` in `astro.config.mjs` | Data |
-| SvelteKit | `c15t/svelte/kit` | `c15t/svelte/testing` | `c15tHandle({ mode })` in `src/hooks.server.ts` | Data |
-| React | `c15t/react` | `c15t/react/testing` | `ConsentProvider`'s `options.mode` | Transport |
-| Vue | `c15t/vue/vue-plugin` | `c15t/vue/testing` | `app.use(c15tVue, { mode })` | Transport |
-| Svelte | `c15t/svelte` | `c15t/svelte/testing` | `<ConsentProvider mode={...}>` | Transport |
-| Angular | `@c15t/angular` | `@c15t/angular/testing` | `provideC15t({ mode })` | Transport |
-| JavaScript | `@c15t/browser` | `@c15t/browser/testing` | `init({ mode })` | Transport |
+| Next.js | `@inth/nextjs` | `@inth/nextjs/testing` | `mode` in `c15t.config.ts` | Data |
+| TanStack Start | `@inth/tanstack-start` | `@inth/tanstack-start/testing` | `resolveConsent({ mode })` | Data |
+| Nuxt | `@inth/nuxt` | `@inth/nuxt/testing` | `c15t.mode` in `nuxt.config.ts` | Data |
+| Astro | `@inth/astro` | `@inth/astro/testing` | `c15t({ mode })` in `astro.config.mjs` | Data |
+| SvelteKit | `@inth/svelte/kit` | `@inth/svelte/testing` | `c15tHandle({ mode })` in `src/hooks.server.ts` | Data |
+| React | `@inth/react` | `@inth/react/testing` | `ConsentProvider`'s `options.mode` | Transport |
+| Vue | `@inth/vue/vue-plugin` | `@inth/vue/testing` | `app.use(c15tVue, { mode })` | Transport |
+| Svelte | `@inth/svelte` | `@inth/svelte/testing` | `<ConsentProvider mode={...}>` | Transport |
+| Angular | `@inth/angular` | `@inth/angular/testing` | `provideC15t({ mode })` | Transport |
+| JavaScript | `@inth/sdk` | `@inth/sdk/testing` | `init({ mode })` | Transport |
 | Script tag | none | `c15t.testing.js` | `data-mode="manifest"` on the headless and IAB scripts | Name |
 
 **Data factories** return a plain object such as `{ type: 'manifest' }`.
@@ -58,7 +58,8 @@ Server-rendered frameworks read their config on the server and in the
 browser, and Nuxt and Astro serialize it, so the mode has to be data. The
 framework turns it into a transport in the browser and loads the code of
 any mode other than the default with `import()`. The same factories are
-available from `c15t/modes` (or `@c15t/core/modes`) for shared code.
+available from each framework package, and from `@inth/sdk/modes` for shared
+code.
 
 **Transport factories** return the transport itself, with its options
 attached as properties. A single-page app has one environment, so the bundler
@@ -81,8 +82,8 @@ holds your policy rules and copy, and no visitor data.
 | `geoUrl` | none | A same-origin route that answers with the visitor's `{ country, region }`. Browser resolution only. |
 | `inputs` | none | `{ country, region }` when the page already knows the visitor's location, for example from an edge worker. Browser resolution only. |
 
-The transport `manifest()` from `c15t/react`, `c15t/vue/vue-plugin`,
-`c15t/svelte`, `@c15t/angular` and `@c15t/browser` always resolves in the
+The transport `manifest()` from `@inth/react`, `@inth/vue/vue-plugin`,
+`@inth/svelte`, `@inth/angular` and `@inth/sdk` always resolves in the
 browser, so it has no `resolve` option. It also takes `projectUrl`,
 `headers`, `credentials`, `domain`, `fetch` and `initFallback`. With no
 options it reads the snapshot and the backend URL your build integration
@@ -93,7 +94,7 @@ know the country or region, browser resolution asks `geoUrl`, then the
 backend's `/init`. Set `initFallback: false` to resolve for an unknown location
 instead. A policy with location rules therefore saves no request in a
 single-page app unless you pass `inputs` or `geoUrl`. The `consentManifest()`
-plugins from `c15t/build`, `c15t/vue/vite` and `c15t/svelte/vite` warn
+plugins from `@inth/sdk/build`, `@inth/vue/vite` and `@inth/svelte/vite` warn
 about this when a single-page app build bundles such a policy.
 
 ### When the manifest is unavailable
@@ -114,7 +115,7 @@ logs one warning per manifest URL:
 
 `hosted()` asks the backend's `GET /init` for each visitor's policy and posts
 choices to `${projectUrl}/subjects`. It takes no options. In React, Vue,
-Svelte, Angular and `@c15t/browser` it is the default, so you write it only to
+Svelte, Angular and `@inth/sdk` it is the default, so you write it only to
 be explicit; in a server-rendered framework it replaces the manifest.
 
 ## testing()
@@ -141,8 +142,8 @@ banner. No recommended rule shows the opt-out notice banner; pass a rule with
 {/* example: fragment */}
 
 ```tsx
-import { ConsentProvider } from 'c15t/react';
-import { testing } from 'c15t/react/testing';
+import { ConsentProvider } from '@inth/react';
+import { testing } from '@inth/react/testing';
 
 <ConsentProvider
 	options={{
@@ -227,28 +228,31 @@ build integration downloads from `${projectUrl}/manifest`:
 
 | Framework | Build integration | Name in messages |
 | --- | --- | --- |
-| Next.js | `withConsentManifest()` from `c15t/next/build`, in `next.config.ts` | `@c15t/nextjs/build` |
-| TanStack Start | `consentManifest()` from `c15t/tanstack-start/build` | `@c15t/tanstack-start/build` |
-| React and JavaScript | `consentManifest()` from `c15t/build` | `@c15t/core/build` |
-| Vue | `consentManifest()` from `c15t/vue/vite` | `@c15t/vue/vite` |
-| Svelte and SvelteKit | `consentManifest()` from `c15t/svelte/vite` | `@c15t/svelte/vite` |
-| Nuxt | the `c15t/vue` module | `@c15t/vue` |
-| Astro | the `c15t()` integration | `@c15t/astro` |
+| Next.js | `withConsentManifest()` from `@inth/nextjs/build`, in `next.config.ts` | `@inth/nextjs/build` |
+| TanStack Start | `consentManifest()` from `@inth/tanstack-start/build` | `@inth/tanstack-start/build` |
+| React | `consentManifest()` from `@inth/react/build` | `@inth/sdk/build` |
+| JavaScript | `consentManifest()` from `@inth/sdk/build` | `@inth/sdk/build` |
+| Vue | `consentManifest()` from `@inth/vue/vite` | `@inth/vue/vite` |
+| Svelte and SvelteKit | `consentManifest()` from `@inth/svelte/vite` | `@inth/svelte/vite` |
+| Nuxt | the `@inth/nuxt` module | `@inth/nuxt` |
+| Astro | the `c15t()` integration | `@inth/astro` |
 
 The integration downloads the manifest when the production build or the dev
 server starts, and waits at most 10 seconds. Nothing is written into your
-source tree. App code reads the result from `c15t/generated`:
+source tree. App code reads the result from the `generated` entry of its
+framework package, such as `@inth/react/generated`, or from
+`@inth/sdk/generated` in plain JavaScript:
 
 {/* example: fragment */}
 
 ```ts
-import { projectUrl, snapshot } from 'c15t/generated';
+import { projectUrl, snapshot } from '@inth/react/generated';
 ```
 
 Both exports are `undefined` when the build has no snapshot, so imports
 compile on a fresh checkout. In the browser bundle of a server-rendered
 framework, `snapshot` is always `undefined`. Next.js goes further: a client
-component that imports `c15t/generated` fails the build.
+component that imports `@inth/nextjs/generated` fails the build.
 
 Rebuild after you change policies, translations or vendors in your project. If
 your CI caches build output, force a fresh build.

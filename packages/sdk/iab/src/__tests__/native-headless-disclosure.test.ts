@@ -23,8 +23,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import type { GlobalVendorList, PublisherRestriction } from '@c15t/core';
-import { resolveIABBannerSummary } from '@c15t/core';
+import type { GlobalVendorList, PublisherRestriction } from '@inth/sdk-core';
+import { resolveIABBannerSummary } from '@inth/sdk-core';
 import { describe, expect, test } from 'vitest';
 
 import { applyPublisherRestrictionsToGVL } from '../headless/effective-vendor-list';
@@ -123,7 +123,7 @@ const configuration = {
 // IAB vendor IDs, so they never touch it; its purposes still count, as the web's
 // `processPurposes` and `applyBlanket` count them. Purpose 3 sits in its
 // legitimate-interest list to check that TCF's consent-only purposes stay out.
-/** A custom vendor as `/init` serves it, `NonIABVendor` in `@c15t/schema`. */
+/** A custom vendor as `/init` serves it, `NonIABVendor` in `@inth/sdk/schema`. */
 interface CustomVendor {
 	id: string;
 	name: string;

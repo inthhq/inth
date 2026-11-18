@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
-import { createConsentKernel } from '@c15t/core';
-import type { Script } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deniedConsents, grantedMarketingConsents } from './e2e-test-utils';

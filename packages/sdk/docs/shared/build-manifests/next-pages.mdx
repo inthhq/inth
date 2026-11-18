@@ -3,8 +3,8 @@
 <include src="./next-config.mdx" />
 
 `withConsentProps()` and `createPagesConsentRoute()` read the snapshot
-through the same alias. The wrapper adds `c15t`, `@c15t/core` and
-`@c15t/nextjs` to `transpilePackages` for this: the Pages Router leaves
+through the same alias. The wrapper adds `@inth/sdk` and `@inth/nextjs` to
+`transpilePackages` for this: the Pages Router leaves
 dependencies external on the server otherwise, and an external package does
 not see the alias.
 

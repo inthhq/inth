@@ -1,13 +1,16 @@
-import { IAB_UNAVAILABLE_ERROR_CODE, IABUnavailableError } from '@c15t/core';
+import {
+	IAB_UNAVAILABLE_ERROR_CODE,
+	IABUnavailableError,
+} from '@inth/sdk/engine';
 import {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
-} from '@c15t/core/modules/persistence';
-import type { InitOutput } from '@c15t/schema/types';
+} from '@inth/sdk/modules/persistence';
+import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createSSRApp, defineComponent } from 'vue';
@@ -262,7 +265,7 @@ afterEach(() => {
 	document.cookie = 'c15t=; max-age=0; path=/';
 });
 
-describe('@c15t/vue kernel runtime', () => {
+describe('@inth/vue kernel runtime', () => {
 	test('preserves the prefetched subject through empty cookie hydration and mount', async () => {
 		const { fetchMock } = createFetchMock();
 		const prefetch = { ...initFixture, subjectId: 'backend+literal' };
@@ -442,7 +445,7 @@ describe('@c15t/vue kernel runtime', () => {
 
 		expect((window as WindowWithC15t).c15t).toMatchObject({
 			mode: 'hosted',
-			pkg: '@c15t/vue',
+			pkg: '@inth/vue',
 		});
 		expect(typeof (window as WindowWithC15t).c15t?.version).toBe('string');
 
@@ -825,7 +828,7 @@ test('runtime clears configured storage when permission is revoked', async () =>
 test('with `iab` set, mounts the shared CMP for a prefetched IAB reference and encodes consent', async () => {
 	const { completeGVL } =
 		await import('../../../iab/src/__tests__/fixtures/gvl-sample');
-	const { deferInitGvl } = await import('@c15t/core');
+	const { deferInitGvl } = await import('@inth/sdk/engine');
 	const config: RuntimeConsentConfig = {
 		iab: {},
 		iframeBlocker: false,
@@ -920,7 +923,7 @@ describe('IAB is opt-in', () => {
 	const createIABInit = async function createIABInit(): Promise<InitOutput> {
 		const { completeGVL } =
 			await import('../../../iab/src/__tests__/fixtures/gvl-sample');
-		const { deferInitGvl } = await import('@c15t/core');
+		const { deferInitGvl } = await import('@inth/sdk/engine');
 		return deferInitGvl(
 			{
 				...initFixture,

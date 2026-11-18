@@ -6,8 +6,8 @@ import {
 	ConsentDialogLink,
 	ConsentRoot,
 	useExperiment,
-} from 'c15t/next';
-import type { ConsentRootProps } from 'c15t/next';
+} from '@inth/nextjs';
+import type { ConsentRootProps } from '@inth/nextjs';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 

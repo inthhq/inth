@@ -1,4 +1,4 @@
-import type { Vendor } from '@c15t/schema/types';
+import type { Vendor } from '@inth/sdk-schema/types';
 
 import type { ConsentState } from '../../consent/compliance';
 import type { AllConsentNames } from '../../consent/consent-types';
@@ -377,7 +377,7 @@ export interface Script {
 	 * Name, privacy policy and other details of the vendor `vendor` names, so
 	 * the preference surface lists it with its own switch. Ignored without
 	 * `vendor`. A declaration in `vendors` or from the backend wins over
-	 * these. Every `@c15t/integrations` helper sets them.
+	 * these. Every `@inth/integrations` helper sets them.
 	 *
 	 * @example
 	 * ```ts

@@ -1,4 +1,4 @@
-import type { Overrides } from '@c15t/core';
+import type { Overrides } from '@inth/sdk/engine';
 
 import { extractRelevantHeaders } from './headers';
 

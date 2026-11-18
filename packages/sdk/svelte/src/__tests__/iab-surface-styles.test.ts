@@ -1,9 +1,9 @@
-import type { ConsentKernel } from '@c15t/core';
-import { css as iabDialogCSS } from '@c15t/ui/styles/sheets/iab-dialog';
-import { css as iabFirstPaintCSS } from '@c15t/ui/styles/sheets/iab-first-paint';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { css as iabDialogCSS } from '@inth/sdk/ui/styles/sheets/iab-dialog';
+import { css as iabFirstPaintCSS } from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 import { render, waitFor } from '@testing-library/svelte';
 import { afterEach, describe, expect, test } from 'vitest';
-import '@c15t/iab';
+import '@inth/sdk/iab';
 
 import Fixture from './fixtures/iab-surface-styles.svelte';
 import { iabStyleOptions } from './iab-style-options';

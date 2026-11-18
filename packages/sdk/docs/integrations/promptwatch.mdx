@@ -17,10 +17,10 @@ By default, c15t also reloads the page.
 Copy the project ID from your Promptwatch dashboard. The helper passes it to
 the client script as `data-project-id`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { promptwatch } from '@c15t/integrations/promptwatch';
+import { promptwatch } from '@inth/integrations/promptwatch';
 
 export const scripts = [promptwatch({ projectId: 'YOUR_PROJECT_ID' })];
 ```

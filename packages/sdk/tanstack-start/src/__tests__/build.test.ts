@@ -10,11 +10,11 @@ const directories: string[] = [];
 
 type Plugin = ReturnType<typeof consentManifest>;
 
-/** What `@c15t/core/generated` holds in one Vite environment. */
+/** What `@inth/sdk/generated` holds in one Vite environment. */
 const loadGenerated = (plugin: Plugin, consumer: 'client' | 'server') =>
 	plugin.load.call(
 		{ environment: { config: { consumer } } },
-		plugin.resolveId('@c15t/core/generated') as string
+		plugin.resolveId('@inth/sdk/generated') as string
 	);
 
 /**
@@ -87,7 +87,7 @@ describe('TanStack Start manifest generation', () => {
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'@c15t/tanstack-start/build: could not fetch the consent manifest from https://consent.example.com/manifest during dev (backend unavailable). The server fetches it at runtime instead'
+				'@inth/tanstack-start/build: could not fetch the consent manifest from https://consent.example.com/manifest during dev (backend unavailable). The server fetches it at runtime instead'
 			)
 		);
 	});
@@ -261,7 +261,7 @@ describe('TanStack Start backend URL variables', () => {
 			const source = String(
 				await plugin.load.call(
 					{ environment: { config: { consumer: 'server' } } },
-					plugin.resolveId('@c15t/core/generated') as string
+					plugin.resolveId('@inth/sdk/generated') as string
 				)
 			);
 			return {
@@ -303,7 +303,7 @@ describe('TanStack Start backend URL variables', () => {
 
 describe('TanStack Start first-paint sheets', () => {
 	const importer =
-		'/app/node_modules/.pnpm/@c15t+react@3/node_modules/@c15t/react/dist/components/prompt/atoms/root.js';
+		'/app/node_modules/.pnpm/@c15t+react@3/node_modules/@inth/react/dist/components/prompt/atoms/root.js';
 	/** What `consentManifest()` resolves `id` to in one Vite environment. */
 	const resolveSheet = async (
 		id: string,
@@ -325,17 +325,19 @@ describe('TanStack Start first-paint sheets', () => {
 		const names = ['tokens', 'button', 'banner'];
 		const resolved = await Promise.all(
 			names.map((name) =>
-				resolveSheet(`@c15t/ui/styles/sheets/${name}`, 'client')
+				resolveSheet(`@inth/sdk/ui/styles/sheets/${name}`, 'client')
 			)
 		);
 		expect(resolved.map(({ result }) => result)).toEqual(
-			names.map((name) => `/resolved/@c15t/ui/styles/sheets/${name}-deferred`)
+			names.map(
+				(name) => `/resolved/@inth/sdk/ui/styles/sheets/${name}-deferred`
+			)
 		);
 	});
 
 	test('the server keeps the sheet text it inlines', async () => {
 		const { resolve, result } = await resolveSheet(
-			'@c15t/ui/styles/sheets/banner',
+			'@inth/sdk/ui/styles/sheets/banner',
 			'server'
 		);
 		expect(result).toBeUndefined();
@@ -344,12 +346,12 @@ describe('TanStack Start first-paint sheets', () => {
 
 	test('sheets no server render inlines keep their text', async () => {
 		const dialog = await resolveSheet(
-			'@c15t/ui/styles/sheets/dialog',
+			'@inth/sdk/ui/styles/sheets/dialog',
 			'client'
 		);
 		expect(dialog.result).toBeUndefined();
 		const ownImport = await resolveSheet(
-			'@c15t/ui/styles/sheets/banner',
+			'@inth/sdk/ui/styles/sheets/banner',
 			'client',
 			'/app/src/theme.ts'
 		);

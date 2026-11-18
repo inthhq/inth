@@ -2,7 +2,7 @@
  * DOM helpers for the React observer tests. Loaded only by files that run
  * under `@vitest-environment jsdom`.
  */
-import type { ConsentKernel } from 'c15t';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import { act } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';

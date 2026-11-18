@@ -4,7 +4,7 @@
 	 * `lib/bridge.svelte` does with its `updateBridge`.
 	 */
 	import { updateGateBridge } from '@c15t/benchmarking/consent-gate-page';
-	import { getConsentKernel } from '@c15t/svelte';
+	import { getConsentKernel } from '@inth/svelte';
 	import { onMount } from 'svelte';
 
 	const kernel = getConsentKernel();

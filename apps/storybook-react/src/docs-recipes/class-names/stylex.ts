@@ -1,6 +1,6 @@
 // #region docs:class-names-stylex title="src/consent-components.ts"
+import type { ConsentProviderOptions } from '@inth/react';
 import * as stylex from '@stylexjs/stylex';
-import type { ConsentProviderOptions } from 'c15t/react';
 
 const styles = stylex.create({
 	card: {

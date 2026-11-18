@@ -1,4 +1,4 @@
-import type { ConsentSnapshot, ConsentState } from '@c15t/core';
+import type { ConsentSnapshot, ConsentState } from '@inth/sdk-core';
 
 /** Read a displayed selection without copying masked effective permissions. */
 export const readSelection = (

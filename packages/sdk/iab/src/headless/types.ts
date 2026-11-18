@@ -4,7 +4,7 @@ import type {
 	GlobalVendorList,
 	NonIABVendor,
 	PublisherRestriction,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 /**
  * Headless IAB types shared across all framework wrappers.
  *

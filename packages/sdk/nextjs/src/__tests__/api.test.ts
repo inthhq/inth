@@ -1,10 +1,10 @@
-import { manifest } from '@c15t/core/modes';
+import { manifest } from '@inth/sdk/modes';
 /**
- * Wiring of `@c15t/nextjs/api` onto the core consent route handler. The
+ * Wiring of `@inth/nextjs/api` onto the core consent route handler. The
  * route behaviour itself is pinned once, in
  * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
  */
-import { clearManifestCache } from '@c15t/core/server';
+import { clearManifestCache } from '@inth/sdk/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute, createManifestFetchInit } from '../api';
@@ -38,7 +38,7 @@ beforeEach(() => {
 	clearManifestCache();
 });
 
-describe('@c15t/nextjs/api', () => {
+describe('@inth/nextjs/api', () => {
 	test('serves a deployment manifest and resolves each visitor without fetching policy', async () => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const { GET } = createConsentRoute({
@@ -150,7 +150,7 @@ describe('@c15t/nextjs/api', () => {
 		const { GET } = createConsentRoute({});
 		await expect(
 			call(GET, 'https://app.example.com/api/c15t/init')
-		).rejects.toThrow('@c15t/nextjs: pass projectUrl or manifestUrl.');
+		).rejects.toThrow('@inth/nextjs: pass projectUrl or manifestUrl.');
 	});
 
 	test('createManifestFetchInit defaults the Data Cache lifetime to 300 seconds', () => {

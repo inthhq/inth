@@ -9,9 +9,8 @@
 		"check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
-		"@c15t/ui": "workspace:*",
-		"c15t": "workspace:*"
+		"@inth/integrations": "workspace:*",
+		"@inth/svelte": "workspace:*"
 	},
 	"devDependencies": {
 		"@sveltejs/kit": "3.0.0",

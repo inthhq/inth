@@ -1,6 +1,6 @@
 // #region docs:gpp title="src/main.ts"
-import { hosted, init } from '@c15t/browser';
-import { mountGPP } from '@c15t/browser/gpp';
+import { hosted, init } from '@inth/sdk';
+import { mountGPP } from '@inth/sdk/gpp';
 
 const consent = init({
 	mode: hosted(),

@@ -1,7 +1,7 @@
 // #region docs:preference-draft title="src/preference-form.ts"
-import type { AllConsentNames } from 'c15t';
-import { createPreferenceDraft } from 'c15t/preference-draft';
-import type { ConsentRuntime } from 'c15t/runtime';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import { createPreferenceDraft } from '@inth/sdk/preference-draft';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 
 // Render a form of category switches that records nothing until Save.
 export const mountPreferenceForm = function mountPreferenceForm(

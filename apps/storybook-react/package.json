@@ -10,8 +10,8 @@
 	},
 	"dependencies": {
 		"@c15t/conformance": "workspace:*",
-		"@c15t/react": "workspace:*",
-		"@c15t/ui": "workspace:*",
+		"@inth/react": "workspace:*",
+		"@inth/sdk": "workspace:*",
 		"react": "^19.2.7",
 		"react-dom": "^19.2.7"
 	},

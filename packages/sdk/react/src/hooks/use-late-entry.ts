@@ -1,6 +1,6 @@
 'use client';
 
-import { isLateEntry } from '@c15t/ui/utils/late-entry';
+import { isLateEntry } from '@inth/sdk/ui/utils/late-entry';
 import { useState } from 'react';
 
 import { isStaticBannerShown } from '../components/prompt/static-banner-shell';

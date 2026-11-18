@@ -2,7 +2,7 @@
 	import type {
 		EventDispatcher,
 		RuntimeEventDispatcherOptions,
-	} from '@c15t/core/events';
+	} from '@inth/sdk/events';
 
 	import Provider from '../../lib/components/consent-provider.svelte';
 	import type { ConsentContextValue } from '../../lib/context.svelte';

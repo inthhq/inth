@@ -1,12 +1,12 @@
-import { policyRulePresets } from '@c15t/core';
-import type { GPPPingData } from '@c15t/iab/gpp';
+import { policyRulePresets } from '@inth/sdk-core';
+import type { GPPPingData } from '@inth/sdk-iab/gpp';
 import {
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk-schema/types';
+import { translations } from '@inth/sdk-translations/en';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createGlobal } from '../global';
@@ -120,7 +120,7 @@ afterEach(() => {
 describe.each(entries)('$mode browser global', ({ create, mode }) => {
 	it('exposes its supported factory without the other transport factories', () => {
 		const api = create();
-		expect(api.pkg).toBe(`@c15t/browser/${mode}`);
+		expect(api.pkg).toBe(`@inth/sdk/${mode}`);
 		expect(api).toHaveProperty(mode, expect.any(Function));
 		const unsupported = [
 			'hosted',
@@ -219,9 +219,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 		const api = await loadTag(mode);
 		await api.ready();
 		expect(api.mode).toBe(mode);
-		expect(api.pkg).toBe(
-			mode === 'hosted' ? '@c15t/browser' : '@c15t/browser/testing'
-		);
+		expect(api.pkg).toBe(mode === 'hosted' ? '@inth/sdk' : '@inth/sdk/testing');
 		expect(loaded).not.toHaveBeenCalled();
 		const saving = api.acceptAll();
 		expect(api.has('measurement')).toBe(true);
@@ -277,7 +275,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 		first.init();
 		await first.ready();
 		const duplicate = installGlobal(create());
-		const generic = installGlobal(createGlobal({ pkg: '@c15t/browser' }));
+		const generic = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
 		expect(duplicate).toBe(first);
 		expect(generic).toBe(first);
 		expect(autoInit(duplicate)).toBe(first.client);
@@ -345,7 +343,7 @@ describe('default CDN entry', () => {
 		const api = await loadTag('hosted');
 		await api.ready();
 
-		expect(api.pkg).toBe('@c15t/browser');
+		expect(api.pkg).toBe('@inth/sdk');
 		expect(api.mode).toBe('hosted');
 		expect(api).toHaveProperty('hosted', expect.any(Function));
 		for (const factory of [

@@ -182,7 +182,7 @@ export const buildMonitorIssueBody = function buildMonitorIssueBody(
 		: undefined;
 
 	const metadataLines = [
-		`- **Vendor**: \`${result.vendor}\` (\`@c15t/integrations/${result.packageSubpath}\`)`,
+		`- **Vendor**: \`${result.vendor}\` (\`@inth/integrations/${result.packageSubpath}\`)`,
 		`- **Probe tier**: \`${result.tier}\``,
 		`- **Failed phase(s)**: ${failing}`,
 		`- **Attempts**: ${result.attempts}`,
@@ -224,7 +224,7 @@ ${formatErrorList('Console errors', result.consoleErrors)}${formatErrorList(
 ### Reproduce locally
 
 \`\`\`sh
-bun run --filter @c15t/integrations test:live-vendors -- --vendor ${result.vendor}
+bun run --filter @inth/integrations test:live-vendors -- --vendor ${result.vendor}
 \`\`\`
 
 <sub>Opened automatically by the script vendor monitor. This issue closes automatically once the vendor passes again.</sub>`;

@@ -50,8 +50,8 @@ your project's manifest, with no request to the backend's `/init`:
 
 ```js title="astro.config.mjs"
 import svelte from '@astrojs/svelte';
+import c15t, { manifest } from '@inth/astro';
 import { defineConfig } from 'astro/config';
-import c15t, { manifest } from 'c15t/astro';
 
 export default defineConfig({
 	integrations: [svelte(), c15t({ mode: manifest({ resolve: 'browser' }) })],
@@ -151,7 +151,7 @@ request headers or cookies. The page then behaves like a page from a static
 build. The browser reads the visitor's cookie, requests the policy from
 `/api/c15t/init` and renders the banner. Other pages still render per request.
 
-If you call `resolveConsentContext` from `c15t/astro/server` yourself, pass
+If you call `resolveConsentContext` from `@inth/astro/server` yourself, pass
 `prerendered: true` only for output that every visitor shares. It drops the
 request's cookie and location, so do not use it to skip the backend for one
 visitor's render.
@@ -186,7 +186,7 @@ swap, listen for `astro:page-load`. See the
 
 ## Test without a backend
 
-`testing()` from `c15t/astro/testing` resolves policies in the browser and on
+`testing()` from `@inth/astro/testing` resolves policies in the browser and on
 your server with no backend. It is for tests only and throws in production
 builds.
 
@@ -194,7 +194,7 @@ builds.
 c15t({ mode: testing() });
 ```
 
-Import `testing` from `c15t/astro/testing`. Choices persist in the visitor's cookie and
+Import `testing` from `@inth/astro/testing`. Choices persist in the visitor's cookie and
 localStorage only. There are no consent records, no hosted policies and no
 visitor counts. Pass `policy` to `testing()` to test a specific policy.
 

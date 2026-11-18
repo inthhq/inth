@@ -1,5 +1,5 @@
 // #region docs:appcues-scripts title="src/consent-scripts.ts"
-import { appcues } from '@c15t/integrations/appcues';
+import { appcues } from '@inth/integrations/appcues';
 
 export const scripts = [
 	appcues({

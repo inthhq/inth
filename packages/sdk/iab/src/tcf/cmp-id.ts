@@ -56,7 +56,7 @@ export const createCmpIdError = function createCmpIdError(
 	const received =
 		value === undefined ? 'undefined (no cmpId was provided)' : String(value);
 	return new Error(
-		`@c15t/iab needs a CMP ID registered with IAB Europe: an integer from ${MIN_CMP_ID} to ${MAX_CMP_ID}. ` +
+		`@inth/sdk/iab needs a CMP ID registered with IAB Europe: an integer from ${MIN_CMP_ID} to ${MAX_CMP_ID}. ` +
 			`A TC String cannot be encoded without one, so no consent record is written. ` +
 			`Register at https://register.consensu.org/CMP, or omit cmpId and let the backend ` +
 			`return it from /init. Received: ${received}.`

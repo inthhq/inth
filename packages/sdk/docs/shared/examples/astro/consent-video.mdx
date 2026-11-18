@@ -2,7 +2,7 @@
 
 ```astro title="src/components/consent-video.astro"
 ---
-import { ConsentDialogLink } from 'c15t/astro/components';
+import { ConsentDialogLink } from '@inth/astro/components';
 ---
 
 <consent-video>
@@ -13,7 +13,7 @@ import { ConsentDialogLink } from 'c15t/astro/components';
 </consent-video>
 
 <script>
-	import { getConsentClient } from 'c15t/astro/client';
+	import { getConsentClient } from '@inth/astro/client';
 
 	class ConsentVideo extends HTMLElement {
 		dispose?: () => void;

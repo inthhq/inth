@@ -1,6 +1,6 @@
 # Vite React Repro
 
-Minimal production-bundle repro for `@c15t/react` using:
+Minimal production-bundle repro for `@inth/react` using:
 
 - `vite@7.1.12`
 - `@vitejs/plugin-react@5.1.0`

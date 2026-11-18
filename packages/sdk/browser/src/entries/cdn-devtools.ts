@@ -15,7 +15,7 @@
  * `window.c15t.publishDevToolsLauncher`, the main tag's copy, instead.
  */
 
-import type { DevToolsPosition, DevToolsTab } from '@c15t/dev-tools';
+import type { DevToolsPosition, DevToolsTab } from '@inth/sdk-dev-tools';
 
 import { createBrowserDevTools } from '../devtools-mount';
 import type { BrowserDevToolsOptions } from '../devtools-mount';

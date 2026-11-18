@@ -1,5 +1,5 @@
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
-import legalLinkStyles from '@c15t/ui/styles/components/legal-links';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';

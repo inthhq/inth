@@ -1,4 +1,4 @@
-import type { ConsentMode } from '@c15t/core/modes';
+import type { ConsentMode } from '@inth/sdk/modes';
 import { createServerFn } from '@tanstack/react-start';
 import { expectTypeOf } from 'vitest';
 

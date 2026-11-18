@@ -4,7 +4,7 @@
  * belongs to the visitor's browser, and a server has no runtime to apply
  * the answer to.
  */
-import { ConsentProvider } from '@c15t/react/provider';
+import { ConsentProvider } from '@inth/react/provider';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';

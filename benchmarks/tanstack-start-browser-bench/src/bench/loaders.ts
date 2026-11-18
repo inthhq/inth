@@ -1,10 +1,10 @@
-import { manifest } from '@c15t/tanstack-start';
+import { manifest } from '@inth/tanstack-start';
 import {
 	createConsentStateHandler,
 	mergeInitIntoConsentState,
 	resolveConsent,
-} from '@c15t/tanstack-start/server';
-import type { ConsentState } from '@c15t/tanstack-start/server';
+} from '@inth/tanstack-start/server';
+import type { ConsentState } from '@inth/tanstack-start/server';
 import { createServerFn } from '@tanstack/react-start';
 
 import { BENCH_BACKEND_URL, getBenchManifestUrl } from './manifest-url';

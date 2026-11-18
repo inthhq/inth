@@ -1,6 +1,6 @@
 <!-- #region docs:headless-app title="src/App.vue" -->
 <script setup lang="ts">
-import { useConsentActiveUI } from 'c15t/vue/vue-plugin';
+import { useConsentActiveUI } from '@inth/vue/vue-plugin';
 
 import ConsentPrompt from './ConsentPrompt.vue';
 import HomePage from './HomePage.vue';

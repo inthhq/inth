@@ -33,7 +33,7 @@ const queryDevTools = <ElementType extends Element = HTMLElement>(
 	return null;
 };
 
-describe('@c15t/svelte/devtools', () => {
+describe('@inth/svelte/devtools', () => {
 	test('keeps explicit service callbacks live without remounting', async () => {
 		const firstClear = vi.fn();
 		const nextClear = vi.fn();

@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import type { AllConsentNames } from '@c15t/core';
+import type { AllConsentNames } from '@inth/sdk-core';
 
 /**
  * Maps IAB TCF purpose IDs to c15t consent categories.

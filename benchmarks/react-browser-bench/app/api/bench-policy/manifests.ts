@@ -6,13 +6,13 @@ import type { PolicyBenchFixtureName } from '@c15t/benchmarking/policy-fixtures'
 import {
 	buildConsentManifestFromConfig,
 	resolveInitFromManifest,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import type {
 	ConsentManifest,
 	InitOutput,
 	ResolveInitFromManifestOptions,
-} from '@c15t/schema/types';
-import { enTranslations } from '@c15t/translations';
+} from '@inth/sdk/schema/types';
+import { enTranslations } from '@inth/sdk/translations';
 
 // Only the default locale is supplied; the resolver needs the requested one.
 const baseTranslations = {

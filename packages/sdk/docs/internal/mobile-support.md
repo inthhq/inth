@@ -29,7 +29,7 @@ Unknown or denied permission keeps optional SDKs off.
 
 The RN runtime, its declarations and its transitive runtime dependencies must
 install without another Inth JavaScript package, a backend runtime or a JS TCF
-codec. Keep `@c15t/core`, `@c15t/iab` and `@iabtechlabtcf/core` as development
+codec. Keep `@inth/sdk/engine`, `@inth/sdk/iab` and `@iabtechlabtcf/core` as development
 conformance oracles. Build, test, docs and Codegen dependencies are allowed.
 
 The packed-consumer boundary test installs the tarball outside the workspace and

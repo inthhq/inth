@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk-ui/styles/components/consent-banner';
 import { describe, expect, expectTypeOf, test } from 'vitest';
 
 import type { ComponentSlots, Theme } from '../theme/types';

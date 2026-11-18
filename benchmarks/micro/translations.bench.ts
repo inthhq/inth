@@ -3,8 +3,8 @@ import {
 	detectBrowserLanguage,
 	mergeTranslationConfigs,
 	prepareTranslationConfig,
-} from '@c15t/core';
-import { enTranslations } from '@c15t/translations';
+} from '@inth/sdk/engine';
+import { enTranslations } from '@inth/sdk/translations';
 
 import { bench, runMicroBenchmarkSuite } from './wrapper';
 

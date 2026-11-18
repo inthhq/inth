@@ -11,7 +11,7 @@
 	},
 	"dependencies": {
 		"@c15t/benchmarking": "workspace:*",
-		"@c15t/core": "workspace:*"
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "22.19.11",

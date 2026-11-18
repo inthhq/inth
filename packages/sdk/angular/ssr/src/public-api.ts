@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular/ssr`: server rendering for `@c15t/angular`.
+ * `@inth/angular/ssr`: server rendering for `@inth/angular`.
  *
  * Server-only: import it from `app.config.server.ts` and `server.ts`.
  *

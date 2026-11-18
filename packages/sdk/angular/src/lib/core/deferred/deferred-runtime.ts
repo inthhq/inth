@@ -18,7 +18,7 @@
  * backend save; then the engine loads, starts from the record and sends
  * the save without recording it again.
  *
- * The same design as `@c15t/svelte`'s `ConsentRoot` and `@c15t/vue`'s Nuxt
+ * The same design as `@inth/svelte`'s `ConsentRoot` and `@inth/vue`'s Nuxt
  * module.
  *
  * @packageDocumentation
@@ -30,28 +30,28 @@ import type {
 	ConsentKernel,
 	SaveResult,
 	SaveUISource,
-} from '@c15t/core';
-import type { ConsentRuntimeIABHandle } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+import type { ConsentRuntimeIABHandle } from '@inth/sdk/runtime';
 import type {
 	ConsentProviderRuntime,
 	ConsentRuntimeUpdate,
-} from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/provider';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
 	planInstantCommit,
-} from '@c15t/core/surface-actions/instant-commit';
-import type { InstantCommit } from '@c15t/core/surface-actions/instant-commit';
-import { startPlainScripts } from '@c15t/core/surface-actions/plain-scripts';
+} from '@inth/sdk/surface-actions/instant-commit';
+import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 import {
 	clearStoredRecordsFor,
 	storageFor,
-} from '@c15t/core/surface-actions/stored-records';
+} from '@inth/sdk/surface-actions/stored-records';
 import {
 	allConsentNames,
 	hasGlobalPrivacyControlSignal,
 	pendingBootSnapshot,
-} from '@c15t/core/surface-state';
+} from '@inth/sdk/surface-state';
 
 import type { C15tResolvedOptions } from '../options';
 import type { ConsentBoot } from './boot';

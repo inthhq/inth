@@ -1,4 +1,4 @@
-import type { GlobalVendorList } from '@c15t/schema/types';
+import type { GlobalVendorList } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { resolveIABBannerSummary } from '../libs/iab-banner-summary';

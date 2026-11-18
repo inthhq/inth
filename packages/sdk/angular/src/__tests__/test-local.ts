@@ -1,4 +1,4 @@
-import type { PolicyRule } from '@c15t/schema/types';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 
 import { offlineMode } from './fixtures/transport-mode';
 

@@ -5,13 +5,13 @@
  * visitor used to see no consent UI at all. They now throw a render error
  * that says what to do, on the server render and in the browser alike.
  *
- * This file must not import `@c15t/react/iab`: loading it marks the app as
+ * This file must not import `@inth/react/iab`: loading it marks the app as
  * one that renders IAB. `iab-policy-guard-provider.test.tsx` covers that.
  */
 import { MINIMAL_GVL } from '@c15t/conformance';
-import type { GlobalVendorList } from '@c15t/core';
-import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import type { GlobalVendorList } from '@inth/sdk/engine';
+import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { Component } from 'react';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';

@@ -2,8 +2,8 @@ import {
 	startsClosedByDefault,
 	toggleOpenClose,
 } from '@c15t/conformance/play/collapsible';
-import { getOpenState } from '@c15t/ui/primitives';
-import { collapsibleVariants } from '@c15t/ui/styles/primitives';
+import { getOpenState } from '@inth/sdk/ui/primitives';
+import { collapsibleVariants } from '@inth/sdk/ui/styles/primitives';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { computed, ref } from 'vue';
 

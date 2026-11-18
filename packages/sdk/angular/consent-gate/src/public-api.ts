@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular/consent-gate`: content gated on consent, with its
+ * `@inth/angular/consent-gate`: content gated on consent, with its
  * placeholder, and the consent-aware analytics event dispatcher.
  *
  * @packageDocumentation

@@ -1,6 +1,6 @@
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import { createConsentKernel } from '@c15t/core';
-import { createPersistence } from '@c15t/core/modules/persistence';
+import { createConsentKernel } from '@inth/sdk/engine';
+import { createPersistence } from '@inth/sdk/modules/persistence';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { iabPromptClassNames, promptClassNames } from '../banner/class-names';
@@ -16,11 +16,11 @@ import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
-// The client imports each banner renderer, and @c15t/iab for an IAB policy,
+// The client imports each banner renderer, and @inth/sdk/iab for an IAB policy,
 // the first time it needs one. Vite compiles a module on its first import,
 // which can outlast a vi.waitFor on a busy machine; importing them here does
 // that while this file loads.
-import '@c15t/iab';
+import '@inth/sdk/iab';
 
 import '../browser/render-iab-prompt';
 import '../browser/render-prompt';

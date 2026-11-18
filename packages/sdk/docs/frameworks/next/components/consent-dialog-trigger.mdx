@@ -15,7 +15,7 @@ of the existing boundary, alongside its banner and dialog:
 ```tsx title="components/privacy-trigger.tsx"
 'use client';
 
-import { ConsentDialogTrigger } from 'c15t/next';
+import { ConsentDialogTrigger } from '@inth/nextjs';
 
 export function PrivacyTrigger() {
 	return <ConsentDialogTrigger showWhen="after-prompt" />;
@@ -38,7 +38,7 @@ This partial example belongs in a Client Component inside the existing boundary.
 Define the theme state, icons and callbacks in that component.
 
 ```tsx
-import { ConsentDialogTriggerToolbar } from 'c15t/next';
+import { ConsentDialogTriggerToolbar } from '@inth/nextjs';
 
 <ConsentDialogTriggerToolbar
 	ariaLabel="Site controls"

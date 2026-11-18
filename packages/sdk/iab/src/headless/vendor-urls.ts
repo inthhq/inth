@@ -1,4 +1,4 @@
-import type { GlobalVendorList } from '@c15t/core';
+import type { GlobalVendorList } from '@inth/sdk-core';
 
 type GvlVendor = GlobalVendorList['vendors'][number];
 

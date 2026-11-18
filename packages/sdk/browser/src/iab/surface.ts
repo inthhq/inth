@@ -1,7 +1,7 @@
-import type { ConsentSnapshot, PresentationAction } from '@c15t/core';
-import type { ConsentRuntimeIABHandle } from '@c15t/core/runtime';
-import { resolveIABBannerSummary } from '@c15t/iab/headless';
-import { setupFocusTrap, setupScrollLock } from '@c15t/ui/utils';
+import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
+import type { ConsentRuntimeIABHandle } from '@inth/sdk-core/runtime';
+import { resolveIABBannerSummary } from '@inth/sdk-iab/headless';
+import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/iab-styles';
 import type { ConsentUIOptions } from '../types';

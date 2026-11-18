@@ -7,7 +7,7 @@
  * @packageDocumentation
  */
 
-import { AD_TECH_PROVIDER_PURPOSES } from '@c15t/schema/types';
+import { AD_TECH_PROVIDER_PURPOSES } from '@inth/sdk-schema/types';
 
 import type { KernelIABState } from '../types';
 

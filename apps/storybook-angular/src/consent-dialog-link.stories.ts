@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { ConsentButton, ConsentDialogLink } from '@c15t/angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
 import { linkOpensDialog } from '@c15t/conformance/play/consent-dialog-link';
+import { ConsentButton, ConsentDialogLink } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
 
 import {
 	consentApplication,

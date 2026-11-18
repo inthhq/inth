@@ -18,10 +18,10 @@ reloads the page by default. To ask Front to clear the chat session, call
 Copy the `chatId` from the widget snippet in your Front Chat channel's
 **Installation** tab.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { frontChat } from '@c15t/integrations/front-chat';
+import { frontChat } from '@inth/integrations/front-chat';
 
 export const scripts = [frontChat({ chatId: 'YOUR_FRONT_CHAT_ID' })];
 ```
@@ -59,7 +59,7 @@ it, call `shutdownFrontChat()` from the `onBeforeConsentRevocationReload`
 callback in your consent options:
 
 ```ts title="src/consent-callbacks.ts"
-import { shutdownFrontChat } from '@c15t/integrations/front-chat';
+import { shutdownFrontChat } from '@inth/integrations/front-chat';
 
 export const callbacks = {
 	onBeforeConsentRevocationReload: ({ preferences }) => {

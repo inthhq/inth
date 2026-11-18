@@ -1,4 +1,4 @@
-import { createConsentRoute } from '@c15t/svelte/kit';
+import { createConsentRoute } from '@inth/svelte/kit';
 
 import { testBackend } from '#lib/test-backend.js';
 

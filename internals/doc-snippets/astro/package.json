@@ -8,9 +8,9 @@
 	"dependencies": {
 		"@astrojs/node": "^9.5.0",
 		"@astrojs/svelte": "^7.2.0",
-		"@c15t/integrations": "workspace:*",
+		"@inth/astro": "workspace:*",
+		"@inth/integrations": "workspace:*",
 		"astro": "^5.16.0",
-		"c15t": "workspace:*",
 		"svelte": "^5.0.0"
 	},
 	"devDependencies": {

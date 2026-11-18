@@ -37,7 +37,7 @@ export {
 
 /**
  * Styling of one consent action, the shape `theme.consentActions` uses.
- * Structural so core stays independent of `@c15t/ui`.
+ * Structural so core stays independent of `@inth/sdk/ui`.
  */
 export interface ExperimentActionStyle {
 	variant?: string;
@@ -47,7 +47,7 @@ export interface ExperimentActionStyle {
 /**
  * Theme overrides an arm merges over the host theme.
  *
- * Structurally compatible with `Theme` from `@c15t/ui/theme`: every token
+ * Structurally compatible with `Theme` from `@inth/sdk/ui/theme`: every token
  * group is a plain object merged one level deep, so `colors: { primary }`
  * replaces that colour and keeps the rest of the host palette. Arrays are
  * replaced, not concatenated. `consentActions` is typed because

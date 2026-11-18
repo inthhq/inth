@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { AdTechProvider, GlobalVendorList } from '@c15t/core';
+	import type { AdTechProvider, GlobalVendorList } from '@inth/sdk/engine';
 	import {
 		permittedLegitimateInterestPurposes,
 		resolveIABVendorUrls,
-	} from '@c15t/iab/headless';
-	import styles from '@c15t/ui/styles/components/iab-consent-dialog';
-	import switchStyles from '@c15t/ui/styles/components/switch';
-	import { switchVariants } from '@c15t/ui/styles/primitives';
+	} from '@inth/sdk/iab/headless';
+	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
+	import switchStyles from '@inth/sdk/ui/styles/components/switch';
+	import { switchVariants } from '@inth/sdk/ui/styles/primitives';
 	import { untrack } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 

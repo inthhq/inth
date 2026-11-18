@@ -9,12 +9,12 @@
 
 /**
  * A c15t component's module, as Vite names it in `ssrContext.modules`:
- * `…/@c15t/vue/dist/…` from an installed package, `…/packages/sdk/vue/dist/…`
+ * `…/@inth/vue/dist/…` from an installed package, `…/packages/sdk/vue/dist/…`
  * from a workspace or linked install (Vite names the real path), and
  * `…/packages/sdk/vue/src/…` in this repository's tests.
  */
 const CONSENT_COMPONENT_MODULE =
-	/(?:@c15t\/vue|packages\/(?:sdk\/)?vue)\/(?:dist|src)\/runtime\/components\//u;
+	/(?:@inth\/vue|packages\/(?:sdk\/)?vue)\/(?:dist|src)\/runtime\/components\//u;
 
 /**
  * The module's global components. A page that renders one hydrates it

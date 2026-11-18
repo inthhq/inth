@@ -1,11 +1,11 @@
 /**
- * The browser build of `@c15t/tanstack-start/server`, selected by the
+ * The browser build of `@inth/tanstack-start/server`, selected by the
  * `browser` export condition.
  *
  * Route definitions ship to the browser, and route files import
  * `consentLoaderOptions` from the server entry. Start strips the server
  * functions that call the other helpers, but the real entry's imports of
- * `@c15t/core` stayed in the client module graph. Rolldown assigns chunks
+ * `@inth/sdk/engine` stayed in the client module graph. Rolldown assigns chunks
  * from that graph, so every core module the provider shares with a lazy
  * chunk got a chunk of its own: about 3 KB gzip and 5 extra files on each
  * consent route, and 5 extra files on routes without c15t.
@@ -27,7 +27,7 @@ export { consentLoaderOptions } from './libs/loader-options';
 
 const serverOnly = function serverOnly(name: string): Error {
 	return new Error(
-		`c15t: ${name}() from @c15t/tanstack-start/server reads the request and runs on the server only. Call it inside a server function (createServerFn), a server route or request middleware.`
+		`c15t: ${name}() from @inth/tanstack-start/server reads the request and runs on the server only. Call it inside a server function (createServerFn), a server route or request middleware.`
 	);
 };
 

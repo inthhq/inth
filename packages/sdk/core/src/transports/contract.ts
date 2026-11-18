@@ -19,7 +19,7 @@
  *
  * ```ts
  * import type { KernelTransport, InitContext, InitResponse } from
- *   '@c15t/core/transports/contract';
+ *   '@inth/sdk/transports/contract';
  *
  * export function createMyTransport(opts: MyOpts): KernelTransport {
  *   return {

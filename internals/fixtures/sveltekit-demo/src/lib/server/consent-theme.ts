@@ -1,4 +1,4 @@
-import { generateThemeCSS } from '@c15t/ui/theme';
+import { generateThemeCSS } from '@inth/sdk/ui/theme';
 
 // Modules in a `server` directory never reach the browser, so the theme
 // generator stays on the server. The CSS is generated once, when the server

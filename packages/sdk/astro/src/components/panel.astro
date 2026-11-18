@@ -9,12 +9,12 @@
  *
  * ```astro
  * ---
- * import ConsentDialog from '@c15t/astro/components/consent-dialog.astro';
+ * import ConsentDialog from '@inth/astro/components/consent-dialog.astro';
  * ---
  * <ConsentDialog />
  * ```
  */
-import type { LegalLinks } from '@c15t/core';
+import type { LegalLinks } from '@inth/sdk/engine';
 import ComponentStyles from './component-styles.astro';
 
 interface Props {
@@ -63,7 +63,7 @@ const { preload = false, legalLinks, disableAnimation } = Astro.props;
 		getConsentClient,
 		openDialog,
 		preloadDialog,
-	} from '@c15t/astro/client';
+	} from '@inth/astro/client';
 
 	// The island's specifier is not written here: only the integration knows
 	// which framework `ui` selected, and naming all of them would make every

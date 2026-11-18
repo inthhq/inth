@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import switchStyles from '@c15t/ui/styles/components/switch';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
-import '@c15t/ui/styles/components/switch.css';
+import '@inth/sdk/ui/styles/components/switch.css';
 
 import { useConsentConfig } from '#c15t/composables';
 

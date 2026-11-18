@@ -96,7 +96,7 @@ exercise real fingerprint generation.
 ## Validation
 
 Build core and its dependencies once with
-`bun turbo run build --filter=@c15t/core`, then run
+`bun turbo run build --filter=@inth/sdk-core`, then run
 `bun run --cwd internals/conformance test`. The package retains Bun's existing test
 runner. Its script fixes the tsconfig used by Bun so dependency build-time paths
 to declaration files cannot become runtime imports.

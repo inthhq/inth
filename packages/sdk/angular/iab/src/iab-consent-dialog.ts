@@ -29,8 +29,8 @@ import {
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵreturnFocusAfterDialog as returnFocusAfterDialog,
-} from '@c15t/angular';
-import type { ActiveUI, Model } from '@c15t/core';
+} from '@inth/angular';
+import type { ActiveUI, Model } from '@inth/sdk/engine';
 
 import type { IABConsentDialogBody } from './iab-consent-dialog-body';
 import { IAB_DIALOG_SHEETS } from './iab-dialog-sheets';

@@ -15,7 +15,7 @@
 		ConsentDialog,
 		ConsentDialogLink,
 		ConsentRoot,
-	} from '@c15t/svelte';
+	} from '@inth/svelte';
 
 	import GateBridge from './gate-bridge.svelte';
 

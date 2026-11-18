@@ -1,6 +1,6 @@
 /**
  * `theme.slots` reaches the stock parts it names, and keeps its classes
- * under `noStyle` the way `resolveStyles` in `@c15t/ui` does.
+ * under `noStyle` the way `resolveStyles` in `@inth/sdk/ui` does.
  */
 
 import { render, waitFor } from '@testing-library/svelte';

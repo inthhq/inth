@@ -1,13 +1,13 @@
 'use client';
 
-import { getDataDisabled } from '@c15t/ui/primitives/data-state';
+import { getDataDisabled } from '@inth/sdk/ui/primitives/data-state';
 import {
 	getNextTabValue,
 	getTabPanelState,
 	getTabState,
-} from '@c15t/ui/primitives/tabs';
-import type { TabsOrientation } from '@c15t/ui/primitives/tabs';
-import styles from '@c15t/ui/styles/components/tabs';
+} from '@inth/sdk/ui/primitives/tabs';
+import type { TabsOrientation } from '@inth/sdk/ui/primitives/tabs';
+import styles from '@inth/sdk/ui/styles/components/tabs';
 import {
 	createContext,
 	forwardRef as createForwardRef,

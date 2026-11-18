@@ -45,14 +45,14 @@ import {
 	isSpeculativeRequest,
 	journeyDomainFrom,
 	POLICY_CONTRACT_VERSION,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import type {
 	ConsentManifest,
 	ConsentRequestHeaderInputs,
 	InitOutput,
 	ResolveInitFromManifestInputs,
 	SessionJourney,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import type { StorageConfig } from '../libs/cookie/types';
 import { experimentArmRef } from '../libs/experiment';
@@ -157,7 +157,7 @@ export type RequestConsentMode = 'hosted' | 'manifest' | 'offline';
 /** Configuration for {@link resolveRequestConsent}. */
 export interface ResolveRequestConsentOptions {
 	/**
-	 * Package name of the adapter, such as `@c15t/nextjs`. Names the adapter
+	 * Package name of the adapter, such as `@inth/nextjs`. Names the adapter
 	 * in session reports and prefixes errors.
 	 */
 	adapter: string;

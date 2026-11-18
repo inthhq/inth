@@ -3,7 +3,7 @@ import type {
 	PolicyConsentCategory,
 	PolicyRight,
 	ResolvedPolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 /** Semantic control roles, independent of their visual variant. */
 export type PresentationAction =

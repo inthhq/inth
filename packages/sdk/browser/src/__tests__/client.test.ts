@@ -1,9 +1,9 @@
-import { policyRulePresets } from '@c15t/core';
-import type { KernelTransport, ProviderTransportFactory } from '@c15t/core';
+import { policyRulePresets } from '@inth/sdk-core';
+import type { KernelTransport, ProviderTransportFactory } from '@inth/sdk-core';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { createScriptTagConsentClient } from '../script-tag-client';
@@ -45,7 +45,7 @@ const start = function start(
 			],
 			...options,
 		},
-		{ pkg: '@c15t/browser/test' }
+		{ pkg: '@inth/sdk/test' }
 	);
 	clients.push(client);
 	client.start();

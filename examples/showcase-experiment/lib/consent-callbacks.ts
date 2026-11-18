@@ -1,4 +1,4 @@
-import type { ConsentProviderCallbacks } from 'c15t/next';
+import type { ConsentProviderCallbacks } from '@inth/nextjs';
 
 import { track } from './analytics';
 

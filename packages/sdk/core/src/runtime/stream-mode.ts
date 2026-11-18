@@ -24,7 +24,7 @@ import type { StreamedInitOptions } from './streamed-init';
 import type { ConsentProviderRuntimeOptions, RuntimePrefetch } from './types';
 
 /**
- * `resolveStreamedInit` from `@c15t/core/runtime/streamed-init`, or a
+ * `resolveStreamedInit` from `@inth/sdk/runtime/streamed-init`, or a
  * function with its signature.
  *
  * @internal
@@ -125,7 +125,7 @@ export const lazyStreamPrefetch = function lazyStreamPrefetch(
  * `streamPrefetch` around a resolver the host has already imported.
  *
  * A host whose prefetch is usually a promise imports `resolveStreamedInit`
- * from `@c15t/core/runtime/streamed-init` statically and passes it here, so
+ * from `@inth/sdk/runtime/streamed-init` statically and passes it here, so
  * the streamed state applies as soon as it arrives instead of after a
  * request for the resolver. `lazyStreamPrefetch` is the same with the
  * resolver loaded on demand. Pass the result as `streamPrefetch` in

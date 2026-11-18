@@ -1,4 +1,4 @@
-import { isVendorAllowed } from '@c15t/core';
+import { isVendorAllowed } from '@inth/sdk/engine';
 
 import { useGateSelector } from '../kernel-selector';
 

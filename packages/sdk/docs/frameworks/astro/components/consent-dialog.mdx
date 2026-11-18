@@ -17,7 +17,7 @@ dialog mounts into the page the first time something opens it:
   or share my data" button on a notice.
 - A [`ConsentDialogLink`](/docs/frameworks/astro/components/consent-dialog-link).
 - A link to `#c15t-preferences`, when the page loads with that hash.
-- `openDialog()` from [`c15t/astro/client`](/docs/frameworks/astro/client-api#open-and-close-dialogs).
+- `openDialog()` from [`@inth/astro/client`](/docs/frameworks/astro/client-api#open-and-close-dialogs).
 
 ## Props
 
@@ -39,7 +39,7 @@ first open must feel instant for every visitor. It costs a background download
 on each page, including for visitors who never open the dialog.
 
 To download the dialog from your own code, call `preloadDialog()` from
-`c15t/astro/client`.
+`@inth/astro/client`.
 
 ## Which framework renders it
 
@@ -48,9 +48,9 @@ integration's `ui` option names:
 
 | `ui` | Renders with | Astro integration to install |
 | --- | --- | --- |
-| `'svelte'` (default) | `c15t/svelte` | `@astrojs/svelte` and `svelte` |
-| `'react'` | `c15t/react` | `@astrojs/react`, `react` and `react-dom` |
-| `'vue'` | `c15t/vue` | `@astrojs/vue` and `vue` |
+| `'svelte'` (default) | `@inth/svelte` | `@astrojs/svelte` and `svelte` |
+| `'react'` | `@inth/react` | `@astrojs/react`, `react` and `react-dom` |
+| `'vue'` | `@inth/vue` | `@astrojs/vue` and `vue` |
 
 Pick the framework your site already ships, so visitors do not download a
 second one for a single dialog. See
@@ -90,13 +90,13 @@ flight waits for the answer.
 ## Stylesheets
 
 The page carries only the banner's rules. The first time a visitor reaches
-for the dialog, c15t links the dialog's rules from
-`@c15t/ui/styles/sheets/dialog.css`, plus the primitives stylesheet for the
+for the dialog, c15t links the dialog's stylesheet, plus the primitives
+stylesheet for the
 Svelte dialog, and waits for them to load before the dialog paints. On a
-Tailwind CSS 3 site, the dialog's rules come with `c15t/astro/styles.css` on
+Tailwind CSS 3 site, the dialog's rules come with `@inth/astro/styles.css` on
 every page, and c15t links only the primitives stylesheet. With
-`styles: false`, import `c15t/astro/styles.css` yourself, which holds the
-dialog's rules too, and `c15t/astro/primitives.css` for the Svelte dialog. See
+`styles: false`, import `@inth/astro/styles.css` yourself, which holds the
+dialog's rules too, and `@inth/astro/primitives.css` for the Svelte dialog. See
 [load the stylesheet yourself](/docs/frameworks/astro/customize#load-the-stylesheet-yourself).
 
 ## Across `ClientRouter` navigation

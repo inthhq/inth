@@ -5,8 +5,8 @@
  * the scroll lock it borrows (`ui/locks-shared.ts`). The built files run in
  * Chromium in `init-script.browser.test.ts`.
  */
-import { policyRulePresets } from '@c15t/core';
-import type { ConsentSnapshot } from '@c15t/core';
+import { policyRulePresets } from '@inth/sdk-core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { InitUI } from '../init/boot';
@@ -50,7 +50,7 @@ const resolvedSnapshot =
 				],
 				ui: false,
 			},
-			{ pkg: '@c15t/browser/test' }
+			{ pkg: '@inth/sdk/test' }
 		);
 		clients.push(client);
 		client.start();

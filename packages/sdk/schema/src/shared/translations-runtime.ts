@@ -1,10 +1,10 @@
-import { deepMergeTranslations, selectLanguage } from '@c15t/translations';
+import { deepMergeTranslations, selectLanguage } from '@inth/sdk-translations';
 import type {
 	BaseTranslations,
 	CompleteTranslations,
 	Translations,
-} from '@c15t/translations';
-import { translations as enTranslations } from '@c15t/translations/en';
+} from '@inth/sdk-translations';
+import { translations as enTranslations } from '@inth/sdk-translations/en';
 
 import {
 	isBuiltInMessageProfile,

@@ -21,12 +21,12 @@ import type {
 	ConsentSnapshot,
 	KernelActiveUI,
 	KernelEvent,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	ConsentRuntime,
 	RuntimePrefetch,
 	StreamedPrefetch,
-} from '@c15t/core/runtime';
+} from '@inth/sdk/runtime';
 
 import type { ProviderServices } from '../context';
 import { markDeferredKernel } from './registry';

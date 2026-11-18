@@ -7,8 +7,8 @@ import {
 	input,
 	PLATFORM_ID,
 } from '@angular/core';
-import { setupFocusTrap } from '@c15t/ui/utils';
-import type { FocusTrapOptions } from '@c15t/ui/utils';
+import { setupFocusTrap } from '@inth/sdk/ui/utils';
+import type { FocusTrapOptions } from '@inth/sdk/ui/utils';
 
 /** `true`/`false`, or an object that also says where focus starts. */
 export type FocusTrapParams =
@@ -28,7 +28,7 @@ const resolve = function resolve(params: FocusTrapParams | '') {
 
 /**
  * Traps keyboard focus in the host element while enabled. Wraps
- * `setupFocusTrap` from `@c15t/ui`. Does nothing on the server.
+ * `setupFocusTrap` from `@inth/sdk/ui`. Does nothing on the server.
  *
  * @example
  * ```html

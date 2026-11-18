@@ -1,6 +1,6 @@
 'use client';
 
-import type { ConsentSnapshot } from '@c15t/nextjs';
+import type { ConsentSnapshot } from '@inth/nextjs';
 
 export type NextjsBenchScenario =
 	| 'baseline'

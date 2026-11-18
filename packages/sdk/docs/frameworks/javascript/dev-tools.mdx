@@ -1,12 +1,12 @@
 ---
 title: DevTools
-description: Mount the c15t DevTools panel in a JavaScript app to inspect consent, scripts, policy and events for @c15t/browser, a consent runtime or a kernel.
+description: Mount the c15t DevTools panel in a JavaScript app to inspect consent, scripts, policy and events for @inth/sdk, a consent runtime or a kernel.
 group: frameworks
 ---
 
-## Mount the panel with @c15t/browser
+## Mount the panel with @inth/sdk
 
-`@c15t/browser` includes the panel. Mount it against the client from `init()`,
+`@inth/sdk` includes the panel. Mount it against the client from `init()`,
 behind your bundler's development flag:
 
 <include src="../../shared/examples/javascript/devtools.mdx" />
@@ -34,11 +34,8 @@ mounted with `embedded: true` keeps the trigger as it is.
 ## Mount the panel with a runtime or kernel
 
 For [`createConsentRuntime`](/docs/frameworks/javascript/headless) or a kernel
-you created yourself, install the panel on its own:
-
-<CommandTabs command="c15t @c15t/dev-tools" mode="install" />
-
-Pass the same kernel your consent UI and script loader use:
+you created yourself, create the panel with `createDevTools` from
+`@inth/sdk/devtools`. Pass the same kernel your consent UI and script loader use:
 
 <include src="../../shared/examples/javascript/runtime-devtools.mdx" />
 

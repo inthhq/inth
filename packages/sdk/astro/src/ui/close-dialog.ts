@@ -1,5 +1,5 @@
-import type { ConsentRuntime } from '@c15t/core/runtime';
-import { showConsentSurface } from '@c15t/core/surface-actions';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
+import { showConsentSurface } from '@inth/sdk/surface-actions';
 
 /**
  * `close()` for the built-in surfaces, which render from the kernel's

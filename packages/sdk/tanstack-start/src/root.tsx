@@ -34,12 +34,12 @@ import {
 	startsScriptsWithoutEngine,
 	useConsentBootPlan,
 	whenIABProviderLoads,
-} from '@c15t/react/deferred';
+} from '@inth/react/deferred';
 import type {
 	ConsentBoot,
 	DeferredCommitConfig,
 	Recorded,
-} from '@c15t/react/deferred';
+} from '@inth/react/deferred';
 
 import { engineNow } from '#engine-now';
 
@@ -98,7 +98,7 @@ if (typeof document === 'undefined') {
 
 /**
  * What a banner choice tapped before the engine loads is recorded with, so
- * it needs no engine (see `@c15t/react/deferred`). None when the engine has
+ * it needs no engine (see `@inth/react/deferred`). None when the engine has
  * to record it: persistence off, or a consent source.
  */
 const commitConfig = function commitConfig(
@@ -210,7 +210,7 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
  * @example
  * ```tsx
  * // src/routes/__root.tsx
- * import { ConsentRoot } from '@c15t/tanstack-start';
+ * import { ConsentRoot } from '@inth/tanstack-start';
  *
  * function RootComponent() {
  *   const { consent } = Route.useLoaderData();

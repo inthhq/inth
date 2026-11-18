@@ -1,7 +1,7 @@
 'use client';
 
-import { iabDisplayTestId } from '@c15t/iab/headless';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+import { iabDisplayTestId } from '@inth/sdk/iab/headless';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { useState } from 'react';
 import type { FC } from 'react';
 

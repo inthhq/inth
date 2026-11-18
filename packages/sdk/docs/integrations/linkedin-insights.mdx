@@ -19,10 +19,10 @@ Copy the partner ID from LinkedIn Campaign Manager under Data, Signals manager,
 Insight Tag. Remove the original Insight Tag snippet and its `<noscript>`
 tracking image.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { linkedinInsights } from '@c15t/integrations/linkedin-insights';
+import { linkedinInsights } from '@inth/integrations/linkedin-insights';
 
 export const scripts = [linkedinInsights({ id: 'YOUR_PARTNER_ID' })];
 ```
@@ -63,7 +63,7 @@ export function trackSignup(marketingAllowed: boolean) {
 
 Pass the current marketing permission from your framework, for example
 `useConsent('marketing')` in React. Use the conversion ID from your LinkedIn
-conversion. `@c15t/integrations/linkedin-insights` exports no event wrapper.
+conversion. `@inth/integrations/linkedin-insights` exports no event wrapper.
 
 ## Verify the LinkedIn Insight Tag
 

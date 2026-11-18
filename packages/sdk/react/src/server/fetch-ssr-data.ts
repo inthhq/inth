@@ -1,5 +1,5 @@
-import { C15T_VERSION_HEADER } from '@c15t/core';
-import type { InitOutput, SSRInitialData } from '@c15t/core';
+import { C15T_VERSION_HEADER } from '@inth/sdk/engine';
+import type { InitOutput, SSRInitialData } from '@inth/sdk/engine';
 
 import { version } from '../version';
 import { CLIENT_FORWARDING_HEADERS, extractRelevantHeaders } from './headers';
@@ -88,13 +88,17 @@ const logRelevantHeaders = function logRelevantHeaders(
 		return;
 	}
 	const headerKeys = Object.keys(relevantHeaders);
-	console.log(`[c15t/server] Detected headers: [${headerKeys.join(', ')}]`);
+	console.log(
+		`[@inth/sdk/server] Detected headers: [${headerKeys.join(', ')}]`
+	);
 	const cfCountry = relevantHeaders['cf-ipcountry'];
 	const xCountry = relevantHeaders['x-vercel-ip-country'];
 	if (cfCountry) {
-		console.log(`[c15t/server] Country from cf-ipcountry: ${cfCountry}`);
+		console.log(`[@inth/sdk/server] Country from cf-ipcountry: ${cfCountry}`);
 	} else if (xCountry) {
-		console.log(`[c15t/server] Country from x-vercel-ip-country: ${xCountry}`);
+		console.log(
+			`[@inth/sdk/server] Country from x-vercel-ip-country: ${xCountry}`
+		);
 	}
 };
 
@@ -133,11 +137,11 @@ const performInitFetch = async function performInitFetch(
 			};
 			if (debug) {
 				console.log(
-					`[c15t/server] SSR fetch succeeded in ${result.metadata?.requestDurationMs ?? 0}ms`
+					`[@inth/sdk/server] SSR fetch succeeded in ${result.metadata?.requestDurationMs ?? 0}ms`
 				);
 				if (result.metadata?.cache?.detail) {
 					console.log(
-						`[c15t/server] SSR cache status: ${result.metadata.cache.detail}`
+						`[@inth/sdk/server] SSR cache status: ${result.metadata.cache.detail}`
 					);
 				}
 			}
@@ -145,17 +149,17 @@ const performInitFetch = async function performInitFetch(
 		}
 		if (debug) {
 			console.log(
-				`[c15t/server] SSR fetch failed with status: ${response.status}`
+				`[@inth/sdk/server] SSR fetch failed with status: ${response.status}`
 			);
 			if (cache.detail) {
-				console.log(`[c15t/server] SSR cache status: ${cache.detail}`);
+				console.log(`[@inth/sdk/server] SSR cache status: ${cache.detail}`);
 			}
 		}
 		return { metadata };
 	} catch (error) {
 		if (debug) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
-			console.log(`[c15t/server] SSR fetch error: ${message}`);
+			console.log(`[@inth/sdk/server] SSR fetch error: ${message}`);
 		}
 		return {};
 	}
@@ -168,14 +172,14 @@ const performInitFetch = async function performInitFetch(
  * This is the framework-agnostic SSR data fetching function. It accepts
  * a standard Web API Headers object and performs the fetch to the c15t backend.
  *
- * Framework-specific packages (like @c15t/nextjs) wrap this function
+ * Framework-specific packages (like @inth/nextjs) wrap this function
  * with their own header resolution logic.
  *
  * **Usage in Framework Wrappers:**
  * ```ts
- * // @c15t/nextjs
+ * // @inth/nextjs
  * import { headers } from 'next/headers';
- * import { fetchSSRData } from '@c15t/react/server';
+ * import { fetchSSRData } from '@inth/react/server';
  *
  * export async function fetchInitialData(options) {
  *   const nextHeaders = await headers();
@@ -186,7 +190,7 @@ const performInitFetch = async function performInitFetch(
  * **Direct Usage (advanced):**
  * ```ts
  * // In any framework with access to request headers
- * import { fetchSSRData } from '@c15t/react/server';
+ * import { fetchSSRData } from '@inth/react/server';
  *
  * const data = await fetchSSRData({
  *   projectUrl: '/api/consent',
@@ -206,7 +210,7 @@ export const fetchSSRData = async function fetchSSRData(
 	const { projectUrl, headers, overrides, debug } = options;
 
 	if (debug) {
-		console.log('[c15t/server] SSR fetch starting...');
+		console.log('[@inth/sdk/server] SSR fetch starting...');
 	}
 
 	// Extract relevant headers from the request
@@ -224,7 +228,7 @@ export const fetchSSRData = async function fetchSSRData(
 	if (!hasRequestHeaders) {
 		if (debug) {
 			console.log(
-				'[c15t/server] No relevant headers found, skipping SSR fetch'
+				'[@inth/sdk/server] No relevant headers found, skipping SSR fetch'
 			);
 		}
 		return undefined;
@@ -236,13 +240,15 @@ export const fetchSSRData = async function fetchSSRData(
 	});
 	if (!normalizedUrl) {
 		if (debug) {
-			console.log('[c15t/server] Failed to normalize URL, skipping SSR fetch');
+			console.log(
+				'[@inth/sdk/server] Failed to normalize URL, skipping SSR fetch'
+			);
 		}
 		return undefined;
 	}
 
 	if (debug) {
-		console.log(`[c15t/server] Fetching from: ${normalizedUrl}/init`);
+		console.log(`[@inth/sdk/server] Fetching from: ${normalizedUrl}/init`);
 	}
 
 	// Preserve an incoming client version; direct SSR requests use this
@@ -251,19 +257,21 @@ export const fetchSSRData = async function fetchSSRData(
 	if (overrides?.country) {
 		initHeaders['x-c15t-country'] = overrides.country;
 		if (debug) {
-			console.log(`[c15t/server] Country override: ${overrides.country}`);
+			console.log(`[@inth/sdk/server] Country override: ${overrides.country}`);
 		}
 	}
 	if (overrides?.region) {
 		initHeaders['x-c15t-region'] = overrides.region;
 		if (debug) {
-			console.log(`[c15t/server] Region override: ${overrides.region}`);
+			console.log(`[@inth/sdk/server] Region override: ${overrides.region}`);
 		}
 	}
 	if (overrides?.language) {
 		initHeaders['accept-language'] = overrides.language;
 		if (debug) {
-			console.log(`[c15t/server] Language override: ${overrides.language}`);
+			console.log(
+				`[@inth/sdk/server] Language override: ${overrides.language}`
+			);
 		}
 	}
 
@@ -282,7 +290,7 @@ export const fetchSSRData = async function fetchSSRData(
 
 	if (!init) {
 		if (debug) {
-			console.log('[c15t/server] SSR fetch returned no data');
+			console.log('[@inth/sdk/server] SSR fetch returned no data');
 		}
 		return undefined;
 	}

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { matchPolicyRules, readPolicyResolutionWire } from '@c15t/schema';
+import { matchPolicyRules, readPolicyResolutionWire } from '@inth/sdk/schema';
 
 import { gvlEntryProblem } from './gvl-fields';
 

@@ -1,6 +1,6 @@
-import { createConsentKernel, getIABControls } from '@c15t/core';
-import { createIAB } from '@c15t/iab';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { createConsentKernel, getIABControls } from '@inth/sdk/engine';
+import { createIAB } from '@inth/sdk/iab';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { createRef } from 'react';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';

@@ -1,7 +1,7 @@
 // #region docs:integration-embed title="src/app/consent-embed.ts"
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { ConsentGate, ConsentGateContent } from '@c15t/angular/consent-gate';
+import { ConsentGate, ConsentGateContent } from '@inth/angular/consent-gate';
 
 import {
 	embedAspectRatio,

@@ -1,5 +1,5 @@
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createManifestTransport } from '../../transports/manifest';
@@ -68,14 +68,14 @@ describe('buildConsentSessionReport', () => {
 	test('describes a matched resolution and the inputs it ran on', async () => {
 		const init = await resolveInit();
 		const report = buildConsentSessionReport({
-			adapter: '@c15t/nextjs',
+			adapter: '@inth/nextjs',
 			init: init as never,
 			inputs: { country: 'DE', gpc: true, region: null },
 			manifest,
 			source: 'route',
 		});
 		expect(report).toMatchObject({
-			adapter: '@c15t/nextjs',
+			adapter: '@inth/nextjs',
 			country: 'DE',
 			gpc: true,
 			language: 'en',
@@ -220,7 +220,7 @@ describe('reportConsentSession', () => {
 		const registered: Promise<void>[] = [];
 
 		await reportConsentSession({
-			adapter: '@c15t/svelte',
+			adapter: '@inth/svelte',
 			fetch: fetchSpy,
 			headers: new Headers({
 				cookie: 'c15t=secret',
@@ -248,7 +248,7 @@ describe('reportConsentSession', () => {
 		expect(headers).not.toHaveProperty('cookie');
 		expect(typeof headers['x-c15t-version']).toBe('string');
 		expect(readBody(fetchSpy.mock.calls[0])).toMatchObject({
-			adapter: '@c15t/svelte',
+			adapter: '@inth/svelte',
 			country: 'DE',
 			revision: 'rev-1',
 			source: 'route',
@@ -493,7 +493,7 @@ describe('createManifestTransport report option', () => {
 			fetch: fetchSpy,
 			headers: { cookie: 'c15t=secret', 'x-forwarded-for': '203.0.113.42' },
 			projectUrl: 'https://consent.example.com',
-			report: { adapter: '@c15t/nextjs', source: 'render' },
+			report: { adapter: '@inth/nextjs', source: 'render' },
 			snapshot: manifest,
 		});
 
@@ -517,7 +517,7 @@ describe('createManifestTransport report option', () => {
 		expect(headers['x-c15t-client-ip']).toBe('203.0.113.42');
 		expect(headers).not.toHaveProperty('cookie');
 		expect(readBody(call)).toMatchObject({
-			adapter: '@c15t/nextjs',
+			adapter: '@inth/nextjs',
 			country: 'DE',
 			gpc: true,
 			policy: { id: 'eu-opt-in' },

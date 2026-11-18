@@ -15,13 +15,13 @@
  * @packageDocumentation
  */
 
-import type { ConsentKernel } from '@c15t/core';
+import type { ConsentKernel } from '@inth/sdk-core';
 
 import type { CornerPosition } from './trigger-utils';
 
 /**
  * Placement handed to DevTools; mirrors `DevToolsDock` from
- * `@c15t/dev-tools`, restated so trigger bundles never reach into the
+ * `@inth/sdk/devtools`, restated so trigger bundles never reach into the
  * DevTools package. Offsets are CSS pixels from the viewport edges of
  * `position`'s corner to the panel.
  */

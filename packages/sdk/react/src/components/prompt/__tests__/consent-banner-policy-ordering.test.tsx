@@ -1,4 +1,4 @@
-import { defaultTranslationConfig } from '@c15t/core';
+import { defaultTranslationConfig } from '@inth/sdk/engine';
 import type { ComponentProps } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

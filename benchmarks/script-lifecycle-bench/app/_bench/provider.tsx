@@ -1,12 +1,12 @@
 'use client';
 
-import { createConsentKernel, createHostedTransport } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
+import { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type {
 	Script,
 	ScriptLoaderHandle,
-} from '@c15t/core/modules/script-loader';
+} from '@inth/sdk/modules/script-loader';
 import {
 	createContext,
 	useContext,

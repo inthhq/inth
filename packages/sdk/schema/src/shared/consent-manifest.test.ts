@@ -1,4 +1,4 @@
-import { baseTranslations } from '@c15t/translations/all';
+import { baseTranslations } from '@inth/sdk-translations/all';
 import { assert, describe, expect, test } from 'vitest';
 
 import {

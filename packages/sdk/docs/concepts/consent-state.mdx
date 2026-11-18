@@ -245,7 +245,7 @@ withdrawn, and `__tcfapi` reports no consent until the next save. Vendors never
 receive a stale TC string: c15t withdraws it, or holds it back, before
 `__tcfapi` publishes.
 
-1. The `@c15t/iab` module loads the TC string the other tab stored, with its
+1. The `@inth/sdk/iab` module loads the TC string the other tab stored, with its
    purpose, vendor and special-feature selections, so `__tcfapi` and the
    preference controls show the choice now in force. Selections the visitor
    changed in this tab without saving are kept.
@@ -484,7 +484,7 @@ picks it up. To apply it at once, call the method yourself:
 // Runtime owners: returns true when any record changed.
 runtime.reconcileStorage();
 
-// Kernel owners with createPersistence from c15t/modules/persistence:
+// Kernel owners with createPersistence from @inth/sdk/modules/persistence:
 persistence.reconcile();
 ```
 

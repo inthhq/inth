@@ -1,7 +1,7 @@
 # HTML (script tag)
 
 The smallest c15t setup for a site without a build step: one script tag loads
-`@c15t/browser` from jsDelivr with the stock consent banner and dialog,
+`@inth/sdk` from jsDelivr with the stock consent banner and dialog,
 PostHog waits for measurement consent as an inert `text/plain` tag, and a
 "Privacy settings" link reopens the dialog.
 

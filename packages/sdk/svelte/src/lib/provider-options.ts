@@ -6,7 +6,7 @@
  * @internal
  */
 
-import type { ConsentRuntime } from '@c15t/core/runtime/provider';
+import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 import type { Snippet } from 'svelte';
 
 import { isIABConfigured, lazyCreateIAB, loadGPP } from './iab-loader';
@@ -82,12 +82,12 @@ export const runtimeOptionsFor = function runtimeOptionsFor(
 ) {
 	return {
 		...options,
-		// Only an app that configured IAB reaches for `@c15t/iab`, and even
+		// Only an app that configured IAB reaches for `@inth/sdk/iab`, and even
 		// then the module arrives through a dynamic import.
 		createIAB: isIABConfigured(options.iab) ? lazyCreateIAB : undefined,
 		// Called only when `gpp` is set, so other apps never fetch the chunk.
 		loadGPP,
 		mode: options.mode as ConsentManagerOptions['mode'],
-		pkg: '@c15t/svelte',
+		pkg: '@inth/svelte',
 	};
 };

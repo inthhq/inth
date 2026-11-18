@@ -1,5 +1,5 @@
 /**
- * `@c15t/browser/headless` — the client without any UI or CSS.
+ * `@inth/sdk/headless` — the client without any UI or CSS.
  *
  * For sites that render their own banner: subscribe to the client, call
  * `acceptAll()` / `rejectAll()` / `save()`, or mark page elements with
@@ -7,19 +7,19 @@
  *
  * @example
  * ```ts
- * import { init } from '@c15t/browser/headless';
+ * import { init } from '@inth/sdk-browser/headless';
  *
  * const c15t = init({ projectUrl: 'https://your-project.inth.app' });
  * c15t.on('ui', (surface) => banner.hidden = surface !== 'banner');
  * ```
  */
 
-import type { WithProjectUrl } from '@c15t/core/runtime';
+import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 
 import { createConsentClient as createClient } from './client';
 import type { ConsentClient, ConsentClientOptions } from './types';
 
-const PKG = '@c15t/browser/headless';
+const PKG = '@inth/sdk/headless';
 
 /**
  * Create the page's client without starting it. `mountUI()` throws.
@@ -52,17 +52,17 @@ export {
 	resolveConsentPresentation,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './client';
 export type { PageAction } from './client';
-export { getEventDispatcher } from '@c15t/core/events';
+export { getEventDispatcher } from '@inth/sdk-core/events';
 export type {
 	EventDispatcher,
 	EventProperties,
 	RuntimeEventDispatcherOptions as GetEventDispatcherOptions,
-} from '@c15t/core/events';
-export { hosted } from '@c15t/core/modes';
-export type { HostedMode } from '@c15t/core/modes';
+} from '@inth/sdk-core/events';
+export { hosted } from '@inth/sdk-core/modes';
+export type { HostedMode } from '@inth/sdk-core/modes';
 export {
 	ACTIVATED_ATTRIBUTE,
 	activateGatedScripts,
@@ -93,4 +93,4 @@ export type {
 	ResolvedVendor,
 	Vendor,
 	VendorChoice,
-} from '@c15t/core';
+} from '@inth/sdk-core';

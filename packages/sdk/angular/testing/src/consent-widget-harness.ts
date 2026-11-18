@@ -1,6 +1,6 @@
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
-import type { AllConsentNames } from '@c15t/angular';
+import type { AllConsentNames } from '@inth/angular';
 
 import { clickAction } from './click-action';
 import { SwitchHarness } from './switch-harness';

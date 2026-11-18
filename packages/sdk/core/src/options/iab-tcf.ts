@@ -8,8 +8,8 @@
  * @packageDocumentation
  */
 
-// GVL types are defined in @c15t/schema — re-export for internal consumers
-import type { GlobalVendorList } from '@c15t/schema/types';
+// GVL types are defined in @inth/sdk/schema — re-export for internal consumers
+import type { GlobalVendorList } from '@inth/sdk-schema/types';
 
 export type {
 	GlobalVendorList,
@@ -22,7 +22,7 @@ export type {
 	GVLStandardTexts,
 	GVLVendor,
 	GVLVendorUrl,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 /**
  * TCF consent data structure for generating TC Strings.
@@ -73,7 +73,7 @@ export interface TCFConsentData {
  *   1, 3, 4, 5 and 6, which TCF allows only with consent.
  *
  * Type `3` is reserved by the spec. Unsupported restrictions throw
- * `PublisherRestrictionError` from `@c15t/iab` instead of being dropped.
+ * `PublisherRestrictionError` from `@inth/sdk/iab` instead of being dropped.
  *
  * @public
  */

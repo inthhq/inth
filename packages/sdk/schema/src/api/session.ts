@@ -63,7 +63,7 @@ export const consentSessionJourneySchema = v.object({
  * never in the body, so the backend's IP handling applies unchanged.
  */
 export const consentSessionReportSchema = v.object({
-	/** Package that resolved init, for example `@c15t/nextjs`. */
+	/** Package that resolved init, for example `@inth/nextjs`. */
 	adapter: v.optional(v.string()),
 	country: v.nullable(v.string()),
 	/**

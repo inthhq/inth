@@ -6,8 +6,8 @@
  * `tsconfig.json` excludes the variant directories so neither side has to
  * type-check the other's imports.
  */
-import { ConsentBoundary } from '@c15t/nextjs';
-import type { ConsentBoundaryProps } from '@c15t/nextjs';
+import { ConsentBoundary } from '@inth/nextjs';
+import type { ConsentBoundaryProps } from '@inth/nextjs';
 import type { ComponentProps } from 'react';
 
 export type RootState = ConsentBoundaryProps['config'];

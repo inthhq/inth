@@ -128,7 +128,7 @@ const restoreSource = function restoreSource(iframe: HTMLIFrameElement): void {
  * with no category to follow, an undeclared slug the visitor turned off
  * stays off rather than loading in the window before the backend declares
  * it. An iframe whose `data-category` names no known category stays
- * blocked, as the on-demand hook in `@c15t/react` holds it.
+ * blocked, as the on-demand hook in `@inth/react` holds it.
  */
 export const reconcileIframe = function reconcileIframe(
 	iframe: HTMLIFrameElement,

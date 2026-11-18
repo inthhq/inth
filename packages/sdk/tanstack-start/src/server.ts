@@ -1,5 +1,5 @@
 /**
- * `@c15t/tanstack-start/server` server-only helpers.
+ * `@inth/tanstack-start/server` server-only helpers.
  *
  * Reads the incoming request (cookies + headers via `getRequest()` from
  * `@tanstack/react-start/server`) and produces a JSON-serializable
@@ -12,11 +12,11 @@
  * ```tsx
  * import { createRootRoute, Outlet } from '@tanstack/react-router';
  * import { createServerFn } from '@tanstack/react-start';
- * import { ConsentRoot } from '@c15t/tanstack-start';
+ * import { ConsentRoot } from '@inth/tanstack-start';
  * import {
  *   consentLoaderOptions,
  *   createConsentStateHandler,
- * } from '@c15t/tanstack-start/server';
+ * } from '@inth/tanstack-start/server';
  *
  * const getConsentState = createServerFn({ method: 'GET' }).handler(
  *   createConsentStateHandler()
@@ -39,7 +39,7 @@
  * ```
  *
  * The backend URL and the policy snapshot come from `consentManifest()` in
- * `vite.config.ts` (`@c15t/core/generated`). The state carries the backend
+ * `vite.config.ts` (`@inth/sdk/generated`). The state carries the backend
  * URL, the mode and the route prefix, so `ConsentRoot` needs nothing else.
  *
  * The state travels only through loader data, never through module state,
@@ -57,29 +57,29 @@
  * condition). Keep the two export lists in step.
  */
 
-import { mergeInitOutputIntoKernelConfig } from '@c15t/core';
+import { mergeInitOutputIntoKernelConfig } from '@inth/sdk/engine';
 import type {
 	ConsentJourneyOption,
 	ExperimentState,
 	JourneyState,
 	KernelConfig,
 	ServerExperiment,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import {
 	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
-} from '@c15t/core/generated';
-import type { ConsentMode } from '@c15t/core/modes';
+} from '@inth/sdk/generated';
+import type { ConsentMode } from '@inth/sdk/modes';
+import type { ConsentManifest, InitOutput } from '@inth/sdk/schema/types';
 import {
 	DEFAULT_CONSENT_ROUTE_PREFIX,
 	normalizeRoutePrefix,
 	resolveRequestConsent,
-} from '@c15t/core/server';
+} from '@inth/sdk/server';
 import type {
 	ManifestCache,
 	ResolveRequestConsentOptions,
-} from '@c15t/core/server';
-import type { ConsentManifest, InitOutput } from '@c15t/schema/types';
+} from '@inth/sdk/server';
 
 import { handledRequestFor } from './libs/handled-request';
 import { isPrerendering } from './libs/prerendering';
@@ -90,7 +90,7 @@ import {
 
 type Awaitable<Value> = Promise<Value> | Value;
 
-export type { ManifestCache } from '@c15t/core/server';
+export type { ManifestCache } from '@inth/sdk/server';
 
 /**
  * Where the helpers read the current request from. Defaults to
@@ -159,9 +159,9 @@ export interface ConsentRequestOptions {
 
 /**
  * Type alias re-exported so consumers can stay within
- * `@c15t/tanstack-start`.
+ * `@inth/tanstack-start`.
  */
-export type { KernelConfig } from '@c15t/core';
+export type { KernelConfig } from '@inth/sdk/engine';
 
 /**
  * Where the browser sends consent requests. {@link resolveConsent} puts it
@@ -202,13 +202,13 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * How the visitor's policy is resolved. The state carries it to
 	 * `ConsentRoot`.
 	 *
-	 * - Omitted, or `manifest()` from `@c15t/tanstack-start`: resolve here
+	 * - Omitted, or `manifest()` from `@inth/tanstack-start`: resolve here
 	 *   from the policy snapshot the build downloaded, or the backend's
 	 *   manifest. When it is unavailable, ask the backend's `/init` and log
 	 *   a warning. `manifest({ resolve: 'browser' })` leaves it to the
 	 *   browser.
 	 * - `hosted()`: ask the hosted backend's `/init` at `projectUrl`.
-	 * - `testing()` from `@c15t/tanstack-start/testing`: the server
+	 * - `testing()` from `@inth/tanstack-start/testing`: the server
 	 *   resolves nothing and the browser resolves a policy with no
 	 *   network; its transport throws in production builds.
 	 *
@@ -413,7 +413,7 @@ const clientConfigFor = function clientConfigFor(
 ): ConsentClientConfig {
 	if (options.proxy && routePrefix === undefined) {
 		throw new Error(
-			'@c15t/tanstack-start: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
+			'@inth/tanstack-start: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
 		);
 	}
 	const config: ConsentClientConfig = {};
@@ -440,7 +440,7 @@ const readRoutePrefix = function readRoutePrefix(
 ): string | undefined {
 	return options.routePrefix === undefined
 		? undefined
-		: normalizeRoutePrefix('@c15t/tanstack-start', options.routePrefix);
+		: normalizeRoutePrefix('@inth/tanstack-start', options.routePrefix);
 };
 
 const resolveConsentState = async function resolveConsentState(
@@ -459,7 +459,7 @@ const resolveConsentState = async function resolveConsentState(
 	}
 	const state = await resolveRequestConsent({
 		...server,
-		adapter: '@c15t/tanstack-start',
+		adapter: '@inth/tanstack-start',
 		cache: options.cache,
 		cookieNames: options.cookieNames,
 		experiment: options.experiment,
@@ -558,7 +558,7 @@ export { consentLoaderOptions } from './libs/loader-options';
  * @example
  * ```ts
  * import { createServerFn } from '@tanstack/react-start';
- * import { createConsentStateHandler } from '@c15t/tanstack-start/server';
+ * import { createConsentStateHandler } from '@inth/tanstack-start/server';
  *
  * export const getConsentState = createServerFn({ method: 'GET' }).handler(
  *   createConsentStateHandler()

@@ -1,7 +1,7 @@
 /**
  * The banner's static import graph must not reach the dialog's style map.
  *
- * A `@c15t/ui` class map imports its stylesheet, so a banner module that
+ * A `@inth/sdk/ui` class map imports its stylesheet, so a banner module that
  * imports the dialog's map puts the dialog stylesheet wherever the banner
  * goes. `description.vue` did, and in Nuxt that made the dialog's rules
  * (14.7 KB raw) part of every page's render-blocking entry CSS. The dialog
@@ -15,8 +15,8 @@ import { describe, expect, test } from 'vitest';
 const componentsDir = join(__dirname, '../runtime/components');
 
 const DIALOG_STYLE_MAPS = [
-	'@c15t/ui/styles/components/consent-dialog',
-	'@c15t/ui/styles/components/iab-consent-dialog',
+	'@inth/sdk/ui/styles/components/consent-dialog',
+	'@inth/sdk/ui/styles/components/iab-consent-dialog',
 ];
 
 /** Static (non-type) import specifiers of a module. */
@@ -77,7 +77,7 @@ describe('banner style imports', () => {
 	test('the dialog still imports its own style map', () => {
 		const graph = staticGraph(join(componentsDir, 'manager.vue'));
 		const importers = [...graph.entries()].filter(([, specifiers]) =>
-			specifiers.includes('@c15t/ui/styles/components/consent-dialog')
+			specifiers.includes('@inth/sdk/ui/styles/components/consent-dialog')
 		);
 
 		expect(importers.length).toBeGreaterThan(0);
@@ -89,7 +89,7 @@ const staticStylesheets = function staticStylesheets(entry: string): string[] {
 	return [...staticGraph(entry).values()]
 		.flat()
 		.filter((specifier) =>
-			/^@c15t\/ui\/styles\/components\/.+\.css$/u.test(specifier)
+			/^@inth\/sdk\/ui\/styles\/components\/.+\.css$/u.test(specifier)
 		);
 };
 
@@ -105,7 +105,7 @@ describe('root style imports', () => {
 	test('neither root imports the dialog trigger statically: it renders only after mount', () => {
 		for (const root of ['root.vue', 'nuxt-root.vue']) {
 			expect(staticStylesheets(join(componentsDir, root)), root).not.toContain(
-				'@c15t/ui/styles/components/consent-dialog-trigger.css'
+				'@inth/sdk/ui/styles/components/consent-dialog-trigger.css'
 			);
 		}
 	});

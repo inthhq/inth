@@ -41,7 +41,7 @@ const resolveWith = async function resolveWith(
 describe('class maps without CSS', () => {
 	it('points a browser class-map import at the variant with no CSS', async () => {
 		const { result } = await resolveWith(
-			'@c15t/ui/styles/components/consent-dialog',
+			'@inth/sdk/ui/styles/components/consent-dialog',
 			withCSS
 		);
 		expect(result).toBe(join(directory, 'panel.node.js'));
@@ -52,7 +52,7 @@ describe('class maps without CSS', () => {
 		['a server environment', {}, 'server'],
 	])('leaves %s alone', async (_name, options, consumer) => {
 		const { resolve, result } = await resolveWith(
-			'@c15t/ui/styles/components/consent-dialog',
+			'@inth/sdk/ui/styles/components/consent-dialog',
 			withCSS,
 			options,
 			consumer
@@ -63,7 +63,7 @@ describe('class maps without CSS', () => {
 
 	it('keeps IAB class-map CSS when only the base stylesheet is injected', async () => {
 		const { resolve, result } = await resolveWith(
-			'@c15t/ui/styles/components/iab-consent-dialog',
+			'@inth/sdk/ui/styles/components/iab-consent-dialog',
 			withCSS
 		);
 		expect(result).toBeNull();
@@ -72,7 +72,7 @@ describe('class maps without CSS', () => {
 
 	it('drops IAB class-map CSS when the IAB stylesheet is injected too', async () => {
 		const { result } = await resolveWith(
-			'@c15t/ui/styles/components/iab-consent-dialog',
+			'@inth/sdk/ui/styles/components/iab-consent-dialog',
 			withCSS,
 			{},
 			'client',
@@ -82,9 +82,9 @@ describe('class maps without CSS', () => {
 	});
 
 	it.each([
-		'@c15t/ui/styles/dialog.css',
-		'@c15t/ui/styles/primitives.css',
-		'@c15t/ui/styles/components/panel.css',
+		'@inth/sdk/ui/styles/dialog.css',
+		'@inth/sdk/ui/styles/primitives.css',
+		'@inth/sdk/ui/styles/components/panel.css',
 	])('empties the island import of %s, which the client links', async (id) => {
 		const { resolve, result } = await resolveWith(id, withCSS);
 		expect(result).toBe(EMPTY_STYLESHEET_ID);
@@ -98,7 +98,7 @@ describe('class maps without CSS', () => {
 
 	it('leaves the client its own `?url` import of a dialog stylesheet', async () => {
 		const { result } = await resolveWith(
-			'@c15t/ui/styles/primitives.css?url',
+			'@inth/sdk/ui/styles/primitives.css?url',
 			withCSS
 		);
 		expect(result).toBeNull();
@@ -106,7 +106,7 @@ describe('class maps without CSS', () => {
 
 	it('keeps IAB component CSS when only the base stylesheet is injected', async () => {
 		const { result } = await resolveWith(
-			'@c15t/ui/styles/components/iab-panel.css',
+			'@inth/sdk/ui/styles/components/iab-panel.css',
 			withCSS
 		);
 		expect(result).toBeNull();
@@ -114,7 +114,7 @@ describe('class maps without CSS', () => {
 
 	it('keeps stylesheet imports in the server build', async () => {
 		const { result } = await resolveWith(
-			'@c15t/ui/styles/dialog.css',
+			'@inth/sdk/ui/styles/dialog.css',
 			withCSS,
 			{
 				ssr: true,
@@ -125,7 +125,7 @@ describe('class maps without CSS', () => {
 
 	it('falls back when a class map has no variant without CSS', async () => {
 		const { result } = await resolveWith(
-			'@c15t/ui/styles/components/lonely',
+			'@inth/sdk/ui/styles/components/lonely',
 			lonely
 		);
 		expect(result).toBeNull();

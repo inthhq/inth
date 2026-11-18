@@ -12,12 +12,12 @@ import {
 	isDevMode,
 	PLATFORM_ID,
 } from '@angular/core';
-import type { Model, PromptPosition, PromptVariant } from '@c15t/core';
-import { replayEarlyConsentTaps } from '@c15t/core/surface-actions';
-import { resolveConsentPresentation } from '@c15t/core/surface-state';
-import type { PolicyRight } from '@c15t/schema/types';
-import styles from '@c15t/ui/styles/components/consent-banner';
-import { getTextDirection } from '@c15t/ui/utils/text-direction';
+import type { Model, PromptPosition, PromptVariant } from '@inth/sdk/engine';
+import type { PolicyRight } from '@inth/sdk/schema/types';
+import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
+import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import styles from '@inth/sdk/ui/styles/components/consent-banner';
+import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 
 import { ConsentManager } from '../core/consent-manager';
 import {

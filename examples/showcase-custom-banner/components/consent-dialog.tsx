@@ -4,14 +4,14 @@ import {
 	ConsentDraftProvider,
 	useConsentDraft,
 	useDeclaredVendors,
-} from 'c15t/next';
-import type { AllConsentNames } from 'c15t/next';
+} from '@inth/nextjs';
+import type { AllConsentNames } from '@inth/nextjs';
 import {
 	useFocusTrap,
 	useHeadlessConsentUI,
 	useTranslations,
-} from 'c15t/next/headless';
-import type { HeadlessConsentSurfaceAction } from 'c15t/next/headless';
+} from '@inth/nextjs/headless';
+import type { HeadlessConsentSurfaceAction } from '@inth/nextjs/headless';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 

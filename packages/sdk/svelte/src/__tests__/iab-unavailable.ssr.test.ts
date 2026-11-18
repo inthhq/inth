@@ -4,7 +4,7 @@
  * instead of shipping no consent UI.
  */
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import type { GlobalVendorList } from '@c15t/core';
+import type { GlobalVendorList } from '@inth/sdk/engine';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 

@@ -1,4 +1,4 @@
-import { init } from '@c15t/browser';
+import { init } from '@inth/sdk';
 
 import { scripts } from './scripts';
 import { testBackend } from './test-backend';

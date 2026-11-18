@@ -1,4 +1,4 @@
-import { useConsent } from 'c15t/react';
+import { useConsent } from '@inth/react';
 
 export const App = () => {
 	const measurement = useConsent('measurement');

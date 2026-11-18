@@ -29,11 +29,11 @@ you deploy.
 [Create an Inth project](https://inth.com), set its policy rules and add your
 site's origin to its trusted origins. Copy the project's backend URL.
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
 There is no c15t stylesheet to import. The components render their own rules
 as `<style>` elements, so no stylesheet request holds back the first paint.
-With Tailwind CSS 3, import `c15t/next/styles.css` yourself and set
+With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
 `styles: false` in `ConsentRoot`'s `options`, as
 [Customize](/docs/frameworks/next/customize#load-the-stylesheet-yourself)
 shows.
@@ -73,7 +73,7 @@ so it can hold `scripts` but must hold no secrets.
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `projectUrl` | `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${projectUrl}/subjects`. |
-| `mode` | `manifest()` | `manifest()`, `hosted()` or `testing()` from `c15t/next`. See [consent modes](/docs/concepts/modes). |
+| `mode` | `manifest()` | `manifest()`, `hosted()` or `testing()` from `@inth/nextjs`. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where you mount the [consent route](#initialize-in-the-browser). Set it only when some pages resolve consent in the browser. |
 | `proxy` | `false` | Send browser saves through the consent route too. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
 | `journey` | `'page'` | The consent journey scope. |
@@ -92,7 +92,7 @@ awaiting it:
 
 <include src="../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-The layout is a Server Component. `c15t/next` gives it `ConsentRoot`,
+The layout is a Server Component. `@inth/nextjs` gives it `ConsentRoot`,
 `ConsentBanner`, `ConsentDialog` and `ConsentDialogLink` as client components,
 so you write no `'use client'` wrapper. `ConsentRoot` already wraps
 `ConsentProvider`, so don't mount both.
@@ -187,7 +187,7 @@ Set `mode: hosted()` in `c15t.config.ts`:
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig, hosted } from 'c15t/next';
+import { defineConsentConfig, hosted } from '@inth/nextjs';
 
 export default defineConsentConfig({ mode: hosted() });
 ```

@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/astro",
+	"name": "@inth/astro",
 	"version": "3.2.0-canary.0",
 	"description": "Astro cookie consent banner for c15t, with server-rendered markup, preference center islands and geo-aware middleware.",
 	"keywords": [
@@ -52,7 +52,8 @@
 	],
 	"type": "module",
 	"sideEffects": [
-		"**/*.css"
+		"**/*.css",
+		"./dist/translations/*.js"
 	],
 	"main": "./dist/index.js",
 	"types": "./dist-types/index.d.ts",
@@ -66,6 +67,11 @@
 			"types": "./dist-types/client.d.ts",
 			"import": "./dist/client.js",
 			"default": "./dist/client.js"
+		},
+		"./devtools": {
+			"types": "./dist-types/devtools.d.ts",
+			"import": "./dist/devtools.js",
+			"default": "./dist/devtools.js"
 		},
 		"./middleware": {
 			"types": "./dist-types/middleware.d.ts",
@@ -121,6 +127,16 @@
 			"import": "./dist/postcss-tailwind3.js",
 			"default": "./dist/postcss-tailwind3.js"
 		},
+		"./engine": {
+			"types": "./dist-types/engine.d.ts",
+			"import": "./dist/engine.js",
+			"default": "./dist/engine.js"
+		},
+		"./translations/*": {
+			"types": "./dist-types/translations/*.d.ts",
+			"import": "./dist/translations/*.js",
+			"default": "./dist/translations/*.js"
+		},
 		"./package.json": "./package.json",
 		"./components/consent-script.astro": "./src/components/consent-script.astro",
 		"./components/consent-banner-deferred.astro": "./src/components/prompt-deferred.astro",
@@ -140,8 +156,8 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/astro",
+		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs && node ../shared/write-translation-entries.mjs dist dist-types",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/astro",
 		"check-types": "tsc --noEmit",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
@@ -151,12 +167,8 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/iab": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/svelte": "workspace:*",
-		"@c15t/translations": "workspace:*",
-		"@c15t/ui": "workspace:*"
+		"@inth/sdk": "workspace:*",
+		"@inth/svelte": "workspace:*"
 	},
 	"devDependencies": {
 		"@astrojs/react": "^6.0.6",
@@ -184,8 +196,8 @@
 		"vue": "^3.5.0"
 	},
 	"peerDependencies": {
-		"@c15t/react": "workspace:^",
-		"@c15t/vue": "workspace:^",
+		"@inth/react": "workspace:^",
+		"@inth/vue": "workspace:^",
 		"astro": "^5.0.0 || ^6.0.0 || ^7.0.0",
 		"react": "^18.0.0 || ^19.0.0",
 		"react-dom": "^18.0.0 || ^19.0.0",
@@ -196,10 +208,10 @@
 		"astro": {
 			"optional": true
 		},
-		"@c15t/react": {
+		"@inth/react": {
 			"optional": true
 		},
-		"@c15t/vue": {
+		"@inth/vue": {
 			"optional": true
 		},
 		"react": {

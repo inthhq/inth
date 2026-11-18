@@ -1,4 +1,4 @@
-import type { ConsentState } from '@c15t/core';
+import type { ConsentState } from '@inth/sdk-core';
 import { expect, test, vi } from 'vitest';
 
 import { createTestingConsentClient as createConsentClient } from '../testing-global';

@@ -19,10 +19,10 @@ Copy the app ID from your Intercom installation snippet, where it is set as
 `app_id`. If your workspace is hosted in the EU or Australia, also set
 `apiBase`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { intercom } from '@c15t/integrations/intercom';
+import { intercom } from '@inth/integrations/intercom';
 
 export const scripts = [intercom({ appId: 'YOUR_APP_ID' })];
 ```
@@ -34,7 +34,7 @@ export const scripts = [intercom({ appId: 'YOUR_APP_ID' })];
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `appId` | Required | Sets `app_id` and the loader URL. The helper trims it. Empty or whitespace-only values log an error and the script does not load. |
-| `apiBase` | `https://api-iam.intercom.io` | Regional API base. `INTERCOM_API_BASES` from `@c15t/integrations/intercom` lists `us`, `eu` and `au`. |
+| `apiBase` | `https://api-iam.intercom.io` | Regional API base. `INTERCOM_API_BASES` from `@inth/integrations/intercom` lists `us`, `eu` and `au`. |
 | `settings` | None | Extra JSON-serializable settings merged into `window.intercomSettings`. `appId` and `apiBase` override any `app_id` or `api_base` here. |
 | `scriptSrc` | `https://widget.intercom.io/widget/<appId>` | Loader URL override. A blank value falls back to the default. |
 

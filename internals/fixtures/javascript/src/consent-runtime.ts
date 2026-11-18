@@ -1,4 +1,4 @@
-import { createConsentRuntime } from 'c15t/runtime';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 
 import { scripts } from './scripts';
 import { testBackend } from './test-backend';

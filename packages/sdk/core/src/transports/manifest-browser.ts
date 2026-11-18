@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/transports/manifest-browser` — resolve `/init` in the browser
+ * `@inth/sdk/transports/manifest-browser` — resolve `/init` in the browser
  * from the backend's consent manifest.
  *
  * The manifest is the location-independent half of the backend's decision:
@@ -8,17 +8,17 @@
  * backend.
  *
  * Only English base copy is bundled. Another language's base copy loads
- * with `import('@c15t/translations/<lang>')` the first time a visitor
+ * with `import('@inth/sdk/translations/<lang>')` the first time a visitor
  * resolves to it, so each language is its own chunk. A manifest carries the
  * project's own copy for every language it customizes.
  *
- * Server code resolves with `@c15t/core/transports/manifest`, which bundles
+ * Server code resolves with `@inth/sdk/transports/manifest`, which bundles
  * every language. Never import that module in client code.
  */
 import type {
 	ConsentManifest,
 	ResolveInitFromManifestInputs,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import { createUnreportedJourneys } from '../libs/journey';
 import { warnManifestFallback } from '../libs/manifest-fallback';
@@ -74,7 +74,7 @@ export type BrowserManifestOptions = ManifestModeBaseOptions &
 /**
  * What {@link manifest} returns: a transport factory that also carries its
  * options as enumerable data, so it satisfies `ManifestMode` from
- * `@c15t/core/modes`.
+ * `@inth/sdk/modes`.
  */
 export type BrowserManifestModeFactory = ProviderTransportFactory &
 	Readonly<BrowserManifestOptions> & {
@@ -475,9 +475,9 @@ export const createBrowserManifestTransport =
  * Resolve init in the browser from the backend's consent manifest.
  *
  * The single-page app `manifest()`: React, the Vue plugin, Svelte and
- * `@c15t/browser` re-export it. It always resolves in the browser, so it
+ * `@inth/sdk` re-export it. It always resolves in the browser, so it
  * has no `resolve` option. Server-framework packages take the data
- * `manifest()` from `@c15t/core/modes` instead.
+ * `manifest()` from `@inth/sdk/modes` instead.
  *
  * @param options - Manifest source and backend.
  * @returns A transport factory for `mode`, carrying its options. Each call
@@ -486,7 +486,7 @@ export const createBrowserManifestTransport =
  * is given, or a backend can't be derived and `projectUrl` is omitted.
  * @example
  * ```ts
- * import { manifest } from '@c15t/core/transports/manifest-browser';
+ * import { manifest } from '@inth/sdk-core/transports/manifest-browser';
  *
  * const mode = manifest({ projectUrl: 'https://your-project.inth.app' });
  * ```

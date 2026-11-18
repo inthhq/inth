@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular/consent-widget`: the preference widget, on its own or in
+ * `@inth/angular/consent-widget`: the preference widget, on its own or in
  * the consent dialog, and the stylesheets they render.
  *
  * @packageDocumentation

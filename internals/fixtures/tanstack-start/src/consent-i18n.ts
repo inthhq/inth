@@ -1,4 +1,4 @@
-import type { ConsentProviderOptions } from 'c15t/tanstack-start';
+import type { ConsentProviderOptions } from '@inth/tanstack-start';
 
 // Keys you leave out keep the copy from your Inth project.
 export const i18n = {

@@ -1,7 +1,7 @@
 import type {
 	ClassNameStyle as BaseClassNameStyle,
 	Theme as BaseTheme,
-} from '@c15t/ui/theme';
+} from '@inth/sdk/ui/theme';
 import type { CSSProperties } from 'react';
 
 export type {
@@ -12,7 +12,7 @@ export type {
 	ShadowTokens,
 	SpacingTokens,
 	TypographyTokens,
-} from '@c15t/ui/theme';
+} from '@inth/sdk/ui/theme';
 
 /**
  * Represents CSS properties with optional CSS variables.

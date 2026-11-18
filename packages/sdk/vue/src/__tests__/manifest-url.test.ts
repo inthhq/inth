@@ -1,4 +1,4 @@
-import type { ConsentKernel } from '@c15t/core';
+import type { ConsentKernel } from '@inth/sdk/engine';
 /**
  * A `manifestUrl` passed to the Vue plugin's `manifest()` is fetched at
  * runtime, even when `consentManifest()` bundled a snapshot.
@@ -6,8 +6,8 @@ import type { ConsentKernel } from '@c15t/core';
 import {
 	createConsentManifestPolicyPack,
 	policyRulePresets,
-} from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, inject } from 'vue';
 

@@ -1,6 +1,6 @@
 import { keyboardNavigation, tabSwitching } from '@c15t/conformance/play/tabs';
-import { getNextTabValue } from '@c15t/ui/primitives';
-import { tabsVariants } from '@c15t/ui/styles/primitives';
+import { getNextTabValue } from '@inth/sdk/ui/primitives';
+import { tabsVariants } from '@inth/sdk/ui/styles/primitives';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { nextTick, ref } from 'vue';
 

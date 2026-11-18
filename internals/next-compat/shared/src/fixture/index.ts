@@ -1,4 +1,3 @@
-import { resolvePolicyRules, writePolicyResolutionWire } from '@c15t/core';
 /**
  * In-process stand-in for the c15t backend.
  *
@@ -9,11 +8,15 @@ import { resolvePolicyRules, writePolicyResolutionWire } from '@c15t/core';
  * they work in App Router route handlers, Pages API routes, and plain Node
  * servers alike.
  */
-import type { StaticConsentResolverOptions } from '@c15t/nextjs/static';
+import type { StaticConsentResolverOptions } from '@inth/nextjs/static';
+import {
+	resolvePolicyRules,
+	writePolicyResolutionWire,
+} from '@inth/sdk/engine';
 
 /**
- * The manifest type `@c15t/nextjs/static` resolves from, reached through the
- * package so the fixture needs no direct `@c15t/schema` dependency. Typing
+ * The manifest type `@inth/nextjs/static` resolves from, reached through the
+ * package so the fixture needs no direct `@inth/sdk/schema` dependency. Typing
  * the payload keeps the stub honest: `createStaticManifestModule` emits the
  * fetched JSON with `satisfies ConsentManifest`, so any field the schema
  * does not know fails the static export cell's type check.
@@ -98,7 +101,7 @@ if (resolution.status !== 'matched') {
 	const reason = 'reason' in resolution ? ` (${resolution.reason})` : '';
 	throw new Error(
 		`Expected fixture policy to match, got status "${resolution.status}"${reason}. ` +
-			'Run inspectPolicyRules from @c15t/schema on the fixture rules to see the validation errors.'
+			'Run inspectPolicyRules from @inth/sdk/schema on the fixture rules to see the validation errors.'
 	);
 }
 const rule = resolution.policy;
@@ -131,7 +134,7 @@ const NO_STORE = { 'cache-control': 'no-store' } as const;
 /**
  * A v3 `/manifest` payload: one default policy pack plus translations, the
  * shape `resolveInitFromManifest` expects. Served with the backend's usual
- * `s-maxage` so the same-origin route in `@c15t/nextjs/api` can cache it.
+ * `s-maxage` so the same-origin route in `@inth/nextjs/api` can cache it.
  */
 export const buildManifestResponse =
 	function buildManifestResponse(): CompatManifest {

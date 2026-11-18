@@ -1,6 +1,6 @@
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
-import type { ConsentButtonAction } from '@c15t/angular';
+import type { ConsentButtonAction } from '@inth/angular';
 
 /** Filters for {@link ConsentButtonHarness} instances. */
 export interface ConsentButtonHarnessFilters extends BaseHarnessFilters {

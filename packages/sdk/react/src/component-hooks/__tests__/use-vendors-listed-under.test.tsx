@@ -1,4 +1,4 @@
-import type { ResolvedVendor, Vendor } from '@c15t/core';
+import type { ResolvedVendor, Vendor } from '@inth/sdk/engine';
 import { describe, expect, test, vi } from 'vitest';
 import { renderHook } from 'vitest-browser-react';
 
@@ -9,7 +9,7 @@ import { useKernel } from '~/kernel-selector';
 import { testing } from '../../testing';
 import { useVendorsListedUnder } from '../use-vendors-listed-under';
 
-// What an `@c15t/integrations` helper puts on its script: a vendor slug and
+// What an `@inth/integrations` helper puts on its script: a vendor slug and
 // the vendor's name and privacy policy, with no entry in `vendors`.
 const helperScript = {
 	category: 'measurement' as const,

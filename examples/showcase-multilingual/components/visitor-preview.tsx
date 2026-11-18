@@ -1,6 +1,6 @@
 'use client';
 
-import { useInit, useModel, useOverrides, useSetOverrides } from 'c15t/next';
+import { useInit, useModel, useOverrides, useSetOverrides } from '@inth/nextjs';
 import { useEffect, useId } from 'react';
 
 import type { Dictionary } from '@/lib/dictionaries';

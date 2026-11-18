@@ -1,4 +1,4 @@
-import type { AllConsentNames, HasCondition, Script } from '@c15t/core';
+import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
 import { compileManifest } from '../../engine/compile';
 import { resolvedManifestToScript } from '../../engine/runtime';

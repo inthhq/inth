@@ -1,5 +1,5 @@
 /**
- * `@c15t/core` — kernel-first consent engine.
+ * `@inth/sdk/engine` — kernel-first consent engine.
  *
  * Design goals:
  * - Pure construction: `createConsentKernel()` has zero side effects.
@@ -8,7 +8,7 @@
  *   No store library types leaked. Adapters own reactivity.
  * - Isomorphic-safe: imports cleanly in Node, RSC, edge runtimes.
  * - Opt-in side effects: persistence, blockers, script loader, banner fetch
- *   live in `@c15t/core/modules/*` — adapters call them inside useEffect /
+ *   live in `@inth/sdk/modules/*` — adapters call them inside useEffect /
  *   onMounted / onMount. Never at kernel construction.
  */
 
@@ -267,13 +267,13 @@ export type {
 	LegalLinksTranslations,
 	TranslationConfig,
 	Translations,
-} from '@c15t/translations';
+} from '@inth/sdk-translations';
 export {
 	deepMergeTranslations,
 	detectBrowserLanguage,
 	mergeTranslationConfigs,
 	prepareTranslationConfig,
-} from '@c15t/translations';
+} from '@inth/sdk-translations';
 export {
 	applyTranslationOverrides,
 	defaultTranslationConfig,
@@ -290,7 +290,7 @@ export type {
 	PolicyRule,
 	PolicyRulePresets,
 	RecommendedPolicyRulesOptions,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 export {
 	normalizePolicyRule,
 	policyRulePresets,
@@ -299,7 +299,7 @@ export {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 	safeFallbackPolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 export {
 	PROMPT_VARIANT_DEFAULT_POSITION,
 	PROMPT_VARIANT_POSITIONS,

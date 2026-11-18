@@ -7,9 +7,9 @@
  * Kept apart from `root-script-loader-preload.test.tsx`: the mocked module
  * evaluates once per file, so each file can show one load.
  */
-import type * as ScriptLoaderModule from '@c15t/core/modules/script-loader';
-import type { Script } from '@c15t/core/modules/script-loader';
-import type { ExternalConsentSource } from '@c15t/core/runtime';
+import type * as ScriptLoaderModule from '@inth/sdk/modules/script-loader';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import type { ExternalConsentSource } from '@inth/sdk/runtime';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -24,7 +24,7 @@ const OFFLINE_CONFIG = { mode: testing() };
 const loads = vi.hoisted(() => ({ evaluated: 0, loaded: 0 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is when this module loads; counting its evaluation is the only view of that from a test.
-vi.mock('@c15t/core/modules/script-loader', async (importOriginal) => {
+vi.mock('@inth/sdk/modules/script-loader', async (importOriginal) => {
 	loads.evaluated += 1;
 	const module = await importOriginal<typeof ScriptLoaderModule>();
 	loads.loaded += 1;

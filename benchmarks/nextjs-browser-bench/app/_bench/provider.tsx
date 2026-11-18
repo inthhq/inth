@@ -1,8 +1,5 @@
 'use client';
 
-// The provider arms take transports; `hosted` from `@c15t/nextjs` is data.
-import { hosted as hostedTransport } from '@c15t/core/transports';
-import { createManifestTransport } from '@c15t/core/transports/manifest';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -10,12 +7,15 @@ import {
 	ConsentRoot,
 	hosted,
 	manifest,
-} from '@c15t/nextjs';
+} from '@inth/nextjs';
 import type {
 	ConsentProviderOptions,
 	ConsentRootProps,
 	WithProjectUrl,
-} from '@c15t/nextjs';
+} from '@inth/nextjs';
+// The provider arms take transports; `hosted` from `@inth/nextjs` is data.
+import { hosted as hostedTransport } from '@inth/sdk/transports';
+import { createManifestTransport } from '@inth/sdk/transports/manifest';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 

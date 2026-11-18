@@ -4,8 +4,8 @@
  * runtime, as it does on an Astro page with `ui: 'react'`.
  */
 
-import { createConsentRuntime } from '@c15t/core/runtime';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, beforeAll, expect, it, vi } from 'vitest';
 
 // Vite compiles the island's whole component tree on first import. That

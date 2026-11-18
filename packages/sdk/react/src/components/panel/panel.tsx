@@ -1,6 +1,6 @@
 'use client';
 
-import type * as C15tCoreTypes from '@c15t/core';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
 /**
  * @packageDocumentation
  * Default implementation of the Consent Dialog that ships with c15t.

@@ -1,5 +1,5 @@
 /**
- * `testing()` from `@c15t/react/testing` in a provider: the banner
+ * `testing()` from `@inth/react/testing` in a provider: the banner
  * and the choice work with no backend, and the location override picks the
  * policy.
  */

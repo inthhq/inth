@@ -1,5 +1,5 @@
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import { mount } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { defineComponent, h, nextTick, provide, ref } from 'vue';
@@ -64,7 +64,7 @@ afterEach(() => {
 	}
 });
 
-describe('@c15t/vue/devtools', () => {
+describe('@inth/vue/devtools', () => {
 	test('keeps explicit service callbacks live without remounting', async () => {
 		const firstClear = vi.fn();
 		const nextClear = vi.fn();

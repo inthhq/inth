@@ -1,4 +1,4 @@
-import { useInit, useSetLanguage, useSnapshot } from 'c15t/react';
+import { useInit, useSetLanguage, useSnapshot } from '@inth/react';
 
 const languages = [
 	{ code: 'en', label: 'English' },

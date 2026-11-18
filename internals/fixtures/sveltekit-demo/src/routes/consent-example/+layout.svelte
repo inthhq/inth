@@ -4,7 +4,7 @@
 		ConsentDialog,
 		ConsentDialogLink,
 		ConsentRoot,
-	} from '@c15t/svelte';
+	} from '@inth/svelte';
 
 	import { scripts } from '#lib/example-scripts.js';
 

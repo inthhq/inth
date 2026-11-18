@@ -8,7 +8,7 @@ group: frameworks
 
 **Check.** `vite build` and `vite dev` download the policy through the
 `consentManifest` plugin in `vite.config.ts`. `vite build` stops with an
-error that starts with `@c15t/svelte/vite: could not fetch the consent
+error that starts with `@inth/svelte/vite: could not fetch the consent
 manifest`, and `vite dev` logs it as a warning. The part in parentheses names
 the cause:
 
@@ -68,7 +68,7 @@ SvelteKit does that. See [choose your setup](/docs/concepts/choose-your-setup).
 
 **Check.** An import from an earlier v3 alpha fails, such as
 `ConsentManagerProvider`, `Frame` or `consentManifest({ outputFile })`.
-`@c15t/svelte` was not public in v2, so the alphas renamed these with no
+`@inth/svelte` was not public in v2, so the alphas renamed these with no
 alias.
 
 **Fix.** Use the current names:
@@ -78,13 +78,13 @@ alias.
 | `ConsentManagerProvider` | `ConsentProvider` |
 | `Frame` | `ConsentGate` |
 | `hosted({ url })` | `hosted()` with `VITE_C15T_BACKEND_URL`, or the provider's `projectUrl` prop |
-| `ConsentManifestOptions`, `consentManifest({ outputFile })` | Removed. `consentManifest()` serves the snapshot as `c15t/generated`. |
+| `ConsentManifestOptions`, `consentManifest({ outputFile })` | Removed. `consentManifest()` serves the snapshot as `@inth/svelte/generated`. |
 
 ## More help
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
 every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because npm installed c15t v2, choices that disappear on
+imports that fail because the wrong package is installed, choices that disappear on
 reload, server HTML that differs from the browser, static builds that fail and
 content blockers that hide the consent UI. [Verify
 consent](/docs/guides/verify-consent) lists the checks to run before release.

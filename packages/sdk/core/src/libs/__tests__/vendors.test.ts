@@ -1,4 +1,4 @@
-import type { VendorCategoryCondition } from '@c15t/schema/types';
+import type { VendorCategoryCondition } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';

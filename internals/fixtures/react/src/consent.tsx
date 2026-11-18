@@ -3,7 +3,7 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-} from 'c15t/react';
+} from '@inth/react';
 import type { ReactNode } from 'react';
 
 import { scripts } from './scripts';

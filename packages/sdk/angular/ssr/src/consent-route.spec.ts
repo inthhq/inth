@@ -7,7 +7,7 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
-import { clearManifestCache } from '@c15t/core/server';
+import { clearManifestCache } from '@inth/sdk/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { MANIFEST_FIXTURE } from './__tests__/manifest-fixture';
@@ -84,7 +84,7 @@ describe('createConsentRoute', () => {
 		expect(response?.status).toBe(201);
 		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
-		expect(headers.get('x-c15t-proxy')).toBe('@c15t/angular');
+		expect(headers.get('x-c15t-proxy')).toBe('@inth/angular');
 		expect(headers.get('x-forwarded-host')).toBe('shop.example');
 	});
 

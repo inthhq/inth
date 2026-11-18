@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular/testing`: `testing()`, which runs the consent flow
+ * `@inth/angular/testing`: `testing()`, which runs the consent flow
  * with no backend, and Angular CDK component harnesses for the c15t
  * consent surfaces, for your own TestBed tests.
  *

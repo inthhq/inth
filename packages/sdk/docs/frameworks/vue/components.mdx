@@ -12,7 +12,7 @@ inside the app that called `app.use(c15tVue, ...)`. Each component imports its
 own styles; there is no stylesheet to add.
 
 Import every component except `ConsentDevTools` by name from
-`c15t/vue/vue-plugin`. A bundler keeps only the components you import.
+`@inth/vue/vue-plugin`. A bundler keeps only the components you import.
 
 | Component | What it renders |
 | --- | --- |
@@ -25,12 +25,12 @@ Import every component except `ConsentDevTools` by name from
 | [`ConsentGate`](/docs/frameworks/vue/components/consent-gate) | Its default slot while a category is allowed, otherwise its `placeholder` slot. |
 | [`IABConsentBanner`](/docs/frameworks/vue/components/iab-consent-banner) | The IAB TCF first layer. |
 | [`IABConsentDialog`](/docs/frameworks/vue/components/iab-consent-dialog) | The IAB TCF preference centre. |
-| [`ConsentDevTools`](/docs/frameworks/vue/components/dev-tools) | A development panel for the consent runtime, from `c15t/vue/devtools`. |
+| [`ConsentDevTools`](/docs/frameworks/vue/components/dev-tools) | A development panel for the consent runtime, from `@inth/vue/devtools`. |
 
 {/* example: fragment */}
 
 ```ts
-import { ConsentDialogLink, ConsentGate } from 'c15t/vue/vue-plugin';
+import { ConsentDialogLink, ConsentGate } from '@inth/vue/vue-plugin';
 ```
 
 The components ship as `.vue` files. Keep
@@ -48,9 +48,9 @@ different variant per route or want to place the surfaces yourself.
 ## Building blocks
 
 The stock surfaces are built from smaller components that
-`c15t/vue/vue-plugin` also exports: `ConsentButton`, `ConsentSwitch`,
+`@inth/vue/vue-plugin` also exports: `ConsentButton`, `ConsentSwitch`,
 `ConsentActions`, `ConsentLink`, `ConsentDescription`, `ConsentTag` and
 `ConsentBrandingIcon`. `ConsentLegalLinks` is only at
-`c15t/vue/runtime/components/consent-legal-links.vue`. For consent UI in your own markup, use the
+`@inth/vue/runtime/components/consent-legal-links.vue`. For consent UI in your own markup, use the
 [headless composables](/docs/frameworks/vue/headless) instead. They give you
 the policy's actions and the draft state without the stock markup.

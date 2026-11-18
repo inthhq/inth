@@ -1,16 +1,16 @@
+import {
+	resolvePolicyRules,
+	writePolicyResolutionWire,
+} from '@inth/sdk/schema/types';
 /**
  * Wiring tests for `loadConsent` on top of `resolveRequestConsent` from
- * `@c15t/core/server`. The core suite pins the rules (forwarding, budget,
+ * `@inth/sdk/server`. The core suite pins the rules (forwarding, budget,
  * self-route guard, deferral, experiment); these check what SvelteKit
  * supplies: the config and inputs `c15tHandle` stored, `event.url`,
  * `event.fetch` as the in-process fetch, the platform's `waitUntil`, and
  * SvelteKit's `building` flag.
  */
-import { clearManifestCache } from '@c15t/core/server';
-import {
-	resolvePolicyRules,
-	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { testing } from '../../testing';

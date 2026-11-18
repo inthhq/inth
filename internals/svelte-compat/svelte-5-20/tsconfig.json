@@ -1,7 +1,7 @@
 {
 	"extends": "./.svelte-kit/tsconfig.json",
 	"compilerOptions": {
-		// The workspace also holds the Svelte and SvelteKit that @c15t/svelte
+		// The workspace also holds the Svelte and SvelteKit that @inth/svelte
 		// builds with, and their declarations clash with these pinned ones.
 		// An app has one copy of each.
 		"skipLibCheck": true,

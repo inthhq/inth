@@ -7,8 +7,8 @@
  * rejected promise, provider overrides, records cleared while it streams)
  * is the runtime's `streamPrefetch` module, tested in core.
  */
-import type { ConsentKernel, KernelConfig } from '@c15t/core';
-import { hosted } from '@c15t/core/transports';
+import type { ConsentKernel, KernelConfig } from '@inth/sdk/engine';
+import { hosted } from '@inth/sdk/transports';
 import { useContext, useEffect } from 'react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

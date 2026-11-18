@@ -182,7 +182,7 @@ export const createBenchmarkPlan = function createBenchmarkPlan(
 	return {
 		// The Nuxt runner records results under the Vue adapter's package name.
 		expectedPackages: packages.map((name) =>
-			name === '@c15t/nuxt-browser-bench' ? '@c15t/vue' : name
+			name === '@c15t/nuxt-browser-bench' ? '@inth/vue' : name
 		),
 		only: shard?.only ?? [],
 		packages,

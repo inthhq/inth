@@ -1,4 +1,4 @@
-import type { VendorCategoryCondition } from '@c15t/schema/types';
+import type { VendorCategoryCondition } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { createConsentKernel } from '..';

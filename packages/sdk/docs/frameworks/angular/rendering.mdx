@@ -9,13 +9,13 @@ group: frameworks
 | Your app | Setup |
 | --- | --- |
 | Browser-only Angular app served as static files | `provideC15t()` with `hosted()`, as in the [quickstart](/docs/frameworks/angular/quickstart). The banner mounts after the app bootstraps. |
-| Angular with `@angular/ssr` and a Node server | `provideC15tServer()` and `createConsentRoute()` from `@c15t/angular/ssr`. The banner is in the first HTML, and the browser only talks to your origin. This page. |
+| Angular with `@angular/ssr` and a Node server | `provideC15tServer()` and `createConsentRoute()` from `@inth/angular/ssr`. The banner is in the first HTML, and the browser only talks to your origin. This page. |
 | Prerendered routes (`RenderMode.Prerender`) | Every visitor gets the same HTML, so it carries no visitor's consent. The browser resolves consent after hydration. See [prerendered and cached pages](#prerendered-and-cached-pages). |
-| Tests with no backend | `testing()` from `@c15t/angular/testing`, which the server resolves from its own rules. Throws in production builds. |
+| Tests with no backend | `testing()` from `@inth/angular/testing`, which the server resolves from its own rules. Throws in production builds. |
 
-`@c15t/angular/ssr` needs `@angular/ssr` and `@angular/platform-server`
+`@inth/angular/ssr` needs `@angular/ssr` and `@angular/platform-server`
 20, 21 or 22. An app created with `ng new --ssr`, or after `ng add @angular/ssr`,
-has both. They are optional peer dependencies of `@c15t/angular`, so a
+has both. They are optional peer dependencies of `@inth/angular`, so a
 browser-only app does not install them.
 
 ## How server rendering works

@@ -38,7 +38,7 @@ The proxy runs on Next.js `^15.0.0 || ^16.0.0`. It does not apply to a
 Create `proxy.ts` at the project root, or in `src/` if your app lives there:
 
 ```ts title="proxy.ts"
-import { c15tProxy } from 'c15t/next/proxy';
+import { c15tProxy } from '@inth/nextjs/proxy';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
@@ -67,7 +67,7 @@ location.
 On Next.js 15 the file is `middleware.ts` and the export is `middleware`:
 
 ```ts title="middleware.ts"
-import { c15tMiddleware } from 'c15t/next/middleware';
+import { c15tMiddleware } from '@inth/nextjs/middleware';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
@@ -82,7 +82,7 @@ export const config = {
 `c15tMiddleware` is the same function as `c15tProxy` under the Next.js 15
 name. Both imports stay supported on both Next.js versions. When you upgrade to
 Next.js 16 and rename `middleware.ts` to `proxy.ts`, switch the import to
-`c15tProxy` from `c15t/next/proxy` at the same time. The options type is
+`c15tProxy` from `@inth/nextjs/proxy` at the same time. The options type is
 exported as `C15tMiddlewareOptions` and `C15tProxyOptions` respectively.
 
 ## Persist geography in cookies
@@ -95,7 +95,7 @@ the incoming request, so the first visit still resolves as unknown and the
 first request after a location change still sees the previous value:
 
 ```ts title="proxy.ts"
-import { c15tProxy } from 'c15t/next/proxy';
+import { c15tProxy } from '@inth/nextjs/proxy';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
@@ -123,8 +123,8 @@ cookie, read it where you call `resolveConsent` and pass it as the
 `country` override:
 
 ```tsx title="app/layout.tsx (partial)"
-import { ConsentRoot } from 'c15t/next';
-import { resolveConsent } from 'c15t/next/server';
+import { ConsentRoot } from '@inth/nextjs';
+import { resolveConsent } from '@inth/nextjs/server';
 import { cookies } from 'next/headers';
 
 async function resolveVisitorConsent() {
@@ -162,7 +162,7 @@ resolution and use it only for non-policy code such as display defaults.
 ## Which headers are read?
 
 `c15tProxy` and the server helpers use the same extraction from
-`@c15t/schema`. Within each group, the first header with a value wins:
+`@inth/sdk/schema`. Within each group, the first header with a value wins:
 
 | Input | Headers, highest precedence first | Source |
 | --- | --- | --- |
@@ -183,7 +183,7 @@ Clear every country and region input c15t recognizes before mapping the
 trusted CloudFront values:
 
 ```ts title="proxy.ts"
-import { c15tProxy } from 'c15t/next/proxy';
+import { c15tProxy } from '@inth/nextjs/proxy';
 import { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {

@@ -133,9 +133,12 @@ describe('Next.js build-time manifest', () => {
 		const server = join(root, CACHE, 'manifest.js');
 		const browser = join(root, CACHE, 'manifest.browser.js');
 		const specifiers = [
-			'@c15t/nextjs/generated-manifest',
-			'@c15t/core/generated',
-			'c15t/generated',
+			'@inth/nextjs/generated-manifest',
+			'@inth/sdk/generated',
+			'@inth/nextjs/generated',
+			'@inth/react/generated',
+			'@inth/svelte/generated',
+			'@inth/tanstack-start/generated',
 		];
 
 		const turbopackAlias = config.turbopack?.resolveAlias ?? {};
@@ -172,7 +175,7 @@ describe('Next.js build-time manifest', () => {
 			...Object.fromEntries(specifiers.map((name) => [`${name}$`, browser])),
 			...Object.fromEntries(
 				sheets.map((name) => [
-					`@c15t/ui/styles/sheets/${name}$`,
+					`@inth/sdk/ui/styles/sheets/${name}$`,
 					expect.stringMatching(
 						new RegExp(`sheets/${name}-deferred\\.js$`, 'u')
 					),
@@ -181,7 +184,7 @@ describe('Next.js build-time manifest', () => {
 			existing: '/existing.js',
 		});
 		for (const name of sheets) {
-			expect(turbopackAlias[`@c15t/ui/styles/sheets/${name}`]).toEqual({
+			expect(turbopackAlias[`@inth/sdk/ui/styles/sheets/${name}`]).toEqual({
 				browser: expect.stringMatching(
 					new RegExp(`sheets/${name}-deferred\\.js$`, 'u')
 				),
@@ -201,7 +204,7 @@ describe('Next.js build-time manifest', () => {
 				{ defaultConfig: {} }
 			);
 
-			expect(config.turbopack?.resolveAlias?.['@c15t/nextjs/user-config']).toBe(
+			expect(config.turbopack?.resolveAlias?.['@inth/nextjs/user-config']).toBe(
 				`./${file}`
 			);
 			const webpack = config.webpack as NonNullable<typeof config.webpack>;
@@ -209,7 +212,7 @@ describe('Next.js build-time manifest', () => {
 				const resolved = webpack({}, { isServer } as never) as {
 					resolve: { alias: Record<string, string> };
 				};
-				expect(resolved.resolve.alias['@c15t/nextjs/user-config$']).toBe(
+				expect(resolved.resolve.alias['@inth/nextjs/user-config$']).toBe(
 					join(root, file)
 				);
 			}
@@ -224,7 +227,7 @@ describe('Next.js build-time manifest', () => {
 		);
 
 		expect(config.turbopack?.resolveAlias).not.toHaveProperty(
-			'@c15t/nextjs/user-config'
+			'@inth/nextjs/user-config'
 		);
 	});
 
@@ -232,7 +235,7 @@ describe('Next.js build-time manifest', () => {
 		await createRoot();
 		const config = await withConsentManifest(
 			{
-				serverExternalPackages: ['@c15t/core'],
+				serverExternalPackages: ['@inth/sdk'],
 				transpilePackages: ['ui-kit', 'c15t'],
 			},
 			optionsFor()
@@ -242,7 +245,7 @@ describe('Next.js build-time manifest', () => {
 		expect(config.transpilePackages).toEqual([
 			'ui-kit',
 			'c15t',
-			'@c15t/nextjs',
+			'@inth/nextjs',
 		]);
 	});
 
@@ -256,7 +259,7 @@ describe('Next.js build-time manifest', () => {
 		await expect(
 			wrapped('phase-production-build', { defaultConfig: {} })
 		).rejects.toThrow(
-			"@c15t/nextjs/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (backend unavailable). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/nextjs/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (backend unavailable). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 		expect(await readServerModule(root)).toBe(before);
 	});
@@ -276,7 +279,7 @@ describe('Next.js build-time manifest', () => {
 		);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'@c15t/nextjs/build: could not fetch the consent manifest from https://consent.example.com/manifest during dev (backend unavailable)'
+				'@inth/nextjs/build: could not fetch the consent manifest from https://consent.example.com/manifest during dev (backend unavailable)'
 			)
 		);
 	});
@@ -460,7 +463,7 @@ describe('Next.js build-time manifest', () => {
 			);
 			expect(info).toHaveBeenCalledWith(expect.stringContaining(reason));
 			// The config is still aliased into the bundles.
-			expect(config.turbopack?.resolveAlias?.['@c15t/nextjs/user-config']).toBe(
+			expect(config.turbopack?.resolveAlias?.['@inth/nextjs/user-config']).toBe(
 				'./c15t.config.ts'
 			);
 		}
@@ -504,7 +507,7 @@ describe('Next.js build-time manifest', () => {
 	test('stops the build when defineConsentConfig rejects c15t.config.ts', async () => {
 		const root = await createRoot();
 		const message =
-			"@c15t/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false.";
+			"@inth/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false.";
 		await writeFile(
 			join(root, 'c15t.config.ts'),
 			`throw new TypeError(${JSON.stringify(message)});\n`
@@ -531,7 +534,7 @@ describe('Next.js build-time manifest', () => {
 		});
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'@c15t/nextjs/build: could not read c15t.config.ts'
+				'@inth/nextjs/build: could not read c15t.config.ts'
 			)
 		);
 		expect(String(warn.mock.calls[0]?.[0])).toContain('config exploded');

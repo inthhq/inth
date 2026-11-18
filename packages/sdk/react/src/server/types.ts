@@ -1,11 +1,11 @@
-import type { Overrides, SSRInitialData } from '@c15t/core';
+import type { Overrides, SSRInitialData } from '@inth/sdk/engine';
 
 /**
  * Base options for SSR data fetching, shared across framework integrations.
  *
  * @remarks
  * This interface contains the common options used by all framework-specific
- * SSR data fetching functions. Framework packages like @c15t/nextjs use
+ * SSR data fetching functions. Framework packages like @inth/nextjs use
  * this directly, while the generic fetchSSRData extends it with headers.
  *
  * @public
@@ -47,7 +47,7 @@ export interface FetchSSRDataOptionsBase {
  * @remarks
  * This is the framework-agnostic interface for SSR data fetching.
  * It extends FetchSSRDataOptionsBase with a required headers parameter.
- * Framework-specific packages (like @c15t/nextjs) use the base interface
+ * Framework-specific packages (like @inth/nextjs) use the base interface
  * and resolve headers internally.
  *
  * @public

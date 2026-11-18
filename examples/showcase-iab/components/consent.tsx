@@ -1,12 +1,12 @@
 'use client';
 
-import { ConsentRoot } from 'c15t/next';
-import { ConsentGPP } from 'c15t/react/gpp';
+import { ConsentRoot } from '@inth/nextjs';
+import { ConsentGPP } from '@inth/react/gpp';
 import {
 	IABConsentBanner,
 	IABConsentDialog,
 	IABProvider,
-} from 'c15t/react/iab';
+} from '@inth/react/iab';
 import type { ReactNode } from 'react';
 
 import { brandTheme } from '@/lib/consent-theme';

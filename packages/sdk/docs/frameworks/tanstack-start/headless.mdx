@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build your own consent banner or embed gate markup in a TanStack Start app with the c15t/tanstack-start/headless hooks inside ConsentRoot.
+description: Build your own consent banner or embed gate markup in a TanStack Start app with the @inth/tanstack-start/headless hooks inside ConsentRoot.
 group: frameworks
 ---
 
@@ -10,8 +10,8 @@ group: frameworks
 
 ## Render your own banner
 
-`c15t/tanstack-start/headless` re-exports the headless hooks from
-`c15t/react/headless`. They read the runtime from `ConsentRoot`. Render your
+`@inth/tanstack-start/headless` re-exports the headless hooks from
+`@inth/react/headless`. They read the runtime from `ConsentRoot`. Render your
 component inside `ConsentRoot` in place of `ConsentBanner`, and keep
 `ConsentDialog` and a preferences link:
 
@@ -23,7 +23,7 @@ import {
 	useBannerCopy,
 	useConsentLabels,
 	useHeadlessConsentUI,
-} from 'c15t/tanstack-start/headless';
+} from '@inth/tanstack-start/headless';
 
 function BannerContent() {
 	const { banner, performAction, openDialog } = useHeadlessConsentUI();

@@ -1,15 +1,15 @@
 'use client';
 
-import type * as C15tCoreTypes from '@c15t/core';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
 /**
  * @packageDocumentation
  * Provides the IAB TCF 2.4 compliant consent dialog component.
  * Implements an accessible, pre-built consent dialog following IAB requirements.
  */
-import { applyPublisherRestrictionsToGVL } from '@c15t/iab/headless';
-import { isDialogDismissKey } from '@c15t/ui/primitives/dialog';
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
+import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import {
 	useCallback,
 	useEffect,

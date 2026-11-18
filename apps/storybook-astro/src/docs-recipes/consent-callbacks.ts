@@ -1,5 +1,5 @@
 // #region docs:callbacks title="src/consent-callbacks.ts"
-import type { C15tClientOptionsExtension } from 'c15t/astro';
+import type { C15tClientOptionsExtension } from '@inth/astro';
 
 export const callbacks: C15tClientOptionsExtension['callbacks'] = {
 	// Runs when the visitor selects accept, reject or save.

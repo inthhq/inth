@@ -6,8 +6,8 @@
  * @packageDocumentation
  */
 
-import type { GlobalVendorList } from '@c15t/core';
 import type { PurposeRestrictionVector } from '@iabtechlabtcf/core';
+import type { GlobalVendorList } from '@inth/sdk-core';
 
 import type { PublisherRestriction, TCFConsentData } from './iab-tcf-types';
 import { getTCFCore } from './lazy-load';

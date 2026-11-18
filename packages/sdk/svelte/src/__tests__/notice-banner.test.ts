@@ -1,4 +1,4 @@
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 

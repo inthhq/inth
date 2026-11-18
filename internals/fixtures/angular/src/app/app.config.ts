@@ -8,8 +8,8 @@ import {
 	withEventReplay,
 } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { hosted, provideC15t } from '@c15t/angular';
-import type { C15tProviderOptions } from '@c15t/angular';
+import { hosted, provideC15t } from '@inth/angular';
+import type { C15tProviderOptions } from '@inth/angular';
 
 import { scripts } from '../scripts';
 import { routes } from './app.routes';

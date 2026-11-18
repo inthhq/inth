@@ -1,6 +1,5 @@
 'use client';
 
-import type { ConsentSnapshot, PromptPresentation } from 'c15t';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -13,13 +12,14 @@ import {
 	useSetOverrides,
 	useSnapshot,
 	usePromptPresentation,
-} from 'c15t/react';
+} from '@inth/react';
 import {
 	IABConsentBanner,
 	IABConsentDialog,
 	IABProvider,
-} from 'c15t/react/iab';
-import { testing } from 'c15t/react/testing';
+} from '@inth/react/iab';
+import { testing } from '@inth/react/testing';
+import type { ConsentSnapshot, PromptPresentation } from '@inth/sdk/engine';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';

@@ -1,10 +1,10 @@
-import type { PromptPresentation } from '@c15t/core';
-import type { InitOutput, PolicyRule } from '@c15t/schema/types';
+import type { PromptPresentation } from '@inth/sdk/engine';
+import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations as enTranslations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import { translations as enTranslations } from '@inth/sdk/translations/en';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';

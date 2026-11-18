@@ -32,10 +32,9 @@ vendor edits reach visitors on their next page load, without a rebuild.
 
 ## Install
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/svelte @inth/integrations" mode="install" />
 
-The `c15t` package exports the Svelte components and consent modes from
-`c15t/svelte`. `@c15t/integrations` holds the vendor helpers.
+`@inth/svelte` exports the Svelte components and consent modes. `@inth/integrations` holds the vendor helpers.
 
 ## Add the Vite plugin
 
@@ -69,7 +68,7 @@ vendor scripts c15t should load:
 <include src="../../shared/examples/svelte/app.mdx" />
 
 The `<main>` element stands in for your app's content. `hosted()` from
-`c15t/svelte` makes one `/init` request to `VITE_C15T_BACKEND_URL`, started
+`@inth/svelte` makes one `/init` request to `VITE_C15T_BACKEND_URL`, started
 early by the script in `index.html`. The backend picks the policy from the
 visitor's location and language and returns its current version. Consent choices go to the same
 backend. Vite writes the variable into the bundle at build time, so changing
@@ -94,7 +93,7 @@ tokens, the trigger and `ConsentGate` theirs. They load in small chunks of
 their own, and the components stay hidden until they arrive. A server-rendered
 SvelteKit page has the banner's rules in its HTML already, so the browser loads
 nothing more. With Tailwind CSS 3, import
-`c15t/svelte/styles.css` yourself and pass `styles={false}` to the provider;
+`@inth/svelte/styles.css` yourself and pass `styles={false}` to the provider;
 see [stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
 
 ## Verify consent
@@ -121,7 +120,7 @@ If the banner does not appear, check the `/init` request, then see
 
 ## Other setups
 
-**Tests** pass `testing()` from `c15t/svelte/testing` as the mode. It resolves a policy
+**Tests** pass `testing()` from `@inth/svelte/testing` as the mode. It resolves a policy
 in the browser with no backend and needs no `projectUrl`. It throws in
 production builds. With no arguments it uses the recommended rules; pass
 `testing({ policy })` to test your own.
@@ -129,7 +128,7 @@ production builds. With no arguments it uses the recommended rules; pass
 {/* example: fragment */}
 
 ```svelte
-import { testing } from 'c15t/svelte/testing';
+import { testing } from '@inth/svelte/testing';
 
 <ConsentProvider mode={testing()}>
 ```
@@ -172,7 +171,7 @@ visitors the browser resolves this way. Swap the mode in `src/App.svelte`:
 
 ```svelte title="src/App.svelte (partial)"
 <script lang="ts">
-	import { ConsentProvider, manifest } from 'c15t/svelte';
+	import { ConsentProvider, manifest } from '@inth/svelte';
 </script>
 
 <ConsentProvider mode={manifest()} {scripts}>

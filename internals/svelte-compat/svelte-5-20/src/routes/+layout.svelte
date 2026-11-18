@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { posthog } from '@c15t/integrations/posthog';
+	import { posthog } from '@inth/integrations/posthog';
 	import {
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
 		ConsentRoot,
-	} from '@c15t/svelte';
+	} from '@inth/svelte';
 
 	let { children, data } = $props();
 

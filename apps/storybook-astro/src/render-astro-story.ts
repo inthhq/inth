@@ -3,13 +3,13 @@
  *
  * An Astro page is server-rendered HTML plus one boot script. This does the
  * same two things: it inlines the config the server produced, drops the
- * markup into the document, and boots `@c15t/astro/client` with the same
+ * markup into the document, and boots `@inth/astro/client` with the same
  * resolved options and the same Svelte dialog adapter the integration
  * registers. Nothing here is Storybook-specific behaviour — the point is
  * that the story exercises the shipped runtime, not a stand-in.
  */
 
-import type { C15tClientOptionsExtension } from '@c15t/astro';
+import type { C15tClientOptionsExtension } from '@inth/astro';
 import {
 	boot,
 	getConsentClient,
@@ -17,9 +17,9 @@ import {
 	registerDialogSurface,
 	registerIAB,
 	registerTransport,
-} from '@c15t/astro/client';
-import { createLazyIABFactory } from '@c15t/core/runtime';
-import { mountRuntimeIAB } from '@c15t/core/runtime/on-demand';
+} from '@inth/astro/client';
+import { createLazyIABFactory } from '@inth/sdk/runtime';
+import { mountRuntimeIAB } from '@inth/sdk/runtime/on-demand';
 import prerendered from 'virtual:c15t-astro-prerendered';
 
 import {
@@ -67,11 +67,11 @@ const registerAdapters = function registerAdapters(ui: AstroUIAdapter): void {
 	if (ui === 'react') {
 		registerDialogAdapter(
 			'react',
-			async () => (await import('@c15t/astro/ui/react')).reactDialogAdapter
+			async () => (await import('@inth/astro/ui/react')).reactDialogAdapter
 		);
 		registerDialogSurface(
 			'react',
-			() => import('@c15t/astro/islands/panel-surface.tsx')
+			() => import('@inth/astro/islands/panel-surface.tsx')
 		);
 		return;
 	}
@@ -79,22 +79,22 @@ const registerAdapters = function registerAdapters(ui: AstroUIAdapter): void {
 	if (ui === 'vue') {
 		registerDialogAdapter(
 			'vue',
-			async () => (await import('@c15t/astro/ui/vue')).vueDialogAdapter
+			async () => (await import('@inth/astro/ui/vue')).vueDialogAdapter
 		);
 		registerDialogSurface(
 			'vue',
-			() => import('@c15t/astro/islands/panel-surface.vue')
+			() => import('@inth/astro/islands/panel-surface.vue')
 		);
 		return;
 	}
 
 	registerDialogAdapter(
 		'svelte',
-		async () => (await import('@c15t/astro/ui/svelte')).svelteDialogAdapter
+		async () => (await import('@inth/astro/ui/svelte')).svelteDialogAdapter
 	);
 	registerDialogSurface(
 		'svelte',
-		() => import('@c15t/astro/islands/panel-surface.svelte')
+		() => import('@inth/astro/islands/panel-surface.svelte')
 	);
 };
 

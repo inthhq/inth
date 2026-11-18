@@ -1,4 +1,4 @@
-import { clearGVLCache } from '@c15t/iab';
+import { clearGVLCache } from '@inth/sdk-iab';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

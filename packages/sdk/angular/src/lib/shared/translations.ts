@@ -1,7 +1,7 @@
 import { computed } from '@angular/core';
 import type { Signal } from '@angular/core';
-import type { Translations } from '@c15t/core';
-import { resolveTranslations } from '@c15t/ui/utils';
+import type { Translations } from '@inth/sdk/engine';
+import { resolveTranslations } from '@inth/sdk/ui/utils';
 
 import type { ConsentManager } from '../core/consent-manager';
 import { fallbackTranslations } from '../core/translation-defaults';

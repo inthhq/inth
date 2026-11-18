@@ -25,23 +25,23 @@ import {
 	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵshouldShowBranding as shouldShowBranding,
-} from '@c15t/angular';
+} from '@inth/angular';
 import {
 	TabsContent,
 	Tabs,
 	TabsList,
 	TabsTrigger,
 	uniqueId,
-} from '@c15t/angular/primitives';
-import { resolveIABBannerSummary } from '@c15t/core/iab-support';
-import { saveIABConsentSurface } from '@c15t/core/surface-actions';
-import { resolveConsentPresentation } from '@c15t/core/surface-state';
-import { applyPublisherRestrictionsToGVL } from '@c15t/iab/headless';
-import { isDialogDismissKey } from '@c15t/ui/primitives/dialog';
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
-import { buttonVariants } from '@c15t/ui/styles/primitives';
-import { getTextDirection } from '@c15t/ui/utils';
+} from '@inth/angular/primitives';
+import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
+import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
+import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
+import { buttonVariants } from '@inth/sdk/ui/styles/primitives';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 
 import { IABFeatureItem } from './iab-feature-item';
 import { ChevronRightIcon, CloseIcon, InfoIcon, LockIcon } from './iab-icons';

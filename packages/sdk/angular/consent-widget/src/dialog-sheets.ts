@@ -10,12 +10,12 @@
  * @packageDocumentation
  */
 
-import type { SurfaceStyleSheet } from '@c15t/angular';
-import * as banner from '@c15t/ui/styles/sheets/banner-deferred';
-import * as button from '@c15t/ui/styles/sheets/button-deferred';
-import * as dialog from '@c15t/ui/styles/sheets/dialog';
-import * as primitives from '@c15t/ui/styles/sheets/primitives';
-import * as tokens from '@c15t/ui/styles/sheets/tokens-deferred';
+import type { SurfaceStyleSheet } from '@inth/angular';
+import * as banner from '@inth/sdk/ui/styles/sheets/banner-deferred';
+import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
+import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
+import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
 
 /**
  * The stylesheets the consent dialog and the consent widget render: the

@@ -15,8 +15,8 @@
  * @internal
  */
 
-import type { KernelOverrides } from '@c15t/core';
-import type { PrefetchedInitialData } from '@c15t/core/runtime/deferred-snapshot';
+import type { KernelOverrides } from '@inth/sdk-core';
+import type { PrefetchedInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 
 /** localStorage key of the cache. */
 export const POLICY_CACHE_KEY = 'c15t-init-policy';

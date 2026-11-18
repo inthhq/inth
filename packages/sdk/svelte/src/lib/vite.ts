@@ -1,5 +1,5 @@
 /**
- * `@c15t/svelte/vite` — build-time help for Svelte and SvelteKit apps.
+ * `@inth/svelte/vite` — build-time help for Svelte and SvelteKit apps.
  *
  * {@link consentManifest} serves the consent manifest the build downloads.
  * In a SvelteKit build it also lets `c15tHandle` preload the on-demand
@@ -10,11 +10,11 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { createConsentManifestPlugin } from '@c15t/core/build';
+import { createConsentManifestPlugin } from '@inth/sdk/build';
 import type {
 	ConsentManifestPlugin,
 	ConsentManifestPluginOptions,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
 
 // With its extension: Node loads this file straight from `dist`, unbundled.
 import { MODULE_PRELOAD_PLACEHOLDERS } from './kit/module-preload.js';
@@ -25,7 +25,7 @@ export type {
 	ConsentManifestPluginOptions,
 	ManifestBuildErrorMode,
 	ManifestBuildOptions,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
 
 /** The plugin `sveltekit()` adds first, which marks a SvelteKit app. */
 const SVELTEKIT_PLUGIN = 'vite-plugin-sveltekit-setup';
@@ -36,7 +36,7 @@ interface ExternalConfigLike {
 	ssr?: { external?: unknown };
 }
 
-/** The plugin that keeps `@c15t/core` bundled in dev SSR. */
+/** The plugin that keeps `@inth/sdk/engine` bundled in dev SSR. */
 export interface ServerGeneratedPlugin {
 	configResolved: (config: ExternalConfigLike) => void;
 	name: string;
@@ -44,9 +44,9 @@ export interface ServerGeneratedPlugin {
 
 /**
  * `vite-plugin-svelte` marks a Svelte library's plain dependencies as SSR
- * externals, so in `vite dev` Node loads `@c15t/core` itself. Its
- * `@c15t/core/generated` is then the empty stand-in, and `loadConsent`
- * sees no snapshot or backend URL. Dropping `@c15t/core` from the externals
+ * externals, so in `vite dev` Node loads `@inth/sdk` itself. Its
+ * `@inth/sdk/generated` is then the empty stand-in, and `loadConsent`
+ * sees no snapshot or backend URL. Dropping `@inth/sdk` from the externals
  * lets Vite resolve that import to the build's virtual module, as it does
  * in `vite build`.
  *
@@ -60,7 +60,7 @@ export const createServerGeneratedPlugin =
 				return;
 			}
 			for (let index = external.length - 1; index >= 0; index -= 1) {
-				if (external[index] === '@c15t/core') {
+				if (external[index] === '@inth/sdk') {
 					external.splice(index, 1);
 				}
 			}
@@ -79,9 +79,9 @@ export const createServerGeneratedPlugin =
 /** The module each on-demand chunk starts from. */
 const CHUNK_MODULES: Readonly<Record<PreloadChunkName, RegExp>> = {
 	engine:
-		/[\\/](?:@c15t[\\/]svelte|packages[\\/](?:sdk[\\/])?svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
+		/[\\/](?:@inth[\\/]svelte|packages[\\/](?:sdk[\\/])?svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
 	'loader-and-blocker':
-		/[\\/](?:@c15t[\\/]core|packages[\\/](?:sdk[\\/])?core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
+		/[\\/](?:@inth[\\/]sdk[\\/]lib[\\/]core|packages[\\/]sdk[\\/]sdk[\\/]lib[\\/]core|packages[\\/](?:sdk[\\/])?core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
 };
 
 const CHUNK_NAMES = Object.keys(CHUNK_MODULES) as PreloadChunkName[];
@@ -265,7 +265,7 @@ export const createModulePreloadPlugin =
 	};
 
 /**
- * The small `@c15t/core` and `@c15t/ui` modules that `ConsentRoot`'s
+ * The small `@inth/sdk/engine` and `@inth/sdk/ui` modules that `ConsentRoot`'s
  * first-load code shares with the consent engine: the consent, vendor,
  * experiment and policy helpers the surfaces read, and what records a tap
  * before the engine.
@@ -281,7 +281,7 @@ export const createModulePreloadPlugin =
  * it costs the page one more request.
  */
 const FIRST_LOAD_SHARED =
-	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@c15t[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface)|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
+	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@inth[\\/]sdk[\\/]lib[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface)|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
 
 /** The slice of Rolldown's output options {@link FirstLoadChunkPlugin} edits. */
 interface OutputOptionsLike {
@@ -380,7 +380,7 @@ export const createFirstLoadChunkPlugin =
 
 /**
  * Serves the deployment's consent manifest and backend URL as the virtual
- * module `@c15t/core/generated` (also `c15t/generated`). Import `snapshot`
+ * module `@inth/sdk/generated` (also `@inth/sdk/generated`). Import `snapshot`
  * from it; no file is written into the app. `vite build` fetches the
  * manifest only when the bundle reads `snapshot`: a Svelte app that uses
  * `hosted()` or `local()` never depends on the backend at build time.
@@ -420,7 +420,7 @@ export const createFirstLoadChunkPlugin =
  * @example
  * ```ts
  * // vite.config.ts
- * import { consentManifest } from '@c15t/svelte/vite';
+ * import { consentManifest } from '@inth/svelte/vite';
  * import { svelte } from '@sveltejs/vite-plugin-svelte';
  *
  * export default { plugins: [consentManifest(), svelte()] };
@@ -443,7 +443,7 @@ export const consentManifest = (
 			'PUBLIC_INTH_PROJECT_URL',
 			'VITE_INTH_PROJECT_URL',
 		],
-		label: '@c15t/svelte/vite',
+		label: '@inth/svelte/vite',
 		serverRendered: (config) =>
 			config.plugins?.some((plugin) => plugin.name === SVELTEKIT_PLUGIN) ??
 			false,

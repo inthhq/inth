@@ -3,12 +3,12 @@
  * The IAB TCF preference centre.
  *
  * Like `<ConsentDialog />`, this renders only a host element; the TCF
- * surface and `@c15t/iab` are both loaded on first open, so a site with IAB
+ * surface and `@inth/sdk/iab` are both loaded on first open, so a site with IAB
  * configured still serves a banner-only page with no TCF bytes.
  *
  * ```astro
  * ---
- * import IABConsentDialog from '@c15t/astro/components/iab-consent-dialog.astro';
+ * import IABConsentDialog from '@inth/astro/components/iab-consent-dialog.astro';
  * ---
  * <IABConsentDialog />
  * ```
@@ -39,7 +39,7 @@ const { preload = false, disableAnimation } = Astro.props;
 ></div>
 
 <script>
-	import { preloadDialog } from '@c15t/astro/client';
+	import { preloadDialog } from '@inth/astro/client';
 
 	// The integration registers the island for the configured `ui`; see
 	// `<ConsentDialog />` for why the specifier does not live here.

@@ -1,4 +1,4 @@
-import type { Translations } from '@c15t/core';
+import type { Translations } from '@inth/sdk/engine';
 import { describe, expect, test } from 'vitest';
 import { renderHook } from 'vitest-browser-react';
 

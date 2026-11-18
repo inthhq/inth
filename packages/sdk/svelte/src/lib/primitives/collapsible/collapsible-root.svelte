@@ -3,7 +3,7 @@
 		getCollapsibleState,
 		getDataDisabled,
 		toggleCollapsibleValue,
-	} from '@c15t/ui/primitives';
+	} from '@inth/sdk/ui/primitives';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 

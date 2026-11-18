@@ -1,8 +1,12 @@
-import type { ConsentSnapshot, ConsentState, KernelEvent } from '@c15t/core';
+import type {
+	ConsentSnapshot,
+	ConsentState,
+	KernelEvent,
+} from '@inth/sdk-core';
 import type {
 	ScriptDiagnostic,
 	ScriptLoaderDebugEvent,
-} from '@c15t/core/modules/script-loader';
+} from '@inth/sdk-core/modules/script-loader';
 
 /** Placement of the floating DevTools launcher and panel. */
 export type DevToolsPosition =

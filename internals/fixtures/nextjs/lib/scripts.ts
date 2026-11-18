@@ -1,6 +1,6 @@
-import { posthog } from '@c15t/integrations/posthog';
-import { xPixel } from '@c15t/integrations/x-pixel';
-import type { Script } from 'c15t';
+import { posthog } from '@inth/integrations/posthog';
+import { xPixel } from '@inth/integrations/x-pixel';
+import type { Script } from '@inth/sdk/engine';
 
 export const scripts: Script[] = [
 	posthog({

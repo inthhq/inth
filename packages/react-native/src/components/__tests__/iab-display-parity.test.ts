@@ -21,7 +21,7 @@
  * - The sample GVL and the helper come from source and from the published entry
  *   point respectively. `gvl-sample` is a fixture with no export path, so it is
  *   read where it lives rather than copied; `iabDisplayTestId` is exported from
- *   `@c15t/iab/headless`, so the ids below are produced by the web's own
+ *   `@inth/sdk/iab/headless`, so the ids below are produced by the web's own
  *   function and not by a mobile-side copy of its template.
  * - The fixture is imported from the example app rather than restated here,
  *   because the thing worth proving is that the data a real screen renders is the
@@ -31,7 +31,7 @@
 import {
 	iabDisplayTestId,
 	resolveIABDialogDisplayModel,
-} from '@c15t/iab/headless';
+} from '@inth/sdk/iab/headless';
 import { describe, expect, test } from 'vitest';
 
 import { IAB_DEMO_DISPLAY_MODEL } from '../../../../../internals/fixtures/react-native-bare/src/fixtures/iab-display-model';

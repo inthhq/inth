@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentDialogLink } from 'c15t/next';
+import { ConsentDialogLink } from '@inth/nextjs';
 
 export const SiteFooter = () => (
 	<footer className="site-footer">

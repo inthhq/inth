@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ButtonMode, ButtonVariant } from '@c15t/schema/config';
-import buttonStyles from '@c15t/ui/styles/components/button';
+import type { ButtonMode, ButtonVariant } from '@inth/sdk/schema/config';
+import buttonStyles from '@inth/sdk/ui/styles/components/button';
 
-import '@c15t/ui/styles/components/button.css';
-import type { ButtonSize } from '@c15t/ui/styles/primitives';
+import '@inth/sdk/ui/styles/components/button.css';
+import type { ButtonSize } from '@inth/sdk/ui/styles/primitives';
 import { computed, mergeProps } from 'vue';
 
 import { useConsentConfig } from '../composables/config';

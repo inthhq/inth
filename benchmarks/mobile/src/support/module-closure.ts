@@ -5,7 +5,7 @@
  * the right number for the tarball and the wrong one for "bundle-size impact". An
  * app's bundler follows every edge out of the entry: each module it reaches is in
  * the bundle, whatever package it lives in, and no amount of `import type` keeps
- * one out. Behind `@c15t/core/consent-categories` sits the kernel, the schema, and
+ * one out. Behind `@inth/sdk/consent-categories` sits the kernel, the schema, and
  * the translations, so the edge worth measuring is the one this package no longer
  * has.
  *
@@ -145,7 +145,7 @@ const specifiers = function specifiers(text: string): string[] {
 /**
  * Split a bare specifier into its package and subpath.
  *
- * `@c15t/core` is a package, `@c15t/schema/types` is a subpath, and the second one
+ * `@inth/sdk/engine` is a package, `@inth/sdk/schema/types` is a subpath, and the second one
  * is what the built core imports. Treating the tail as the package name looked for
  * a `packages/types` that has never existed, which dropped a whole package out of
  * the closure and understated the number this file exists to get right.
@@ -170,7 +170,7 @@ const splitSpecifier = function splitSpecifier(spec: string): {
 /**
  * Resolve a workspace package's entry the way a bundler would.
  *
- * @param packageName - Bare package name, for example `@c15t/core`.
+ * @param packageName - Bare package name, for example `@inth/sdk/engine`.
  * @param subpath - Export subpath, `.` for the package entry.
  * @param workspaceRoot - Repository root, where the workspace packages live.
  * @returns Absolute path, or `undefined` when nothing on disk answers the specifier.
@@ -180,7 +180,11 @@ export const resolveWorkspaceEntry = function resolveWorkspaceEntry(
 	subpath: string,
 	workspaceRoot: string
 ): string | undefined {
-	const shortName = packageName.split('/').at(-1) ?? packageName;
+	// A private part such as `@inth/sdk-core` lives in `packages/sdk/core`.
+	const shortName = (packageName.split('/').at(-1) ?? packageName).replace(
+		/^sdk-(?=.)/u,
+		''
+	);
 	const packageDir = resolve(workspaceRoot, 'packages', 'sdk', shortName);
 	const manifestPath = resolve(packageDir, 'package.json');
 

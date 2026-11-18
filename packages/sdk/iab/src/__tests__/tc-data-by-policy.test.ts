@@ -3,12 +3,12 @@
  * `__tcfapi` answers by the visitor's policy: full TC data when it uses IAB
  * TCF, only the base fields when it does not.
  */
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk-core';
+import type { ConsentKernel } from '@inth/sdk-core';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 
 import { createIAB } from '../index';

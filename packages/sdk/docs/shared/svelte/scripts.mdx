@@ -7,7 +7,7 @@ has a category. The loader adds a script to the page when its category becomes
 allowed and removes it when the category is withdrawn. Nothing optional loads
 while the policy is still resolving, or when it fails.
 
-Helpers in `@c15t/integrations`, such as `posthog()` from `@c15t/integrations/posthog`,
+Helpers in `@inth/integrations`, such as `posthog()` from `@inth/integrations/posthog`,
 return a configuration with the right category and the vendor's own consent
 calls. [Integrations](/docs/integrations/overview) lists every helper. For an
 SDK without a helper, write a configuration with an `id`, `category` and `src`
@@ -73,7 +73,7 @@ a vendor set, configure `clearOnRevocation`; see
 ## Let visitors turn off one vendor
 
 A visitor can allow marketing and still switch off one vendor in it. Pass
-`vendors` to the provider; helpers from `@c15t/integrations` already carry their
+`vendors` to the provider; helpers from `@inth/integrations` already carry their
 vendor slug. See [vendor consent](./vendor-consent).
 
 ## Verify vendor loading

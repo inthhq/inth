@@ -1,8 +1,8 @@
 // #region docs:server-config title="astro.config.mjs"
 import node from '@astrojs/node';
 import svelte from '@astrojs/svelte';
+import c15t from '@inth/astro';
 import { defineConfig } from 'astro/config';
-import c15t from 'c15t/astro';
 
 export default defineConfig({
 	adapter: node({ mode: 'standalone' }),

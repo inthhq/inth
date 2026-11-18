@@ -3,7 +3,7 @@
  *
  * `src/protocol/gvl.ts` copies the served vendor list so a phone app can read one
  * without the web schema in its bundle, and `gvl.type-test.ts` holds that copy
- * against `@c15t/core` at compile time. What neither can see is the pair of
+ * against `@inth/sdk/engine` at compile time. What neither can see is the pair of
  * producers that put the bytes on the bridge: a key renamed in Swift's
  * `GlobalVendorList.swift`, or one Kotlin's `GlobalVendorList.kt` adds, compiles
  * on its own side, leaves the fixtures green, and reaches a hand holding a

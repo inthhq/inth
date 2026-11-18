@@ -1,6 +1,6 @@
 import { isProductionBuild } from '../libs/is-production';
 /**
- * `@c15t/core/runtime/client-mode` — turn a consent mode into the transport
+ * `@inth/sdk/runtime/client-mode` — turn a consent mode into the transport
  * a server-framework client root uses, keeping every path that page doesn't
  * run out of its first-load JavaScript.
  *
@@ -507,7 +507,7 @@ let warnedImplementation = false;
  * The transport factory a server-framework client root uses for its
  * options.
  *
- * Takes the data from `@c15t/core/modes` and the testing entries. With
+ * Takes the data from `@inth/sdk/modes` and the testing entries. With
  * none, the root uses manifest mode, the default of every server
  * framework: the server resolves from the manifest and a browser re-init
  * goes through the consent route, which falls back to the backend's
@@ -523,8 +523,8 @@ let warnedImplementation = false;
  * @throws {Error} When the mode needs a backend URL and none is set.
  * @example
  * ```ts
- * import { manifest } from '@c15t/core/modes';
- * import { clientMode } from '@c15t/core/runtime/client-mode';
+ * import { manifest } from '@inth/sdk-core/modes';
+ * import { clientMode } from '@inth/sdk-core/runtime/client-mode';
  *
  * const mode = clientMode(manifest(), {
  *   projectUrl: 'https://your-project.inth.app',
@@ -535,7 +535,7 @@ let warnedImplementation = false;
 export const clientMode = function clientMode(
 	selected: ConsentMode | ProviderTransportFactory | undefined,
 	options: ClientModeOptions = {},
-	testingEntry = '@c15t/core/testing'
+	testingEntry = '@inth/sdk/testing'
 ): ProviderTransportFactory {
 	const mode = selected ?? { type: 'manifest' as const };
 	if (typeof mode === 'function') {

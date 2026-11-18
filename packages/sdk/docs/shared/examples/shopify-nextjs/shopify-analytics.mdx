@@ -3,10 +3,10 @@
 ```tsx title="components/shopify-analytics.tsx"
 'use client';
 
-import { createShopifyCustomerPrivacy } from '@c15t/integrations/shopify';
+import { createShopifyCustomerPrivacy } from '@inth/integrations/shopify';
+import { useSnapshot } from '@inth/nextjs';
 import type { ShopifyScriptsI18n, ShopifyScriptsShop } from '@shopify/hydrogen';
 import { ShopifyScripts } from '@shopify/hydrogen/react';
-import { useSnapshot } from 'c15t/next';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 

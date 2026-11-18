@@ -1,14 +1,14 @@
 /**
- * `@c15t/angular/primitives`: the unstyled building blocks of the stock
+ * `@inth/angular/primitives`: the unstyled building blocks of the stock
  * dialog and widget (switch, accordion, collapsible, tabs, dialog and
  * preference item), with the framework-agnostic primitive helpers and
- * class maps from `@c15t/ui`.
+ * class maps from `@inth/sdk/ui`.
  *
  * @packageDocumentation
  */
 
-export * from '@c15t/ui/primitives';
-export * from '@c15t/ui/styles/primitives';
+export * from '@inth/sdk/ui/primitives';
+export * from '@inth/sdk/ui/styles/primitives';
 export {
 	Accordion,
 	AccordionContent,

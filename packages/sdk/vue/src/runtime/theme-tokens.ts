@@ -1,9 +1,9 @@
-import { defaultConsentConfig } from '@c15t/schema/config';
+import { defaultConsentConfig } from '@inth/sdk/schema/config';
 import {
 	defaultDarkColors,
 	generateDefaultThemeCSS,
 	generateThemeCSS,
-} from '@c15t/ui/theme';
+} from '@inth/sdk/ui/theme';
 
 import type { ConsentConfig } from './config';
 import { TOKENS_STYLE_ID } from './tokens-style-id';
@@ -16,7 +16,7 @@ export { TOKENS_STYLE_ID };
 /**
  * The stock dark palette under the `.dark` and `.c15t-dark` selectors.
  *
- * React and Svelte get it from `@c15t/ui/styles.css`. The Vue components
+ * React and Svelte get it from `@inth/sdk/ui/styles.css`. The Vue components
  * import per-component stylesheets that carry no tokens, so it ships here,
  * on the same selectors: one class above the `tokens` rule, and one below a
  * `theme`.
@@ -46,7 +46,7 @@ const DEFAULT_DARK_CSS = generateDefaultThemeCSS({ dark: defaultDarkColors });
  *
  * @example
  * ```ts
- * import { generateTokensCSS } from '@c15t/vue/vue-plugin';
+ * import { generateTokensCSS } from '@inth/vue/vue-plugin';
  *
  * const css = generateTokensCSS(
  * 	{ 'c15t-primary': '#2f6f4e' },

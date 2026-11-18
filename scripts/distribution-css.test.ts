@@ -34,7 +34,7 @@ test.each(['react', 'nextjs', 'tanstack-start'])(
 		for (const prefix of ['', 'iab/']) {
 			writeFileSync(
 				join(packageRoot, `src/${prefix}styles.css`),
-				`@import '@c15t/ui/${prefix}styles.css';\n`
+				`@import '@inth/sdk/ui/${prefix}styles.css';\n`
 			);
 			writeFileSync(
 				join(workspace, `ui/dist/${prefix}styles.tw3.css`),
@@ -45,7 +45,7 @@ test.each(['react', 'nextjs', 'tanstack-start'])(
 		for (const prefix of ['', 'iab/']) {
 			expect(
 				readFileSync(join(packageRoot, `dist/${prefix}styles.css`), 'utf8')
-			).toBe(`@import '@c15t/ui/${prefix}styles.css';\n`);
+			).toBe(`@import '@inth/sdk/ui/${prefix}styles.css';\n`);
 			const inlined = readFileSync(
 				join(packageRoot, `dist/${prefix}styles.tw3.css`),
 				'utf8'

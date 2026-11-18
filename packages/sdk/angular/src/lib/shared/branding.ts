@@ -7,7 +7,7 @@ import {
 	input,
 	signal,
 } from '@angular/core';
-import styles from '@c15t/ui/styles/components/branding';
+import styles from '@inth/sdk/ui/styles/components/branding';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';

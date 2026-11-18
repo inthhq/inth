@@ -3,8 +3,8 @@
  * and after the engine attaches: they must not throw before it, must not
  * load it just by mounting, and must end up on the engine's kernel.
  */
-import type { ConsentKernel, ConsentSnapshot, Script } from '@c15t/core';
-import { getScriptDiagnostics } from '@c15t/core/modules/script-loader';
+import type { ConsentKernel, ConsentSnapshot, Script } from '@inth/sdk/engine';
+import { getScriptDiagnostics } from '@inth/sdk/modules/script-loader';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -249,7 +249,7 @@ describe('useScriptLoader under a stand-in kernel', () => {
 });
 
 describe('iabProviderLoaded', () => {
-	test('reads the mark `@c15t/react/iab` sets, and wakes a waiter when it loads later', () => {
+	test('reads the mark `@inth/react/iab` sets, and wakes a waiter when it loads later', () => {
 		const waiter = vi.fn();
 		expect(iabProviderLoaded()).toBe(false);
 		whenIABProviderLoads(waiter);

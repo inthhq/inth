@@ -1,15 +1,15 @@
 'use client';
 
-import type * as C15tCoreTypes from '@c15t/core';
-import type { PromptPosition, PromptVariant } from '@c15t/core';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
 /**
  * @packageDocumentation
  * Provides the main consent banner component for privacy consent management.
  * Implements an accessible, customizable banner following GDPR requirements.
  */
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
-import styles from '@c15t/ui/styles/components/consent-banner';
-import type { SurfacePresentation } from '@c15t/ui/utils';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+import styles from '@inth/sdk/ui/styles/components/consent-banner';
+import type { SurfacePresentation } from '@inth/sdk/ui/utils';
 import { Fragment } from 'react';
 import type { FC, ReactNode } from 'react';
 

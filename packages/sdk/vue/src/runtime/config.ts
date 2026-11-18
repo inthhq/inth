@@ -4,15 +4,15 @@ import type {
 	ClearOnRevocationConfig,
 	HydrationRecords,
 	Vendor,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	ConsentControlOptions,
 	ConsentRuntimeOptions,
 	RuntimeIABOptions,
-} from '@c15t/core/runtime';
-import type { ConsentConfig as BaseConsentConfig } from '@c15t/schema/config';
-import type { InitOutput } from '@c15t/schema/types';
-import type { Theme, UIOptions } from '@c15t/ui/theme';
+} from '@inth/sdk/runtime';
+import type { ConsentConfig as BaseConsentConfig } from '@inth/sdk/schema/config';
+import type { InitOutput } from '@inth/sdk/schema/types';
+import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import type { HTMLAttributes } from 'vue';
 
 /** Nuxt options for the server render and the consent route. */

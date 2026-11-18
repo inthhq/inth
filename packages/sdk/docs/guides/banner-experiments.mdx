@@ -18,19 +18,21 @@ resolved. In the React example, the `Consent` wrapper takes the arm as a prop:
 
 <include src="../shared/examples/react/experiment-consent.mdx" />
 
-`defineExperiment()` from `c15t` returns its argument and has TypeScript check
+`defineExperiment()` from the `engine` entry of your framework package
+(`@inth/react/engine` here, or `@inth/sdk/engine` in plain JavaScript)
+returns its argument and has TypeScript check
 the arm names in `arm` and `split`. The callbacks forward each impression and
 choice to `window.dataLayer`; see
 [send the events to your own analytics](#send-the-events-to-your-own-analytics-too).
 
 Your flag provider returns a plain string. To check it before passing it as
-`arm`, type it with `ExperimentArmName` from `c15t`, which is `control` plus
+`arm`, type it with `ExperimentArmName`, which is `control` plus
 the experiment's arm names:
 
 {/* example: fragment */}
 
 ```ts
-import type { ExperimentArmName } from 'c15t';
+import type { ExperimentArmName } from '@inth/react';
 
 // 'control' | 'wall'
 type BannerArm = ExperimentArmName<typeof bannerExperiment>;
@@ -57,9 +59,9 @@ c15t merges the arm over `presentation`, exposes it as `snapshot.experiment`,
 sends it with `/init`, and records it on the choices of visitors the banner
 showed it to, so you can compare opt-in rate and time to decision per arm.
 
-The same option exists in `c15t/next` (`ConsentRoot` `options`), `c15t/vue`,
-`c15t/svelte`, the `c15t()` Astro integration from `c15t/astro`, and
-`@c15t/browser`. On a server-rendered page in Next.js, TanStack Start or
+The same option exists in `@inth/nextjs` (`ConsentRoot` `options`), `@inth/vue`,
+`@inth/svelte`, the `c15t()` Astro integration from `@inth/astro`, and
+`@inth/sdk`. On a server-rendered page in Next.js, TanStack Start or
 SvelteKit, pass it to `resolveConsent` instead, which counts the arm and hands
 it to the client; see [Vercel Flags SDK](#vercel-flags-sdk).
 
@@ -87,7 +89,7 @@ with `experimentArm`, where `bannerExperimentFlag` stands for your flag lookup:
 {/* example: fragment */}
 
 ```ts title="src/middleware.ts"
-import { consentMiddleware } from 'c15t/astro/middleware';
+import { consentMiddleware } from '@inth/astro/middleware';
 
 export const onRequest = consentMiddleware({
 	experimentArm: async (context) => await bannerExperimentFlag(context),
@@ -123,11 +125,11 @@ experiment: {
 
 Read the merged theme with `useResolvedTheme()` in React,
 `useResolvedTheme(theme)` in Vue, `getConsentManager().theme` in Svelte and
-`client.theme` in `@c15t/browser`. Astro renders the arm's tokens with the
+`client.theme` in `@inth/sdk`. Astro renders the arm's tokens with the
 banner. In React, `consentActions` and slot overrides apply through the
 provider, but colour, radius and other tokens reach the page through
 `ConsentTheme`. Render it from the resolved theme in a client component inside
-the provider, with both imported from `c15t/react`:
+the provider, with both imported from `@inth/react`:
 
 {/* example: fragment */}
 
@@ -184,7 +186,7 @@ from [send the events to your own analytics](#send-the-events-to-your-own-analyt
 in `options`. The layout awaits consent inside `<Suspense>`, as in
 [render the banner in the server HTML](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html),
 so the banner is in the server HTML already showing the visitor's arm.
-`resolveConsent` in `c15t/tanstack-start/server` and `c15t/svelte/server`
+`resolveConsent` in `@inth/tanstack-start/server` and `@inth/svelte/server`
 takes the same `experiment`.
 
 If you pass `resolveConsent()` to `ConsentRoot` without awaiting it (the
@@ -326,7 +328,7 @@ arm before you deploy with `validateExperiment` in a test. `euPolicy` and
 {/* example: fragment */}
 
 ```ts
-import { validateExperiment } from 'c15t/experiment';
+import { validateExperiment } from '@inth/react/engine';
 
 test('banner-shape arms pass under the EU policy', () => {
 	validateExperiment(bannerExperiment, euPolicy, { presentation });
@@ -345,7 +347,7 @@ import {
 	useExperiment,
 	useResolvedPresentation,
 	useResolvedTheme,
-} from 'c15t/react';
+} from '@inth/react';
 
 const { id, arm, assignedBy } = useExperiment() ?? {};
 const presentation = useResolvedPresentation();
@@ -373,7 +375,7 @@ arm from your flag is known from the first render, on the server too.
 
 Vue exposes `useExperiment()`, `useResolvedPresentation()` and
 `useResolvedTheme(theme)`, Svelte `getConsentManager().experiment`,
-`.presentation` and `.theme`, and `@c15t/browser` `client.presentation` and
+`.presentation` and `.theme`, and `@inth/sdk` `client.presentation` and
 `client.theme`. Every adapter also reports the arm on `snapshot.experiment`.
 
 ## What is recorded
@@ -417,8 +419,8 @@ On a server-rendered page the server calls `/init`, not the browser, so the
 server has to know the arm. Pass the experiment to `resolveConsent`, as in
 [Vercel Flags SDK](#vercel-flags-sdk): it sends only `{ id, arm }` to the
 backend and hands the full experiment to the client in its state.
-`resolveConsent` takes `experiment` in `c15t/next/server`,
-`c15t/tanstack-start/server` and `c15t/svelte/server`; Astro and Nuxt pass
+`resolveConsent` takes `experiment` in `@inth/nextjs/server`,
+`@inth/tanstack-start/server` and `@inth/svelte/server`; Astro and Nuxt pass
 the arm they rendered on their own. When c15t picks the arm in the browser,
 the browser's own `/init` carries it, so a server-rendered page that skips
 the client `/init` has no count for built-in assignment. Resolve the arm with

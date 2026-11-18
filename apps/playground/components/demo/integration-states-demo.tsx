@@ -1,7 +1,7 @@
 'use client';
 
-import { ConsentGate, ConsentProvider } from 'c15t/react';
-import { testing } from 'c15t/react/testing';
+import { ConsentGate, ConsentProvider } from '@inth/react';
+import { testing } from '@inth/react/testing';
 import { RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { createConsentKernel, resolvePolicyRules } from '@c15t/core';
-import type { ConsentKernel, KernelTransport } from '@c15t/core';
+import { createConsentKernel, resolvePolicyRules } from '@inth/sdk/engine';
+import type { ConsentKernel, KernelTransport } from '@inth/sdk/engine';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createShopifyCustomerPrivacy } from './shopify';

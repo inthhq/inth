@@ -5,7 +5,7 @@ import { useContext, useEffect, useSyncExternalStore, version } from 'react';
 import { GlobalThemeContext } from '~/context/theme-context';
 import { useUIConfig } from '~/ui-config-context';
 
-/** A stylesheet from `@c15t/ui/styles/sheets/*`. */
+/** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
 export interface SurfaceStyleSheet {
 	/** Dedupes the stylesheet: a page renders each `id` once. */
 	id: string;

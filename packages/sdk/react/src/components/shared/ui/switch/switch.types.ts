@@ -1,6 +1,6 @@
 /**
- * Re-export switch variant types from @c15t/ui for convenience.
- * The canonical definitions are in @c15t/ui/styles/primitives.
+ * Re-export switch variant types from @inth/sdk/ui for convenience.
+ * The canonical definitions are in @inth/sdk/ui/styles/primitives.
  */
 export type {
 	SwitchCSSVariables,
@@ -9,4 +9,4 @@ export type {
 	SwitchThumbCSSVariables,
 	SwitchTrackCSSVariables,
 	SwitchVariantsProps,
-} from '@c15t/ui/styles/primitives';
+} from '@inth/sdk/ui/styles/primitives';

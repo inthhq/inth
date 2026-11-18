@@ -60,7 +60,7 @@ the rule promises, including a persistent opt-out control.
 
 Every field is optional. Pass them in the `gpp` option, where `gpp: true`
 uses the defaults, as props on `ConsentGPP` in React, or to `mountGPP()` in
-`@c15t/browser`.
+`@inth/sdk`.
 
 | Option | Default | Effect |
 | --- | --- | --- |
@@ -105,7 +105,7 @@ GPP code. Vendor scripts that call `__gpp` earlier need a stub. c15t takes over
 the calls and listeners a stub queued, whether the stub keeps listeners on
 `__gpp.events`, as the GPP specification's sample does, or returns them from
 `__gpp('events')`, as `@iabgpp/stub` does. Call `initializeGPPStub()` from
-`@c15t/iab/gpp` in your first script, or use the IAB's own stub snippet.
+`@inth/sdk/iab/gpp` in your first script, or use the IAB's own stub snippet.
 When another stub already answers iframes, c15t leaves that to it, so each
 iframe call gets one reply.
 

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 
-import '@c15t/ui/styles/components/consent-banner.css';
-import dialogStyles from '@c15t/ui/styles/components/consent-dialog';
+import '@inth/sdk/ui/styles/components/consent-banner.css';
+import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@c15t/ui/styles/components/consent-dialog.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed } from 'vue';
 
 import DescriptionContent from './description-content.vue';

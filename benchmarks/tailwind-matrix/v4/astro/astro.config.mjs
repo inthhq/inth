@@ -1,8 +1,8 @@
 // #region docs:astro-config title="astro.config.mjs"
 import svelte from '@astrojs/svelte';
+import c15t, { hosted } from '@inth/astro';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
-import c15t, { hosted } from 'c15t/astro';
 
 export default defineConfig({
 	integrations: [

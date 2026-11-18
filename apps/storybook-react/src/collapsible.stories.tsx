@@ -2,7 +2,7 @@ import {
 	startsClosedByDefault,
 	toggleOpenClose,
 } from '@c15t/conformance/play/collapsible';
-import { Collapsible } from '@c15t/react/primitives';
+import { Collapsible } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 

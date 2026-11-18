@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Diagnose vendor scripts that run early, unexpected reloads, empty custom banners, CORS errors, duplicate consent owners and policy resolution in a JavaScript app that uses @c15t/browser or c15t/runtime.
+description: Diagnose vendor scripts that run early, unexpected reloads, empty custom banners, CORS errors, duplicate consent owners and policy resolution in a JavaScript app that uses @inth/sdk or @inth/sdk/runtime.
 group: frameworks
 ---
 
@@ -8,7 +8,7 @@ group: frameworks
 
 **Check.** Each vendor needs one owner. Look for a snippet left in
 `index.html`, a second `init()` call, or a script loader attached to a kernel
-that `@c15t/browser` or `createConsentRuntime` already owns. Each of these loads
+that `@inth/sdk` or `createConsentRuntime` already owns. Each of these loads
 vendors outside the consent gate or twice.
 
 **Fix.** Call `init()` or create the runtime once per page, in the browser
@@ -17,7 +17,7 @@ entry point, and pass every vendor through its `scripts` list.
 ## Why does the page reload when a visitor saves?
 
 **Check.** Did the visitor turn off a category they had allowed?
-`@c15t/browser` and `createConsentRuntime` reload the page then, because code
+`@inth/sdk` and `createConsentRuntime` reload the page then, because code
 that already ran cannot be unloaded. Allowing categories never reloads.
 
 **Fix.** To handle withdrawal yourself, pass `reloadOnConsentRevoked: false`,
@@ -51,7 +51,7 @@ origin.
 
 ## Why does a gated script in my HTML never run?
 
-**Check.** With the `nonce` option set, `@c15t/browser` runs only
+**Check.** With the `nonce` option set, `@inth/sdk` runs only
 `<script type="text/plain" data-c15t-category>` tags that carry the same
 nonce. Open the console and look for a warning that c15t skipped a
 `data-c15t-category` script, and check the tag for
@@ -67,7 +67,7 @@ later. See
 allow the `<style>` element the stock UI adds, the policy blocks it.
 
 **Fix.** Pass the nonce from your `style-src` as the `nonce` option, or import
-`@c15t/browser/styles.css` with `ui: { shadow: false, styles: false }` as
+`@inth/sdk/styles.css` with `ui: { shadow: false, styles: false }` as
 [Content Security Policy](/docs/frameworks/javascript/content-security-policy#allow-the-stock-uis-styles)
 describes.
 
@@ -82,12 +82,12 @@ rule matched the request and its category is not allowed. The console logs
 
 ## Inspect the active policy
 
-Call this helper with your kernel: `consent.kernel` from `@c15t/browser`,
+Call this helper with your kernel: `consent.kernel` from `@inth/sdk`,
 `runtime.kernel` from `createConsentRuntime`, or one you created. It logs the
 current state and later changes without recording a choice.
 
 ```ts title="src/observe-consent-policy.ts"
-import type { ConsentKernel } from 'c15t';
+import type { ConsentKernel } from '@inth/sdk/engine';
 
 export function observeConsentPolicy(kernel: ConsentKernel) {
 	const report = () => {
@@ -118,6 +118,6 @@ feature would run.
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
 every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because npm installed c15t v2, choices that disappear on
+imports that fail because the wrong package is installed, choices that disappear on
 reload, server HTML that differs from the browser, static builds that fail and
 content blockers that hide the consent UI.

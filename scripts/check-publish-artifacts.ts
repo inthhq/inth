@@ -99,12 +99,12 @@ const distBlockedPathPatterns: { reason: string; pattern: RegExp }[] = [
 /**
  * The consent kernel a mobile app must never be asked to install.
  *
- * `@c15t/core` is the browser engine: it owns consent state, storage, script
+ * `@inth/sdk` holds the browser engine: it owns consent state, storage, script
  * gating, and callbacks in JavaScript. `@inth/react-native` renders the state the
  * Swift and Kotlin cores own instead, so the kernel is the oracle its tests and
  * fixture generator run against, not a package a phone build resolves.
  */
-const KERNEL_PACKAGE = '@c15t/core';
+const KERNEL_PACKAGE = '@inth/sdk';
 
 /**
  * Packages that must publish a surface free of the JavaScript consent kernel.
@@ -313,9 +313,8 @@ export const scanKernelFreePackage = function scanKernelFreePackage(
 };
 
 const requiredPackedFilesByPackage: Record<string, string[]> = {
-	'@c15t/core': ['AGENTS.md', 'docs/README.md'],
-	'@c15t/integrations': ['AGENTS.md', 'docs/README.md'],
-	'@c15t/nextjs': [
+	'@inth/integrations': ['AGENTS.md', 'docs/README.md'],
+	'@inth/nextjs': [
 		'AGENTS.md',
 		'docs/README.md',
 		'styles.css',
@@ -331,7 +330,7 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'src/iab/styles.css',
 		'src/iab/styles.tw3.css',
 	],
-	'@c15t/react': [
+	'@inth/react': [
 		'AGENTS.md',
 		'docs/README.md',
 		'styles.css',
@@ -344,17 +343,6 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'dist/iab/styles.tw3.css',
 		'src/styles.tw3.css',
 		'src/iab/styles.tw3.css',
-	],
-	'@c15t/scripts': ['AGENTS.md', 'docs/README.md'],
-	'@c15t/ui': [
-		'styles.css',
-		'styles.tw3.css',
-		'iab/styles.css',
-		'iab/styles.tw3.css',
-		'dist/styles.css',
-		'dist/styles.tw3.css',
-		'dist/iab/styles.css',
-		'dist/iab/styles.tw3.css',
 	],
 	// The native half has one owner for this list: `scripts/react-native-autolink.ts` says
 	// what a host app opens, and the release gate holds the tarball to it. A named directory
@@ -384,14 +372,21 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'skills/inth-react-native/docs/README.md',
 		'skills/inth-react-native/docs/frameworks/react-native/expo.md',
 	],
-	c15t: ['AGENTS.md'],
+	'@inth/sdk': [
+		'AGENTS.md',
+		'docs/README.md',
+		'lib/ui/styles.css',
+		'lib/ui/styles.tw3.css',
+		'lib/ui/iab/styles.css',
+		'lib/ui/iab/styles.tw3.css',
+		'lib/ui/dist/styles.css',
+		'lib/ui/dist/styles.tw3.css',
+		'lib/ui/dist/iab/styles.css',
+		'lib/ui/dist/iab/styles.tw3.css',
+	],
 };
 
-const styleEntrypointPackages = new Set([
-	'@c15t/ui',
-	'@c15t/react',
-	'@c15t/nextjs',
-]);
+const styleEntrypointPackages = new Set(['@inth/react', '@inth/nextjs']);
 
 const rootTw3ProxyContents: Record<string, string> = {
 	'iab/styles.tw3.css': "@import '../dist/iab/styles.tw3.css';",
@@ -598,7 +593,19 @@ export const runPack = function runPack(
 	return firstPack;
 };
 
-export const getBlockedReason = function getBlockedReason(
+/**
+ * Packages whose builders ship declarations inside dist/ by design, with no
+ * dist-types/ directory: svelte-package, unbuild (Vue), nuxt-module-build
+ * and ng-packagr (Angular Package Format, `dist/types/`).
+ */
+const DECLARATIONS_IN_DIST = new Set([
+	'@inth/angular',
+	'@inth/nuxt',
+	'@inth/svelte',
+	'@inth/vue',
+]);
+
+const blockedReasonInPackage = function blockedReasonInPackage(
 	packageName: string,
 	path: string
 ): string | null {
@@ -628,20 +635,13 @@ export const getBlockedReason = function getBlockedReason(
 			// The generated style entrypoints ship their declarations next to
 			// the JavaScript they describe.
 			if (
-				packageName === '@c15t/ui' &&
+				packageName === '@inth/sdk-ui' &&
 				(/^dist\/styles\/components\/[^/]+\.d\.ts$/u.test(path) ||
 					path === 'dist/styles/dialog.d.ts')
 			) {
 				return null;
 			}
-			// svelte-package, nuxt-module-build and ng-packagr (Angular Package
-			// Format, `dist/types/`) ship declarations inside dist/ by design (no
-			// dist-types/ directory).
-			if (
-				packageName === '@c15t/svelte' ||
-				packageName === '@c15t/vue' ||
-				packageName === '@c15t/angular'
-			) {
+			if (DECLARATIONS_IN_DIST.has(packageName)) {
 				return null;
 			}
 			return 'declaration file in runtime dist';
@@ -664,6 +664,22 @@ export const getBlockedReason = function getBlockedReason(
 	}
 
 	return null;
+};
+
+export const getBlockedReason = function getBlockedReason(
+	packageName: string,
+	path: string
+): string | null {
+	// `@inth/sdk` ships each private part under `lib/<folder>/`: judge those
+	// files as the part's own.
+	const part =
+		packageName === '@inth/sdk'
+			? /^lib\/(?<folder>[^/]+)\/(?<rest>.+)$/u.exec(path)?.groups
+			: undefined;
+	if (part?.folder && part.rest) {
+		return blockedReasonInPackage(`@inth/sdk-${part.folder}`, part.rest);
+	}
+	return blockedReasonInPackage(packageName, path);
 };
 
 const scanStyleEntrypointsContent = function scanStyleEntrypointsContent(
@@ -725,11 +741,14 @@ export const scanUiComponentStyleArtifacts =
 		packageName: string,
 		packedFilePaths: Set<string>
 	): { path: string; size: number; reason: string }[] {
-		if (packageName !== '@c15t/ui') {
+		if (packageName !== '@inth/sdk') {
 			return [];
 		}
 
-		const sourceDir = join(packageDir, 'src/styles/components');
+		// @inth/sdk ships the UI part under lib/ui/; its sources sit beside
+		// the package, in packages/sdk/ui.
+		const prefix = 'lib/ui/';
+		const sourceDir = join(packageDir, '..', 'ui', 'src/styles/components');
 		const styleNames = readdirSync(sourceDir)
 			.filter((file) => file.endsWith('.module.css'))
 			.map((file) => file.replace('.module.css', ''))
@@ -738,7 +757,7 @@ export const scanUiComponentStyleArtifacts =
 
 		for (const name of styleNames) {
 			for (const extension of ['css', 'js', 'd.ts']) {
-				const path = `dist/styles/components/${name}.${extension}`;
+				const path = `${prefix}dist/styles/components/${name}.${extension}`;
 				if (!packedFilePaths.has(path)) {
 					issues.push({
 						path,
@@ -749,11 +768,11 @@ export const scanUiComponentStyleArtifacts =
 			}
 
 			for (const stalePath of [
-				`dist/styles/components/${name}_module.css`,
-				`dist/styles/components/${name}.module.css`,
-				`dist/styles/components/${name}.module.js`,
-				`dist/styles/components/${name}.module.cjs`,
-				`dist/styles/components/${name}.cjs`,
+				`${prefix}dist/styles/components/${name}_module.css`,
+				`${prefix}dist/styles/components/${name}.module.css`,
+				`${prefix}dist/styles/components/${name}.module.js`,
+				`${prefix}dist/styles/components/${name}.module.cjs`,
+				`${prefix}dist/styles/components/${name}.cjs`,
 			]) {
 				if (packedFilePaths.has(stalePath)) {
 					issues.push({
@@ -764,7 +783,7 @@ export const scanUiComponentStyleArtifacts =
 				}
 			}
 
-			const cssPath = `dist/styles/components/${name}.css`;
+			const cssPath = `${prefix}dist/styles/components/${name}.css`;
 			if (packedFilePaths.has(cssPath)) {
 				const filePath = join(packageDir, cssPath);
 				const content = existsSync(filePath)
@@ -786,7 +805,7 @@ export const scanUiComponentStyleArtifacts =
 				}
 			}
 
-			const jsPath = `dist/styles/components/${name}.js`;
+			const jsPath = `${prefix}dist/styles/components/${name}.js`;
 			if (packedFilePaths.has(jsPath)) {
 				const filePath = join(packageDir, jsPath);
 				const content = existsSync(filePath)
@@ -803,7 +822,7 @@ export const scanUiComponentStyleArtifacts =
 				}
 			}
 
-			const declarationPath = `dist/styles/components/${name}.d.ts`;
+			const declarationPath = `${prefix}dist/styles/components/${name}.d.ts`;
 			if (packedFilePaths.has(declarationPath)) {
 				const filePath = join(packageDir, declarationPath);
 				const content = existsSync(filePath)

@@ -5,14 +5,14 @@ import type {
 	ConsentState,
 	KernelOverrides,
 	ResolvedVendor,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 import {
 	deniedVendorIds,
 	evaluateConsent,
 	CONSENT_CATEGORIES,
 	resolveConsentPresentation,
 	subscribeIABControls,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 
 import type { RunAction } from './action-runner';
 import { appendActionFeedback } from './action-runner';

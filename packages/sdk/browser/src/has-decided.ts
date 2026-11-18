@@ -1,4 +1,4 @@
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 
 /**
  * Whether the visitor has answered the choice prompt: a recorded choice, or

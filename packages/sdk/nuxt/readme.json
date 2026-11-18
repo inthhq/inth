@@ -1,0 +1,29 @@
+{
+	"title": "@inth/nuxt: Nuxt cookie banner and cookie consent management",
+	"description": "Cookie banner, consent dialog, and preference center for Nuxt 3 and 4, with consent policies you set by location, such as GDPR opt-in or CCPA opt-out. The server resolves each visitor's policy, so the banner is in the first HTML.",
+	"features": [
+		"A Nuxt module: add `@inth/nuxt` to `modules` and the server resolves each visitor's policy",
+		"Prebuilt cookie banner, consent dialog, and preference center with a theme system",
+		"Auto-imported composables for a fully custom design",
+		"Analytics, ads, and pixels follow each visitor's choice through @inth/integrations: Google Tag Manager, Google Consent Mode v2, GA4, Meta Pixel, PostHog, and more",
+		"IAB TCF 2.4 banner and dialog components",
+		"Static hosting with a policy bundled at build time"
+	],
+	"prerequisites": [
+		"Nuxt 3 or 4",
+		"Node.js 20.19 or later",
+		"An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests"
+	],
+	"manualInstallation": ["", "```bash\npnpm add @inth/nuxt\n```"],
+	"usage": [
+		"Register the module and set `NUXT_PUBLIC_C15T_BACKEND_URL` to your Inth backend URL",
+		"```ts\n// nuxt.config.ts\nexport default defineNuxtConfig({\n  modules: ['@inth/nuxt'],\n})\n```",
+		"Add `ConsentRoot` and a link that opens the preference dialog to `app.vue`",
+		"```vue\n<!-- app/app.vue -->\n<template>\n  <ConsentRoot />\n  <NuxtPage />\n  <footer>\n    <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n  </footer>\n</template>\n```",
+		"For the full setup, see the [Nuxt quickstart](https://c15t.com/docs/frameworks/nuxt/quickstart)"
+	],
+	"docsLink": "https://c15t.com/docs/frameworks/nuxt/quickstart",
+	"quickStartLink": "https://c15t.com/docs/frameworks/nuxt/quickstart",
+	"showCLIGeneration": false,
+	"showHosting": true
+}

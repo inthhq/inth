@@ -42,10 +42,10 @@ If you're upgrading an existing app to TanStack Start 1.0, upgrade Node.js to
 
 ## Install c15t
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/tanstack-start @inth/integrations" mode="install" />
 
-`c15t` contains the TanStack Start adapter at `c15t/tanstack-start`.
-`@c15t/integrations` holds the vendor loaders used below.
+`c15t` contains the TanStack Start adapter at `@inth/tanstack-start`.
+`@inth/integrations` holds the vendor loaders used below.
 
 ## Bundle your policy at build time
 
@@ -55,7 +55,7 @@ Add the `consentManifest` plugin to `vite.config.ts`, before `tanstackStart()`:
 
 During `vite build`, or in `vite dev` when the server first loads it, the
 plugin downloads your project's public policy from `${projectUrl}/manifest` and serves it to server code as
-`snapshot` from `c15t/generated`. In the browser bundle, `snapshot` is
+`snapshot` from `@inth/tanstack-start/generated`. In the browser bundle, `snapshot` is
 `undefined`, so the policy stays on the server. No file is written into your
 project.
 
@@ -82,7 +82,7 @@ no effect.
 
 To apply policy edits without rebuilding, pass
 `createConsentStateHandler({ mode: manifest({ source: 'runtime' }) })`, with
-`manifest` from `c15t/tanstack-start`. The server function then fetches and
+`manifest` from `@inth/tanstack-start`. The server function then fetches and
 caches the policy at runtime; see
 [runtime fetching](/docs/frameworks/tanstack-start/rendering#await-consent-in-the-loader).
 
@@ -103,10 +103,10 @@ What each part does:
   [Geography headers](/docs/frameworks/tanstack-start/geography-headers) lists
   the headers it reads. Declare the `createServerFn()` call in your own module,
   as shown. Start's compiler finds server code by that call site and removes
-  it from the browser build. The browser build's `c15t/generated` exports
+  it from the browser build. The browser build's `@inth/tanstack-start/generated` exports
   `snapshot: undefined`, so the policy never ships to the browser. A server
   function built inside a package does not work. In the browser build,
-  `@c15t/tanstack-start/server` carries only `consentLoaderOptions`; its other
+  `@inth/tanstack-start/server` carries only `consentLoaderOptions`; its other
   helpers throw if browser code calls them.
 - **The loader** awaits the result. `consentLoaderOptions` stops the loader
   from running again on client-side navigation, since the visitor's consent
@@ -128,12 +128,12 @@ What each part does:
 
 ## Gate your own features
 
-Read a category's permission with `useConsent` from `c15t/tanstack-start`:
+Read a category's permission with `useConsent` from `@inth/tanstack-start`:
 
 {/* example: fragment */}
 
 ```tsx title="src/components/marketing-banner.tsx"
-import { useConsent } from 'c15t/tanstack-start';
+import { useConsent } from '@inth/tanstack-start';
 
 export function MarketingBanner() {
 	return useConsent('marketing') ? <aside>Spring sale</aside> : null;

@@ -18,7 +18,7 @@ Then pass them in the config:
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig } from 'c15t/next';
+import { defineConsentConfig } from '@inth/nextjs';
 
 import { callbacks } from './lib/consent-callbacks';
 
@@ -44,7 +44,7 @@ remount.
 | `onError` | A consent command fails in the browser, such as a failed `/init` request or a save the backend rejects. | `error`, a message string |
 | `onBeforeConsentRevocationReload` | A save withdrew a granted category or vendor, right before c15t reloads the page. | `preferences`, the permissions after the save |
 
-The type for the whole object is `ConsentProviderCallbacks` from `c15t/next`.
+The type for the whole object is `ConsentProviderCallbacks` from `@inth/nextjs`.
 Callbacks run after c15t updates its state, so `snapshot` and hooks such as
 `useConsent()` already hold the new values.
 

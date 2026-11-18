@@ -12,7 +12,7 @@
  * already use.
  *
  * It renders from props and nothing else. The rows arrive on `model` in the shape
- * `@c15t/iab`'s display model publishes, nothing here reads a consent kernel, and
+ * `@inth/sdk/iab`'s display model publishes, nothing here reads a consent kernel, and
  * every switch the subject moves is held locally until one press of Save hands the
  * whole selection over in a single call. Closing writes nothing, which is the same
  * bargain the web's preference centre makes.
@@ -329,7 +329,7 @@ export interface ConsentIabDrawerRootProps {
 	readonly initialTab?: ConsentIabTab;
 	/** Called when the subject leaves without saving, and by Android's back. */
 	readonly onClose: () => void;
-	/** Disclosure to render, in the shape `@c15t/iab`'s display model publishes. */
+	/** Disclosure to render, in the shape `@inth/sdk/iab`'s display model publishes. */
 	readonly model: ConsentIabDisplayModel;
 	/**
 	 * Called with every decision on the surface, once, when the subject writes.

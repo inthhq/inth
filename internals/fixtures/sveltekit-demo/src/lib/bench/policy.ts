@@ -1,4 +1,4 @@
-import { resolvePolicyRules } from 'c15t';
+import { resolvePolicyRules } from '@inth/sdk/engine';
 
 export const BENCHMARK_POLICY_RESOLUTION = resolvePolicyRules({
 	countryCode: 'DE',

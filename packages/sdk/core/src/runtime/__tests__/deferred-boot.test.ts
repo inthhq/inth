@@ -77,7 +77,7 @@ describe('pendingBootSnapshot', () => {
 		expect(imports.length).toBeGreaterThan(0);
 		for (const specifier of imports) {
 			expect(specifier).not.toMatch(
-				/kernel|consent-record|deferred-snapshot|@c15t\/schema|translations|\.\.\/policy/u
+				/kernel|consent-record|deferred-snapshot|@inth\/sdk\/schema|translations|\.\.\/policy/u
 			);
 		}
 	});

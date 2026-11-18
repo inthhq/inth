@@ -1,4 +1,4 @@
-import { mapInitOutputToInitResponse } from '@c15t/core';
+import { mapInitOutputToInitResponse } from '@inth/sdk/engine';
 import { describe, expect, it } from 'vitest';
 
 import { createPolicyOperations } from '../../core-benchmarks/src/policy-operations';

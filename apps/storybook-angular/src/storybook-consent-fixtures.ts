@@ -1,6 +1,6 @@
 import type { ApplicationConfig } from '@angular/core';
-import { provideC15t } from '@c15t/angular';
-import type { C15tOptions, C15tProviderOptions } from '@c15t/angular';
+import { provideC15t } from '@inth/angular';
+import type { C15tOptions, C15tProviderOptions } from '@inth/angular';
 
 import {
 	seedStorybookChoice,

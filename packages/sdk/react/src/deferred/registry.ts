@@ -7,10 +7,10 @@
  * @internal
  */
 
-import type { ConsentKernel } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
-import type * as ScriptLoaderModule from '@c15t/core/modules/script-loader';
-import { claimPlainScripts } from '@c15t/core/surface-actions/plain-scripts';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import type * as ScriptLoaderModule from '@inth/sdk/modules/script-loader';
+import { claimPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
 /**
  * Loaders the engine's chunk offers. A module imported from there finds
@@ -32,7 +32,7 @@ export interface DeferredModules {
  * @internal
  */
 export const loadDeferredScriptLoader = () =>
-	import('@c15t/core/modules/script-loader');
+	import('@inth/sdk/modules/script-loader');
 
 interface DeferredEntry {
 	ready: Promise<DeferredModules>;

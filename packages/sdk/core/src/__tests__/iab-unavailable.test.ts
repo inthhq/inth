@@ -1,5 +1,5 @@
-import { resolvePolicyRules } from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
 import {

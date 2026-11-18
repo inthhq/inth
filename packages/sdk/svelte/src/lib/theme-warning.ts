@@ -1,4 +1,4 @@
-import type { Theme } from '@c15t/ui/theme';
+import type { Theme } from '@inth/sdk/ui/theme';
 import { DEV } from 'esm-env';
 
 /** `Theme` keys that only reach the page as CSS variables. */

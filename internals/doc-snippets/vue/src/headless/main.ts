@@ -1,5 +1,5 @@
 // #region docs:headless-main title="src/main.ts"
-import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
+import { c15tVue, manifest } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';

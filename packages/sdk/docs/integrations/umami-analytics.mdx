@@ -18,10 +18,10 @@ Copy the website ID from your Umami tracking code. The helper passes it to the
 script as `data-website-id`. For a self-hosted Umami instance, set `scriptUrl`
 to your instance's tracker script.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { umamiAnalytics } from '@c15t/integrations/umami-analytics';
+import { umamiAnalytics } from '@inth/integrations/umami-analytics';
 
 export const scripts = [umamiAnalytics({ websiteId: 'YOUR_WEBSITE_ID' })];
 ```

@@ -1,13 +1,13 @@
-import { generateThemeCSS as uiGenerateThemeCSS } from '@c15t/ui/theme';
+import { generateThemeCSS as uiGenerateThemeCSS } from '@inth/sdk/ui/theme';
 import { describe, expect, test } from 'vitest';
 
 import { generateThemeCSS } from '../theme-utils';
 
 const theme = { dark: { primary: '#40e0d0' } };
 
-describe('generateThemeCSS from @c15t/react/utils', () => {
+describe('generateThemeCSS from @inth/react/utils', () => {
 	test.each(['light', 'dark', 'system', null, undefined] as const)(
-		'writes the same CSS as @c15t/ui/theme for colorScheme %s',
+		'writes the same CSS as @inth/sdk/ui/theme for colorScheme %s',
 		(colorScheme) => {
 			expect(generateThemeCSS(theme, colorScheme)).toBe(
 				uiGenerateThemeCSS(theme, colorScheme)

@@ -1,4 +1,4 @@
-import type { Theme } from '@c15t/ui/theme';
+import type { Theme } from '@inth/sdk/ui/theme';
 
 /** `Theme` keys that only reach the page as CSS variables. */
 const TOKEN_KEYS = [

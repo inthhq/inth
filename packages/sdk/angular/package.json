@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/angular",
+	"name": "@inth/angular",
 	"version": "3.2.0-canary.0",
 	"description": "Angular cookie consent banner for c15t, with a consent dialog and preference center. Standalone components, signals and zoneless change detection.",
 	"keywords": [
@@ -51,69 +51,83 @@
 	],
 	"type": "module",
 	"sideEffects": [
-		"**/*.css"
+		"**/*.css",
+		"./dist/translations/*.js"
 	],
-	"module": "./dist/fesm2022/c15t-angular.mjs",
-	"types": "./dist/types/c15t-angular.d.ts",
+	"module": "./dist/fesm2022/inth-angular.mjs",
+	"types": "./dist/types/inth-angular.d.ts",
 	"exports": {
+		"./gpp": {
+			"types": "./dist/types/inth-angular-gpp.d.ts",
+			"default": "./dist/fesm2022/inth-angular-gpp.mjs"
+		},
+		"./engine": {
+			"types": "./dist/types/inth-angular-engine.d.ts",
+			"default": "./dist/fesm2022/inth-angular-engine.mjs"
+		},
+		"./translations/*": {
+			"types": "./dist/translations/*.d.ts",
+			"import": "./dist/translations/*.js",
+			"default": "./dist/translations/*.js"
+		},
 		"./package.json": "./package.json",
 		"./styles.css": "./dist/styles.css",
 		"./iab/styles.css": "./dist/iab/styles.css",
 		"./devtools": {
-			"types": "./dist/types/c15t-angular-devtools.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-devtools.mjs"
+			"types": "./dist/types/inth-angular-devtools.d.ts",
+			"default": "./dist/fesm2022/inth-angular-devtools.mjs"
 		},
 		"./postcss-tailwind3": {
 			"types": "./dist/postcss-tailwind3/index.d.ts",
 			"default": "./dist/postcss-tailwind3/index.mjs"
 		},
 		"./ssr": {
-			"types": "./dist/types/c15t-angular-ssr.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-ssr.mjs"
+			"types": "./dist/types/inth-angular-ssr.d.ts",
+			"default": "./dist/fesm2022/inth-angular-ssr.mjs"
 		},
 		"./testing": {
-			"types": "./dist/types/c15t-angular-testing.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-testing.mjs"
+			"types": "./dist/types/inth-angular-testing.d.ts",
+			"default": "./dist/fesm2022/inth-angular-testing.mjs"
 		},
 		"./consent-dialog": {
-			"types": "./dist/types/c15t-angular-consent-dialog.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-consent-dialog.mjs"
+			"types": "./dist/types/inth-angular-consent-dialog.d.ts",
+			"default": "./dist/fesm2022/inth-angular-consent-dialog.mjs"
 		},
 		"./consent-dialog-trigger": {
-			"types": "./dist/types/c15t-angular-consent-dialog-trigger.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-consent-dialog-trigger.mjs"
+			"types": "./dist/types/inth-angular-consent-dialog-trigger.d.ts",
+			"default": "./dist/fesm2022/inth-angular-consent-dialog-trigger.mjs"
 		},
 		"./consent-gate": {
-			"types": "./dist/types/c15t-angular-consent-gate.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-consent-gate.mjs"
+			"types": "./dist/types/inth-angular-consent-gate.d.ts",
+			"default": "./dist/fesm2022/inth-angular-consent-gate.mjs"
 		},
 		"./consent-root": {
-			"types": "./dist/types/c15t-angular-consent-root.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-consent-root.mjs"
+			"types": "./dist/types/inth-angular-consent-root.d.ts",
+			"default": "./dist/fesm2022/inth-angular-consent-root.mjs"
 		},
 		"./consent-widget": {
-			"types": "./dist/types/c15t-angular-consent-widget.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-consent-widget.mjs"
+			"types": "./dist/types/inth-angular-consent-widget.d.ts",
+			"default": "./dist/fesm2022/inth-angular-consent-widget.mjs"
 		},
 		"./iab": {
-			"types": "./dist/types/c15t-angular-iab.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-iab.mjs"
+			"types": "./dist/types/inth-angular-iab.d.ts",
+			"default": "./dist/fesm2022/inth-angular-iab.mjs"
 		},
 		"./primitives": {
-			"types": "./dist/types/c15t-angular-primitives.d.ts",
-			"default": "./dist/fesm2022/c15t-angular-primitives.mjs"
+			"types": "./dist/types/inth-angular-primitives.d.ts",
+			"default": "./dist/fesm2022/inth-angular-primitives.mjs"
 		},
 		".": {
-			"types": "./dist/types/c15t-angular.d.ts",
-			"default": "./dist/fesm2022/c15t-angular.mjs"
+			"types": "./dist/types/inth-angular.d.ts",
+			"default": "./dist/fesm2022/inth-angular.mjs"
 		}
 	},
 	"publishConfig": {
 		"access": "public"
 	},
 	"scripts": {
-		"build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && pnpm run build:schematics",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/angular",
+		"build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && pnpm run build:schematics && node ../shared/write-translation-entries.mjs dist",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/angular",
 		"build:schematics": "tsc -p schematics/tsconfig.json && node schematics/copy-assets.mjs",
 		"check-types": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.spec.json",
 		"dev": "ng-packagr -p ng-package.json -c tsconfig.lib.json --watch",
@@ -124,12 +138,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/dev-tools": "workspace:*",
-		"@c15t/iab": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/translations": "workspace:*",
-		"@c15t/ui": "workspace:*",
+		"@inth/sdk": "workspace:*",
 		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
@@ -149,9 +158,9 @@
 		"@angular/router": "22.2.5",
 		"@angular/ssr": "22.2.6",
 		"@c15t/conformance": "workspace:*",
-		"@c15t/integrations": "workspace:*",
 		"@c15t/typescript-config": "workspace:*",
 		"@c15t/vitest-config": "workspace:*",
+		"@inth/integrations": "workspace:*",
 		"@schematics/angular": "22.2.6",
 		"@types/node": "25.5.0",
 		"@vitest/coverage-istanbul": "4.1.10",

@@ -1,4 +1,4 @@
-import type { LegalLinksTranslations } from '@c15t/translations';
+import type { LegalLinksTranslations } from '@inth/sdk-translations';
 
 export interface LegalLink {
 	/** The URL or path to the legal link */

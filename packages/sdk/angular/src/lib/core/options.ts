@@ -3,8 +3,9 @@ import type {
 	IABConfig,
 	LegalLinks,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import type { HostedMode } from '@c15t/core/modes';
+} from '@inth/sdk/engine';
+import type { CreateIABOptions } from '@inth/sdk/iab';
+import type { HostedMode } from '@inth/sdk/modes';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeOptions,
@@ -13,10 +14,9 @@ import type {
 	RuntimePersistenceOptions,
 	RuntimeScriptLoaderOptions,
 	WithProjectUrl,
-} from '@c15t/core/runtime';
-import type { ConsentTesting } from '@c15t/core/testing';
-import type { CreateIABOptions } from '@c15t/iab';
-import type { Theme, UIOptions } from '@c15t/ui/theme';
+} from '@inth/sdk/runtime';
+import type { ConsentTesting } from '@inth/sdk/testing';
+import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 
 import type { DialogPreload } from './dialog-warming';
 import { isIABConfigured, lazyCreateIAB, loadGPP } from './iab-loader';
@@ -45,9 +45,9 @@ export type C15tCallbacks = NonNullable<ConsentRuntimeOptions['callbacks']>;
  * Options for {@link provideC15t}, besides `mode` and `runtime`.
  *
  * Everything not declared here is the framework-agnostic
- * `ConsentRuntimeOptions` contract from `@c15t/core/runtime`, forwarded
+ * `ConsentRuntimeOptions` contract from `@inth/sdk/runtime`, forwarded
  * untouched to the runtime. `createIAB` and `loadGPP` are supplied by this
- * package and `pkg` is fixed to `'@c15t/angular'`.
+ * package and `pkg` is fixed to `'@inth/angular'`.
  */
 export interface C15tSharedOptions
 	extends
@@ -77,7 +77,7 @@ export interface C15tSharedOptions
 	 * the runtime starts and keeps the GPP string in step with the visitor's
 	 * choices. `true` or `{}` uses the defaults; omitted or `false` leaves
 	 * GPP off. The GPP code loads through a dynamic import of
-	 * `@c15t/iab/gpp`, so apps that leave it off never download it.
+	 * `@inth/sdk/iab/gpp`, so apps that leave it off never download it.
 	 *
 	 * Ignored with an external `runtime`: set `gpp` on that runtime.
 	 *
@@ -102,7 +102,7 @@ export interface C15tSharedOptions
 	 * elements, carrying `nonce`. On a server-rendered page the rules are in
 	 * the HTML, so no stylesheet `<link>` holds back the first paint.
 	 *
-	 * Set `false` when the app imports `@c15t/angular/styles.css` itself.
+	 * Set `false` when the app imports `@inth/angular/styles.css` itself.
 	 *
 	 * @default true
 	 */
@@ -115,7 +115,7 @@ export interface C15tSharedOptions
 	/**
 	 * Slot styles and consent-action variants. Design tokens (colors, dark,
 	 * typography, spacing, radius, shadows, motion) are not applied in the
-	 * browser: put `generateThemeCSS(theme)` from `@c15t/ui/theme` in a
+	 * browser: put `generateThemeCSS(theme)` from `@inth/sdk/ui/theme` in a
 	 * stylesheet or a `<style id="c15t-theme">`. In development the provider
 	 * warns when `theme` has tokens and the page has no `#c15t-theme`.
 	 */
@@ -127,7 +127,7 @@ export interface C15tSharedOptions
  *
  * @example
  * ```ts
- * import { provideC15t } from '@c15t/angular';
+ * import { provideC15t } from '@inth/angular';
  *
  * export const appConfig: ApplicationConfig = {
  *   providers: [provideC15t({ projectUrl: '/api/c15t' })],
@@ -148,11 +148,11 @@ export interface C15tOptions extends C15tSharedOptions {
 	 *   `provideC15tServer()`, the server render resolves from the
 	 *   backend's consent manifest, falling back to `/init` with a warning
 	 *   when it is unavailable.
-	 * - `hosted()` from `@c15t/angular`: ask `${projectUrl}/init`, on the
+	 * - `hosted()` from `@inth/angular`: ask `${projectUrl}/init`, on the
 	 *   server too.
-	 * - `manifest()` from `@c15t/angular`: resolve from the manifest in the
+	 * - `manifest()` from `@inth/angular`: resolve from the manifest in the
 	 *   browser too.
-	 * - `testing()` from `@c15t/angular/testing`: resolve a policy with no
+	 * - `testing()` from `@inth/angular/testing`: resolve a policy with no
 	 *   backend, for tests. It throws in production builds. To keep consent
 	 *   out of the way in an app's own tests instead, set `enabled: false`.
 	 */
@@ -212,12 +212,12 @@ export const runtimeOptionsFor = function runtimeOptionsFor(
 ) {
 	return {
 		...options,
-		// Only an app that configured IAB reaches for `@c15t/iab`, and even
+		// Only an app that configured IAB reaches for `@inth/sdk/iab`, and even
 		// then the module arrives through a dynamic import.
 		createIAB: isIABConfigured(options.iab) ? lazyCreateIAB : undefined,
 		// Called only when `gpp` is set, so other apps never fetch the chunk.
 		loadGPP,
 		mode: selectedMode(options),
-		pkg: '@c15t/angular',
+		pkg: '@inth/angular',
 	};
 };

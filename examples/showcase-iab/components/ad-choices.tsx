@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentDialogLink } from 'c15t/next';
+import { ConsentDialogLink } from '@inth/nextjs';
 
 import { adPartners } from '@/lib/ad-partners';
 import { canServe, useTcfData } from '@/lib/use-tcf-data';

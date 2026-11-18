@@ -1,5 +1,5 @@
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import type { GlobalVendorList } from '@c15t/core';
+import type { GlobalVendorList } from '@inth/sdk-core';
 import { describe, expect, test } from 'vitest';
 
 import {

@@ -11,7 +11,7 @@
  * @deprecated `readRequestConsent()` already returns the subject. Removed in
  * v4.
  */
-import { isSpeculativeRequest } from '@c15t/schema/types';
+import { isSpeculativeRequest } from '@inth/sdk-schema/types';
 
 import type { StorageConfig } from '../libs/cookie/types';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';

@@ -1,5 +1,5 @@
 import { buttonRenders } from '@c15t/conformance/play/button';
-import { Button } from '@c15t/react/primitives';
+import { Button } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta = {

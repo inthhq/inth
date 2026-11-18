@@ -6,8 +6,8 @@
 		"check-types": "nuxt typecheck"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
-		"c15t": "workspace:*",
+		"@inth/integrations": "workspace:*",
+		"@inth/nuxt": "workspace:*",
 		"h3": "1.15.11",
 		"nuxt": "^4.5.1"
 	},

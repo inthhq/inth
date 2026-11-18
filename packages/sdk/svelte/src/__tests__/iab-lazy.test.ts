@@ -1,11 +1,11 @@
 /**
- * `@c15t/iab` must not reach an app that did not ask for IAB.
+ * `@inth/sdk/iab` must not reach an app that did not ask for IAB.
  *
  * The provider sits in every SvelteKit app's layout chunk, so a static
  * import of the TCF implementation costs sites that never show a TCF
  * surface 3.3 KB gzipped there (measured on the SvelteKit bench). Two
  * things keep it out, and both are asserted here: no module an app loads
- * for the banner imports `@c15t/iab` for a value, and the runtime only
+ * for the banner imports `@inth/sdk/iab` for a value, and the runtime only
  * gets a `createIAB` — the thing that triggers the dynamic import — when
  * `iab` is configured.
  */
@@ -69,9 +69,11 @@ describe('lazy IAB loading', () => {
 		'iab-loader.ts',
 		'index.ts',
 		'types.ts',
-	])('%s has no value import of `@c15t/iab`', (file) => {
+	])('%s has no value import of `@inth/sdk/iab`', (file) => {
 		const text = source(file);
-		const imports = text.match(/^\s*import\s+(?!type\b)[^;]*'@c15t\/iab'/gmu);
+		const imports = text.match(
+			/^\s*import\s+(?!type\b)[^;]*'@inth\/sdk\/iab'/gmu
+		);
 
 		expect(imports).toBeNull();
 	});
@@ -93,7 +95,7 @@ describe('lazy IAB loading', () => {
 		mountProvider({ iab: { cmpId: 42, enabled: true } });
 
 		// The CMP arrives through a dynamic import, so the first run pays
-		// for transforming `@c15t/iab` as well as loading it.
+		// for transforming `@inth/sdk/iab` as well as loading it.
 		await vi.waitFor(
 			() => {
 				expect((window as WindowWithTCF).__tcfapi).toBeTypeOf('function');

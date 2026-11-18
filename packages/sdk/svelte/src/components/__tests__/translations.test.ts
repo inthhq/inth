@@ -4,12 +4,12 @@
  * Mirrors: packages/sdk/react/src/hooks/__tests__/use-translations.test.tsx
  */
 
-import type { KernelTranslations, Translations } from '@c15t/core';
+import type { KernelTranslations, Translations } from '@inth/sdk/engine';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { enTranslations } from '@c15t/translations';
+} from '@inth/sdk/schema/types';
+import { enTranslations } from '@inth/sdk/translations';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test } from 'vitest';
 

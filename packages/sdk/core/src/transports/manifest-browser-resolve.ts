@@ -10,14 +10,14 @@
 import {
 	POLICY_CONTRACT_VERSION,
 	resolveInitFromManifest,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import type {
 	ConsentManifest,
 	InitOutput,
 	ResolveInitFromManifestInputs,
-} from '@c15t/schema/types';
-import { enTranslations } from '@c15t/translations';
-import type { BaseTranslations, Translations } from '@c15t/translations';
+} from '@inth/sdk-schema/types';
+import { enTranslations } from '@inth/sdk-translations';
+import type { BaseTranslations, Translations } from '@inth/sdk-translations';
 
 import { mapInitOutputToInitResponse } from './init-output';
 import type { TransportInitResponse } from './init-output';

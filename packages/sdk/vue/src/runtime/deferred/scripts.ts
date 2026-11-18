@@ -2,15 +2,15 @@
  * The app's `scripts` before the consent engine loads: whether one may run
  * under a snapshot, and inserting the plain ones a choice allows the way
  * the script loader would, so the loader adopts them when it arrives.
- * Small, for the first-load chunk. Same rules as `@c15t/react`'s deferred
+ * Small, for the first-load chunk. Same rules as `@inth/react`'s deferred
  * root.
  *
  * @packageDocumentation
  * @internal
  */
 
-import type { ConsentSnapshot, HasCondition } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
+import type { ConsentSnapshot, HasCondition } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
 
 type Condition = HasCondition<string>;
 
@@ -102,7 +102,7 @@ export const isPlainScript = function isPlainScript(script: Script): boolean {
 /**
  * A script element the loader adopts when it mounts the script, as it
  * adopts one the server's inline start inserted (`__c15tStarted`, see
- * `@c15t/core/runtime/script-server-start`).
+ * `@inth/sdk/runtime/script-server-start`).
  */
 type StartedElement = HTMLScriptElement & {
 	__c15tScript?: string;

@@ -1,5 +1,5 @@
-import { hosted } from '@c15t/nextjs';
-import { resolveConsent } from '@c15t/nextjs/server';
+import { hosted } from '@inth/nextjs';
+import { resolveConsent } from '@inth/nextjs/server';
 import type { ReactNode } from 'react';
 
 import { NextjsPrefetchedBenchmarkProvider } from '../_bench/provider';

@@ -1,5 +1,5 @@
 // #region docs:consent-route title="src/consent.server.ts"
-import { createConsentRoute } from '@c15t/angular/ssr';
+import { createConsentRoute } from '@inth/angular/ssr';
 
 /**
  * The consent route at `/api/c15t`. It resolves `/init` from the backend's

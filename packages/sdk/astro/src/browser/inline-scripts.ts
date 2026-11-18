@@ -28,8 +28,8 @@
  * category is granted. With a page nonce, tags without it are skipped.
  */
 
-import { allConsentNames, has, isVendorDenied } from '@c15t/core';
-import type { AllConsentNames, ConsentSnapshot } from '@c15t/core';
+import { allConsentNames, has, isVendorDenied } from '@inth/sdk/engine';
+import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk/engine';
 
 /** Attribute that marks a script for consent gating. */
 export const CATEGORY_ATTRIBUTE = 'data-c15t-category';
@@ -69,7 +69,7 @@ const isTrusted = function isTrusted(
 	}
 	// biome-ignore lint/suspicious/noConsole: security diagnostic for the page author.
 	console.warn(
-		`@c15t/astro: skipped a ${CATEGORY_ATTRIBUTE} script without the page's CSP nonce. Add nonce={Astro.locals.c15t.nonce} to your own gated tags.`,
+		`@inth/astro: skipped a ${CATEGORY_ATTRIBUTE} script without the page's CSP nonce. Add nonce={Astro.locals.c15t.nonce} to your own gated tags.`,
 		element
 	);
 	element.setAttribute(ACTIVATED_ATTRIBUTE, 'untrusted');
@@ -156,7 +156,7 @@ export const activateGatedScripts = function activateGatedScripts(
 			// forever, which reads as "the integration is broken".
 			// biome-ignore lint/suspicious/noConsole: authoring-time diagnostic.
 			console.warn(
-				`@c15t/astro: unknown ${CATEGORY_ATTRIBUTE} "${category}". Expected one of ${allConsentNames.join(', ')}.`
+				`@inth/astro: unknown ${CATEGORY_ATTRIBUTE} "${category}". Expected one of ${allConsentNames.join(', ')}.`
 			);
 			element.setAttribute(ACTIVATED_ATTRIBUTE, 'invalid');
 			continue;

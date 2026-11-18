@@ -4,16 +4,16 @@
 		Model,
 		PromptPosition,
 		PromptVariant,
-	} from '@c15t/core';
-	import { resolveConsentPresentation } from '@c15t/core';
+	} from '@inth/sdk/engine';
+	import { resolveConsentPresentation } from '@inth/sdk/engine';
+	import type { PolicyRight } from '@inth/sdk/schema/types';
 	import {
 		EARLY_CONSENT_TAP_SCRIPT,
 		replayEarlyConsentTaps,
-	} from '@c15t/core/surface-actions';
-	import type { PolicyRight } from '@c15t/schema/types';
-	import styles from '@c15t/ui/styles/components/consent-banner';
-	import { resolveTranslations } from '@c15t/ui/utils';
-	import { getTextDirection } from '@c15t/ui/utils/text-direction';
+	} from '@inth/sdk/surface-actions';
+	import styles from '@inth/sdk/ui/styles/components/consent-banner';
+	import { resolveTranslations } from '@inth/sdk/ui/utils';
+	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { onMount } from 'svelte';
 
 	import {

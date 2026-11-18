@@ -8,7 +8,7 @@
  * `focus-trap.ts` and `scroll-lock.ts`: its code loads on its own.
  */
 
-import type * as DomModule from '@c15t/ui/utils/dom';
+import type * as DomModule from '@inth/sdk/ui/utils/dom';
 
 import type { FocusTrapParams } from './focus-trap';
 
@@ -16,7 +16,7 @@ type DomUtils = typeof DomModule;
 
 let domUtils: Promise<DomUtils> | undefined;
 const loadDomUtils = (): Promise<DomUtils> => {
-	domUtils ??= import('@c15t/ui/utils/dom');
+	domUtils ??= import('@inth/sdk/ui/utils/dom');
 	return domUtils;
 };
 

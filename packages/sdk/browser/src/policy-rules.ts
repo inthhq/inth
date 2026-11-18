@@ -1,5 +1,5 @@
-import { policyRulePresets } from '@c15t/core';
-import type { PolicyRule } from '@c15t/core';
+import { policyRulePresets } from '@inth/sdk-core';
+import type { PolicyRule } from '@inth/sdk-core';
 
 import type { TestingScriptTagOptions } from './types';
 
@@ -26,7 +26,7 @@ export const resolveRules = function resolveRules(
 			: undefined;
 		if (typeof preset !== 'function') {
 			throw new Error(
-				`@c15t/browser: unknown policy preset "${entry}". Expected one of ${Object.keys(policyRulePresets).join(', ')}.`
+				`@inth/sdk: unknown policy preset "${entry}". Expected one of ${Object.keys(policyRulePresets).join(', ')}.`
 			);
 		}
 		return preset();

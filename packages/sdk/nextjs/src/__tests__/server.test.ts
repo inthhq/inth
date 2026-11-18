@@ -7,12 +7,12 @@
  * cookies and headers independently.
  */
 
-import { createConsentKernel } from '@c15t/core';
-import type { KernelConfig } from '@c15t/core';
-import { hosted } from '@c15t/core/modes';
-import { clearManifestCache } from '@c15t/core/server';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { KernelConfig } from '@inth/sdk/engine';
+import { hosted } from '@inth/sdk/modes';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
+import type { PolicyRule } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
@@ -320,7 +320,7 @@ describe('resolveConsent: manifest session reports', () => {
 		expect(headers['user-agent']).toBe('Mozilla/5.0');
 		expect(headers).not.toHaveProperty('cookie');
 		expect(JSON.parse(init.body as string)).toMatchObject({
-			adapter: '@c15t/nextjs',
+			adapter: '@inth/nextjs',
 			country: 'DE',
 			source: 'render',
 		});

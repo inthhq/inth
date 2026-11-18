@@ -5,11 +5,11 @@
  * the trigger after mount, the Nuxt banner on the server and in the
  * browser.
  */
-import type { InitOutput } from '@c15t/schema/types';
+import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { Component } from 'vue';

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PREFERENCE_ITEM_SLOTS } from '@c15t/ui/primitives';
+import { PREFERENCE_ITEM_SLOTS } from '@inth/sdk/ui/primitives';
 import { computed } from 'vue';
 
 import { usePreferenceItemContext } from './context';

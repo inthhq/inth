@@ -1,4 +1,4 @@
-import type { ConsentRequestHeaderInputs as ConsentRequestInputs } from '@c15t/schema/types';
+import type { ConsentRequestHeaderInputs as ConsentRequestInputs } from '@inth/sdk/schema/types';
 
 /**
  * Consent inputs the request middleware resolved, keyed by the request

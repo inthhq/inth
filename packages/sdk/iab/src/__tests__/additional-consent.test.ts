@@ -1,12 +1,12 @@
 /** @vitest-environment jsdom */
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk-core';
+import type { ConsentKernel } from '@inth/sdk-core';
 import {
 	AD_TECH_PROVIDER_FETCH_TIMEOUT_MS,
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createIAB } from '../index';

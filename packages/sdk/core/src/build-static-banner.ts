@@ -10,7 +10,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import type { ConsentManifest, InitOutput } from '@c15t/schema/types';
+import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 
 import { storedAnswerKeys } from './libs/journey';
 import {
@@ -21,13 +21,13 @@ import {
 import { STORAGE_KEY_V2 } from './libs/storage-keys';
 import { resolveManifestInit } from './transports/manifest-cache';
 
-/** A stylesheet from `@c15t/ui/styles/sheets/*`. */
+/** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
 export interface StaticBannerSheet {
 	id: string;
 	css: string;
 }
 
-/** What `@c15t/react/static-banner` exports. @internal */
+/** What `@inth/react/static-banner` exports. @internal */
 export interface StaticBannerRenderer {
 	/** The banner's stylesheets, in cascade order. */
 	STATIC_BANNER_SHEETS: readonly StaticBannerSheet[];
@@ -39,7 +39,7 @@ export interface StaticBannerRenderer {
 }
 
 /**
- * Sheets `@c15t/react` imports that a page with the static banner already
+ * Sheets `@inth/react` imports that a page with the static banner already
  * holds (`tokens`, `button`, `banner`), or that only a surface rendered
  * later needs (`trigger`, `consent-gate`). A client build gets each one's
  * `-deferred` module: the same `id`, no text, and a `load()` used only when
@@ -53,21 +53,21 @@ const DEFERRED_SHEETS = new Set([
 	'trigger',
 	'consent-gate',
 ]);
-const SHEETS_PREFIX = '@c15t/ui/styles/sheets/';
+const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
 
-/** A module of the installed `@c15t/react`, whatever the package manager. */
-const REACT_PACKAGE = /[\\/]node_modules[\\/]@c15t[\\/]react[\\/]/u;
+/** A module of the installed `@inth/react`, whatever the package manager. */
+const REACT_PACKAGE = /[\\/]node_modules[\\/]@inth[\\/]react[\\/]/u;
 
 /**
- * The stock banner's root component in `@c15t/react`'s build, or the
+ * The stock banner's root component in `@inth/react`'s build, or the
  * `ConsentBanner` a browser build imports (`deferred/client-banner.js`),
  * which loads that component in a chunk of its own.
  */
 const BANNER_MODULE =
-	/[\\/]@c15t[\\/]react[\\/]dist[\\/](?:components[\\/]prompt[\\/]atoms[\\/]root|deferred[\\/]client-banner)\.js$/u;
+	/[\\/]@inth[\\/]react[\\/]dist[\\/](?:components[\\/]prompt[\\/]atoms[\\/]root|deferred[\\/]client-banner)\.js$/u;
 
 /**
- * The `-deferred` twin of a sheet `@c15t/react` imports, or `undefined` for
+ * The `-deferred` twin of a sheet `@inth/react` imports, or `undefined` for
  * any other import.
  *
  * @param id - The import specifier.
@@ -89,19 +89,19 @@ export const deferredSheetSpecifier = function deferredSheetSpecifier(
 		: undefined;
 };
 
-/** `@c15t/react`'s `ConsentBanner` export, by its package import. */
+/** `@inth/react`'s `ConsentBanner` export, by its package import. */
 const CONSENT_BANNER_IMPORT = '#consent-banner';
 
 /**
- * The browser `ConsentBanner` for `@c15t/react`'s `#consent-banner`, when
- * the importer is the installed `@c15t/react`: a gate that loads the stock
+ * The browser `ConsentBanner` for `@inth/react`'s `#consent-banner`, when
+ * the importer is the installed `@inth/react`: a gate that loads the stock
  * banner in a chunk of its own. A page with the static banner shows that
  * one until its client loads, so the banner's code need not be in the
  * page's first-load JavaScript. Any other import is `undefined`.
  *
  * @param id - The import specifier.
  * @param importer - The importing module's path.
- * @returns The gate's path in the importer's `@c15t/react`.
+ * @returns The gate's path in the importer's `@inth/react`.
  * @internal
  */
 export const clientBannerPath = function clientBannerPath(
@@ -131,7 +131,7 @@ export interface StaticBannerChunk {
 }
 
 /**
- * Where the `@c15t/react` a page's entry loads statically is installed,
+ * Where the `@inth/react` a page's entry loads statically is installed,
  * when that includes the stock banner, or the browser `ConsentBanner` that
  * loads it; otherwise `undefined`. A page that imports the banner only in
  * a lazy chunk of its own, or no c15t at all, such as a second entry, gets
@@ -171,7 +171,7 @@ export const findPageBanner = function findPageBanner(
 };
 
 /**
- * Loads `@c15t/react/static-banner` from the installed package.
+ * Loads `@inth/react/static-banner` from the installed package.
  *
  * @param reactRoot - The package directory.
  * @returns Its exports, or `undefined` when this version has none.
@@ -182,7 +182,7 @@ export const loadStaticBannerRenderer = async function loadStaticBannerRenderer(
 ): Promise<StaticBannerRenderer | undefined> {
 	try {
 		const file = createRequire(join(reactRoot, 'package.json')).resolve(
-			'@c15t/react/static-banner'
+			'@inth/react/static-banner'
 		);
 		return (await import(pathToFileURL(file).href)) as StaticBannerRenderer;
 	} catch {
@@ -246,7 +246,7 @@ export interface StaticBanner {
  * shows a choice banner, in `language`, hidden, followed by the script that
  * shows it when the page's `/init` answers with the same policy.
  *
- * @param renderer - `@c15t/react/static-banner`.
+ * @param renderer - `@inth/react/static-banner`.
  * @param manifest - The deployment's manifest.
  * @param options - Language to render, and the consent storage key.
  * @returns The banner, or `undefined` when no pack shows a choice banner.
@@ -295,7 +295,7 @@ export const renderStaticBannerHtml = function renderStaticBannerHtml(
 
 /**
  * The sheets as hoisted React styles: `data-href` is what React 19 adopts
- * a `<style href precedence>` from, and what `@c15t/react` looks up before
+ * a `<style href precedence>` from, and what `@inth/react` looks up before
  * loading a deferred sheet.
  *
  * @param sheets - The stylesheets, in cascade order.

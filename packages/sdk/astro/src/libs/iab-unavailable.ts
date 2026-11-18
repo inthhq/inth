@@ -10,9 +10,9 @@
  *
  * @internal
  */
-import { IABUnavailableError, policyNeedsIAB } from '@c15t/core';
-import type { ConsentSnapshot } from '@c15t/core';
-import { isIABConfigured } from '@c15t/core/runtime';
+import { IABUnavailableError, policyNeedsIAB } from '@inth/sdk/engine';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import { isIABConfigured } from '@inth/sdk/runtime';
 
 import type { C15tAstroOptions } from '../types';
 

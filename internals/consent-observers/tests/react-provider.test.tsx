@@ -1,9 +1,9 @@
-import type { ConsentKernel } from 'c15t';
-import { ConsentProvider, useConsent } from 'c15t/react';
-import { KernelContext } from 'c15t/react/context';
+import { ConsentProvider, useConsent } from '@inth/react';
+import { KernelContext } from '@inth/react/context';
 // @vitest-environment jsdom
-import { testing } from 'c15t/react/testing';
-import type { ConsentRuntime } from 'c15t/runtime';
+import { testing } from '@inth/react/testing';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { act, Component, StrictMode, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';

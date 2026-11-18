@@ -3,8 +3,8 @@
  * backend can link an init to the save that follows. Never the subject id.
  */
 
-import { parseJourneyId, parseJourneyScope } from '@c15t/schema/types';
-import type { ConsentJourneyScope } from '@c15t/schema/types';
+import { parseJourneyId, parseJourneyScope } from '@inth/sdk-schema/types';
+import type { ConsentJourneyScope } from '@inth/sdk-schema/types';
 
 import type { KernelJourney } from '../types';
 import {

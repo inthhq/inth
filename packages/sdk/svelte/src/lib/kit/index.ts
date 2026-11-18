@@ -1,18 +1,18 @@
 /**
- * `@c15t/svelte/kit` — the SvelteKit server layer.
+ * `@inth/svelte/kit` — the SvelteKit server layer.
  *
  * Server-only: keep it to `hooks.server.ts`, `+*.server.ts` and
  * `+server.ts`. The modes here are plain data; `<ConsentRoot>` from
- * `@c15t/svelte` turns them into a transport in the browser.
+ * `@inth/svelte` turns them into a transport in the browser.
  *
  * ```ts
  * // src/hooks.server.ts
- * import { c15tHandle } from '@c15t/svelte/kit';
+ * import { c15tHandle } from '@inth/svelte/kit';
  *
  * export const handle = c15tHandle();
  *
  * // src/routes/+layout.server.ts
- * export { loadConsent as load } from '@c15t/svelte/kit';
+ * export { loadConsent as load } from '@inth/svelte/kit';
  * ```
  *
  * ```svelte
@@ -57,5 +57,5 @@ export type {
 	ManifestMode,
 	ManifestModeOptions,
 	TestingMode,
-} from '@c15t/core/modes';
-export { hosted, manifest } from '@c15t/core/modes';
+} from '@inth/sdk/modes';
+export { hosted, manifest } from '@inth/sdk/modes';

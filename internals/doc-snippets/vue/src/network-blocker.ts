@@ -1,5 +1,5 @@
 // #region docs:network-blocker title="src/network-blocker.ts"
-import type { UseNetworkBlockerOptions } from 'c15t/vue/vue-plugin';
+import type { UseNetworkBlockerOptions } from '@inth/vue/vue-plugin';
 
 export const networkBlocker = {
 	onRequestBlocked: (info) => {

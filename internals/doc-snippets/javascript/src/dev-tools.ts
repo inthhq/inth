@@ -1,4 +1,4 @@
-import { hosted, init } from '@c15t/browser';
+import { hosted, init } from '@inth/sdk';
 
 import { runtime } from './consent-runtime';
 
@@ -9,7 +9,7 @@ const consent = init({
 
 // #region docs:devtools title="src/main.ts"
 if (import.meta.env.DEV) {
-	const { mountDevTools } = await import('@c15t/browser/devtools');
+	const { mountDevTools } = await import('@inth/sdk/devtools');
 	mountDevTools(consent, { defaultTab: 'scripts' });
 }
 // #endregion docs:devtools
@@ -18,7 +18,7 @@ const { kernel } = runtime;
 
 // #region docs:runtime-devtools title="src/consent-ui.ts"
 if (import.meta.env.DEV) {
-	const { createDevTools } = await import('@c15t/dev-tools');
+	const { createDevTools } = await import('@inth/sdk/devtools');
 	const tools = createDevTools({ kernel });
 	import.meta.hot?.dispose(() => tools.destroy());
 }

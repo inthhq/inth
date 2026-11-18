@@ -2,7 +2,7 @@ import type {
 	ConsentExperiment,
 	OnChoiceRecordedPayload,
 	OnSurfaceShownPayload,
-} from 'c15t';
+} from '@inth/sdk/engine';
 
 /** One experiment event the page lists. */
 export interface ExperimentLogEntry {

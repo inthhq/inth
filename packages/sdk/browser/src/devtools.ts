@@ -1,6 +1,6 @@
 /**
- * `@c15t/browser/devtools` — the c15t DevTools panel for the script-tag
- * client, the way `@c15t/react/devtools` mounts it for a React provider.
+ * `@inth/sdk/devtools` — the c15t DevTools panel for the script-tag
+ * client, the way `@inth/react/devtools` mounts it for a React provider.
  *
  * The panel inspects consents, scripts, policy and events, and its
  * Location tab changes country, region, language and GPC and re-runs
@@ -8,8 +8,8 @@
  *
  * @example
  * ```ts
- * import { hosted, init } from '@c15t/browser';
- * import { mountDevTools } from '@c15t/browser/devtools';
+ * import { hosted, init } from '@inth/sdk-browser';
+ * import { mountDevTools } from '@inth/sdk-browser/devtools';
  *
  * const client = init({
  *   mode: hosted({ projectUrl: 'https://your-instance.c15t.dev' }),
@@ -20,8 +20,8 @@
  * ```
  */
 
-import type { DevToolsInstance } from '@c15t/dev-tools';
-import { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
+import type { DevToolsInstance } from '@inth/sdk-dev-tools';
+import { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import { createBrowserDevTools } from './devtools-mount';
 import type { BrowserDevToolsOptions } from './devtools-mount';
@@ -47,9 +47,10 @@ export const mountDevTools = function mountDevTools(
 	return createBrowserDevTools(client, options, publishDevToolsLauncher);
 };
 
+export { createDevTools } from '@inth/sdk-dev-tools';
 export type {
 	DevToolsActions,
 	DevToolsInstance,
 	DevToolsPosition,
 	DevToolsTab,
-} from '@c15t/dev-tools';
+} from '@inth/sdk-dev-tools';

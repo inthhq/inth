@@ -1,10 +1,10 @@
-import type { TranslationConfig } from '@c15t/core';
-import { translations as english } from '@c15t/translations/en';
-import { resolveTranslations } from '@c15t/ui/utils';
+import type { TranslationConfig } from '@inth/sdk/engine';
+import { translations as english } from '@inth/sdk/translations/en';
+import { resolveTranslations } from '@inth/sdk/ui/utils';
 
 /**
  * IAB translations interface.
- * Matches the structure in @c15t/translations.
+ * Matches the structure in @inth/sdk/translations.
  */
 export interface IABTranslations {
 	banner: {
@@ -88,7 +88,7 @@ export interface IABTranslations {
 }
 
 /**
- * The English IAB copy, from `@c15t/translations/en` rather than core's
+ * The English IAB copy, from `@inth/sdk/translations/en` rather than core's
  * root entry: this module ships with the overlay directives every banner
  * uses, and the root entry would bring the kernel into that first load.
  */

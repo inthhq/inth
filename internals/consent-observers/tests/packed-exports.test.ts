@@ -1,5 +1,5 @@
 /**
- * Guards the premise of every other test here: the fixture reaches c15t only
+ * Guards the premise of every other test here: the fixture reaches the SDK only
  * through the packed tarballs and the `exports` they publish, and never
  * discovers a kernel through a global.
  */
@@ -29,7 +29,7 @@ const files = [
 ];
 
 const IMPORT_PATTERN =
-	/(?:from\s+|import\s*\(\s*)['"](?<specifier>(?:@c15t\/[^/'"]+|c15t)(?:\/[^'"]*)?)['"]/gu;
+	/(?:from\s+|import\s*\(\s*)['"](?<specifier>@inth\/[^/'"]+(?:\/[^'"]*)?)['"]/gu;
 
 const specifiers = [
 	...new Set(
@@ -51,11 +51,11 @@ const splitSpecifier = function splitSpecifier(specifier: string) {
 };
 
 describe('packed public exports', () => {
-	test('the fixture imports c15t packages', () => {
-		expect(specifiers).toContain('c15t/runtime');
-		expect(specifiers).toContain('c15t/react/context');
-		expect(specifiers).toContain('c15t/next/server');
-		expect(specifiers).toContain('c15t/tanstack-start/server');
+	test('the fixture imports @inth packages', () => {
+		expect(specifiers).toContain('@inth/sdk/runtime');
+		expect(specifiers).toContain('@inth/react/context');
+		expect(specifiers).toContain('@inth/nextjs/server');
+		expect(specifiers).toContain('@inth/tanstack-start/server');
 	});
 
 	test.each(specifiers)('%s is a published export', (specifier) => {

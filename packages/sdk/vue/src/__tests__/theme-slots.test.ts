@@ -2,14 +2,14 @@
  * `theme.slots` styles the stock parts in Vue too, through the same mapping
  * onto `components` the Astro Vue island used to apply itself.
  */
-import type { InitOutput, PolicyRule } from '@c15t/schema/types';
+import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations as enTranslations } from '@c15t/translations/en';
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
+} from '@inth/sdk/schema/types';
+import { translations as enTranslations } from '@inth/sdk/translations/en';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vitest';

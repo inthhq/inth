@@ -5,9 +5,9 @@
  * only when asked. Each test streams a real server render into an iframe
  * and hydrates it.
  */
-import type { Callbacks, KernelConfig } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
-import type { PolicyRule } from '@c15t/schema/types';
+import type { Callbacks, KernelConfig } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 import { Suspense, act, useLayoutEffect, useSyncExternalStore } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 

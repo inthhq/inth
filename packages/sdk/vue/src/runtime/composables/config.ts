@@ -1,6 +1,6 @@
-import { applyExperimentTheme } from '@c15t/core';
-import { defaultConsentConfig } from '@c15t/schema/config';
-import { applyThemeSlots } from '@c15t/ui/utils';
+import { applyExperimentTheme } from '@inth/sdk/engine';
+import { defaultConsentConfig } from '@inth/sdk/schema/config';
+import { applyThemeSlots } from '@inth/sdk/ui/utils';
 import { defu } from 'defu';
 import { computed, inject, toValue } from 'vue';
 import type { ComputedRef } from 'vue';

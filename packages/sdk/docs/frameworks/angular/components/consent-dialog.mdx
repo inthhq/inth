@@ -17,7 +17,7 @@ The dialog stays closed until something opens it, so do not wrap it in
 
 ## How the dialog loads
 
-Import `ConsentDialog` from `@c15t/angular/consent-dialog`. It is a small
+Import `ConsentDialog` from `@inth/angular/consent-dialog`. It is a small
 host; the dialog's body, with the widget and primitives it renders, is a
 separate chunk it imports:
 
@@ -41,7 +41,7 @@ the visitor can try again. A dialog whose `open` you set emits
 The dialog's CSS loads the same way, as a chunk of its own, and goes into
 `<head>` as a `<style>` element with the page's CSP nonce. The dialog stays
 transparent until its rules are in. With `styles: false`, they come from your
-imported `@c15t/angular/styles.css`.
+imported `@inth/angular/styles.css`.
 
 ## Inputs
 

@@ -8,18 +8,18 @@
  * repeated and discarded renders share one request, and that nothing
  * reads it for a runtime that never runs.
  */
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
 import type {
 	ConsentKernel,
 	KernelTransport,
 	ProviderTransportContext,
-} from '@c15t/core';
-import { createPersistence } from '@c15t/core/modules/persistence';
-import { hosted } from '@c15t/core/transports';
+} from '@inth/sdk/engine';
+import { createPersistence } from '@inth/sdk/modules/persistence';
 import {
 	readJourneyParams,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import { hosted } from '@inth/sdk/transports';
 import { StrictMode, Suspense, act, useContext, useEffect } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';

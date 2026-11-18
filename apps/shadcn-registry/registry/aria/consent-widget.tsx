@@ -1,10 +1,10 @@
 "use client"
 
-import { ConsentDraftProvider, useHasConsentUI } from "c15t/react"
+import { ConsentDraftProvider, useHasConsentUI } from "@inth/react"
 import {
   useConsentTextDirection,
   useTranslations,
-} from "c15t/react/headless"
+} from "@inth/react/headless"
 
 import {
   ConsentPreferences,

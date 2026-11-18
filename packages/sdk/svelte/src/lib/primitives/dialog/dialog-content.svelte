@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { getDialogState, isDialogDismissKey } from '@c15t/ui/primitives';
-	import { firstTabbable } from '@c15t/ui/utils';
+	import { getDialogState, isDialogDismissKey } from '@inth/sdk/ui/primitives';
+	import { firstTabbable } from '@inth/sdk/ui/utils';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 

@@ -31,10 +31,10 @@ project reach visitors on their next page load, without a rebuild.
 
 ## Install c15t
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/react @inth/integrations" mode="install" />
 
-`c15t` contains the React adapter at `c15t/react` and the Vite plugin at
-`c15t/build`. `@c15t/integrations` holds the vendor loaders used below.
+`c15t` contains the React adapter at `@inth/react` and the Vite plugin at
+`@inth/react/build`. `@inth/integrations` holds the vendor loaders used below.
 
 ## Add the Vite plugin
 
@@ -102,7 +102,7 @@ Read a category's permission with `useConsent` inside the provider:
 {/* example: fragment */}
 
 ```tsx title="src/marketing-banner.tsx"
-import { useConsent } from 'c15t/react';
+import { useConsent } from '@inth/react';
 
 export function MarketingBanner() {
 	return useConsent('marketing') ? <aside>Spring sale</aside> : null;

@@ -8,12 +8,12 @@ import {
 	POLICY_CONTRACT_VERSION,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import type {
 	InitOutput,
 	PolicyResolution,
 	PolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 import type {

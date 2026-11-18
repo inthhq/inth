@@ -1,5 +1,5 @@
 /**
- * `custom()`, kept on `@c15t/core/transports` only for
+ * `custom()`, kept on `@inth/sdk/transports` only for
  * `@inth/react-native`'s web client, which builds its own transports.
  * Providers no longer take it: tests pass a transport factory as `mode`,
  * and apps set `projectUrl`.
@@ -17,7 +17,7 @@ import type { ProviderTransportFactory } from './mode';
  * @returns A custom provider transport factory.
  * @example
  * ```ts
- * import { custom } from '@c15t/core/transports';
+ * import { custom } from '@inth/sdk-core/transports';
  *
  * const mode = custom({
  *   async init() {

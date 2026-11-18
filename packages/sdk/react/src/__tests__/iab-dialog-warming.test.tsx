@@ -1,5 +1,5 @@
 import { MINIMAL_GVL } from '@c15t/conformance';
-import type { GlobalVendorList } from '@c15t/schema/types';
+import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';

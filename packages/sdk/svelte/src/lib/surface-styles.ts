@@ -15,13 +15,13 @@
  * surfaces find the copy `c15tHandle` wrote and download nothing; a page
  * rendered only in the browser loads each text once.
  */
-import * as banner from '@c15t/ui/styles/sheets/banner-deferred';
-import * as button from '@c15t/ui/styles/sheets/button-deferred';
-import * as consentGate from '@c15t/ui/styles/sheets/consent-gate-deferred';
-import * as tokens from '@c15t/ui/styles/sheets/tokens-deferred';
-import * as trigger from '@c15t/ui/styles/sheets/trigger-deferred';
+import * as banner from '@inth/sdk/ui/styles/sheets/banner-deferred';
+import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
+import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate-deferred';
+import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
+import * as trigger from '@inth/sdk/ui/styles/sheets/trigger-deferred';
 
-/** A stylesheet from `@c15t/ui/styles/sheets/*`. */
+/** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
 export interface SurfaceStyleSheet {
 	/** Dedupes the stylesheet: a page holds each `id` once. */
 	readonly id: string;

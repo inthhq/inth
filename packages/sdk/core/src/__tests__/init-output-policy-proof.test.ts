@@ -2,8 +2,8 @@ import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { InitOutput, PolicyResolution } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { InitOutput, PolicyResolution } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
 import {

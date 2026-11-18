@@ -1,4 +1,4 @@
-import { firstTabbable } from '@c15t/ui/utils';
+import { firstTabbable } from '@inth/sdk/ui/utils';
 import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 

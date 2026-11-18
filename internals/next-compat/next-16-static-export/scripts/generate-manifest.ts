@@ -9,7 +9,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createStaticManifestModule } from '@c15t/nextjs/static';
+import { createStaticManifestModule } from '@inth/nextjs/static';
 
 const projectUrl = process.env.NEXT_PUBLIC_COMPAT_BACKEND_URL;
 if (!projectUrl) {

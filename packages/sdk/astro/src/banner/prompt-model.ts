@@ -11,15 +11,19 @@
 import {
 	defaultTranslationConfig,
 	resolveConsentPresentation,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	ConsentPresentation,
 	ConsentSnapshot,
 	LegalLinks,
-} from '@c15t/core';
-import type { Translations } from '@c15t/translations';
-import type { AllThemeKeys, ConsentActionStyle, Theme } from '@c15t/ui/theme';
-import { getTextDirection } from '@c15t/ui/utils';
+} from '@inth/sdk/engine';
+import type { Translations } from '@inth/sdk/translations';
+import type {
+	AllThemeKeys,
+	ConsentActionStyle,
+	Theme,
+} from '@inth/sdk/ui/theme';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 
 import type { PromptClassNames } from './class-names';
 import { resolveSlotBinding } from './theme-slots';

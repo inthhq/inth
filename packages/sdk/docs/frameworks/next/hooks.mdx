@@ -1,6 +1,6 @@
 ---
 title: Hooks
-description: Gate features and save consent choices in Next.js Client Components with the focused hooks exported from c15t/next.
+description: Gate features and save consent choices in Next.js Client Components with the focused hooks exported from @inth/nextjs.
 group: frameworks
 ---
 
@@ -10,12 +10,12 @@ Every hook reads the runtime from the `ConsentRoot` set up in your
 [App Router](/docs/frameworks/next/app-router) or
 [Pages Router](/docs/frameworks/next/pages-router) guide, so call them from a
 Client Component rendered inside that root and import them from
-`c15t/next`.
+`@inth/nextjs`.
 
 ```tsx title="components/optional-feature.tsx"
 'use client';
 
-import { useConsent } from 'c15t/next';
+import { useConsent } from '@inth/nextjs';
 
 export function OptionalFeature() {
 	const allowed = useConsent('marketing');
@@ -32,7 +32,7 @@ Place this Client Component inside your existing consent boundary.
 ```tsx title="components/reject-button.tsx"
 'use client';
 
-import { useSaveConsents } from 'c15t/next';
+import { useSaveConsents } from '@inth/nextjs';
 
 export function RejectButton() {
 	const save = useSaveConsents();

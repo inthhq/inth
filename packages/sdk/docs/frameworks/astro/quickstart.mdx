@@ -34,11 +34,11 @@ hold the finished code for each.
 
 ## Install the packages
 
-<CommandTabs command="c15t @astrojs/svelte svelte @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/astro @astrojs/svelte svelte @inth/integrations" mode="install" />
 
 The banner is plain `.astro` markup and ships no framework JavaScript. The
 preference dialog is an island that loads when a visitor first reaches for it.
-The `c15t` package includes the dialog for Svelte, React and Vue, and the
+`@inth/astro` includes the dialog for Svelte, React and Vue, and the
 integration renders it with the one of those three your site registers.
 
 Use the framework your site already ships, so visitors do not download a second
@@ -102,7 +102,7 @@ The built server keeps the backend URL from build time, so setting
 `PUBLIC_C15T_BACKEND_URL` when you start it changes nothing. Rebuild to point
 at another project. To apply policy edits without rebuilding, set
 `mode: manifest({ source: 'runtime' })`, with `manifest` imported from
-`c15t/astro`. The server then fetches and caches the policy at runtime.
+`@inth/astro`. The server then fetches and caches the policy at runtime.
 
 The integration writes its options into the page as JSON. `c15t()` throws if
 an option holds a function, and names the option. Callbacks, vendor helpers

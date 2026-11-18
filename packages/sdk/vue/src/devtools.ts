@@ -1,11 +1,11 @@
-import { createDevTools } from '@c15t/dev-tools';
+import { createDevTools } from '@inth/sdk/devtools';
 import type {
 	DevToolsInstance,
 	DevToolsOptions,
 	DevToolsPosition,
 	DevToolsTab,
-} from '@c15t/dev-tools';
-import { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
+} from '@inth/sdk/devtools';
+import { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 import {
 	defineComponent,
 	h,

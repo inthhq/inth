@@ -11,16 +11,19 @@
  * (see `rslib.config.ts`): one file has nowhere to load a chunk from, and
  * inlined `import()`s only add bytes.
  */
-import { watchRevocationReload } from '@c15t/core';
-import { createIframeBlocker } from '@c15t/core/modules/iframe-blocker';
-import { createPersistence } from '@c15t/core/modules/persistence';
-import { createWindowDebug } from '@c15t/core/modules/window-debug';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '@c15t/core/runtime';
+import { watchRevocationReload } from '@inth/sdk-core';
+import { createIframeBlocker } from '@inth/sdk-core/modules/iframe-blocker';
+import { createPersistence } from '@inth/sdk-core/modules/persistence';
+import { createWindowDebug } from '@inth/sdk-core/modules/window-debug';
+import type {
+	ConsentRuntime,
+	ConsentRuntimeOptions,
+} from '@inth/sdk-core/runtime';
 import {
 	createConsentRuntimeWith,
 	mountRuntimeIAB,
 	onDemandRuntimeModules,
-} from '@c15t/core/runtime/on-demand';
+} from '@inth/sdk-core/runtime/on-demand';
 
 /**
  * Creates the page's consent runtime.

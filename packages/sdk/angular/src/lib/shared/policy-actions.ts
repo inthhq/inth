@@ -6,8 +6,8 @@ import {
 	input,
 } from '@angular/core';
 import type { TemplateRef } from '@angular/core';
-import type { SurfacePresentation } from '@c15t/core';
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
+import type { SurfacePresentation } from '@inth/sdk/engine';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 
 import { resolveNoStyle } from '../core/no-style';
 

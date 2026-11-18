@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { CONSENT_COMPONENT_SLOT_KEYS } from '@c15t/schema/config';
+import { CONSENT_COMPONENT_SLOT_KEYS } from '@inth/sdk/schema/config';
 import { describe, expect, test } from 'vitest';
 
 const runtimeComponentsDir = join(

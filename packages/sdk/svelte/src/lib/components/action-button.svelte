@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { AllConsentNames } from '@c15t/core';
-	import buttonStyles from '@c15t/ui/styles/components/button';
+	import type { AllConsentNames } from '@inth/sdk/engine';
+	import buttonStyles from '@inth/sdk/ui/styles/components/button';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';

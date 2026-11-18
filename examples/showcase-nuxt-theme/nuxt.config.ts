@@ -48,5 +48,5 @@ export default defineNuxtConfig({
 	},
 	compatibilityDate: '2026-07-04',
 	css: ['~/assets/site.css', '~/assets/consent.css'],
-	modules: ['c15t/vue'],
+	modules: ['@inth/nuxt'],
 });

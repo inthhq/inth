@@ -4,9 +4,9 @@
  * Implements accessible, customizable components following GDPR requirements.
  */
 
-import type { PolicyRight } from '@c15t/schema/types';
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
-import styles from '@c15t/ui/styles/components/consent-banner';
+import type { PolicyRight } from '@inth/sdk/schema/types';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+import styles from '@inth/sdk/ui/styles/components/consent-banner';
 import { forwardRef as createForwardRef, isValidElement, useRef } from 'react';
 import type { ButtonHTMLAttributes, MouseEvent, ReactNode, Ref } from 'react';
 

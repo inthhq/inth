@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -390,7 +390,7 @@ const normalizeApiHost = function normalizeApiHost(
  *
  * @example
  * ```ts
- * import { hightouch } from '@c15t/integrations/hightouch';
+ * import { hightouch } from '@inth/integrations/hightouch';
  *
  * hightouch({
  * 	writeKey: 'WRITE_KEY',

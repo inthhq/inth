@@ -31,7 +31,7 @@
  * @packageDocumentation
  */
 
-import type { AdTechProvider } from '@c15t/core';
+import type { AdTechProvider } from '@inth/sdk-core';
 
 import { processGVLForDialog } from './dialog-data';
 import type {

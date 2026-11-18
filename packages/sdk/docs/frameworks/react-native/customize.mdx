@@ -7,7 +7,7 @@ group: frameworks
 The standard React Native integration opens SwiftUI and Compose consent
 screens. Customize those screens through native `ConsentTheme` settings or
 native build metadata. React `style` props and web CSS do not style them. The
-theme uses the web token names from `@c15t/ui`, so a brand defined for the web
+theme uses the web theme's token names, so a brand defined for the web
 theme maps onto the native screens field for field.
 
 ## Choose what to change
@@ -232,7 +232,7 @@ native code and build metadata:
 
 ## Copy and languages
 
-The native presenter reads every label from `@c15t/translations`, in the
+The native presenter reads every label from `@inth/sdk/translations`, in the
 policy's translation language, on iOS and Android alike. Buttons, headings and
 category names use the web banner's keys, so they read "Accept All" and
 "Reject All". App-only sentences, such as the category explanations and save

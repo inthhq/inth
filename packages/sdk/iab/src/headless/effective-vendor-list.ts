@@ -11,7 +11,7 @@
  * @packageDocumentation
  */
 
-import type { GlobalVendorList, PublisherRestriction } from '@c15t/core';
+import type { GlobalVendorList, PublisherRestriction } from '@inth/sdk-core';
 
 /**
  * Purposes current TCF policy allows only with consent. Mirrors

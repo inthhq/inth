@@ -14,9 +14,8 @@
 	},
 	"dependencies": {
 		"@c15t/benchmarking": "workspace:*",
-		"@c15t/core": "workspace:*",
-		"@c15t/react": "workspace:*",
-		"@c15t/translations": "workspace:*",
+		"@inth/react": "workspace:*",
+		"@inth/sdk": "workspace:*",
 		"mitata": "^1.0.34"
 	},
 	"devDependencies": {

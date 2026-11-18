@@ -20,10 +20,10 @@ Copy the pixel ID from Meta Events Manager. Remove the original pixel snippet,
 its `<noscript>` tracking image and any tag-manager entry that loads the same
 pixel.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { metaPixel } from '@c15t/integrations/meta-pixel';
+import { metaPixel } from '@inth/integrations/meta-pixel';
 
 export const scripts = [metaPixel({ pixelId: '123456789012345' })];
 ```
@@ -66,7 +66,7 @@ export function trackPurchase(marketingAllowed: boolean, value: number) {
 ```
 
 Pass the current marketing permission from your framework, for example
-`useConsent('marketing')` in React. `@c15t/integrations/meta-pixel` also exports
+`useConsent('marketing')` in React. `@inth/integrations/meta-pixel` also exports
 typed wrappers: `metaPixelEvent`, `metaPixelCustomEvent`,
 `metaPixelSingleEvent` and `metaPixelSingleCustomEvent`. They do nothing while
 `window.fbq` is undefined, before the pixel's first setup. They do not check

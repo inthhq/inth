@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { AdTechProvider } from '@c15t/core';
+import type { AdTechProvider } from '@inth/sdk/engine';
 
-import '@c15t/ui/styles/components/iab-consent-dialog.css';
-import { countIABPartners } from '@c15t/iab/headless';
+import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
+import { countIABPartners } from '@inth/sdk/iab/headless';
 
-import '@c15t/ui/styles/components/switch.css';
-import dialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
+import '@inth/sdk/ui/styles/components/switch.css';
+import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 /**
  * One row in the IAB preference centre: a purpose, a special purpose or a
  * special feature. Features have their own informational row,
@@ -17,7 +17,7 @@ import dialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
  * one that keeps it collapsed in the DOM. Same slots, same collapsing
  * three-element content, same switch stylesheet.
  */
-import switchStyles from '@c15t/ui/styles/components/switch';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { computed, ref, toValue } from 'vue';
 
 import {

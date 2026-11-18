@@ -1,6 +1,6 @@
 <!-- #region docs:embed -->
 <script setup lang="ts">
-import { ConsentDialogLink, ConsentGate } from 'c15t/vue/vue-plugin';
+import { ConsentDialogLink, ConsentGate } from '@inth/vue/vue-plugin';
 </script>
 
 <template>

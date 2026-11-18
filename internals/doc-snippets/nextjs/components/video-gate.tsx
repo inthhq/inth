@@ -1,7 +1,7 @@
 // #region docs:headless-consent-gate
 'use client';
 
-import { useConsentGate } from 'c15t/next/headless';
+import { useConsentGate } from '@inth/nextjs/headless';
 import type { ReactNode } from 'react';
 
 export const VideoGate = ({ children }: { children: ReactNode }) => {

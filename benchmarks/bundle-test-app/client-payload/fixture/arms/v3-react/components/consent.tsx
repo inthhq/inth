@@ -6,14 +6,14 @@ import {
 	ConsentDialogLink,
 	ConsentProvider,
 	hosted,
-} from 'c15t/react';
-import type { ConsentProviderOptions } from 'c15t/react';
+} from '@inth/react';
+import type { ConsentProviderOptions } from '@inth/react';
 import type { ReactNode } from 'react';
 
 import { theme } from './theme';
 
 /**
- * The c15t docs site's shape: `ConsentProvider` from the `c15t/react`
+ * The c15t docs site's shape: `ConsentProvider` from the `@inth/react`
  * umbrella entry in hosted mode, fed the server-resolved state.
  */
 export const Consent = ({

@@ -1,5 +1,5 @@
-import { consentLoaderOptions } from '@c15t/tanstack-start/server';
-import type { ConsentState } from '@c15t/tanstack-start/server';
+import { consentLoaderOptions } from '@inth/tanstack-start/server';
+import type { ConsentState } from '@inth/tanstack-start/server';
 import { Outlet, useLoaderData } from '@tanstack/react-router';
 
 import { BenchDocument } from './document';

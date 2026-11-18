@@ -10,7 +10,7 @@ import {
 	HeadlessConsent,
 	resolveActionLabels,
 	resolvePromptCopy,
-} from '@c15t/angular';
+} from '@inth/angular';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

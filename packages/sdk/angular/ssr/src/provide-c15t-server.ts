@@ -18,26 +18,26 @@ import {
 	ɵC15T_SERVER_STATE,
 	ɵC15T_SERVER_STATE_GATE,
 	ɵServerStateGate,
-} from '@c15t/angular';
-import type { C15tProviderOptions } from '@c15t/angular';
-import type { ProviderTransportFactory } from '@c15t/core';
-import { isIABConfigured } from '@c15t/core/runtime';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
-import { resolveRequestConsent } from '@c15t/core/server';
+} from '@inth/angular';
+import type { C15tProviderOptions } from '@inth/angular';
+import type { ProviderTransportFactory } from '@inth/sdk/engine';
+import { isIABConfigured } from '@inth/sdk/runtime';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
+import { recommendedPolicyRules } from '@inth/sdk/schema/types';
+import type { ConsentManifest, PolicyRule } from '@inth/sdk/schema/types';
+import { resolveRequestConsent } from '@inth/sdk/server';
 import type {
 	ManifestFetch,
 	ResolveRequestConsentOptions,
-} from '@c15t/core/server';
-import { assertNotProduction } from '@c15t/core/testing';
-import type { TestingModeOptions } from '@c15t/core/testing';
-import { recommendedPolicyRules } from '@c15t/schema/types';
-import type { ConsentManifest, PolicyRule } from '@c15t/schema/types';
+} from '@inth/sdk/server';
+import { assertNotProduction } from '@inth/sdk/testing';
+import type { TestingModeOptions } from '@inth/sdk/testing';
 
 import type { ConsentRoute } from './consent-route';
 import { addEarlyTapScript } from './early-tap-script';
 import { startScriptsOnServer } from './server-script-start';
 
-const ADAPTER = '@c15t/angular';
+const ADAPTER = '@inth/angular';
 
 /** Options for {@link provideC15tServer}. */
 export interface C15tServerOptions {
@@ -120,7 +120,7 @@ const serverResolution = function serverResolution(
 	if (mode?.type === 'testing') {
 		// The test's policy or the recommended pack, resolved here so the
 		// banner renders on the server, and never in production.
-		assertNotProduction('@c15t/angular/testing');
+		assertNotProduction('@inth/angular/testing');
 		const iab = mode.iab ?? isIABConfigured(provider.iab);
 		return {
 			mode: 'offline',
@@ -230,7 +230,7 @@ const resolveServerState = function resolveServerState(
  * // app.config.server.ts
  * import { mergeApplicationConfig } from '@angular/core';
  * import { provideServerRendering, withRoutes } from '@angular/ssr';
- * import { provideC15tServer } from '@c15t/angular/ssr';
+ * import { provideC15tServer } from '@inth/angular/ssr';
  *
  * export const config = mergeApplicationConfig(appConfig, {
  *   providers: [

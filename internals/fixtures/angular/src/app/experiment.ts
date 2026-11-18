@@ -5,8 +5,8 @@
 import { PlatformLocation } from '@angular/common';
 import { Injectable, inject, signal } from '@angular/core';
 import type { Provider } from '@angular/core';
-import { C15T_OPTIONS } from '@c15t/angular';
-import type { C15tCallbacks, C15tProviderOptions } from '@c15t/angular';
+import { C15T_OPTIONS } from '@inth/angular';
+import type { C15tCallbacks, C15tProviderOptions } from '@inth/angular';
 
 type ConsentExperiment = NonNullable<C15tProviderOptions['experiment']>;
 

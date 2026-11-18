@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -157,7 +157,7 @@ export interface MixpanelAnalyticsOptions {
  *
  * @example
  * ```ts
- * import { mixpanelAnalytics } from '@c15t/integrations/mixpanel-analytics';
+ * import { mixpanelAnalytics } from '@inth/integrations/mixpanel-analytics';
  *
  * const script = mixpanelAnalytics({
  * 	token: '1234567890abcdef1234567890abcdef',

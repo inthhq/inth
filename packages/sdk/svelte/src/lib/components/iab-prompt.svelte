@@ -2,13 +2,13 @@
 	import {
 		resolveIABBannerSummary,
 		resolveConsentPresentation,
-	} from '@c15t/core';
-	import type { Model } from '@c15t/core';
-	import { saveIABConsentSurface } from '@c15t/core/surface-actions';
-	import buttonStyles from '@c15t/ui/styles/components/button';
-	import actionStyles from '@c15t/ui/styles/components/consent-actions';
-	import styles from '@c15t/ui/styles/components/iab-consent-banner';
-	import { getTextDirection } from '@c15t/ui/utils';
+	} from '@inth/sdk/engine';
+	import type { Model } from '@inth/sdk/engine';
+	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+	import buttonStyles from '@inth/sdk/ui/styles/components/button';
+	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+	import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
+	import { getTextDirection } from '@inth/sdk/ui/utils';
 
 	import { focusTrap } from '../actions/focus-trap';
 	import { portal } from '../actions/portal';

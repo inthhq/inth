@@ -54,21 +54,6 @@ export interface PackageDocsConfig {
 	skillDirectory?: boolean;
 }
 
-/** Every framework directory under `docs/frameworks`. */
-const umbrellaFrameworks = [
-	'next',
-	'tanstack-start',
-	'react',
-	'nuxt',
-	'vue',
-	'astro',
-	'svelte',
-	'sveltekit',
-	'angular',
-	'html',
-	'javascript',
-].map((framework) => `frameworks/${framework}/**/*.mdx`);
-
 export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
@@ -106,35 +91,15 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		include: [
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
-			'frameworks/javascript/**/*.mdx',
-			'customization/**/*.mdx',
-			'integrations/**/*.mdx',
-		],
-		name: '@c15t/core',
-		outDir: 'packages/sdk/core',
-		skill: {
-			install: '`npm install c15t`',
-			topic:
-				'the project uses the headless c15t engine, `createConsentRuntime` or custom consent UI',
-			umbrella: true,
-		},
-		summary:
-			'Headless v3 consent, Inth setup, runtime ownership and script loading.',
-	},
-	{
-		include: [
-			'concepts/**/*.mdx',
-			'guides/**/!(mobile-*).mdx',
 			'frameworks/react/**/*.mdx',
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/react',
+		name: '@inth/react',
 		outDir: 'packages/sdk/react',
 		skill: {
-			install: '`npm install c15t` and import `c15t/react`',
+			install: '`npm install @inth/react`',
 			topic: 'the project is a React app, such as Vite or React Router',
-			umbrella: true,
 		},
 		summary:
 			'React v3 consent components, hooks, Inth setup and customization.',
@@ -147,13 +112,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/nextjs',
+		name: '@inth/nextjs',
 		outDir: 'packages/sdk/nextjs',
 		skill: {
-			install: '`npm install c15t` and import `c15t/next`',
+			install: '`npm install @inth/nextjs`',
 			topic:
 				'the project is a Next.js app with the App Router, Pages Router or static export',
-			umbrella: true,
 		},
 		summary:
 			'Next.js v3 App Router, Pages Router, static export and hydration with Inth.',
@@ -163,19 +127,32 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/vue/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@inth/vue',
+		outDir: 'packages/sdk/vue',
+		skill: {
+			install: '`npm install @inth/vue`',
+			topic: 'the project is a Vue app without Nuxt',
+		},
+		summary: 'Vue v3 plugin, Vite setup and server rendering with Inth.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/nuxt/**/*.mdx',
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/vue',
-		outDir: 'packages/sdk/vue',
+		name: '@inth/nuxt',
+		outDir: 'packages/sdk/nuxt',
 		skill: {
-			install: '`npm install c15t` and import `c15t/vue`',
-			topic: 'the project is a Vue or Nuxt app',
-			umbrella: true,
+			install: '`npm install @inth/nuxt`',
+			topic: 'the project is a Nuxt 3 or 4 app',
 		},
-		summary:
-			'Vue and Nuxt v3 integration, Vite setup, SSR and static hosting with Inth.',
+		summary: 'Nuxt v3 module, SSR, static hosting and components with Inth.',
 	},
 	{
 		include: [
@@ -186,12 +163,11 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/svelte',
+		name: '@inth/svelte',
 		outDir: 'packages/sdk/svelte',
 		skill: {
-			install: '`npm install c15t` and import `c15t/svelte`',
+			install: '`npm install @inth/svelte`',
 			topic: 'the project is a Svelte or SvelteKit app',
-			umbrella: true,
 		},
 		summary:
 			'Svelte and SvelteKit v3 providers, request loading and static hosting with Inth.',
@@ -204,10 +180,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/angular',
+		name: '@inth/angular',
 		outDir: 'packages/sdk/angular',
 		skill: {
-			install: '`npm install @c15t/angular`',
+			install: '`npm install @inth/angular`',
 			topic:
 				'the project is an Angular 20, 21 or 22 app, with or without `@angular/ssr`',
 		},
@@ -222,12 +198,11 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/astro',
+		name: '@inth/astro',
 		outDir: 'packages/sdk/astro',
 		skill: {
-			install: '`npm install c15t` and import `c15t/astro`',
+			install: '`npm install @inth/astro`',
 			topic: 'the project is an Astro site',
-			umbrella: true,
 		},
 		summary:
 			'Astro v3 static and server integration, dialog adapters and runtime ownership.',
@@ -240,35 +215,14 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/tanstack-start',
+		name: '@inth/tanstack-start',
 		outDir: 'packages/sdk/tanstack-start',
 		skill: {
-			install: '`npm install c15t` and import `c15t/tanstack-start`',
+			install: '`npm install @inth/tanstack-start`',
 			topic: 'the project is a TanStack Start app',
-			umbrella: true,
 		},
 		summary:
 			'TanStack Start v3 server functions, request middleware and consent boundaries.',
-	},
-	{
-		include: [
-			'concepts/**/*.mdx',
-			'guides/**/!(mobile-*).mdx',
-			'frameworks/index.mdx',
-			...umbrellaFrameworks,
-			'customization/**/*.mdx',
-			'integrations/**/*.mdx',
-		],
-		name: 'c15t',
-		outDir: 'packages/sdk/c15t',
-		skill: {
-			install:
-				'`npm install c15t` and import the framework subpath, such as `c15t/next`',
-			topic:
-				'the project uses c15t with Next.js, React, TanStack Start, Vue, Nuxt, Astro or plain JavaScript',
-		},
-		summary:
-			'c15t v3 framework integration and consent management. Install c15t and use its framework subpaths; adapters and add-ons absent from its exports use separate packages.',
 	},
 	{
 		include: [
@@ -281,10 +235,11 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/integrations',
+		name: '@inth/integrations',
 		outDir: 'packages/sdk/integrations',
 		skill: {
-			install: '`npm install @c15t/integrations` alongside `c15t`',
+			install:
+				'`npm install @inth/integrations` alongside the framework package',
 			topic:
 				'the project loads analytics, pixels, tag managers or embeds that must wait for consent',
 		},
@@ -293,43 +248,20 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	},
 	{
 		include: [
-			'frameworks/*/upgrade-v3.mdx',
-			'concepts/**/*.mdx',
-			'guides/**/!(mobile-*).mdx',
-			'frameworks/*/scripts.mdx',
-			'frameworks/*/embeds.mdx',
-			'frameworks/*/network-blocker.mdx',
-			'customization/**/*.mdx',
-			'integrations/**/*.mdx',
-		],
-		name: '@c15t/scripts',
-		outDir: 'packages/sdk/scripts',
-		skill: {
-			// The compatibility package re-exports @c15t/integrations; new code
-			// installs the canonical package.
-			install:
-				'`npm install @c15t/integrations` alongside `c15t`, replacing the deprecated `@c15t/scripts`',
-			topic:
-				'the project imports the deprecated `@c15t/scripts` vendor helpers, or loads analytics, pixels, tag managers or embeds that must wait for consent',
-		},
-		summary:
-			'Deprecated v3 compatibility package for @c15t/integrations. Migrate before v4.',
-	},
-	{
-		include: [
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/html/**/*.mdx',
 			'frameworks/javascript/**/*.mdx',
+			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/browser',
-		outDir: 'packages/sdk/browser',
+		name: '@inth/sdk',
+		outDir: 'packages/sdk/sdk',
 		skill: {
 			install:
-				'a `<script>` tag for `@c15t/browser` from jsDelivr, or `npm install @c15t/browser`',
+				'a `<script>` tag for `@inth/sdk` from jsDelivr, or `npm install @inth/sdk`',
 			topic:
-				'the site is plain HTML, a CMS, a page builder or a static site generator, or a bundled app without a UI framework',
+				'the site is plain HTML, a CMS, a page builder or a static site generator, a bundled app without a UI framework, or code that uses the headless engine and `createConsentRuntime`',
 		},
 		summary:
 			'c15t for plain HTML sites from one script tag, and for bundled JavaScript apps with the stock UI: data attributes, the window.c15t API, customization, script and iframe gating, IAB and integrations.',

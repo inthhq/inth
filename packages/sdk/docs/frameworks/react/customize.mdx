@@ -35,7 +35,7 @@ in the module that renders `ConsentProvider`:
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx (partial)"
-import 'c15t/react/styles.css';
+import '@inth/react/styles.css';
 
 // In the ConsentProvider options:
 styles: false,
@@ -72,7 +72,7 @@ A single-page app has no server render, so pick one of two ways:
   {/* example: fragment */}
 
   ```tsx title="src/consent-theme.ts"
-  import { defineTheme } from 'c15t/react';
+  import { defineTheme } from '@inth/react';
 
   export const theme = defineTheme({
     colors: { primary: '#2f6f4e', primaryHover: '#24563c' },
@@ -81,7 +81,7 @@ A single-page app has no server render, so pick one of two ways:
   ```
 
   In `src/consent.tsx`, render `<ConsentTheme theme={theme} />` from
-  `c15t/react` just before `<ConsentProvider>`.
+  `@inth/react` just before `<ConsentProvider>`.
 
 In a server-rendered app, such as React Router framework mode, render
 `ConsentTheme` in the root component so the `<style>` element is part of the
@@ -130,7 +130,7 @@ card for choices:
 {/* example: fragment */}
 
 ```tsx title="src/regional-banner.tsx"
-import { ConsentBanner, usePolicyRule } from 'c15t/react';
+import { ConsentBanner, usePolicyRule } from '@inth/react';
 
 export function RegionalBanner() {
 	const policy = usePolicyRule();

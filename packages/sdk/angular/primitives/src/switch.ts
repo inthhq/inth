@@ -13,7 +13,7 @@ import {
 	getDataDisabled,
 	getSwitchState,
 	toggleSwitchValue,
-} from '@c15t/ui/primitives';
+} from '@inth/sdk/ui/primitives';
 
 /**
  * A headless switch on the host `<button>`: `role="switch"`,

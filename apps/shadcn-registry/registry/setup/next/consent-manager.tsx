@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
-import { ConsentRoot } from "c15t/next"
-import { resolveConsent } from "c15t/next/server"
+import { ConsentRoot } from "@inth/nextjs"
+import { resolveConsent } from "@inth/nextjs/server"
 
 import { ConsentBanner } from "@/components/c15t/consent-banner"
 import { ConsentDialog } from "@/components/c15t/consent-dialog"

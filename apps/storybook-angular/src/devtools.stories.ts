@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { provideC15t } from '@c15t/angular';
-import type { C15tProviderOptions } from '@c15t/angular';
-import { ConsentDevTools } from '@c15t/angular/devtools';
 import {
 	devToolsProviderOptions,
 	getDevToolsCategories,
 } from '@c15t/conformance/fixtures/devtools';
 import { devToolsFlow, devToolsReady } from '@c15t/conformance/play/devtools';
+import { provideC15t } from '@inth/angular';
+import type { C15tProviderOptions } from '@inth/angular';
+import { ConsentDevTools } from '@inth/angular/devtools';
 
 /** The DevTools panel the React and Svelte Storybooks show, for parity. */
 const meta = {

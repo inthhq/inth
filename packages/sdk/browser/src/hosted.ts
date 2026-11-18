@@ -1,7 +1,7 @@
 /**
- * `@c15t/browser/hosted`: the hosted client and stock UI.
+ * `@inth/sdk/hosted`: the hosted client and stock UI.
  */
-import type { WithProjectUrl } from '@c15t/core/runtime';
+import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 
 import { createHostedConsentClient } from './hosted-client';
 import type { ConsentClient, HostedConsentClientOptions } from './types';
@@ -19,7 +19,7 @@ export const createConsentClient = function createConsentClient(
 ): ConsentClient {
 	return createHostedConsentClient(options, {
 		mountUI: mountConsentUI,
-		pkg: '@c15t/browser/hosted',
+		pkg: '@inth/sdk/hosted',
 	});
 };
 
@@ -45,8 +45,8 @@ export {
 	activateGatedScripts,
 	CATEGORY_ATTRIBUTE,
 } from './gated-scripts';
-export { hosted } from '@c15t/core/modes';
-export type { HostedMode } from '@c15t/core/modes';
+export { hosted } from '@inth/sdk-core/modes';
+export type { HostedMode } from '@inth/sdk-core/modes';
 export type {
 	ConsentBannerOptions,
 	ConsentClient,
@@ -60,12 +60,12 @@ export type {
 	TriggerPosition,
 } from './types';
 export { mountConsentUI } from './ui/mount';
-export { getEventDispatcher } from '@c15t/core/events';
+export { getEventDispatcher } from '@inth/sdk-core/events';
 export type {
 	EventDispatcher,
 	EventProperties,
 	RuntimeEventDispatcherOptions as GetEventDispatcherOptions,
-} from '@c15t/core/events';
+} from '@inth/sdk-core/events';
 export { version } from './version';
 export type {
 	ConsentSnapshot,
@@ -73,4 +73,4 @@ export type {
 	ResolvedVendor,
 	Vendor,
 	VendorChoice,
-} from '@c15t/core';
+} from '@inth/sdk-core';

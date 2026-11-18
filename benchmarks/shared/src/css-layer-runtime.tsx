@@ -1,13 +1,13 @@
 'use client';
 
-import { ConsentTheme } from '@c15t/react';
-import { ConsentDialog } from '@c15t/react/components/consent-dialog';
-import { ConsentWidget } from '@c15t/react/components/consent-widget';
-import { ConsentBanner } from '@c15t/react/consent-banner';
-import { ConsentDraftProvider } from '@c15t/react/draft';
-import { useActiveUI, useSetActiveUI } from '@c15t/react/hooks';
-import { ConsentProvider } from '@c15t/react/provider';
-import buttonStyles from '@c15t/ui/styles/components/button';
+import { ConsentTheme } from '@inth/react';
+import { ConsentDialog } from '@inth/react/components/consent-dialog';
+import { ConsentWidget } from '@inth/react/components/consent-widget';
+import { ConsentBanner } from '@inth/react/consent-banner';
+import { ConsentDraftProvider } from '@inth/react/draft';
+import { useActiveUI, useSetActiveUI } from '@inth/react/hooks';
+import { ConsentProvider } from '@inth/react/provider';
+import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import { useEffect } from 'react';
 
 import { benchPolicy } from './bench-policy';

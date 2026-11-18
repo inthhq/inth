@@ -1,4 +1,4 @@
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { registerDevToolsBridge } from '../runtime/devtools/bridge';

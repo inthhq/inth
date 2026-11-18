@@ -1,7 +1,7 @@
 /**
  * Test support for opening the React dialog island.
  *
- * `@c15t/react` loads its preference dialog from a separate chunk the first
+ * `@inth/react` loads its preference dialog from a separate chunk the first
  * time a dialog opens. Vite compiles that chunk on its first import, which
  * took 2 to 4 s in a parallel run, inside the first test that opened a
  * React island. Importing the chunk here compiles it while the test file

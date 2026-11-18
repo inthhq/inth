@@ -4,7 +4,7 @@
  * one `planEarlyCommit` (and so `commands.save`) commits for the same tap,
  * and it must decline whatever `planEarlyCommit` declines.
  */
-import type { PolicyRule } from '@c15t/schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
 import {

@@ -16,7 +16,7 @@ export default mergeConfig(
 				// picks for browser bundles.
 				'#inline-start': resolve(__dirname, './src/engine/inline-start.ts'),
 				// Exercise the docs example against the source under test.
-				'@c15t/integrations/sentry': resolve(
+				'@inth/integrations/sentry': resolve(
 					__dirname,
 					'./src/vendors/analytics/sentry.ts'
 				),

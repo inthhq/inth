@@ -1,4 +1,4 @@
-import type { AllConsentNames, ConsentState, Script } from '@c15t/core';
+import type { AllConsentNames, ConsentState, Script } from '@inth/sdk/engine';
 
 /** The Zaraz Consent API methods used by the bridge. */
 export interface ZarazConsentApi {

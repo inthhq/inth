@@ -1,5 +1,12 @@
 'use client';
 
+import type { DeferredCommitted, DeferredEngine } from '@inth/react/deferred';
+import {
+	ConsentBootData,
+	DeferredEngineHost,
+} from '@inth/react/deferred/engine';
+import { ConsentProvider } from '@inth/react/provider';
+import type { ConsentProviderOptions } from '@inth/react/provider';
 /**
  * The engine side of `ConsentRoot`, loaded on demand by `./root`.
  *
@@ -12,7 +19,7 @@
  * Receives the visitor's `ConsentState` from the root route loader, resolved
  * or as a pending promise the loader streams, and forwards it to the React
  * provider as `options.prefetch`. Kernel creation, persistence, init, and
- * module wiring live in `@c15t/react`.
+ * module wiring live in `@inth/react`.
  *
  * The state also carries the backend URL, the mode and the route prefix
  * `createConsentStateHandler()` was given. `clientMode()` turns them into a
@@ -27,21 +34,14 @@ import type {
 	KernelOverrides,
 	KernelTransport,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import { projectUrl as generatedProjectUrl } from '@c15t/core/generated';
-import type { ConsentMode } from '@c15t/core/modes';
-import { clientMode } from '@c15t/core/runtime/client-mode';
-import type { WithProjectUrl } from '@c15t/core/runtime/provider';
-import { preloadScriptLoaderWith } from '@c15t/core/runtime/script-loader-preload';
-import type * as ScriptServerStart from '@c15t/core/runtime/script-server-start';
-import { resolveStreamedInit } from '@c15t/core/runtime/streamed-init';
-import type { DeferredCommitted, DeferredEngine } from '@c15t/react/deferred';
-import {
-	ConsentBootData,
-	DeferredEngineHost,
-} from '@c15t/react/deferred/engine';
-import { ConsentProvider } from '@c15t/react/provider';
-import type { ConsentProviderOptions } from '@c15t/react/provider';
+} from '@inth/sdk/engine';
+import { projectUrl as generatedProjectUrl } from '@inth/sdk/generated';
+import type { ConsentMode } from '@inth/sdk/modes';
+import { clientMode } from '@inth/sdk/runtime/client-mode';
+import type { WithProjectUrl } from '@inth/sdk/runtime/provider';
+import { preloadScriptLoaderWith } from '@inth/sdk/runtime/script-loader-preload';
+import type * as ScriptServerStart from '@inth/sdk/runtime/script-server-start';
+import { resolveStreamedInit } from '@inth/sdk/runtime/streamed-init';
 import * as React from 'react';
 import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -53,7 +53,7 @@ import type { ConsentState } from './server';
 
 // The stock surfaces a deferred root renders come from this chunk, so
 // they share its modules instead of carrying copies.
-export { ConsentBanner, ConsentDialog } from '@c15t/react/deferred/engine';
+export { ConsentBanner, ConsentDialog } from '@inth/react/deferred/engine';
 
 type RecordedState = PromiseLike<ConsentState> & {
 	status?: string;
@@ -84,7 +84,7 @@ const transportFor = function transportFor(
 			projectUrl,
 			routePrefix,
 		},
-		'@c15t/tanstack-start/testing'
+		'@inth/tanstack-start/testing'
 	);
 };
 
@@ -200,7 +200,7 @@ const loadScriptServerStart = function loadScriptServerStart(): Recorded<
 	return record(
 		(async () => {
 			try {
-				return await import('@c15t/core/runtime/script-server-start');
+				return await import('@inth/sdk/runtime/script-server-start');
 			} catch {
 				return undefined;
 			}
@@ -312,7 +312,7 @@ const renderFor = function renderFor(
 ) {
 	let render = renders.get(options);
 	if (!render || render.state !== state) {
-		// As `newRenderId` in `@c15t/core/runtime/script-server-start`.
+		// As `newRenderId` in `@inth/sdk/runtime/script-server-start`.
 		render = { id: Math.random().toString(36).slice(2, 10), state };
 		renders.set(options, render);
 	}
@@ -461,7 +461,7 @@ const useRootOptions = function useRootOptions({
 
 	const providerOptions: ConsentProviderOptions = {
 		...options,
-		__debugPkg: '@c15t/tanstack-start',
+		__debugPkg: '@inth/tanstack-start',
 		// A returning visitor's state often lets a script run. Start the
 		// script loader's download during the first render, not after
 		// hydration, a round trip later.

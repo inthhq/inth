@@ -3,7 +3,7 @@
 		accordionVariants,
 		getAccordionItemState,
 		toggleAccordionValue,
-	} from '@c15t/svelte';
+	} from '@inth/svelte';
 
 	interface Props {
 		item1Title?: string;

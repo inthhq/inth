@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ConsentKernel } from '@c15t/core';
+	import type { ConsentKernel } from '@inth/sdk/engine';
 
 	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import IABConsentDialog from '../../lib/components/iab-panel.svelte';

@@ -12,8 +12,8 @@ import type { ConsentClientOptions, ConsentState } from './types';
 export interface ConsentRootProps extends ConsentClientOptions {
 	/**
 	 * The visitor's resolved consent state, produced server-side by
-	 * `resolveConsent()` from `c15t/next/server` or `withConsentProps()`
-	 * from `c15t/next/pages`. Serializable JSON; a promise is fine, the
+	 * `resolveConsent()` from `@inth/nextjs/server` or `withConsentProps()`
+	 * from `@inth/nextjs/pages`. Serializable JSON; a promise is fine, the
 	 * provider awaits it. Without it the browser resolves consent itself.
 	 */
 	state?: ConsentState | Promise<ConsentState>;

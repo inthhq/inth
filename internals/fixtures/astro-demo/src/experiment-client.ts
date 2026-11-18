@@ -1,10 +1,13 @@
+import type { C15tClientOptionsExtension } from '@inth/astro';
 /**
  * `consent-client.ts` plus callbacks that push each impression and choice
  * made under a banner-experiment arm to `window.dataLayer` for GTM. The
  * showcase build uses it as the client entrypoint with `C15T_EXPERIMENT=1`.
  */
-import type { OnChoiceRecordedPayload, OnSurfaceShownPayload } from 'c15t';
-import type { C15tClientOptionsExtension } from 'c15t/astro';
+import type {
+	OnChoiceRecordedPayload,
+	OnSurfaceShownPayload,
+} from '@inth/sdk/engine';
 
 import consentClient from './consent-client';
 

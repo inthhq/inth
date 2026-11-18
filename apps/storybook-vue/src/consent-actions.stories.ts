@@ -1,4 +1,4 @@
-import type { PolicyUiAction } from '@c15t/schema/types';
+import type { PolicyUiAction } from '@inth/sdk/schema/types';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { ref } from 'vue';
 

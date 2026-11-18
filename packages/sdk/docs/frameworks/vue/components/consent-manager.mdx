@@ -8,14 +8,14 @@ group: frameworks
 
 `ConsentRoot` already renders `ConsentManager` when preferences open. Import
 it yourself only when you compose the surfaces in place of `ConsentRoot`.
-Import it from `c15t/vue/vue-plugin`:
+Import it from `@inth/vue/vue-plugin`:
 
 <include src="../../../shared/examples/vue/consent-surfaces.mdx" />
 
 ## Open the dialog from your code
 
 Set `activeUI` to `'manager'` with `useConsentActiveUI()` from
-`c15t/vue/vue-plugin`. The Vue adapter uses `'manager'` where the React
+`@inth/vue/vue-plugin`. The Vue adapter uses `'manager'` where the React
 adapter uses `'dialog'`.
 
 {/* example: fragment */}

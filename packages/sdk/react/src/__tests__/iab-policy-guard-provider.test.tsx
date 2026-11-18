@@ -4,9 +4,9 @@
  * renders. `iab-policy-guard.test.tsx` covers the app without it.
  */
 import { MINIMAL_GVL } from '@c15t/conformance';
-import type { GlobalVendorList } from '@c15t/core';
-import { deferInitGvl } from '@c15t/core';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import type { GlobalVendorList } from '@inth/sdk/engine';
+import { deferInitGvl } from '@inth/sdk/engine';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

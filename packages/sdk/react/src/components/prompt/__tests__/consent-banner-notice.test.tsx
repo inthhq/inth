@@ -1,5 +1,5 @@
-import type { PolicyRule } from '@c15t/schema/types';
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
+import type { PolicyRule } from '@inth/sdk/schema/types';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import type { ComponentProps } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

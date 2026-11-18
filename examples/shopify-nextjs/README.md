@@ -9,7 +9,7 @@ the visitor has answered the banner.
 ## Files
 
 - `components/shopify-analytics.tsx`: the Shopify bridge from
-  `@c15t/integrations/shopify`. `ShopifyAnalytics` renders `ShopifyScripts`
+  `@inth/integrations/shopify`. `ShopifyAnalytics` renders `ShopifyScripts`
   in the head with the bridge's `setup`, and `ShopifyConsentSync` feeds it
   each `useSnapshot()`.
 - `c15t.config.ts`: declares the categories the bridge maps. c15t can't see

@@ -4,15 +4,15 @@
  * tap's own task without the consent engine, and the engine adopts that
  * record when it loads.
  */
-import type { ConsentSnapshot, KernelEvent, Script } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
-import type { InitOutput } from '@c15t/schema/types';
+import type { ConsentSnapshot, KernelEvent, Script } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
+import { translations } from '@inth/sdk/translations/en';
 import { mount } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';

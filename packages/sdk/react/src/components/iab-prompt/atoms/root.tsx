@@ -1,7 +1,7 @@
 'use client';
 
-import type * as C15tCoreTypes from '@c15t/core';
-import styles from '@c15t/ui/styles/components/iab-consent-banner';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { forwardRef as createForwardRef, useMemo } from 'react';
 import type { CSSProperties, FC, HTMLAttributes, ReactNode } from 'react';
 

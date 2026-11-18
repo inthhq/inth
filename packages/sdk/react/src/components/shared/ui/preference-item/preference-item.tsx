@@ -1,14 +1,14 @@
 'use client';
 
-import type { ConsentComponentSlotKey } from '@c15t/schema/config';
-import { getDataDisabled } from '@c15t/ui/primitives/data-state';
+import type { ConsentComponentSlotKey } from '@inth/sdk/schema/config';
+import { getDataDisabled } from '@inth/sdk/ui/primitives/data-state';
 import {
 	getPreferenceItemState,
 	PREFERENCE_ITEM_INTERNAL_SLOTS,
 	PREFERENCE_ITEM_SLOTS,
 	togglePreferenceItemValue,
-} from '@c15t/ui/primitives/preference-item';
-import styles from '@c15t/ui/styles/components/preference-item';
+} from '@inth/sdk/ui/primitives/preference-item';
+import styles from '@inth/sdk/ui/styles/components/preference-item';
 import {
 	createContext,
 	forwardRef as createForwardRef,

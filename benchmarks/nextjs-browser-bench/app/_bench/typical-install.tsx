@@ -1,15 +1,15 @@
 'use client';
 
-import { gtag } from '@c15t/integrations/google-tag';
-import { metaPixel } from '@c15t/integrations/meta-pixel';
-import { tiktokPixel } from '@c15t/integrations/tiktok-pixel';
+import { gtag } from '@inth/integrations/google-tag';
+import { metaPixel } from '@inth/integrations/meta-pixel';
+import { tiktokPixel } from '@inth/integrations/tiktok-pixel';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentRoot,
-} from '@c15t/nextjs';
-import type { ConsentRootProps } from '@c15t/nextjs';
+} from '@inth/nextjs';
+import type { ConsentRootProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { NextjsBenchmarkProbe } from './probe';
@@ -22,7 +22,7 @@ import {
 import './with-consent.css';
 
 /**
- * Three common vendors through `@c15t/integrations`, as the Next.js scripts
+ * Three common vendors through `@inth/integrations`, as the Next.js scripts
  * guide registers them. Google tag always loads and signals Consent Mode;
  * Meta and TikTok wait for marketing consent. Each points at a local
  * stand-in so the bench measures when c15t starts them, not a CDN.

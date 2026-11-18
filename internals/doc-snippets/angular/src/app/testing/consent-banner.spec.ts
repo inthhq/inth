@@ -1,14 +1,14 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentBanner, ConsentManager, provideC15t } from '@c15t/angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
+import { ConsentBanner, ConsentManager, provideC15t } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
 // #region docs:harness-banner-test title="src/app/consent-banner.spec.ts"
 import {
 	ConsentBannerHarness,
 	ConsentDialogHarness,
 	testing,
-} from '@c15t/angular/testing';
+} from '@inth/angular/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 @Component({

@@ -1,6 +1,6 @@
-import * as button from '@c15t/ui/styles/sheets/button';
-import * as consentGate from '@c15t/ui/styles/sheets/consent-gate';
-import * as tokens from '@c15t/ui/styles/sheets/tokens';
+import * as button from '@inth/sdk/ui/styles/sheets/button';
+import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate';
+import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 
 import type { SurfaceStyleSheet } from './surface-styles';
 

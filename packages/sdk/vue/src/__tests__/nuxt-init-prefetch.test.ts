@@ -3,14 +3,14 @@
  * the server's `render:html` hook through the browser: the HTML starts the
  * request and the Nuxt plugin's runtime adopts it.
  */
-import { C15T_POLICY_CONTRACT_HEADER } from '@c15t/core';
+import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { InitOutput } from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import type { InitOutput } from '@inth/sdk/schema/types';
+import { translations } from '@inth/sdk/translations/en';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, ref } from 'vue';
 import type { App, Ref } from 'vue';
@@ -37,7 +37,7 @@ vi.mock('nitropack/runtime', () => ({
 	useRuntimeConfig,
 }));
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The module registers this Nitro virtual; the test provides the app config it returns.
-vi.mock('#c15t/server-app-config', () => ({
+vi.mock('#@inth/sdk/server-app-config', () => ({
 	useServerAppConfig: () =>
 		nuxt.serverAppConfig ? { c15t: nuxt.appConfig } : undefined,
 }));

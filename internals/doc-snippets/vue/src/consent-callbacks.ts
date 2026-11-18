@@ -1,5 +1,5 @@
 // #region docs:callbacks title="src/consent-callbacks.ts"
-import type { C15tVuePluginOptions } from 'c15t/vue/vue-plugin';
+import type { C15tVuePluginOptions } from '@inth/vue/vue-plugin';
 
 export const callbacks = {
 	// The visitor clicked Accept all, Reject all or Save.

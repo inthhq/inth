@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/nextjs",
+	"name": "@inth/nextjs",
 	"version": "3.2.0-canary.0",
 	"description": "Next.js cookie consent banner and consent management platform for c15t. Server-rendered for the App Router and Pages Router, with a consent dialog and preference center.",
 	"keywords": [
@@ -68,7 +68,8 @@
 	],
 	"type": "module",
 	"sideEffects": [
-		"**/*.css"
+		"**/*.css",
+		"./dist/translations/*.js"
 	],
 	"main": "./dist/index.js",
 	"types": "./dist-types/index.d.ts",
@@ -166,14 +167,29 @@
 			"types": "./dist-types/user-config.d.ts",
 			"import": "./dist/user-config.js",
 			"default": "./dist/user-config.js"
+		},
+		"./generated": {
+			"types": "./dist-types/generated.d.ts",
+			"import": "./dist/generated.js",
+			"default": "./dist/generated.js"
+		},
+		"./engine": {
+			"types": "./dist-types/engine.d.ts",
+			"import": "./dist/engine.js",
+			"default": "./dist/engine.js"
+		},
+		"./translations/*": {
+			"types": "./dist-types/translations/*.d.ts",
+			"import": "./dist/translations/*.js",
+			"default": "./dist/translations/*.js"
 		}
 	},
 	"publishConfig": {
 		"access": "public"
 	},
 	"scripts": {
-		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/nextjs",
+		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/nextjs",
 		"check-types": "pnpm run prebuild && tsc --noEmit",
 		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun scripts/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
@@ -184,10 +200,8 @@
 		"test:watch": "pnpm run prebuild && vitest --passWithNoTests"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/react": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/translations": "workspace:*"
+		"@inth/react": "workspace:*",
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"@c15t/conformance": "workspace:*",

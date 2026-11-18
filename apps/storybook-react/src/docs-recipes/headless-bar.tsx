@@ -1,6 +1,6 @@
 // #region docs:headless-bar title="src/cookie-bar.tsx"
-import { useHeadlessConsentUI } from 'c15t/react/headless';
-import type { HeadlessConsentBannerAction } from 'c15t/react/headless';
+import { useHeadlessConsentUI } from '@inth/react/headless';
+import type { HeadlessConsentBannerAction } from '@inth/react/headless';
 
 import './cookie-bar.css';
 

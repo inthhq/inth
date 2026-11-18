@@ -11,8 +11,8 @@
  * that nothing loaded; the second holds the chunk back to test the window
  * before it arrives.
  */
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentKernel, KernelVendorsState } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentKernel, KernelVendorsState } from '@inth/sdk/engine';
 import { useContext, useEffect } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -33,7 +33,7 @@ const blockerModule = vi.hoisted(() => {
 });
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is when the provider evaluates this module. The factory counts loads, can hold the chunk back, and returns the real module.
-vi.mock('@c15t/core/modules/iframe-blocker', async (importOriginal) => {
+vi.mock('@inth/sdk/modules/iframe-blocker', async (importOriginal) => {
 	blockerModule.loads += 1;
 	await blockerModule.gate;
 	return await importOriginal();

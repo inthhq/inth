@@ -5,7 +5,7 @@
  * state>`. With it the kernel resolves the policy on the server, so the
  * banner is in the first HTML instead of appearing a frame after
  * hydration. The resolution itself is `resolveRequestConsent` from
- * `@c15t/core/server`; this module supplies what SvelteKit knows about the
+ * `@inth/sdk/server`; this module supplies what SvelteKit knows about the
  * request: `event.request`, `event.url`, `event.fetch`, the platform's
  * `waitUntil`, and the config and inputs `c15tHandle` stored.
  */
@@ -13,9 +13,9 @@ import { building } from '$app/env';
 import {
 	projectUrl as builtProjectUrl,
 	snapshot as builtSnapshot,
-} from '@c15t/core/generated';
-import { readWaitUntil, resolveRequestConsent } from '@c15t/core/server';
-import type { ResolveRequestConsentOptions } from '@c15t/core/server';
+} from '@inth/sdk/generated';
+import { readWaitUntil, resolveRequestConsent } from '@inth/sdk/server';
+import type { ResolveRequestConsentOptions } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import type { ConsentRootState } from '../types';
@@ -176,7 +176,7 @@ const requestFrom = function requestFrom(
  *
  * ```ts
  * // src/routes/+layout.server.ts
- * export { loadConsent as load } from '@c15t/svelte/kit';
+ * export { loadConsent as load } from '@inth/svelte/kit';
  * ```
  *
  * ```svelte
@@ -217,7 +217,7 @@ export const loadConsent = async function loadConsent(
 	const cookieName = options.cookieName ?? locals?.cookieName;
 	const shared = building || locals?.shared === true;
 	const state = await resolveRequestConsent({
-		adapter: '@c15t/svelte',
+		adapter: '@inth/svelte',
 		...serverResolution(mode, locals, projectUrl),
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,

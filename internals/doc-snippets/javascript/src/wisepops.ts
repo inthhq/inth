@@ -1,5 +1,5 @@
 // #region docs:wisepops-scripts title="src/consent-scripts.ts"
-import { wisepops } from '@c15t/integrations/wisepops';
+import { wisepops } from '@inth/integrations/wisepops';
 
 export const scripts = [wisepops({ siteId: 'YOUR_WISEPOPS_SITE_ID' })];
 

@@ -13,7 +13,7 @@ const getBenchManifestUrl = function getBenchManifestUrl() {
 };
 
 /**
- * Zero-consent baseline build: C15T_BENCH_BASELINE=1 omits the @c15t/vue
+ * Zero-consent baseline build: C15T_BENCH_BASELINE=1 omits the @inth/nuxt
  * module (and its config) entirely so the /baseline scenario measures the
  * page's own floor. Two-build pattern, same as the CSS experiment.
  */
@@ -27,7 +27,7 @@ const config = {
 		nitro: { output: { dir: baselineServerOutputDir } },
 	}),
 	compatibilityDate: '2026-07-04',
-	modules: baselineBuild ? [] : ['@c15t/vue'],
+	modules: baselineBuild ? [] : ['@inth/nuxt'],
 	routeRules: {
 		'/baseline-client': { ssr: false },
 		'/client': { ssr: false },
@@ -50,7 +50,7 @@ const config = {
 				/**
 				 * Static consent mount per build (see app/consent-mount.vue).
 				 * Baseline builds get an empty stub so they never reference
-				 * `@c15t/vue`; full builds get a static `<ConsentRoot />` —
+				 * `@inth/nuxt`; full builds get a static `<ConsentRoot />` —
 				 * dynamic-by-name global resolution costs +82ms banner-visible
 				 * on client-manifest (mobile + 200ms).
 				 */

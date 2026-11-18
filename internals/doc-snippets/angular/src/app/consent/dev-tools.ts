@@ -1,6 +1,6 @@
 // #region docs:dev-tools
 import { ChangeDetectionStrategy, Component, isDevMode } from '@angular/core';
-import { ConsentDevTools } from '@c15t/angular/devtools';
+import { ConsentDevTools } from '@inth/angular/devtools';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

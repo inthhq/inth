@@ -27,10 +27,10 @@ default, c15t also reloads the page.
 Copy the 32-character project token from your Mixpanel installation snippet,
 where it is passed to `mixpanel.init`. Remove that snippet.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { mixpanelAnalytics } from '@c15t/integrations/mixpanel-analytics';
+import { mixpanelAnalytics } from '@inth/integrations/mixpanel-analytics';
 
 export const scripts = [
 	mixpanelAnalytics({ token: '0123456789abcdef0123456789abcdef' }),

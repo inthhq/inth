@@ -1,6 +1,6 @@
 'use client';
 
-import type { UIOptions } from '@c15t/ui/theme';
+import type { UIOptions } from '@inth/sdk/ui/theme';
 
 import { useReducedMotion } from './use-reduced-motion';
 import { useTheme } from './use-theme';
@@ -34,7 +34,7 @@ export type ResolvedComponentConfig = Required<ComponentConfig>;
  * globally via the ConsentProvider or overridden locally on individual
  * components. Local values take precedence over global values.
  *
- * The configuration props are defined in UIOptions from @c15t/ui/theme,
+ * The configuration props are defined in UIOptions from @inth/sdk/ui/theme,
  * ensuring consistency across all framework implementations.
  *
  * When `disableAnimation` is not explicitly set (locally or globally),

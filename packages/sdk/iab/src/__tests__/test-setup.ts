@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-import type { NonIABVendor } from '@c15t/core';
+import type { NonIABVendor } from '@inth/sdk-core';
 import { vi } from 'vitest';
 
 import type {

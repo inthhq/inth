@@ -1,4 +1,4 @@
-import type { IABHandle, CreateIABOptions } from '@c15t/iab';
+import type { IABHandle, CreateIABOptions } from '@inth/sdk/iab';
 import { createContext } from 'react';
 
 /**
@@ -31,7 +31,7 @@ export interface IABContextValue {
  * Context carrying the IAB CMP handle.
  *
  * It lives in its own module, away from `iab-context.tsx`, because that
- * file statically imports `createIAB` from `@c15t/iab`. A provider handed
+ * file statically imports `createIAB` from `@inth/sdk/iab`. A provider handed
  * an externally owned runtime already has a CMP and must be able to publish
  * it here without pulling the TCF encoder into its chunk.
  *

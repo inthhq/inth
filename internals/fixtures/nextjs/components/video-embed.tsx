@@ -1,7 +1,7 @@
 /* oxlint-disable react/iframe-missing-sandbox -- This fixed cross-origin YouTube player needs its own origin for storage and playback. */
 'use client';
 
-import { ConsentGate } from 'c15t/next';
+import { ConsentGate } from '@inth/nextjs';
 
 export const VideoEmbed = () => (
 	<ConsentGate category="measurement">

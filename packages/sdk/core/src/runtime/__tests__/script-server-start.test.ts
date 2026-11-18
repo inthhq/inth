@@ -5,7 +5,7 @@
  * its setup and inserts its element before hydration, unless the browser
  * holds a newer decision than the one the server read.
  */
-import type { PolicyRule } from '@c15t/schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {

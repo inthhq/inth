@@ -1,5 +1,5 @@
-import type { PolicyResolution } from '@c15t/schema/types';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import type { PolicyResolution } from '@inth/sdk/schema/types';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

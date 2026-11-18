@@ -7,7 +7,7 @@
  * Rolldown keeps a module that lazy chunks share with the route in the
  * route's chunk only while its chunk graph has no static cycle, and its
  * cycle check counts every import record, used or not. One unused
- * re-export (`@c15t/ui/utils/dom` re-exporting `setupColorScheme`) was
+ * re-export (`@inth/sdk/ui/utils/dom` re-exporting `setupColorScheme`) was
  * enough to split every shared module into its own file.
  *
  * `ConsentRoot` loads its engine with `import()`: the first-load files
@@ -23,7 +23,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync } from 'node:zlib';
 
-import { createDialogChunkPlugin } from '@c15t/core/build';
+import { createDialogChunkPlugin } from '@inth/sdk/build';
 import { build } from 'vite';
 import { describe, expect, test } from 'vitest';
 
@@ -37,10 +37,10 @@ const fixture: Record<string, string> = {
 	entry:
 		"globalThis.routes = [() => import('fixture:root-route'), () => import('fixture:provider-route')];",
 	'provider-route': `import { createElement as h } from 'react';
-import { ConsentBanner, ConsentDialog, ConsentProvider } from '@c15t/tanstack-start';
+import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/tanstack-start';
 export default () => h(ConsentProvider, { options: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
 	'root-route': `import { createElement as h } from 'react';
-import { ConsentBanner, ConsentDialog, ConsentRoot } from '@c15t/tanstack-start';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/tanstack-start';
 export default () => h(ConsentRoot, { state: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
 };
 
@@ -90,7 +90,7 @@ const routeFirstLoad = async function routeFirstLoad(
 		resolve: {
 			alias: [
 				{
-					find: /^@c15t\/tanstack-start$/u,
+					find: /^@inth\/tanstack-start$/u,
 					replacement: join(packageRoot, 'dist/index.js'),
 				},
 			],
@@ -193,8 +193,14 @@ describe('TanStack Start client chunks', () => {
 		// The returning-visitor path (the stored-choice gate and watcher, the
 		// wake-up on a failed server start, the render's page object and the
 		// live-option wake-up, and the plain-script checks that keep the early
-		// start to what it can verify) sits in the first load.
-		expect(brotli).toBeLessThanOrEqual(19_247);
+		// start to what it can verify) sits in the first load. The build is
+		// unminified, so it keeps Rolldown's `//#region <path>` comments: the
+		// engine's modules sit under `../sdk/lib/core/dist/` since @inth/sdk,
+		// which adds 18 bytes over 19,245 here. With the old paths the same
+		// output is 19,228 bytes. The flat entry names (`@inth/sdk/engine` in
+		// strings where `@inth/sdk/core` was) and the minifier's new local
+		// names add 7 more, though the files' raw bytes went down.
+		expect(brotli).toBeLessThanOrEqual(19_270);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

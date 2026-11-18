@@ -5,7 +5,7 @@
  * image; started after it, it no longer delays Largest Contentful Paint.
  * The same rule as the React adapter's deferred engine and the server
  * script start (`AFTER_PRIORITY_IMAGES` in
- * `@c15t/core/runtime/script-server-start`).
+ * `@inth/sdk/runtime/script-server-start`).
  *
  * @packageDocumentation
  * @internal

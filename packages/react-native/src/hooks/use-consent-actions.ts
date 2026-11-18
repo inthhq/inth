@@ -15,7 +15,7 @@ import type { OptionalConsentCategory } from '../protocol/vocabulary';
 import { useConsentClient } from '../provider/consent-context';
 
 /**
- * The commands a consent surface can take that `@c15t/react` has no hook for.
+ * The commands a consent surface can take that `@inth/react` has no hook for.
  *
  * Saving, identifying, overrides and notice dismissal have their own hooks with
  * the web names: {@link useSaveConsents}, {@link useIdentify},
@@ -100,7 +100,7 @@ export const useConsentActions = function useConsentActions(): ConsentActions {
 };
 
 /**
- * What {@link useSaveConsents} accepts, matching `@c15t/react`'s `save`.
+ * What {@link useSaveConsents} accepts, matching `@inth/react`'s `save`.
  *
  * - `'all'` grants every category in the policy scope.
  * - `'none'` grants necessary only.
@@ -126,7 +126,7 @@ const intentFor = function intentFor(input: SaveConsentsInput): CommitIntent {
 };
 
 /**
- * Save the subject's consent choice, as `@c15t/react`'s `save` does.
+ * Save the subject's consent choice, as `@inth/react`'s `save` does.
  *
  * With no argument it saves the current draft: the nearest
  * `ConsentDraftProvider`'s, or the draft every `useConsentDraft()` outside one

@@ -1,4 +1,4 @@
-import type { UIOptions } from '@c15t/ui/theme';
+import type { UIOptions } from '@inth/sdk/ui/theme';
 
 import type { ReactComponentSlots } from './slots';
 
@@ -12,6 +12,6 @@ import type { ReactComponentSlots } from './slots';
  * @public
  */
 export interface ReactUIOptions extends UIOptions {
-	/** Per-component slot attribute overrides (shared contract with @c15t/vue). */
+	/** Per-component slot attribute overrides (shared contract with @inth/vue). */
 	components?: ReactComponentSlots;
 }

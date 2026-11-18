@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentWidget } from '@c15t/svelte';
+	import { ConsentWidget } from '@inth/svelte';
 
 	import {
 		editableConsentOptions,

@@ -1,16 +1,16 @@
-import type { Vendor } from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
-import type { Script } from '@c15t/core/modules/script-loader';
-import type { ProviderTransportFactory } from '@c15t/react';
+import type { ProviderTransportFactory } from '@inth/react';
 import type {
 	UseNetworkBlockerOptions,
 	UsePersistenceOptions,
 	UseScriptLoaderOptions,
-} from '@c15t/react/module-hooks';
+} from '@inth/react/module-hooks';
 import type {
 	ConsentProviderOptions,
 	ConsentProviderPrefetch,
-} from '@c15t/react/provider';
+} from '@inth/react/provider';
+import type { Vendor } from '@inth/sdk/engine';
+import type { ConsentMode } from '@inth/sdk/modes';
+import type { Script } from '@inth/sdk/modules/script-loader';
 
 /**
  * The visitor's resolved consent state: serializable policy, records, and

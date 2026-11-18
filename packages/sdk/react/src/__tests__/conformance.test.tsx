@@ -22,9 +22,9 @@ import type {
 	ConsentKernel,
 	KernelActiveUI,
 	TranslationsResponse,
-} from '@c15t/core';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import type { GlobalVendorList } from '@c15t/schema/types';
+} from '@inth/sdk/engine';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
+import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';

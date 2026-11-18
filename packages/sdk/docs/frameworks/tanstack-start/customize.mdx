@@ -39,7 +39,7 @@ through `head()`:
 {/* example: fragment */}
 
 ```tsx title="src/routes/__root.tsx (partial)"
-import consentCss from 'c15t/tanstack-start/styles.css?url';
+import consentCss from '@inth/tanstack-start/styles.css?url';
 
 // In createRootRoute({ head: () => ({ links: [...] }) }):
 { href: consentCss, rel: 'stylesheet' }
@@ -79,7 +79,7 @@ variables. Pick one of two ways to set them:
   {/* example: fragment */}
 
   ```tsx title="src/consent-theme.ts"
-  import { defineTheme } from 'c15t/tanstack-start';
+  import { defineTheme } from '@inth/tanstack-start';
 
   export const theme = defineTheme({
     colors: { primary: '#2f6f4e', primaryHover: '#24563c' },
@@ -88,7 +88,7 @@ variables. Pick one of two ways to set them:
   ```
 
   In the root component, render `<ConsentTheme theme={theme} />` from
-  `c15t/tanstack-start` inside `<head>`, after `<HeadContent />`.
+  `@inth/tanstack-start` inside `<head>`, after `<HeadContent />`.
 
 `ConsentTheme` outranks a plain `:root` rule, wherever each one loads. If you
 use both, a variable set in both places takes the `ConsentTheme` value. Write

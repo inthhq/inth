@@ -23,8 +23,8 @@
 		"test": "bun test --tsconfig-override \"$PWD/tsconfig.json\" --preload ./test-setup.ts"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/schema": "workspace:*",
+		"@inth/sdk-core": "workspace:*",
+		"@inth/sdk-schema": "workspace:*",
 		"axe-core": "4.11.0",
 		"storybook": "10.3.1"
 	},

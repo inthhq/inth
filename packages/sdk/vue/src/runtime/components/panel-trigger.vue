@@ -2,13 +2,13 @@
 import type {
 	ConsentDialogTriggerPosition,
 	ConsentDialogTriggerSize,
-} from '@c15t/schema/config';
-import triggerStyles from '@c15t/ui/styles/components/consent-dialog-trigger';
-import { followDevToolsDock } from '@c15t/ui/utils/devtools-launcher';
-import { calculateNearestCorner } from '@c15t/ui/utils/trigger-utils';
-import type { CornerPosition } from '@c15t/ui/utils/trigger-utils';
+} from '@inth/sdk/schema/config';
+import triggerStyles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
+import { followDevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
+import { calculateNearestCorner } from '@inth/sdk/ui/utils/trigger-utils';
+import type { CornerPosition } from '@inth/sdk/ui/utils/trigger-utils';
 
-import '@c15t/ui/styles/components/consent-dialog-trigger.css';
+import '@inth/sdk/ui/styles/components/consent-dialog-trigger.css';
 import { computed, ref, watch } from 'vue';
 
 import {

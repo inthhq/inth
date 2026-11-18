@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
-import { ConsentDialogTrigger } from '@c15t/angular/consent-dialog-trigger';
+import { dialogFocusManagement } from '@c15t/conformance/play/consent-dialog';
+import { triggerOpensDialog } from '@c15t/conformance/play/consent-dialog-trigger';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
+import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import type {
 	ConsentDialogTriggerPosition,
 	ConsentDialogTriggerSize,
 	ConsentDialogTriggerVisibility,
-} from '@c15t/angular/consent-dialog-trigger';
-import { dialogFocusManagement } from '@c15t/conformance/play/consent-dialog';
-import { triggerOpensDialog } from '@c15t/conformance/play/consent-dialog-trigger';
+} from '@inth/angular/consent-dialog-trigger';
 
 import {
 	consentApplication,

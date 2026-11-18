@@ -13,7 +13,7 @@ const monorepoRoot = resolve(projectDir, '../..');
  *   stylesheets the banner renders. It builds into `.next-css-styles`, so
  *   the two builds can sit side by side.
  * Both builds load the same JavaScript. Each imports its CSS explicitly
- * rather than relying on `@c15t/ui` class maps to import it.
+ * rather than relying on `@inth/sdk/ui` class maps to import it.
  */
 const useStylesCss = process.env.C15T_CSS === 'styles';
 
@@ -24,11 +24,9 @@ const cssEntryAbs = resolve(projectDir, cssEntryRel);
 
 const transpilePackages = [
 	'@c15t/benchmarking',
-	'@c15t/iab',
-	'@c15t/react',
-	'@c15t/nextjs',
-	'@c15t/ui',
-	'@c15t/core',
+	'@inth/sdk',
+	'@inth/react',
+	'@inth/nextjs',
 ];
 
 const config: NextConfig = {

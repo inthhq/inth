@@ -10,7 +10,7 @@
  * @packageDocumentation
  */
 
-import type { GlobalVendorList } from '@c15t/core';
+import type { GlobalVendorList } from '@inth/sdk-core';
 
 import type { PublisherRestriction } from './iab-tcf-types';
 

@@ -20,28 +20,28 @@
  * @internal
  */
 
-import type { ConsentSnapshot, KernelEvent, SaveResult } from '@c15t/core';
+import type { ConsentSnapshot, KernelEvent, SaveResult } from '@inth/sdk-core';
 import {
 	configFromPrefetchedInit,
 	hasStoredConsent,
 	pendingSnapshot,
 	primeInitRequest,
 	snapshotFromPrefetchedInit,
-} from '@c15t/core/runtime/deferred-snapshot';
+} from '@inth/sdk-core/runtime/deferred-snapshot';
 import type {
 	DeferredSnapshotOptions,
 	PrefetchedInitialData,
-} from '@c15t/core/runtime/deferred-snapshot';
+} from '@inth/sdk-core/runtime/deferred-snapshot';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
 	planInstantCommit,
-} from '@c15t/core/surface-actions/instant-commit';
+} from '@inth/sdk-core/surface-actions/instant-commit';
 import {
 	isPlainScript,
 	isRunnableNow,
 	startPlainScripts,
-} from '@c15t/core/surface-actions/plain-scripts';
+} from '@inth/sdk-core/surface-actions/plain-scripts';
 
 import { mergeClientOptions, readPageOptions } from '../auto-init';
 import { activateGatedScripts } from '../gated-scripts';
@@ -127,7 +127,7 @@ const PAGE_ACTIONS: Record<string, string> = {
 };
 
 const notReady = (): Error =>
-	new Error('@c15t/browser: call c15t.init() first, or wait for c15t.ready().');
+	new Error('@inth/sdk: call c15t.init() first, or wait for c15t.ready().');
 
 /** A queued call whose result the caller waits for (see `runQueued`). */
 type SettledCall = QueuedCall & {
@@ -309,7 +309,7 @@ export const runInitScript = function runInitScript(
 		if (!src) {
 			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 			console.error(
-				'@c15t/browser: c15t.js cannot tell where c15t.hosted.js is. Load c15t.js from a URL, or set data-hosted-src.'
+				'@inth/sdk: c15t.js cannot tell where c15t.hosted.js is. Load c15t.js from a URL, or set data-hosted-src.'
 			);
 			return;
 		}
@@ -376,7 +376,7 @@ export const runInitScript = function runInitScript(
 				listener(next);
 			} catch (error) {
 				// oxlint-disable-next-line no-console -- A page listener failed.
-				console.error('@c15t/browser: a subscribe listener threw.', error);
+				console.error('@inth/sdk: a subscribe listener threw.', error);
 			}
 		}
 	};
@@ -1000,7 +1000,7 @@ export const runInitScript = function runInitScript(
 		isVendorAllowed(vendorId: string) {
 			if (!api) {
 				throw new Error(
-					'@c15t/browser: isVendorAllowed() needs c15t.hosted.js. Call it from c15t.onInit().'
+					'@inth/sdk: isVendorAllowed() needs c15t.hosted.js. Call it from c15t.onInit().'
 				);
 			}
 			return api.isVendorAllowed(vendorId);
@@ -1038,7 +1038,7 @@ export const runInitScript = function runInitScript(
 				active = false;
 			};
 		},
-		pkg: '@c15t/browser',
+		pkg: '@inth/sdk',
 		provideGPP(module: Parameters<C15tGlobalBase['provideGPP']>[0]) {
 			if (api) {
 				return api.provideGPP(module);

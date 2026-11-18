@@ -1,14 +1,14 @@
-import { C15T_POLICY_CONTRACT_HEADER } from '@c15t/core';
-import type { ExternalConsentSource } from '@c15t/core/runtime';
-import { resolveManifestInit } from '@c15t/core/transports/manifest-cache';
+import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import type { ExternalConsentSource } from '@inth/sdk/runtime';
 import {
 	normalizePolicyRule,
 	createConsentManifestPolicyPack,
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { InitOutput, PolicyRule } from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
+import { translations } from '@inth/sdk/translations/en';
+import { resolveManifestInit } from '@inth/sdk/transports/manifest-cache';
 import { afterEach, expect, test, vi } from 'vitest';
 import {
 	createApp,

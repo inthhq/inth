@@ -129,7 +129,7 @@ describe('native build policy export', () => {
 	});
 });
 
-// This config aliases @c15t/schema and @c15t/translations to their sources,
+// This config aliases @inth/sdk/schema and @inth/sdk/translations to their sources,
 // which hides whether the exporter can find them outside Vitest. The Android
 // emulator jobs run this script with tsx, where Node resolves each bare import
 // from the importing file's own folder.
@@ -147,7 +147,14 @@ describe('exporter dependencies outside Vitest', () => {
 				),
 			]
 				.map((match) => match.groups?.specifier ?? '')
-				.filter((specifier) => !specifier.startsWith('node:'));
+				.filter((specifier) => !specifier.startsWith('node:'))
+				// The package a specifier such as `@inth/sdk/schema` names.
+				.map((specifier) =>
+					specifier
+						.split('/')
+						.slice(0, specifier.startsWith('@') ? 2 : 1)
+						.join('/')
+				);
 			expect(packages.length).toBeGreaterThan(0);
 			const lookup = createRequire(url).resolve.paths('') ?? [];
 			const missing = packages.filter(

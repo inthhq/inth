@@ -19,7 +19,7 @@ export const assertInitialFocus = async function assertInitialFocus(
 	});
 };
 
-// Mirrors `firstTabbable` in `@c15t/ui`: the same selector, the same
+// Mirrors `firstTabbable` in `@inth/sdk/ui`: the same selector, the same
 // visibility and disabled checks, positive `tabindex` first.
 const FOCUSABLE = [
 	'a[href]:not([disabled]):not([tabindex="-1"])',

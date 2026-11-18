@@ -5,7 +5,7 @@
 		ConsentDialog,
 		IABConsentBanner,
 		IABConsentDialog,
-	} from 'c15t/svelte';
+	} from '@inth/svelte';
 </script>
 
 <!-- Visitors whose policy is not IAB get the standard banner and dialog. -->

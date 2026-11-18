@@ -1,9 +1,9 @@
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk-core';
 import type {
 	ConsentSnapshot,
 	ConsentState,
 	HydrationRecords,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 
 import { resolvePolicyRules } from '../../../../schema/src/types';
 import type { PolicyRule } from '../../../../schema/src/types';

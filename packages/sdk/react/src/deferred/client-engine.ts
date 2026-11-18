@@ -1,5 +1,5 @@
 /**
- * The side of `@c15t/react`'s `ConsentProvider` that loads on demand: the
+ * The side of `@inth/react`'s `ConsentProvider` that loads on demand: the
  * real provider, which builds and starts the runtime, and the host that
  * hands its kernel to a client root's stand-in. One `import()`, so the
  * bundler makes one chunk group.

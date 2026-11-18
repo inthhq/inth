@@ -1,12 +1,12 @@
 ---
 title: Hooks
-description: Read consent permissions, open the preference dialog and save choices in TanStack Start components with the hooks exported from c15t/tanstack-start.
+description: Read consent permissions, open the preference dialog and save choices in TanStack Start components with the hooks exported from @inth/tanstack-start.
 group: frameworks
 ---
 
 ## Read only the state you need
 
-`c15t/tanstack-start` re-exports every hook from `c15t/react`. Each hook reads
+`@inth/tanstack-start` re-exports every hook from `@inth/react`. Each hook reads
 the runtime from `ConsentRoot`, so call hooks in components rendered inside it.
 Any route component qualifies, because `ConsentRoot` wraps the `Outlet` in the
 root route.
@@ -14,7 +14,7 @@ root route.
 {/* example: fragment */}
 
 ```tsx title="src/components/optional-feature.tsx"
-import { useConsent } from 'c15t/tanstack-start';
+import { useConsent } from '@inth/tanstack-start';
 
 export function OptionalFeature() {
 	const allowed = useConsent('marketing');
@@ -34,7 +34,7 @@ Set the active surface to `'dialog'` from any component inside `ConsentRoot`:
 {/* example: fragment */}
 
 ```tsx title="src/components/privacy-menu-item.tsx"
-import { useSetActiveUI } from 'c15t/tanstack-start';
+import { useSetActiveUI } from '@inth/tanstack-start';
 
 export function PrivacyMenuItem() {
 	const setActiveUI = useSetActiveUI();
@@ -53,7 +53,7 @@ export function PrivacyMenuItem() {
 {/* example: fragment */}
 
 ```tsx title="src/components/reject-button.tsx"
-import { useSaveConsents } from 'c15t/tanstack-start';
+import { useSaveConsents } from '@inth/tanstack-start';
 
 export function RejectButton() {
 	const save = useSaveConsents();
@@ -71,4 +71,4 @@ export function RejectButton() {
 
 Hooks need React context, so they do not run in loaders, `beforeLoad`, server
 functions or server routes. On the server, read the request's consent state
-with `resolveConsent` from `c15t/tanstack-start/server`.
+with `resolveConsent` from `@inth/tanstack-start/server`.

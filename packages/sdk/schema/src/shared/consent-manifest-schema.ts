@@ -1,5 +1,5 @@
-import { enTranslations } from '@c15t/translations';
-import type { Translations } from '@c15t/translations';
+import { enTranslations } from '@inth/sdk-translations';
+import type { Translations } from '@inth/sdk-translations';
 import * as v from 'valibot';
 
 import { brandingSchema } from './branding';

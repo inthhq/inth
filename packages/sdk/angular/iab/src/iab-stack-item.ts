@@ -6,10 +6,10 @@ import {
 	output,
 	signal,
 } from '@angular/core';
-import { ɵresolveNoStyle as resolveNoStyle } from '@c15t/angular';
-import { countIABPartners } from '@c15t/iab/headless';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
-import switchStyles from '@c15t/ui/styles/components/switch';
+import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
+import { countIABPartners } from '@inth/sdk/iab/headless';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
 import { ChevronRightIcon } from './iab-icons';
 import { IABPurposeItem, PREFERENCE_ITEM, SWITCH } from './iab-purpose-item';

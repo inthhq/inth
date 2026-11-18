@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
-import { consentManifest } from '@c15t/tanstack-start/build';
+import { consentManifest } from '@inth/tanstack-start/build';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -23,7 +23,7 @@ import { defineConfig } from 'vite';
 const rootProvider = process.env.C15T_BENCH_ROOT_PROVIDER === '1';
 // Resolve the adapter-owned dependency explicitly, including under isolated installs.
 const adapterRequire = createRequire(
-	createRequire(import.meta.url).resolve('@c15t/tanstack-start')
+	createRequire(import.meta.url).resolve('@inth/tanstack-start')
 );
 
 export default defineConfig({
@@ -50,10 +50,10 @@ export default defineConfig({
 				),
 			},
 			// Exact match: a string alias also rewrites
-			// `@c15t/react/iab/styles.css` to `iab.js/styles.css`.
+			// `@inth/react/iab/styles.css` to `iab.js/styles.css`.
 			{
-				find: /^@c15t\/react\/iab$/u,
-				replacement: adapterRequire.resolve('@c15t/react/iab'),
+				find: /^@inth\/react\/iab$/u,
+				replacement: adapterRequire.resolve('@inth/react/iab'),
 			},
 		],
 	},

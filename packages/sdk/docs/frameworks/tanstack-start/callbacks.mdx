@@ -43,7 +43,7 @@ remount.
 | `onBeforeConsentRevocationReload` | A save withdrew a granted category or vendor, right before c15t reloads the page. | `preferences`, the permissions after the save |
 
 The type for the whole object is `ConsentProviderCallbacks` from
-`c15t/tanstack-start`. Callbacks run after c15t updates its state, so
+`@inth/tanstack-start`. Callbacks run after c15t updates its state, so
 `snapshot` and hooks such as `useConsent()` already hold the new values.
 
 `resolveConsent` on the server has no error callback. When the manifest

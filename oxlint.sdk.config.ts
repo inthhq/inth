@@ -23,13 +23,12 @@ const nextAppFiles = nextAppDirectories.map(
 );
 
 const nonReactFrameworkFiles = [
-	'apps/storybook-solid/**/*.{js,jsx,ts,tsx}',
 	'apps/storybook-svelte/**/*.{js,jsx,ts,tsx}',
 	'apps/storybook-vue/**/*.{js,jsx,ts,tsx}',
 	'benchmarks/nuxt-browser-bench/**/*.{js,jsx,ts,tsx}',
 	'internals/fixtures/nuxt/**/*.{js,jsx,ts,tsx}',
 	'internals/fixtures/nuxt-vapor/**/*.{js,jsx,ts,tsx}',
-	'packages/sdk/solid/**/*.{js,jsx,ts,tsx}',
+	'packages/sdk/nuxt/**/*.{js,jsx,ts,tsx}',
 	'packages/sdk/svelte/**/*.{js,jsx,ts,tsx}',
 	'packages/sdk/vue/**/*.{js,jsx,ts,tsx}',
 ] as const;
@@ -124,7 +123,6 @@ export default defineConfig({
 		'.repos/**',
 		'.tmp-bun/**',
 		'apps/shadcn-registry/vendor/**',
-		'packages/sdk/c15t/shims/**',
 		// Injected verbatim into WebView pages, where page script may have
 		// replaced built-ins first. They avoid iterators and destructuring on
 		// purpose; see "WebView consent" in packages/native-protocol/CONTRACT.md.
@@ -210,7 +208,7 @@ export default defineConfig({
 		},
 		{
 			// Angular's public name for the local-policy mode is `local()` from
-			// `@c15t/angular`. Core's deprecated `offline` alias must not reach
+			// `@inth/angular`. Core's deprecated `offline` alias must not reach
 			// Angular code, docs snippets, fixtures or benches.
 			files: [
 				'packages/sdk/angular/**/*.{ts,mts,js,mjs}',
@@ -227,15 +225,15 @@ export default defineConfig({
 						paths: [
 							{
 								importNames: ['offline'],
-								message: "Use local() from '@c15t/angular' instead of offline.",
-								name: '@c15t/core',
+								message: "Use local() from '@inth/angular' instead of offline.",
+								name: '@inth/sdk/engine',
 							},
 						],
 						patterns: [
 							{
-								group: ['@c15t/core/*'],
+								group: ['@inth/sdk/*'],
 								importNames: ['offline'],
-								message: "Use local() from '@c15t/angular' instead of offline.",
+								message: "Use local() from '@inth/angular' instead of offline.",
 							},
 						],
 					},

@@ -1,5 +1,5 @@
 /**
- * Google Additional Consent provider list, in the shape `@c15t/iab` reads
+ * Google Additional Consent provider list, in the shape `@inth/sdk/iab` reads
  * from `https://gvl.inth.app/additional-consent`.
  *
  * Google publishes the list as a CSV without CORS headers, so browsers

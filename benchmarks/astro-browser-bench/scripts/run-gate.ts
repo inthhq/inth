@@ -234,7 +234,7 @@ try {
 	await runConsentGate({
 		framework: 'astro',
 		notes: [
-			"@c15t/astro in manifest mode with a runtime manifest from the fixture backend; server-rendered banner and dialog, gated scripts from a clientEntrypoint, as CookieBench's Astro fixture. The control page is a build without the integration.",
+			"@inth/astro in manifest mode with a runtime manifest from the fixture backend; server-rendered banner and dialog, gated scripts from a clientEntrypoint, as CookieBench's Astro fixture. The control page is a build without the integration.",
 		],
 		packageName: '@c15t/astro-browser-bench',
 		paths: { control: '/gate/control', gate: '/gate' },

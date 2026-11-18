@@ -3,12 +3,12 @@
 import {
 	actionAppearanceFromTheme,
 	resolveConsentPresentation,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	ConsentPresentation,
 	PresentationAction,
 	ResolvedConsentPresentation,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 
 import { GlobalThemeContext } from '../context/theme-context';

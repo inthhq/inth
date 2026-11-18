@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
-import type { ScriptCallbackInfo } from '@c15t/core';
-import { createConsentKernel } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
+import type { ScriptCallbackInfo } from '@inth/sdk/engine';
+import { createConsentKernel } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultComFormsSdkMock } from './__tests__/default-com-sdk';

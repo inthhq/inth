@@ -3,12 +3,12 @@
  * `PreferenceItem` uses. The explicit stylesheet import below gives a Nuxt
  * app the collapse and header rules without loading the aggregated
  * stylesheet; the class map itself carries no CSS. The
- * `@c15t/ui/styles/primitives` variants map to a stylesheet that only ships
+ * `@inth/sdk/ui/styles/primitives` variants map to a stylesheet that only ships
  * in that aggregate.
  */
-import styles from '@c15t/ui/styles/components/preference-item';
+import styles from '@inth/sdk/ui/styles/components/preference-item';
 
-import '@c15t/ui/styles/components/preference-item.css';
+import '@inth/sdk/ui/styles/components/preference-item.css';
 
 const withClass = (base: string, options?: { class?: string }) =>
 	[base, options?.class].filter(Boolean).join(' ');

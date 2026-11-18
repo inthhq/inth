@@ -248,40 +248,40 @@ export default mergeConfig(
 					resolve: {
 						alias: [
 							{
-								find: '@c15t/core/runtime/provider',
+								find: '@inth/sdk-core/runtime/provider',
 								replacement: resolve(
 									__dirname,
 									'../core/src/runtime/provider.ts'
 								),
 							},
 							{
-								find: '@c15t/core/runtime/deferred-snapshot',
+								find: '@inth/sdk-core/runtime/deferred-snapshot',
 								replacement: resolve(
 									__dirname,
 									'../core/src/runtime/deferred-snapshot.ts'
 								),
 							},
 							{
-								find: '@c15t/core/runtime/on-demand',
+								find: '@inth/sdk-core/runtime/on-demand',
 								replacement: resolve(
 									__dirname,
 									'../core/src/runtime/on-demand.ts'
 								),
 							},
 							{
-								find: '@c15t/core/runtime',
+								find: '@inth/sdk-core/runtime',
 								replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 							},
 							{
-								find: /^@c15t\/core$/u,
+								find: /^@inth\/sdk-core$/u,
 								replacement: resolve(__dirname, '../core/src/index.ts'),
 							},
 							{
-								find: '@c15t/iab/headless',
+								find: '@inth/sdk-iab/headless',
 								replacement: resolve(__dirname, '../iab/src/headless.ts'),
 							},
 							{
-								find: /^@c15t\/iab$/u,
+								find: /^@inth\/sdk-iab$/u,
 								replacement: resolve(__dirname, '../iab/src/index.ts'),
 							},
 						],

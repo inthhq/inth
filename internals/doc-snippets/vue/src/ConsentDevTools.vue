@@ -5,7 +5,7 @@ import { defineAsyncComponent } from 'vue';
 // Development builds only: the dynamic import keeps DevTools out of
 // production bundles.
 const DevTools = import.meta.env.DEV
-	? defineAsyncComponent(() => import('c15t/vue/devtools'))
+	? defineAsyncComponent(() => import('@inth/vue/devtools'))
 	: null;
 </script>
 

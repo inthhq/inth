@@ -1,5 +1,5 @@
 import { controlledToggle, toggleOnOff } from '@c15t/conformance/play/switch';
-import { Switch } from '@c15t/react/primitives';
+import { Switch } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 

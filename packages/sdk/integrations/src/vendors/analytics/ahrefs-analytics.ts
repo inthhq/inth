@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -79,7 +79,7 @@ export interface AhrefsAnalyticsOptions {
  *
  * @example
  * ```ts
- * import { ahrefsAnalytics } from '@c15t/integrations/ahrefs-analytics';
+ * import { ahrefsAnalytics } from '@inth/integrations/ahrefs-analytics';
  *
  * ahrefsAnalytics({ key: 'YOUR_PROJECT_KEY' });
  * ```

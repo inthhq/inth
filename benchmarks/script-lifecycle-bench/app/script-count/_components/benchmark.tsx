@@ -1,10 +1,10 @@
 'use client';
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import { ConsentDraftProvider } from '@c15t/react/draft';
-import { useSaveConsents } from '@c15t/react/hooks';
-import { useScriptLoader } from '@c15t/react/module-hooks/script-loader';
-import { ConsentProvider } from '@c15t/react/provider';
+import { ConsentDraftProvider } from '@inth/react/draft';
+import { useSaveConsents } from '@inth/react/hooks';
+import { useScriptLoader } from '@inth/react/module-hooks/script-loader';
+import { ConsentProvider } from '@inth/react/provider';
 import { useEffect, useMemo, useState } from 'react';
 
 import { createInitialBenchState, listDomIds, makeScripts } from './fixtures';
@@ -91,7 +91,7 @@ export const ScriptCountBenchmark = ({ count }: { count: number }) => (
 	>
 		<ConsentDraftProvider>
 			<main style={{ fontFamily: 'system-ui', padding: '2rem' }}>
-				<h1>@c15t/react script count benchmark</h1>
+				<h1>@inth/react script count benchmark</h1>
 				<p>Scripts: {count}</p>
 				<ScriptCountProbe count={count} />
 			</main>

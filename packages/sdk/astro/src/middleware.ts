@@ -1,5 +1,5 @@
 /**
- * Astro middleware entrypoint for `@c15t/astro`.
+ * Astro middleware entrypoint for `@inth/astro`.
  *
  * The integration registers this with `order: 'pre'` so every route — pages,
  * endpoints and server islands alike — sees `Astro.locals.c15t` already
@@ -36,7 +36,7 @@ export default onRequest;
  * @example
  * ```ts
  * // src/middleware.ts
- * import { consentMiddleware } from '@c15t/astro/middleware';
+ * import { consentMiddleware } from '@inth/astro/middleware';
  *
  * export const onRequest = consentMiddleware({
  *   experimentArm: (context) =>

@@ -51,7 +51,7 @@ HTML page has no convention either. A site that has one opts in with `null`.
 
 In Nuxt, set `colorScheme: null` under the `c15t` key in `nuxt.config.ts` or
 in `app/app.config.ts`. Nuxt drops a `null` in inline module options, such as
-`modules: [['@c15t/vue', { colorScheme: null }]]`, before the module reads it,
+`modules: [['@inth/vue', { colorScheme: null }]]`, before the module reads it,
 so c15t would copy your `dark` class as if `colorScheme` were unset.
 
 ## Follow your site's theme switch
@@ -93,13 +93,13 @@ Where the theme goes depends on the framework:
 
 - **React, Next.js, TanStack Start.** Pass it to `ConsentTheme`. To write the
   CSS outside a component, call `generateThemeCSS(theme, colorScheme)` from
-  `c15t/react/utils`, or `@c15t/react/utils` if you installed the scoped
+  `@inth/react/utils`, or `@inth/react/utils` if you installed the scoped
   package. It writes the same CSS as `ConsentTheme`.
 - **Vue, Nuxt.** Pass it as `theme` in the plugin or module options. It goes
   into the `<style id="c15t-css-vars">` element with `tokens`.
 - **Astro.** Pass it as `theme` in the integration options.
 - **SvelteKit, Svelte.** Pass it to `generateThemeCSS(theme, colorScheme)` from
-  `@c15t/ui/theme` on the server.
+  `@inth/svelte` on the server.
 - **HTML, JavaScript.** Pass it as `ui.theme`.
 
 This Nuxt example follows the system setting and uses its own dark primary

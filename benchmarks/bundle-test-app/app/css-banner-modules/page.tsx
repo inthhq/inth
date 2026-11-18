@@ -1,8 +1,8 @@
 'use client';
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import { ConsentBanner } from '@c15t/react/consent-banner';
-import { ConsentProvider } from '@c15t/react/provider';
+import { ConsentBanner } from '@inth/react/consent-banner';
+import { ConsentProvider } from '@inth/react/provider';
 
 const CssBannerModulesPage = () => (
 	<ConsentProvider

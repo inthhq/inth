@@ -10,7 +10,7 @@
  * tag's `data-country` and `data-region`.
  */
 
-import { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
+import { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import { autoInit, installGlobal } from '../global-base';
 import { createTestingGlobal } from '../testing-global';

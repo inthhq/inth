@@ -10,7 +10,7 @@
  * server's own fetch, cookies included, at a host of the sender's choosing.
  */
 
-import { parseForwarded } from '@c15t/schema/types';
+import { parseForwarded } from '@inth/sdk-schema/types';
 
 /** Request headers as a Web `Headers` object or a Node header record. */
 export type RequestHeaderSource =
@@ -251,7 +251,7 @@ const trimTrailingSlash = function trimTrailingSlash(value: string): string {
  * @returns The absolute URL, or `null` when it cannot be resolved.
  * @example
  * ```ts
- * import { resolveRequestProjectUrl } from '@c15t/core/server';
+ * import { resolveRequestProjectUrl } from '@inth/sdk-core/server';
  *
  * resolveRequestProjectUrl('/api/c15t', { requestUrl: request.url });
  * // 'https://app.example.com/api/c15t'

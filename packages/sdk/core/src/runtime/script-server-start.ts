@@ -13,7 +13,7 @@
  * call these for HTML that is cached or prerendered: that HTML carries no
  * one visitor's consent.
  */
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
 import type { Script } from '../libs/script-loader/types';
 import {
@@ -342,7 +342,7 @@ export const PAGE_RENDER_KEY = '__c15tRender';
 
 /**
  * The ids of the renders a deferred root ended (`endPageRender` in
- * `@c15t/react`), newest last, at most {@link ENDED_RENDERS_LIMIT}. Kept
+ * `@inth/react`), newest last, at most {@link ENDED_RENDERS_LIMIT}. Kept
  * apart from {@link PAGE_RENDER_KEY}, which a newer render replaces, so a
  * render's start script that streams in late still finds it ended.
  *

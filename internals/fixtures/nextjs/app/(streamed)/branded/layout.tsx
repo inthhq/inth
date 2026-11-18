@@ -1,4 +1,4 @@
-import { ConsentTheme } from 'c15t/react';
+import { ConsentTheme } from '@inth/react';
 import type { ReactNode } from 'react';
 
 import { brandTheme } from '@/lib/theme';

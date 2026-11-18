@@ -7,7 +7,11 @@
  * at gate time. It never looks for a kernel on `window` and never imports
  * anything outside the packages' `exports` maps.
  */
-import type { AllConsentNames, ConsentKernel, ConsentSnapshot } from 'c15t';
+import type {
+	AllConsentNames,
+	ConsentKernel,
+	ConsentSnapshot,
+} from '@inth/sdk/engine';
 
 /** What the observer keeps from one snapshot. */
 export interface ObservedConsent {

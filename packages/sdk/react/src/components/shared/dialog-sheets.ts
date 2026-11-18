@@ -1,4 +1,4 @@
-import * as dialog from '@c15t/ui/styles/sheets/dialog';
+import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
 
 import { BANNER_SHEETS } from './first-paint-sheets';
 import type { SurfaceStyleSheet } from './surface-styles';

@@ -1,5 +1,5 @@
 /**
- * `@c15t/vue/testing` — render the banner and the consent flow in tests
+ * `@inth/vue/testing` — render the banner and the consent flow in tests
  * with no backend.
  *
  * Pass `testing()` as the plugin's `mode`, or as `c15t.mode` in
@@ -21,8 +21,8 @@
  *
  * @example
  * ```ts
- * import { c15tVue } from 'c15t/vue/vue-plugin';
- * import { testing } from 'c15t/vue/testing';
+ * import { c15tVue } from '@inth/vue/vue-plugin';
+ * import { testing } from '@inth/vue/testing';
  *
  * app.use(c15tVue, {
  *   overrides: { country: 'DE' },
@@ -32,10 +32,10 @@
  *
  * @packageDocumentation
  */
-import { createTestingMode } from '@c15t/core/testing';
-import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+import { createTestingMode } from '@inth/sdk/testing';
+import type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 
-export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+export type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 
 /**
  * A `mode` for tests that resolves `policy`, or the recommended policy
@@ -49,5 +49,5 @@ export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
 export const testing = function testing(
 	options: TestingModeOptions = {}
 ): ConsentTesting {
-	return createTestingMode('@c15t/vue/testing', options);
+	return createTestingMode('@inth/vue/testing', options);
 };

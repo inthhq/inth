@@ -17,17 +17,17 @@ Set `gpp` under the `c15t` key in `nuxt.config.ts`:
 ```ts title="nuxt.config.ts"
 export default defineNuxtConfig({
 	c15t: {
-		// Loads @c15t/iab/gpp and installs `__gpp` once the app mounts.
+		// Loads @inth/sdk/iab/gpp and installs `__gpp` once the app mounts.
 		gpp: true,
 	},
-	modules: ['c15t/vue'],
+	modules: ['@inth/nuxt'],
 });
 ```
 
 The module installs `__gpp` in the browser after the app mounts. The server
-HTML does not include it. The browser loads `@c15t/iab/gpp` as its own chunk,
+HTML does not include it. The browser loads `@inth/sdk/iab/gpp` as its own chunk,
 and only when `gpp` is set. The Vue integration already depends on
-`@c15t/iab`; nothing else to install. Every GPP option is plain data, so `gpp` also works under
+`@inth/sdk/iab`; nothing else to install. Every GPP option is plain data, so `gpp` also works under
 `c15t` in `app.config.ts`.
 
 Replace `https://your-project.inth.app` with your project's backend URL. The

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import type { TCData, TCDataOutsideTCF } from 'c15t';
+import type { TCData, TCDataOutsideTCF } from '@inth/nextjs';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';

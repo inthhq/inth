@@ -3,7 +3,7 @@
  * root must find that promise again so the provider consumes it
  * instead of issuing a second request.
  */
-import { primePrefetchedInitialData } from '@c15t/core';
+import { primePrefetchedInitialData } from '@inth/sdk/engine';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {

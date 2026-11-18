@@ -18,7 +18,7 @@ const rawSources = import.meta.glob(
 		'!../**/__tests__/**',
 		'!../**/*.test.*',
 		'!../consent-theme.tsx',
-		// The public `@c15t/react/utils` helpers, for server or build-time use.
+		// The public `@inth/react/utils` helpers, for server or build-time use.
 		'!../utils/theme-utils.ts',
 	],
 	{ eager: true, import: 'default', query: '?raw' }
@@ -29,7 +29,7 @@ describe('ConsentProvider theme tokens', () => {
 		expect(Object.keys(rawSources)).toContain('../provider.tsx');
 		const offending = Object.entries(rawSources)
 			.filter(([, text]) =>
-				/^import\s+(?!type\b)\{[^}]*\b(?:generateThemeCSS|defaultTheme|themeToVars)\b[^}]*\}\s*from\s+'@c15t\/ui\/theme';/mu.test(
+				/^import\s+(?!type\b)\{[^}]*\b(?:generateThemeCSS|defaultTheme|themeToVars)\b[^}]*\}\s*from\s+'@inth\/sdk\/ui\/theme';/mu.test(
 					text
 				)
 			)

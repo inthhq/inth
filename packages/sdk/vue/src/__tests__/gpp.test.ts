@@ -1,8 +1,8 @@
 /**
  * The `gpp` option mounts the IAB GPP CMP API (`window.__gpp`) from
- * `@c15t/iab/gpp` when the app mounts, and removes it on unmount.
+ * `@inth/sdk/iab/gpp` when the app mounts, and removes it on unmount.
  */
-import { createConsentRuntime } from '@c15t/core/runtime';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
@@ -34,7 +34,7 @@ const cleanups: (() => void)[] = [];
 
 beforeAll(async () => {
 	// Load the chunk once so negative cases can't pass on a slow import.
-	await import('@c15t/iab/gpp');
+	await import('@inth/sdk/iab/gpp');
 }, 30_000);
 
 afterEach(() => {

@@ -7,7 +7,7 @@
  * @internal
  */
 
-import type { ConsentExperiment, ConsentSnapshot } from '@c15t/core';
+import type { ConsentExperiment, ConsentSnapshot } from '@inth/sdk/engine';
 
 /** Attribute on the `<script type="application/json">` element. @internal */
 export const CONSENT_BOOT_ATTRIBUTE = 'data-c15t-boot';

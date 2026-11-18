@@ -1,6 +1,6 @@
-import { createConsentKernel, has } from '@c15t/core';
-import type { Script } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
+import { createConsentKernel, has } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 
 import { bench, runMicroBenchmarkSuite } from './wrapper';
 

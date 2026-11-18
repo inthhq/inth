@@ -7,11 +7,8 @@ import {
 	GENERATED_MODULE_IDS,
 	readBuildEnv,
 	writeManifestCacheModule,
-} from '@c15t/core/build';
-import type {
-	ManifestBuildOptions,
-	ManifestCacheFiles,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
+import type { ManifestBuildOptions, ManifestCacheFiles } from '@inth/sdk/build';
 import type { NextConfig } from 'next';
 import {
 	PHASE_DEVELOPMENT_SERVER,
@@ -23,7 +20,7 @@ import type { ConsentConfig } from './config';
 export type {
 	ManifestBuildErrorMode,
 	ManifestBuildOptions,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
 
 /** Variable the build reads the backend URL from, like `defineConsentConfig`. */
 const BACKEND_URL_ENV = 'NEXT_PUBLIC_C15T_BACKEND_URL';
@@ -44,17 +41,17 @@ export type ConsentNextConfig =
 
 /**
  * The specifiers aliased to the written snapshot: the one the server
- * helpers import, and `@c15t/core/generated` (with its `c15t/generated`
- * re-export) for app code. The packages' own modules there export
- * `undefined`.
+ * helpers import, and `@inth/nextjs/generated` (or `@inth/sdk/generated`)
+ * for app code. The
+ * packages' own modules there export `undefined`.
  */
 const GENERATED_SPECIFIERS = [
-	'@c15t/nextjs/generated-manifest',
+	'@inth/nextjs/generated-manifest',
 	...GENERATED_MODULE_IDS,
 ];
 
 /** The specifier the package imports the app's `c15t.config.ts` through. */
-const USER_CONFIG_SPECIFIER = '@c15t/nextjs/user-config';
+const USER_CONFIG_SPECIFIER = '@inth/nextjs/user-config';
 
 /** Config files looked up at the project root, in this order. */
 const USER_CONFIG_FILES = [
@@ -70,7 +67,7 @@ const USER_CONFIG_FILES = [
  * Pages Router leaves dependencies external on the server unless they are
  * transpiled.
  */
-const GENERATED_IMPORTERS = ['c15t', '@c15t/core', '@c15t/nextjs'];
+const GENERATED_IMPORTERS = ['@inth/sdk', '@inth/nextjs'];
 
 type WebpackConfigFunction = NonNullable<NextConfig['webpack']>;
 
@@ -78,7 +75,7 @@ type WebpackConfigFunction = NonNullable<NextConfig['webpack']>;
  * The sheets server-rendered surfaces put in the HTML: `tokens`, `button`,
  * `banner`, `trigger` and `consent-gate` (the banner, the IAB banner, the
  * trigger and the ConsentGate), and `first-paint`, which earlier
- * `@c15t/react` releases rendered for the IAB banner. A server-rendered page already
+ * `@inth/react` releases rendered for the IAB banner. A server-rendered page already
  * holds their text in `<style>` elements, so browser bundles get each
  * sheet's `-deferred` module, with the same `id` and a `load()` that fetches
  * the text only when a surface renders first in the browser.
@@ -91,10 +88,10 @@ const SERVER_RENDERED_SHEETS = [
 	'trigger',
 	'consent-gate',
 ] as const;
-const SHEETS_PREFIX = '@c15t/ui/styles/sheets/';
+const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
 
 interface SheetFiles {
-	/** The sheet's specifier, as `@c15t/react` imports it. */
+	/** The sheet's specifier, as `@inth/react` imports it. */
 	specifier: string;
 	eager: string;
 	deferred: string;
@@ -102,16 +99,16 @@ interface SheetFiles {
 
 /**
  * Each sheet module and its deferred twin as files, resolved the way
- * `@c15t/react` resolves them. A sheet the installed `@c15t/ui` lacks, or
+ * `@inth/react` resolves them. A sheet the installed `@inth/sdk/ui` lacks, or
  * has no deferred twin for, is left out.
  */
 const resolveSheetFiles = function resolveSheetFiles(): SheetFiles[] {
 	let fromReact: ReturnType<typeof createRequire>;
 	try {
-		// From this package: an isolated install links `@c15t/react` here and
-		// `@c15t/ui` beside `@c15t/react`, not at the project root.
+		// From this package: an isolated install links `@inth/react` here and
+		// `@inth/sdk/ui` beside `@inth/react`, not at the project root.
 		fromReact = createRequire(
-			createRequire(import.meta.url).resolve('@c15t/react')
+			createRequire(import.meta.url).resolve('@inth/react')
 		);
 	} catch {
 		return [];
@@ -213,7 +210,7 @@ const loadUserConfig = async function loadUserConfig(
 		// would too, so stop here.
 		const rejected = parts.find(
 			(part) =>
-				part instanceof Error && part.message.startsWith('@c15t/nextjs: ')
+				part instanceof Error && part.message.startsWith('@inth/nextjs: ')
 		);
 		if (rejected) {
 			throw rejected;
@@ -222,7 +219,7 @@ const loadUserConfig = async function loadUserConfig(
 			.map((part) => (part instanceof Error ? part.message : String(part)))
 			.join(': ');
 		console.warn(
-			`@c15t/nextjs/build: could not read ${relative(root, file)} (${reason}), so the build fetches the consent manifest as for manifest().`
+			`@inth/nextjs/build: could not read ${relative(root, file)} (${reason}), so the build fetches the consent manifest as for manifest().`
 		);
 		return undefined;
 	}
@@ -385,13 +382,13 @@ const withConsentAliases = function withConsentAliases(
  * The manifest is written to `node_modules/.cache/c15t/manifest.js` and
  * handed to the server helpers. `resolveConsent` and the consent route handlers read
  * it by default. Server code that needs it reads `snapshot` from
- * `@c15t/core/generated` (or `c15t/generated`). Nothing is written into the
+ * `@inth/sdk/generated` (or `@inth/sdk/generated`). Nothing is written into the
  * app's source tree. Production server startup never fetches or rewrites the
  * snapshot.
  *
  * Only server bundles get the snapshot. In a browser bundle the alias points
  * at a module that imports `server-only`, so a client component that
- * imports `@c15t/core/generated` fails the build instead of shipping it.
+ * imports `@inth/sdk/generated` fails the build instead of shipping it.
  *
  * The fetch waits at most 10 seconds. When it fails, `next build` and
  * `next dev` log a warning and write a module whose `snapshot` is
@@ -407,7 +404,7 @@ const withConsentAliases = function withConsentAliases(
  * `projectUrl`.
  *
  * The config and the snapshot reach the helpers through bundler aliases.
- * The wrapper adds `c15t`, `@c15t/core` and `@c15t/nextjs` to
+ * The wrapper adds `@inth/sdk` and `@inth/nextjs` to
  * `transpilePackages`, so Pages Router server bundles apply them too. A
  * package listed in `serverExternalPackages` stays external and does not
  * see the aliases: it reads no config and fetches the manifest at runtime.
@@ -429,7 +426,7 @@ const withConsentAliases = function withConsentAliases(
  * rejects `c15t.config.ts`.
  * @example
  * ```ts
- * import { withConsentManifest } from 'c15t/next/build';
+ * import { withConsentManifest } from '@inth/nextjs/build';
  *
  * // Reads NEXT_PUBLIC_C15T_BACKEND_URL, like defineConsentConfig.
  * export default withConsentManifest({});
@@ -437,7 +434,7 @@ const withConsentAliases = function withConsentAliases(
  *
  * ```ts
  * // c15t.config.ts
- * import { defineConsentConfig } from 'c15t/next';
+ * import { defineConsentConfig } from '@inth/nextjs';
  *
  * export default defineConsentConfig({});
  * ```
@@ -484,8 +481,8 @@ export const withConsentManifest =
 			{
 				command: phase === PHASE_PRODUCTION_BUILD ? 'build' : 'dev',
 				envNames: [BACKEND_URL_ENV, INTH_URL_ENV],
-				importSource: 'c15t/next/static',
-				label: '@c15t/nextjs/build',
+				importSource: '@inth/nextjs/static',
+				label: '@inth/nextjs/build',
 				skipReason:
 					resolved.output === 'export'
 						? "a static export (`output: 'export'`) has no server to use it"

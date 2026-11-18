@@ -1,9 +1,9 @@
-import type { InitResponse } from '@c15t/core';
-import type { PolicyRule } from '@c15t/schema/types';
+import type { InitResponse } from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';

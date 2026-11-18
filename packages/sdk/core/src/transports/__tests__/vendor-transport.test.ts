@@ -1,4 +1,4 @@
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 /**
  * Vendor consent across the transport boundary: the save body carries the
  * grant map, a subject read maps grants back to denials, and init output

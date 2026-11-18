@@ -8,7 +8,7 @@ group: frameworks
 
 Two module options in `nuxt.config.ts` decide where each visitor's policy
 comes from. `mode` is `manifest()`, `hosted()` or `testing()`, imported from
-`c15t/vue`. `routePrefix` is where the module adds its consent route.
+`@inth/nuxt`. `routePrefix` is where the module adds its consent route.
 
 | Your deployment | `c15t` options | Banner in the first HTML |
 | --- | --- | --- |
@@ -20,9 +20,9 @@ comes from. `mode` is `manifest()`, `hosted()` or `testing()`, imported from
 
 `mode` and `routePrefix` are read from `nuxt.config.ts` only. They decide
 what the build bundles and which routes the server has, so `app.config.ts`
-cannot change them. Import the modes from `c15t/vue`, the module entry: they
+cannot change them. Import the modes from `@inth/nuxt`, the module entry: they
 return plain data that reaches the browser through runtime config. Passing a
-transport, such as `manifest` from `c15t/vue/vue-plugin`, throws during setup.
+transport, such as `manifest` from `@inth/vue/vue-plugin`, throws during setup.
 
 The module has one configuration for the whole app. It decides per route
 whether the HTML belongs to one visitor or to everyone.
@@ -49,7 +49,7 @@ adopts those tags instead of inserting its own. Nothing starts from the HTML
 while the policy asks the visitor to choose, not even `alwaysLoad` entries, and
 a prerendered route starts nothing.
 
-The vendor helpers from `@c15t/integrations` start this way, except Cloudflare
+The vendor helpers from `@inth/integrations` start this way, except Cloudflare
 Zaraz and Sentry. Those two helpers, and `scripts` entries you write yourself,
 start after hydration.
 
@@ -137,11 +137,11 @@ no snapshot:
 {/* example: fragment */}
 
 ```ts title="nuxt.config.ts"
-import { hosted } from 'c15t/vue';
+import { hosted } from '@inth/nuxt';
 
 export default defineNuxtConfig({
 	c15t: { mode: hosted() },
-	modules: ['c15t/vue'],
+	modules: ['@inth/nuxt'],
 });
 ```
 
@@ -165,11 +165,11 @@ refreshes it in the background, so policy edits apply without a rebuild:
 {/* example: fragment */}
 
 ```ts title="nuxt.config.ts"
-import { manifest } from 'c15t/vue';
+import { manifest } from '@inth/nuxt';
 
 export default defineNuxtConfig({
 	c15t: { mode: manifest({ source: 'runtime' }) },
-	modules: ['c15t/vue'],
+	modules: ['@inth/nuxt'],
 });
 ```
 

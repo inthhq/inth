@@ -3,12 +3,12 @@
  * Handles token-to-CSS variable conversion and dark mode overrides.
  */
 
-import type { ThemeCSSVariables } from '@c15t/ui/theme';
+import type { ThemeCSSVariables } from '@inth/sdk/ui/theme';
 import {
 	defaultTheme as baseDefaultTheme,
 	generateThemeCSS as baseGenerateThemeCSS,
 	themeToVars as baseThemeToVars,
-} from '@c15t/ui/theme';
+} from '@inth/sdk/ui/theme';
 
 import type { Theme } from '../types/theme/style-types';
 
@@ -29,7 +29,7 @@ export const themeToVars = function themeToVars(
 
 /**
  * Generates a CSS string for the theme variables, the same CSS as
- * `generateThemeCSS` from `@c15t/ui/theme`.
+ * `generateThemeCSS` from `@inth/sdk/ui/theme`.
  *
  * @param theme - Theme tokens to serialize.
  * @param colorScheme - `'dark'` makes the dark tokens the default,
@@ -39,7 +39,7 @@ export const themeToVars = function themeToVars(
  * @returns Theme CSS for a `<style>` element or a stylesheet.
  * @example
  * ```ts
- * import { generateThemeCSS } from '@c15t/react/utils';
+ * import { generateThemeCSS } from '@inth/react/utils';
  *
  * const css = generateThemeCSS({ dark: { primary: '#7fd1a8' } }, 'system');
  * ```

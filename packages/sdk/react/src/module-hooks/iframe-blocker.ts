@@ -5,22 +5,22 @@ import {
 	getEffectiveGateState,
 	has,
 	isVendorDenied,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
 	ConsentKernel,
 	ConsentSnapshot,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	IframeBlockerHandle,
 	IframeBlockerOptions,
-} from '@c15t/core/modules/iframe-blocker';
+} from '@inth/sdk/modules/iframe-blocker';
 import { useEffect, useRef, useState } from 'react';
 
 import { useRequiredKernel } from './shared';
 
 const loadIframeBlockerModule = () =>
-	import('@c15t/core/modules/iframe-blocker');
+	import('@inth/sdk/modules/iframe-blocker');
 
 export interface UseIframeBlockerOptions {
 	disableAutomaticBlocking?: boolean;

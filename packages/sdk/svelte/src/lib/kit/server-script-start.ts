@@ -89,7 +89,7 @@ export const loadServerScriptStart =
 		loading ??= (async () => {
 			try {
 				const { serverScriptStart } =
-					await import('@c15t/core/runtime/script-server-start');
+					await import('@inth/sdk/runtime/script-server-start');
 				registerPageStart(serverScriptStart);
 			} catch {
 				loading = undefined;

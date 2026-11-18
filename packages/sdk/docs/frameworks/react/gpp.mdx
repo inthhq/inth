@@ -1,12 +1,12 @@
 ---
 title: IAB GPP
-description: Add the IAB Global Privacy Platform API (__gpp) to a React app with ConsentGPP from @c15t/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Add the IAB Global Privacy Platform API (__gpp) to a React app with ConsentGPP from @inth/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
 group: frameworks
 ---
 
 ## What GPP does
 
-`ConsentGPP` from `@c15t/react/gpp` installs `window.__gpp`, the GPP 1.1 CMP
+`ConsentGPP` from `@inth/react/gpp` installs `window.__gpp`, the GPP 1.1 CMP
 API, and keeps its GPP string in step with the visitor's choices. Prebid.js,
 Google Ad Manager and other ad tech read US privacy signals from it.
 
@@ -17,7 +17,7 @@ Render `ConsentGPP` inside `ConsentProvider`:
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx"
-import { ConsentGPP } from '@c15t/react/gpp';
+import { ConsentGPP } from '@inth/react/gpp';
 
 <ConsentProvider options={{ mode, scripts }}>
 	<ConsentGPP />
@@ -27,9 +27,8 @@ import { ConsentGPP } from '@c15t/react/gpp';
 
 `ConsentGPP` renders nothing. It installs `__gpp` after it mounts and
 removes it when it unmounts. It lives in its own entry, like
-`@c15t/react/iab`, so apps that do not import it bundle none of the GPP
-code. `@c15t/react` already depends on `@c15t/iab`; with the `c15t`
-package, import from `c15t/react/gpp`.
+`@inth/react/iab`, so apps that do not import it bundle none of the GPP
+code. `@inth/react` already depends on the IAB code; nothing else to install.
 
 The props are the GPP options listed below, for example
 `<ConsentGPP usFallback="none" />`. It works the same with a runtime you

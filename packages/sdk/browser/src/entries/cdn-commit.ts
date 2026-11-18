@@ -8,7 +8,7 @@
 import {
 	planEarlyCommit,
 	storeEarlyCommit,
-} from '@c15t/core/surface-actions/early-commit';
+} from '@inth/sdk-core/surface-actions/early-commit';
 
 import { readBoot } from '../init/boot';
 import { version } from '../version';

@@ -2,7 +2,7 @@
  * A choice in progress: what a custom preference screen shows and stages
  * before the subject presses Save.
  *
- * It mirrors the draft `@c15t/react` keeps for its preference dialog. Edits stay
+ * It mirrors the draft `@inth/react` keeps for its preference dialog. Edits stay
  * in JavaScript; nothing reaches the native core until `save()`, which records
  * every displayed category in one commit. The draft follows the native record
  * while it is clean, and turns stale when the policy changes under an unsaved

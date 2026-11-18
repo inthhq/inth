@@ -6,10 +6,10 @@
  * production `c15t` script loader and runs the probe checks defined in
  * `../vendors`.
  */
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentState } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import type { ScriptLoaderHandle } from '@c15t/core/modules/script-loader';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentState } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 
 import type {
 	LiveProbeCheckResult,

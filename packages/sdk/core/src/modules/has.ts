@@ -376,7 +376,7 @@ export const evaluateConsent = function evaluateConsent<
  * @returns `true` when the vendor is declared and may load at `now`.
  * @example
  * ```ts
- * import { isVendorAllowed } from 'c15t';
+ * import { isVendorAllowed } from '@inth/sdk/engine';
  *
  * if (isVendorAllowed(kernel.getSnapshot(), 'youtube')) {
  *   mountVideo();

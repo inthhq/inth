@@ -53,8 +53,7 @@ export const generateJavaScriptBoilerplate = (
 	const mode = options.mode === 'offline' ? 'offline' : 'manifest';
 	return {
 		dependencies: [
-			'@c15t/browser',
-			'c15t',
+			'@inth/sdk',
 			...integrationDependencies(options),
 		],
 		files: {
@@ -65,7 +64,7 @@ export const generateJavaScriptBoilerplate = (
 				'\t\t<script\n\t\t\ttype="module"\n\t\t\tsrc="/src/main.ts"\n\t\t></script>\n'
 			),
 			'src/main.ts': `${sortImports([
-				`import { init, ${mode} } from '@c15t/browser';`,
+				`import { init, ${mode} } from '@inth/sdk';`,
 				...scriptImports(options.scripts),
 			])}
 
@@ -73,7 +72,7 @@ init({
 	mode: ${mode}(),
 ${scriptsProperty(options.scripts, '\t')}});
 `,
-			'vite.config.ts': `import { consentManifest } from 'c15t/build';
+			'vite.config.ts': `import { consentManifest } from '@inth/sdk/build';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

@@ -1,11 +1,11 @@
-import { clientMode } from '@c15t/core/runtime/client-mode';
-import { clearManifestCache } from '@c15t/core/server';
+import { clientMode } from '@inth/sdk/runtime/client-mode';
+import type { ConsentManifest, InitOutput } from '@inth/sdk/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
-} from '@c15t/core/transports/manifest-cache';
-import type { ConsentManifest, InitOutput } from '@c15t/schema/types';
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+} from '@inth/sdk/transports/manifest-cache';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createVueConsentKernelContext } from '../runtime/kernel';
@@ -227,9 +227,9 @@ describe('plain Vue modes', () => {
 	test('manifest() and the hosted backend name the plugin when no backend URL is set', () => {
 		// No `consentManifest()` plugin in this test, so the build supplied
 		// no backend URL.
-		expect(() => manifest()).toThrow('consentManifest() from c15t/vue/vite');
+		expect(() => manifest()).toThrow('consentManifest() from @inth/vue/vite');
 		expect(() => selectedMode({})).toThrow(
-			'c15t: `projectUrl` is required. Add consentManifest() from c15t/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.'
+			'c15t: `projectUrl` is required. Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.'
 		);
 	});
 
@@ -355,7 +355,7 @@ describe('Nuxt modes', () => {
 			expect(fetchMock).not.toHaveBeenCalled();
 			expect((window as WindowWithC15t).c15t).toMatchObject({
 				mode: 'manifest',
-				pkg: '@c15t/vue',
+				pkg: '@inth/vue',
 			});
 		} finally {
 			context.dispose();

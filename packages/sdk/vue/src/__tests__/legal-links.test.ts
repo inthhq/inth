@@ -1,4 +1,4 @@
-import legalLinkStyles from '@c15t/ui/styles/components/legal-links';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { mount } from '@vue/test-utils';
 import { describe, expect, test } from 'vitest';
 import { ref } from 'vue';

@@ -1,7 +1,7 @@
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { resolveOptions } from '../integration';

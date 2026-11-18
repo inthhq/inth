@@ -1,22 +1,22 @@
 // oxlint-disable no-use-before-define -- TanStack Router's file-route shape: the component reads its own route's loader data.
 // #region docs:same-origin-root title="src/routes/__root.tsx"
 import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDialogLink,
+	ConsentRoot,
+} from '@inth/tanstack-start';
+import {
+	consentLoaderOptions,
+	createConsentStateHandler,
+} from '@inth/tanstack-start/server';
+import {
 	createRootRoute,
 	HeadContent,
 	Outlet,
 	Scripts,
 } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentDialogLink,
-	ConsentRoot,
-} from 'c15t/tanstack-start';
-import {
-	consentLoaderOptions,
-	createConsentStateHandler,
-} from 'c15t/tanstack-start/server';
 
 import { scripts } from '../scripts';
 

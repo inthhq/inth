@@ -1,7 +1,7 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Switch } from '@c15t/angular/primitives';
+import { Switch } from '@inth/angular/primitives';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { SwitchHarness } from './switch-harness';

@@ -1,5 +1,5 @@
-import type { ConsentKernel } from '@c15t/core';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';

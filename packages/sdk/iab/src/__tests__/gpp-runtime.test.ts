@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { createConsentRuntime } from '@c15t/core/runtime';
-import { testing } from '@c15t/core/testing';
+import { createConsentRuntime } from '@inth/sdk-core/runtime';
+import { testing } from '@inth/sdk-core/testing';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import type { GPPPingData } from '../gpp';
@@ -17,7 +17,7 @@ afterEach(() => {
 	delete window.__gpp;
 });
 
-test('the runtime gpp option mounts __gpp from @c15t/iab/gpp and removes it on dispose', async () => {
+test('the runtime gpp option mounts __gpp from @inth/sdk/iab/gpp and removes it on dispose', async () => {
 	const runtime = createConsentRuntime({
 		gpp: { usFallback: 'none' },
 		loadGPP: () => import('../gpp'),

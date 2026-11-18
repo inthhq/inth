@@ -1,4 +1,4 @@
-import type { EventDispatcher } from '@c15t/core/events';
+import type { EventDispatcher } from '@inth/sdk/events';
 import { render } from '@testing-library/svelte';
 import { expect, test, vi } from 'vitest';
 

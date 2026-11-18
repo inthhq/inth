@@ -7,9 +7,9 @@
  * @packageDocumentation
  * @internal
  */
-import type { ConsentSnapshot, KernelActiveUI } from '@c15t/core';
-import type { ConsentActiveUI } from '@c15t/schema/config';
-import type { InitOutput } from '@c15t/schema/types';
+import type { ConsentSnapshot, KernelActiveUI } from '@inth/sdk/engine';
+import type { ConsentActiveUI } from '@inth/sdk/schema/config';
+import type { InitOutput } from '@inth/sdk/schema/types';
 
 /** Translation, location and branding data for Vue components. Policy lives in the kernel snapshot. */
 export type VueConsentDisplayData = Pick<

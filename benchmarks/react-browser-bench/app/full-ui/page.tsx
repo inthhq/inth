@@ -1,6 +1,6 @@
 'use client';
 
-import { useSetActiveUI } from '@c15t/react';
+import { useSetActiveUI } from '@inth/react';
 
 import { ReactBenchmarkProvider } from '../_bench/provider';
 

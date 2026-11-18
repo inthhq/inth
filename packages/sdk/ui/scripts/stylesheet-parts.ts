@@ -82,7 +82,7 @@ export const IAB_DIALOG_COMPONENTS = ['iab-panel'] as const;
  * banner's padding and borders. Every layered stylesheet opens with the
  * full order, so `components` lands between `base` and `utilities`
  * whichever sheet loads first. Without Tailwind the other four layers stay
- * empty. `@c15t/ui/postcss-tailwind3` removes the statement with the blocks.
+ * empty. `@inth/sdk-ui/postcss-tailwind3` removes the statement with the blocks.
  *
  * That covers the aggregates (`styles.css` loaded above the app's own CSS,
  * or injected by Astro from `page-ssr`) and the per-component sheets Vue

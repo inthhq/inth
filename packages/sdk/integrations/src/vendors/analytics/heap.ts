@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -445,7 +445,7 @@ const resolveHeapScriptUrl = function resolveHeapScriptUrl(
  *
  * @example
  * ```ts
- * import { heap } from '@c15t/integrations/heap';
+ * import { heap } from '@inth/integrations/heap';
  *
  * const script = heap({
  * 	envId: '123456789',

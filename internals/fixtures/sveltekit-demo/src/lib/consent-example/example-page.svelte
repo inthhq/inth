@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentGate } from '@c15t/svelte';
+	import { ConsentGate } from '@inth/svelte';
 	import type { Snippet } from 'svelte';
 
 	/**

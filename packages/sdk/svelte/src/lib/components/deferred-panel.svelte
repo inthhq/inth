@@ -58,7 +58,7 @@
 	 * the page loads while a button that opens it is mounted, and on hover or
 	 * focus of that button (see `preloadDialog`). Props are the dialog's own.
 	 */
-	import type { ActiveUI } from '@c15t/core';
+	import type { ActiveUI } from '@inth/sdk/engine';
 	import { onMount } from 'svelte';
 
 	import { getConsentContext } from '../context.svelte';

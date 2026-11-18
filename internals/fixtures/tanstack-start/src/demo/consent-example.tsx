@@ -1,4 +1,4 @@
-import { useExperiment } from 'c15t/tanstack-start';
+import { useExperiment } from '@inth/tanstack-start';
 import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react';
 
 import { VideoEmbed } from '../components/video-embed';
@@ -9,7 +9,7 @@ const subscribe = () => () => {
 };
 const DevTools = import.meta.env.DEV
 	? lazy(async () => {
-			const module = await import('c15t/react/devtools');
+			const module = await import('@inth/react/devtools');
 			return { default: module.DevTools };
 		})
 	: null;

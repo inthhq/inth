@@ -1,5 +1,5 @@
 // #region docs:dynamic-yield-scripts title="src/consent-scripts.ts"
-import { dynamicYield } from '@c15t/integrations/dynamic-yield';
+import { dynamicYield } from '@inth/integrations/dynamic-yield';
 
 export const scripts = [
 	dynamicYield({

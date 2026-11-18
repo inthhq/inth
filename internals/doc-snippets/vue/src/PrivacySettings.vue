@@ -1,6 +1,6 @@
 <!-- #region docs:privacy-settings title="src/PrivacySettings.vue" -->
 <script setup lang="ts">
-import { ConsentWidget } from 'c15t/vue/vue-plugin';
+import { ConsentWidget } from '@inth/vue/vue-plugin';
 </script>
 
 <template>

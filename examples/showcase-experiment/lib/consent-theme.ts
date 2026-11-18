@@ -1,4 +1,4 @@
-import { defineTheme } from 'c15t/next';
+import { defineTheme } from '@inth/nextjs';
 
 // Northwind's colors for the stock banner and dialog. The experiment's arms
 // change the banner's shape, not these tokens. No 'use client', so the

@@ -4,7 +4,7 @@
  * alone, the switch follows the primary color instead of staying the default
  * blue.
  */
-import '@c15t/ui/styles.css';
+import '@inth/sdk/ui/styles.css';
 import { afterEach, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 

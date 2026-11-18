@@ -7,9 +7,9 @@
  * Runs in the `ssr` project, so the provider is server-compiled as it is
  * during a SvelteKit render.
  */
-import type { Script } from '@c15t/core';
-import type { PolicyRule } from '@c15t/schema/types';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import type { Script } from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { render } from 'svelte/server';
 import { afterEach, beforeAll, expect, test } from 'vitest';
 

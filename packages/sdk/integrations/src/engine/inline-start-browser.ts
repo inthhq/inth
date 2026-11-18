@@ -5,7 +5,7 @@
  *
  * @internal
  */
-import type { ScriptServerStart } from '@c15t/core';
+import type { ScriptServerStart } from '@inth/sdk/engine';
 
 import type { ManifestStep } from '../types';
 

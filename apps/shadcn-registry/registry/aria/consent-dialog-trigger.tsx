@@ -4,7 +4,7 @@ import {
   type ConsentDialogTriggerVisibility,
   useConsentDialogTrigger,
   useConsentLabels,
-} from "c15t/react/headless"
+} from "@inth/react/headless"
 
 import { ConsentBrandingMark } from "@/components/c15t/consent-branding"
 import { Button } from "@/components/ui/button"

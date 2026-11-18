@@ -68,7 +68,7 @@ c15t's layered rules without extra specificity.
 <include src="../shared/examples/storybook-react/class-names-emotion.mdx" />
 
 Emotion inserts its rules into the page, not into a shadow root. With the HTML
-script tag or `@c15t/browser`, set `ui: { shadow: false }` so the UI renders
+script tag or `@inth/sdk`, set `ui: { shadow: false }` so the UI renders
 in the page where those rules reach it. `ui.stylesheetUrls` cannot carry them,
 because they have no URL.
 
@@ -91,7 +91,7 @@ from a module, such as CSS Modules, cannot reach `astro.config.mjs`.
 
 ## Style the script tag's shadow root
 
-The script tag and `init()` from `@c15t/browser` render into a shadow root. A
+The script tag and `init()` from `@inth/sdk` render into a shadow root. A
 class from your page's stylesheet reaches a part only if the stylesheet reaches
 the shadow root. Pick one:
 

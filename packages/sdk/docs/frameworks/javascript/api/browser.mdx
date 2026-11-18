@@ -1,6 +1,6 @@
 ---
-title: "@c15t/browser API"
-description: Reference for the @c15t/browser ES module in a bundled JavaScript app, covering its entry points, init and createConsentClient, the client's methods and properties, events, page hooks and helper exports.
+title: "@inth/sdk API"
+description: Reference for the @inth/sdk ES module in a bundled JavaScript app, covering its entry points, init and createConsentClient, the client's methods and properties, events, page hooks and helper exports.
 group: frameworks
 ---
 
@@ -8,17 +8,17 @@ group: frameworks
 
 | Import | What it gives you |
 | --- | --- |
-| `@c15t/browser` | `init`, `createConsentClient` and `mountConsentUI`, with the stock banner, dialog and trigger. `projectUrl` is required; `mode` is optional: `manifest()` or `hosted()`. |
-| `@c15t/browser/hosted` | The stock UI and client for hosted mode only. Requires `projectUrl`. |
-| `@c15t/browser/testing` | `testing()`, the mode for tests. It throws in production builds. |
-| `@c15t/browser/headless` | The same client with no UI and no CSS. `mountUI()` throws. |
-| `@c15t/browser/iab` | The client with the IAB TCF CMP and the IAB banner and dialog. See [IAB TCF](/docs/frameworks/javascript/iab). |
-| `@c15t/browser/devtools` | `mountDevTools(client, options)`. See [DevTools](/docs/frameworks/javascript/dev-tools). |
-| `@c15t/browser/styles.css`, `@c15t/browser/iab/styles.css` | The stylesheets, for `ui: { shadow: false, styles: false }`. |
+| `@inth/sdk` | `init`, `createConsentClient` and `mountConsentUI`, with the stock banner, dialog and trigger. `projectUrl` is required; `mode` is optional: `manifest()` or `hosted()`. |
+| `@inth/sdk/hosted` | The stock UI and client for hosted mode only. Requires `projectUrl`. |
+| `@inth/sdk/testing` | `testing()`, the mode for tests. It throws in production builds. |
+| `@inth/sdk/headless` | The same client with no UI and no CSS. `mountUI()` throws. |
+| `@inth/sdk/iab-client` | The client with the IAB TCF CMP and the IAB banner and dialog. See [IAB TCF](/docs/frameworks/javascript/iab). |
+| `@inth/sdk/devtools` | `mountDevTools(client, options)`. See [DevTools](/docs/frameworks/javascript/dev-tools). |
+| `@inth/sdk/styles.css`, `@inth/sdk/iab/styles.css` | The stylesheets, for `ui: { shadow: false, styles: false }`. |
 
 Install it with:
 
-<CommandTabs command="@c15t/browser" mode="install" />
+<CommandTabs command="@inth/sdk" mode="install" />
 
 In the ES module build the preference dialog code is a separate chunk. It
 starts loading in idle time once the banner or trigger is on screen, and at
@@ -30,22 +30,22 @@ stylesheet in one file. Both need a backend URL. `c15t.testing.js` is the
 file for test pages: it resolves a policy in the browser with no backend. The
 other script files contain neither its transport nor the policy pack.
 
-`@c15t/browser` is not part of the `c15t` package. Use one entry per page.
+Use one entry per page.
 Each creates its own client, and two clients on one page would each run the
 script loader and blockers.
 
 ### Choose a bundle for one mode
 
-Use `@c15t/browser/hosted` when the page always asks the backend's `/init`. It
+Use `@inth/sdk/hosted` when the page always asks the backend's `/init`. It
 excludes the manifest transport code, and its `init()` and
 `createConsentClient()` have the same lifecycle as the general entry.
 
 | Entry | Accepted configuration | Configuration that throws |
 | --- | --- | --- |
-| `@c15t/browser` | `projectUrl`, and optional `mode`: `hosted()`, `manifest()` or `testing()` from `@c15t/browser/testing`. | No `projectUrl` unless `mode` is `testing()` or `enabled` is `false`; a mode name such as `'hosted'`. |
-| `@c15t/browser/hosted` | `projectUrl`, optional `mode: 'hosted'` or `hosted()`. | Missing backend URL; a different mode; `manifest` or `manifestUrl`. |
+| `@inth/sdk` | `projectUrl`, and optional `mode`: `hosted()`, `manifest()` or `testing()` from `@inth/sdk/testing`. | No `projectUrl` unless `mode` is `testing()` or `enabled` is `false`; a mode name such as `'hosted'`. |
+| `@inth/sdk/hosted` | `projectUrl`, optional `mode: 'hosted'` or `hosted()`. | Missing backend URL; a different mode; `manifest` or `manifestUrl`. |
 
-Use `@c15t/browser/iab` for IAB TCF. Mode names such as `'hosted'`,
+Use `@inth/sdk/iab-client` for IAB TCF. Mode names such as `'hosted'`,
 `manifest` and `manifestUrl` are options of the script-tag builds.
 
 ## Start the client
@@ -61,7 +61,7 @@ module can create it at import time and call `client.start()` later:
 {/* example: fragment */}
 
 ```ts
-import { createConsentClient, manifest } from '@c15t/browser';
+import { createConsentClient, manifest } from '@inth/sdk';
 
 export const consent = createConsentClient({ mode: manifest(), scripts });
 ```
@@ -160,10 +160,10 @@ A started client also wires markup on the page, with no code:
 
 ## Helper exports
 
-The general `@c15t/browser` entry exports all the helpers below. The hosted
+The general `@inth/sdk` entry exports all the helpers below. The hosted
 entry exports `hosted`, the page action constants, gated script helpers,
 `mountConsentUI` and `version`. `testing()` comes from
-`@c15t/browser/testing`.
+`@inth/sdk/testing`.
 
 | Export | What it does |
 | --- | --- |

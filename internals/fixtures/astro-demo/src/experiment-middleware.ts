@@ -7,7 +7,7 @@
  * provider would: `?experiment=1` runs the `control` arm (the default
  * banner), `&arm=wall` the `wall` arm. Without the param no experiment runs.
  */
-import { consentMiddleware } from 'c15t/astro/middleware';
+import { consentMiddleware } from '@inth/astro/middleware';
 
 export const onRequest = consentMiddleware({
 	experimentArm: ({ url }) => {

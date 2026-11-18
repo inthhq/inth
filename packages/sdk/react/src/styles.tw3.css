@@ -1,5 +1,5 @@
 /**
- * @c15t/react — Tailwind 3-compatible prebuilt component styles.
+ * @inth/react — Tailwind 3-compatible prebuilt component styles.
  *
  * Import this stylesheet in the same global CSS entrypoint as Tailwind 3,
  * after `@tailwind components;` and before `@tailwind utilities;`.
@@ -7,7 +7,7 @@
  * Usage (src/index.css):
  *   @tailwind base;
  *   @tailwind components;
- *   @import "@c15t/react/styles.tw3.css";
+ *   @import "@inth/react/styles.tw3.css";
  *   @tailwind utilities;
  */
-@import '@c15t/ui/styles.tw3.css';
+@import '@inth/sdk/ui/styles.tw3.css';

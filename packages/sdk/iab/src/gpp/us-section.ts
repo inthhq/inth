@@ -7,7 +7,7 @@
  * @packageDocumentation
  */
 
-import type { AllConsentNames, ConsentSnapshot } from '@c15t/core';
+import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk-core';
 
 import type { USSectionValues } from './encoder';
 import { US_NATIONAL_SECTION, US_STATE_SECTIONS } from './sections';

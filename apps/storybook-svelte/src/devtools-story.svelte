@@ -3,7 +3,7 @@
 		devToolsProviderOptions,
 		getDevToolsCategories,
 	} from '@c15t/conformance/fixtures/devtools';
-	import { ConsentProvider } from '@c15t/svelte';
+	import { ConsentProvider } from '@inth/svelte';
 
 	import { DevTools } from '../../../packages/sdk/svelte/src/lib/devtools';
 </script>

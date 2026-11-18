@@ -3,4 +3,4 @@
  * `loadConsent` resolves the fixture manifest in-process, the way
  * CookieBench's SvelteKit fixture resolves its bundled manifest.
  */
-export { loadConsent as load } from '@c15t/svelte/kit';
+export { loadConsent as load } from '@inth/svelte/kit';

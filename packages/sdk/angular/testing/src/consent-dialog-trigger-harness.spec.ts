@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentManager } from '@c15t/angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
-import { ConsentDialogTrigger } from '@c15t/angular/consent-dialog-trigger';
+import { ConsentManager } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
+import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import {

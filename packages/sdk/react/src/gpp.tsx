@@ -1,17 +1,17 @@
 'use client';
 
 /**
- * `@c15t/react/gpp` — IAB GPP for a React consent provider.
+ * `@inth/react/gpp` — IAB GPP for a React consent provider.
  *
- * A separate entry, like `@c15t/react/iab`, so apps that do not render
+ * A separate entry, like `@inth/react/iab`, so apps that do not render
  * {@link ConsentGPP} bundle none of the GPP code.
  *
  * @packageDocumentation
  */
 
-import type { AllConsentNames } from '@c15t/core';
-import type { RuntimeGPPOptions } from '@c15t/core/runtime';
-import { createGPP } from '@c15t/iab/gpp';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import { createGPP } from '@inth/sdk/iab/gpp';
+import type { RuntimeGPPOptions } from '@inth/sdk/runtime';
 import { useContext, useEffect } from 'react';
 
 import { KernelContext } from './context';
@@ -34,7 +34,7 @@ export type ConsentGPPProps = RuntimeGPPOptions;
  *
  * @example
  * ```tsx
- * import { ConsentGPP } from '@c15t/react/gpp';
+ * import { ConsentGPP } from '@inth/react/gpp';
  *
  * <ConsentProvider options={{ mode: hosted({ projectUrl }) }}>
  *   <ConsentGPP usFallback="none" />
@@ -53,7 +53,7 @@ export const ConsentGPP = ({
 	const kernel = useContext(KernelContext);
 	if (!kernel) {
 		throw new Error(
-			'c15t: ConsentGPP must be rendered inside <ConsentProvider> from @c15t/react.'
+			'c15t: ConsentGPP must be rendered inside <ConsentProvider> from @inth/react.'
 		);
 	}
 	// A key, so an inline array does not remount the API on every render.

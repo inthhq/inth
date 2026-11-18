@@ -7,17 +7,17 @@
  * `IABUnavailableError` as an `error` event and throws it as an uncaught
  * error.
  */
-import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
+import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk-core';
 import type {
 	InitResponse,
 	KernelTransport,
 	ProviderTransportFactory,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

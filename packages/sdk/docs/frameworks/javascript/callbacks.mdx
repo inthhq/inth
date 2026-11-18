@@ -21,7 +21,7 @@ per-vendor work; see the [script loader](/docs/frameworks/javascript/modules/scr
 
 ## Pass callbacks
 
-`callbacks` works the same in `init()` from `@c15t/browser` and in
+`callbacks` works the same in `init()` from `@inth/sdk` and in
 `createConsentRuntime`:
 
 <include src="../../shared/examples/javascript/callbacks.mdx" />
@@ -54,7 +54,7 @@ explains the difference.
 
 ## Client events
 
-The `@c15t/browser` client also emits events. `consent.on(event, listener)`
+The `@inth/sdk` client also emits events. `consent.on(event, listener)`
 returns an unsubscribe function:
 
 <import src="../../shared/browser/client-options.mdx#events" />
@@ -79,14 +79,14 @@ const stop = runtime.kernel.events.on('choice:recorded', ({ confirmed }) => {
 The four callbacks are built on `choice:recorded`, `permissions:changed` and
 `command:error`. The [kernel reference](/docs/frameworks/javascript/api/kernel#events)
 lists every event. To attach the callbacks to a kernel you created yourself,
-call `wireRuntimeCallbacks({ kernel, callbacks })` from `c15t/runtime`.
+call `wireRuntimeCallbacks({ kernel, callbacks })` from `@inth/sdk/runtime`.
 
 ## Errors thrown by your code
 
 A callback or kernel listener that throws does not stop other listeners or
 fail the action. c15t reports it with `reportError` in the browser.
 
-A listener added with `on()` on the `@c15t/browser` client that throws is
+A listener added with `on()` on the `@inth/sdk` client that throws is
 logged with `console.error`. The later `on` listeners for the same event and
 the matching `c15t:*` event on `document` still run. This covers the `ready`
 and `ui` listeners that `on()` calls at once after the policy resolved, so

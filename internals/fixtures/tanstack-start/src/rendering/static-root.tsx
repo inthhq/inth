@@ -1,16 +1,16 @@
 import {
-	createRootRoute,
-	HeadContent,
-	Outlet,
-	Scripts,
-} from '@tanstack/react-router';
-import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentRoot,
 	consentPrefetchHead,
-} from 'c15t/tanstack-start';
+} from '@inth/tanstack-start';
+import {
+	createRootRoute,
+	HeadContent,
+	Outlet,
+	Scripts,
+} from '@tanstack/react-router';
 
 import { scripts } from '../scripts';
 import { testBackend } from '../test-backend';

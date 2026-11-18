@@ -21,10 +21,10 @@ tag, any `<Databuddy />` component from `@databuddy/sdk`, and any code that
 sets `window.databuddyConfig`. The helper seeds that global only when it is absent,
 so an existing value overrides it.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { databuddy } from '@c15t/integrations/databuddy';
+import { databuddy } from '@inth/integrations/databuddy';
 
 export const scripts = [
 	databuddy({ clientId: 'YOUR_CLIENT_ID', features: { interactions: false } }),

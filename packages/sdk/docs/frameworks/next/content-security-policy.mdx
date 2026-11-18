@@ -29,8 +29,8 @@ Then read the header in the root layout and pass it to `ConsentRoot` as
 Component, so no wrapper is needed:
 
 ```tsx title="app/layout.tsx"
-import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
-import { resolveConsent } from 'c15t/next/server';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/nextjs';
+import { resolveConsent } from '@inth/nextjs/server';
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
 import type { ReactNode } from 'react';
@@ -119,7 +119,7 @@ It does not apply to anything else:
   its tags, do not receive the nonce. Add `'strict-dynamic'` to `script-src` so
   scripts loaded by a nonced script are allowed, or list those vendor hosts
   explicitly.
-- The prebuilt stylesheet `c15t/next/styles.css`, if you import it with
+- The prebuilt stylesheet `@inth/nextjs/styles.css`, if you import it with
   `styles: false`, is a regular stylesheet from your own origin. It is covered
   by `style-src 'self'`, not by the nonce. Use that setup when a page cannot
   carry a per-request nonce.

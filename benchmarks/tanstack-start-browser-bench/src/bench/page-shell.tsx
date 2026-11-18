@@ -1,4 +1,4 @@
-import { useSetActiveUI } from '@c15t/tanstack-start';
+import { useSetActiveUI } from '@inth/tanstack-start';
 import { Link } from '@tanstack/react-router';
 
 import type { TanstackBenchScenario } from './state';

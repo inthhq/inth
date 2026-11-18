@@ -9,14 +9,17 @@
  * no stylesheet of its own.
  */
 
-import { applyExperimentAssignment, applyExperimentTheme } from '@c15t/core';
+import {
+	applyExperimentAssignment,
+	applyExperimentTheme,
+} from '@inth/sdk/engine';
 import type {
 	ConsentExperiment,
 	ConsentPresentation,
 	ConsentSnapshot,
 	LegalLinks,
-} from '@c15t/core';
-import type { Theme } from '@c15t/ui/theme';
+} from '@inth/sdk/engine';
+import type { Theme } from '@inth/sdk/ui/theme';
 
 import type { PromptClassNames } from '../banner/class-names';
 import { resolvePromptModel } from '../banner/prompt-model';

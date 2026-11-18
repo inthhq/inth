@@ -3,4 +3,4 @@
  * `loadConsent` resolves the cached fixture manifest in-process. The
  * backend never sits on the request path.
  */
-export { loadConsent as load } from '@c15t/svelte/kit';
+export { loadConsent as load } from '@inth/svelte/kit';

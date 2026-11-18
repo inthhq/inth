@@ -1,5 +1,5 @@
-import * as dialog from '@c15t/ui/styles/sheets/dialog';
-import * as iabDialog from '@c15t/ui/styles/sheets/iab-dialog';
+import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as iabDialog from '@inth/sdk/ui/styles/sheets/iab-dialog';
 
 import { IAB_FIRST_PAINT_SHEETS } from './iab-first-paint-sheets';
 import type { SurfaceStyleSheet } from './surface-styles';

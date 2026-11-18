@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular`: cookie banner, consent dialog, preference center and
+ * `@inth/angular`: cookie banner, consent dialog, preference center and
  * headless consent state for Angular 20 and later.
  *
  * Each area owns one section below. Add exports only to your own section,
@@ -11,7 +11,7 @@
 // core
 export { provideC15t } from './lib/core/provide-c15t';
 export { C15T_OPTIONS } from './lib/core/options';
-// Private (`ɵ`): the TransferState key `@c15t/angular/ssr` writes.
+// Private (`ɵ`): the TransferState key `@inth/angular/ssr` writes.
 export {
 	C15T_SERVER_STATE as ɵC15T_SERVER_STATE,
 	C15T_SERVER_STATE_GATE as ɵC15T_SERVER_STATE_GATE,
@@ -65,20 +65,20 @@ export {
 export { whenPageIdle as ɵwhenPageIdle } from './lib/core/dialog-warming';
 export type { DialogPreload } from './lib/core/dialog-warming';
 export { manifest } from './lib/core/modes';
-export { hosted, type HostedMode } from '@c15t/core/modes';
-export type { ConsentTesting } from '@c15t/core/testing';
+export { hosted, type HostedMode } from '@inth/sdk/modes';
+export type { ConsentTesting } from '@inth/sdk/testing';
 export { defaultTranslationConfig } from './lib/core/translation-defaults';
 export {
 	detectBrowserLanguage,
 	mergeTranslationConfigs,
 	prepareTranslationConfig,
-} from '@c15t/translations';
+} from '@inth/sdk/translations';
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
-} from '@c15t/core/surface-state';
+} from '@inth/sdk/surface-state';
 
 export type {
 	ActiveUI,
@@ -122,18 +122,18 @@ export type {
 	SaveResult,
 	Translations,
 	TranslationsResponse,
-} from '@c15t/core';
-export { createConsentRuntime } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+export { createConsentRuntime } from '@inth/sdk/runtime';
 export type {
 	ConsentRuntime,
 	ConsentRuntimeIABFactory,
 	ConsentRuntimeIABHandle,
 	ConsentRuntimeOptions,
-} from '@c15t/core/runtime';
+} from '@inth/sdk/runtime';
 export type {
 	BrowserManifestModeFactory,
 	BrowserManifestOptions as ManifestModeOptions,
-} from '@c15t/core/transports/manifest-browser';
+} from '@inth/sdk/transports/manifest-browser';
 export type {
 	ColorTokens,
 	ComponentSlots,
@@ -144,7 +144,7 @@ export type {
 	SpacingTokens,
 	Theme,
 	TypographyTokens,
-} from '@c15t/ui/theme';
+} from '@inth/sdk/ui/theme';
 
 // directives
 export { IfConsent } from './lib/core/if-consent';
@@ -203,3 +203,18 @@ export {
 	shouldShowBranding as ɵshouldShowBranding,
 } from './lib/shared';
 export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';
+
+// Engine types the guides use; the helpers are in the `engine` entry.
+export type {
+	CategoryDecision,
+	ExperimentArmName,
+	ExperimentAssignment,
+	PrefetchOptions,
+	ResolvedVendor,
+	Script,
+	ScriptCallbackInfo,
+	TCData,
+	TCDataOutsideTCF,
+	Vendor,
+} from '@inth/sdk/engine';
+export { defineTheme, generateThemeCSS } from '@inth/sdk/ui/theme';

@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentGate } from 'c15t/react';
+import { ConsentGate } from '@inth/react';
 
 import { cn } from '../lib/utils';
 

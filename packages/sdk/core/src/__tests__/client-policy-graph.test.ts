@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { disabledPolicyResolution } from '../policy';
@@ -61,7 +61,7 @@ const resolveRelative = function resolveRelative(
 	throw new Error(`Cannot resolve ${specifier} from ${from}`);
 };
 
-/** Names each file in the static graph imports from `@c15t/schema/types`. */
+/** Names each file in the static graph imports from `@inth/sdk/schema/types`. */
 const schemaImports = function schemaImports(
 	entries: string[]
 ): Map<string, string[]> {
@@ -80,7 +80,7 @@ const schemaImports = function schemaImports(
 			const specifier = match.groups?.specifier as string;
 			if (specifier.startsWith('.')) {
 				pending.push(resolveRelative(file, specifier));
-			} else if (specifier === '@c15t/schema/types') {
+			} else if (specifier === '@inth/sdk/schema/types') {
 				const names = (match.groups?.names ?? '')
 					.split(',')
 					.map((name) => name.trim().split(/\s+as\s+/u)[0] as string)

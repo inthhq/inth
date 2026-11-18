@@ -20,8 +20,6 @@ export const frameworkGuides = [
 export interface PackageSkill {
 	topic: string;
 	install: string;
-	/** True when the `c15t` umbrella package re-exports this package. */
-	umbrella?: boolean;
 }
 
 /**
@@ -117,13 +115,8 @@ export const renderPackageSkill = function renderPackageSkill(
 		].join('\n');
 	}
 	const slug = packageSkillName(packageName);
-	// The umbrella package is itself named c15t, so "c15t with c15t" says
-	// nothing about which package the skill ships in.
-	const isUmbrella = packageName === 'c15t';
-	const packageLabel = isUmbrella ? 'the c15t umbrella package' : packageName;
-	const heading = isUmbrella
-		? 'c15t (umbrella package)'
-		: `c15t with ${packageName}`;
+	const packageLabel = packageName;
+	const heading = `c15t with ${packageName}`;
 	const quickstarts = frameworkGuides
 		.map(([dir, label]) =>
 			link(bundledFiles, `frameworks/${dir}/quickstart.md`, label)
@@ -160,9 +153,9 @@ export const renderPackageSkill = function renderPackageSkill(
 		'',
 		'## Rules',
 		'',
-		`- Install with ${skill.install}. Keep every c15t package on the same release.${skill.umbrella ? ' New apps install `c15t` and import its framework subpath. An app that already depends on this scoped package can keep importing from it, but should not install both.' : ''}`,
+		`- Install with ${skill.install}. Keep every c15t package on the same release.`,
 		"- The backend URL comes from the user's Inth project or self-hosted backend. It is public configuration. Never invent one; ask for it or read it from the environment.",
-		'- Register analytics, pixels and embeds through c15t and remove the vendor\'s own loader or plugin. With a bundler, use `@c15t/integrations` helpers and `ConsentGate`. On a plain HTML page, change the vendor\'s `<script>` to `type="text/plain"` with `data-c15t-category`. A banner does not block code loaded elsewhere.',
+		'- Register analytics, pixels and embeds through c15t and remove the vendor\'s own loader or plugin. With a bundler, use `@inth/integrations` helpers and `ConsentGate`. On a plain HTML page, change the vendor\'s `<script>` to `type="text/plain"` with `data-c15t-category`. A banner does not block code loaded elsewhere.',
 		'- Gate features on the current permission. Never save a consent choice on page load or from code; only a visitor action records one.',
 		'- Offline mode keeps policies in code and choices in the browser, with no consent records. Not recommended for production environments.',
 		'- Keep one consent provider or root for the whole app, mounted outside route-level components.',

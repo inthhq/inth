@@ -1,17 +1,17 @@
 /** @vitest-environment jsdom */
-import { createConsentKernel, evaluateConsent } from '@c15t/core';
+import { createConsentKernel, evaluateConsent } from '@inth/sdk-core';
 import type {
 	ConsentKernel,
 	HydrationRecords,
 	HydrationResult,
 	KernelTransport,
-} from '@c15t/core';
-import { createPersistence } from '@c15t/core/modules/persistence';
+} from '@inth/sdk-core';
+import { createPersistence } from '@inth/sdk-core/modules/persistence';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createAuthorityReceipt, validateAuthority } from '../authority';

@@ -1,4 +1,4 @@
-import type { ConsentKernel, ConsentState } from '@c15t/core';
+import type { ConsentKernel, ConsentState } from '@inth/sdk/engine';
 
 /**
  * Categories DevTools shows: `necessary`, then the policy scope narrowed to

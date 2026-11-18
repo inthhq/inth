@@ -1,8 +1,8 @@
 'use client';
 
-import type * as C15tCoreTypes from '@c15t/core';
-import { isDialogDismissKey } from '@c15t/ui/primitives/dialog';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
+import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { useEffect, useMemo, useState } from 'react';
 import type { FC, ReactNode } from 'react';
 import { createPortal } from 'react-dom';

@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build a custom consent banner or embed gate in React with the c15t/react/headless hooks inside your ConsentProvider.
+description: Build a custom consent banner or embed gate in React with the @inth/react/headless hooks inside your ConsentProvider.
 group: frameworks
 ---
 
@@ -9,14 +9,14 @@ group: frameworks
 <import src="../../shared/react/headless.mdx#when-to-go-headless" />
 
 Check for a policy before rendering your own surfaces. `useModel()` from
-`c15t/react` returns `null` while no rule has resolved and `'none'` under a
+`@inth/react` returns `null` while no rule has resolved and `'none'` under a
 rule that owes no consent UI, and the pre-built surfaces render nothing in that
 state.
 
 ## Minimal example
 
 The headless hooks read the runtime from the nearest `ConsentProvider` from
-`c15t/react`. Render this component inside that provider in place of the stock
+`@inth/react`. Render this component inside that provider in place of the stock
 banner, and keep the dialog and persistent preferences control.
 
 <include src="../../shared/examples/react/headless-banner.mdx" />

@@ -6,7 +6,7 @@ import {
 	INIT_EXPERIMENT_PARAM,
 	parseExperimentHeader,
 	readJourneyParams,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { corsPreflightReasons } from '../../../__tests__/fixtures/cors-safelist';

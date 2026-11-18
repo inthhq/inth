@@ -1,10 +1,10 @@
-import { emitScriptDebugEvent } from '@c15t/core';
+import { emitScriptDebugEvent } from '@inth/sdk/engine';
 import type {
 	ConsentState,
 	Script,
 	ScriptCallbackInfo,
 	ScriptLifecycleCallback,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 
 import { inlineStepsStart } from '#inline-start';
 

@@ -1,8 +1,8 @@
 /**
- * `@c15t/react/headless` — hooks for building your own consent UI on the
+ * `@inth/react/headless` — hooks for building your own consent UI on the
  * kernel, without the prebuilt components or their CSS.
  *
- * Pair with `ConsentProvider` from `@c15t/react` (or `@c15t/react/provider`).
+ * Pair with `ConsentProvider` from `@inth/react` (or `@inth/react/provider`).
  */
 
 export {
@@ -13,13 +13,13 @@ export {
 	resolveActionLabels,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 export type {
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
 	ResolvedVendor,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 export {
 	type ConsentLabels,
 	useConsentLabels,
@@ -58,5 +58,5 @@ export { useColorScheme } from './hooks/use-color-scheme';
 export { useFocusTrap } from './hooks/use-focus-trap';
 export { useIABPolicyGuard } from './hooks/use-iab-policy-guard';
 export { useScrollLock } from './hooks/use-scroll-lock';
-// IAB headless hook lives on the `@c15t/react/iab` subpath.
+// IAB headless hook lives on the `@inth/react/iab` subpath.
 export type { ReactUIOptions } from './types/manager';

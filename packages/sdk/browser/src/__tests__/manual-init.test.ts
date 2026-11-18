@@ -37,7 +37,7 @@ const installManual = function installManual(): {
 	const currentScript = vi
 		.spyOn(document, 'currentScript', 'get')
 		.mockReturnValue(script);
-	const api = installGlobal(createGlobal({ pkg: '@c15t/browser' }));
+	const api = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
 	// Disabled clients still resolve their transport and options, without
 	// issuing backend requests or mounting UI in these lifecycle tests.
 	api.config({ enabled: false });
@@ -123,7 +123,7 @@ describe('manual initialization', () => {
 			})
 		);
 		const duplicate = installGlobal(
-			createGlobal({ pkg: '@c15t/browser/headless' })
+			createGlobal({ pkg: '@inth/sdk/headless' })
 		);
 		expect(autoInit(duplicate)).toBeNull();
 		currentScript.mockReturnValue(null);

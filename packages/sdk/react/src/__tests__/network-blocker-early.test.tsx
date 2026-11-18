@@ -1,4 +1,4 @@
-import type { NetworkBlockerRule } from '@c15t/core/modules/network-blocker';
+import type { NetworkBlockerRule } from '@inth/sdk/modules/network-blocker';
 import { StrictMode, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';

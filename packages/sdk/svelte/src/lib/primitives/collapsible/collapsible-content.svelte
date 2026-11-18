@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getCollapsibleState } from '@c15t/ui/primitives';
+	import { getCollapsibleState } from '@inth/sdk/ui/primitives';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 

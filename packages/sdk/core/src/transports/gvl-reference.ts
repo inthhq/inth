@@ -1,9 +1,9 @@
-import { extractConsentRequestInputs } from '@c15t/schema/types';
+import { extractConsentRequestInputs } from '@inth/sdk-schema/types';
 import type {
 	AdTechProvider,
 	GlobalVendorList,
 	InitOutput,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import { resolveIABBannerSummary } from '../libs/iab-banner-summary';
 

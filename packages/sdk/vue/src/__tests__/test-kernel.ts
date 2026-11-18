@@ -5,7 +5,7 @@
  * `customFetch`, `domain`), and this wrapper turns them into `hosted()`.
  */
 
-import { hosted } from '@c15t/core/transports';
+import { hosted } from '@inth/sdk/transports';
 
 import { createVueConsentKernelContext as createContext } from '../runtime/kernel';
 import type {

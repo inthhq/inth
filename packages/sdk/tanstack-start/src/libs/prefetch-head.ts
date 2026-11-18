@@ -1,8 +1,8 @@
-import type { KernelOverrides } from '@c15t/core';
+import type { KernelOverrides } from '@inth/sdk/engine';
 import {
 	buildPrefetchScript,
 	getMatchingPrefetchedInitialData,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 
 import type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from '../types';
 import { trimTrailingSlashes } from './path';
@@ -63,7 +63,7 @@ export const readPrefetchedInitialData =
  * @returns A fragment with a `scripts` array to spread into `head()`.
  * @example
  * ```tsx
- * import { consentPrefetchHead } from '@c15t/tanstack-start';
+ * import { consentPrefetchHead } from '@inth/tanstack-start';
  *
  * export const Route = createRootRoute({
  *   head: () => ({

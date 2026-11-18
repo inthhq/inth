@@ -1,6 +1,6 @@
 /**
  * The provider's `gpp` option mounts the IAB GPP CMP API (`window.__gpp`)
- * from `@c15t/iab/gpp`, which loads through a dynamic import only when the
+ * from `@inth/sdk/iab/gpp`, which loads through a dynamic import only when the
  * option is set, and removes it again when the provider unmounts.
  */
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -66,7 +66,7 @@ describe('ConsentProvider gpp option', () => {
 	test('installs __gpp with the given options and removes it on unmount', async () => {
 		const app = mountProvider({ gpp: { cmpId: 42 } });
 
-		// `@c15t/iab/gpp` arrives through a dynamic import, so the first
+		// `@inth/sdk/iab/gpp` arrives through a dynamic import, so the first
 		// run pays for transforming it as well as loading it.
 		await vi.waitFor(
 			() => {

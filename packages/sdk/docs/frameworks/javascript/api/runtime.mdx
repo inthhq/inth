@@ -1,6 +1,6 @@
 ---
 title: createConsentRuntime
-description: Reference for createConsentRuntime from c15t/runtime, the framework-agnostic consent runtime behind every c15t adapter, with every option, what start and dispose do, and the runtime handle's methods.
+description: Reference for createConsentRuntime from @inth/sdk/runtime, the framework-agnostic consent runtime behind every c15t adapter, with every option, what start and dispose do, and the runtime handle's methods.
 group: frameworks
 ---
 
@@ -11,7 +11,7 @@ and connects the modules a page needs, such as stored choices, script
 loading, iframe gating, network blocking, data clearing, IAB, callbacks and
 the reload after a withdrawal. It renders nothing. Use it when you render your own UI, connect a
 framework without a c15t adapter, or share one consent state between several
-parts of a page. `@c15t/browser` builds one for you; see
+parts of a page. `@inth/sdk` builds one for you; see
 [choose a headless API](/docs/frameworks/javascript/headless#choose-a-headless-api).
 
 <include src="../../../shared/examples/javascript/runtime.mdx" />
@@ -26,7 +26,7 @@ Only `mode` is required.
 | Option | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `projectUrl` | `string` | required | Your Inth backend URL. Not needed with `mode: testing()` or `enabled: false`. |
-| `mode` | `hosted()`, `manifest()` or `testing()` | `hosted()` | Where the policy comes from. `testing()` comes from `c15t/testing` and throws in production builds. See [transports](/docs/frameworks/javascript/transports). |
+| `mode` | `hosted()`, `manifest()` or `testing()` | `hosted()` | Where the policy comes from. `testing()` comes from `@inth/sdk/testing` and throws in production builds. See [transports](/docs/frameworks/javascript/transports). |
 | `scripts` | `Script[]` | none | Vendor scripts the loader mounts as categories are allowed. See [script loader](/docs/frameworks/javascript/modules/script-loader). |
 | `consentCategories` | category names | inferred | Categories to offer alongside those your scripts, rules and vendors use, within the policy's scope. |
 | `networkBlocker` | `{ rules, enabled?, logBlockedRequests?, onRequestBlocked? }` or `false` | off | Hold matching `fetch` and XHR requests until their category is allowed. See [network blocker](/docs/frameworks/javascript/modules/network-blocker). |
@@ -46,11 +46,11 @@ Only `mode` is required.
 | `nonce` | `string` | none | CSP nonce the script loader puts on every `<script>` it creates. A script's own `nonce` wins. |
 | `scriptLoader` | `{ onDebug? }` | none | Receive every script loader lifecycle event. |
 | `iab` | IAB options or `false` | none | CMP settings. Needs `createIAB`. |
-| `createIAB` | `createIAB` from `@c15t/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
+| `createIAB` | `createIAB` from `@inth/sdk/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
 | `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. c15t then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow a c15t mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
 | `enabled` | `boolean` | `true` | `false` grants every category, skips init and mounts no blocker, persistence or IAB. Scripts load at once. |
 | `windowDebug` | `boolean` | `true` | Install a small `window.c15t` object with `version`, `pkg`, `mode` and `hosting` on `start()`. `hosting` reads the current snapshot, so it changes from `null` once `/init` reports it. |
-| `pkg` | `string` | `'@c15t/core'` | The package name `window.c15t` reports. |
+| `pkg` | `string` | `'@inth/sdk/engine'` | The package name `window.c15t` reports. |
 
 ## What start and dispose do
 
@@ -152,8 +152,8 @@ production, a change to `mode`, `i18n`, `experiment`, `persistence` or
 
 `prefetch` may also be a promise, for example the result of a server helper
 that a framework streams to the browser, when `modules` includes
-`streamPrefetch` from `c15t/runtime`, or `lazyStreamPrefetch` from
-`c15t/runtime/provider`, which loads that code only for a runtime whose prefetch
+`streamPrefetch` from `@inth/sdk/runtime`, or `lazyStreamPrefetch` from
+`@inth/sdk/runtime/provider`, which loads that code only for a runtime whose prefetch
 is a promise. Without either, a pending prefetch is ignored with a warning
 outside production, and the runtime requests the policy itself. That keeps the
 code out of providers that never stream. The runtime starts with a provisional
@@ -186,12 +186,12 @@ file. Spread it into `modules` next to the modules you import statically:
 {/* example: fragment */}
 
 ```ts
-import { watchRevocationReload } from 'c15t';
-import { createIframeBlocker } from 'c15t/modules/iframe-blocker';
-import { createPersistence } from 'c15t/modules/persistence';
-import { createWindowDebug } from 'c15t/modules/window-debug';
-import { onDemandRuntimeModules } from 'c15t/runtime/on-demand';
-import { createConsentProviderRuntime } from 'c15t/runtime/provider';
+import { watchRevocationReload } from '@inth/sdk/engine';
+import { createIframeBlocker } from '@inth/sdk/modules/iframe-blocker';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { createWindowDebug } from '@inth/sdk/modules/window-debug';
+import { onDemandRuntimeModules } from '@inth/sdk/runtime/on-demand';
+import { createConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 
 const runtime = createConsentProviderRuntime(options, {
 	...onDemandRuntimeModules,
@@ -213,14 +213,14 @@ works the same way, but if it imports code your first chunk also uses,
 bundlers that split shared code (Vite, esbuild) move that code into extra
 chunks the first load then fetches.
 
-Import from `c15t/runtime/provider` when your provider loads modules on
+Import from `@inth/sdk/runtime/provider` when your provider loads modules on
 demand. It exports `createConsentProviderRuntime`, `lazyRuntimeModule` and
 `lazyStreamPrefetch`, and none of the modules `defaultRuntimeModules` imports
 statically. Some bundlers, esbuild among them, keep a module in the first chunk
 when it is imported statically anywhere in the graph, even unused, and also
 through `import()`.
 
-`c15t/runtime/on-demand` exports `onDemandRuntimeModules`,
+`@inth/sdk/runtime/on-demand` exports `onDemandRuntimeModules`,
 `createConsentRuntimeWith` and `mountRuntimeIAB`.
 `createConsentRuntimeWith(options, modules)` is `createConsentRuntime` with the
 modules you choose, for a page that configures once (a script tag, an Astro
@@ -231,7 +231,7 @@ through its own `import()` calls would get the on-demand chunks as well, plus
 an extra chunk for each module both load, and a page that configures once
 would get the provider runtime's update and streamed-prefetch chunks.
 
-`c15t/runtime/on-demand-factories` exports each on-demand factory on its own:
+`@inth/sdk/runtime/on-demand-factories` exports each on-demand factory on its own:
 `scriptLoaderOnDemand`, `networkBlockerOnDemand`, `clearOnRevocationOnDemand`
 and `connectConsentSourceOnDemand`. `scriptLoaderOnDemand` and
 `networkBlockerOnDemand` each load a chunk with only their module. Use them
@@ -245,17 +245,17 @@ not, which would split the shared chunk apart:
 {/* example: fragment */}
 
 ```ts
-import { watchRevocationReload } from 'c15t';
-import { createIframeBlocker } from 'c15t/modules/iframe-blocker';
-import { createPersistence } from 'c15t/modules/persistence';
-import { createScriptLoader } from 'c15t/modules/script-loader';
-import { createWindowDebug } from 'c15t/modules/window-debug';
-import { createConsentRuntimeWith } from 'c15t/runtime/on-demand';
+import { watchRevocationReload } from '@inth/sdk/engine';
+import { createIframeBlocker } from '@inth/sdk/modules/iframe-blocker';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import { createWindowDebug } from '@inth/sdk/modules/window-debug';
+import { createConsentRuntimeWith } from '@inth/sdk/runtime/on-demand';
 import {
 	clearOnRevocationOnDemand,
 	connectConsentSourceOnDemand,
 	networkBlockerOnDemand,
-} from 'c15t/runtime/on-demand-factories';
+} from '@inth/sdk/runtime/on-demand-factories';
 
 const runtime = createConsentRuntimeWith(options, {
 	connectConsentSource: connectConsentSourceOnDemand,
@@ -272,9 +272,9 @@ runtime.start();
 
 ## Other exports
 
-| Export from `c15t/runtime` | What it does |
+| Export from `@inth/sdk/runtime` | What it does |
 | --- | --- |
-| `createLazyIABFactory(loader)` | Wrap a dynamic `import('@c15t/iab')` so the IAB code loads as a separate chunk when the runtime mounts IAB. Pass its `create` as `createIAB`. |
+| `createLazyIABFactory(loader)` | Wrap a dynamic `import('@inth/sdk/iab')` so the IAB code loads as a separate chunk when the runtime mounts IAB. Pass its `create` as `createIAB`. |
 | `isIABConfigured(iab)` | Whether an `iab` option turns IAB on. |
 | `wireRuntimeCallbacks({ kernel, callbacks })` | Attach the four callbacks to a kernel you own. Returns a disposer. |
 | `createConsentProviderRuntime(options, modules)` | The runtime for a framework provider. See [runtime for a framework provider](#runtime-for-a-framework-provider). |

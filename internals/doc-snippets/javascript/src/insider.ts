@@ -1,5 +1,5 @@
 // #region docs:insider-scripts title="src/consent-scripts.ts"
-import { insiderTag } from '@c15t/integrations/insider';
+import { insiderTag } from '@inth/integrations/insider';
 
 export const scripts = [
 	insiderTag({

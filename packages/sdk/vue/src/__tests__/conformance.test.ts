@@ -11,8 +11,12 @@ import type {
 	SuiteApi,
 	TestDriver,
 } from '@c15t/conformance';
-import { deferInitGvl, initOutputToKernelConfig } from '@c15t/core';
-import type { InitResponse, KernelConfig, KernelTransport } from '@c15t/core';
+import { deferInitGvl, initOutputToKernelConfig } from '@inth/sdk/engine';
+import type {
+	InitResponse,
+	KernelConfig,
+	KernelTransport,
+} from '@inth/sdk/engine';
 /**
  * Vue conformance entry point.
  *
@@ -20,17 +24,17 @@ import type { InitResponse, KernelConfig, KernelTransport } from '@c15t/core';
  * component, so the driver builds the same kernel context the plugin provides
  * and injects it into a small Vue app around the requested component.
  */
-import { createPersistence } from '@c15t/core/modules/persistence';
+import { createPersistence } from '@inth/sdk/modules/persistence';
 import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import type {
 	GlobalVendorList,
 	InitOutput,
 	TranslationsResponse,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { createApp, createSSRApp, defineComponent, h } from 'vue';

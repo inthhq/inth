@@ -1,4 +1,3 @@
-import { createFileRoute } from '@tanstack/react-router';
 import {
 	useActiveUI,
 	useConsent,
@@ -8,7 +7,8 @@ import {
 	usePolicyRule,
 	usePolicyResolution,
 	useSetActiveUI,
-} from 'c15t/tanstack-start';
+} from '@inth/tanstack-start';
+import { createFileRoute } from '@tanstack/react-router';
 
 import { IabSurfaces } from '../demo/iab-surfaces';
 

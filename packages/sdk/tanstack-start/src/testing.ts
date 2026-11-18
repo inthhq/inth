@@ -1,5 +1,5 @@
 /**
- * `@c15t/tanstack-start/testing` — run the consent flow in tests with no backend.
+ * `@inth/tanstack-start/testing` — run the consent flow in tests with no backend.
  *
  * Pass `mode: testing()` to `resolveConsent()`, or as `ConsentRoot`'s
  * `options.mode`. It needs no `projectUrl`. The server resolves nothing,
@@ -20,17 +20,17 @@
  *
  * @example
  * ```ts
- * import { resolveConsent } from '@c15t/tanstack-start/server';
- * import { testing } from '@c15t/tanstack-start/testing';
+ * import { resolveConsent } from '@inth/tanstack-start/server';
+ * import { testing } from '@inth/tanstack-start/testing';
  *
  * const state = await resolveConsent(request, { mode: testing() });
  * ```
  *
  * @packageDocumentation
  */
-import type { TestingMode, TestingModeOptions } from '@c15t/core/modes';
+import type { TestingMode, TestingModeOptions } from '@inth/sdk/modes';
 
-export type { TestingMode, TestingModeOptions } from '@c15t/core/modes';
+export type { TestingMode, TestingModeOptions } from '@inth/sdk/modes';
 
 /**
  * A `mode` for tests that resolves `policy`, or the recommended policy

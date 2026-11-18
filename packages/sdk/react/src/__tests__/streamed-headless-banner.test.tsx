@@ -4,8 +4,8 @@
  * chunk of the same response, before hydration, and only when the resolved
  * policy shows one.
  */
-import type { KernelConfig } from '@c15t/core';
-import type { PolicyRule } from '@c15t/schema/types';
+import type { KernelConfig } from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 import { act } from 'react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';

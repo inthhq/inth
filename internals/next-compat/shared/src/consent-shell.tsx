@@ -1,14 +1,14 @@
 'use client';
 
-import { createManifestTransport } from '@c15t/core/transports/manifest';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentRoot,
 	defineConsentConfig,
 	hosted,
-} from '@c15t/nextjs';
-import type { ConsentConfig, ConsentRootProps } from '@c15t/nextjs';
+} from '@inth/nextjs';
+import type { ConsentConfig, ConsentRootProps } from '@inth/nextjs';
+import { createManifestTransport } from '@inth/sdk/transports/manifest';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 
@@ -48,7 +48,7 @@ export interface ConsentShellProps {
 	/** CSP nonce for automatic component styles in the nonce test routes. */
 	nonce?: string;
 	/**
-	 * `false` in the cells that import `@c15t/nextjs/styles.css`, so the
+	 * `false` in the cells that import `@inth/nextjs/styles.css`, so the
 	 * components do not deliver a second copy of its rules.
 	 */
 	styles?: boolean;

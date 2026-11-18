@@ -12,9 +12,9 @@ export type MarkerTable = Record<ExamplesPayloadBoundaryMetric, string[]>;
 
 /** Markers that don't depend on the fixture backend. */
 export const STATIC_MARKERS: Omit<MarkerTable, 'snapshotBytes'> = {
-	// `@c15t/dev-tools` class names.
+	// `@inth/sdk/devtools` class names.
 	devtoolsBytes: ['c15t-dev-tools__'],
-	// The CMP API global from `@c15t/iab`.
+	// The CMP API global from `@inth/sdk/iab`.
 	iabBytes: ['__tcfapi'],
 	// The cookie banner title in German and French.
 	nonEnLocaleBytes: ['Wir respektieren deine', 'Nous respectons votre vie'],

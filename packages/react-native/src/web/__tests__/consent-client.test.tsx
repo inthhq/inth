@@ -1,6 +1,6 @@
 // @vitest-environment-options { "url": "https://app.example.com/" }
 /**
- * The web client: the browser engine from `@c15t/core`, read through the
+ * The web client: the browser engine from `@inth/sdk/engine`, read through the
  * React Native snapshot contract.
  *
  * Everything here runs the real runtime, kernel and persistence in jsdom. The
@@ -9,7 +9,7 @@
  * engine actually produces rather than a hand-written kernel snapshot.
  */
 
-import { createOfflineTransport, offline } from '@c15t/core/transports';
+import { createOfflineTransport, offline } from '@inth/sdk/transports';
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 

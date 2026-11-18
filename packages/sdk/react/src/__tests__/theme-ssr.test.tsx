@@ -1,5 +1,5 @@
-import '@c15t/ui/styles.css';
-import { defaultDarkColors, defaultTheme } from '@c15t/ui/theme';
+import '@inth/sdk/ui/styles.css';
+import { defaultDarkColors, defaultTheme } from '@inth/sdk/ui/theme';
 import { act } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';

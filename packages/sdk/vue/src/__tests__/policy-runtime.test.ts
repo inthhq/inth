@@ -1,12 +1,12 @@
-import type { AllConsentNames } from '@c15t/core';
-import { readStoredRecords } from '@c15t/core/modules/persistence';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import { readStoredRecords } from '@inth/sdk/modules/persistence';
 import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { PolicyResolution, PolicyRule } from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import type { PolicyResolution, PolicyRule } from '@inth/sdk/schema/types';
+import { translations } from '@inth/sdk/translations/en';
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, nextTick } from 'vue';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import { forwardRef as createForwardRef } from 'react';
 import type { HTMLAttributes, ReactNode } from 'react';
 

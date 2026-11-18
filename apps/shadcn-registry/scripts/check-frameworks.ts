@@ -1,6 +1,6 @@
 /**
  * Type-checks the Next.js and TanStack Start copies of the UI items. The
- * build rewrites their `c15t/react` imports to the framework's entry point,
+ * build rewrites their `@inth/react` imports to the framework's entry point,
  * so this writes those copies to `dist/framework-check` and runs tsc on
  * them with each base's vendored ui and the framework's setup files.
  */

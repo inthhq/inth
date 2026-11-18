@@ -1,4 +1,4 @@
-import { readStoredRecordsFromCookieHeader } from '@c15t/core/modules/persistence';
+import { readStoredRecordsFromCookieHeader } from '@inth/sdk/modules/persistence';
 import { expect, it } from 'vitest';
 
 import {

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@analogjs/storybook-angular';
 import {
 	ConsentGate,
 	ConsentGatePlaceholder,
-} from '@c15t/angular/consent-gate';
+} from '@inth/angular/consent-gate';
 
 import {
 	consentApplication,

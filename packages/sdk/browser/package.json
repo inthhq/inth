@@ -1,6 +1,7 @@
 {
-	"name": "@c15t/browser",
+	"name": "@inth/sdk-browser",
 	"version": "3.2.0-canary.0",
+	"private": true,
 	"description": "Script-tag build of c15t for Webflow, WordPress, Framer, Squarespace and plain HTML. One script tag, script blocking and an optional IAB TCF build.",
 	"keywords": [
 		"banner",
@@ -126,28 +127,23 @@
 			"default": "./dist/prefetch.js"
 		}
 	},
-	"publishConfig": {
-		"access": "public"
-	},
 	"scripts": {
 		"build": "pnpm run prebuild && rslib build && bun scripts/copy-styles.ts && node ../../../scripts/normalize-dist-types.mjs",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/browser",
 		"check-types": "pnpm run prebuild && tsc --noEmit",
 		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
 		"prebuild": "genversion --esm --semi src/version.ts && bun scripts/build-styles.ts",
-		"prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
 		"test": "pnpm run prebuild && vitest run",
 		"test:watch": "pnpm run prebuild && vitest"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/dev-tools": "workspace:*",
-		"@c15t/iab": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/translations": "workspace:*",
-		"@c15t/ui": "workspace:*"
+		"@inth/sdk-core": "workspace:*",
+		"@inth/sdk-dev-tools": "workspace:*",
+		"@inth/sdk-iab": "workspace:*",
+		"@inth/sdk-schema": "workspace:*",
+		"@inth/sdk-translations": "workspace:*",
+		"@inth/sdk-ui": "workspace:*"
 	},
 	"devDependencies": {
 		"@c15t/conformance": "workspace:*",

@@ -6,7 +6,7 @@ import {
 	forgetOwnedVendors,
 	IABUnavailableError,
 	isVendorAllowed,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 import type {
 	AllConsentNames,
 	ConsentPresentation,
@@ -19,19 +19,19 @@ import type {
 	SaveInput,
 	ProviderTransportFactory,
 	ResolvedVendor,
-} from '@c15t/core';
-import { isIABConfigured } from '@c15t/core/runtime';
+} from '@inth/sdk-core';
+import { isIABConfigured } from '@inth/sdk-core/runtime';
 import type {
 	ConsentRuntimeIABFactory,
 	GPPModuleLoader,
 	RuntimeGPPOptions,
-} from '@c15t/core/runtime';
+} from '@inth/sdk-core/runtime';
 import {
 	saveConsentSurface,
 	saveIABConsentSurface,
 	showConsentSurface,
-} from '@c15t/core/surface-actions';
-import type { Theme } from '@c15t/ui/theme';
+} from '@inth/sdk-core/surface-actions';
+import type { Theme } from '@inth/sdk-ui/theme';
 
 import { createBrowserRuntime } from './create-runtime';
 import { createDeferred } from './deferred';
@@ -76,7 +76,7 @@ export interface CreateConsentClientContext {
 	onStart?: (options: ScriptTagClientOptions) => () => void;
 	/** Optional CMP factory supplied exclusively by the IAB entry. */
 	createIAB?: ConsentRuntimeIABFactory;
-	/** Loads `@c15t/iab/gpp`. Only the script-tag global supplies it. */
+	/** Loads `@inth/sdk/iab/gpp`. Only the script-tag global supplies it. */
 	loadGPP?: GPPModuleLoader;
 	/** The `gpp` option when the page sets none. Off unless an entry sets it. */
 	defaultGPP?: RuntimeGPPOptions | boolean;
@@ -126,7 +126,7 @@ const callListener = function callListener<PayloadType>(
 	} catch (error) {
 		// oxlint-disable-next-line no-console -- A page listener failed; keep dispatching.
 		console.error(
-			`@c15t/browser: a "${event}" listener threw; the other listeners still run.`,
+			`@inth/sdk: a "${event}" listener threw; the other listeners still run.`,
 			error
 		);
 	}
@@ -169,7 +169,7 @@ export const createConsentClientWith = function createConsentClientWith(
 	context: CreateConsentClientContext = {}
 ): ConsentClient {
 	if (options.iab && options.iab.enabled !== false && !context.createIAB) {
-		throw new Error('@c15t/browser: IAB requires the @c15t/browser/iab entry.');
+		throw new Error('@inth/sdk: IAB requires the @inth/sdk/iab-client entry.');
 	}
 	const runtime = createBrowserRuntime({
 		callbacks: options.callbacks,
@@ -189,7 +189,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		nonce: options.nonce,
 		overrides: options.overrides,
 		persistence: options.persistence,
-		pkg: options.pkg ?? context.pkg ?? '@c15t/browser',
+		pkg: options.pkg ?? context.pkg ?? '@inth/sdk',
 		prefetch: options.prefetch,
 		presentation: options.presentation,
 		reloadOnConsentRevoked: options.reloadOnConsentRevoked,
@@ -302,7 +302,7 @@ export const createConsentClientWith = function createConsentClientWith(
 				)
 			: new IABUnavailableError(
 					'this page loads the build without IAB',
-					'Load c15t.iab.js instead of c15t.js, or import from @c15t/browser/iab'
+					'Load c15t.iab.js instead of c15t.js, or import from @inth/sdk/iab-client'
 				);
 		emit('error', error);
 		queueMicrotask(() => {
@@ -490,7 +490,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		mountUI(uiOptions?: ConsentUIOptions) {
 			if (!context.mountUI) {
 				throw new Error(
-					'@c15t/browser: this build is headless. Load c15t.js, or import `mountConsentUI` from "@c15t/browser".'
+					'@inth/sdk: this build is headless. Load c15t.js, or import `mountConsentUI` from "@inth/sdk".'
 				);
 			}
 			ui?.destroy();

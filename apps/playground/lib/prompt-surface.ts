@@ -7,14 +7,14 @@
  * Node.
  */
 
-import { PROMPT_VARIANT_POSITIONS } from 'c15t';
+import { PROMPT_VARIANT_POSITIONS } from '@inth/sdk/engine';
 import type {
 	ConsentExperiment,
 	ConsentPresentation,
 	PromptPosition,
 	PromptPresentation,
 	PromptVariant,
-} from 'c15t';
+} from '@inth/sdk/engine';
 
 /**
  * Arms of the demo's banner-shape experiment (`?experiment=1`). `control`

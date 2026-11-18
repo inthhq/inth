@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { TabsOrientation } from '@c15t/ui/primitives';
-	import { getDataDisabled } from '@c15t/ui/primitives';
+	import type { TabsOrientation } from '@inth/sdk/ui/primitives';
+	import { getDataDisabled } from '@inth/sdk/ui/primitives';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 

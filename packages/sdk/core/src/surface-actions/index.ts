@@ -6,7 +6,7 @@
  * surface shows once a choice is recorded, when does a save close the
  * surface it came from, and when does an older save lose to a newer click.
  * This module answers them once, over the kernel, so React, Vue, Svelte,
- * Astro and `@c15t/browser` only wrap it in their own idiom.
+ * Astro and `@inth/sdk` only wrap it in their own idiom.
  *
  * The rules:
  *
