@@ -43,6 +43,17 @@ final class SubjectLinkTests: XCTestCase {
         return (seen, pump)
     }
 
+    /// The first error matching `matches`, waiting up to a second for the event pump.
+    private func firstError(
+        in seen: SendableBox<[CoreErrorInfo]>, where matches: (CoreErrorInfo) -> Bool
+    ) async -> CoreErrorInfo? {
+        for _ in 0..<200 {
+            if let found = seen.value.first(where: matches) { return found }
+            try? await Task.sleep(nanoseconds: 5_000_000)
+        }
+        return nil
+    }
+
     // MARK: - Linking
 
     func testIdentifySendsALinkOnlyWithATokenAndNeverStoresTheToken() async throws {
@@ -86,10 +97,10 @@ final class SubjectLinkTests: XCTestCase {
 
         core.identify(KernelUser(externalId: "user_123"), identityToken: "stale")
         await core.waitUntilIdle()
-        try? await Task.sleep(nanoseconds: 20_000_000)
 
-        let error = try XCTUnwrap(seen.value.first { $0.code == "http-status" })
-        for part in ["401", "identity_token_invalid", "req_link"] {
+        let found = await firstError(in: seen) { $0.code == "identity_token_invalid" }
+        let error = try XCTUnwrap(found, "\(seen.value)")
+        for part in ["401", "req_link"] {
             XCTAssertTrue(error.message.contains(part), error.message)
         }
         XCTAssertEqual(core.snapshot().subject?.externalId, "user_123")

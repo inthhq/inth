@@ -1398,7 +1398,13 @@ public final class ConsentCore: @unchecked Sendable {
             case let .success(canonical):
                 self.adoptCanonicalSubjectId(canonical, sentFor: identity.id)
             case let .failure(error):
-                self.events.emit(.error(error.info))
+                // A refused link names the backend's `error.code`, such as
+                // `identity_token_invalid`, so the host can tell a stale token from a conflict.
+                if case let .httpStatus(_, code?, _, _) = error {
+                    self.events.emit(.error(CoreErrorInfo(code: code, message: error.message)))
+                } else {
+                    self.events.emit(.error(error.info))
+                }
             }
         }
     }
