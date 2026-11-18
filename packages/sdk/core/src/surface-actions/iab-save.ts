@@ -19,13 +19,15 @@ const logSaveError = (error: unknown): void => {
  * came first, so the visitor can try again.
  *
  * A failed save is reported once, through `onError`, and resolves
- * `{ ok: false }`, so a surface needs no handler of its own.
+ * `{ ok: false }`, so a surface needs no handler of its own. A choice the
+ * CMP recorded locally before the failure keeps the surface closed.
  *
  * @param kernel - The kernel the CMP records into.
  * @param save - Applies any blanket and runs the CMP handle's `save()`.
  * @param onError - Receives what `save` threw. Defaults to `console.error`.
- * @returns `{ ok: true }` when a new IAB authority was recorded. The handle
- * refuses an authority for a policy that changed while it encoded.
+ * @returns `{ ok: true }` when a new IAB authority was recorded and the save
+ * finished. The handle refuses an authority for a policy that changed while
+ * it encoded.
  */
 export const saveIABConsentSurface = async (
 	kernel: ConsentKernel,
@@ -37,12 +39,14 @@ export const saveIABConsentSurface = async (
 	const surface = before.activeUI;
 	const open = isOpen(surface);
 	let recorded = false;
+	let failed = false;
 	if (open) {
 		kernel.set.activeUI('none');
 	}
 	try {
 		await save();
 	} catch (error) {
+		failed = true;
 		onError(error);
 	} finally {
 		const after = kernel.getSnapshot();
@@ -56,5 +60,5 @@ export const saveIABConsentSurface = async (
 			kernel.set.activeUI(surface);
 		}
 	}
-	return { ok: recorded };
+	return { ok: recorded && !failed };
 };

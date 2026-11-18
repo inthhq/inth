@@ -783,11 +783,11 @@ export class IABConsentDialogBody {
 		if (!state) {
 			return;
 		}
-		const { ok } = await saveIABConsentSurface(this.#consent.kernel(), () =>
-			state.save()
-		);
+		const kernel = this.#consent.kernel();
+		await saveIABConsentSurface(kernel, () => state.save());
 		// The save closed the surface: a parent that owns `open` hears it.
-		if (ok) {
+		// A save that recorded nothing brings the dialog back instead.
+		if (kernel.getSnapshot().activeUI !== 'dialog') {
 			this.openChange.emit(false);
 		}
 	}
