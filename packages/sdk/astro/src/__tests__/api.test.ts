@@ -7,16 +7,15 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
 import { manifest as manifestMode } from '../mode';
 import {
-	clearManifestCache,
 	createConsentRouteHandlers,
 	resolveConsentContext,
-	resolveManifestSourceUrl,
 	waitUntilFromLocals,
 } from '../server';
 import type { InthAstroOptions } from '../types';
@@ -72,9 +71,6 @@ describe('createConsentRouteHandlers', () => {
 			}).manifest(request('/api/inth/manifest'));
 			expect(fetch.mock.calls[0]?.[0]).toBe(expected);
 		}
-		expect(resolveManifestSourceUrl(request('/api/inth/init'), options())).toBe(
-			`${BACKEND}/manifest`
-		);
 	});
 
 	it('resolves an inline manifest without fetching it', async () => {

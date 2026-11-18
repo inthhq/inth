@@ -16,12 +16,13 @@
  */
 
 import type { StorageConfig } from '@inth/sdk/engine';
+import type {
+	ConsentProxyRouteMethodHandlers,
+	ConsentRouteMethodHandlers,
+} from '@inth/sdk/server';
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 
-import type {
-	NextConsentProxyRouteHandlers,
-	NextConsentRouteOptions,
-} from './api';
+import type { NextRouteHandler, NextConsentRouteOptions } from './api';
 import { createConsentRoute } from './api';
 import type { ConsentConfig } from './config';
 import type {
@@ -167,8 +168,8 @@ export const createPagesConsentRoute = function createPagesConsentRoute(
 	options: NextConsentRouteOptions = {},
 	param = 'inth'
 ): PagesApiHandler {
-	const handlers: Partial<NextConsentProxyRouteHandlers> &
-		Pick<NextConsentProxyRouteHandlers, 'GET'> = createConsentRoute(options);
+	const handlers: Partial<ConsentProxyRouteMethodHandlers<NextRouteHandler>> &
+		ConsentRouteMethodHandlers<NextRouteHandler> = createConsentRoute(options);
 	return toPagesApiHandler(
 		(request, req) => {
 			// `req.query` mixes the route parameter with the query string, so
@@ -182,8 +183,9 @@ export const createPagesConsentRoute = function createPagesConsentRoute(
 			// With `proxy`, writes go to the forwarding handlers; HEAD and any
 			// method without one read like GET.
 			const handler =
-				handlers[request.method as keyof NextConsentProxyRouteHandlers] ??
-				handlers.GET;
+				handlers[
+					request.method as keyof ConsentProxyRouteMethodHandlers<NextRouteHandler>
+				] ?? handlers.GET;
 			return handler(request, {
 				params: Promise.resolve({ [param]: segments }),
 			});

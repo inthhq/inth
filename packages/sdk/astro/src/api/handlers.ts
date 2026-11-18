@@ -10,12 +10,14 @@
  */
 
 import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
-import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
-import type { ManifestFetch } from '@inth/sdk/server';
+import {
+	createConsentRouteHandler,
+	readWaitUntil,
+	resolveServerMode,
+} from '@inth/sdk/server';
+import type { ConsentRouteFetchGvl, ManifestFetch } from '@inth/sdk/server';
 
 import type { InthResolvedOptions } from '../types';
-import { resolveManifestSourceFrom } from './manifest-init';
-import type { FetchGvl } from './manifest-init';
 
 /**
  * The per-request context a route or the middleware can pass so a
@@ -25,6 +27,11 @@ import type { FetchGvl } from './manifest-init';
  */
 export interface RequestLifetime {
 	locals?: unknown;
+	/**
+	 * The path below the route, from its rest parameter (`params.path` for
+	 * `[...path]`). Defaults to the last URL segment.
+	 */
+	path?: string;
 }
 
 interface AdapterLocals {
@@ -63,7 +70,7 @@ export interface ConsentRouteHandlerOptions {
 	 * Defaults to the shared server cache, with a deadline on the upstream
 	 * request.
 	 */
-	fetchGvl?: FetchGvl;
+	fetchGvl?: ConsentRouteFetchGvl;
 	/**
 	 * Receives the promise of detached work started by this request (a
 	 * background manifest revalidation, a session report), so the host can
@@ -74,26 +81,6 @@ export interface ConsentRouteHandlerOptions {
 	 */
 	onBackgroundRevalidate?: (revalidation: Promise<void>) => void;
 }
-
-/**
- * Work out where `GET /manifest` lives for this request.
- *
- * `manifestUrl` when set, otherwise `${projectUrl}/manifest`.
- *
- * @param request - The incoming request, used to resolve relative URLs.
- * @param options - The resolved integration options.
- * @returns An absolute manifest URL.
- * @throws {Error} When neither a manifest URL nor a backend URL is configured.
- */
-export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
-	request: Request,
-	options: InthResolvedOptions
-): string {
-	return resolveManifestSourceFrom(
-		{ headers: request.headers, url: request.url },
-		options
-	);
-};
 
 /**
  * Build the `init` and `manifest` route handlers, the ones behind the
@@ -109,7 +96,7 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
  *
  * @param handlerOptions - Integration options plus test seams.
  * @returns `init`, `manifest`, and a `GET` that dispatches between them by
- * the last path segment.
+ * the path below the route, and answers 404 for any other path.
  * @example
  * ```ts
  * // src/pages/api/inth/[...path].ts, with routePrefix: false and
@@ -118,22 +105,32 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
  * import { createConsentRouteHandlers } from '@inth/astro/server';
  *
  * const handlers = createConsentRouteHandlers({ options });
- * export const GET = ({ locals, request }) => handlers.GET(request, { locals });
+ * export const GET = ({ locals, params, request }) =>
+ *   handlers.GET(request, { locals, path: params.path });
  * ```
  */
 export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	handlerOptions: ConsentRouteHandlerOptions
 ) {
-	const { mode, i18n } = handlerOptions.options;
+	const { i18n, mode, projectUrl, routePrefix } = handlerOptions.options;
 	const handle = createConsentRouteHandler({
+		...resolveServerMode({
+			adapter: '@inth/astro',
+			mode,
+			projectUrl,
+			routePrefix,
+		}).route,
 		adapter: '@inth/astro',
 		fetch: handlerOptions.fetch,
 		fetchGvl: handlerOptions.fetchGvl,
-		manifest: mode.type === 'manifest' ? mode.snapshot : undefined,
-		manifestUrl: mode.type === 'manifest' ? mode.manifestUrl : undefined,
-		projectUrl: handlerOptions.options.projectUrl,
 	});
 	const locale = i18n?.locale;
+	// The same override the SSR path applies, so both resolve one language,
+	// and one set of vendor-list translations.
+	const inputsFor = (request: Request) =>
+		locale
+			? extractConsentRequestInputs(request.headers, { language: locale })
+			: undefined;
 
 	const waitUntilFor = function waitUntilFor(
 		lifetime: RequestLifetime | undefined
@@ -158,11 +155,7 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 		lifetime?: RequestLifetime
 	): Promise<Response> {
 		return handle(request, {
-			// The same override the SSR path applies, so both resolve one
-			// language, and one set of vendor-list translations.
-			inputs: locale
-				? extractConsentRequestInputs(request.headers, { language: locale })
-				: undefined,
+			inputs: inputsFor(request),
 			route: 'init',
 			waitUntil: waitUntilFor(lifetime),
 		});
@@ -186,26 +179,22 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	};
 
 	/**
-	 * The catch-all route: `init` or `manifest` by the last path segment,
-	 * and 404 for anything else under the prefix.
+	 * The catch-all route: `init` or `manifest` by the path below the
+	 * route, and 404 for anything else under the prefix.
 	 *
 	 * @param request - The incoming request.
-	 * @param lifetime - The route's `{ locals }`.
+	 * @param lifetime - The route's `{ locals, path }`.
 	 */
 	const GET = function GET(
 		request: Request,
 		lifetime?: RequestLifetime
 	): Promise<Response> {
-		const route = /\/(?<route>init|manifest)\/?$/u.exec(
-			new URL(request.url).pathname
-		)?.groups?.route;
-		if (route === 'manifest') {
-			return manifest(request, lifetime);
-		}
-		if (route === 'init') {
-			return init(request, lifetime);
-		}
-		return Promise.resolve(new Response(null, { status: 404 }));
+		return handle(request, {
+			inputs: inputsFor(request),
+			// A catch-all mount: without its rest parameter, the last segment.
+			path: lifetime?.path ?? new URL(request.url).pathname.split('/').pop(),
+			waitUntil: waitUntilFor(lifetime),
+		});
 	};
 
 	return { GET, init, manifest };

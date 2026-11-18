@@ -1,8 +1,12 @@
 import { inthProtocolHeaders } from '@inth/sdk/engine';
-import { createConsentRouteHandler } from '@inth/sdk/server';
+import {
+	createConsentRouteHandler,
+	createConsentRouteMethodHandlers,
+} from '@inth/sdk/server';
 import type {
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
+	ConsentRouteMethodHandlersFor,
 	ConsentRouteName,
 } from '@inth/sdk/server';
 
@@ -152,27 +156,12 @@ export type NextRouteHandler = (
 	context: NextRouteHandlerContext
 ) => Promise<Response>;
 
-/** Handlers returned by {@link createConsentRoute}. */
-export interface NextConsentRouteHandlers {
-	/** Serves `manifest` and `init`; other paths answer 404. */
-	GET: NextRouteHandler;
-}
-
-/** Handlers returned by {@link createConsentRoute} with `proxy` on. */
-export interface NextConsentProxyRouteHandlers extends NextConsentRouteHandlers {
-	POST: NextRouteHandler;
-	PATCH: NextRouteHandler;
-	PUT: NextRouteHandler;
-	DELETE: NextRouteHandler;
-	OPTIONS: NextRouteHandler;
-}
-
-/** Picks the handler set from the options' `proxy`. */
-export type NextConsentRouteHandlersFor<Options> = Options extends {
-	proxy: true | ConsentProxyOptions;
-}
-	? NextConsentProxyRouteHandlers
-	: NextConsentRouteHandlers;
+/**
+ * Handlers returned by {@link createConsentRoute}: `GET`, plus the write
+ * methods with `proxy` on.
+ */
+export type NextConsentRouteHandlersFor<Options> =
+	ConsentRouteMethodHandlersFor<Options, NextRouteHandler>;
 
 /**
  * The path below the route prefix, from the route's catch-all parameter
@@ -222,30 +211,15 @@ export const createConsentRoute = function createConsentRoute<
 >(options: Options = {} as Options): NextConsentRouteHandlersFor<Options> {
 	const handle = createHandler(options);
 	const waitUntil = options.onBackgroundRevalidate;
-	const handlerFor = function handlerFor(
-		route?: ConsentRouteName
-	): NextRouteHandler {
-		return async (request, context) =>
+	return createConsentRouteMethodHandlers<Options, NextRouteHandler>(
+		options.proxy,
+		(route?: ConsentRouteName) => async (request, context) =>
 			handle(request, {
 				path: await readCatchAllPath(context),
 				route,
 				waitUntil,
-			});
-	};
-	const GET = handlerFor();
-	if (!options.proxy) {
-		return { GET } as NextConsentRouteHandlersFor<Options>;
-	}
-	const forward = handlerFor('proxy');
-	const handlers: NextConsentProxyRouteHandlers = {
-		DELETE: forward,
-		GET,
-		OPTIONS: forward,
-		PATCH: forward,
-		POST: forward,
-		PUT: forward,
-	};
-	return handlers as NextConsentRouteHandlersFor<Options>;
+			})
+	);
 };
 
 export type { ConsentConfig } from './config';

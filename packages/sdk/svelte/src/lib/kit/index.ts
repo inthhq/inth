@@ -37,8 +37,6 @@ export type { LoadConsentOptions } from './load-consent';
 export { loadConsent } from './load-consent';
 export type {
 	ConsentProxyOptions,
-	ConsentProxyRouteHandlers,
-	ConsentRouteHandlers,
 	ConsentRouteHandlersFor,
 	ConsentRouteOptions,
 } from './routes';

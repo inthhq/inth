@@ -2,14 +2,13 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
-import { clearGvlCache } from '@inth/sdk/server';
+import { clearGvlCache, clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
 import { createConsentMiddleware } from '../middleware-handler';
 import { manifest as manifestMode } from '../mode';
-import { clearManifestCache } from '../server';
 import type { InthAstroOptions, InthLocals } from '../types';
 
 const MANIFEST = await buildConsentManifestFromConfig({

@@ -33,10 +33,14 @@ import {
 	snapshot as generatedSnapshot,
 } from '@inth/sdk/generated';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
-import { createConsentRouteHandler } from '@inth/sdk/server';
+import {
+	createConsentRouteHandler,
+	createConsentRouteMethodHandlers,
+} from '@inth/sdk/server';
 import type {
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
+	ConsentRouteMethodHandlersFor,
 	ConsentRouteRequestContext,
 	ManifestCache,
 } from '@inth/sdk/server';
@@ -161,35 +165,13 @@ export type ConsentRouteHandler = (
 	context: ConsentRouteHandlerContext
 ) => Promise<Response>;
 
-/** Handlers returned by {@link createConsentRoute}. */
-export interface ConsentRouteHandlers {
-	/**
-	 * Splat handler: serves `manifest` and `init` under one file route. With
-	 * `proxy` enabled, every other allowlisted path is forwarded upstream.
-	 */
-	GET: ConsentRouteHandler;
-}
-
 /**
- * Handlers returned by {@link createConsentRoute} when `proxy` is enabled:
- * `GET` plus one proxy handler per write method.
- */
-export interface ConsentProxyRouteHandlers extends ConsentRouteHandlers {
-	POST: ConsentRouteHandler;
-	PATCH: ConsentRouteHandler;
-	PUT: ConsentRouteHandler;
-	DELETE: ConsentRouteHandler;
-	OPTIONS: ConsentRouteHandler;
-}
-
-/**
- * Picks the handler shape from the options: the proxy handlers when
- * `proxy` is set to anything truthy, the plain handlers otherwise.
+ * Handlers returned by {@link createConsentRoute}: `GET`, plus `POST`,
+ * `PATCH`, `PUT`, `DELETE` and `OPTIONS` when `proxy` is set to anything
+ * truthy.
  */
 export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
-	Options extends { proxy: true | ConsentProxyOptions }
-		? ConsentProxyRouteHandlers
-		: ConsentRouteHandlers;
+	ConsentRouteMethodHandlersFor<Options, ConsentRouteHandler>;
 
 /**
  * Creates the handlers for the same-origin consent route,
@@ -256,21 +238,9 @@ export const createConsentRoute = function createConsentRoute<
 		};
 	};
 
-	const GET: ConsentRouteHandler = async (context) =>
-		handle(context.request, await contextFor(context));
-	if (!resolved.proxy) {
-		const handlers: ConsentRouteHandlers = { GET };
-		return handlers as ConsentRouteHandlersFor<Options>;
-	}
-	const proxyHandler: ConsentRouteHandler = async (context) =>
-		handle(context.request, await contextFor(context, 'proxy'));
-	const proxied: ConsentProxyRouteHandlers = {
-		DELETE: proxyHandler,
-		GET,
-		OPTIONS: proxyHandler,
-		PATCH: proxyHandler,
-		POST: proxyHandler,
-		PUT: proxyHandler,
-	};
-	return proxied as ConsentRouteHandlersFor<Options>;
+	return createConsentRouteMethodHandlers<Options, ConsentRouteHandler>(
+		resolved.proxy,
+		(route) => async (context) =>
+			handle(context.request, await contextFor(context, route))
+	);
 };

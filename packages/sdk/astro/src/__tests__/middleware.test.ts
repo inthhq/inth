@@ -2,6 +2,7 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { enTranslations } from '@inth/sdk/translations';
 import { baseTranslations } from '@inth/sdk/translations/all';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -10,7 +11,6 @@ import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
 import { createConsentMiddleware } from '../middleware-handler';
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';
-import { clearManifestCache } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions, InthLocals } from '../types';
 import { testRule, testWire } from './policy-fixture';

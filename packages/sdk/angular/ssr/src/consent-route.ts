@@ -9,15 +9,17 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  */
 import {
 	createConsentRouteHandler,
+	DEFAULT_CONSENT_ROUTE_PREFIX,
+	IN_PROCESS_ORIGIN,
 	normalizeRoutePrefix,
 	readRequestForwarding,
 	resolveRequestOrigin,
+	trimPathSlashes,
 } from '@inth/sdk/server';
 import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
-	ConsentRouteRequestContext,
 	ManifestFetch,
 } from '@inth/sdk/server';
 
@@ -143,32 +145,10 @@ const pathBelow = function pathBelow(
 	if (pathname === prefix) {
 		return '';
 	}
-	if (!pathname.startsWith(`${prefix}/`)) {
-		return undefined;
-	}
-	let start = prefix.length;
-	let end = pathname.length;
-	while (start < end && pathname[start] === '/') {
-		start += 1;
-	}
-	while (end > start && pathname[end - 1] === '/') {
-		end -= 1;
-	}
-	return pathname.slice(start, end);
+	return pathname.startsWith(`${prefix}/`)
+		? trimPathSlashes(pathname.slice(prefix.length))
+		: undefined;
 };
-
-const trimTrailingSlashes = (value: string): string => {
-	let end = value.length;
-	while (end > 1 && value[end - 1] === '/') {
-		end -= 1;
-	}
-	return value.slice(0, end);
-};
-
-const READ_METHODS = new Set(['GET', 'HEAD']);
-
-/** The origin of an in-process request with no incoming request to copy. */
-const IN_PROCESS_ORIGIN = 'http://c15t.local';
 
 /** Headers an in-process request carries when the route trusts them. */
 const FORWARDING_HEADERS = [
@@ -178,62 +158,6 @@ const FORWARDING_HEADERS = [
 	'x-forwarded-proto',
 	'x-forwarded-ssl',
 ] as const;
-
-/** Whether `pathname` is `prefix` or below it, on a segment boundary. */
-const onOrBelow = (pathname: string, prefix: string): boolean => {
-	const path = trimTrailingSlashes(pathname);
-	return path === prefix || path.startsWith(`${prefix}/`);
-};
-
-/** Whether a URL names its own origin (`https://…`, `//…`). */
-const isAbsolute = (url: string): boolean =>
-	/^[a-z][a-z\d+.-]*:/iu.test(url) || url.startsWith('//');
-
-/** Resolves a relative URL's path, `..` segments included. */
-const RELATIVE_BASE = 'http://inth.invalid';
-
-/**
- * The upstream URLs that would send the route's requests back into it.
- * A relative one always does, so it is rejected at setup. An absolute one
- * does only when the site itself serves it, which the route learns per
- * request: those come back as origins to check against each request. A
- * protocol-relative one (`//host/…`) comes back as `//host`, which takes
- * each request's own scheme.
- *
- * @throws {TypeError} When a relative `projectUrl` or `manifestUrl` is the
- * route or beneath it.
- */
-const upstreamLoops = function upstreamLoops(
-	options: ConsentRouteOptions,
-	routePrefix: string
-): string[] {
-	const origins: string[] = [];
-	for (const [name, url] of [
-		['projectUrl', options.projectUrl],
-		['manifestUrl', options.manifestUrl],
-	] as const) {
-		if (!url) {
-			continue;
-		}
-		const absolute = isAbsolute(url);
-		const protocolRelative = url.startsWith('//');
-		// The scheme here only parses the URL; a protocol-relative one keeps
-		// the request's own when it is checked.
-		const resolved = absolute
-			? new URL(protocolRelative ? `http:${url}` : url)
-			: new URL(url, RELATIVE_BASE);
-		if (!onOrBelow(resolved.pathname, routePrefix)) {
-			continue;
-		}
-		if (!absolute) {
-			throw new TypeError(
-				`${ADAPTER}: \`${name}\` (${url}) is on or beneath the consent route (${routePrefix}), so the route would call itself. Pass the inth backend's URL.`
-			);
-		}
-		origins.push(protocolRelative ? `//${resolved.host}` : resolved.origin);
-	}
-	return origins;
-};
 
 /**
  * Creates the consent route for an Angular server: `/manifest` and `/init`
@@ -272,9 +196,8 @@ export const createConsentRoute = function createConsentRoute(
 ): ConsentRoute {
 	const routePrefix = normalizeRoutePrefix(
 		ADAPTER,
-		options.routePrefix ?? '/api/inth'
+		options.routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX
 	);
-	const loops = upstreamLoops(options, routePrefix);
 	const handler = createConsentRouteHandler({
 		adapter: ADAPTER,
 		fetch: options.fetch,
@@ -283,6 +206,7 @@ export const createConsentRoute = function createConsentRoute(
 		manifestUrl: options.manifestUrl,
 		projectUrl: options.projectUrl,
 		proxy: options.proxy,
+		routePrefix,
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});
 
@@ -295,36 +219,11 @@ export const createConsentRoute = function createConsentRoute(
 		if (path === undefined) {
 			return null;
 		}
-		// The site's origin as the handler sees it, forwarded headers
-		// included when it trusts them.
-		const site =
-			forwarding?.() ??
-			readRequestForwarding(request, options.trustForwardedHeaders === true);
-		if (
-			loops.includes(`${site.proto}://${site.host}`) ||
-			loops.includes(`//${site.host}`)
-		) {
-			// An absolute upstream URL on this site, beneath this route: the
-			// request would come back here.
-			return new Response(
-				`${ADAPTER}: \`projectUrl\` or \`manifestUrl\` points beneath the consent route on this site (${routePrefix}). Pass the inth backend's URL.`,
-				{ status: 500 }
-			);
-		}
-		const read = READ_METHODS.has(request.method.toUpperCase());
-		if (!(read || options.proxy)) {
-			return new Response(null, {
-				headers: { allow: 'GET, HEAD' },
-				status: 405,
-			});
-		}
-		const context: ConsentRouteRequestContext = {
+		return await handler(request, {
 			forwarding,
 			path,
-			route: read ? undefined : 'proxy',
 			waitUntil: options.waitUntil,
-		};
-		return await handler(request, context);
+		});
 	};
 
 	/** In-process fetch with requests on `origin`, carrying `forwarded`. */

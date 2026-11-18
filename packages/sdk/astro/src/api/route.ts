@@ -20,8 +20,8 @@ import { createConsentRouteHandlers } from './handlers';
 
 const handlers = createConsentRouteHandlers({ options });
 
-export const GET: APIRoute = ({ locals, request }) =>
-	handlers.GET(request, { locals });
+export const GET: APIRoute = ({ locals, params, request }) =>
+	handlers.GET(request, { locals, path: params.path });
 
 /**
  * The paths a prerendered route writes: only the manifest, which the

@@ -650,31 +650,14 @@ export {
 
 // The handlers behind the injected route, for a site that sets
 // `routePrefix: false` and mounts them itself. The browser does not call
-// such a route for `/init`; see `createConsentRouteHandlers`. The manifest cache
-// lives in `@inth/sdk/server`, one process cache shared with the other
+// such a route for `/init`; see `createConsentRouteHandlers`. The manifest
+// cache is in `@inth/sdk/server`, one process cache shared with the other
 // framework adapters.
 export {
 	createConsentRouteHandlers,
-	resolveManifestSourceUrl,
 	waitUntilFromLocals,
 } from './api/handlers';
 export type {
 	ConsentRouteHandlerOptions,
 	RequestLifetime,
 } from './api/handlers';
-export { resolveManifestSourceFrom } from './api/manifest-init';
-export type { FetchGvl, RequestSource } from './api/manifest-init';
-export {
-	clearManifestCache,
-	createManifestRequestUrl,
-	fetchCachedManifest,
-	getManifestSMaxAge,
-	getManifestStaleWhileRevalidate,
-	MANIFEST_DEDUPE_TTL_SECONDS,
-	MANIFEST_PASSTHROUGH_HEADERS,
-} from '@inth/sdk/server';
-export type {
-	CachedManifestResponse,
-	FetchCachedManifestOptions,
-	ManifestFetch,
-} from '@inth/sdk/server';

@@ -18,12 +18,19 @@ import {
 	snapshot as builtSnapshot,
 } from '@inth/sdk/generated';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
-import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
+import {
+	createConsentRouteHandlerCache,
+	createConsentRouteMethodHandlers,
+	readWaitUntil,
+	trimPathSlashes,
+} from '@inth/sdk/server';
 import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
 	ConsentRouteHandler,
+	ConsentRouteMethodHandlersFor,
+	ConsentRouteName,
 	ConsentRouteRequestContext,
 	ManifestFetch,
 } from '@inth/sdk/server';
@@ -48,19 +55,6 @@ export const waitUntilFromEvent = function waitUntilFromEvent(
 	readWaitUntil(
 		(event.platform as { context?: unknown } | undefined)?.context
 	)?.(revalidation);
-};
-
-/** Removes surrounding slashes in linear time. */
-const trimPathSlashes = function trimPathSlashes(value: string): string {
-	let start = 0;
-	let end = value.length;
-	while (end > 0 && value[end - 1] === '/') {
-		end -= 1;
-	}
-	while (start < end && value[start] === '/') {
-		start += 1;
-	}
-	return value.slice(start, end);
 };
 
 const REST_PARAM = /\[\.\.\.(?<name>[^\]=]+)(?:=[^\]]+)?\]/u;
@@ -191,29 +185,13 @@ export interface ConsentRouteOptions {
 	proxy?: boolean | ConsentProxyOptions;
 }
 
-/** The route's handlers: `GET`, or every method with `proxy`. */
-export interface ConsentRouteHandlers {
-	/** Serves `manifest` and `init`; with `proxy`, forwards the rest. */
-	GET: RequestHandler;
-}
-
-/** The route's handlers when `proxy` is enabled. */
-export interface ConsentProxyRouteHandlers extends ConsentRouteHandlers {
-	POST: RequestHandler;
-	PATCH: RequestHandler;
-	PUT: RequestHandler;
-	DELETE: RequestHandler;
-	OPTIONS: RequestHandler;
-}
-
 /**
- * Picks the handler shape from the options: every method when `proxy` is
- * set to anything truthy, `GET` otherwise.
+ * The route's handlers: `GET`, which serves `manifest` and `init`, plus
+ * `POST`, `PATCH`, `PUT`, `DELETE` and `OPTIONS` when `proxy` is set to
+ * anything truthy.
  */
 export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
-	Options extends { proxy: true | ConsentProxyOptions }
-		? ConsentProxyRouteHandlers
-		: ConsentRouteHandlers;
+	ConsentRouteMethodHandlersFor<Options, RequestHandler>;
 
 /** What the route resolves with, from its options and the handle's. */
 interface RouteSource {
@@ -222,15 +200,8 @@ interface RouteSource {
 	snapshot: ConsentManifest | undefined;
 }
 
-const trimTrailingSlashes = function trimTrailingSlashes(
-	value: string
-): string {
-	let end = value.length;
-	while (end > 1 && value[end - 1] === '/') {
-		end -= 1;
-	}
-	return value.slice(0, end);
-};
+/** A path with one leading slash and none trailing, for comparison. */
+const asPath = (value: string): string => `/${trimPathSlashes(value)}`;
 
 /**
  * Whether a handle's relative `projectUrl` names this route, as
@@ -246,20 +217,20 @@ const pointsAtRoute = function pointsAtRoute(
 	if (!projectUrl.startsWith('/')) {
 		return false;
 	}
-	const target = trimTrailingSlashes(projectUrl);
+	const target = asPath(projectUrl);
 	if (
 		locals?.routePrefix !== undefined &&
-		target === trimTrailingSlashes(locals.routePrefix)
+		target === asPath(locals.routePrefix)
 	) {
 		return true;
 	}
 	const rest = readRestPath(event);
-	const pathname = trimTrailingSlashes(event.url.pathname);
+	const pathname = asPath(event.url.pathname);
 	const mount =
 		rest === undefined || rest === ''
 			? pathname
 			: pathname.slice(0, -(rest.length + 1));
-	return target === trimTrailingSlashes(mount || '/');
+	return target === asPath(mount);
 };
 
 /** The handle's backend URL, unless it points at this route. */
@@ -358,20 +329,12 @@ export const createConsentRoute = function createConsentRoute<
 	const options: ConsentRouteOptions = routeOptions ?? {};
 	// The handle passes the same values on every request, so the core
 	// handler is built once and rebuilt only if they change.
-	let built: { handle: ConsentRouteHandler; source: RouteSource } | undefined;
+	const cached = createConsentRouteHandlerCache();
 	const handlerFor = function handlerFor(
 		event: RequestEvent
 	): ConsentRouteHandler {
 		const source = readRouteSource(options, event);
-		if (
-			built &&
-			built.source.projectUrl === source.projectUrl &&
-			built.source.manifestUrl === source.manifestUrl &&
-			built.source.snapshot === source.snapshot
-		) {
-			return built.handle;
-		}
-		const handle = createConsentRouteHandler({
+		return cached({
 			adapter: '@inth/svelte',
 			fetch: options.fetch,
 			fetchGvl: options.fetchGvl,
@@ -380,15 +343,13 @@ export const createConsentRoute = function createConsentRoute<
 			projectUrl: source.projectUrl,
 			proxy: options.proxy,
 		});
-		built = { handle, source };
-		return handle;
 	};
 	const onBackgroundRevalidate =
 		options.onBackgroundRevalidate ?? waitUntilFromEvent;
 
 	const contextFor = function contextFor(
 		event: RequestEvent,
-		route?: 'proxy'
+		route: ConsentRouteName | undefined
 	): ConsentRouteRequestContext {
 		return {
 			forwarding: () => readForwarding(event),
@@ -402,20 +363,9 @@ export const createConsentRoute = function createConsentRoute<
 		};
 	};
 
-	const GET: RequestHandler = (event) =>
-		handlerFor(event)(event.request, contextFor(event));
-	if (!options.proxy) {
-		return { GET } as ConsentRouteHandlersFor<Options>;
-	}
-	const proxy: RequestHandler = (event) =>
-		handlerFor(event)(event.request, contextFor(event, 'proxy'));
-	const proxied: ConsentProxyRouteHandlers = {
-		DELETE: proxy,
-		GET,
-		OPTIONS: proxy,
-		PATCH: proxy,
-		POST: proxy,
-		PUT: proxy,
-	};
-	return proxied as ConsentRouteHandlersFor<Options>;
+	return createConsentRouteMethodHandlers<Options, RequestHandler>(
+		options.proxy,
+		(route) => (event) =>
+			handlerFor(event)(event.request, contextFor(event, route))
+	);
 };

@@ -2,11 +2,12 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { resolveOptions } from '../integration';
 import { manifest as manifestMode } from '../mode';
-import { clearManifestCache, resolveConsentContext } from '../server';
+import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import { testRule } from './policy-fixture';
 

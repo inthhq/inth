@@ -1,12 +1,9 @@
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
-import {
-	clearManifestCache,
-	DEFAULT_RESOLVE_TIMEOUT_MS,
-	resolveConsentContext,
-} from '../server';
+import { DEFAULT_RESOLVE_TIMEOUT_MS, resolveConsentContext } from '../server';
 import type { InthAstroOptions } from '../types';
 import { testWire } from './policy-fixture';
 

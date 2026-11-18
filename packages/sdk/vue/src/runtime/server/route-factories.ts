@@ -10,7 +10,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  * in-process fetch, and hands detached work to the preset's `waitUntil`.
  */
 import {
-	createConsentRouteHandler,
+	createConsentRouteHandlerCache,
 	readWaitUntil,
 	resolveServerMode,
 } from '@inth/sdk/server';
@@ -121,8 +121,8 @@ const readSubpath = function readSubpath(
 /**
  * `GET ${routePrefix}/manifest` and `GET ${routePrefix}/init`: the backend
  * manifest with its cache headers, and the visitor's init resolved from
- * it. The core handler is rebuilt only when Nitro hands back a different
- * runtime config object.
+ * it. The core handler is rebuilt only when the runtime config changes
+ * where the route reads from.
  *
  * @param dependencies - Nitro's fetch and runtime config, and the snapshot.
  * @returns The h3 handler the module mounts at `${routePrefix}/**`.
@@ -131,18 +131,11 @@ const readSubpath = function readSubpath(
 export const createConsentRoute = function createConsentRoute(
 	dependencies: RouteDependencies
 ) {
-	const built: {
-		current?: {
-			runtimeConfig: unknown;
-			handle: ConsentRouteHandler;
-			prefix: string | undefined;
-		};
-	} = {};
-	const handlerFor = function handlerFor(runtimeConfig: unknown) {
-		const { current } = built;
-		if (current && current.runtimeConfig === runtimeConfig) {
-			return current;
-		}
+	const cached = createConsentRouteHandlerCache();
+	const handlerFor = function handlerFor(runtimeConfig: unknown): {
+		handle: ConsentRouteHandler;
+		prefix: string | undefined;
+	} {
 		const config = readConsentConfig(runtimeConfig);
 		const prefix = readNuxtRoutePrefix(config);
 		const { route } = resolveServerMode({
@@ -152,14 +145,12 @@ export const createConsentRoute = function createConsentRoute(
 			projectUrl: config.projectUrl,
 			routePrefix: prefix,
 		});
-		const handle = createConsentRouteHandler({
+		const handle = cached({
 			...route,
 			adapter: '@inth/nuxt',
 			fetch: dependencies.fetch,
 		});
-		const next = { handle, prefix, runtimeConfig };
-		built.current = next;
-		return next;
+		return { handle, prefix };
 	};
 	return defineEventHandler(async (event) => {
 		const { handle, prefix } = handlerFor(dependencies.useRuntimeConfig(event));

@@ -431,7 +431,7 @@ describe('serverFetch', () => {
 });
 
 describe('saves', () => {
-	test('the route answers a save with 404, so the browser never posts one here', async () => {
+	test('the route answers a save with 405, so the browser never posts one here', async () => {
 		mocks.useRuntimeConfig.mockReturnValue({ public: { inth: {} } });
 		const app = createApp();
 		const router = createRouter();
@@ -446,7 +446,7 @@ describe('saves', () => {
 				method: 'POST',
 			})
 		);
-		expect(response.status).toBe(404);
+		expect(response.status).toBe(405);
 		// A snapshot-only config has no backend to save to, and the client
 		// refuses to send saves to the route instead.
 		const config = {
