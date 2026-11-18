@@ -27,14 +27,6 @@ import {
 import type { StoredExperimentArm } from './experiment-storage';
 import type { ConsentPresentation, PresentationAction } from './policy-actions';
 
-export {
-	applyExperimentAssignment,
-	applyExperimentTheme,
-	CONTROL_ARM,
-	resolveExperimentPresentation,
-	resolveExperimentTheme,
-} from './experiment-presentation';
-
 /**
  * Styling of one consent action, the shape `theme.consentActions` uses.
  * Structural so core stays independent of `@inth/sdk/ui`.

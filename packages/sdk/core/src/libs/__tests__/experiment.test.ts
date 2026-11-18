@@ -5,15 +5,17 @@ import { defineExperiment } from '../../index';
 import type { ExperimentArmName } from '../../index';
 import {
 	actionAppearanceFromTheme,
-	applyExperimentTheme,
 	experimentConfigError,
 	pickExperimentArm,
-	resolveExperimentPresentation,
-	resolveExperimentTheme,
 	seedExperiment,
 } from '../experiment';
 import type { ConsentExperiment } from '../experiment';
 import { validateExperiment } from '../experiment-engine';
+import {
+	applyExperimentTheme,
+	resolveExperimentPresentation,
+	resolveExperimentTheme,
+} from '../experiment-presentation';
 
 const choice = normalizePolicyRule({
 	id: 'choice',

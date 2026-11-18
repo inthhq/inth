@@ -301,13 +301,15 @@ export {
 } from './libs/policy-actions';
 export {
 	actionAppearanceFromTheme,
-	applyExperimentAssignment,
-	applyExperimentTheme,
 	defineExperiment,
 	hostExperiment,
-	resolveExperimentTheme,
 	seedExperiment,
 } from './libs/experiment';
+export {
+	applyExperimentAssignment,
+	applyExperimentTheme,
+	resolveExperimentTheme,
+} from './libs/experiment-presentation';
 export type {
 	ActionAppearance,
 	ConsentExperiment,
