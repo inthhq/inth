@@ -91,6 +91,15 @@ describe('resolveParams', () => {
 		).toThrowError(/initURL was removed.*Policy is fetched from projectUrl/u);
 	});
 
+	it('refuses the renamed domain option and names property instead', () => {
+		expect(() =>
+			resolveParams({ domain: 'acme.com', projectUrl: BACKEND } as never)
+		).toThrowError(/domain was renamed to property/u);
+		expect(
+			resolveParams({ projectUrl: BACKEND, property: 'acme.com' }).property
+		).toBe('acme.com');
+	});
+
 	describe('dryRun', () => {
 		it('is off unless set, and must be a boolean', () => {
 			expect(resolveParams({ projectUrl: BACKEND }).dryRun).toBe(false);
