@@ -404,9 +404,6 @@ const getCustomProperties = function getCustomProperties(
 	return out;
 };
 
-/**
- * Capture the computed style + CSS custom properties for a single element.
- */
 export const captureComputedStyle = function captureComputedStyle(
 	el: Element,
 	options: CaptureOptions = {}
@@ -446,9 +443,6 @@ export const captureComputedStyleFor = function captureComputedStyleFor(
 	return out;
 };
 
-/**
- * Diff two snapshots. Returns an array of divergences (empty if equal).
- */
 export const diffComputedStyle = function diffComputedStyle(
 	a: ComputedStyleSnapshot,
 	b: ComputedStyleSnapshot,

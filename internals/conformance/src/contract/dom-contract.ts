@@ -2,10 +2,8 @@
  * Machine-readable DOM contract for every prebuilt component.
  *
  * Each entry maps a component key → DOM/ARIA expectations that every
- * framework must render identically. Used by:
- * - `assertDomContract(container, componentKey)` — runtime assertion helper
- * - `apps/parity-runner` — as the source for cross-framework DOM diffs
- * - `dom-snapshot.ts` — as the list of stable elements to capture
+ * framework must render identically. `assertDomContract` and
+ * `assertStableElements` check a rendered component against it.
  */
 
 import { TEST_IDS } from './test-ids';

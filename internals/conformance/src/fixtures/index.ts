@@ -1,6 +1,6 @@
 /**
  * Framework-agnostic fixture data for consent storybook stories.
- * React/Vue/Svelte/Solid each wrap these in their own provider components.
+ * Each framework's Storybook wraps these in its own provider components.
  */
 
 export const editableConsentOptions = {

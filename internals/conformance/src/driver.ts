@@ -7,8 +7,8 @@ import type {
  * Framework-agnostic test driver.
  *
  * Each framework package implements this interface once; the conformance
- * suites consume it to exercise behavior without knowing whether the
- * underlying UI is React, Next.js, Svelte, Vue, or Solid.
+ * suites consume it to exercise behavior without knowing which framework
+ * renders the UI.
  *
  * The driver's job is to own the framework-specific rendering lifecycle
  * and expose a uniform surface for the suites to interact with.

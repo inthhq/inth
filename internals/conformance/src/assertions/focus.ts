@@ -136,8 +136,8 @@ export const assertTabOrder = async function assertTabOrder(
 };
 
 /**
- * Assert that `Shift+Tab` from the current focus moves back to the previous
- * element in the order.
+ * Walk `Shift+Tab` back through the expected focus order and assert each
+ * stop matches. The last of `orderedTestIds` should already have focus.
  */
 export const assertReverseTabOrder = async function assertReverseTabOrder(
 	root: ParentNode,
