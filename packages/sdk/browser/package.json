@@ -1,6 +1,6 @@
 {
 	"name": "@inth/sdk-browser",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"private": true,
 	"description": "Script-tag build of Inth for Webflow, WordPress, Framer, Squarespace and plain HTML. One script tag, script blocking and an optional IAB TCF build.",
 	"keywords": [

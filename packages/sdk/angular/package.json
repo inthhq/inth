@@ -1,6 +1,6 @@
 {
 	"name": "@inth/angular",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"description": "Angular cookie consent banner for Inth, with a consent dialog and preference center. Standalone components, signals and zoneless change detection.",
 	"keywords": [
 		"angular",
@@ -123,7 +123,8 @@
 		}
 	},
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"tag": "alpha"
 	},
 	"scripts": {
 		"build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && pnpm run build:schematics && node ../shared/write-translation-entries.mjs dist",

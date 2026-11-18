@@ -1,6 +1,6 @@
 {
 	"name": "@inth/tanstack-start",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"description": "TanStack cookie consent banner for TanStack Start, built on Inth. Server-rendered banner, request middleware and a preference center.",
 	"keywords": [
 		"banner",
@@ -155,7 +155,8 @@
 		}
 	},
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"tag": "alpha"
 	},
 	"scripts": {
 		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun ../shared/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",

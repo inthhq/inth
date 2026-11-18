@@ -1,17 +1,19 @@
 name: Release SDK
 
-# DISABLED. Its packages carry Inth names; this release line turns on once
-# the owner adds registry credentials. Until then it runs
-# only by hand, and tools/ci/release-guard.ts stops the publish job: it
-# refuses while the SDK_RELEASE_ENABLED repository variable is not "true", and
-# it refuses any c15t, @c15t/* or com.c15t artifact even when the variable is
-# set. The publish step is a placeholder that fails; nothing here can publish.
+# Publishes @inth/sdk and the framework packages in packages/sdk to npm under
+# the alpha dist-tag, with npm trusted publishing: GitHub's OIDC token, no npm
+# token. Tegami (tools/ci/sdk-release.ts) publishes what .tegami/sdk/
+# publish-lock.yaml lists and skips versions already on npm, then tags
+# sdk@<version>. With nothing left to publish it opens a version PR instead.
+# Never a bare version tag: SwiftPM reads those as Swift releases.
 #
-# Releases: npm, @inth/sdk and the framework packages in packages/sdk. Tags:
-# sdk@<version>, never a bare version, which SwiftPM reads as a Swift release.
-# To enable: wire the publish step, grant it the permissions it needs, put the
-# credentials in a protected environment and set SDK_RELEASE_ENABLED to
-# "true".
+# Off until the SDK_RELEASE_ENABLED repository variable is "true":
+# tools/ci/release-guard.ts stops the publish job before it installs
+# anything. Turn it on after the first publish by hand and after trusted
+# publishing is set up for every package (.tegami/sdk/README.md).
+#
+# Keep this file name: npm trusted publishing for the SDK packages names
+# release-sdk.yml, so a rename makes npm reject the publish.
 on:
   workflow_dispatch:
 
@@ -33,22 +35,44 @@ jobs:
   publish:
     name: Publish SDK
     needs: verify
+    # npm trusted publishing requires a GitHub-hosted runner.
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 60
     permissions:
-      contents: read
+      # The sdk@<version> tag, the GitHub release and the version PR.
+      contents: write
+      pull-requests: write
+      # The OIDC token npm exchanges for a publish credential.
+      id-token: write
+    env:
+      NODE_OPTIONS: --max-old-space-size=6144
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .node-version
+          registry-url: https://registry.npmjs.org
       - name: Refuse while disabled or while artifacts carry c15t names
         env:
           RELEASE_ENABLED: ${{ vars.SDK_RELEASE_ENABLED }}
         run: node tools/ci/release-guard.ts sdk
-      - name: Publish
-        run: |
-          echo "::error::SDK publishing is not wired yet. See the comment at the top of this workflow."
-          exit 1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          cache: true
+      # The SDK's build scripts run TypeScript with bun.
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.11
+      - run: pnpm install --frozen-lockfile
+      - name: Build the SDK packages and their docs
+        run: pnpm turbo run build build:docs --concurrency=4 --filter='./packages/sdk/*'
+      - name: Pack and check every package
+        run: pnpm sdk:pack
+      - name: Version or publish packages
+        run: pnpm tegami:sdk ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"

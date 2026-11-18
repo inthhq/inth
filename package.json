@@ -38,7 +38,9 @@
     "sdk:bench:nightly": "pnpm sdk:turbo:bench bench:nightly",
     "sdk:bench:micro": "turbo run bench --filter=@inth/benchmarks",
     "sdk:compat:styles:build": "turbo run build --filter=@inth/css-layer-preview --filter=@inth/tw3-css-test --filter=@inth/tw4-css-test --filter=@inth/no-tw-css-test --filter=@inth/tailwind-matrix-v3 --filter=@inth/tailwind-matrix-v4",
-    "sdk:lint:repo": "pnpm --dir scripts run lint:repo"
+    "sdk:lint:repo": "pnpm --dir scripts run lint:repo",
+    "sdk:pack": "node tools/ci/sdk-pack.ts",
+    "tegami:sdk": "node tools/ci/sdk-release.ts"
   },
   "devDependencies": {
     "@oxlint/plugins": "1.81.0",

@@ -1,6 +1,6 @@
 {
 	"name": "@inth/react",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"description": "React cookie consent banner and React consent dialog for Inth, plus a React cookie banner, preference center and headless hooks.",
 	"keywords": [
 		"cmp",
@@ -288,7 +288,8 @@
 		}
 	},
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"tag": "alpha"
 	},
 	"scripts": {
 		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun ../shared/generate-distribution-css.ts && pnpm run clean:dist:test-artifacts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",

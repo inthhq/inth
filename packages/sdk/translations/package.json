@@ -1,6 +1,6 @@
 {
 	"name": "@inth/sdk-translations",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"private": true,
 	"description": "Translations for Inth in 53 languages. Typed i18n strings for Inth banners, dialogs and preference centers.",
 	"keywords": [

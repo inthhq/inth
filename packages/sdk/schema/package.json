@@ -1,6 +1,6 @@
 {
 	"name": "@inth/sdk-schema",
-	"version": "3.1.1-canary.0",
+	"version": "0.0.0-alpha.0",
 	"private": true,
 	"description": "Valibot schemas and TypeScript types for the Inth consent API, shared by the backend, frontends and Node.js SDK.",
 	"keywords": [

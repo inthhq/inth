@@ -1,6 +1,6 @@
 {
 	"name": "@inth/vue",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"description": "Vue cookie consent banner, consent dialog and preference center for Inth. Nuxt apps use @inth/nuxt.",
 	"keywords": [
 		"banner",
@@ -229,7 +229,8 @@
 		}
 	},
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"tag": "alpha"
 	},
 	"scripts": {
 		"build": "unbuild",
