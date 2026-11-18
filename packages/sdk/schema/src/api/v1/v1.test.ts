@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	v1CanonicalSubjectIdSchema,
+	v1ConsentCheckOutputSchema,
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordOutputSchema,
 	v1ConsentSessionReportSchema,
@@ -267,6 +268,28 @@ describe('documents', () => {
 				...acceptances,
 				acceptances: [],
 				subjectId: SUBJECT,
+			}).success
+		).toBe(false);
+	});
+});
+
+describe('GET /v1/consent/check', () => {
+	const result = { hasConsent: true, isLatestPolicy: false };
+
+	it('keeps the result of every type, including one named constructor', () => {
+		const output = v.parse(
+			v1ConsentCheckOutputSchema,
+			JSON.parse(
+				JSON.stringify({ results: { constructor: result, terms_us: result } })
+			)
+		);
+		expect(Object.keys(output.results)).toEqual(['constructor', 'terms_us']);
+	});
+
+	it('refuses a malformed result', () => {
+		expect(
+			v.safeParse(v1ConsentCheckOutputSchema, {
+				results: { terms_us: { hasConsent: 'yes', isLatestPolicy: false } },
 			}).success
 		).toBe(false);
 	});

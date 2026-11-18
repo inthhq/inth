@@ -290,8 +290,23 @@ export const v1ConsentCheckResultSchema = v.object({
 	isLatestPolicy: v.boolean(),
 });
 
+/**
+ * One result per type asked about. Checked by hand: `v.record` drops a key
+ * such as `constructor`, a valid document type, and still succeeds.
+ */
+const checkResultsSchema = v.custom<
+	Record<string, v.InferOutput<typeof v1ConsentCheckResultSchema>>
+>(
+	(input) =>
+		isPlainPolicyObject(input) &&
+		Object.values(input).every((result) =>
+			v.is(v1ConsentCheckResultSchema, result)
+		),
+	'Expected a check result for each type'
+);
+
 export const v1ConsentCheckOutputSchema = v.object({
-	results: v.record(v.string(), v1ConsentCheckResultSchema),
+	results: checkResultsSchema,
 });
 
 // ---------------------------------------------------------------------------
