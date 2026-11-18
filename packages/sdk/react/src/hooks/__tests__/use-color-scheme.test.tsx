@@ -18,10 +18,8 @@ describe('useColorScheme', () => {
 	let removeEventListenerSpy: ReturnType<typeof vi.spyOn>;
 
 	beforeEach(() => {
-		// Reset document classes
 		document.documentElement.classList.remove('inth-dark', 'dark');
 
-		// Mock matchMedia
 		mediaQueryList = {
 			addEventListener: vi.fn(),
 			// Deprecated but included for completeness
@@ -39,7 +37,6 @@ describe('useColorScheme', () => {
 			() => mediaQueryList as MediaQueryList
 		);
 
-		// Spy on event listeners
 		addEventListenerSpy = vi.spyOn(mediaQueryList, 'addEventListener');
 		removeEventListenerSpy = vi.spyOn(mediaQueryList, 'removeEventListener');
 	});
@@ -97,11 +94,9 @@ describe('useColorScheme', () => {
 		// This allows users to manage color scheme themselves
 		document.documentElement.classList.add('dark');
 		await renderHook(() => useColorScheme(null));
-		// inth-dark should NOT be added - the hook is inactive when null
 		expect(document.documentElement.classList.contains('inth-dark')).toBe(
 			false
 		);
-		// The original 'dark' class should still be there (untouched)
 		expect(document.documentElement.classList.contains('dark')).toBe(true);
 	});
 });

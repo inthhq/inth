@@ -5,36 +5,6 @@ import { useContext, useMemo } from 'react';
 import { GlobalThemeContext, LocalThemeContext } from '~/context/theme-context';
 import type { ThemeContextValue } from '~/context/theme-context';
 
-/**
- * Hook to access the current theme context.
- *
- * @remarks
- * Provides type-safe access to theme values and consent management state.
- * Throws an error if used outside of a Theme.Root component.
- * Supports TypeScript inference for theme types.
- *
- * @throws {Error} When used outside of a Theme.Root component
- *
- * @example
- * ```tsx
- * const MyComponent = () => {
- *   const { theme, noStyle, disableAnimation } = useTheme();
- *
- *   return (
- *     <div className={theme?.myClass}>
- *       {!disableAnimation && <AnimatedContent />}
- *     </div>
- *   );
- * };
- * ```
- *
- * @returns The current theme context value
- * @public
- */
-
-/**
- * Deep merges two objects recursively
- */
 const isIndexableObject = function isIndexableObject(
 	value: unknown
 ): value is Record<string, unknown> {
@@ -82,7 +52,6 @@ export const useTheme = (): ThemeContextValue => {
 		throw new Error('Theme components must be used within Theme.Root');
 	}
 
-	// Deep merge the entire context, with local taking precedence
 	return useMemo(
 		() => deepMerge(globalContext, localContext || null),
 		[globalContext, localContext]

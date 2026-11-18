@@ -48,13 +48,9 @@ export interface NextRequestContext {
 	 */
 	cookies: () => Awaitable<{ toString: () => string }>;
 
-	/**
-	 * Returns the request headers as a Web `Headers` instance.
-	 */
 	headers: () => Awaitable<Headers>;
 }
 
-/** The request facts the core resolver needs. */
 interface NextRequestFacts {
 	headers: Headers;
 	cookie: string;

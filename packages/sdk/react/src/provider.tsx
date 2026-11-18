@@ -413,26 +413,6 @@ export type ConsentProviderProps =
 	| ExternalRuntimeProviderProps;
 
 /**
- * The modules a provider-built runtime mounts. Persistence, window debug
- * and the revocation reload are static: a returning visitor's choice must
- * apply before the banner shows, and the reload has to see the first save.
- * The rest load on demand, so a page that configures none of them never
- * downloads them:
- *
- * - the script loader and data clearing, when `scripts` or
- *   `clearOnRevocation` is set;
- * - the network blocker, when `networkBlocker` is set; the runtime holds
- *   matching requests from construction until it lands;
- * - the iframe blocker, when the first gated iframe is on the page; until
- *   then a watcher pauses gated frames consent does not allow.
- *
- * `lazyStreamPrefetch` lets `prefetch` be a promise a server streams in,
- * and loads that code only when it is one; a root that passes
- * `__resolveStreamedInit` has it in its first-load chunk instead. A root
- * that passes `__preloadScriptLoader` starts the script loader's download
- * during the first render when consent already lets a script run.
- */
-/**
  * Connects a `consentSource` once its module has loaded. Few sites borrow
  * their decisions from another CMP, so the rest do not download it. Until
  * it connects, the kernel grants no optional category.
@@ -462,6 +442,26 @@ const connectConsentSourceOnDemand: ConsentRuntimeModules['connectConsentSource'
 const loadScriptLoader = async () =>
 	(await import('@inth/sdk/modules/script-loader')).createScriptLoader;
 
+/**
+ * The modules a provider-built runtime mounts. Persistence, window debug
+ * and the revocation reload are static: a returning visitor's choice must
+ * apply before the banner shows, and the reload has to see the first save.
+ * The rest load on demand, so a page that configures none of them never
+ * downloads them:
+ *
+ * - the script loader and data clearing, when `scripts` or
+ *   `clearOnRevocation` is set;
+ * - the network blocker, when `networkBlocker` is set; the runtime holds
+ *   matching requests from construction until it lands;
+ * - the iframe blocker, when the first gated iframe is on the page; until
+ *   then a watcher pauses gated frames consent does not allow.
+ *
+ * `lazyStreamPrefetch` lets `prefetch` be a promise a server streams in,
+ * and loads that code only when it is one; a root that passes
+ * `__resolveStreamedInit` has it in its first-load chunk instead. A root
+ * that passes `__preloadScriptLoader` starts the script loader's download
+ * during the first render when consent already lets a script run.
+ */
 const reactRuntimeModules = function reactRuntimeModules(
 	options: ConsentProviderOptions
 ): ConsentRuntimeModules {
@@ -989,8 +989,6 @@ const isPromiseLike = function isPromiseLike(
 };
 
 /**
- * v3 ConsentProvider.
- *
  * Builds one consent runtime (`createConsentProviderRuntime`) per mounted
  * provider and renders its kernel: the kernel goes into context, and
  * selector hooks subscribe to it through `useSyncExternalStore`. New

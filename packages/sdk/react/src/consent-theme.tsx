@@ -40,7 +40,6 @@ export interface ConsentThemeProps {
  * Render it once, next to the consent provider, where your framework renders
  * on the server. The provider does not generate theme CSS itself.
  *
- * @param props - The theme, color scheme and CSP nonce.
  * @returns A `<style id="inth-theme">` element.
  * @example
  * ```tsx

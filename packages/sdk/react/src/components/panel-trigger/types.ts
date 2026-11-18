@@ -1,9 +1,3 @@
-/**
- * Type definitions for the consent dialog trigger components.
- *
- * @packageDocumentation
- */
-
 import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 import type { CornerPosition } from '@inth/sdk/ui/utils/trigger-utils';
 import type { ReactNode } from 'react';
@@ -20,9 +14,6 @@ import type { ClassNameStyle } from '~/types/theme';
  */
 export type TriggerIcon = 'branding' | 'fingerprint' | 'settings' | ReactNode;
 
-/**
- * Size options for trigger controls.
- */
 export type TriggerSize = 'sm' | 'md' | 'lg';
 
 /**
@@ -31,7 +22,7 @@ export type TriggerSize = 'sm' | 'md' | 'lg';
 export type TriggerOrientation = 'horizontal' | 'vertical';
 
 /**
- * Props for the existing single-button ConsentDialogTrigger component.
+ * Props for the single-button ConsentDialogTrigger component.
  */
 export interface ConsentDialogTriggerProps {
 	/**
@@ -62,9 +53,6 @@ export interface ConsentDialogTriggerProps {
 	 */
 	ariaLabel?: string;
 
-	/**
-	 * Additional CSS class names.
-	 */
 	className?: string;
 
 	/**
@@ -109,22 +97,17 @@ export interface ConsentDialogTriggerToolbarAction {
 	/** Accessible name announced for the action button. */
 	label: string;
 
-	/** Icon displayed in the action. */
 	icon: TriggerIcon;
 
-	/** Callback fired when the action is selected. */
 	onSelect: () => void;
 
-	/** Whether the action is disabled. */
 	disabled?: boolean;
 
 	/** Whether the action represents a currently active toggle state. */
 	pressed?: boolean;
 
-	/** Additional CSS class names for the action button. */
 	className?: string;
 
-	/** Inline styles for the action button. */
 	style?: ClassNameStyle['style'];
 }
 
@@ -152,10 +135,8 @@ export interface ConsentDialogTriggerToolbarPreferences {
 	/** Callback fired before the preferences dialog opens. */
 	onSelect?: () => void;
 
-	/** Additional CSS class names for the preferences button. */
 	className?: string;
 
-	/** Inline styles for the preferences button. */
 	style?: ClassNameStyle['style'];
 }
 
@@ -230,7 +211,4 @@ export interface ConsentDialogTriggerToolbarProps extends Omit<
 	onPositionChange?: (position: CornerPosition) => void;
 }
 
-/**
- * Re-export CornerPosition for convenience.
- */
 export type { CornerPosition };

@@ -1,11 +1,3 @@
-/**
- * v3 React adapter tests.
- *
- * Three categories:
- * 1. Selector hooks subscribe correctly and update on relevant mutations.
- * 2. ZERO unrelated re-renders invariant — key v3 gate.
- * 3. Stale-closure bug (c15t/c15t#604) is structurally resolved.
- */
 import type { ReactNode } from 'react';
 import { Profiler, StrictMode, useEffect } from 'react';
 import { describe, expect, test, vi } from 'vitest';
@@ -245,7 +237,6 @@ describe('v3 react: zero unrelated re-renders', () => {
 			</Wrapper>
 		);
 
-		// Wait for initial mount to settle.
 		await new Promise((resolve) => {
 			setTimeout(resolve, 10);
 		});
@@ -259,10 +250,7 @@ describe('v3 react: zero unrelated re-renders', () => {
 			setTimeout(resolve, 10);
 		});
 
-		// Marketing hook's returned value changed → exactly one more commit.
 		expect(marketingRenders.length).toBeGreaterThan(marketingAfterMount);
-		// Measurement hook's returned value is unchanged → zero additional
-		// commits.
 		expect(measurementRenders.length).toBe(measurementAfterMount);
 	});
 

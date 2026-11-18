@@ -316,10 +316,6 @@ const plan = function plan(
 export const createConsentProvider = function createConsentProvider(
 	importEngine: () => Promise<EngineModule> = () => import('./client-engine')
 ): (props: ConsentProviderProps) => ReactNode {
-	/**
-	 * Starts loading the engine once per page, retrying a failed import as
-	 * `recordOnce` does.
-	 */
 	const loadEngine = recordOnce(importEngine);
 
 	const EngineProvider = (props: ConsentProviderProps): ReactNode => {

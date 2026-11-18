@@ -34,14 +34,12 @@ interface PurposeItemProps {
 	isLocked?: boolean;
 	/** Legitimate interest objections - true means user has NOT objected (allowed) */
 	vendorLegitimateInterests?: Record<string, boolean>;
-	/** Handler for legitimate interest objection toggle */
 	onVendorLegitimateInterestToggle?: (
 		vendorId: VendorId,
 		value: boolean
 	) => void;
 	/** Purpose-level legitimate interest state - true means NOT objected (allowed) */
 	purposeLegitimateInterests?: Record<number, boolean>;
-	/** Handler for purpose-level legitimate interest objection toggle */
 	onPurposeLegitimateInterestToggle?: (
 		purposeId: number,
 		value: boolean
@@ -174,16 +172,13 @@ export const PurposeItem: FC<PurposeItemProps> = ({
 	const getVendorLegitimateInterest = (vendorId: VendorId) =>
 		vendorLegitimateInterests[String(vendorId)] ?? true;
 
-	// Check if purpose-level LI is allowed (not objected)
 	const isPurposeLIAllowed = purposeLegitimateInterests[purpose.id] ?? true;
 
-	// Handler for purpose-level LI objection - also objects to all LI vendors for this purpose
 	const handlePurposeLIObjection = () => {
 		const newValue = !isPurposeLIAllowed;
 		if (onPurposeLegitimateInterestToggle) {
 			onPurposeLegitimateInterestToggle(purpose.id, newValue);
 		}
-		// Also toggle all LI vendors for this purpose
 		if (onVendorLegitimateInterestToggle) {
 			for (const vendor of legIntVendors) {
 				onVendorLegitimateInterestToggle(vendor.id, newValue);
@@ -195,7 +190,6 @@ export const PurposeItem: FC<PurposeItemProps> = ({
 	const adTechProviders = purpose.adTechProviders ?? [];
 	const partnerCount = countIABPartners([purpose]);
 
-	// Separate IAB and custom vendors
 	const iabConsentVendors = consentVendors.filter((v) => !v.isCustom);
 	const customConsentVendors = consentVendors.filter((v) => v.isCustom);
 	const iabLegIntVendors = legIntVendors.filter((v) => !v.isCustom);
@@ -207,10 +201,8 @@ export const PurposeItem: FC<PurposeItemProps> = ({
 	const showConsentSwitch =
 		purpose.hasConsentBasis !== false || !onPurposeLegitimateInterestToggle;
 
-	// Handle purpose toggle - also toggles all consent-based vendors
 	const handlePurposeToggle = (value: boolean) => {
 		onToggle(value);
-		// Also toggle all consent-based vendors associated with this purpose
 		for (const vendor of consentVendors) {
 			onVendorToggle(vendor.id, value);
 		}

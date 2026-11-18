@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Button component for the ConsentDialogTrigger compound component.
- *
- * @packageDocumentation
- */
-
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { forwardRef as createForwardRef } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent, ReactNode } from 'react';
@@ -20,9 +14,6 @@ import { mergeSlotProps } from '~/utils/merge-slot-props';
 import type { CornerPosition, TriggerSize } from '../types';
 import { useTriggerContext } from './root';
 
-/**
- * Maps corner position to CSS class name.
- */
 const cornerClassMap = {
 	'bottom-left': styles.bottomLeft,
 	'bottom-right': styles.bottomRight,
@@ -30,18 +21,12 @@ const cornerClassMap = {
 	'top-right': styles.topRight,
 } as const satisfies Record<CornerPosition, string | undefined>;
 
-/**
- * Maps size to CSS class name.
- */
 const sizeClassMap = {
 	lg: styles.lg,
 	md: styles.md,
 	sm: styles.sm,
 } as const;
 
-/**
- * Props for the Button component.
- */
 export interface TriggerButtonProps {
 	children: ReactNode;
 
@@ -57,9 +42,6 @@ export interface TriggerButtonProps {
 	 */
 	ariaLabel?: string;
 
-	/**
-	 * Additional CSS class names.
-	 */
 	className?: string;
 
 	/**
@@ -116,7 +98,8 @@ export const TriggerButton = createForwardRef<
 		useIdleDialogWarming(true);
 
 		const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-			// Don't open dialog if this was a drag interaction
+			// The click that ends a drag doesn't open the dialog. Keyboard clicks
+			// have `detail` 0, so a stale drag flag can't swallow them.
 			if (event.detail !== 0 && wasDragged()) {
 				return;
 			}

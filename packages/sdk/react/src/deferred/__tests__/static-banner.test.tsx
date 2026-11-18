@@ -154,7 +154,6 @@ test('the client banner takes the static banner’s place: one banner, same mark
 	const banner = mountStaticBanner();
 	const staticRoot = banner.querySelector(ROOT)?.outerHTML;
 	expect(staticRoot).toBeTruthy();
-	// Record every frame until the client banner is in.
 	const frames: number[] = [];
 	let watching = true;
 	const watch = () => {

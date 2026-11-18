@@ -11,8 +11,6 @@ import { useEffect } from 'react';
  * Locks are counted, so a banner and a dialog can both hold one and the page
  * scrolls again only when both release. Unmounting releases the lock.
  *
- * @param shouldLock - Whether the page should stop scrolling
- *
  * @example
  * ```tsx
  * const { banner } = useHeadlessConsentUI();

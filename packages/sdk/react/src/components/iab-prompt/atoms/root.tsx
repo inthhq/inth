@@ -67,7 +67,6 @@ const IABConsentBannerRootChildren = createForwardRef<
 		const model = useModel();
 		const translations = useTranslations();
 		const textDirection = useTextDirection(translations?.language ?? 'en');
-		// IAB banner shows when activeUI is 'banner' and the current model matches
 		const sheetsReady = useSurfaceSheetsReady(IAB_FIRST_PAINT_SHEETS, noStyle);
 		const shouldShowBanner =
 			sheetsReady &&

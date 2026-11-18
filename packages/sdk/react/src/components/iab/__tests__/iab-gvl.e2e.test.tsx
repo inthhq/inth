@@ -1,9 +1,3 @@
-/**
- * IAB GVL E2E Tests
- *
- * Browser-based tests for GVL loading and content validation.
- */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -37,7 +31,6 @@ describe('IAB GVL E2E Tests', () => {
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
 			await waitForCMP();
 
-			// GVL should be available via getVendorList
 			const gvl = await tcfApiPromise<{
 				purposes: Record<number, unknown>;
 				vendors: Record<number, unknown>;
@@ -59,12 +52,10 @@ describe('IAB GVL E2E Tests', () => {
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
 			await waitForCMP();
 
-			// Banner should show vendor count
 			const bannerText =
 				document.querySelector('[data-testid="iab-consent-banner-header"]')
 					?.textContent || '';
 
-			// Should contain a number
 			expect(bannerText).toMatch(/\d+/u);
 		});
 	});
@@ -222,7 +213,6 @@ describe('IAB GVL E2E Tests', () => {
 
 			expect(Object.keys(gvl.vendors).length).toBeGreaterThan(0);
 
-			// Check first vendor has required fields
 			// oxlint-disable-next-line prefer-destructuring -- Preserve declaration order, interface shape, and public compatibility.
 			const firstVendor = Object.values(gvl.vendors)[0];
 			expect(firstVendor).toHaveProperty('id');

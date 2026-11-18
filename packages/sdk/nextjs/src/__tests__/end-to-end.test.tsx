@@ -1,13 +1,3 @@
-/**
- * End-to-end tests for the Next.js adapter.
- *
- * Covers the full flow:
- * 1. Server: resolveConsent calls the backend, returns the enriched state.
- * 2. Client: ConsentRoot with projectUrl auto-fires kernel.commands.init().
- * 3. Client: enabled=false disables init and treats consents as allowed.
- * 4. Prefetched banner visibility reaches the snapshot before the client
- *    roundtrip completes.
- */
 import { useConsent, useSaveConsents, useSnapshot } from '@inth/react';
 import type { KernelConfig } from '@inth/sdk/engine';
 import { manifest } from '@inth/sdk/modes';
@@ -203,7 +193,6 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 describe('ConsentRoot: resolved state reaches first paint', () => {
 	test('prepared policy renders without a duplicate browser init', async () => {
-		// Fetch that resolves on demand — simulates a slow roundtrip.
 		let resolveInit: (value: unknown) => void = () => undefined;
 		const fetchSpy = vi.fn(
 			() =>
@@ -241,8 +230,7 @@ describe('ConsentRoot: resolved state reaches first paint', () => {
 				</ConsentRoot>
 			);
 
-			// First paint carries the prefetched values. The init roundtrip
-			// is still in flight (resolveInit has not been called).
+			// First paint carries the prefetched values.
 			await expect
 				.element(getByTestId('probe'))
 				.toHaveTextContent('gdpr|opt-in|banner');

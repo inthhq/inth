@@ -1,8 +1,3 @@
-/**
- * Utility functions for processing the v2 theme system.
- * Handles token-to-CSS variable conversion and dark mode overrides.
- */
-
 import type { ThemeCSSVariables } from '@inth/sdk/ui/theme';
 import {
 	defaultTheme as baseDefaultTheme,

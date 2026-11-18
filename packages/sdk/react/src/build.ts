@@ -24,7 +24,6 @@ import type {
  *
  * @param options - Backend URL, `onBuildError`, `source` and the
  * `index.html` options.
- * @returns The Vite plugin.
  */
 export const consentManifest = (
 	options: ConsentManifestPluginOptions = {}

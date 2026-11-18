@@ -16,7 +16,6 @@ import { useDeclaredVendors, useVendorChoice } from '~/hooks';
  * turned it off. Then it stays listed so the visitor can turn it on again.
  * Under an `iab` policy the list is empty.
  *
- * @param category - The category row being rendered.
  * @returns The vendors to list, in declared order.
  *
  * @example

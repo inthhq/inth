@@ -34,10 +34,6 @@ export interface ConsentWidgetRootProps {
 
 /**
  * Props for the ConsentWidget component
- *
- * @remarks
- * Extends ThemeContextValue to provide comprehensive theming support
- * while maintaining type safety for consent management specific features.
  */
 export interface ConsentWidgetProps extends Omit<
 	ConsentWidgetRootProps,
@@ -46,7 +42,7 @@ export interface ConsentWidgetProps extends Omit<
 	/**
 	 * Controls whether to hide the branding in the widget footer.
 	 *
-	 * @defaultValue false
+	 * @defaultValue true
 	 */
 	hideBranding?: boolean;
 	/**

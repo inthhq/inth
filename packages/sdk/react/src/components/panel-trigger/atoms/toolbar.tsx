@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Internal toolbar view for ConsentDialogTriggerToolbar.
- *
- * @packageDocumentation
- */
-
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { followDevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';

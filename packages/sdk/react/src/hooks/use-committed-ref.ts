@@ -19,8 +19,6 @@ import { useInsertionEffect, useRef } from 'react';
  * Assigning the committed value is idempotent, so StrictMode's replayed
  * effects cannot leave a stale value behind.
  *
- * @param value - The value this render uses.
- * @returns A ref whose `current` is the last committed `value`.
  * @internal
  */
 export const useCommittedRef = function useCommittedRef<Value>(value: Value): {

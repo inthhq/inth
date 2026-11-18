@@ -1,6 +1,4 @@
 /**
- * v3 React hooks.
- *
  * Every selector hook uses `useSyncExternalStore` to subscribe to the
  * kernel. Hydration reads the immutable server snapshot. After hydration,
  * consumers read live state, including browser-only privacy signals.
@@ -206,7 +204,6 @@ export const useVendorConsent = function useVendorConsent(
  * including changes the visitor has not saved yet. Use it to render a
  * control, not to gate a vendor: see {@link useVendorConsent}.
  *
- * @param purposeId - IAB purpose ID.
  * @returns Whether the purpose is selected.
  */
 export const usePurposeConsent = function usePurposeConsent(
@@ -223,7 +220,6 @@ export const usePurposeConsent = function usePurposeConsent(
  * saved yet. Use it to render a control, not to gate a vendor: see
  * {@link useVendorConsent}.
  *
- * @param featureId - IAB special feature ID.
  * @returns Whether the special feature is selected.
  */
 export const useSpecialFeatureOptIn = function useSpecialFeatureOptIn(
@@ -375,8 +371,7 @@ export const useIdentify =
 	};
 
 /**
- * Async command: run the init transport (currently a no-op in the kernel;
- * boot modules wire in SSR hydration, prefetch, banner fetch).
+ * Async command: run the kernel's `init()` through its transport.
  */
 export const useInit = function useInit(): ConsentKernel['commands']['init'] {
 	const kernel = useKernel();

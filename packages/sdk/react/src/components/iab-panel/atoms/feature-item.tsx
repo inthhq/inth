@@ -32,7 +32,6 @@ export interface FeatureItemProps {
  * toggles. It shows the name, the description, the illustrations and the
  * names of the vendors that use the feature.
  *
- * @param props - The feature and its test id.
  * @returns The collapsible feature row.
  * @example
  * ```tsx

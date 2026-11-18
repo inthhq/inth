@@ -13,7 +13,7 @@ import * as React from 'react';
 
 import type { ConsentProviderOptions } from '../provider';
 
-/** `@inth/sdk/runtime/script-server-start`. @internal */
+/** @internal */
 export type ScriptServerStartModule = typeof ScriptServerStart;
 
 /** A promise that keeps its result where React 18 reads it on a retry. @internal */
@@ -96,8 +96,6 @@ const settledStates = new WeakMap<Promise<unknown>, Recorded<unknown>>();
  * transport then, and the server start has nothing to start. One promise
  * per input, so `use` sees the same value on a retry.
  *
- * @param state - A streamed consent state.
- * @returns The settled state.
  * @internal
  */
 export const settledState = function settledState<State>(
@@ -130,8 +128,6 @@ const { use } = React as {
  * `use` where React has it. React 18 suspends on a thrown promise and
  * reads its recorded result on the retry.
  *
- * @param promise - A recorded promise.
- * @returns Its value.
  * @internal
  */
 export const read = function read<Value>(promise: Recorded<Value>): Value {
@@ -168,7 +164,6 @@ const renders = new WeakMap<object, Render>();
  *
  * @param options - The provider options the render passes.
  * @param state - The consent state it renders with.
- * @returns The render.
  * @internal
  */
 export const renderFor = function renderFor(
@@ -186,10 +181,8 @@ export const renderFor = function renderFor(
 /**
  * This render's server start plan, made once.
  *
- * @param module - The server start module.
  * @param options - The provider options the render passes.
  * @param state - The consent state it renders with.
- * @returns The plan.
  * @internal
  */
 export const renderPlan = function renderPlan(

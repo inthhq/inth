@@ -2,7 +2,7 @@
  * `@inth/react/static-banner`: the stock banner as HTML, for a build that
  * puts it in a client-rendered page's `index.html`.
  *
- * `consentManifest()` from `@inth/sdk/build` (`@inth/sdk/build`) loads this
+ * `consentManifest()` from `@inth/sdk/build` loads this
  * module in Node during `vite build`. It renders `<ConsentBanner />` the way
  * the client-rendered `ConsentProvider` renders it once the page's `/init`
  * answers: the same stand-in kernel, the same snapshot from the same answer.

@@ -22,10 +22,6 @@ import * as Button from '../ui/button';
 import type { ButtonVariantsProps } from '../ui/button/button';
 import type { ConsentButtonElement, ConsentButtonProps } from './button.types';
 
-/**
- * Props that should be filtered out before spreading to the DOM element.
- * These are custom props used for component logic that are not valid HTML attributes.
- */
 const NON_DOM_PROPS = [
 	'primary',
 	'secondary',
@@ -136,21 +132,6 @@ const resolveConsentButtonStyle = function resolveConsentButtonStyle(params: {
 	);
 };
 
-/**
- * Button component that allows users to reject non-essential cookies.
- *
- * @remarks
- * When clicked, this button saves only necessary cookie consents and closes the banner.
- *
- * @example
- * ```tsx
- * <CookieBannerRejectButton>
- *   Reject All Cookies
- * </CookieBannerRejectButton>
- * ```
- *
- * @public
- */
 export const ConsentButton = createForwardRef<
 	ConsentButtonElement,
 	ConsentButtonProps &
@@ -237,7 +218,6 @@ export const ConsentButton = createForwardRef<
 			},
 		});
 
-		// Need to know what category to set
 		if (!category && action === 'set-consent') {
 			throw new Error('Category is required for set-consent action');
 		}
@@ -252,12 +232,10 @@ export const ConsentButton = createForwardRef<
 					action === 'accept-consent' ||
 					action === 'reject-consent' ||
 					action === 'custom-consent';
-				// Handle UI first - prioritize closing dialogs/banners
 				if ((closeConsentBanner || closeConsentDialog) && !actionSavesConsent) {
 					setActiveUI('none');
 				}
 
-				// Open privacy dialog if needed
 				if (action === 'open-consent-dialog') {
 					setActiveUI('dialog');
 				}
@@ -335,7 +313,6 @@ export const ConsentButton = createForwardRef<
 
 		const Comp = asChild ? Slot : 'button';
 
-		// Filter out non-DOM props to prevent React warnings
 		const domProps = Object.fromEntries(
 			Object.entries(props).filter(
 				([key]) =>

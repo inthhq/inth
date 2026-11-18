@@ -1,11 +1,6 @@
 'use client';
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
-/**
- * @packageDocumentation
- * Provides the IAB TCF 2.4 compliant cookie banner component.
- * Implements an accessible, pre-built banner following IAB requirements.
- */
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import type { FC } from 'react';
@@ -128,7 +123,6 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 	const { components } = useUIConfig();
 	const resolvedScrollLock = policyBanner.blocking;
 
-	// Merge local props with global theme context
 	const config = useComponentConfig({
 		disableAnimation: localDisableAnimation,
 		noStyle: localNoStyle,
@@ -136,7 +130,6 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 		trapFocus: policyBanner.blocking,
 	});
 
-	// Handle button actions
 	const handleAcceptAll = async () => {
 		try {
 			await performBannerAction('accept');
@@ -169,13 +162,11 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 		return null;
 	}
 
-	// Replace {partnerCount} placeholder in description
 	const descriptionText = iabT.banner.description.replace(
 		'{partnerCount}',
 		String(banner.vendorCount)
 	);
 
-	// Replace {count} placeholder in partners link
 	const partnersLinkText = iabT.banner.partnersLink.replace(
 		'{count}',
 		String(banner.vendorCount)

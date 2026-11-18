@@ -192,8 +192,6 @@ const VendorRow = ({
  * vendor toggle never grants a category on its own. A `disabled` vendor is
  * listed without a switch.
  *
- * @param props - The category whose vendors to list, plus `Box` attributes.
- * @returns The vendor list, or `null` when there is nothing to list.
  * @public
  */
 export const ConsentWidgetVendorList = ({

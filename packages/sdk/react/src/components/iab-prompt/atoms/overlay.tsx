@@ -26,7 +26,7 @@ const IABConsentBannerOverlay = createForwardRef<HTMLDivElement, OverlayProps>(
 		} = useTheme();
 		const { components } = useUIConfig();
 
-		// Show when banner is active (model filtering is handled by the root component)
+		// The root component filters by model.
 		const shouldShow = activeUI === 'banner';
 
 		const theme = mergeSlotProps(components?.['iab-banner']?.overlay, {

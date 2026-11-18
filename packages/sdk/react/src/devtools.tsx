@@ -104,7 +104,7 @@ const useStableServices = (
 };
 
 /**
- * Mounts the Inth DevTools engine for the nearest v3 consent provider.
+ * Mounts the Inth DevTools engine for the nearest consent provider.
  *
  * @param props - Presentation options passed to the DevTools engine.
  * @returns `null`; the engine mounts its interface into `document.body`.
@@ -328,7 +328,7 @@ export const InthTanStackDevtoolsPanel = forwardRef<
 );
 
 /**
- * Create a Inth plugin configuration for React TanStack Devtools.
+ * Create an Inth plugin configuration for React TanStack Devtools.
  * @param options - Plugin identity, initial state, and embedded panel options.
  * @returns Plugin configuration whose panel binds to the nearest provider.
  */

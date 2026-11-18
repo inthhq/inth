@@ -1,7 +1,7 @@
 /**
  * ConsentRoot runs the mode the state carries.
  *
- * `offline()` from the server function resolves the recommended rules in the
+ * `testing()` from the server function resolves the recommended rules in the
  * browser, with no backend. That the offline code stays out of the root's
  * first-load JavaScript is checked on the built package in
  * `client-chunks.test.ts`.

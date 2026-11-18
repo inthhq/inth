@@ -21,7 +21,6 @@ let pending: Promise<TriggerToolbarComponent> | undefined;
 /**
  * Make the toolbar available synchronously.
  *
- * @param component - The toolbar view.
  * @internal
  */
 export const registerTriggerToolbar = function registerTriggerToolbar(
@@ -33,7 +32,6 @@ export const registerTriggerToolbar = function registerTriggerToolbar(
 /**
  * The toolbar view when it has loaded or been registered.
  *
- * @returns The toolbar view, or `undefined` while it is not loaded.
  * @internal
  */
 export const getTriggerToolbar = function getTriggerToolbar():
@@ -46,7 +44,6 @@ export const getTriggerToolbar = function getTriggerToolbar():
  * Load the toolbar view. A failed load is not cached, so a later call
  * retries.
  *
- * @returns The toolbar view.
  * @internal
  */
 export const loadTriggerToolbar =

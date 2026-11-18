@@ -1,11 +1,6 @@
 'use client';
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
-/**
- * @packageDocumentation
- * Provides the IAB TCF 2.4 compliant consent dialog component.
- * Implements an accessible, pre-built consent dialog following IAB requirements.
- */
 import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
@@ -126,7 +121,7 @@ export interface IABConsentDialogProps {
 }
 
 /**
- * IAB TCF 2.4 compliant consent dialog dialog.
+ * IAB TCF 2.4 compliant consent dialog.
  *
  * @remarks
  * This component implements the required IAB TCF 2.4 UI elements:
@@ -189,7 +184,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		models.includes(model) &&
 		(open ?? activeUI === 'dialog');
 
-	// Merge local props with global theme context
 	const config = useComponentConfig({
 		disableAnimation: localDisableAnimation,
 		noStyle: localNoStyle,
@@ -218,7 +212,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		[gvl, publisherRestrictions]
 	);
 
-	// Handlers
 	const handlePurposeToggle = useCallback(
 		(purposeId: number, value: boolean) => {
 			iabState?.setPurposeConsent(purposeId, value);
@@ -295,14 +288,12 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		openDialog({ tab: 'vendors' });
 	};
 
-	// Focus trap
 	useFocusTrap(
 		Boolean(isMounted && isOpen && config.trapFocus),
 		cardRef as RefObject<HTMLElement>,
 		{ initialFocus: 'first-tabbable' }
 	);
 
-	// Scroll lock
 	useScrollLock(Boolean(isOpen && config.scrollLock));
 
 	useEffect(() => {
@@ -313,13 +304,11 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		return onDialogDismiss(document.documentElement, handleClose);
 	}, [handleClose, isOpen]);
 
-	// Mount state for portal
 	useEffect(() => {
 		const frame = requestAnimationFrame(() => setIsMounted(true));
 		return () => cancelAnimationFrame(frame);
 	}, []);
 
-	// Visibility animation
 	useEffect(() => {
 		if (isOpen) {
 			const frame = requestAnimationFrame(() => setIsVisible(true));
@@ -370,7 +359,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		const previousHeight = previousHeightRef.current;
 		previousHeightRef.current = null;
 
-		// Check for reduced motion preference
 		const prefersReducedMotion = window.matchMedia(
 			'(prefers-reduced-motion: reduce)'
 		).matches;
@@ -379,7 +367,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 			return;
 		}
 
-		// Lock at previous height immediately
 		content.style.height = `${previousHeight}px`;
 		content.style.overflow = 'hidden';
 		content.style.transition = 'none';
@@ -395,12 +382,10 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 					return;
 				}
 
-				// Now measure the natural height of the new content
 				content.style.height = 'auto';
 				const newHeight = content.getBoundingClientRect().height;
 				content.style.height = `${previousHeight}px`;
 
-				// Skip animation if heights are the same
 				if (Math.abs(previousHeight - newHeight) < 1) {
 					content.style.height = '';
 					content.style.overflow = '';
@@ -411,7 +396,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 				// Force reflow before enabling transition
 				content.getBoundingClientRect();
 
-				// Animate to new height
 				content.style.transition =
 					'height 180ms cubic-bezier(0.33, 1, 0.68, 1)';
 				content.style.height = `${newHeight}px`;
@@ -437,7 +421,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		};
 	}, [activeTab]);
 
-	// Capture height before tab change
 	const handleTabChange = useCallback(
 		(tab: 'purposes' | 'vendors') => {
 			if (contentRef.current) {
@@ -1022,7 +1005,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		</ConsentTrackingContext.Provider>
 	);
 
-	// Resolve trigger props
 	const triggerProps: ConsentDialogTriggerProps | null =
 		// oxlint-disable-next-line no-nested-ternary -- Preserve established branch order and control flow.
 		showTrigger === true

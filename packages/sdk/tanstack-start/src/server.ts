@@ -154,10 +154,6 @@ export interface ConsentRequestOptions {
 	request?: ConsentRequestSource;
 }
 
-/**
- * Type alias re-exported so consumers can stay within
- * `@inth/tanstack-start`.
- */
 export type { KernelConfig } from '@inth/sdk/engine';
 
 /**
@@ -359,7 +355,6 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	shared?: boolean;
 }
 
-/** The options' route prefix, checked; `undefined` when unset. */
 const readRoutePrefix = function readRoutePrefix(
 	options: ResolveConsentOptions
 ): string | undefined {
@@ -465,8 +460,6 @@ export const resolveConsent = async function resolveConsent(
  *
  * @param base - Cookie-and-headers state, such as from
  * `resolveConsent({ mode: manifest({ resolve: 'browser' }) })`.
- * @param init - The init payload to merge.
- * @returns The merged state.
  */
 export const mergeInitIntoConsentState = function mergeInitIntoConsentState(
 	base: ConsentState,
@@ -507,7 +500,6 @@ export { consentLoaderOptions } from './libs/loader-options';
  *
  * @param options - {@link resolveConsent} options: `mode`, `routePrefix`,
  * `snapshot` and the rest. `request` defaults to `getRequest()`.
- * @returns A handler that resolves to the request's consent state.
  * @throws {TypeError} When `routePrefix` is `/` or not a path, when the
  * server function is declared rather than on a request.
  */

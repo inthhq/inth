@@ -1,10 +1,3 @@
-/**
- * Browser Test Setup for Vitest
- *
- * This file runs in the browser before tests start.
- * It sets up mock GVL for IAB tests.
- */
-
 import type * as Core from '@inth/sdk/engine';
 import type { RevocationReloadOptions } from '@inth/sdk/engine';
 import { vi } from 'vitest';
@@ -40,8 +33,7 @@ if (typeof document !== 'undefined') {
 	sessionStorage.clear();
 }
 
-// Set mock GVL on window immediately (before any other code runs)
-// This is picked up by the bundled core code's fetchGVL function
+// Core's fetchGVL reads this mock, so it is set before any other code runs.
 if (typeof window !== 'undefined') {
 	(window as unknown as { __inth_mock_gvl?: typeof mockGVL }).__inth_mock_gvl =
 		mockGVL;

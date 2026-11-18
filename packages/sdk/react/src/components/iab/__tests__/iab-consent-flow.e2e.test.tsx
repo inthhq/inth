@@ -1,9 +1,3 @@
-/**
- * IAB Consent Flow E2E Tests
- *
- * Browser-based tests for complete user consent journeys.
- */
-
 import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -39,19 +33,15 @@ describe('IAB Consent Flow E2E Tests', () => {
 				</ConsentProvider>
 			);
 
-			// 1. Display banner
 			const acceptButton = await waitForElement(
 				'[data-testid="iab-consent-banner-accept-button"]'
 			);
 			await waitForCMP();
 
-			// 2. Click accept
 			await userEvent.click(acceptButton);
 
-			// 3. Banner should close
 			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
 
-			// 4. Verify storage (wait for it to be saved)
 			await vi.waitFor(
 				() => {
 					const consent = getStoredConsent();
@@ -131,7 +121,6 @@ describe('IAB Consent Flow E2E Tests', () => {
 
 			await userEvent.click(customizeButton);
 
-			// Preference center should open
 			await waitForElement('[data-testid="iab-consent-dialog-root"]');
 		});
 
@@ -151,7 +140,6 @@ describe('IAB Consent Flow E2E Tests', () => {
 			await userEvent.click(customizeButton);
 			await waitForElement('[data-testid="iab-consent-dialog-root"]');
 
-			// Wait for content to load
 			await vi.waitFor(
 				() => {
 					const content = document.querySelector(
@@ -164,7 +152,6 @@ describe('IAB Consent Flow E2E Tests', () => {
 				{ timeout: 3000 }
 			);
 
-			// Find and click save button
 			const buttons = Array.from(
 				document.querySelectorAll(
 					'[data-testid="iab-consent-dialog-root"] button'
@@ -229,7 +216,6 @@ describe('IAB Consent Flow E2E Tests', () => {
 			await userEvent.click(acceptButton);
 			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
 
-			// Verify TC string storage
 			const tcString = await vi.waitFor(
 				() => {
 					const stored = getStoredTCString();
@@ -252,7 +238,6 @@ describe('IAB Consent Flow E2E Tests', () => {
 				</ConsentProvider>
 			);
 
-			// Banner should show on first visit
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
 		});
 	});
@@ -269,7 +254,6 @@ describe('IAB Consent Flow E2E Tests', () => {
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
 			await waitForCMP();
 
-			// Set up listener
 			const events: string[] = [];
 
 			const tcfapi = (window as { __tcfapi?: TcfApiTestFunction }).__tcfapi;
@@ -279,7 +263,6 @@ describe('IAB Consent Flow E2E Tests', () => {
 				});
 			}
 
-			// Click accept
 			const acceptButton = document.querySelector(
 				'[data-testid="iab-consent-banner-accept-button"]'
 			);
@@ -287,7 +270,6 @@ describe('IAB Consent Flow E2E Tests', () => {
 				await userEvent.click(acceptButton);
 			}
 
-			// Wait for events
 			await vi.waitFor(
 				() => {
 					if (!events.includes('useractioncomplete')) {

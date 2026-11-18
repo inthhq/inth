@@ -1,13 +1,5 @@
 'use client';
 
-/**
- * ConsentDialogTrigger component exports.
- *
- * @packageDocumentation
- */
-
-// Main compound component
-// Atom components for direct usage
 export {
 	ConsentDialogTrigger,
 	type ConsentDialogTriggerCompound,
@@ -22,7 +14,6 @@ export {
 	useTriggerContext,
 } from './panel-trigger';
 export { ConsentDialogTriggerToolbar } from './panel-trigger-toolbar';
-// Types
 export type {
 	ConsentDialogTriggerProps,
 	ConsentDialogTriggerToolbarAction,
@@ -33,7 +24,6 @@ export type {
 	TriggerOrientation,
 	TriggerSize,
 } from './types';
-// Hook
 export {
 	type UseDraggableOptions,
 	type UseDraggableReturn,

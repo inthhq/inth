@@ -212,10 +212,8 @@ const ServerScriptStart = ({
 	// A failed import still renders the empty script the browser hydrates.
 	const code = module ? renderPlan(module, options, state).code : undefined;
 	return (
-		// Runs a granted vendor's setup and inserts its tag before the page
-		// hydrates. The script loader adopts the tag.
 		<script
-			// oxlint-disable-next-line react/no-danger -- inth's own code; serverScriptStart escapes `<` in every value.
+			// oxlint-disable-next-line react/no-danger -- Inth's own code; serverScriptStart escapes `<` in every value.
 			dangerouslySetInnerHTML={{ __html: code ?? '' }}
 			nonce={options.nonce}
 			suppressHydrationWarning

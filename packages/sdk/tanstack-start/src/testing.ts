@@ -23,7 +23,7 @@
  * import { resolveConsent } from '@inth/tanstack-start/server';
  * import { testing } from '@inth/tanstack-start/testing';
  *
- * const state = await resolveConsent(request, { mode: testing() });
+ * const state = await resolveConsent({ mode: testing(), request });
  * ```
  *
  * @packageDocumentation

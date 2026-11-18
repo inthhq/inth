@@ -7,8 +7,6 @@ import { useTranslations } from '~/component-hooks/use-translations';
 /**
  * The IAB copy for the active language, each missing key filled from
  * English.
- *
- * @returns Complete IAB translations.
  */
 export const useIABTranslations =
 	function useIABTranslations(): IABTranslations {

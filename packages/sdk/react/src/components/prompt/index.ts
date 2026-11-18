@@ -1,15 +1,5 @@
 'use client';
 
-/**
- * Enhanced ConsentBanner component with compound components attached.
- *
- * @remarks
- * This is the main export that provides access to all ConsentBanner components.
- * It follows the compound components pattern, allowing for flexible composition
- * of the banner's parts.
- *
- */
-
 import type { FC } from 'react';
 
 import { Overlay } from './atoms/overlay';
@@ -36,10 +26,6 @@ import type {
 	ConsentBannerProps,
 } from './prompt';
 
-/**
- * This interface extends the base ConsentBanner component with additional sub-components
- * that can be used to compose the banner's structure.
- */
 export interface ConsentBannerCompoundComponent extends FC<ConsentBannerProps> {
 	Root: typeof Root;
 	Card: typeof Card;
@@ -61,18 +47,9 @@ export interface ConsentBannerCompoundComponent extends FC<ConsentBannerProps> {
  * A customizable consent banner component.
  *
  * @remarks
- * This component serves as the main entry point for rendering a consent banner.
  * Start with the pre-built component and its existing configuration surface.
  * For most customization, use `ConsentProvider` options, theme tokens,
  * slots, and `theme.consentActions` before reaching for compound composition.
- *
- * Key features:
- * - Fully accessible by default
- * - GDPR Compliant
- * - Customizable appearance
- * - Responsive design
- * - Error boundary protection
- * - Advanced compound component support when markup must change
  *
  * @example
  * Simple usage with default settings:
@@ -157,7 +134,6 @@ const ConsentBanner = Object.assign(ConsentBannerComponent, {
 	Title,
 }) as ConsentBannerCompoundComponent;
 
-// Export the main component as both default and named export
 export default ConsentBanner;
 
 // Export individual components for backward compatibility

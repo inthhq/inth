@@ -26,9 +26,6 @@ interface IABConsentDialogHeaderProps {
 	 * @default true
 	 */
 	showCloseButton?: boolean;
-	/**
-	 * Additional class name.
-	 */
 	className?: string;
 }
 

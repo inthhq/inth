@@ -102,11 +102,6 @@ const logRelevantHeaders = function logRelevantHeaders(
 	}
 };
 
-/**
- * Performs the init fetch request.
- * All async work (header resolution) should be done before calling this.
- * GVL is now included in the init response when server has it configured.
- */
 const performInitFetch = async function performInitFetch(
 	normalizedUrl: string,
 	relevantHeaders: Record<string, string>,
@@ -199,7 +194,6 @@ const performInitFetch = async function performInitFetch(
  * });
  * ```
  *
- * @param options - Configuration options including projectUrl, headers, overrides, and debug
  * @returns The SSR initial data or undefined if the fetch fails
  *
  * @public
@@ -213,7 +207,6 @@ export const fetchSSRData = async function fetchSSRData(
 		console.log('[@inth/react/server] SSR fetch starting...');
 	}
 
-	// Extract relevant headers from the request
 	const relevantHeaders = extractRelevantHeaders(headers, {
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});
@@ -234,7 +227,6 @@ export const fetchSSRData = async function fetchSSRData(
 		return undefined;
 	}
 
-	// Normalize URL synchronously
 	const normalizedUrl = resolveRequestProjectUrl(projectUrl, {
 		headers,
 		trustForwardedHeaders: options.trustForwardedHeaders,
@@ -278,7 +270,6 @@ export const fetchSSRData = async function fetchSSRData(
 		}
 	}
 
-	// Fetch init data (GVL is included in response when server has it configured)
 	const initResult = await performInitFetch(
 		normalizedUrl,
 		initHeaders,
@@ -298,6 +289,7 @@ export const fetchSSRData = async function fetchSSRData(
 		return undefined;
 	}
 
-	// GVL is now part of the init response
+	// The backend sends the GVL in the init response when it has one
+	// configured.
 	return { gvl: init.gvl, init, metadata: initResult.metadata };
 };

@@ -22,7 +22,7 @@ import { isRunnableNow, scriptsNeedEngine } from '../runnable';
 /**
  * Leaves what a server render with id `id` leaves in the test's document:
  * boot data carrying the id, and the page object its inline scripts write.
- * inth's modules run in the test's window, so that is where they look.
+ * Inth's modules run in the test's window, so that is where they look.
  */
 const leavePageRender = (
 	pageObject: Record<string, unknown>,
@@ -488,7 +488,6 @@ describe('scripts a hook started before its loader', () => {
 		});
 		expect(inPage()).toBe(true);
 		expect(requestEngine).not.toHaveBeenCalled();
-		// One of them moves.
 		await screen.rerender(
 			view([owned, { ...twin, src: '/never-served/owned-early-v2.js' }])
 		);

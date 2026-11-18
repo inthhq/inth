@@ -1,14 +1,6 @@
 'use client';
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
-/**
- * @packageDocumentation
- * Default implementation of the Consent Dialog that ships with Inth.
- *
- * The new compound-component API exposes all primitives (Root, Card, etc.).
- * This default export simply composes those primitives so consumers that
- * prefer a one-line `<ConsentDialog />` usage still have it.
- */
 import type { FC } from 'react';
 
 import type { ConsentDialogTriggerProps } from '~/components/panel-trigger';
@@ -137,13 +129,11 @@ export const ConsentDialog: FC<ConsentDialogProps> = ({
 }) => {
 	const activeUI = useActiveUI();
 
-	// Merge local props with global theme context
 	const config = useComponentConfig({
 		disableAnimation: localDisableAnimation,
 		noStyle: localNoStyle,
 	});
 
-	// Compose the props we want to forward to the Root primitive
 	const rootProps = {
 		open: open ?? activeUI === 'dialog',
 		...config,
@@ -153,7 +143,6 @@ export const ConsentDialog: FC<ConsentDialogProps> = ({
 		uiSource,
 	};
 
-	// Resolve trigger props
 	const triggerProps: ConsentDialogTriggerProps | null =
 		// oxlint-disable-next-line no-nested-ternary -- Preserve established branch order and control flow.
 		showTrigger === true

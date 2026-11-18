@@ -75,7 +75,6 @@ export const scriptsNeedEngine = function scriptsNeedEngine(
  * privacy signal, which the evaluator applies.
  *
  * @param snapshot - The snapshot the banner shows.
- * @returns The permissions, or `null`.
  * @internal
  */
 export const acceptedPermissions = function acceptedPermissions(

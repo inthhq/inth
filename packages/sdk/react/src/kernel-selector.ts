@@ -16,7 +16,6 @@ import { HydrationSnapshotContext, KernelContext } from './context';
 /**
  * Reads the kernel from the nearest provider.
  *
- * @returns The provider's kernel.
  * @throws {Error} When called outside a `ConsentProvider`.
  * @internal
  */
@@ -35,7 +34,6 @@ export const useKernel = function useKernel(): ConsentKernel {
  * inside a streamed consent surface, the snapshot the server rendered that
  * surface from.
  *
- * @param kernel - The provider's kernel.
  * @returns A `getServerSnapshot` for `useSyncExternalStore`.
  * @internal
  */
@@ -51,8 +49,6 @@ export const useServerSnapshot = function useServerSnapshot(
  * caller only when the selected value `Object.is`-differs, so a selector
  * must return a primitive or a reference the snapshot already holds.
  *
- * @param selector - Picks the slice from a snapshot.
- * @returns The selected slice.
  * @internal
  */
 export const useKernelSelector = function useKernelSelector<SliceType>(
@@ -81,7 +77,6 @@ export const useKernelSelector = function useKernelSelector<SliceType>(
  * timer has not processed yet still denies.
  *
  * @param selector - Picks the slice from a snapshot at the given time.
- * @returns The selected slice.
  * @internal
  */
 export const useGateSelector = function useGateSelector<SliceType>(

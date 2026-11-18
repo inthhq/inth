@@ -8,7 +8,6 @@ import type {
  * A transport factory that hands the provider `transport`, for tests that
  * stand in for the backend with a fake.
  *
- * @param transport - The fake transport.
  * @param kind - The kind `window.__inthDebug.mode` reports.
  * @returns A factory for the provider's `mode`.
  */

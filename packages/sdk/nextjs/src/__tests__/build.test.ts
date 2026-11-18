@@ -38,7 +38,7 @@ const typescriptDir = dirname(
 
 /**
  * A temporary app root, which `withConsentManifest` reads from the cwd,
- * with TypeScript installed so a `inth.config.ts` can be read.
+ * with TypeScript installed so an `inth.config.ts` can be read.
  */
 const createRoot = async () => {
 	const root = await mkdtemp(join(tmpdir(), 'inth-manifest-'));

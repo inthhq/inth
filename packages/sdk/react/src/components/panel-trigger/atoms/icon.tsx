@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Icon component for the ConsentDialogTrigger compound component.
- *
- * @packageDocumentation
- */
-
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { resolveBrandMark } from '@inth/sdk/ui/utils';
 import { isValidElement } from 'react';
@@ -20,9 +14,6 @@ import type { TriggerIcon as TriggerIconType } from '../types';
 import { useTriggerContext } from './root';
 import { FingerprintIcon, SettingsIcon } from './trigger-icons';
 
-/**
- * Props for the Icon component.
- */
 export interface TriggerIconProps {
 	/**
 	 * Icon to display.
@@ -35,9 +26,6 @@ export interface TriggerIconProps {
 	 */
 	icon?: TriggerIconType;
 
-	/**
-	 * Additional CSS class names.
-	 */
 	className?: string;
 
 	/**
@@ -76,7 +64,6 @@ export const TriggerIcon = ({
 		noStyle: noStyle ?? contextNoStyle,
 	});
 
-	// Render custom ReactNode
 	if (isValidElement(icon)) {
 		return (
 			<span
@@ -88,7 +75,6 @@ export const TriggerIcon = ({
 		);
 	}
 
-	// Render built-in icons
 	let iconElement: ReactNode;
 	switch (icon) {
 		case 'fingerprint':

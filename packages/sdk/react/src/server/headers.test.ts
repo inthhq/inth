@@ -70,7 +70,6 @@ describe('extractRelevantHeaders', () => {
 		const headers = new Headers();
 		headers.set('cf-ipcountry', 'US');
 		headers.set('user-agent', 'Mozilla/5.0');
-		// Other headers not set
 
 		const result = extractRelevantHeaders(headers);
 
@@ -141,13 +140,11 @@ describe('extractRelevantHeaders', () => {
 	it('should add inth headers when corresponding headers are present', () => {
 		const headers = new Headers();
 
-		// Country headers
 		headers.set('cf-ipcountry', 'US');
 		headers.set('x-vercel-ip-country', 'GB');
 		headers.set('x-amz-cf-ipcountry', 'DE');
 		headers.set('x-country-code', 'FR');
 
-		// Region headers
 		headers.set('x-vercel-ip-country-region', 'CA-ON');
 		headers.set('x-region-code', 'WEST');
 
@@ -160,7 +157,6 @@ describe('extractRelevantHeaders', () => {
 			'x-c15t-region': 'CA-ON',
 		});
 
-		// Test with only one country header
 		const headersWithOneCountry = new Headers();
 		headersWithOneCountry.set('x-country-code', 'FR');
 
@@ -169,7 +165,6 @@ describe('extractRelevantHeaders', () => {
 			'x-c15t-country': 'FR',
 		});
 
-		// Test with only one region header
 		const headersWithOneRegion = new Headers();
 		headersWithOneRegion.set('x-region-code', 'WEST');
 
