@@ -103,7 +103,7 @@ describe('consent copy', () => {
 	it('labels the trigger from the bundle, else English', () => {
 		expect(resolveTriggerLabels({ trigger: { label: 'Datenschutz' } })).toEqual(
 			{
-				devToolsLabel: 'inth DevTools',
+				devToolsLabel: 'Inth DevTools',
 				label: 'Datenschutz',
 				toolbarLabel: 'Privacy controls',
 			}

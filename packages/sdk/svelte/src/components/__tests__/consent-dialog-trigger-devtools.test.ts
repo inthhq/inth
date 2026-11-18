@@ -77,7 +77,7 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 			'[data-inth-trigger-action="preferences"]'
 		) as HTMLElement;
 		expect(toolbar.getAttribute('aria-label')).toBe('Privacy controls');
-		expect(item.getAttribute('aria-label')).toBe('inth DevTools');
+		expect(item.getAttribute('aria-label')).toBe('Inth DevTools');
 
 		await fireEvent.keyDown(toolbar, { key: 'ArrowLeft' });
 		expect(document.activeElement).toBe(preferences);

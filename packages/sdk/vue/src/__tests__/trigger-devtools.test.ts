@@ -147,7 +147,7 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 				'[data-inth-trigger-action="preferences"][aria-label="Open privacy settings"]'
 			)
 		).not.toBeNull();
-		expect(devToolsItem()?.getAttribute('aria-label')).toBe('inth DevTools');
+		expect(devToolsItem()?.getAttribute('aria-label')).toBe('Inth DevTools');
 		expect(devToolsRoot().classList).toContain('inth-dev-tools--docked');
 
 		const item = devToolsItem();

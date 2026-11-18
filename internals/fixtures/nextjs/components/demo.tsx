@@ -152,7 +152,7 @@ export const Demo = ({ children }: { children: ReactNode }) => {
 							<IntegrationStatus allowed={marketingAllowed} />
 						</div>
 						<p className="caption">
-							Open inth DevTools in the corner to inspect consent state and
+							Open Inth DevTools in the corner to inspect consent state and
 							script activity, or to clear stored records.
 						</p>
 					</section>

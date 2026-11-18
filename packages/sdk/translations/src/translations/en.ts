@@ -179,7 +179,7 @@ export const translations: CompleteTranslations = {
 		preferences: 'Manage preferences',
 	},
 	trigger: {
-		devToolsLabel: 'inth DevTools',
+		devToolsLabel: 'Inth DevTools',
 		label: 'Open privacy settings',
 		toolbarLabel: 'Privacy controls',
 	},
