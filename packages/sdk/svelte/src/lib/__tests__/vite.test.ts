@@ -382,6 +382,8 @@ describe('consentManifest first-load chunk', () => {
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment-presentation.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/modules/vendor-allowed.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/surface-actions/instant-commit.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/translations/defaults.js',
+			'/app/node_modules/@inth/sdk/lib/translations/dist/translations/en.js',
 			'C:\\app\\node_modules\\@inth\\sdk\\lib\\ui\\dist\\utils\\text-direction.js',
 			'\0vite/preload-helper.js',
 		]) {
@@ -400,6 +402,8 @@ describe('consentManifest first-load chunk', () => {
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/cookie/operations.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/modules/has.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/consent-record/evaluate.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/translations/index.js',
+			'/app/node_modules/@inth/sdk/lib/translations/dist/languages/de.js',
 			'/app/node_modules/@inth/svelte/dist/deferred/commit.js',
 			'/app/node_modules/other/dist/libs/vendors.js',
 			'/app/node_modules/other/vite/preload-helper.js',

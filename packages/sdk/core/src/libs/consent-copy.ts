@@ -1,6 +1,10 @@
 /** Resolve the copy a consent UI renders from the active translations. */
 import type { PolicyPrompt, PolicyRight } from '@inth/sdk-schema/types';
-import type { Translations } from '@inth/sdk-translations';
+import type {
+	IABTranslations,
+	Translations,
+	TriggerTranslations,
+} from '@inth/sdk-translations';
 // The `/en` entry, not the package root: the React components that share a
 // chunk with lazy surfaces call these helpers, and importing the root (with
 // its stock-language registry) from that chunk gives Rolldown a static cycle
@@ -115,3 +119,111 @@ export const resolvePreferenceControlLabels =
 			preferences: rights?.preferences ?? fallback.preferences,
 		};
 	};
+
+/**
+ * Display title of a consent category.
+ *
+ * @remarks
+ * Reads the active language, then English, then title-cases the name, so a
+ * custom category without a translation still reads as words
+ * (`product_updates` becomes "Product Updates").
+ *
+ * @param translations - The active language bundle.
+ * @param name - The category name.
+ * @returns The title to render.
+ *
+ * @example
+ * ```ts
+ * resolveCategoryTitle(translations, 'measurement'); // 'Analytics'
+ * ```
+ */
+export const resolveCategoryTitle = function resolveCategoryTitle(
+	translations: Partial<Translations> | undefined,
+	name: string
+): string {
+	const own = translations?.consentTypes as
+		| Record<string, { title?: string } | undefined>
+		| undefined;
+	const english = enTranslations.consentTypes as Record<
+		string,
+		{ title?: string } | undefined
+	>;
+	return (
+		own?.[name]?.title ??
+		english[name]?.title ??
+		name
+			.replace(/_/gu, ' ')
+			.replace(/\b\w/gu, (character) => character.toUpperCase())
+	);
+};
+
+const isSection = function isSection(
+	value: unknown
+): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+};
+
+/** `overrides` over `defaults`, key by key, keeping the shape of `defaults`. */
+const mergeOver = function mergeOver<Section extends object>(
+	defaults: Section,
+	overrides: unknown
+): Section {
+	if (!isSection(overrides)) {
+		return defaults;
+	}
+	const result: Record<string, unknown> = { ...(defaults as object) };
+	for (const [key, fallback] of Object.entries(defaults)) {
+		const value = overrides[key];
+		if (value === undefined) {
+			continue;
+		}
+		result[key] =
+			isSection(fallback) && isSection(value)
+				? mergeOver(fallback, value)
+				: value;
+	}
+	return result as Section;
+};
+
+/**
+ * The IAB copy, every key filled.
+ *
+ * @remarks
+ * Language bundles and backend copy may leave IAB keys out; each missing
+ * key reads English.
+ *
+ * @param translations - The active language bundle.
+ * @returns The complete IAB copy.
+ *
+ * @example
+ * ```ts
+ * const iab = resolveIABCopy(translations);
+ * iab.preferenceCenter.vendorList.search;
+ * ```
+ */
+export const resolveIABCopy = function resolveIABCopy(
+	translations: Partial<Translations> | undefined
+): IABTranslations {
+	return mergeOver(enTranslations.iab, translations?.iab);
+};
+
+/**
+ * Accessible names for the floating trigger and its toolbar.
+ *
+ * @param translations - The active language bundle. Missing keys use English.
+ * @returns The trigger, toolbar and DevTools item labels.
+ *
+ * @example
+ * ```ts
+ * button.ariaLabel = resolveTriggerLabels(translations).label;
+ * ```
+ */
+export const resolveTriggerLabels = function resolveTriggerLabels(
+	translations: Partial<Translations> | undefined
+): TriggerTranslations {
+	// English always carries the section.
+	return mergeOver(
+		enTranslations.trigger as TriggerTranslations,
+		translations?.trigger
+	);
+};

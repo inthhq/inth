@@ -13,6 +13,10 @@ import type { CONSENT_CATEGORY } from '@inth/sdk/consent-record';
  */
 import type { PresentationAction } from '@inth/sdk/engine';
 import { deniedVendorIds, vendorsListedUnder } from '@inth/sdk/engine';
+import {
+	resolveActionLabels,
+	resolveCategoryTitle,
+} from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 
 import '@inth/sdk/ui/styles/components/accordion.css';
@@ -97,18 +101,12 @@ const consentTypeTranslations = computed(
 		>
 );
 
-const formatConsentName = function formatConsentName(
-	category: CONSENT_CATEGORY
-): string {
-	return category
-		.replace(/_/gu, ' ')
-		.replace(/\b\w/gu, (character) => character.toUpperCase());
-};
-
 const consentTitle = function consentTitle(category: CONSENT_CATEGORY): string {
-	return (
-		consentTypeTranslations.value[category]?.title ??
-		formatConsentName(category)
+	return resolveCategoryTitle(
+		init.value?.translations?.translations as
+			| Parameters<typeof resolveCategoryTitle>[0]
+			| undefined,
+		category
 	);
 };
 
@@ -192,14 +190,13 @@ const contentId = function contentId(index: number): string {
 	return `inth-preference-item-content-${uid}-${index}`;
 };
 
-const labels = computed(() => {
-	const common = init.value?.translations?.translations?.common;
-	return {
-		accept: common?.acceptAll ?? 'Accept all',
-		reject: common?.rejectAll ?? 'Reject all',
-		save: common?.save ?? 'Save',
-	} as Partial<Record<PresentationAction, string>>;
-});
+const labels = computed(() =>
+	resolveActionLabels(
+		init.value?.translations?.translations as
+			| Parameters<typeof resolveActionLabels>[0]
+			| undefined
+	)
+);
 
 const ACTION_TEST_IDS: Partial<Record<PresentationAction, string>> = {
 	accept: 'consent-widget-footer-accept-all-button',

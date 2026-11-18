@@ -195,4 +195,50 @@ describe('ConsentDialogTrigger', () => {
 			expect(trigger?.getAttribute('aria-label')).toBe('Open privacy settings');
 		});
 	});
+
+	test('showWhen="after-consent" waits until the banner is answered', async () => {
+		render(FullFlowFixture, {
+			options: defaultOptions,
+			showWhen: 'after-consent',
+		});
+
+		const acceptButton = await waitFor(() =>
+			getDefined(
+				document.querySelector('[data-testid="consent-banner-accept-button"]')
+			)
+		);
+		expect(
+			document.querySelector('[data-testid="consent-dialog-trigger"]')
+		).not.toBeInTheDocument();
+
+		await fireEvent.click(acceptButton);
+
+		await waitFor(() => {
+			expect(
+				document.querySelector('[data-testid="consent-dialog-trigger"]')
+			).toBeInTheDocument();
+		});
+	});
+
+	test('takes its accessible name from the trigger translations', async () => {
+		render(FullFlowFixture, {
+			options: {
+				...defaultOptions,
+				i18n: {
+					detectBrowserLanguage: false,
+					locale: 'en',
+					messages: { en: { trigger: { label: 'Privacy choices' } } },
+				},
+			},
+			showWhen: 'always',
+		});
+
+		await waitFor(() => {
+			expect(
+				document
+					.querySelector('[data-testid="consent-dialog-trigger"]')
+					?.getAttribute('aria-label')
+			).toBe('Privacy choices');
+		});
+	});
 });

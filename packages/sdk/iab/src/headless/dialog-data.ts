@@ -48,26 +48,17 @@ const EMPTY_DIALOG_DATA: HeadlessIABDialogData = {
 type GvlVendor = GlobalVendorList['vendors'][number];
 
 /**
- * Custom vendors with only the legitimate interest purposes TCF permits,
- * so the dialog never offers an objection on a consent-only purpose.
+ * A vendor from the Global Vendor List as the dialog renders it.
+ *
+ * @param vendorId - The vendor's key in `gvl.vendors`.
+ * @param vendor - The GVL entry.
+ * @param language - The UI language, which picks the vendor's privacy links.
+ * @param purposeId - The purpose the vendor is listed under, which sets
+ * `usesLegitimateInterest`.
+ * @returns The vendor row.
  */
-const getCustomVendors = function getCustomVendors(
-	iab: HeadlessIABStateInput
-): NonIABVendor[] {
-	return (iab.nonIABVendors ?? iab.customVendors ?? []).map((vendor) =>
-		vendor.legIntPurposes
-			? {
-					...vendor,
-					legIntPurposes: permittedLegitimateInterestPurposes(
-						vendor.legIntPurposes
-					),
-				}
-			: vendor
-	);
-};
-
-const mapGvlVendor = function mapGvlVendor(
-	vendorId: string,
+export const mapGvlVendor = function mapGvlVendor(
+	vendorId: string | number,
 	vendor: GvlVendor,
 	language: string | undefined,
 	purposeId?: number
@@ -79,6 +70,11 @@ const mapGvlVendor = function mapGvlVendor(
 	return {
 		cookieMaxAgeSeconds: vendor.cookieMaxAgeSeconds,
 		cookieRefresh: vendor.cookieRefresh,
+		// The GVL sends the data category ids as `dataDeclaration`.
+		dataDeclaration:
+			(vendor as GvlVendor & { dataDeclaration?: number[] }).dataDeclaration ??
+			vendor.dataCategories ??
+			[],
 		dataRetention: vendor.dataRetention,
 		deviceStorageDisclosureUrl: resolveIABSafeUrl(
 			vendor.deviceStorageDisclosureUrl
@@ -101,19 +97,33 @@ const mapGvlVendor = function mapGvlVendor(
 	};
 };
 
-const mapCustomVendor = function mapCustomVendor(
+/**
+ * A custom (non-IAB) vendor as the dialog renders it. Its legitimate
+ * interest purposes keep only those TCF permits, so the dialog never
+ * offers an objection on a consent-only purpose.
+ *
+ * @param vendor - The custom vendor.
+ * @param purposeId - The purpose the vendor is listed under, which sets
+ * `usesLegitimateInterest`.
+ * @returns The vendor row.
+ */
+export const mapCustomVendor = function mapCustomVendor(
 	vendor: NonIABVendor,
 	purposeId?: number
 ): HeadlessIABProcessedVendor {
+	const legIntPurposes = permittedLegitimateInterestPurposes(
+		vendor.legIntPurposes
+	);
 	return {
 		cookieMaxAgeSeconds: vendor.cookieMaxAgeSeconds ?? null,
 		cookieRefresh: undefined,
+		dataDeclaration: vendor.dataCategories ?? [],
 		dataRetention: undefined,
 		deviceStorageDisclosureUrl: null,
 		features: vendor.features || [],
 		id: vendor.id,
 		isCustom: true,
-		legIntPurposes: vendor.legIntPurposes || [],
+		legIntPurposes,
 		legitimateInterestUrl: null,
 		name: vendor.name,
 		policyUrl: resolveIABSafeUrl(vendor.privacyPolicyUrl) ?? '',
@@ -122,10 +132,45 @@ const mapCustomVendor = function mapCustomVendor(
 		specialPurposes: [],
 		usesCookies: vendor.usesCookies ?? false,
 		usesLegitimateInterest: purposeId
-			? (vendor.legIntPurposes?.includes(purposeId) ?? false)
+			? legIntPurposes.includes(purposeId)
 			: false,
 		usesNonCookieAccess: vendor.usesNonCookieAccess ?? false,
 	};
+};
+
+/** The vendor list copy {@link formatVendorMaxAge} reads. */
+export interface VendorMaxAgeCopy {
+	/** Uses the `{days}` placeholder. */
+	maxAge: string;
+	/** Appended when the vendor refreshes the cookie. */
+	maxAgeRefreshes?: string;
+}
+
+/**
+ * A vendor's cookie max age as the dialog shows it, such as "Max Age:
+ * 30d (refreshes)".
+ *
+ * @remarks
+ * Days round up: a max age is an upper bound, so a cookie that lives 36
+ * hours reads "2d", and one that lives an hour reads "1d", not "0d".
+ *
+ * @param seconds - `cookieMaxAgeSeconds`.
+ * @param refresh - `cookieRefresh`.
+ * @param copy - `iab.preferenceCenter.vendorList`.
+ * @returns The text, or `null` when the vendor declares no max age.
+ */
+export const formatVendorMaxAge = function formatVendorMaxAge(
+	seconds: number | null | undefined,
+	refresh: boolean | undefined,
+	copy: VendorMaxAgeCopy
+): string | null {
+	if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) {
+		return null;
+	}
+	const age = copy.maxAge.replace('{days}', String(Math.ceil(seconds / 86400)));
+	return refresh && copy.maxAgeRefreshes
+		? `${age} ${copy.maxAgeRefreshes}`
+		: age;
 };
 
 /**
@@ -156,12 +201,12 @@ const processPurposes = function processPurposes(
 				);
 
 			const customVendorsForPurpose = customVendors
+				.map((vendor) => mapCustomVendor(vendor, purposeId))
 				.filter(
 					(vendor) =>
-						vendor.purposes?.includes(purposeId) ||
-						vendor.legIntPurposes?.includes(purposeId)
-				)
-				.map((vendor) => mapCustomVendor(vendor, purposeId));
+						vendor.purposes.includes(purposeId) ||
+						vendor.legIntPurposes.includes(purposeId)
+				);
 
 			return {
 				description: purpose.description,
@@ -342,7 +387,7 @@ export const processGVLForDialog = function processGVLForDialog(
 	);
 	// A custom vendor with a registered vendor's id is dropped, as
 	// `createIAB()` drops it, so the two never share a row.
-	const customVendors = getCustomVendors(iab).filter(
+	const customVendors = (iab.nonIABVendors ?? iab.customVendors ?? []).filter(
 		(vendor) => !Object.hasOwn(iab.gvl?.vendors ?? {}, String(vendor.id))
 	);
 	const { language } = iab;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/branding';
 	import {
 		resolveBrandingTag,
@@ -10,7 +11,6 @@
 	import { onMount } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { fallbackTranslations } from '../translation-defaults';
 	import BrandMark from './icons/brand-mark.svelte';
 
 	let {
@@ -30,7 +30,7 @@
 	const translations = $derived(
 		resolveTranslations(
 			consent.state.translationConfig,
-			fallbackTranslations(consent.state.translationConfig)
+			defaultTranslationConfig
 		)
 	);
 

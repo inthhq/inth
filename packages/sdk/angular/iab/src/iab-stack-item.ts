@@ -8,6 +8,11 @@ import {
 } from '@angular/core';
 import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import { countIABPartners } from '@inth/sdk/iab/headless';
+import type {
+	HeadlessIABVendorId,
+	ProcessedStack,
+} from '@inth/sdk/iab/headless';
+import type { IABTranslations } from '@inth/sdk/translations';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
@@ -18,8 +23,6 @@ import type {
 	IABPurposeRow,
 	IABVendorChoice,
 } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
-import type { ProcessedStack, VendorId } from './iab-types';
 
 /** A stack, or a display-model row whose purposes carry `hasConsentBasis`. */
 export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
@@ -184,7 +187,7 @@ export class IABStackItem {
 	/** A vendor's consent switch changed. */
 	readonly vendorToggle = output<IABVendorChoice>();
 	/** A vendor name was clicked. */
-	readonly vendorClick = output<VendorId>();
+	readonly vendorClick = output<HeadlessIABVendorId>();
 	/** A vendor's objection changed. */
 	readonly vendorLegitimateInterestToggle = output<IABVendorChoice>();
 	/** A purpose's objection changed. */

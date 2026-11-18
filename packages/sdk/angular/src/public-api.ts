@@ -49,7 +49,6 @@ export {
 	TRIGGER_SHEETS,
 } from './lib/core/consent-styles';
 export type { SurfaceStyleSheet } from './lib/core/consent-styles';
-export { fallbackTranslations } from './lib/core/translation-defaults';
 export { whenIABReady } from './lib/core/iab-loader';
 export {
 	holdIdleDialogWarming,
@@ -62,7 +61,7 @@ export type { DialogPreload } from './lib/core/dialog-warming';
 export { manifest } from './lib/core/modes';
 export { hosted, type HostedMode } from '@inth/sdk/modes';
 export type { ConsentTesting } from '@inth/sdk/testing';
-export { defaultTranslationConfig } from './lib/core/translation-defaults';
+export { defaultTranslationConfig } from '@inth/sdk/surface-state';
 export {
 	detectBrowserLanguage,
 	mergeTranslationConfigs,

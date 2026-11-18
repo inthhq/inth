@@ -33,6 +33,8 @@ import {
 } from '@inth/angular/primitives';
 import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
 import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
+import { resolveIABDialogDisplayModel } from '@inth/sdk/iab/headless';
+import type { HeadlessIABVendorId } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
@@ -51,8 +53,6 @@ import { IABPurposeItem } from './iab-purpose-item';
 import type { IABPurposeChoice, IABVendorChoice } from './iab-purpose-item';
 import { IABStackItem } from './iab-stack-item';
 import { getIABTranslations } from './iab-translations';
-import { resolveIABDialogDisplayModel } from './iab-types';
-import type { VendorId } from './iab-types';
 import { IABVendorList } from './iab-vendor-list';
 import type { IABAdTechProviderChoice } from './iab-vendor-list';
 
@@ -630,7 +630,9 @@ export class IABConsentDialogBody {
 	protected readonly activeTab = signal<string | null>('purposes');
 	readonly #rememberedTab = computed(() => this.iab()?.preferenceCenterTab);
 	/** @internal */
-	protected readonly selectedVendorId = signal<VendorId | null>(null);
+	protected readonly selectedVendorId = signal<HeadlessIABVendorId | null>(
+		null
+	);
 	/** @internal */
 	protected readonly specialPurposesExpanded = signal(false);
 	/**
@@ -784,7 +786,7 @@ export class IABConsentDialogBody {
 	}
 
 	/** @internal */
-	protected showVendor(vendorId: VendorId): void {
+	protected showVendor(vendorId: HeadlessIABVendorId): void {
 		this.selectedVendorId.set(vendorId);
 		this.selectTab('vendors');
 	}

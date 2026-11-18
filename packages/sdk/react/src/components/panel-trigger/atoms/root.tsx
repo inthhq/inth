@@ -8,6 +8,7 @@
  */
 
 import type { KernelBranding } from '@inth/sdk/engine';
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -22,7 +23,7 @@ import {
 } from '../../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../../shared/surface-styles';
 import { TRIGGER_SHEETS } from '../../shared/trigger-sheets';
-import type { CornerPosition, TriggerVisibility } from '../types';
+import type { CornerPosition } from '../types';
 import { useDraggable } from '../use-draggable';
 import type { UseDraggableReturn } from '../use-draggable';
 
@@ -89,7 +90,7 @@ export interface TriggerRootProps {
 	 * Controls when the trigger is visible.
 	 * @default 'always'
 	 */
-	showWhen?: TriggerVisibility;
+	showWhen?: ConsentDialogTriggerVisibility;
 
 	/**
 	 * Replaces the `showWhen` calculation with a host-computed value. The

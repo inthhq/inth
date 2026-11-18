@@ -26,14 +26,18 @@ export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
 export { resolveConsentPresentation } from './libs/policy-actions';
 export {
 	resolveActionLabels,
+	resolveCategoryTitle,
+	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveTriggerLabels,
 } from './libs/consent-copy';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 } from './libs/experiment';
 export { hasGlobalPrivacyControlSignal } from './libs/global-privacy-control';
+export { defaultTranslationConfig } from './translations/defaults';
 export { createLazyIABFactory } from './runtime/lazy-iab';
 export { pendingBootSnapshot } from './runtime/pending-snapshot';
 export type { PendingSnapshotOptions } from './runtime/pending-snapshot';

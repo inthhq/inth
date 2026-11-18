@@ -1,3 +1,4 @@
+import { resolveCategoryTitle } from '@inth/sdk/engine';
 import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 import {
@@ -179,12 +180,6 @@ const ConsentWidgetAccordion = ({
 const OpenIcon = LucideIcon({ iconPath: <path d="M5 12h14M12 5v14" /> });
 const CloseIcon = LucideIcon({ iconPath: <path d="M5 12h14" /> });
 
-const formatConsentName = function formatConsentName(name: AllConsentNames) {
-	return name
-		.replace(/_/gu, ' ')
-		.replace(/\b\w/gu, (c: string) => c.toUpperCase());
-};
-
 interface ConsentWidgetAccordionRowProps {
 	consent: ConsentType;
 	title: string;
@@ -329,7 +324,8 @@ const ConsentWidgetAccordionItems = () => {
 	};
 	const { noStyle, onToggleItem, openValues } =
 		useConsentWidgetAccordionContext();
-	const { consentTypes } = useTranslations();
+	const translations = useTranslations();
+	const { consentTypes } = translations;
 	const consents = useMemo(
 		() =>
 			displayedCategories.flatMap((name) =>
@@ -349,9 +345,7 @@ const ConsentWidgetAccordionItems = () => {
 			onToggleItem={onToggleItem}
 			open={openValues.includes(consent.name)}
 			restricted={isRestricted(consent.name)}
-			title={
-				consentTypes[consent.name]?.title ?? formatConsentName(consent.name)
-			}
+			title={resolveCategoryTitle(translations, consent.name)}
 		/>
 	));
 };

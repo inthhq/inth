@@ -19,6 +19,17 @@ import { ConsentDialogTrigger } from './consent-dialog-trigger';
 })
 class TriggerCorner {}
 
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [ConsentDialogTrigger],
+	selector: 'test-trigger-after-consent',
+	template: `<inth-consent-dialog-trigger
+		showWhen="after-consent"
+		[persistPosition]="false"
+	/>`,
+})
+class TriggerAfterConsent {}
+
 afterEach(() => {
 	TestBed.resetTestingModule();
 	localStorage.clear();
@@ -26,6 +37,23 @@ afterEach(() => {
 });
 
 describe('ConsentDialogTrigger', () => {
+	test('after-consent waits until no prompt is owed', async () => {
+		TestBed.configureTestingModule({
+			providers: [provideInth({ ...testOptions(), disableAnimation: true })],
+		});
+		const fixture = TestBed.createComponent(TriggerAfterConsent);
+		await fixture.whenStable();
+		const consent = TestBed.inject(ConsentManager);
+		const trigger = () =>
+			document.querySelector('[data-testid="consent-dialog-trigger"]');
+		expect(consent.promptRequirement().kind).not.toBe('none');
+		expect(trigger()).toBeNull();
+
+		await consent.saveConsents('all');
+		await fixture.whenStable();
+		expect(trigger()?.getAttribute('aria-label')).toBe('Open privacy settings');
+	});
+
 	test('starts in the corner defaultPosition names', async () => {
 		TestBed.configureTestingModule({
 			providers: [provideInth({ ...testOptions(), disableAnimation: true })],

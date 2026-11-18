@@ -510,7 +510,7 @@ export const ConsentDemo = () => {
 							ariaLabel="Privacy controls"
 							defaultPosition="bottom-right"
 							persistPosition={false}
-							showWhen="after-prompt"
+							showWhen="after-consent"
 						/>
 					) : null}
 					<IABProvider {...iabConfig}>

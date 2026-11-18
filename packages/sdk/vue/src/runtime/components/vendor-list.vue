@@ -7,12 +7,14 @@
  * so the cross-framework parity runner sees identical DOM.
  */
 import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+import type { VendorListTranslations } from '@inth/sdk/translations';
 import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 
 import '@inth/sdk/ui/styles/components/vendor-list.css';
 import { computed, ref, useId } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '../composables';
+import { useConsentConfig } from '../composables';
+import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import { preferenceItemVariants } from '../primitives/preference-item/variants';
 import { switchVariants } from '../primitives/switch-variants';
 import { slotAttrs } from '../utils/slot-attrs';
@@ -35,22 +37,17 @@ const emit = defineEmits<{
 }>();
 
 const config = useConsentConfig();
-const init = useConsentInit();
+const translations = useSurfaceTranslations();
 const pi = preferenceItemVariants();
 const sw = switchVariants();
 /** Two surfaces can list the same vendor at once, so ids are scoped per instance. */
 const uid = useId();
 
-const DEFAULT_COPY = {
-	disabledByCategory: 'Turn on this category to choose vendors.',
-	privacyPolicy: 'Privacy policy',
-	switchLabel: 'Allow {vendor}',
-	title: 'Vendors ({count})',
-};
-
-const copy = computed(() => ({
-	...DEFAULT_COPY,
-	...init.value?.translations?.translations?.consentManagerDialog?.vendors,
+// English carries every vendor list key.
+const copy = computed<VendorListTranslations>(() => ({
+	...(translations.value.english.consentManagerDialog
+		.vendors as VendorListTranslations),
+	...translations.value.bundle?.consentManagerDialog?.vendors,
 }));
 
 const styles = computed(() => (props.noStyle ? undefined : vendorListStyles));

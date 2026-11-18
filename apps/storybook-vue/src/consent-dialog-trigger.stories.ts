@@ -49,7 +49,7 @@ export const DialogFocusManagement: Story = {
 
 export const CustomOffset: Story = {
 	beforeEach: () => {
-		window.localStorage.removeItem('inth:dialog-trigger-position');
+		window.localStorage.removeItem('inth-trigger-position');
 	},
 	play: async () => {
 		const trigger = await within(document.body).findByTestId(

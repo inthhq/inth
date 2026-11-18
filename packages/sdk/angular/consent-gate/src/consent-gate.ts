@@ -27,12 +27,12 @@ import {
 	ConsentManager,
 	ConsentStyles,
 	ConsentTheme,
-	fallbackTranslations,
 	SURFACE_SCOPES,
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
 import type { AllConsentNames } from '@inth/sdk/engine';
+import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-gate';
 import {
 	resolveStyles,
@@ -230,10 +230,12 @@ export class ConsentGate {
 		);
 	});
 
-	readonly #translations = computed(() => {
-		const config = this.#consent.translationConfig();
-		return resolveTranslations(config, fallbackTranslations(config));
-	});
+	readonly #translations = computed(() =>
+		resolveTranslations(
+			this.#consent.translationConfig(),
+			defaultTranslationConfig
+		)
+	);
 
 	readonly #categoryTitle = computed(() => {
 		const category = this.category();

@@ -14,7 +14,8 @@ type TranslationSection =
 	| 'consentGate'
 	| 'legalLinks'
 	| 'iab'
-	| 'rights';
+	| 'rights'
+	| 'trigger';
 
 const isPlainObject = function isPlainObject(
 	value: unknown
@@ -170,6 +171,7 @@ export const deepMergeTranslations = function deepMergeTranslations(
 		'legalLinks',
 		'iab',
 		'rights',
+		'trigger',
 	];
 
 	const result: Partial<Translations> = {};

@@ -97,9 +97,9 @@ const disableAnimation = computed(() =>
 const iabT = useIabTranslations();
 
 const labels = computed(() => ({
-	accept: iabT.value?.common?.acceptAll ?? 'Accept all',
-	customize: iabT.value?.common?.customize ?? 'Customize',
-	reject: iabT.value?.common?.rejectAll ?? 'Reject all',
+	accept: iabT.value.common.acceptAll,
+	customize: iabT.value.common.customize,
+	reject: iabT.value.common.rejectAll,
 }));
 
 // The summary — which purposes, stacks and special features the banner

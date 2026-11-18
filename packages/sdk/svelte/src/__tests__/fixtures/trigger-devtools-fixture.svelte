@@ -14,7 +14,7 @@
 	}: {
 		devTools?: boolean;
 		trigger?: boolean;
-		showWhen?: 'always' | 'never';
+		showWhen?: 'always' | 'after-consent' | 'never';
 		defaultPosition?: CornerPosition;
 	} = $props();
 </script>

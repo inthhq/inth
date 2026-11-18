@@ -66,20 +66,14 @@ export const createBanner = function createBanner(
 	const build = function build(snapshot: ConsentSnapshot): HTMLElement {
 		const copy = resolveCopy(snapshot);
 		const { t } = copy;
-		const notice = snapshot.policyRule.prompt === 'notice';
 		const labels: Record<PresentationAction, string> = {
-			accept: options.acceptButtonText ?? t.common.acceptAll,
-			customize: options.customizeButtonText ?? t.common.customize,
-			dismiss: t.common.acknowledge,
-			reject: options.rejectButtonText ?? t.common.rejectAll,
-			save: t.common.save,
+			...copy.actions,
+			accept: options.acceptButtonText ?? copy.actions.accept,
+			customize: options.customizeButtonText ?? copy.actions.customize,
+			reject: options.rejectButtonText ?? copy.actions.reject,
 		};
-		const title =
-			options.title ??
-			(notice ? t.cookieBanner.noticeTitle : t.cookieBanner.title);
-		const description =
-			options.description ??
-			(notice ? t.cookieBanner.noticeDescription : t.cookieBanner.description);
+		const title = options.title ?? copy.prompt.title;
+		const description = options.description ?? copy.prompt.description;
 		const actions = resolveActions(
 			snapshot,
 			'prompt',
@@ -187,7 +181,7 @@ export const createBanner = function createBanner(
 							onclick: () => ctx.client.openDialog(),
 							type: 'button',
 						},
-						control === 'opt-out' ? t.rights.optOut : t.rights.preferences
+						copy.controls[control]
 					),
 					'consentBannerRightLink'
 				)

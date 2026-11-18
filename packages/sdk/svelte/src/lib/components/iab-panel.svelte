@@ -5,7 +5,11 @@
 		resolveIABBannerSummary,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
-	import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
+	import {
+		applyPublisherRestrictionsToGVL,
+		resolveIABDialogDisplayModel,
+	} from '@inth/sdk/iab/headless';
+	import type { HeadlessIABVendorId as VendorId } from '@inth/sdk/iab/headless';
 	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 	import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
@@ -24,8 +28,6 @@
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { IAB_DIALOG_SHEETS } from '../iab-dialog-sheets';
 	import { getIABTranslations } from '../iab-translations';
-	import { resolveIABDialogDisplayModel } from '../iab-types';
-	import type { VendorId } from '../iab-types';
 	import { Tabs } from '../primitives';
 	import Branding from './branding.svelte';
 	import IABFeatureItem from './iab-feature-item.svelte';

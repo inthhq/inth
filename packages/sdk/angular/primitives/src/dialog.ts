@@ -160,9 +160,9 @@ export class DialogPositioner {
 
 /**
  * The dialog itself: `role="dialog"`, labelled by its title and described
- * by its description. Escape closes it. While open it takes focus (an
- * element marked `data-inth-dialog-focus="true"`, else the first tabbable
- * one), traps it with `trapFocus`, and locks scrolling with `preventScroll`.
+ * by its description. Escape closes it. While open it takes focus (its
+ * first tabbable element), traps it with `trapFocus`, and locks scrolling
+ * with `preventScroll`.
  * A closed dialog that stays mounted is `inert` and `aria-hidden`.
  */
 @Directive({

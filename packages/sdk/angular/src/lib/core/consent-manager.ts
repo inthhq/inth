@@ -51,6 +51,7 @@ import {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 	consentTypes as defaultConsentTypes,
+	defaultTranslationConfig,
 	deniedVendorIds,
 	has as evaluateHas,
 	hasGlobalPrivacyControlSignal,
@@ -73,7 +74,6 @@ import { isIABConfigured } from './iab-loader';
 import { INTH_OPTIONS, runtimeOptionsFor } from './options';
 import type { InthResolvedOptions, InthSharedOptions } from './options';
 import { INTH_SERVER_STATE, INTH_SERVER_STATE_GATE } from './server-state';
-import { registeredDefaultTranslations } from './translation-defaults';
 
 /**
  * Loads the consent engine's chunk. Provide another to test a failed load.
@@ -171,7 +171,7 @@ export interface ConsentDraftState {
 const toTranslationConfig = function toTranslationConfig(
 	snapshot: ConsentSnapshot
 ): TranslationConfig {
-	const defaults = registeredDefaultTranslations();
+	const defaults = defaultTranslationConfig;
 	const resolved = snapshot.translations;
 	if (!resolved) {
 		return defaults;

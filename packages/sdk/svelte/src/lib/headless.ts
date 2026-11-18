@@ -35,14 +35,14 @@ export {
 } from './event-dispatcher';
 export { getIABTranslations, type IABTranslations } from './iab-translations';
 export {
-	getIABBannerDisplayItems,
+	type HeadlessIABVendorId,
 	type ProcessedFeature,
 	type ProcessedGVLData,
 	type ProcessedPurpose,
 	type ProcessedSpecialFeature,
 	type ProcessedStack,
 	type ProcessedVendor,
-	processGVLData,
-	type VendorId,
-} from './iab-types';
+	processGVLForDialog,
+	resolveIABBannerSummary,
+} from '@inth/sdk/iab/headless';
 export type { ConsentManagerOptions } from './types';

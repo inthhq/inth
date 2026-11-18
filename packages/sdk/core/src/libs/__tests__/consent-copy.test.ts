@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	resolveActionLabels,
+	resolveCategoryTitle,
+	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveTriggerLabels,
 } from '../consent-copy';
 
 describe('consent copy', () => {
@@ -71,5 +74,39 @@ describe('consent copy', () => {
 			'opt-out': 'Do not sell or share my data',
 			preferences: 'Manage preferences',
 		});
+	});
+
+	it('titles a category from its language, then English, then its name', () => {
+		expect(
+			resolveCategoryTitle(
+				{ consentTypes: { measurement: { title: 'Statistik' } } },
+				'measurement'
+			)
+		).toBe('Statistik');
+		expect(resolveCategoryTitle({ consentTypes: {} }, 'measurement')).toBe(
+			'Analytics'
+		);
+		expect(resolveCategoryTitle(undefined, 'product_updates')).toBe(
+			'Product Updates'
+		);
+	});
+
+	it('fills IAB copy key by key from English', () => {
+		const iab = resolveIABCopy({
+			iab: { preferenceCenter: { vendorList: { search: 'Suchen' } } },
+		});
+		expect(iab.preferenceCenter.vendorList.search).toBe('Suchen');
+		expect(iab.preferenceCenter.vendorList.maxAgeRefreshes).toBe('(refreshes)');
+		expect(iab.common.acceptAll).toBe('Accept All');
+	});
+
+	it('labels the trigger from the bundle, else English', () => {
+		expect(resolveTriggerLabels({ trigger: { label: 'Datenschutz' } })).toEqual(
+			{
+				devToolsLabel: 'inth DevTools',
+				label: 'Datenschutz',
+				toolbarLabel: 'Privacy controls',
+			}
+		);
 	});
 });

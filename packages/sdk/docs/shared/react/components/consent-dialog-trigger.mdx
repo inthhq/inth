@@ -12,9 +12,9 @@ group: reference
   | `icon` | `'branding' \| 'fingerprint' \| 'settings' \| ReactNode` | `'branding'` | Icon rendered inside the button. |
   | `defaultPosition` | `'bottom-left' \| 'bottom-right' \| 'top-left' \| 'top-right'` | `'bottom-right'` | Corner the button starts in. |
   | `persistPosition` | `boolean` | `true` | Remember the corner the visitor dragged it to. |
-  | `showWhen` | `'always' \| 'after-prompt' \| 'never'` | `'always'` | When the button is visible. `after-prompt` waits until no choice or notice is owed. |
+  | `showWhen` | `'always' \| 'after-consent' \| 'never'` | `'always'` | When the button is visible. `after-consent` waits until no choice or notice is owed. |
   | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Button size. |
-  | `ariaLabel` | `string` | `'Open privacy settings'` | Accessible name. |
+  | `ariaLabel` | `string` | `trigger.label` translation ("Open privacy settings") | Accessible name. |
   | `noStyle` | `boolean` | `false` | Remove the default styling. |
 </section>
 
@@ -26,9 +26,9 @@ group: reference
   | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction. |
   | `defaultPosition` | `CornerPosition` | `'bottom-right'` | Corner the toolbar starts in. |
   | `persistPosition` | `boolean` | `true` | Remember the dragged corner. |
-  | `showWhen` | `'always' \| 'after-prompt' \| 'never'` | `'always'` | When the built-in preferences action is visible. App-owned actions always render. `after-prompt` waits until no choice or notice is owed. |
+  | `showWhen` | `'always' \| 'after-consent' \| 'never'` | `'always'` | When the built-in preferences action is visible. App-owned actions always render. `after-consent` waits until no choice or notice is owed. |
   | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Size of each action. |
-  | `ariaLabel` | `string` | `'Privacy controls'` | Accessible name for the toolbar group. |
+  | `ariaLabel` | `string` | `trigger.toolbarLabel` translation ("Privacy controls") | Accessible name for the toolbar group. |
   | `noStyle` | `boolean` | `false` | Remove the default styling. |
 
   While `<ConsentDevTools>` is mounted, the toolbar adds a DevTools button at

@@ -27,9 +27,10 @@ const ui: ConsentUIOptions = {
 	styles: false,
 	trigger: true,
 };
-// No banner, so the trigger shows as soon as the policy resolves.
+// No prompt, but preferences stay reachable, so the trigger shows as
+// soon as the policy resolves.
 const options: ConsentClientOptions = {
-	policy: ['worldNone'],
+	policy: ['worldOptOutNoPrompt'],
 	ui,
 };
 

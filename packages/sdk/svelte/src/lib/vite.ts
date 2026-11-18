@@ -276,12 +276,15 @@ export const createModulePreloadPlugin =
  * and `experiment-presentation`, so `vendors`, `experiment`, `modules/has`
  * and the record evaluator stay with the engine.
  *
+ * The English copy joins them: the surfaces resolve their text against
+ * it, and the engine starts from it.
+ *
  * Vite's preload helper joins them: the first load's dynamic imports use
  * it, and it rode in this chunk before through `experiment`. On its own
  * it costs the page one more request.
  */
 const FIRST_LOAD_SHARED =
-	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@inth[\\/]sdk[\\/]lib[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface)|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
+	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@inth[\\/]sdk[\\/]lib[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface|translations[\\/]defaults)|translations[\\/]dist[\\/]translations[\\/]en|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
 
 /** The slice of Rolldown's output options {@link FirstLoadChunkPlugin} edits. */
 interface OutputOptionsLike {

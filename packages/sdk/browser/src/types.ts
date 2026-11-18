@@ -33,6 +33,7 @@ import type {
 	RuntimeNetworkBlockerOptions,
 } from '@inth/sdk-core/runtime';
 import type { ConsentTesting } from '@inth/sdk-core/testing';
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk-schema/config';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import type { Theme } from '@inth/sdk-ui/theme';
 
@@ -101,11 +102,14 @@ export interface ConsentTriggerOptions {
 	/** Button size. Defaults to `md`. */
 	size?: 'sm' | 'md' | 'lg';
 	/**
-	 * When to show it. `always` (default) whenever no other surface is
-	 * open; `after-consent` only once the visitor has decided.
+	 * When to show it, by the framework triggers' rule. `always` (default)
+	 * whenever the dialog is closed, beside an open banner too;
+	 * `after-consent` only once no prompt is owed (a choice saved or a
+	 * notice dismissed); `never` not at all. It stays hidden while the
+	 * policy leaves nothing to manage.
 	 */
-	showWhen?: 'always' | 'after-consent';
-	/** Accessible name. */
+	showWhen?: ConsentDialogTriggerVisibility;
+	/** Accessible name. Defaults to the `trigger.label` translation. */
 	ariaLabel?: string;
 	/** Remember a dragged-to corner in localStorage. Defaults to `true`. */
 	persistPosition?: boolean;

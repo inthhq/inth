@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { LegalLinks as LegalLinksType } from '@inth/sdk/engine';
+	import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 	import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 	import {
 		resolveLegalLinkEntries,
@@ -7,7 +8,6 @@
 	} from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { fallbackTranslations } from '../translation-defaults';
 
 	// No theme slot: the React and Vue legal links take only the stock link
 	// class, and the description's slot belongs to the description.
@@ -32,7 +32,7 @@
 			links,
 			resolveTranslations(
 				consent.state.translationConfig,
-				fallbackTranslations(consent.state.translationConfig)
+				defaultTranslationConfig
 			).legalLinks
 		)
 	);

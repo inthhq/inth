@@ -5164,6 +5164,9 @@ importers:
       '@inth/sdk-core':
         specifier: workspace:*
         version: link:../core
+      '@inth/sdk-schema':
+        specifier: workspace:*
+        version: link:../schema
       '@inth/sdk-translations':
         specifier: workspace:*
         version: link:../translations

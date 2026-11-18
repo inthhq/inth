@@ -7,6 +7,7 @@
  * @packageDocumentation
  */
 
+import { isTriggerVisible } from '@inth/sdk/ui/utils/trigger-utils';
 import type { ReactNode } from 'react';
 
 import { useHasConsentPreferences, usePromptRequirement } from '~/hooks';
@@ -28,7 +29,7 @@ const DEFAULT_PREFERENCES: ConsentDialogTriggerToolbarPreferences = {};
  *
  * The toolbar itself does not depend on the consent policy: app-owned
  * actions always render. `showWhen` governs only the built-in preferences
- * action, so `after-prompt` hides that one item while a choice or notice is
+ * action, so `after-consent` hides that one item while a choice or notice is
  * owed and the rest of the toolbar stays put. The toolbar renders nothing
  * only when it has no visible item.
  *
@@ -56,7 +57,7 @@ export const ConsentDialogTriggerToolbar = ({
 	orientation = 'horizontal',
 	defaultPosition = 'bottom-right',
 	persistPosition = true,
-	ariaLabel = 'Privacy controls',
+	ariaLabel,
 	showWhen = 'always',
 	size = 'md',
 	className,
@@ -66,12 +67,14 @@ export const ConsentDialogTriggerToolbar = ({
 }: ConsentDialogTriggerToolbarProps): ReactNode => {
 	const promptRequirement = usePromptRequirement();
 	const hasConsentUI = useHasConsentPreferences();
-	const promptSettled =
-		showWhen !== 'after-prompt' || promptRequirement.kind === 'none';
-	// Without a resolved policy, or under a `none` rule that keeps no right
-	// reachable, there is nothing to manage, so the built-in item stays out
-	// regardless of `showWhen`; app-owned actions still render.
-	const showPreferences = hasConsentUI && showWhen !== 'never' && promptSettled;
+	// The toolbar holds app-owned actions too, so it stays while the dialog
+	// is open; only the built-in item follows the trigger rule.
+	const showPreferences = isTriggerVisible({
+		dialogOpen: false,
+		hasConsentPreferences: hasConsentUI,
+		promptOwed: promptRequirement.kind !== 'none',
+		showWhen,
+	});
 	const visible = actions.length > 0 || showPreferences;
 
 	return (

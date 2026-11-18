@@ -1,4 +1,5 @@
 import type { PolicyRule } from '@inth/sdk/schema/types';
+import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import type { ComponentProps } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -6,7 +7,6 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
-import { defaultTranslationConfig } from '~/utils/default-translation-config';
 
 import { testing } from '../../../testing';
 

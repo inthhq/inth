@@ -5,6 +5,7 @@ import type {
 	ConsentPresentation,
 	TranslationConfig,
 } from '@inth/sdk/engine';
+import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import { useCallback, useMemo } from 'react';
 
 import { useHeadlessConsentUI } from '../component-hooks/use-headless-consent-ui';
@@ -15,7 +16,6 @@ import {
 	useTranslations,
 } from '../hooks';
 import { useIAB } from '../iab-context';
-import { defaultTranslationConfig } from '../utils/default-translation-config';
 
 const toTranslationConfig = function toTranslationConfig(
 	resolved: ReturnType<typeof useTranslations>

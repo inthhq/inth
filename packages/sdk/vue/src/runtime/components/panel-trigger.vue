@@ -1,15 +1,26 @@
 <script setup lang="ts">
-import type {
-	ConsentDialogTriggerPosition,
-	ConsentDialogTriggerSize,
-} from '@inth/sdk/schema/config';
+import type { ConsentDialogTriggerSize } from '@inth/sdk/schema/config';
+import { resolveTriggerLabels } from '@inth/sdk/surface-state';
 import triggerStyles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { followDevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
-import { calculateNearestCorner } from '@inth/sdk/ui/utils/trigger-utils';
-import type { CornerPosition } from '@inth/sdk/ui/utils/trigger-utils';
+import {
+	calculateCornerFromDrag,
+	createInitialDragState,
+	getPersistedPosition,
+	isTriggerVisible,
+	nextToolbarItem,
+	onSnapEnd,
+	persistPosition,
+	toolbarOrder,
+} from '@inth/sdk/ui/utils/trigger-utils';
+import type {
+	CornerPosition,
+	DragState,
+	TriggerToolbarItem,
+} from '@inth/sdk/ui/utils/trigger-utils';
 
 import '@inth/sdk/ui/styles/components/consent-dialog-trigger.css';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import {
 	useConsentActiveUI,
@@ -24,10 +35,8 @@ import {
 	usePromptRequirement,
 } from '../composables/kernel';
 import { useDevToolsLauncher } from '../composables/use-devtools-launcher';
-import { useDraggable } from '../composables/use-draggable';
-import { useLocalStorageRef } from '../composables/use-local-storage-ref';
 import { useMounted } from '../composables/use-mounted';
-import { useWindowSize } from '../composables/use-window-size';
+import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import { slotAttrs } from '../utils/slot-attrs';
 import TriggerIcon from './trigger-icon.vue';
 
@@ -35,42 +44,31 @@ const activeUI = useConsentActiveUI();
 const config = useConsentConfig();
 const policy = usePolicyRule();
 const init = useConsentInit();
+const translations = useSurfaceTranslations();
 
-const STORAGE_KEY = 'inth:dialog-trigger-position';
-const FALLBACK_OFFSET = 20;
-const TOOLBAR_LABEL = 'Privacy controls';
-const DEVTOOLS_LABEL = 'inth DevTools';
+/** Movement past which a pointer sequence counts as a drag, not a click. */
+const DRAG_SLOP_PX = 5;
 
 const mounted = useMounted();
-const { width, height } = useWindowSize();
 const triggerRef = ref<HTMLElement | null>(null);
-const persistedPosition = useLocalStorageRef<{ x: number; y: number } | null>(
-	STORAGE_KEY,
-	null
+
+const labels = computed(() => resolveTriggerLabels(translations.value.bundle));
+const triggerLabel = computed(
+	() => config.value.triggerAriaLabel ?? labels.value.label
 );
 
-const hasConsentUi = useHasConsentPreferences();
+const hasConsentPreferences = useHasConsentPreferences();
 const promptRequirement = usePromptRequirement();
-const isVisible = computed(() => {
-	if (!mounted.value) {
-		return false;
-	}
-	// Nothing to manage without a resolved policy.
-	if (!hasConsentUi.value) {
-		return false;
-	}
-	// Keep persistent preferences accessible while a notice is open.
-	if (activeUI.value === 'manager') {
-		return false;
-	}
-	const showWhen = config.value.triggerShowWhen;
-	if (showWhen === 'never') {
-		return false;
-	}
-	// `after-consent` waits until no prompt is owed: a choice saved or a
-	// notice dismissed, the same rule as React's `after-prompt`.
-	return showWhen === 'always' || promptRequirement.value.kind === 'none';
-});
+const isVisible = computed(
+	() =>
+		mounted.value &&
+		isTriggerVisible({
+			dialogOpen: activeUI.value === 'manager',
+			hasConsentPreferences: hasConsentPreferences.value,
+			promptOwed: promptRequirement.value.kind !== 'none',
+			showWhen: config.value.triggerShowWhen ?? 'after-consent',
+		})
+);
 
 // With <ConsentDevTools> mounted, the trigger becomes a two-item toolbar
 // that carries the DevTools launcher, so one control occupies the corner.
@@ -78,159 +76,145 @@ const devTools = useDevToolsLauncher(useConsentKernel(), isVisible);
 const showToolbar = devTools.available;
 const devToolsOpen = devTools.isOpen;
 
-const resolveSizePixels = function resolveSizePixels(
-	size: ConsentDialogTriggerSize
-): number {
-	if (size === 'sm') {
-		return 32;
-	}
-	if (size === 'lg') {
-		return 48;
-	}
-	return 40;
-};
-
-/** Width and height the trigger takes up on screen. */
-const resolveFootprint = function resolveFootprint(
-	size: ConsentDialogTriggerSize
-): { width: number; height: number } {
-	const sizePixels = resolveSizePixels(size);
-	if (!showToolbar.value) {
-		return { height: sizePixels, width: sizePixels };
-	}
-	const element = triggerRef.value;
-	if (element?.offsetWidth && element.offsetHeight) {
-		return { height: element.offsetHeight, width: element.offsetWidth };
-	}
-	// Two items, the divider between them, and the toolbar's border.
-	return { height: sizePixels + 2, width: sizePixels * 2 + 3 };
-};
-
-// Resolve the same CSS length as class-positioned triggers, including rem,
-// calc(), and caller overrides inherited by the rendered trigger.
-const resolveOffset = function resolveOffset(): number {
-	const trigger = triggerRef.value;
-	if (!trigger) {
-		return FALLBACK_OFFSET;
-	}
-	const probe = document.createElement('span');
-	probe.style.cssText =
-		'position:absolute;visibility:hidden;padding-left:var(--cdt-offset,20px)';
-	trigger.append(probe);
-	const offset = Number.parseFloat(getComputedStyle(probe).paddingLeft);
-	probe.remove();
-	return Number.isFinite(offset) ? offset : FALLBACK_OFFSET;
-};
-
-const resolveInitialPosition = function resolveInitialPosition(
-	position: ConsentDialogTriggerPosition,
-	size: ConsentDialogTriggerSize
-) {
-	const footprint = resolveFootprint(size);
-	const offset = resolveOffset();
-	const maxX = Math.max(width.value - footprint.width - offset, offset);
-	const maxY = Math.max(height.value - footprint.height - offset, offset);
-	if (position === 'top-left') {
-		return { x: offset, y: offset };
-	}
-	if (position === 'top-right') {
-		return { x: maxX, y: offset };
-	}
-	if (position === 'bottom-left') {
-		return { x: offset, y: maxY };
-	}
-	return { x: maxX, y: maxY };
-};
-
-const initialValue = computed(
-	() =>
-		persistedPosition.value ??
-		resolveInitialPosition(
-			config.value.triggerDefaultPosition ?? 'bottom-right',
-			config.value.triggerSize ?? 'md'
-		)
+const corner = ref<CornerPosition>(
+	config.value.triggerDefaultPosition ?? 'bottom-right'
 );
-
-const { position, isDragging } = useDraggable(triggerRef, {
-	initialValue: initialValue.value,
-	onEnd: (nextPosition) => {
-		if (!config.value.triggerPersistPosition) {
-			return;
-		}
-
-		persistedPosition.value = { x: nextPosition.x, y: nextPosition.y };
-	},
-	preventDefault: true,
-	stopPropagation: true,
+onMounted(() => {
+	if (config.value.triggerPersistPosition === false) {
+		return;
+	}
+	const persisted = getPersistedPosition();
+	if (persisted) {
+		corner.value = persisted;
+	}
 });
 
-watch(
-	[mounted, width, height, activeUI, showToolbar],
-	() => {
-		if (!mounted.value || isDragging.value) {
-			return;
-		}
-		if (persistedPosition.value) {
-			// The toolbar is wider than the button saved there; keep it on
-			// screen.
-			if (showToolbar.value) {
-				const footprint = resolveFootprint(config.value.triggerSize ?? 'md');
-				const offset = resolveOffset();
-				position.value = {
-					x: Math.max(
-						Math.min(position.value.x, width.value - footprint.width - offset),
-						0
-					),
-					y: Math.max(
-						Math.min(
-							position.value.y,
-							height.value - footprint.height - offset
-						),
-						0
-					),
-				};
-			}
-			return;
-		}
+const dragState = ref<DragState>(createInitialDragState());
+const isDragging = computed(() => dragState.value.isDragging);
+const isSnapping = ref(false);
+let hasDragged = false;
+let dragStartTime = 0;
+let capturedElement: HTMLElement | null = null;
 
-		const next = resolveInitialPosition(
-			config.value.triggerDefaultPosition ?? 'bottom-right',
-			config.value.triggerSize ?? 'md'
-		);
-		position.value = next;
-	},
-	{ flush: 'post', immediate: true }
-);
-
-const triggerStyle = computed(() => ({
-	left: `${position.value.x}px`,
-	position: 'fixed' as const,
-	top: `${position.value.y}px`,
-	zIndex: 9999,
-}));
-
-const openDialog = function openDialog() {
-	activeUI.value = 'manager';
+const releaseCapture = function releaseCapture(event: PointerEvent) {
+	capturedElement?.releasePointerCapture?.(event.pointerId);
+	capturedElement = null;
 };
 
-// The corner the toolbar sits nearest, settled when a drag ends.
-const corner = ref<CornerPosition>('bottom-right');
-watch(
-	[position, isDragging, width, height, showToolbar],
-	() => {
-		if (isDragging.value) {
-			return;
+const onPointerDown = function onPointerDown(event: PointerEvent) {
+	if (event.button !== 0) {
+		return;
+	}
+	capturedElement = event.target as HTMLElement;
+	capturedElement.setPointerCapture?.(event.pointerId);
+	hasDragged = false;
+	dragStartTime = Date.now();
+	isSnapping.value = false;
+	dragState.value = {
+		currentX: event.clientX,
+		currentY: event.clientY,
+		isDragging: true,
+		startX: event.clientX,
+		startY: event.clientY,
+	};
+};
+
+const onPointerMove = function onPointerMove(event: PointerEvent) {
+	const state = dragState.value;
+	if (!state.isDragging) {
+		return;
+	}
+	if (
+		Math.abs(event.clientX - state.startX) > DRAG_SLOP_PX ||
+		Math.abs(event.clientY - state.startY) > DRAG_SLOP_PX
+	) {
+		hasDragged = true;
+	}
+	dragState.value = {
+		...state,
+		currentX: event.clientX,
+		currentY: event.clientY,
+	};
+};
+
+const onPointerUp = function onPointerUp(event: PointerEvent) {
+	releaseCapture(event);
+	const state = dragState.value;
+	if (!state.isDragging) {
+		return;
+	}
+	if (hasDragged) {
+		const dragX = event.clientX - state.startX;
+		const dragY = event.clientY - state.startY;
+		const duration = Date.now() - dragStartTime;
+		const next = calculateCornerFromDrag(corner.value, dragX, dragY, {
+			velocityX: duration > 0 ? dragX / duration : 0,
+			velocityY: duration > 0 ? dragY / duration : 0,
+		});
+		if (next !== corner.value) {
+			isSnapping.value = true;
+			corner.value = next;
+			if (config.value.triggerPersistPosition !== false) {
+				persistPosition(next);
+			}
 		}
-		const footprint = resolveFootprint(config.value.triggerSize ?? 'md');
-		corner.value = calculateNearestCorner(
-			position.value.x + footprint.width / 2,
-			position.value.y + footprint.height / 2,
-			width.value,
-			height.value
-		);
+	}
+	dragState.value = createInitialDragState();
+};
+
+const onPointerCancel = function onPointerCancel(event: PointerEvent) {
+	releaseCapture(event);
+	dragState.value = createInitialDragState();
+};
+
+// The snapping class stays on until the move to the new corner ends.
+watch(
+	[isSnapping, triggerRef],
+	([snapping, element], _previous, onCleanup) => {
+		if (snapping && element) {
+			onCleanup(
+				onSnapEnd(element, () => {
+					isSnapping.value = false;
+				})
+			);
+		}
 	},
-	{ flush: 'post', immediate: true }
+	{ flush: 'post' }
 );
+
+const dragStyle = computed(() => {
+	const state = dragState.value;
+	return state.isDragging
+		? {
+				transform: `translate(${state.currentX - state.startX}px, ${state.currentY - state.startY}px)`,
+				transition: 'none',
+			}
+		: undefined;
+});
+
+const cornerClassMap = {
+	'bottom-left': triggerStyles.bottomLeft,
+	'bottom-right': triggerStyles.bottomRight,
+	'top-left': triggerStyles.topLeft,
+	'top-right': triggerStyles.topRight,
+} as const satisfies Record<CornerPosition, string>;
+
+const motionClasses = computed(() => [
+	cornerClassMap[corner.value],
+	isDragging.value && triggerStyles.dragging,
+	isSnapping.value && triggerStyles.snapping,
+]);
+
+/** A pointer click that ends a drag; a keyboard click has `detail` 0. */
+const endsDrag = function endsDrag(event: MouseEvent): boolean {
+	return event.detail !== 0 && hasDragged;
+};
+
+const openDialog = function openDialog(event: MouseEvent) {
+	if (!endsDrag(event)) {
+		activeUI.value = 'manager';
+	}
+};
 
 // Keep a docked DevTools panel beside the toolbar as it moves corners or
 // changes size. Skip mid-drag; the drop re-runs this.
@@ -249,18 +233,9 @@ watch(
 	{ flush: 'post', immediate: true }
 );
 
-type ToolbarItemKind = 'preferences' | 'devtools';
-
-// Preferences sits in the corner; DevTools, a development aid, sits
-// farthest from it.
-const toolbarItems = computed<readonly ToolbarItemKind[]>(() => {
-	if (!devTools.instance.value) {
-		return ['preferences'];
-	}
-	return corner.value.endsWith('left')
-		? ['preferences', 'devtools']
-		: ['devtools', 'preferences'];
-});
+const toolbarItems = computed<readonly TriggerToolbarItem[]>(() =>
+	devTools.instance.value ? toolbarOrder(corner.value) : ['preferences']
+);
 
 const preferencesRight = computed(() =>
 	policy.value.rights.includes('opt-out') ? 'opt-out' : 'preferences'
@@ -277,15 +252,15 @@ const sizeClass = computed(
 		sizeClassMap[(config.value.triggerSize ?? 'md') as ConsentDialogTriggerSize]
 );
 
-const activeItem = ref<ToolbarItemKind>('preferences');
-const focusedItem = computed<ToolbarItemKind>(() =>
+const activeItem = ref<TriggerToolbarItem>('preferences');
+const focusedItem = computed<TriggerToolbarItem>(() =>
 	toolbarItems.value.includes(activeItem.value)
 		? activeItem.value
 		: 'preferences'
 );
-const itemElements = new Map<ToolbarItemKind, HTMLButtonElement>();
+const itemElements = new Map<TriggerToolbarItem, HTMLButtonElement>();
 const setItemElement = function setItemElement(
-	kind: ToolbarItemKind,
+	kind: TriggerToolbarItem,
 	element: unknown
 ) {
 	if (element instanceof HTMLButtonElement) {
@@ -298,18 +273,11 @@ const setItemElement = function setItemElement(
 const handleToolbarKeyDown = function handleToolbarKeyDown(
 	event: KeyboardEvent
 ) {
-	const items = toolbarItems.value;
-	const index = items.indexOf(focusedItem.value);
-	let next: ToolbarItemKind | undefined;
-	if (event.key === 'ArrowRight') {
-		next = items[(index + 1) % items.length];
-	} else if (event.key === 'ArrowLeft') {
-		next = items[(index - 1 + items.length) % items.length];
-	} else if (event.key === 'Home') {
-		next = items.at(0);
-	} else if (event.key === 'End') {
-		next = items.at(-1);
-	}
+	const next = nextToolbarItem(
+		toolbarItems.value,
+		focusedItem.value,
+		event.key
+	);
 	if (!next) {
 		return;
 	}
@@ -318,12 +286,15 @@ const handleToolbarKeyDown = function handleToolbarKeyDown(
 	itemElements.get(next)?.focus();
 };
 
-const selectItem = function selectItem(kind: ToolbarItemKind) {
-	if (kind === 'devtools') {
+const selectItem = function selectItem(
+	kind: TriggerToolbarItem,
+	event: MouseEvent
+) {
+	if (kind === 'preferences') {
+		openDialog(event);
+	} else if (!endsDrag(event)) {
 		devTools.instance.value?.toggle();
-		return;
 	}
-	openDialog();
 };
 </script>
 
@@ -338,11 +309,11 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 			v-bind="
 				slotAttrs(config.components?.trigger?.toolbar, [
 					triggerStyles.toolbar,
-					isDragging && triggerStyles.dragging,
+					...motionClasses,
 				])
 			"
 			role="toolbar"
-			:aria-label="TOOLBAR_LABEL"
+			:aria-label="labels.toolbarLabel"
 			aria-orientation="horizontal"
 			dir="ltr"
 			tabindex="-1"
@@ -350,9 +321,14 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 			data-inth-trigger-toolbar="true"
 			data-inth-trigger="true"
 			:data-dragging="isDragging ? true : undefined"
+			:data-snapping="isSnapping ? true : undefined"
 			:data-disable-animation="config.disableAnimation ? true : undefined"
-			:style="[config.components?.trigger?.toolbar?.style, triggerStyle]"
+			:style="[config.components?.trigger?.toolbar?.style, dragStyle]"
 			@keydown="handleToolbarKeyDown"
+			@pointerdown="onPointerDown"
+			@pointermove="onPointerMove"
+			@pointerup="onPointerUp"
+			@pointercancel="onPointerCancel"
 		>
 			<button
 				v-for="kind in toolbarItems"
@@ -365,9 +341,7 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 					])
 				"
 				type="button"
-				:aria-label="
-					kind === 'devtools' ? DEVTOOLS_LABEL : config.triggerAriaLabel
-				"
+				:aria-label="kind === 'devtools' ? labels.devToolsLabel : triggerLabel"
 				:aria-expanded="kind === 'devtools' ? devToolsOpen : undefined"
 				:data-inth-rights="
 					kind === 'preferences' ? policy.rights.join(' ') : undefined
@@ -376,7 +350,7 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 				:data-inth-trigger-item="kind"
 				:data-right="kind === 'preferences' ? preferencesRight : undefined"
 				:tabindex="kind === focusedItem ? 0 : -1"
-				@click="selectItem(kind)"
+				@click="selectItem(kind, $event)"
 				@focus="activeItem = kind"
 			>
 				<span
@@ -414,7 +388,10 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 			v-else-if="isVisible"
 			ref="triggerRef"
 			v-bind="
-				slotAttrs(config.components?.trigger?.root, triggerStyles.trigger)
+				slotAttrs(config.components?.trigger?.root, [
+					triggerStyles.trigger,
+					...motionClasses,
+				])
 			"
 			type="button"
 			data-testid="consent-dialog-trigger"
@@ -422,10 +399,15 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 			:data-inth-rights="policy.rights.join(' ')"
 			:data-size="config.triggerSize"
 			:data-dragging="isDragging ? true : undefined"
+			:data-snapping="isSnapping ? true : undefined"
 			:data-disable-animation="config.disableAnimation ? true : undefined"
-			:style="[config.components?.trigger?.root?.style, triggerStyle]"
-			:aria-label="config.triggerAriaLabel"
+			:style="[config.components?.trigger?.root?.style, dragStyle]"
+			:aria-label="triggerLabel"
 			@click="openDialog"
+			@pointerdown="onPointerDown"
+			@pointermove="onPointerMove"
+			@pointerup="onPointerUp"
+			@pointercancel="onPointerCancel"
 		>
 			<span
 				v-bind="slotAttrs(config.components?.trigger?.icon, triggerStyles.icon)"
@@ -441,7 +423,7 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 				v-bind="config.components?.trigger?.text"
 				:class="triggerStyles.text"
 			>
-				{{ config.triggerAriaLabel }}
+				{{ triggerLabel }}
 			</span>
 		</button>
 	</Teleport>

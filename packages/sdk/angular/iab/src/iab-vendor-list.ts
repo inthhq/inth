@@ -1,11 +1,13 @@
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import {
+	afterNextRender,
 	ChangeDetectionStrategy,
 	Component,
 	computed,
 	DOCUMENT,
 	effect,
 	inject,
+	Injector,
 	input,
 	output,
 	PLATFORM_ID,
@@ -14,11 +16,22 @@ import {
 } from '@angular/core';
 import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import { uniqueId } from '@inth/angular/primitives';
-import type { AdTechProvider, GlobalVendorList } from '@inth/sdk/engine';
+import type {
+	AdTechProvider,
+	GlobalVendorList,
+	NonIABVendor,
+} from '@inth/sdk/engine';
 import {
-	resolveIABSafeUrl,
-	resolveIABVendorUrls,
+	formatVendorMaxAge,
+	mapCustomVendor,
+	mapGvlVendor,
 } from '@inth/sdk/iab/headless';
+import type {
+	HeadlessIABVendorId,
+	ProcessedPurpose,
+	ProcessedVendor,
+} from '@inth/sdk/iab/headless';
+import type { IABTranslations } from '@inth/sdk/translations';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { switchVariants } from '@inth/sdk/ui/styles/primitives';
@@ -36,13 +49,6 @@ import {
 } from './iab-icons';
 import { PREFERENCE_ITEM, SWITCH } from './iab-purpose-item';
 import type { IABVendorChoice } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
-import type {
-	NonIABVendor,
-	ProcessedPurpose,
-	ProcessedVendor,
-	VendorId,
-} from './iab-types';
 
 const sw = switchVariants();
 
@@ -63,8 +69,10 @@ interface SimpleEntry {
 }
 
 /** A row's key: registered and custom vendors may share an id. */
-const vendorRowKey = (vendor: { id: VendorId; isCustom?: boolean }): string =>
-	`${vendor.isCustom ? 'custom' : 'gvl'}:${String(vendor.id)}`;
+const vendorRowKey = (vendor: {
+	id: HeadlessIABVendorId;
+	isCustom?: boolean;
+}): string => `${vendor.isCustom ? 'custom' : 'gvl'}:${String(vendor.id)}`;
 
 /** What one vendor row renders, computed once per vendor. */
 interface VendorRow {
@@ -808,6 +816,7 @@ export class IABVendorList {
 	protected readonly idPrefix = uniqueId('inth-iab-partners');
 	readonly #document = inject(DOCUMENT);
 	readonly #browser = isPlatformBrowser(inject(PLATFORM_ID));
+	readonly #injector = inject(Injector);
 
 	/** The vendor list, after publisher restrictions. */
 	readonly vendorData = input<GlobalVendorList | null>(null);
@@ -816,7 +825,7 @@ export class IABVendorList {
 	/** Consent per vendor, keyed by vendor id. */
 	readonly vendorConsents = input<Readonly<Record<string, boolean>>>({});
 	/** Show only this vendor, as picked on the purposes tab. */
-	readonly selectedVendorId = input<VendorId | null>(null);
+	readonly selectedVendorId = input<HeadlessIABVendorId | null>(null);
 	/** Publisher-declared non-IAB vendors. */
 	readonly customVendors = input<readonly NonIABVendor[]>([]);
 	/** Legitimate interest per vendor; a missing vendor is allowed. */
@@ -868,54 +877,16 @@ export class IABVendorList {
 
 	readonly #iabVendors = computed((): ProcessedVendor[] => {
 		const data = this.vendorData();
-		if (!data) {
-			return [];
-		}
 		const language = this.language();
-		return Object.entries(data.vendors).map(([id, vendor]) => ({
-			cookieMaxAgeSeconds: vendor.cookieMaxAgeSeconds,
-			cookieRefresh: vendor.cookieRefresh,
-			dataDeclaration:
-				(vendor as unknown as { dataDeclaration?: number[] }).dataDeclaration ||
-				[],
-			dataRetention: vendor.dataRetention,
-			deviceStorageDisclosureUrl: resolveIABSafeUrl(
-				vendor.deviceStorageDisclosureUrl
-			),
-			features: vendor.features || [],
-			id: Number(id),
-			isCustom: false,
-			legIntPurposes: vendor.legIntPurposes || [],
-			...resolveIABVendorUrls(vendor, language),
-			name: vendor.name,
-			purposes: vendor.purposes || [],
-			specialFeatures: vendor.specialFeatures || [],
-			specialPurposes: vendor.specialPurposes || [],
-			usesCookies: vendor.usesCookies,
-			usesNonCookieAccess: vendor.usesNonCookieAccess,
-		}));
+		return data
+			? Object.entries(data.vendors).map(([id, vendor]) =>
+					mapGvlVendor(id, vendor, language)
+				)
+			: [];
 	});
 
 	readonly #customVendors = computed((): ProcessedVendor[] =>
-		this.customVendors().map((cv) => ({
-			cookieMaxAgeSeconds: cv.cookieMaxAgeSeconds ?? null,
-			cookieRefresh: undefined,
-			dataDeclaration: cv.dataCategories || [],
-			dataRetention: undefined,
-			deviceStorageDisclosureUrl: null,
-			features: cv.features || [],
-			id: cv.id,
-			isCustom: true,
-			legIntPurposes: cv.legIntPurposes || [],
-			legitimateInterestUrl: null,
-			name: cv.name,
-			policyUrl: resolveIABSafeUrl(cv.privacyPolicyUrl) ?? '',
-			purposes: cv.purposes || [],
-			specialFeatures: cv.specialFeatures || [],
-			specialPurposes: [],
-			usesCookies: cv.usesCookies ?? false,
-			usesNonCookieAccess: cv.usesNonCookieAccess ?? false,
-		}))
+		this.customVendors().map((vendor) => mapCustomVendor(vendor))
 	);
 
 	/**
@@ -954,16 +925,11 @@ export class IABVendorList {
 				? lookup(vendor.specialFeatures, data.specialFeatures)
 				: [];
 			const features = data ? lookup(vendor.features || [], data.features) : [];
-			let maxAgeText: string | null = null;
-			if (vendor.cookieMaxAgeSeconds) {
-				maxAgeText = t.maxAge.replace(
-					'{days}',
-					String(Math.floor(vendor.cookieMaxAgeSeconds / 86_400))
-				);
-				if (vendor.cookieRefresh) {
-					maxAgeText = `${maxAgeText} ${t.maxAgeRefreshes}`;
-				}
-			}
+			const maxAgeText = formatVendorMaxAge(
+				vendor.cookieMaxAgeSeconds,
+				vendor.cookieRefresh,
+				t
+			);
 			const special =
 				specialPurposes.length > 0 ? `, ${specialPurposes.length} special` : '';
 			const featureCount =
@@ -1055,13 +1021,16 @@ export class IABVendorList {
 			if (!this.#browser) {
 				return;
 			}
-			const timer = setTimeout(() => {
-				const element = this.#document.getElementById(
-					`${this.idPrefix}-${row.domKey}`
-				);
-				element?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-			}, 100);
-			onCleanup(() => clearTimeout(timer));
+			// Once the expanded row has rendered.
+			const scroll = afterNextRender(
+				() => {
+					this.#document
+						.getElementById(`${this.idPrefix}-${row.domKey}`)
+						?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+				},
+				{ injector: this.#injector }
+			);
+			onCleanup(() => scroll.destroy());
 		});
 	}
 

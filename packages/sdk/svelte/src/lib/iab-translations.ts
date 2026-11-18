@@ -1,163 +1,32 @@
 import type { TranslationConfig } from '@inth/sdk/engine';
-import { defaultTranslationConfig } from '@inth/sdk/engine';
+import {
+	defaultTranslationConfig,
+	resolveIABCopy,
+} from '@inth/sdk/surface-state';
+import type { IABTranslations as IABTranslationKeys } from '@inth/sdk/translations';
 import { resolveTranslations } from '@inth/sdk/ui/utils';
 
-/**
- * IAB translations interface.
- * Matches the structure in @inth/sdk/translations.
- */
-export interface IABTranslations {
-	banner: {
-		title: string;
-		description: string;
-		partnersLink: string;
-		andMore: string;
-		legitimateInterestNotice: string;
-		scopeServiceSpecific: string;
-		scopeGroup: string;
-	};
-	common: {
-		acceptAll: string;
-		rejectAll: string;
-		customize: string;
-		saveSettings: string;
-		loading: string;
-		showingSelectedVendor: string;
-		clearSelection: string;
-		customPartner: string;
-	};
-	preferenceCenter: {
-		title: string;
-		description: string;
-		tabs: {
-			purposes: string;
-			vendors: string;
-		};
-		purposeItem: {
-			partners: string;
-			vendorsUseLegitimateInterest: string;
-			examples: string;
-			partnersUsingPurpose: string;
-			withYourPermission: string;
-			legitimateInterest: string;
-			objectButton: string;
-			objected: string;
-			rightToObject: string;
-		};
-		specialPurposes: {
-			title: string;
-			tooltip: string;
-		};
-		features: {
-			title: string;
-			description: string;
-		};
-		vendorList: {
-			search: string;
-			showingCount: string;
-			iabVendorsHeading: string;
-			iabVendorsNotice: string;
-			customVendorsHeading: string;
-			customVendorsNotice: string;
-			adTechProvidersHeading: string;
-			adTechProvidersNotice: string;
-			purposes: string;
-			specialPurposes: string;
-			specialFeatures: string;
-			features: string;
-			dataCategories: string;
-			usesCookies: string;
-			nonCookieAccess: string;
-			maxAge: string;
-			maxAgeRefreshes: string;
-			retention: string;
-			retainedDays: string;
-			legitimateInterest: string;
-			privacyPolicy: string;
-			storageDisclosure: string;
-			requiredNotice: string;
-			noVendorsFound: string;
-			partnerCount: string;
-			partnerSingular: string;
-			partnerPlural: string;
-		};
-		footer: {
-			consentStorage: string;
-		};
-	};
-}
-
-// oxlint-disable-next-line typescript/no-non-null-assertion -- enTranslations is guaranteed to exist in defaultTranslationConfig
-const DEFAULT_IAB_TRANSLATIONS = defaultTranslationConfig.translations.en!
-	.iab as IABTranslations;
-
-/**
- * Deep merge helper for IAB translations.
- */
-const deepMerge = function deepMerge<T extends Record<string, unknown>>(
-	defaults: T,
-	overrides?: Partial<T>
-): T {
-	if (!overrides) {
-		return defaults;
-	}
-
-	const result = { ...defaults };
-
-	for (const key of Object.keys(defaults) as (keyof T)[]) {
-		const defaultValue = defaults[key];
-		const overrideValue = overrides[key];
-
-		if (
-			overrideValue !== undefined &&
-			typeof defaultValue === 'object' &&
-			defaultValue !== null &&
-			typeof overrideValue === 'object' &&
-			overrideValue !== null &&
-			!Array.isArray(defaultValue)
-		) {
-			result[key] = deepMerge(
-				defaultValue as Record<string, unknown>,
-				overrideValue as Record<string, unknown>
-			) as T[keyof T];
-		} else if (overrideValue !== undefined) {
-			result[key] = overrideValue as T[keyof T];
-		}
-	}
-
-	return result;
+type Filled<Section> = {
+	[Key in keyof Section]-?: NonNullable<Section[Key]> extends object
+		? Filled<NonNullable<Section[Key]>>
+		: NonNullable<Section[Key]>;
 };
 
+/** The IAB copy with every key set, including the ones a language may omit. */
+export type IABTranslations = Filled<IABTranslationKeys>;
+
 /**
- * Get IAB translations with fallback to defaults.
- * Svelte equivalent of the React `useIABTranslations` hook.
+ * The IAB copy for the active language, each missing key filled from
+ * English.
+ *
+ * @param translationConfig - `getConsentManager().state.translationConfig`.
+ * @returns The complete IAB copy.
  */
 export const getIABTranslations = function getIABTranslations(
 	translationConfig?: TranslationConfig
 ): IABTranslations {
-	const translations = resolveTranslations(
-		translationConfig ?? {},
-		defaultTranslationConfig
-	);
-
-	if (!translations.iab) {
-		return DEFAULT_IAB_TRANSLATIONS;
-	}
-
-	return {
-		banner: deepMerge(
-			DEFAULT_IAB_TRANSLATIONS.banner,
-			translations.iab.banner as Partial<IABTranslations['banner']>
-		),
-		common: deepMerge(
-			DEFAULT_IAB_TRANSLATIONS.common,
-			translations.iab.common as Partial<IABTranslations['common']>
-		),
-		preferenceCenter: deepMerge(
-			DEFAULT_IAB_TRANSLATIONS.preferenceCenter,
-			translations.iab.preferenceCenter as Partial<
-				IABTranslations['preferenceCenter']
-			>
-		),
-	};
+	// English sets every key, and `resolveIABCopy` fills each gap from it.
+	return resolveIABCopy(
+		resolveTranslations(translationConfig ?? {}, defaultTranslationConfig)
+	) as IABTranslations;
 };

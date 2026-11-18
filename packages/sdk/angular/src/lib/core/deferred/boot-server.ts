@@ -145,11 +145,10 @@ export const canDeferEngine = function canDeferEngine(
 };
 
 /**
- * The snapshot's copy with every key the English defaults have. Before the
- * engine loads, the browser's surfaces have no defaults to fall back to
- * (`../translation-defaults.ts`), so the server fills the gaps of a
- * partial bundle. An English bundle comes back unchanged. The IAB copy is
- * left out unless the app configured IAB.
+ * The snapshot's copy with every key the English defaults have. The
+ * surfaces read the active language's bundle as a whole, so the server
+ * fills the gaps of a partial bundle. An English bundle comes back
+ * unchanged. The IAB copy is left out unless the app configured IAB.
  *
  * @param snapshot - The snapshot the server rendered with.
  * @param withIAB - Whether to keep the IAB copy.

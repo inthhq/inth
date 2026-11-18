@@ -126,8 +126,8 @@ group: reference
   | --- | --- | --- | --- |
   | `position` | `'bottom-right'`, `'bottom-left'`, `'top-right'` or `'top-left'` | `'bottom-right'` | The corner the button starts in. |
   | `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
-  | `showWhen` | `'always'` or `'after-consent'` | `'always'` | `after-consent` hides the button until the visitor has answered the prompt. |
-  | `ariaLabel` | `string` | "Open privacy settings" | The button's accessible name. It has no visible text. |
+  | `showWhen` | `'always'`, `'after-consent'` or `'never'` | `'always'` | `after-consent` hides the button until the visitor has answered the prompt. `never` hides it. |
+  | `ariaLabel` | `string` | The `trigger.label` translation, "Open privacy settings" in English | The button's accessible name. It has no visible text. |
   | `persistPosition` | `boolean` | `true` | Remember the corner a visitor dragged the button to, in localStorage. A remembered corner wins over `position`. |
 </section>
 

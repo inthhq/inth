@@ -1,7 +1,11 @@
-import type { ConsentSnapshot } from '@inth/sdk-core';
+import { resolveTriggerLabels } from '@inth/sdk-core';
+import type { ConsentSnapshot, Translations } from '@inth/sdk-core';
+import { hasConsentPreferences } from '@inth/sdk-core/surface-actions';
 import {
 	calculateCornerFromDrag,
 	getPersistedPosition,
+	isTriggerVisible,
+	onSnapEnd,
 	persistPosition,
 } from '@inth/sdk-ui/utils';
 import type { CornerPosition } from '@inth/sdk-ui/utils';
@@ -14,7 +18,6 @@ import {
 import type { DevToolsLauncherTarget } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import { classes } from '../generated/styles';
-import { hasDecided } from '../has-decided';
 import type { ConsentTriggerOptions } from '../types';
 import { createBrandMark } from './branding';
 import { cx, h } from './dom';
@@ -31,14 +34,14 @@ const POSITION_CLASS: Record<CornerPosition, keyof typeof classes.trigger> = {
 
 /** Movement past which a pointer sequence counts as a drag, not a click. */
 const DRAG_SLOP_PX = 5;
-const SNAP_MS = 300;
 
 /**
  * The floating button that reopens the preference centre.
  *
- * Hidden while the banner or dialog is up. Drag it to another corner and
- * it snaps there and remembers the choice, the way the framework triggers
- * do.
+ * Shown by the framework triggers' rule (`isTriggerVisible`): hidden while
+ * the dialog is up or with nothing to manage, and with `after-consent`
+ * until no prompt is owed. Drag it to another corner and it snaps there
+ * and remembers the choice, the way the framework triggers do.
  *
  * While a DevTools panel is mounted for the same client (`mountDevTools`
  * or `c15t.devtools.js`), the visible trigger becomes a two-item toolbar
@@ -70,7 +73,8 @@ export const createTrigger = function createTrigger(
 	let startX = 0;
 	let startY = 0;
 	let startedAt = 0;
-	let snapTimer: ReturnType<typeof setTimeout> | undefined;
+	// Ends the wait for the current snap; set while one runs.
+	let cancelSnap: (() => void) | undefined;
 	// The arm the slots were applied for.
 	let renderedExperiment = ctx.client.getSnapshot().experiment;
 	// The element holding the pointer, for release on drop.
@@ -86,6 +90,17 @@ export const createTrigger = function createTrigger(
 
 	// The mark follows the resolved branding, like the React trigger's.
 	let { branding } = ctx.client.getSnapshot();
+	const labels = function labels(snapshot: ConsentSnapshot) {
+		const translated = resolveTriggerLabels(
+			snapshot.translations?.translations as Partial<Translations> | undefined
+		);
+		return {
+			...translated,
+			label: options.ariaLabel ?? translated.label,
+		};
+	};
+	let renderedLabels = labels(ctx.client.getSnapshot());
+
 	const createIcon = function createIcon(): HTMLSpanElement {
 		return slot(
 			h(
@@ -101,10 +116,10 @@ export const createTrigger = function createTrigger(
 	const element = h(
 		'button',
 		{
-			'aria-label': options.ariaLabel ?? 'Open privacy settings',
-			'data-inth-trigger': 'true',
+			'aria-label': renderedLabels.label,
 			// Stops the hover and snap transitions, as on the other surfaces.
 			'data-disable-animation': ctx.disableAnimation,
+			'data-inth-trigger': 'true',
 			'data-size': size,
 			'data-testid': 'consent-dialog-trigger',
 			hidden: true,
@@ -161,7 +176,7 @@ export const createTrigger = function createTrigger(
 		element.style.transition = transition;
 		// `applyClasses` rewrites the class unless `noStyle` is set.
 		element.removeAttribute('class');
-		applyClasses(snapTimer !== undefined);
+		applyClasses(cancelSnap !== undefined);
 	};
 
 	/** The element on screen: the toolbar while it hosts DevTools. */
@@ -185,13 +200,11 @@ export const createTrigger = function createTrigger(
 		}
 		toolbar?.setCorner(next);
 		applyClasses(true);
-		if (snapTimer !== undefined) {
-			clearTimeout(snapTimer);
-		}
-		snapTimer = setTimeout(() => {
-			snapTimer = undefined;
+		cancelSnap?.();
+		cancelSnap = onSnapEnd(current(), () => {
+			cancelSnap = undefined;
 			applyClasses(false);
-		}, SNAP_MS);
+		});
 	};
 
 	const onPointerDown = function onPointerDown(event: PointerEvent): void {
@@ -288,8 +301,8 @@ export const createTrigger = function createTrigger(
 
 	const createToolbar = function createToolbar(): TriggerToolbar {
 		const created = createTriggerToolbar({
-			ariaLabel: options.ariaLabel ?? 'Open privacy settings',
 			icon: createBrandMark(branding),
+			labels: renderedLabels,
 			noStyle,
 			onDevTools: () => launcher?.toggle(),
 			onPreferences: () => ctx.client.openDialog(),
@@ -324,7 +337,7 @@ export const createTrigger = function createTrigger(
 				toolbar.element.replaceWith(element);
 				toolbar = null;
 			}
-			applyClasses(snapTimer !== undefined);
+			applyClasses(cancelSnap !== undefined);
 			dock();
 		}
 		toolbar?.setOpen(slotState.isOpen);
@@ -350,9 +363,7 @@ export const createTrigger = function createTrigger(
 
 	return {
 		destroy() {
-			if (snapTimer !== undefined) {
-				clearTimeout(snapTimer);
-			}
+			cancelSnap?.();
 			unsubscribeLauncher();
 			stopDocking?.();
 			releaseClaim?.();
@@ -361,9 +372,23 @@ export const createTrigger = function createTrigger(
 			element.remove();
 		},
 		sync(snapshot: ConsentSnapshot) {
-			const allowed = showWhen === 'always' || hasDecided(snapshot);
-			visible = allowed && snapshot.activeUI === 'none';
+			visible = isTriggerVisible({
+				dialogOpen: snapshot.activeUI === 'dialog',
+				hasConsentPreferences: hasConsentPreferences(snapshot),
+				promptOwed: snapshot.promptRequirement.kind !== 'none',
+				showWhen,
+			});
 			element.hidden = !visible;
+			const nextLabels = labels(snapshot);
+			if (
+				nextLabels.label !== renderedLabels.label ||
+				nextLabels.toolbarLabel !== renderedLabels.toolbarLabel ||
+				nextLabels.devToolsLabel !== renderedLabels.devToolsLabel
+			) {
+				renderedLabels = nextLabels;
+				element.setAttribute('aria-label', nextLabels.label);
+				toolbar?.setLabels(nextLabels);
+			}
 			claimWhileVisible();
 			if (snapshot.branding !== branding) {
 				({ branding } = snapshot);
@@ -373,7 +398,7 @@ export const createTrigger = function createTrigger(
 				toolbar?.setIcon(createBrandMark(branding));
 			}
 			if (renderedExperiment === snapshot.experiment) {
-				applyClasses(snapTimer !== undefined);
+				applyClasses(cancelSnap !== undefined);
 				return;
 			}
 			renderedExperiment = snapshot.experiment;

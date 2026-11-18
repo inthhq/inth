@@ -12,7 +12,7 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@inth/sdk-core';
+import type { ConsentSnapshot, Translations } from '@inth/sdk-core';
 import type { CompleteTranslations } from '@inth/sdk-translations';
 import { getTextDirection } from '@inth/sdk-ui/utils';
 
@@ -51,7 +51,9 @@ export const hasBannerCopy = function hasBannerCopy(
 
 /**
  * The copy a surface renders: the snapshot's translations as they are.
- * Call only when {@link hasBannerCopy} holds.
+ * Call only when {@link hasBannerCopy} holds, so every string core's
+ * `consent-copy` order would reach is in the bundle and no English is
+ * needed behind it.
  *
  * @param snapshot - The snapshot.
  * @returns The copy.
@@ -60,9 +62,32 @@ export const resolveCopy = function resolveCopy(
 	snapshot: ConsentSnapshot
 ): SurfaceCopy {
 	const language = snapshot.translations?.language;
+	const t = snapshot.translations?.translations as CompleteTranslations;
+	const { rights } = t as Partial<Translations>;
+	const notice = snapshot.policyRule.prompt === 'notice';
 	return {
+		actions: {
+			accept: t.common.acceptAll,
+			customize: t.common.customize,
+			dismiss: t.common.acknowledge,
+			reject: t.common.rejectAll,
+			save: t.common.save,
+		},
+		controls: {
+			'opt-out': rights?.optOut ?? '',
+			preferences: rights?.preferences ?? '',
+		},
 		dir: getTextDirection(language),
 		language,
-		t: snapshot.translations?.translations as CompleteTranslations,
+		prompt: notice
+			? {
+					description: t.cookieBanner.noticeDescription,
+					title: t.cookieBanner.noticeTitle,
+				}
+			: {
+					description: t.cookieBanner.description,
+					title: t.cookieBanner.title,
+				},
+		t,
 	};
 };

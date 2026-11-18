@@ -2,7 +2,6 @@
 export * from './branding';
 export * from './cn';
 export * from './color-scheme';
-export * from './deep-merge';
 export * from './dom';
 export * from './legal-links';
 export * from './merge-styles';

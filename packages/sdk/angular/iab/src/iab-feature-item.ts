@@ -5,12 +5,12 @@ import {
 	signal,
 } from '@angular/core';
 import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
+import type { ProcessedFeature } from '@inth/sdk/iab/headless';
+import type { IABTranslations } from '@inth/sdk/translations';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
 import { ChevronRightIcon } from './iab-icons';
 import { PREFERENCE_ITEM } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
-import type { ProcessedFeature } from './iab-types';
 
 /**
  * One informational IAB Feature row.

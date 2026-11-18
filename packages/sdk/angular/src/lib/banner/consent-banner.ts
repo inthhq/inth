@@ -16,7 +16,12 @@ import type { Model, PromptPosition, PromptVariant } from '@inth/sdk/engine';
 import { actionAppearanceFromTheme } from '@inth/sdk/engine';
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import {
+	resolveActionLabels,
+	resolveConsentPresentation,
+	resolvePreferenceControlLabels,
+	resolvePromptCopy,
+} from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
 import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 import {
@@ -34,7 +39,6 @@ import {
 } from '../core/consent-styles';
 import { ConsentTheme } from '../core/consent-theme';
 import { NoStyleScope, resolveNoStyle } from '../core/no-style';
-import { registeredDefaultTranslations } from '../core/translation-defaults';
 import { FocusTrap } from '../overlay/focus-trap';
 import { Overlay } from '../overlay/overlay';
 import { Portal } from '../overlay/portal';
@@ -446,63 +450,32 @@ export class ConsentBanner {
 				.length > 0
 	);
 
-	// Before the engine registers its defaults there are none: the server
-	// completed the snapshot's bundle with them.
-	readonly #english = computed(() => {
-		// Read again when the snapshot changes, as the engine attaching does.
-		this.consent.snapshot();
-		return registeredDefaultTranslations()?.translations.en;
-	});
+	readonly #promptCopy = computed(() =>
+		resolvePromptCopy(this.#translations(), this.promptKind())
+	);
 
 	/** @internal */
-	protected readonly resolvedHeading = computed(() => {
-		const own = this.heading();
-		if (own !== undefined) {
-			return own;
-		}
-		const banner = this.#translations().cookieBanner;
-		return this.isNotice()
-			? (banner.noticeTitle ?? this.#english()?.cookieBanner?.noticeTitle ?? '')
-			: banner.title;
-	});
+	protected readonly resolvedHeading = computed(
+		() => this.heading() ?? this.#promptCopy().title
+	);
 	/** @internal */
-	protected readonly resolvedDescription = computed(() => {
-		const own = this.description();
-		if (own !== undefined) {
-			return own;
-		}
-		const banner = this.#translations().cookieBanner;
-		return this.isNotice()
-			? (banner.noticeDescription ??
-					this.#english()?.cookieBanner?.noticeDescription ??
-					'')
-			: banner.description;
-	});
+	protected readonly resolvedDescription = computed(
+		() => this.description() ?? this.#promptCopy().description
+	);
 	/** @internal */
 	protected readonly rightLabels = computed(
-		(): Partial<Record<PolicyRight, string | undefined>> => {
-			const { rights } = this.#translations();
-			const english = this.#english()?.rights;
-			return {
-				'opt-out': rights?.optOut ?? english?.optOut,
-				preferences: rights?.preferences ?? english?.preferences,
-			};
-		}
+		(): Partial<Record<PolicyRight, string | undefined>> =>
+			resolvePreferenceControlLabels(this.#translations())
 	);
 	readonly #labels = computed(() => {
-		const { common } = this.#translations();
+		const labels = resolveActionLabels(this.#translations());
 		return {
-			accept: this.acceptButtonText() ?? common.acceptAll,
-			customize: this.customizeButtonText() ?? common.customize,
+			accept: this.acceptButtonText() ?? labels.accept,
+			customize: this.customizeButtonText() ?? labels.customize,
 			// Acknowledgement records no category choice.
-			dismiss:
-				this.dismissButtonText() ??
-				common.acknowledge ??
-				common.dismiss ??
-				this.#english()?.common?.acknowledge ??
-				'',
-			reject: this.rejectButtonText() ?? common.rejectAll,
-		} satisfies Record<ConsentBannerButton, string | undefined>;
+			dismiss: this.dismissButtonText() ?? labels.dismiss,
+			reject: this.rejectButtonText() ?? labels.reject,
+		} satisfies Record<ConsentBannerButton, string>;
 	});
 
 	readonly #parts = computed(() => {

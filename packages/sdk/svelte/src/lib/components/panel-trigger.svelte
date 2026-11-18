@@ -1,15 +1,29 @@
 <script lang="ts">
+	import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
+	import {
+		defaultTranslationConfig,
+		resolveTriggerLabels,
+	} from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 	import {
 		calculateCornerFromDrag,
 		createInitialDragState,
 		getPersistedPosition,
+		isTriggerVisible,
+		nextToolbarItem,
+		onSnapEnd,
 		persistPosition as persistToStorage,
 		resolveBrandMark,
 		resolveStyles,
 		toStyleAttributeValue,
+		resolveTranslations,
+		toolbarOrder,
 	} from '@inth/sdk/ui/utils';
-	import type { CornerPosition, DragState } from '@inth/sdk/ui/utils';
+	import type {
+		CornerPosition,
+		DragState,
+		TriggerToolbarItem,
+	} from '@inth/sdk/ui/utils';
 	import {
 		claimDevToolsLauncher,
 		EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT,
@@ -31,15 +45,12 @@
 	import DevToolsIcon from './icons/dev-tools-icon.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 
-	type TriggerVisibility = 'always' | 'never';
-	type ToolbarItem = 'devtools' | 'preferences';
-
 	let {
 		defaultPosition = 'bottom-right' as CornerPosition,
 		persistPosition = true,
-		showWhen = 'always' as TriggerVisibility,
+		showWhen = 'always' as ConsentDialogTriggerVisibility,
 		size = 'md' as 'sm' | 'md' | 'lg',
-		ariaLabel = 'Open privacy settings',
+		ariaLabel,
 		noStyle = false,
 		class: className,
 		onclick,
@@ -47,8 +58,12 @@
 	}: {
 		defaultPosition?: CornerPosition;
 		persistPosition?: boolean;
-		showWhen?: TriggerVisibility;
+		/**
+		 * `always`, `after-consent` (once no prompt is owed) or `never`.
+		 */
+		showWhen?: ConsentDialogTriggerVisibility;
 		size?: 'sm' | 'md' | 'lg';
+		/** Defaults to the `trigger.label` translation. */
 		ariaLabel?: string;
 		noStyle?: boolean;
 		class?: string;
@@ -78,12 +93,23 @@
 	});
 
 	const brandMark = $derived(resolveBrandMark(consent.state.branding));
-	// Nothing to manage without a resolved policy.
 	const visible = $derived(
-		consent.state.hasConsentPreferences &&
-			showWhen !== 'never' &&
-			consent.snapshot.activeUI !== 'dialog'
+		isTriggerVisible({
+			dialogOpen: consent.snapshot.activeUI === 'dialog',
+			hasConsentPreferences: consent.state.hasConsentPreferences,
+			promptOwed: consent.snapshot.promptRequirement.kind !== 'none',
+			showWhen,
+		})
 	);
+	const labels = $derived(
+		resolveTriggerLabels(
+			resolveTranslations(
+				consent.state.translationConfig,
+				defaultTranslationConfig
+			)
+		)
+	);
+	const preferencesLabel = $derived(ariaLabel ?? labels.label);
 
 	// Load the deferred dialog before the first click, but only while the
 	// button is shown: a hidden trigger can't open the dialog.
@@ -126,6 +152,7 @@
 	);
 	const isDragging = $derived(dragState.isDragging);
 	let toolbarElement: HTMLDivElement | undefined = $state();
+	let buttonElement: HTMLButtonElement | undefined = $state();
 
 	// Keep the docked panel beside the toolbar as it changes corner or size.
 	// Skip mid-drag; the drop re-runs this.
@@ -140,17 +167,10 @@
 		);
 	});
 
-	// Preferences sits in the corner; DevTools, a development aid, sits
-	// farthest from it.
-	const toolbarItems: ToolbarItem[] = $derived.by(() => {
-		if (!devTools) {
-			return ['preferences'];
-		}
-		return corner.endsWith('left')
-			? ['preferences', 'devtools']
-			: ['devtools', 'preferences'];
-	});
-	let focusedItem: ToolbarItem | undefined = $state();
+	const toolbarItems: readonly TriggerToolbarItem[] = $derived(
+		devTools ? toolbarOrder(corner) : ['preferences']
+	);
+	let focusedItem: TriggerToolbarItem | undefined = $state();
 	const tabStopItem = $derived(
 		focusedItem && toolbarItems.includes(focusedItem)
 			? focusedItem
@@ -252,9 +272,6 @@
 
 			if (newCorner !== corner) {
 				isSnapping = true;
-				setTimeout(() => {
-					isSnapping = false;
-				}, 300);
 				updateCorner(newCorner);
 			}
 		}
@@ -277,33 +294,28 @@
 		devTools?.toggle();
 	};
 
+	// The snap ends with the trigger's own transition, once the snapping
+	// class and the new corner have rendered.
+	$effect(() => {
+		const element = showToolbar ? toolbarElement : buttonElement;
+		if (!(isSnapping && element)) {
+			return;
+		}
+		return onSnapEnd(element, () => {
+			isSnapping = false;
+		});
+	});
+
 	const handleToolbarKeyDown = function handleToolbarKeyDown(e: KeyboardEvent) {
-		const index = tabStopItem ? toolbarItems.indexOf(tabStopItem) : 0;
-		let next: ToolbarItem | undefined;
-		switch (e.key) {
-			case 'ArrowRight':
-				next = toolbarItems[(index + 1) % toolbarItems.length];
-				break;
-			case 'ArrowLeft':
-				next =
-					toolbarItems[(index - 1 + toolbarItems.length) % toolbarItems.length];
-				break;
-			case 'Home':
-				[next] = toolbarItems;
-				break;
-			case 'End':
-				next = toolbarItems.at(-1);
-				break;
-			default:
-				return;
+		const next = nextToolbarItem(toolbarItems, tabStopItem, e.key);
+		if (!next) {
+			return;
 		}
 		e.preventDefault();
-		if (next) {
-			focusedItem = next;
-			toolbarElement
-				?.querySelector<HTMLElement>(`[data-inth-trigger-item="${next}"]`)
-				?.focus();
-		}
+		focusedItem = next;
+		toolbarElement
+			?.querySelector<HTMLElement>(`[data-inth-trigger-item="${next}"]`)
+			?.focus();
 	};
 
 	const handleClick = function handleClick(e: MouseEvent) {
@@ -416,7 +428,7 @@
 				role="toolbar"
 				tabindex="-1"
 				dir="ltr"
-				aria-label="Privacy controls"
+				aria-label={labels.toolbarLabel}
 				aria-orientation="horizontal"
 				data-corner={corner}
 				data-inth-trigger-toolbar="true"
@@ -437,7 +449,7 @@
 							class={devToolsItemStyle.className || ''}
 							style={toStyleAttributeValue(devToolsItemStyle.style)}
 							tabindex={tabStopItem === item ? 0 : -1}
-							aria-label="inth DevTools"
+							aria-label={labels.devToolsLabel}
 							aria-expanded={launcher.isOpen}
 							data-inth-trigger-action="devtools"
 							data-inth-trigger-item="devtools"
@@ -463,7 +475,7 @@
 							class={preferencesItemStyle.className || ''}
 							style={toStyleAttributeValue(preferencesItemStyle.style)}
 							tabindex={tabStopItem === item ? 0 : -1}
-							aria-label={ariaLabel}
+							aria-label={preferencesLabel}
 							data-inth-rights={consent.snapshot.policyRule.rights.join(' ')}
 							data-inth-trigger-action="preferences"
 							data-inth-trigger-item="preferences"
@@ -493,13 +505,14 @@
 			</div>
 		{:else}
 			<button
+				bind:this={buttonElement}
 				type="button"
 				class={triggerStyle.className || ''}
 				style={buttonStyle}
 				data-inth-trigger="true"
 				data-inth-rights={consent.snapshot.policyRule.rights.join(' ')}
 				data-disable-animation={theme.disableAnimation ? '' : undefined}
-				aria-label={ariaLabel}
+				aria-label={preferencesLabel}
 				onclick={handleClick}
 				onpointerdown={handlePointerDown}
 				onpointermove={handlePointerMove}

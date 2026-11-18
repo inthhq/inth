@@ -1,13 +1,17 @@
 'use client';
 
-import type { AdTechProvider, GlobalVendorList } from '@inth/sdk/engine';
+import type {
+	AdTechProvider,
+	GlobalVendorList,
+	NonIABVendor,
+} from '@inth/sdk/engine';
 import {
-	permittedLegitimateInterestPurposes,
-	resolveIABSafeUrl,
-	resolveIABVendorUrls,
+	formatVendorMaxAge,
+	mapCustomVendor,
+	mapGvlVendor,
 } from '@inth/sdk/iab/headless';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FC } from 'react';
 
 import * as PreferenceItem from '~/components/shared/ui/preference-item';
@@ -24,29 +28,14 @@ import {
 	filterAdTechProviders,
 } from './ad-tech-provider-section';
 
-/** Custom vendor not registered with IAB */
-const EMPTY_CUSTOM_VENDORS: CustomVendor[] = [];
+const EMPTY_CUSTOM_VENDORS: NonIABVendor[] = [];
 const EMPTY_VENDOR_INTERESTS: Record<string, boolean> = {};
 const EMPTY_AD_TECH_PROVIDERS: AdTechProvider[] = [];
-
-interface CustomVendor {
-	id: string | number;
-	name: string;
-	privacyPolicyUrl: string;
-	purposes: number[];
-	legIntPurposes?: number[];
-	specialFeatures?: number[];
-	features?: number[];
-	dataCategories?: number[];
-	usesCookies?: boolean;
-	usesNonCookieAccess?: boolean;
-	cookieMaxAgeSeconds?: number;
-}
 
 interface VendorFeaturesProps {
 	features: { description: string; id: number; name: string }[];
 	heading: string;
-	standardText: string;
+	standardText: string | undefined;
 	testId: string;
 }
 
@@ -102,7 +91,7 @@ interface VendorListProps {
 	onVendorToggle: (vendorId: VendorId, value: boolean) => void;
 	selectedVendorId: VendorId | null;
 	onClearSelection: () => void;
-	customVendors?: CustomVendor[];
+	customVendors?: NonIABVendor[];
 	/** Legitimate interest state - true means user has NOT objected (allowed) */
 	vendorLegitimateInterests?: Record<string, boolean>;
 	/** Handler for legitimate interest objection toggle */
@@ -173,78 +162,45 @@ export const VendorList: FC<VendorListProps> = ({
 	const iab = useIABTranslations();
 	const language = useKernelTranslations()?.language;
 
-	// Map IAB vendors
-	const iabVendors: ProcessedVendor[] = vendorData
-		? Object.entries(vendorData.vendors).map(([id, vendor]) => ({
-				cookieMaxAgeSeconds: vendor.cookieMaxAgeSeconds,
-				cookieRefresh: vendor.cookieRefresh,
-				dataDeclaration:
-					(vendor as unknown as { dataDeclaration?: number[] })
-						.dataDeclaration || [],
-				dataRetention: vendor.dataRetention,
-				deviceStorageDisclosureUrl: resolveIABSafeUrl(
-					vendor.deviceStorageDisclosureUrl
-				),
-				features: vendor.features || [],
-				id: Number(id),
-				isCustom: false,
-				legIntPurposes: vendor.legIntPurposes || [],
-				...resolveIABVendorUrls(vendor, language),
-				name: vendor.name,
-				purposes: vendor.purposes || [],
-				specialFeatures: vendor.specialFeatures || [],
-				specialPurposes: vendor.specialPurposes || [],
-				usesCookies: vendor.usesCookies,
-				usesNonCookieAccess: vendor.usesNonCookieAccess,
-			}))
-		: [];
-
-	// Map custom/non-IAB vendors
-	const mappedCustomVendors: ProcessedVendor[] = customVendors.map((cv) => ({
-		cookieMaxAgeSeconds: cv.cookieMaxAgeSeconds ?? null,
-		cookieRefresh: undefined,
-		dataDeclaration: cv.dataCategories || [],
-		dataRetention: undefined,
-		deviceStorageDisclosureUrl: null,
-		features: cv.features || [],
-		id: cv.id,
-		isCustom: true,
-		legIntPurposes: permittedLegitimateInterestPurposes(cv.legIntPurposes),
-		legitimateInterestUrl: null,
-		name: cv.name,
-		policyUrl: resolveIABSafeUrl(cv.privacyPolicyUrl) ?? '',
-		purposes: cv.purposes || [],
-		specialFeatures: cv.specialFeatures || [],
-		specialPurposes: [],
-		usesCookies: cv.usesCookies ?? false,
-		usesNonCookieAccess: cv.usesNonCookieAccess ?? false,
-	}));
-
-	// Combine and sort all vendors
 	const vendors: ProcessedVendor[] = [
-		...iabVendors,
-		...mappedCustomVendors,
+		...(vendorData
+			? Object.entries(vendorData.vendors).map(([id, vendor]) =>
+					mapGvlVendor(id, vendor, language)
+				)
+			: []),
+		...customVendors.map((vendor) => mapCustomVendor(vendor)),
 	].sort((a, b) => a.name.localeCompare(b.name));
 
 	useEffect(() => {
-		if (selectedVendorId !== null) {
-			const frame = requestAnimationFrame(() => {
-				setExpandedVendors((prev) => new Set(prev).add(selectedVendorId));
-			});
-			const scrollTimer = setTimeout(() => {
-				const element = document.getElementById(
-					`vendor-${String(selectedVendorId)}`
-				);
-				if (element) {
-					element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				}
-			}, 100);
-			return () => {
-				cancelAnimationFrame(frame);
-				clearTimeout(scrollTimer);
-			};
+		if (selectedVendorId === null) {
+			return;
 		}
+		const frame = requestAnimationFrame(() => {
+			setExpandedVendors((prev) => new Set(prev).add(selectedVendorId));
+		});
+		return () => {
+			cancelAnimationFrame(frame);
+		};
 	}, [selectedVendorId]);
+
+	// Scroll to a selected vendor once its expanded row has rendered.
+	const scrolledToRef = useRef<VendorId | null>(null);
+	useEffect(() => {
+		if (selectedVendorId === null) {
+			scrolledToRef.current = null;
+			return;
+		}
+		if (
+			scrolledToRef.current === selectedVendorId ||
+			!expandedVendors.has(selectedVendorId)
+		) {
+			return;
+		}
+		scrolledToRef.current = selectedVendorId;
+		document
+			.getElementById(`vendor-${String(selectedVendorId)}`)
+			?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	}, [selectedVendorId, expandedVendors]);
 
 	const filteredVendors =
 		selectedVendorId === null
@@ -376,17 +332,11 @@ export const VendorList: FC<VendorListProps> = ({
 		const isLegitimateInterestAllowed =
 			vendorLegitimateInterests[vendorKey] ?? true;
 		const standardRetentionDays = vendor.dataRetention?.stdRetention;
-		let maxAgeText: string | null = null;
-
-		if (vendor.cookieMaxAgeSeconds) {
-			maxAgeText = iab.preferenceCenter.vendorList.maxAge.replace(
-				'{days}',
-				String(Math.floor(vendor.cookieMaxAgeSeconds / 86400))
-			);
-			if (vendor.cookieRefresh) {
-				maxAgeText = `${maxAgeText} (refreshes)`;
-			}
-		}
+		const maxAgeText = formatVendorMaxAge(
+			vendor.cookieMaxAgeSeconds,
+			vendor.cookieRefresh,
+			iab.preferenceCenter.vendorList
+		);
 		const rowHeaderProps = mergeSlotProps(
 			components?.['iab-vendor-list']?.rowHeader,
 			{
@@ -647,7 +597,7 @@ export const VendorList: FC<VendorListProps> = ({
 					heading={iab.preferenceCenter.vendorList.features}
 					standardText={
 						vendorData?.standardTexts?.features ||
-						iab.preferenceCenter.features.description
+						iab.preferenceCenter.features?.description
 					}
 					testId={`vendor-${vendorKey}-features-standard-text`}
 				/>

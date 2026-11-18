@@ -1,23 +1,26 @@
 <script lang="ts">
-	import type { AdTechProvider, GlobalVendorList } from '@inth/sdk/engine';
+	import type {
+		AdTechProvider,
+		GlobalVendorList,
+		NonIABVendor,
+	} from '@inth/sdk/engine';
 	import {
-		permittedLegitimateInterestPurposes,
-		resolveIABSafeUrl,
-		resolveIABVendorUrls,
+		formatVendorMaxAge,
+		mapCustomVendor,
+		mapGvlVendor,
+	} from '@inth/sdk/iab/headless';
+	import type {
+		HeadlessIABVendorId as VendorId,
+		ProcessedPurpose,
+		ProcessedVendor,
 	} from '@inth/sdk/iab/headless';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 	import { switchVariants } from '@inth/sdk/ui/styles/primitives';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	import type { IABTranslations } from '../iab-translations';
-	import type {
-		NonIABVendor,
-		ProcessedPurpose,
-		ProcessedVendor,
-		VendorId,
-	} from '../iab-types';
 	import { PreferenceItem, Switch } from '../primitives';
 	import ChevronDownIcon from './icons/chevron-down-icon.svelte';
 	import CloseIcon from './icons/close-icon.svelte';
@@ -74,56 +77,15 @@
 	let searchTerm = $state('');
 	let expandedVendors = new SvelteSet<VendorId>();
 
-	// Map IAB vendors
-	const iabVendors = $derived.by((): ProcessedVendor[] => {
-		if (!vendorData) {
-			return [];
-		}
-		return Object.entries(vendorData.vendors).map(([id, vendor]) => ({
-			cookieMaxAgeSeconds: vendor.cookieMaxAgeSeconds,
-			cookieRefresh: vendor.cookieRefresh,
-			dataDeclaration:
-				(vendor as unknown as { dataDeclaration?: number[] }).dataDeclaration ||
-				[],
-			dataRetention: vendor.dataRetention,
-			deviceStorageDisclosureUrl: resolveIABSafeUrl(
-				vendor.deviceStorageDisclosureUrl
-			),
-			features: vendor.features || [],
-			id: Number(id),
-			isCustom: false,
-			legIntPurposes: vendor.legIntPurposes || [],
-			...resolveIABVendorUrls(vendor, language),
-			name: vendor.name,
-			purposes: vendor.purposes || [],
-			specialFeatures: vendor.specialFeatures || [],
-			specialPurposes: vendor.specialPurposes || [],
-			usesCookies: vendor.usesCookies,
-			usesNonCookieAccess: vendor.usesNonCookieAccess,
-		}));
-	});
-
-	// Map custom vendors
-	const mappedCustomVendors = $derived.by((): ProcessedVendor[] =>
-		customVendors.map((cv) => ({
-			cookieMaxAgeSeconds: cv.cookieMaxAgeSeconds ?? null,
-			cookieRefresh: undefined,
-			dataDeclaration: cv.dataCategories || [],
-			dataRetention: undefined,
-			deviceStorageDisclosureUrl: null,
-			features: cv.features || [],
-			id: cv.id,
-			isCustom: true,
-			legIntPurposes: permittedLegitimateInterestPurposes(cv.legIntPurposes),
-			legitimateInterestUrl: null,
-			name: cv.name,
-			policyUrl: resolveIABSafeUrl(cv.privacyPolicyUrl) ?? '',
-			purposes: cv.purposes || [],
-			specialFeatures: cv.specialFeatures || [],
-			specialPurposes: [],
-			usesCookies: cv.usesCookies ?? false,
-			usesNonCookieAccess: cv.usesNonCookieAccess ?? false,
-		}))
+	const iabVendors = $derived(
+		vendorData
+			? Object.entries(vendorData.vendors).map(([id, vendor]) =>
+					mapGvlVendor(id, vendor, language)
+				)
+			: []
+	);
+	const mappedCustomVendors = $derived(
+		customVendors.map((vendor) => mapCustomVendor(vendor))
 	);
 
 	// Combine and sort all vendors
@@ -133,21 +95,29 @@
 		)
 	);
 
-	// Scroll to selected vendor.
-	// Uses untrack for expandedVendors write to avoid reactive cycle,
-	// and cleans up the timeout if selectedVendorId changes rapidly.
+	// Expand the selected vendor, then scroll to it once the expanded row
+	// has rendered. `untrack` keeps the write from re-running this effect.
 	$effect(() => {
-		if (selectedVendorId !== null) {
-			const id = selectedVendorId;
-			untrack(() => {
-				expandedVendors.add(id);
-			});
-			const timer = setTimeout(() => {
-				const element = document.getElementById(`vendor-${String(id)}`);
-				element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			}, 100);
-			return () => clearTimeout(timer);
+		if (selectedVendorId === null) {
+			return;
 		}
+		const id = selectedVendorId;
+		untrack(() => {
+			expandedVendors.add(id);
+		});
+		let current = true;
+		const scrollToVendor = async () => {
+			await tick();
+			if (current) {
+				document
+					.getElementById(`vendor-${String(id)}`)
+					?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		};
+		void scrollToVendor();
+		return () => {
+			current = false;
+		};
 	});
 
 	const filteredVendors = $derived.by(() => {
@@ -297,17 +267,11 @@
 	const getMaxAgeText = function getMaxAgeText(
 		vendor: ProcessedVendor
 	): string | null {
-		if (!vendor.cookieMaxAgeSeconds) {
-			return null;
-		}
-		let text = iabT.preferenceCenter.vendorList.maxAge.replace(
-			'{days}',
-			String(Math.floor(vendor.cookieMaxAgeSeconds / 86400))
+		return formatVendorMaxAge(
+			vendor.cookieMaxAgeSeconds,
+			vendor.cookieRefresh,
+			iabT.preferenceCenter.vendorList
 		);
-		if (vendor.cookieRefresh) {
-			text = `${text} ${iabT.preferenceCenter.vendorList.maxAgeRefreshes}`;
-		}
-		return text;
 	};
 </script>
 
