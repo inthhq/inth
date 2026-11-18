@@ -5,14 +5,14 @@ import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests_
 import { IABProvider } from '../../../packages/sdk/react/src/iab';
 import { ConsentProvider } from '../../../packages/sdk/react/src/index';
 import type { ConsentProviderOptions } from '../../../packages/sdk/react/src/index';
-import { testing } from '../../../packages/sdk/react/src/testing';
 import {
-	storybookPolicy,
-	storybookPolicyResolution,
+	seedStorybookChoice,
 	storybookIABPolicy,
 	storybookIABPresentation,
+	storybookMode,
+	storybookPolicy,
+	storybookPolicyResolution,
 	storybookPresentation,
-	seedStorybookChoice,
 } from '../../storybook-consent-policy';
 
 type ConsentRecord = Record<string, boolean>;
@@ -55,7 +55,7 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 };
 
 export const defaultConsentOptions: ConsentProviderOptions = {
-	mode: testing({ policy: [storybookPolicy] }),
+	mode: storybookMode([storybookPolicy]),
 	presentation: storybookPresentation,
 };
 
@@ -91,9 +91,7 @@ export const editableStoredConsent: ConsentRecord = {
 
 export const defaultIABOptions: ConsentProviderOptions = {
 	...defaultConsentOptions,
-	mode: testing({
-		policy: [storybookIABPolicy],
-	}),
+	mode: storybookMode([storybookIABPolicy]),
 	presentation: storybookIABPresentation,
 };
 

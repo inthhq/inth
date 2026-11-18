@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { PromptPosition, PromptVariant } from '@c15t/core';
 	import { ConsentBanner, ConsentDialog } from '@c15t/svelte';
-	import { testing } from '@c15t/svelte/testing';
 
-	import { storybookPolicy } from '../../storybook-consent-policy';
+	import {
+		storybookMode,
+		storybookPolicy,
+	} from '../../storybook-consent-policy';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
 	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
 
@@ -25,16 +27,14 @@
 
 	// A notice under an opt-out model: an opt-out link plus a primary Accept All.
 	const noticeOptions = {
-		mode: testing({
-			policy: [
-				{
-					...storybookPolicy,
-					id: 'storybook-notice',
-					model: 'opt-out' as const,
-					prompt: 'notice' as const,
-				},
-			],
-		}),
+		mode: storybookMode([
+			{
+				...storybookPolicy,
+				id: 'storybook-notice',
+				model: 'opt-out' as const,
+				prompt: 'notice' as const,
+			},
+		]),
 		presentation: undefined,
 	};
 </script>

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
 import { ConsentBanner } from '@c15t/angular';
 import { ConsentDialog } from '@c15t/angular/consent-dialog';
-import { testing } from '@c15t/angular/testing';
 import {
 	bannerAcceptViaKeyboard,
 	bannerContract,
@@ -10,7 +9,7 @@ import {
 } from '@c15t/conformance/play/consent-banner';
 import type { PromptPosition, PromptVariant } from '@c15t/core';
 
-import { storybookPolicy } from '../../storybook-consent-policy';
+import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';
 import {
 	consentApplication,
 	editableConsentOptions,
@@ -27,16 +26,14 @@ interface BannerStoryArgs {
 
 // A notice under an opt-out model: an opt-out link plus a primary Accept All.
 const noticeOptions = {
-	mode: testing({
-		policy: [
-			{
-				...storybookPolicy,
-				id: 'storybook-notice',
-				model: 'opt-out' as const,
-				prompt: 'notice' as const,
-			},
-		],
-	}),
+	mode: storybookMode([
+		{
+			...storybookPolicy,
+			id: 'storybook-notice',
+			model: 'opt-out' as const,
+			prompt: 'notice' as const,
+		},
+	]),
 	presentation: undefined,
 };
 

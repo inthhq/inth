@@ -1,10 +1,10 @@
 import type { ApplicationConfig } from '@angular/core';
 import { provideC15t } from '@c15t/angular';
 import type { C15tOptions, C15tProviderOptions } from '@c15t/angular';
-import { testing } from '@c15t/angular/testing';
 
 import {
 	seedStorybookChoice,
+	storybookMode,
 	storybookPolicy,
 	storybookPolicyResolution,
 	storybookPresentation,
@@ -43,7 +43,7 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 };
 
 export const defaultConsentOptions: C15tOptions = {
-	mode: testing({ policy: [storybookPolicy] }),
+	mode: storybookMode([storybookPolicy]),
 	presentation: storybookPresentation,
 };
 

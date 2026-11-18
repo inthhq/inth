@@ -7,8 +7,7 @@ import { ConsentDialog } from 'c15t/react';
 import type { ConsentProviderOptions } from 'c15t/react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import { testing } from '../../../packages/sdk/react/src/testing';
-import { storybookPolicy } from '../../storybook-consent-policy';
+import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';
 import { RecipePage } from './docs-recipe-page';
 import { CookieBanner } from './docs-recipes/compose-banner';
 import {
@@ -72,16 +71,14 @@ const customizeOpensDialog: Story['play'] = async () => {
 
 const noticeOptions: Partial<ConsentProviderOptions> = {
 	...editableConsentOptions,
-	mode: testing({
-		policy: [
-			{
-				...storybookPolicy,
-				id: 'storybook-notice',
-				model: 'opt-out',
-				prompt: 'notice',
-			},
-		],
-	}),
+	mode: storybookMode([
+		{
+			...storybookPolicy,
+			id: 'storybook-notice',
+			model: 'opt-out',
+			prompt: 'notice',
+		},
+	]),
 	presentation: undefined,
 };
 

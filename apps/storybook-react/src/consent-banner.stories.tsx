@@ -10,8 +10,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 } from '../../../packages/sdk/react/src/index';
-import { testing } from '../../../packages/sdk/react/src/testing';
-import { storybookPolicy } from '../../storybook-consent-policy';
+import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';
 import {
 	editableConsentOptions,
 	StorybookConsentProvider,
@@ -71,16 +70,14 @@ export const Notice: Story = {
 		<StorybookConsentProvider
 			options={{
 				...editableConsentOptions,
-				mode: testing({
-					policy: [
-						{
-							...storybookPolicy,
-							id: 'storybook-notice',
-							model: 'opt-out',
-							prompt: 'notice',
-						},
-					],
-				}),
+				mode: storybookMode([
+					{
+						...storybookPolicy,
+						id: 'storybook-notice',
+						model: 'opt-out',
+						prompt: 'notice',
+					},
+				]),
 				presentation: undefined,
 			}}
 		>

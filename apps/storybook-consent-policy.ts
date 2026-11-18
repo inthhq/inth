@@ -1,4 +1,6 @@
 import type { ConsentPresentation } from '../packages/sdk/core/src/libs/policy-actions';
+import type { ProviderTransportFactory } from '../packages/sdk/core/src/transports/mode';
+import { createOfflineTransport } from '../packages/sdk/core/src/transports/offline';
 import type { HydrationRecords } from '../packages/sdk/core/src/types';
 import {
 	createPolicyRuleFingerprints,
@@ -27,9 +29,33 @@ export const storybookIABPolicy: PolicyRule = {
 };
 
 /**
+ * The stories' `mode`: resolves `policy` in the browser and sends nothing.
+ * A Storybook build is a production build, where `testing()` refuses to run,
+ * so the stories build the transport it would hand the provider themselves.
+ *
+ * @param policy - The rules the story resolves.
+ * @returns A provider transport factory.
+ */
+export const storybookMode = function storybookMode(
+	policy: PolicyRule[]
+): ProviderTransportFactory {
+	return Object.assign(
+		(context: Parameters<ProviderTransportFactory>[0]) =>
+			createOfflineTransport({
+				acknowledgeNoRecords: true,
+				iabEnabled: context.iabEnabled,
+				policyRules: policy,
+				translations: context.translations,
+				translationsFor: context.translationsFor,
+			}),
+		{ kind: 'offline' as const }
+	);
+};
+
+/**
  * The storybook policy already resolved, for adapters whose provider can
  * take a prefetched resolution. Consent surfaces render only once a policy
- * is resolved, so a story that waits on an async `testing()` init paints
+ * is resolved, so a story that waits on an async init paints
  * without its link, trigger, and widget for a tick; a prefetched resolution
  * makes the first paint authoritative, as server rendering does in an app.
  */
