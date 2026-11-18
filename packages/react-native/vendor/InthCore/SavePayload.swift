@@ -239,7 +239,7 @@ public struct SavePayload: Sendable, Codable, Equatable {
     }
 }
 
-/// Builds the `POST /subjects` body, field for field as `@inth/sdk/engine` builds it.
+/// Builds the `POST /subjects` body, field for field as `@c15t/core` builds it.
 ///
 /// Two representations of the same act travel together on purpose. `preferences`
 /// is the complete explicit map after the act, which is what a backend records;

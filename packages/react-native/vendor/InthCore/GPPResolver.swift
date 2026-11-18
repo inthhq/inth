@@ -1,6 +1,6 @@
 import Foundation
 
-/// MSPA mode for covered transactions: `GPPMspaMode` in `@inth/sdk/iab/gpp`. Leave it unset
+/// MSPA mode for covered transactions: `GPPMspaMode` in `@c15t/iab/gpp`. Leave it unset
 /// unless the publisher signed the IAB Multi-State Privacy Agreement.
 public enum GPPMspaMode: String, Sendable, Codable, Equatable {
     /// The publisher offers the opt-outs itself.

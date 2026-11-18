@@ -295,7 +295,7 @@ public struct HydrationRecords: Sendable, Equatable {
 
 /// A decoded `/init` response.
 ///
-/// Field-for-field the subset of `@inth/sdk/engine`'s `InitResponse` that means
+/// Field-for-field the subset of `@c15t/core`'s `InitResponse` that means
 /// something on mobile. `gvl` is read: the backend embeds it whenever the matched
 /// policy model is `iab` (`buildInitResponse` in `packages/backend/src/http/init.ts`),
 /// and a mobile consent surface needs the purposes and vendor names to render the

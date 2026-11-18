@@ -2,7 +2,7 @@ import Foundation
 
 /// Interaction the active policy still owes.
 ///
-/// `{ kind, reason }`, which is what `@inth/sdk/engine` puts on its snapshot, what the
+/// `{ kind, reason }`, which is what `@c15t/core` puts on its snapshot, what the
 /// `packages/native-protocol` fixtures carry, and what `@inth/react-native` decodes. The
 /// contract document sketches a `notice`/`acknowledge`/`purpose` triple instead;
 /// the kernel wins, because a native core that flattened it would hand the
@@ -111,7 +111,7 @@ public struct PolicyResolutionInfo: Sendable, Codable, Equatable {
 /// Geographic context reported by the backend.
 ///
 /// Keyed `countryCode`/`regionCode`, because that is `locationSchema` in
-/// `@inth/sdk/schema`. There is no `language` here: the language in effect lives on
+/// `@c15t/schema`. There is no `language` here: the language in effect lives on
 /// `ConsentOverrides.language`, where a device locale can supply it.
 public struct LocationContext: Sendable, Codable, Equatable {
     public let countryCode: String?
@@ -414,7 +414,7 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
     /// consent yet" apart from "consent denied".
     public let ready: Bool
     public let model: ConsentModel
-    /// Surface to render. Never absent: `deriveActiveUI` in `@inth/sdk/engine` answers
+    /// Surface to render. Never absent: `deriveActiveUI` in `@c15t/core` answers
     /// `'none'` while a policy is pending and after a failed resolution, and the
     /// protocol fixtures never carry `null` here. The optional `null` in
     /// `KernelActiveUI` exists for an adapter that has not built a snapshot, which

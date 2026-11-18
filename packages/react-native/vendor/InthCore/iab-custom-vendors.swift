@@ -1,7 +1,7 @@
 import Foundation
 
 /// A custom vendor: a partner the publisher declares under IAB TCF that is not on the Global
-/// Vendor List. `NonIABVendor` in `@inth/sdk/schema` (`packages/sdk/schema/src/shared/non-iab-vendor.ts`),
+/// Vendor List. `NonIABVendor` in `@c15t/schema` (`packages/sdk/schema/src/shared/non-iab-vendor.ts`),
 /// served by `/init` as `customVendors`.
 ///
 /// The stock screens list it beside the registered vendors and it gets its own consent and

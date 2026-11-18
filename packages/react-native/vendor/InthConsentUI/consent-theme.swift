@@ -337,7 +337,7 @@ public struct ConsentTheme: Equatable, Sendable {
     }
 
     /// First-layer copy a host may replace. Decision labels are not here on purpose. A `nil` field
-    /// shows the stock copy from `@inth/sdk/translations` in the policy's language; a host string is
+    /// shows the stock copy from `@c15t/translations` in the policy's language; a host string is
     /// shown as given in every language.
     public struct Copy: Equatable, Sendable {
         /// The headline. Keep it short: it is set in display type.

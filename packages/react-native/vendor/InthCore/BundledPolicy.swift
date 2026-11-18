@@ -131,7 +131,7 @@ public struct BundledPolicyResource: Sendable {
             atpFetchedAt: atpAt.flatMap { $0 >= 0 && $0 <= issued ? $0 : nil })
     }
 
-    /// What `matchPolicyRules` in `@inth/sdk/schema` answers for a location.
+    /// What `matchPolicyRules` in `@c15t/schema` answers for a location.
     enum MatchOutcome: Equatable {
         case matched(index: Int, matchedBy: String)
         /// A known location no rule covers. The core runs the safe fallback.
