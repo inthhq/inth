@@ -90,6 +90,27 @@ export const buildV1ConsentSessionReport = function buildV1ConsentSessionReport(
 };
 
 /**
+ * Whether {@link reportV1ConsentSession} would send a report for `options`.
+ *
+ * @param options - The same options the report takes.
+ * @returns `false` for a prefetch or prerender request, a non-`GET`
+ * request, a relative project URL, or no fetch.
+ */
+export const sendsV1ConsentSessionReport = function sendsV1ConsentSessionReport(
+	options: Pick<
+		V1SessionReportOptions,
+		'fetch' | 'headers' | 'method' | 'projectUrl'
+	>
+): boolean {
+	return Boolean(
+		resolveSessionReportProjectUrl(options) &&
+		(options.fetch !== undefined || typeof globalThis.fetch === 'function') &&
+		!isSpeculativeRequest(options.headers) &&
+		(options.method === undefined || options.method.toUpperCase() === 'GET')
+	);
+};
+
+/**
  * Send one session report to `POST /v1/consent/sessions`, detached.
  *
  * Never throws and never rejects. A prefetch or prerender request, a
@@ -103,12 +124,7 @@ export const reportV1ConsentSession = function reportV1ConsentSession(
 ): Promise<void> {
 	const projectUrl = resolveSessionReportProjectUrl(options);
 	const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
-	if (
-		!projectUrl ||
-		!fetchImpl ||
-		isSpeculativeRequest(options.headers) ||
-		(options.method !== undefined && options.method.toUpperCase() !== 'GET')
-	) {
+	if (!projectUrl || !fetchImpl || !sendsV1ConsentSessionReport(options)) {
 		return Promise.resolve();
 	}
 

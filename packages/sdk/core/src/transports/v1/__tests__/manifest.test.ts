@@ -106,6 +106,57 @@ describe('GET /v1/consent/manifest', () => {
 	});
 });
 
+describe('a manifest body that is not an object', () => {
+	test('fails the init and is fetched again by the next one', async () => {
+		let attempts = 0;
+		const transport = createV1ManifestTransport({
+			fetch: (() => {
+				attempts += 1;
+				return Promise.resolve(json(200, attempts === 1 ? null : MANIFEST));
+			}) as typeof globalThis.fetch,
+			projectUrl: PROJECT_URL,
+		});
+
+		await expect(transport.init({ overrides: {}, user: null })).rejects.toThrow(
+			'without a manifest'
+		);
+		await transport.init({ overrides: {}, user: null });
+
+		expect(attempts).toBe(2);
+	});
+});
+
+describe('the IAB vendor list', () => {
+	test('resolves a relative URL against the manifest URL', async () => {
+		const urls: string[] = [];
+		const transport = createV1ManifestTransport({
+			fetch: stubFetch(() => json(200, {})).fetch,
+			fetchGvl: ({ reference }) => {
+				urls.push(reference.url);
+				return Promise.resolve(null);
+			},
+			projectUrl: PROJECT_URL,
+			snapshot: {
+				...MANIFEST,
+				cmpId: 28,
+				iab: { enabled: true, gvl: { url: '/gvl/vendor-list.json' } },
+				policyPacks: [
+					createConsentManifestPolicyPack({
+						id: 'iab',
+						match: { fallback: true },
+						model: 'iab',
+						prompt: 'choice',
+					}),
+				],
+			} as unknown as ConsentManifest,
+		});
+
+		await transport.init({ overrides: {}, user: null });
+
+		expect(urls).toEqual([`${PROJECT_URL}/gvl/vendor-list.json`]);
+	});
+});
+
 describe('saves in manifest mode', () => {
 	test('assert the decision the manifest resolved', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
@@ -224,6 +275,33 @@ describe('POST /v1/consent/sessions', () => {
 			storedChoice: false,
 		});
 	});
+
+	test.each([
+		['a HEAD request', { method: 'HEAD' }],
+		['a prefetch', { headers: { 'sec-purpose': 'prefetch' } }],
+	])(
+		'%s reports nothing, and the save carries no journey',
+		async (_label, report) => {
+			const { calls, fetch } = stubFetch(() =>
+				json(200, { subjectId: SUBJECT })
+			);
+			const transport = createV1ManifestTransport({
+				fetch,
+				projectUrl: PROJECT_URL,
+				report: { source: 'render', ...report },
+				snapshot: MANIFEST,
+			});
+
+			await transport.init({ journey: JOURNEY, overrides: {}, user: null });
+			await transport.save(
+				savePayload({ journey: { id: JOURNEY.id, scope: 'page' } })
+			);
+
+			expect(calls.map((call) => call.url)).toEqual([
+				`${PROJECT_URL}/v1/consent/records`,
+			]);
+		}
+	);
 
 	test('a relative project URL reports nothing', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));

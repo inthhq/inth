@@ -24,7 +24,6 @@ import { baseTranslations } from '@inth/sdk-translations/all';
 import type { BaseTranslations } from '@inth/sdk-translations/all';
 
 import { createUnreportedJourneys } from '../../libs/journey';
-import { resolveSessionReportProjectUrl } from '../../libs/session-report';
 import type { SessionReportHeaders } from '../../libs/session-report';
 import type { InitContext, KernelOverrides } from '../../types';
 import {
@@ -40,7 +39,11 @@ import { readInthApiError } from './error';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
 import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
-import { reportV1ConsentSession } from './session-report';
+import {
+	reportV1ConsentSession,
+	sendsV1ConsentSessionReport,
+} from './session-report';
+import type { V1SessionReportOptions } from './session-report';
 
 /** Session reporting for a server-side manifest transport. */
 export interface V1ManifestReportOptions {
@@ -169,7 +172,14 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 					response
 				);
 			}
-			return (await response.json()) as ConsentManifest;
+			const manifest: unknown = await response.json();
+			if (typeof manifest !== 'object' || manifest === null) {
+				// Thrown inside the attempt, so the next init fetches again.
+				throw new TypeError(
+					`Inth transport: ${V1_ROUTES.manifest} answered ${response.status} without a manifest`
+				);
+			}
+			return manifest as ConsentManifest;
 		};
 
 	const getManifest = function getManifest(): Promise<ConsentManifest> {
@@ -238,7 +248,10 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 				payload.gvl = await fetchGvl({
 					fetch: fetchImpl,
 					language: payload.translations.language.split('-')[0] || 'en',
-					reference: manifest.iab.gvl,
+					reference: {
+						...manifest.iab.gvl,
+						url: resolveEndpoint(manifest.iab.gvl.url, manifestUrl),
+					},
 				});
 			}
 			const adTechProviders = await providers;
@@ -249,28 +262,24 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 				lastDecisionInputs = rememberDecisionInputs(payload, inputs.gpc);
 			}
 
-			const reportTo =
-				options.report &&
-				resolveSessionReportProjectUrl({
-					projectUrl: options.report.projectUrl ?? options.projectUrl,
-				});
-			if (options.report && reportTo) {
+			const report: V1SessionReportOptions | undefined = options.report && {
+				adapter: options.report.adapter,
+				experiment: ctx.experiment,
+				fetch: fetchImpl,
+				headers: options.report.headers,
+				init: payload,
+				inputs,
+				journey,
+				manifest,
+				method: options.report.method,
+				projectUrl: options.report.projectUrl ?? options.projectUrl,
+				source: options.report.source,
+				waitUntil: options.report.waitUntil,
+			};
+			if (report && sendsV1ConsentSessionReport(report)) {
 				unreported.reported(journey);
 				// Detached: the report never rejects and never fails the init.
-				void reportV1ConsentSession({
-					adapter: options.report.adapter,
-					experiment: ctx.experiment,
-					fetch: fetchImpl,
-					headers: options.report.headers,
-					init: payload,
-					inputs,
-					journey,
-					manifest,
-					method: options.report.method,
-					projectUrl: reportTo,
-					source: options.report.source,
-					waitUntil: options.report.waitUntil,
-				});
+				void reportV1ConsentSession(report);
 			} else {
 				// Nothing carried this journey, so its saves send none either.
 				unreported.resolvedLocally(journey);
