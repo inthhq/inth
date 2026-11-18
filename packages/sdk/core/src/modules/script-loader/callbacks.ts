@@ -28,6 +28,7 @@ export const buildCallbackInfo = function buildCallbackInfo(
 		| 'deniedVendors'
 		| 'gateState'
 		| 'getConsentReader'
+		| 'getLoadErrorReporter'
 		| 'isReplacing'
 		| 'registration'
 	>,
@@ -54,6 +55,10 @@ export const buildCallbackInfo = function buildCallbackInfo(
 		Object.defineProperty(info, 'getCurrentConsent', {
 			value: getCurrentConsent,
 		});
+	}
+	const reportLoadError = tools.getLoadErrorReporter?.(script);
+	if (reportLoadError) {
+		Object.defineProperty(info, 'reportLoadError', { value: reportLoadError });
 	}
 	if (tools.isReplacing?.(script)) {
 		Object.defineProperty(info, 'replacing', { value: true });

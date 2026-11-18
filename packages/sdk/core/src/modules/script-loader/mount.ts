@@ -32,7 +32,11 @@ export interface MountDeps {
 	/** Consent reads for callback payloads. */
 	tools: Pick<
 		ScriptLoaderTools,
-		'deniedVendors' | 'gateState' | 'getConsentReader' | 'registration'
+		| 'deniedVendors'
+		| 'gateState'
+		| 'getConsentReader'
+		| 'getLoadErrorReporter'
+		| 'registration'
 	>;
 	/** Stop lifecycle callbacks when disposal is requested during mounting. */
 	isDisposed: () => boolean;

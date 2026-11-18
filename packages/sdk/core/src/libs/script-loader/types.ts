@@ -54,6 +54,16 @@ export interface ScriptCallbackInfo {
 	 */
 	readonly afterReplacement?: (effect: () => void) => void;
 
+	/**
+	 * Report that a file a callback-only script inserted itself failed to
+	 * load, such as a copy that failed its integrity check. Runs this
+	 * registration's `onError` with `error`. Does nothing once the
+	 * registration is gone. Non-enumerable.
+	 * @param error - Why the file failed.
+	 * @internal
+	 */
+	readonly reportLoadError?: (error: Error) => void;
+
 	/** The original script ID */
 	id: string;
 

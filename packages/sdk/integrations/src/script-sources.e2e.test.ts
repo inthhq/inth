@@ -108,6 +108,60 @@ describe('scriptLoader.sources with integrations', () => {
 		runtime.dispose();
 	});
 
+	it.each([
+		[
+			'HubSpot',
+			async () => (await freshHubspot())({ portalId: '53' }),
+			() => document.getElementById('hs-script-loader'),
+		],
+		[
+			'ActiveCampaign',
+			async () =>
+				(
+					await import('./vendors/email-and-sms/activecampaign')
+				).activeCampaignTracking({ accountId: '123456' }),
+			() => scriptBySrc('https://acme.example/scripts/'),
+		],
+	])(
+		"runs %s's onError when its source's copy fails its integrity check",
+		async (_name, build, loader) => {
+			vi.resetModules();
+			const onError = vi.fn();
+			const script = { ...(await build()), onError };
+			const runtime = createConsentRuntime({
+				enabled: false,
+				mode: custom({ init: () => Promise.resolve({}) }),
+				persistence: false,
+				scriptLoader: {
+					sources: {
+						[script.id]: {
+							integrity: REGISTRY_INTEGRITY,
+							src: 'https://acme.example/scripts/vendor@0123456789abcdef.js',
+						},
+					},
+				},
+				scripts: [script],
+			});
+			runtime.start();
+			await vi.waitFor(() =>
+				expect(loader()?.getAttribute('src')).toBeTruthy()
+			);
+
+			// What the browser fires for an SRI mismatch, a 423 hold or a 410.
+			loader()?.dispatchEvent(new Event('error'));
+
+			await vi.waitFor(() => expect(onError).toHaveBeenCalledOnce());
+			expect(onError).toHaveBeenCalledWith(
+				expect.objectContaining({ id: script.id })
+			);
+			runtime.dispose();
+			// The vendor cleanup leaves ActiveCampaign's globals behind.
+			for (const name of ['pgo', 'prismGlobalObjectAlias']) {
+				Reflect.deleteProperty(window, name);
+			}
+		}
+	);
+
 	it('will not reuse a HubSpot loader that skips the integrity its source asks for', async () => {
 		const hubspot = await freshHubspot();
 		const hubspotSource =

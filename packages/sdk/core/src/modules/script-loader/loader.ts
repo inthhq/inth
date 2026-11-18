@@ -231,6 +231,38 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			consentReaders.set(script, reader);
 			return reader.read;
 		},
+		getLoadErrorReporter: (script) => (error) => {
+			const entry = normalized.find((candidate) => candidate.script === script);
+			// Disposal empties `normalized`, so a late report finds nothing.
+			if (!entry) {
+				return;
+			}
+			const snapshot = kernel.getSnapshot();
+			const elementId = elementIds.resolve(script);
+			invokeCallback(
+				script,
+				'onError',
+				buildCallbackInfo(
+					callbackTools,
+					script,
+					snapshot,
+					hasScriptConsent(entry, buildReconcilePass(snapshot, tools)),
+					elementId,
+					undefined,
+					error
+				),
+				emit
+			);
+			emit({
+				action: 'error',
+				elementId,
+				message: `Script failed: ${error.message}`,
+				scope: 'lifecycle',
+				scriptId: script.id,
+				source: 'script-loader',
+				timestamp: Date.now(),
+			});
+		},
 		isReplacing: (script) => script === replacingScript,
 		registration: ownerSource,
 	};

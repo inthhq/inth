@@ -395,6 +395,16 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 		if (installation.crossorigin) {
 			element.setAttribute('crossorigin', installation.crossorigin);
 		}
+		// A copy that fails its integrity check, or a 423 or 410, fires
+		// `error`. Core does not watch this tag, so pass it to each owner.
+		element.addEventListener('error', () => {
+			const error = new Error(`Failed to load script: ${installation.src}`);
+			for (const registrations of owners.values()) {
+				for (const owner of registrations.values()) {
+					owner.info.reportLoadError?.(error);
+				}
+			}
+		});
 		ownedLoaders.add(element);
 		host.document.head.appendChild(element);
 	};

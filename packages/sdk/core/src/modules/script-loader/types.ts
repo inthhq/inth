@@ -56,6 +56,11 @@ export interface ScriptLoaderTools {
 		script: Script
 	) => ScriptCallbackInfo['getCurrentConsent'];
 
+	/** Reports a load failure for the script object's active lifecycle. */
+	getLoadErrorReporter?: (
+		script: Script
+	) => ScriptCallbackInfo['reportLoadError'];
+
 	/** `extractConsentNamesFromCondition`. */
 	categoriesOf: typeof extractConsentNamesFromCondition;
 	/** `declareOwnedVendors`. */
