@@ -233,6 +233,27 @@ describe('scriptLoader.sources', () => {
 		runtime.dispose();
 	});
 
+	test('reads the last pin when a script spells the attribute twice', () => {
+		const runtime = start({
+			scriptLoader: {
+				sources: {
+					vendor: { integrity: REGISTRY_INTEGRITY, src: REGISTRY_SRC },
+				},
+			},
+			scripts: [
+				vendorScript({
+					attributes: { Integrity: '', integrity: 'sha384-pinned' },
+				}),
+			],
+		});
+
+		expect(fetchAttributes('vendor')).toMatchObject({
+			integrity: 'sha384-pinned',
+			src: 'https://cdn.vendor.example/vendor.js',
+		});
+		runtime.dispose();
+	});
+
 	test('keeps a pinned script on its own URL when a stronger pinned hash decides', () => {
 		// Browsers check only the strongest algorithm a pin lists, so the
 		// registry's sha384 hash would never be compared.

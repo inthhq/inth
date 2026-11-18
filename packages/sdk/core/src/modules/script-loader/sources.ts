@@ -135,7 +135,8 @@ const applySource = (script: Script, source: ScriptSource): Script => {
 	// HTML attribute names are case-insensitive: `Integrity` is the same pin
 	// as `integrity`, and a source's hash must not replace it on the element.
 	const isPin = (name: string): boolean => name.toLowerCase() === 'integrity';
-	const pinned = Object.entries(own).find(([name]) => isPin(name))?.[1];
+	// With two spellings, the element ends on the last one set.
+	const pinned = Object.entries(own).findLast(([name]) => isPin(name))?.[1];
 	const ownWithoutPin = Object.fromEntries(
 		Object.entries(own).filter(([name]) => !isPin(name))
 	);
