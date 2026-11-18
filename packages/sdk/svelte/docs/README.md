@@ -14,7 +14,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [SvelteKit quickstart](./frameworks/sveltekit/quickstart.md)
 - [Choose your setup](./concepts/choose-your-setup.md): Pick the Inth setup for your framework, rendering mode and hosting, and decide who runs the consent backend.
 - [How consent works](./concepts/how-consent-works.md): What Inth decides on each page load, the difference between a permission and a recorded choice, and what happens when a visitor saves.
-- [Customize the interface](./customization/overview.md): Change inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
+- [Customize the interface](./customization/overview.md): Change Inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
 - [Verify consent](./guides/verify-consent.md): Check in a production build that vendor requests wait for consent, rejection survives a reload, preferences reopen and privacy signals apply.
 
 ## More documentation
@@ -35,20 +35,20 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [ConsentDialogTrigger](./frameworks/svelte/components/consent-dialog-trigger.md): Add a floating, draggable privacy button to a Svelte app with ConsentDialogTrigger, and set its corner, size, saved position, accessible name and callbacks.
 - [ConsentGate](./frameworks/svelte/components/consent-gate.md): Keep a YouTube video or map out of a Svelte page until its consent category is allowed with ConsentGate, and replace its placeholder.
 - [ConsentProvider](./frameworks/svelte/components/consent-provider.md): Mount ConsentProvider at the root of a Svelte app to start Inth, with every prop, its default, and which options update after mount.
-- [ConsentWidget](./frameworks/svelte/components/consent-widget.md): Put inth's category switches inline on a Svelte privacy settings page with ConsentWidget, and how its draft, vendors and stale-policy alert behave.
+- [ConsentWidget](./frameworks/svelte/components/consent-widget.md): Put Inth's category switches inline on a Svelte privacy settings page with ConsentWidget, and how its draft, vendors and stale-policy alert behave.
 - [DevTools](./frameworks/svelte/components/dev-tools.md): Inspect consent, scripts, location and events in a Svelte app with ConsentDevTools from @inth/svelte/devtools, loaded only in development.
 - [IABConsentBanner](./frameworks/svelte/components/iab-consent-banner.md): Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in a Svelte app with IABConsentBanner, its props and behavior.
 - [IABConsentDialog](./frameworks/svelte/components/iab-consent-dialog.md): Show the IAB TCF 2.4 preference center with purposes, features and vendors in a Svelte app with IABConsentDialog.
 - [Primitives](./frameworks/svelte/components/primitives.md): Build your own accessible consent dialog in Svelte with the Dialog, Switch, Tabs, Accordion and PreferenceItem primitives and the focusTrap, scrollLock and portal actions.
 - [Content Security Policy](./frameworks/svelte/content-security-policy.md): Write a Content Security Policy for a Svelte app using Inth, with the hosts to allow, the provider's nonce option and what Inth injects.
-- [Customize](./frameworks/svelte/customize.md): Change inth's colors, shape, button styles and copy in a Svelte app with a token stylesheet, theme slots, presentation props and translations.
+- [Customize](./frameworks/svelte/customize.md): Change Inth's colors, shape, button styles and copy in a Svelte app with a token stylesheet, theme slots, presentation props and translations.
 - [Embeds](./frameworks/svelte/embeds.md): Keep YouTube videos, maps and other iframes out of a Svelte page until their consent category is allowed, with ConsentGate or the iframe blocker.
 - [Context getters](./frameworks/svelte/getters.md): Reference for every @inth/svelte context getter in a Svelte app, from reading permissions and recorded choices to saving, the draft, IAB state and kernel events.
 - [IAB GPP](./frameworks/svelte/gpp.md): Expose the IAB Global Privacy Platform API (__gpp) from a Svelte app with the provider's gpp option, so ad tech can read US state opt-outs and the TCF EU consent string.
 - [Headless](./frameworks/svelte/headless.md): Replace the Inth banner or preference dialog with your own Svelte markup while the provider keeps policy, storage and script loading.
 - [IAB TCF](./frameworks/svelte/iab.md): Turn on the IAB TCF 2.4 banner and preference center in a Svelte app with IABConsentBanner, IABConsentDialog and the provider's iab option.
 - [Network blocker](./frameworks/svelte/network-blocker.md): Hold fetch and XMLHttpRequest calls to tracking domains in a Svelte app until their consent category is allowed, with the provider's networkBlocker option.
-- [Quickstart](./frameworks/svelte/quickstart.md): Add a Inth cookie banner, preference dialog and consent-gated scripts to a Svelte 5 app built with Vite, using Inth as the consent backend.
+- [Quickstart](./frameworks/svelte/quickstart.md): Add an Inth cookie banner, preference dialog and consent-gated scripts to a Svelte 5 app built with Vite, using Inth as the consent backend.
 - [Scripts](./frameworks/svelte/scripts.md): Load vendor scripts, iframes and network requests in a Svelte app only after the visitor allows their consent category, and stop them when consent is withdrawn.
 - [Translations](./frameworks/svelte/translations.md): Change Inth banner and dialog copy in a Svelte app with component text props or the provider's i18n option, and switch languages at runtime.
 - [Troubleshooting](./frameworks/svelte/troubleshooting.md): Fix a Vite build that cannot fetch the Inth manifest, a missing bundled policy, a missing banner, a wrong backend URL, ignored theme colors and vendors that load before consent in a Svelte app.
@@ -66,12 +66,12 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [ConsentDialogTrigger](./frameworks/sveltekit/components/consent-dialog-trigger.md): Add a floating, draggable privacy button to a SvelteKit layout with ConsentDialogTrigger, and set its corner, size, saved position, accessible name and callbacks.
 - [ConsentGate](./frameworks/sveltekit/components/consent-gate.md): Keep a YouTube video or map out of SvelteKit server HTML until its consent category is allowed with ConsentGate, and replace its placeholder.
 - [ConsentRoot](./frameworks/sveltekit/components/consent-root.md): Mount ConsentRoot in a SvelteKit root layout with the state loadConsent returns, so the banner is in the first HTML, with every prop and its default.
-- [ConsentWidget](./frameworks/sveltekit/components/consent-widget.md): Put inth's category switches inline on a SvelteKit privacy settings route with ConsentWidget, and how its draft, vendors and stale-policy alert behave.
+- [ConsentWidget](./frameworks/sveltekit/components/consent-widget.md): Put Inth's category switches inline on a SvelteKit privacy settings route with ConsentWidget, and how its draft, vendors and stale-policy alert behave.
 - [DevTools](./frameworks/sveltekit/components/dev-tools.md): Inspect consent, scripts, location and events in a SvelteKit app with ConsentDevTools, imported only when $app/env reports development.
 - [IABConsentBanner](./frameworks/sveltekit/components/iab-consent-banner.md): Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in a SvelteKit app with IABConsentBanner, its props and behavior.
 - [IABConsentDialog](./frameworks/sveltekit/components/iab-consent-dialog.md): Show the IAB TCF 2.4 preference center with purposes, features and vendors in a SvelteKit app with IABConsentDialog.
 - [Primitives](./frameworks/sveltekit/components/primitives.md): Build your own accessible consent dialog in SvelteKit with the Dialog, Switch, Tabs, Accordion and PreferenceItem primitives and the focusTrap, scrollLock and portal actions.
-- [Content Security Policy](./frameworks/sveltekit/content-security-policy.md): Write a Content Security Policy for a SvelteKit app using Inth with SvelteKit's csp option, covering vendor hosts, inth's style elements, the server-rendered theme style and style attributes.
+- [Content Security Policy](./frameworks/sveltekit/content-security-policy.md): Write a Content Security Policy for a SvelteKit app using Inth with SvelteKit's csp option, covering vendor hosts, Inth's style elements, the server-rendered theme style and style attributes.
 - [Customize](./frameworks/sveltekit/customize.md): Render Inth brand colors on the SvelteKit server with generateThemeCSS, and change slots, button styles, banner shape and copy.
 - [Embeds](./frameworks/sveltekit/embeds.md): Keep YouTube videos, maps and other iframes out of SvelteKit server HTML and the browser until their consent category is allowed.
 - [Geography headers](./frameworks/sveltekit/geography-headers.md): Which request headers SvelteKit's Inth helpers read for country, region, language and Global Privacy Control, how to trust them, and how to test another location.
@@ -106,15 +106,15 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 
 ## Customization
 
-- [Class names and CSS-in-JS](./customization/class-names.md): Style inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
-- [Dark mode](./customization/dark-mode.md): Switch inth's banner and dialog to dark colors with colorScheme, set your own dark tokens, follow your site's theme switch, and paint dark on the first frame in every framework.
-- [Motion and animation](./customization/motion.md): Change how fast inth's banner and dialog animate with duration and easing tokens, turn animations off per surface with disableAnimation, and check reduced-motion behavior in each framework.
-- [Customize the interface](./customization/overview.md): Change inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
+- [Class names and CSS-in-JS](./customization/class-names.md): Style Inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
+- [Dark mode](./customization/dark-mode.md): Switch Inth's banner and dialog to dark colors with colorScheme, set your own dark tokens, follow your site's theme switch, and paint dark on the first frame in every framework.
+- [Motion and animation](./customization/motion.md): Change how fast Inth's banner and dialog animate with duration and easing tokens, turn animations off per surface with disableAnimation, and check reduced-motion behavior in each framework.
+- [Customize the interface](./customization/overview.md): Change Inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
 - [Banner designs](./customization/recipes.md): Five consent banner designs built with Inth, from one prop to your own markup, with tested code for React, Vue, Svelte, Astro and plain HTML.
-- [Component parts](./customization/slots.md): Find every part of inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
-- [Stylesheets and CSS layers](./customization/stylesheets.md): See how Inth delivers its styles in each framework without a render-blocking stylesheet, when to import styles.css yourself with styles false, which file holds the dialog's rules, and how inth's cascade layer meets your own.
-- [Tailwind CSS](./customization/tailwind.md): Use inth's styles with Tailwind CSS 4 or 3 in every framework, put utilities on Inth component parts, and use Tailwind's dark variant with Inth.
-- [Theme tokens](./customization/tokens.md): Change inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
+- [Component parts](./customization/slots.md): Find every part of Inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
+- [Stylesheets and CSS layers](./customization/stylesheets.md): See how Inth delivers its styles in each framework without a render-blocking stylesheet, when to import styles.css yourself with styles false, which file holds the dialog's rules, and how Inth's cascade layer meets your own.
+- [Tailwind CSS](./customization/tailwind.md): Use Inth's styles with Tailwind CSS 4 or 3 in every framework, put utilities on Inth component parts, and use Tailwind's dark variant with Inth.
+- [Theme tokens](./customization/tokens.md): Change Inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
 - [Copy and translations](./customization/translations.md): Change consent wording through i18n and test the complete prompt and preferences flow.
 
 ## Integrations
@@ -134,7 +134,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Attentive](./integrations/attentive.md): Load the Attentive tag only after marketing consent with the Inth attentiveTag helper, and check its requests and storage in DevTools.
 - [Branch](./integrations/branch.md): Set Branch's consumer protection attribution level and Google DMA parameters from Inth consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
 - [Braze](./integrations/braze.md): Keep the Braze SDK disabled until Inth consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
-- [Custom integrations](./integrations/building-integrations.md): Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using a Inth script configuration.
+- [Custom integrations](./integrations/building-integrations.md): Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using an Inth script configuration.
 - [Clay](./integrations/clay.md): Load Clay web intent only after marketing consent and understand its storage and revocation limits.
 - [Clearbit](./integrations/clearbit.md): Load the Clearbit enrichment tag only after marketing consent with the Inth clearbit helper, and check it in DevTools.
 - [Cloudflare Web Analytics](./integrations/cloudflare-web-analytics.md): Load the Cloudflare Web Analytics beacon only after measurement consent with the Inth cloudflareWebAnalytics helper, and check it in DevTools.
