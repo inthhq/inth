@@ -157,8 +157,7 @@ const readDocument = (): Json =>
 export const checkV1OpenApiTypes =
 	async function checkV1OpenApiTypes(): Promise<boolean> {
 		return (
-			readFileSync(TYPES_PATH, 'utf8') ===
-			(await renderTypes(readDocument()))
+			readFileSync(TYPES_PATH, 'utf8') === (await renderTypes(readDocument()))
 		);
 	};
 
