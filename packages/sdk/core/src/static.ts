@@ -15,6 +15,11 @@ import type {
 import { resolveInitFromManifest } from '@inth/sdk-schema/types';
 import { baseTranslations } from '@inth/sdk-translations/all';
 
+import {
+	fetchGeoInputs,
+	readGeoInputs,
+} from './transports/manifest-browser-remote';
+
 /** The manifest shape static resolvers and generated modules use. */
 export type { ConsentManifest } from '@inth/sdk-schema/types';
 
@@ -88,38 +93,6 @@ const readBrowserGpc = function readBrowserGpc(): boolean | undefined {
 	);
 };
 
-const readGeoField = function readGeoField(value: unknown): string | undefined {
-	return typeof value === 'string' && value.trim() ? value.trim() : undefined;
-};
-
-/**
- * Keeps trimmed, non-empty string fields only. Geo JSON comes from an
- * endpoint at runtime, so a number or blank string must count as "no
- * location" rather than reach the policy resolver.
- */
-const normalizeGeo = function normalizeGeo(
-	geo: StaticGeoResult | null | undefined
-): Pick<ResolveInitFromManifestInputs, 'country' | 'region'> {
-	return {
-		country: readGeoField(geo?.country) ?? readGeoField(geo?.countryCode),
-		region: readGeoField(geo?.region) ?? readGeoField(geo?.regionCode),
-	};
-};
-
-const fetchStaticGeo = async function fetchStaticGeo(
-	geoUrl: string,
-	fetchImpl: typeof globalThis.fetch
-): Promise<StaticGeoResult | null> {
-	const response = await fetchImpl(geoUrl, {
-		headers: { accept: 'application/json' },
-		method: 'GET',
-	});
-	if (!response.ok) {
-		return null;
-	}
-	return (await response.json()) as StaticGeoResult;
-};
-
 /**
  * Resolves the init payload for a visitor whose location is unknown.
  *
@@ -179,7 +152,7 @@ export const createStaticConsentResolver = function createStaticConsentResolver(
 	const language = options.language ?? readBrowserLanguage() ?? 'en';
 	const gpc = options.gpc ?? readBrowserGpc();
 	const commonInputs = { gpc, language };
-	const initialGeo = normalizeGeo(options.geo);
+	const initialGeo = readGeoInputs(options.geo);
 	const hasGeo = Boolean(initialGeo.country || initialGeo.region);
 	const initial = hasGeo
 		? resolveInitFromManifest(
@@ -199,11 +172,8 @@ export const createStaticConsentResolver = function createStaticConsentResolver(
 			if (!fetchImpl) {
 				return initial;
 			}
-			const geo = await fetchStaticGeo(options.geoUrl, fetchImpl).catch(
-				() => null
-			);
-			const resolvedGeo = normalizeGeo(geo);
-			if (!resolvedGeo.country && !resolvedGeo.region) {
+			const resolvedGeo = await fetchGeoInputs(options.geoUrl, fetchImpl);
+			if (!(resolvedGeo?.country || resolvedGeo?.region)) {
 				return initial;
 			}
 			return resolveInitFromManifest(

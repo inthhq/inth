@@ -170,6 +170,19 @@ describe('createStaticConsentResolver', () => {
 		await expect(fetched.resolved).resolves.toBe(fetched.initial);
 	});
 
+	test('reads a lower-case location the way the browser manifest resolver does', async () => {
+		const fetch = geoResponse({ country: 'us', region: 'ca' });
+		const resolution = createStaticConsentResolver({
+			fetch,
+			geoUrl: '/api/geo',
+			language: 'en',
+			manifest,
+		});
+		const resolved = await resolution.resolved;
+		expect(resolved.policyResolution.policy?.id).toBe('us-ca-opt-out');
+		expect(resolved.location).toEqual({ countryCode: 'US', regionCode: 'CA' });
+	});
+
 	test('trims location fields and falls through to the other spelling', async () => {
 		const resolution = createStaticConsentResolver({
 			fetch: geoResponse({ country: 1, countryCode: ' US ', regionCode: 'CA' }),
