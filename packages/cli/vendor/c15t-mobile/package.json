@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/cli-mobile-vendor",
+	"name": "@inth/cli-mobile-vendor",
 	"private": true,
 	"description": "The c15t CLI's mobile code, parked until it is ported. @inth/cli does not import or ship it. This manifest lets scripts/export-mobile-policy.ts resolve the packages the exporter imports.",
 	"license": "Apache-2.0",

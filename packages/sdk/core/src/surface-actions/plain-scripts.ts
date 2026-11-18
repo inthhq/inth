@@ -6,7 +6,7 @@
  * leave at the tap, or at once for a returning visitor. These helpers
  * decide which of the page's `scripts` that is safe for and insert them
  * the way the loader would. The loader adopts each element when it
- * mounts, as it adopts one a server start inserted (`__c15tStarted`, see
+ * mounts, as it adopts one a server start inserted (`__inthStarted`, see
  * `../runtime/script-server-start`).
  *
  * Small and free of the kernel, so a first-load chunk can carry them.
@@ -314,21 +314,21 @@ const elementDeclarationOf = (script: Script): string =>
  * adopts one the server's inline start inserted.
  */
 type StartedElement = HTMLScriptElement & {
-	__c15tAdopted?: boolean;
+	__inthAdopted?: boolean;
 	/** Inserted by {@link startPlainScripts}, so its owners may release it. */
-	__c15tEarly?: boolean;
+	__inthEarly?: boolean;
 	/** How many owners declare it ({@link claimPlainScripts}). */
-	__c15tOwners?: number;
+	__inthOwners?: number;
 	/**
 	 * What {@link startPlainScripts} inserted it for: its script's
 	 * declaration without its identity ({@link elementDeclarationOf}).
 	 */
-	__c15tPlainDeclaration?: string;
+	__inthPlainDeclaration?: string;
 	/** The server render whose start inserted it, or took it over last. */
-	__c15tStartRender?: string;
-	__c15tScript?: string;
-	__c15tConsent?: boolean;
-	__c15tDone?: 'load' | 'error';
+	__inthStartRender?: string;
+	__inthScript?: string;
+	__inthConsent?: boolean;
+	__inthDone?: 'load' | 'error';
 };
 
 /**
@@ -355,10 +355,10 @@ export const startPlainScripts = function startPlainScripts(
 	reserved: Readonly<Record<string, unknown>> = {}
 ): string[] {
 	const host = window as unknown as {
-		__c15tStarted?: Record<string, StartedElement>;
+		__inthStarted?: Record<string, StartedElement>;
 	};
-	host.__c15tStarted ??= {};
-	const started = host.__c15tStarted;
+	host.__inthStarted ??= {};
+	const started = host.__inthStarted;
 	const inserted: string[] = [];
 	for (const script of scripts) {
 		const key = script.resourceKey ?? script.id;
@@ -372,10 +372,10 @@ export const startPlainScripts = function startPlainScripts(
 		}
 		const element: StartedElement = document.createElement('script');
 		element.src = script.src as string;
-		element.__c15tScript = script.id;
-		element.__c15tConsent = true;
-		element.__c15tEarly = true;
-		element.__c15tPlainDeclaration = elementDeclarationOf(script);
+		element.__inthScript = script.id;
+		element.__inthConsent = true;
+		element.__inthEarly = true;
+		element.__inthPlainDeclaration = elementDeclarationOf(script);
 		if (script.async !== undefined) {
 			element.async = script.async;
 		}
@@ -393,7 +393,7 @@ export const startPlainScripts = function startPlainScripts(
 			element.setAttribute(name, String(value));
 		}
 		const done = (event: Event) => {
-			element.__c15tDone = event.type === 'load' ? 'load' : 'error';
+			element.__inthDone = event.type === 'load' ? 'load' : 'error';
 		};
 		element.addEventListener('load', done);
 		element.addEventListener('error', done);
@@ -409,8 +409,8 @@ export const startPlainScripts = function startPlainScripts(
 
 /** The registry the loader adopts started elements from. */
 const startedElements = (): Record<string, StartedElement> | undefined =>
-	(window as unknown as { __c15tStarted?: Record<string, StartedElement> })
-		.__c15tStarted;
+	(window as unknown as { __inthStarted?: Record<string, StartedElement> })
+		.__inthStarted;
 
 /**
  * An owner's declarations, one per resource: the scripts that share a key
@@ -454,10 +454,10 @@ export const claimPlainScripts = function claimPlainScripts(
 	const declaredOtherwise: string[] = [];
 	for (const [key, declaration] of declarationsByKey(scripts)) {
 		const element = started?.[key];
-		if (!element?.__c15tEarly || owned.has(key)) {
+		if (!element?.__inthEarly || owned.has(key)) {
 			continue;
 		}
-		const recorded = element.__c15tPlainDeclaration;
+		const recorded = element.__inthPlainDeclaration;
 		if (
 			recorded !== undefined &&
 			!scripts.some(
@@ -469,7 +469,7 @@ export const claimPlainScripts = function claimPlainScripts(
 			declaredOtherwise.push(key);
 			continue;
 		}
-		element.__c15tOwners = (element.__c15tOwners ?? 0) + 1;
+		element.__inthOwners = (element.__inthOwners ?? 0) + 1;
 		owned.set(key, declaration);
 	}
 	return declaredOtherwise;
@@ -560,11 +560,11 @@ export const releasePlainScripts = function releasePlainScripts(
 	const started = startedElements();
 	for (const key of keys) {
 		const element = started?.[key];
-		if (!(started && element?.__c15tEarly)) {
+		if (!(started && element?.__inthEarly)) {
 			continue;
 		}
-		element.__c15tOwners = (element.__c15tOwners ?? 1) - 1;
-		if (element.__c15tOwners <= 0 && !element.__c15tAdopted) {
+		element.__inthOwners = (element.__inthOwners ?? 1) - 1;
+		if (element.__inthOwners <= 0 && !element.__inthAdopted) {
 			element.remove();
 			Reflect.deleteProperty(started, key);
 		}
@@ -592,9 +592,9 @@ export const releaseServerStartedScripts = function releaseServerStartedScripts(
 		if (
 			started &&
 			element &&
-			element.__c15tStartRender === renderId &&
-			!element.__c15tEarly &&
-			!element.__c15tAdopted
+			element.__inthStartRender === renderId &&
+			!element.__inthEarly &&
+			!element.__inthAdopted
 		) {
 			element.remove();
 			Reflect.deleteProperty(started, key);

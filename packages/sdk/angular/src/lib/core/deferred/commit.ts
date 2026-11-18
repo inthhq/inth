@@ -32,7 +32,7 @@ import type { EarlyCommit } from '@inth/sdk/surface-actions/early-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import { storageFor } from '@inth/sdk/surface-actions/stored-records';
 
-import type { C15tResolvedOptions } from '../options';
+import type { InthResolvedOptions } from '../options';
 import { pendingIsInert } from './stand-in';
 import type { StandInHandle } from './stand-in';
 
@@ -56,7 +56,7 @@ export interface CompleteCommitInput {
 	/** The surface the save is attributed to. Defaults to `banner`. */
 	uiSource?: SaveUISource;
 	config: Pick<
-		C15tResolvedOptions,
+		InthResolvedOptions,
 		'callbacks' | 'consentSource' | 'persistence' | 'storageConfig'
 	>;
 }
@@ -95,7 +95,7 @@ const sameValue = function sameValue(left: unknown, right: unknown): boolean {
 
 /** Calls the app callback the engine's runtime calls for `event`. */
 const announce = function announce(
-	callbacks: C15tResolvedOptions['callbacks'],
+	callbacks: InthResolvedOptions['callbacks'],
 	event: KernelEvent
 ): void {
 	const { type: _type, ...payload } = event;
@@ -114,7 +114,7 @@ const announce = function announce(
 			);
 		}
 	} catch (error) {
-		console.error('[c15t] A consent callback threw.', error);
+		console.error('[inth] A consent callback threw.', error);
 	}
 };
 

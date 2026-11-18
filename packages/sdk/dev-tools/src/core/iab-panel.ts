@@ -49,7 +49,7 @@ const createSwitch = (
 	disabled: boolean,
 	onChange: (value: boolean) => void
 ): HTMLElement => {
-	const row = createElement(document, 'label', 'c15t-dev-tools__check');
+	const row = createElement(document, 'label', 'inth-dev-tools__check');
 	const input = createElement(document, 'input');
 	input.type = 'checkbox';
 	input.setAttribute('role', 'switch');
@@ -97,12 +97,12 @@ export const renderIABPanel = (
 			createElement(
 				document,
 				'p',
-				'c15t-dev-tools__muted',
+				'inth-dev-tools__muted',
 				'Read-only: waiting for this provider’s IAB module.'
 			)
 		);
 	}
-	const actions = createElement(document, 'div', 'c15t-dev-tools__actions');
+	const actions = createElement(document, 'div', 'inth-dev-tools__actions');
 	const save = createButton(
 		document,
 		'Save IAB consent',
@@ -132,7 +132,7 @@ export const renderIABPanel = (
 		state.search
 	);
 	filter.input.type = 'search';
-	const groupField = createElement(document, 'label', 'c15t-dev-tools__field');
+	const groupField = createElement(document, 'label', 'inth-dev-tools__field');
 	const group = createElement(document, 'select');
 	group.dataset.focusKey = 'iab:group';
 	for (const [value, label] of [
@@ -149,7 +149,7 @@ export const renderIABPanel = (
 		createElement(document, 'span', undefined, 'IAB view'),
 		group
 	);
-	const list = createElement(document, 'div', 'c15t-dev-tools__iab-list');
+	const list = createElement(document, 'div', 'inth-dev-tools__iab-list');
 	const selections = createSection(document, 'Choices');
 	selections.append(groupField, filter.field, list);
 	container.append(selections);
@@ -220,7 +220,7 @@ export const renderIABPanel = (
 				createElement(
 					document,
 					'p',
-					'c15t-dev-tools__empty',
+					'inth-dev-tools__empty',
 					query
 						? 'No IAB choices match your search.'
 						: 'No choices are configured in this group.'
@@ -232,12 +232,12 @@ export const renderIABPanel = (
 			createElement(
 				document,
 				'p',
-				'c15t-dev-tools__muted',
+				'inth-dev-tools__muted',
 				`${choices.filter((choice) => choice.consent).length} of ${choices.length} matching choices enabled`
 			)
 		);
 		for (const choice of choices.slice(offset, offset + PAGE_SIZE)) {
-			const item = createElement(document, 'div', 'c15t-dev-tools__iab-choice');
+			const item = createElement(document, 'div', 'inth-dev-tools__iab-choice');
 			item.append(
 				createElement(
 					document,
@@ -251,7 +251,7 @@ export const renderIABPanel = (
 					createElement(
 						document,
 						'span',
-						'c15t-dev-tools__badge',
+						'inth-dev-tools__badge',
 						'Custom vendor'
 					)
 				);
@@ -295,7 +295,7 @@ export const renderIABPanel = (
 			const pagination = createElement(
 				document,
 				'div',
-				'c15t-dev-tools__actions'
+				'inth-dev-tools__actions'
 			);
 			const previous = createButton(document, 'Previous IAB page', () => {
 				state.page -= 1;
@@ -343,7 +343,7 @@ export const renderIABPanel = (
 		createElement(
 			document,
 			'p',
-			'c15t-dev-tools__muted',
+			'inth-dev-tools__muted',
 			'Last generated string. Unsaved edits are not reflected here.'
 		)
 	);
@@ -372,16 +372,16 @@ export const renderIABPanel = (
 			createElement(
 				document,
 				'p',
-				'c15t-dev-tools__empty',
+				'inth-dev-tools__empty',
 				'No TC string generated yet. Save IAB consent to generate one.'
 			)
 		);
 	}
-	const raw = createElement(document, 'details', 'c15t-dev-tools__script');
+	const raw = createElement(document, 'details', 'inth-dev-tools__script');
 	const rawContent = createElement(
 		document,
 		'div',
-		'c15t-dev-tools__script-body'
+		'inth-dev-tools__script-body'
 	);
 	const updateRaw = (): void => {
 		rawContent.replaceChildren(
@@ -399,7 +399,7 @@ export const renderIABPanel = (
 		createElement(
 			document,
 			'summary',
-			'c15t-dev-tools__script-summary',
+			'inth-dev-tools__script-summary',
 			'Raw IAB state'
 		),
 		rawContent

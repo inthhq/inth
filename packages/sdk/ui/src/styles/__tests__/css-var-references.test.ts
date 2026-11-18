@@ -1,10 +1,10 @@
 /**
- * A `var(--c15t-…)` with no fallback is only as good as the token behind it.
+ * A `var(--inth-…)` with no fallback is only as good as the token behind it.
  *
  * The variable names are produced by the resolver table in `theme/utils.ts`, so
  * a stylesheet that reaches for a plausible-sounding neighbour of a real token
- * gets nothing: `--c15t-font-weight-regular` next to a real
- * `--c15t-font-weight-normal`, or `--c15t-shadow-xl` above the top of a scale
+ * gets nothing: `--inth-font-weight-regular` next to a real
+ * `--inth-font-weight-normal`, or `--inth-shadow-xl` above the top of a scale
  * that ends at `lg`. CSS does not error on that. The declaration becomes
  * invalid at computed-value time, the property falls back to its inherited or
  * initial value, and a surface quietly loses a weight or its elevation while
@@ -48,7 +48,7 @@ const sourceFiles = function sourceFiles(dir: string): string[] {
 
 /**
  * The name inside each `var()` that carries no fallback, so a nested
- * `var(--c15t-shadow-xl, 0 20px 25px -5px rgb(0 0 0 / 0.1))` is allowed to name
+ * `var(--inth-shadow-xl, 0 20px 25px -5px rgb(0 0 0 / 0.1))` is allowed to name
  * a token that does not exist: an override hook with a working default is the
  * pattern `panel-trigger.module.css` uses on purpose.
  */
@@ -87,7 +87,7 @@ const fallbacklessReferences = function fallbacklessReferences(source: string) {
 
 		const inner = source.slice(index + 4, end).trim();
 
-		if (inner.startsWith('--c15t-')) {
+		if (inner.startsWith('--inth-')) {
 			names.push(inner);
 		}
 	}
@@ -100,7 +100,7 @@ const declared = new Set(
 	ENTRYPOINTS.flatMap((entrypoint) => {
 		const sheet = read(join(DIST_DIR, entrypoint));
 
-		return [...sheet.matchAll(/(?<name>--c15t-[a-z0-9-]+)\s*:/gu)].map(
+		return [...sheet.matchAll(/(?<name>--inth-[a-z0-9-]+)\s*:/gu)].map(
 			(match) => match.groups?.name ?? ''
 		);
 	})
@@ -115,16 +115,16 @@ describe('stylesheet variable references', () => {
 
 	test('the published sheets declare the default tokens', () => {
 		for (const name of [
-			'--c15t-shadow-sm',
-			'--c15t-shadow-lg',
-			'--c15t-font-weight-normal',
-			'--c15t-space-md',
+			'--inth-shadow-sm',
+			'--inth-shadow-lg',
+			'--inth-font-weight-normal',
+			'--inth-space-md',
 		]) {
 			expect(declared, name).toContain(name);
 		}
 	});
 
-	test('every fallbackless var(--c15t-*) names a token that is declared', () => {
+	test('every fallbackless var(--inth-*) names a token that is declared', () => {
 		const dangling = new Map<string, string[]>();
 
 		for (const file of files) {
@@ -147,12 +147,12 @@ describe('stylesheet variable references', () => {
 
 	// A motion variable with a fallback still has to be a real token: the
 	// fallback renders, so a theme's `motion` never reaches the part. The
-	// floating trigger read `--c15t-motion-duration` and friends that way.
-	test('every var(--c15t-*) motion reference names a declared token', () => {
+	// floating trigger read `--inth-motion-duration` and friends that way.
+	test('every var(--inth-*) motion reference names a declared token', () => {
 		const dangling = files.flatMap((file) =>
 			[
 				...read(file).matchAll(
-					/var\(\s*(?<name>--c15t-[a-z0-9-]*(?:duration|easing|motion)[a-z0-9-]*)/gu
+					/var\(\s*(?<name>--inth-[a-z0-9-]*(?:duration|easing|motion)[a-z0-9-]*)/gu
 				),
 			]
 				.map((match) => match.groups?.name ?? '')

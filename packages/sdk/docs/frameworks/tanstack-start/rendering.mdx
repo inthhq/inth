@@ -108,9 +108,9 @@ What the route serves:
 
 | Request | Handled by |
 | --- | --- |
-| `GET /api/c15t/init` or `GET /api/c15t` | The route, from the bundled manifest, for this request's location, language and privacy signal |
-| `GET /api/c15t/manifest` | The route, serving the bundled manifest |
-| `POST /api/c15t/subjects` and other consent paths | Forwarded to your backend because `proxy: true` |
+| `GET /api/inth/init` or `GET /api/inth` | The route, from the bundled manifest, for this request's location, language and privacy signal |
+| `GET /api/inth/manifest` | The route, serving the bundled manifest |
+| `POST /api/inth/subjects` and other consent paths | Forwarded to your backend because `proxy: true` |
 | Any other path | `404`, so the route is never an open proxy |
 
 Keep these details right:
@@ -119,11 +119,11 @@ Keep these details right:
   `consentManifest()` for its own requests. It never fetches under
   `routePrefix`, so the render cannot call its own route.
 - `routePrefix` puts the prefix on the state, so `ConsentRoot` sends the
-  browser's init to `/api/c15t/init` and binds each save to the policy it
+  browser's init to `/api/inth/init` and binds each save to the policy it
   resolved. It also makes the page load IAB vendor lists through the route.
   It means the same as Next.js `defineConsentConfig({ routePrefix })`, and
   like there it has no default. `'/'` throws
-  ``@inth/tanstack-start: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.``
+  ``@inth/tanstack-start: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.``
   when the handler is created. An empty string throws too, because it isn't
   a path that starts with `/`. To run without a consent route, leave
   `routePrefix` out.
@@ -160,7 +160,7 @@ resolve consent from the backend URL `consentManifest()` read:
   your Inth project's trusted origins.
 - `consentPrefetchHead` is optional. It adds an inline script to `<head>` that
   starts the `/init` request before the app's JavaScript loads, and
-  `ConsentRoot` uses that response instead of sending its own. If c15t
+  `ConsentRoot` uses that response instead of sending its own. If Inth
   assigns a banner experiment's arm, pass the experiment too:
   `consentPrefetchHead({ projectUrl, experiment })`. Without it,
   `ConsentRoot` sends a second `/init` for visitors who have not chosen yet.
@@ -186,14 +186,14 @@ rebuild. A manifest with neither rule resolves to a failed
 
 ## Know when ConsentRoot loads its engine
 
-`ConsentRoot` keeps c15t's consent engine out of the page's first-load
+`ConsentRoot` keeps inth's consent engine out of the page's first-load
 JavaScript. The engine is the code that stores consent, saves choices and
 renders the banner in React. The server still renders the whole root, so the
 banner, its styles and any scripts the server starts are in the first HTML,
 with the consent state the page rendered from.
 
 In the browser the page under `ConsentRoot` hydrates at once. Until the engine
-loads, c15t's hooks return the consent state the server rendered with, and
+loads, inth's hooks return the consent state the server rendered with, and
 most of their actions, such as `useSetActiveUI()`, wait for the engine and run
 when it arrives. The banner keeps its server HTML.
 
@@ -297,7 +297,7 @@ finishes. The promise never rejects.
    `data-testid="consent-banner-root"`, and so does a streamed loader. A
    prerendered page does not.
 2. **Filter DevTools Network by `subjects`** and reject. The `POST` goes to
-   `/api/c15t/subjects` on your origin with the same-origin route, and to your
+   `/api/inth/subjects` on your origin with the same-origin route, and to your
    backend URL otherwise.
 3. **Vendor requests** stay absent until you allow their category, on every
    path.

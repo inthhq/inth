@@ -18,7 +18,7 @@ export { storageFor } from '../runtime/storage-for';
 
 /**
  * Clears stored records as a runtime's `clearRecords()` does, for a host
- * whose runtime has not loaded yet: every c15t record removed and the
+ * whose runtime has not loaded yet: every Inth record removed and the
  * clear epoch stored before it returns, so a reload or teardown that comes
  * first cannot bring the cleared choice back. Nothing is cleared where the
  * runtime would not persist: disabled, under a `consentSource`, or with

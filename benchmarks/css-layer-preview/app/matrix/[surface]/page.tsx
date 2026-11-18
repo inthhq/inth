@@ -1,5 +1,5 @@
-import { CssLayerScenarioRenderer } from '@c15t/benchmarking/css-layer-runtime';
-import type { CssLayerSurface } from '@c15t/benchmarking/css-layer-runtime';
+import { CssLayerScenarioRenderer } from '@inth/benchmarking/css-layer-runtime';
+import type { CssLayerSurface } from '@inth/benchmarking/css-layer-runtime';
 import { notFound } from 'next/navigation';
 
 type Surface = CssLayerSurface | 'widget';

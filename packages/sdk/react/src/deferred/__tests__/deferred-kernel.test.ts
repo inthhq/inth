@@ -482,7 +482,7 @@ describe('watchStoredChoice', () => {
 /**
  * Leaves what a server render with id `id` leaves in the test's document:
  * boot data carrying the id, and the page object its inline scripts write.
- * c15t's modules run in the test's window, so that is where they look.
+ * inth's modules run in the test's window, so that is where they look.
  */
 const leavePageRender = (
 	pageObject: Record<string, unknown>,
@@ -490,13 +490,13 @@ const leavePageRender = (
 ): (() => void) => {
 	const boot = document.createElement('script');
 	boot.type = 'application/json';
-	boot.setAttribute('data-c15t-boot', '');
+	boot.setAttribute('data-inth-boot', '');
 	boot.textContent = JSON.stringify({ i: id, s: {} });
 	document.head.prepend(boot);
-	(globalThis as Record<string, unknown>).__c15tRender = { id, ...pageObject };
+	(globalThis as Record<string, unknown>).__inthRender = { id, ...pageObject };
 	return () => {
 		boot.remove();
-		Reflect.deleteProperty(globalThis, '__c15tRender');
+		Reflect.deleteProperty(globalThis, '__inthRender');
 	};
 };
 
@@ -513,7 +513,7 @@ describe('a server start that fails while the engine waits', () => {
 	test('uses the name core sets', () => {
 		// `SERVER_START_FAILED_EVENT` in core's `runtime/script-server-start`,
 		// whose own test pins the same string.
-		expect(SERVER_START_FAILED).toBe('__c15tServerStartFailed');
+		expect(SERVER_START_FAILED).toBe('__inthServerStartFailed');
 	});
 
 	test('loads the engine when the page reports it', () => {
@@ -521,7 +521,7 @@ describe('a server start that fails while the engine waits', () => {
 		const start = vi.fn();
 		const dispose = scheduleDeferredEngine(start);
 		expect(start).not.toHaveBeenCalled();
-		window.dispatchEvent(new Event('__c15tServerStartFailed'));
+		window.dispatchEvent(new Event('__inthServerStartFailed'));
 		expect(start).toHaveBeenCalledTimes(1);
 		dispose();
 		removeHero();
@@ -548,7 +548,7 @@ test("a failure an earlier render's server start recorded does not wake this roo
 	Object.defineProperty(image, 'complete', { value: false });
 	document.body.append(image);
 	const cleanup = leavePageRender({ starts: {} });
-	(globalThis as Record<string, unknown>).__c15tRender = {
+	(globalThis as Record<string, unknown>).__inthRender = {
 		failed: 1,
 		id: 'an-earlier-render',
 		starts: {},

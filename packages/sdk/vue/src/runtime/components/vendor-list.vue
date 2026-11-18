@@ -92,9 +92,9 @@ const isChecked = (vendor: ResolvedVendor) => props.granted[vendor.id] ?? true;
 const labelId = (vendor: ResolvedVendor) =>
 	`${uid}vendor-${props.category}-${vendor.id}`;
 const triggerId = (index: number) =>
-	`c15t-preference-item-trigger-${uid}-${index}`;
+	`inth-preference-item-trigger-${uid}-${index}`;
 const contentId = (index: number) =>
-	`c15t-preference-item-content-${uid}-${index}`;
+	`inth-preference-item-content-${uid}-${index}`;
 </script>
 
 <template>

@@ -1,7 +1,7 @@
 import {
 	startsClosedByDefault,
 	toggleOpenClose,
-} from '@c15t/conformance/play/collapsible';
+} from '@inth/conformance/play/collapsible';
 import { getOpenState } from '@inth/sdk/ui/primitives';
 import { collapsibleVariants } from '@inth/sdk/ui/styles/primitives';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
@@ -47,7 +47,7 @@ export const Default: Story = {
 			};
 		},
 		template: `
-			<div :class="rootClass" :data-state="openState" style="--collapsible-gap:0.75rem;border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);padding:1rem;width:32rem">
+			<div :class="rootClass" :data-state="openState" style="--collapsible-gap:0.75rem;border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);padding:1rem;width:32rem">
 				<button
 					:class="triggerClass"
 					type="button"
@@ -92,7 +92,7 @@ export const ClosedByDefault: Story = {
 			};
 		},
 		template: `
-			<div :class="rootClass" :data-state="openState" style="--collapsible-gap:0.75rem;border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);padding:1rem;width:32rem">
+			<div :class="rootClass" :data-state="openState" style="--collapsible-gap:0.75rem;border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);padding:1rem;width:32rem">
 				<button
 					:class="triggerClass"
 					type="button"

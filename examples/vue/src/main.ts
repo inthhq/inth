@@ -1,12 +1,12 @@
 // #region docs:main title="src/main.ts"
 import { posthog } from '@inth/integrations/posthog';
-import { c15tVue, hosted } from '@inth/vue/vue-plugin';
+import { inthVue, hosted } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';
 
 createApp(App)
-	.use(c15tVue, {
+	.use(inthVue, {
 		mode: hosted(),
 		scripts: [
 			posthog({

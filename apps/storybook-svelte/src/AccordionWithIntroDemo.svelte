@@ -30,7 +30,7 @@
 <div style="display:grid;gap:1rem;width:32rem;">
 	<div style="display:grid;gap:0.5rem;">
 		<h3 style="font-size:1.25rem;margin:0;">{introTitle}</h3>
-		<p style="color:var(--c15t-text-muted);margin:0;">{introDescription}</p>
+		<p style="color:var(--inth-text-muted);margin:0;">{introDescription}</p>
 	</div>
 	<div class={classes.root()}>
 		<div

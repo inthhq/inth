@@ -292,7 +292,7 @@ export const createConsentProviderRuntime =
 			const pending = on && initial.prefetch !== knownPrefetch;
 			if (pending && !streamPrefetch && !isProductionBuild()) {
 				console.warn(
-					'c15t: `prefetch` is a promise, but the runtime was created without `streamPrefetch` in its modules. It is ignored and the runtime requests the policy itself.'
+					'inth: `prefetch` is a promise, but the runtime was created without `streamPrefetch` in its modules. It is ignored and the runtime requests the policy itself.'
 				);
 			}
 			const mode =

@@ -48,7 +48,7 @@ const buildFixture = async function buildFixture(
 	// filesystem; /tmp can be mounted separately in a linked worktree.
 	const buildDir = join(FIXTURE, '.astro');
 	await mkdir(buildDir, { recursive: true });
-	const outDir = await mkdtemp(join(buildDir, `c15t-${ui}-`));
+	const outDir = await mkdtemp(join(buildDir, `inth-${ui}-`));
 	outDirs.push(outDir);
 	await promisify(execFile)(
 		process.execPath,
@@ -57,11 +57,11 @@ const buildFixture = async function buildFixture(
 			env: {
 				...process.env,
 				ASTRO_TELEMETRY_DISABLED: '1',
-				C15T_ASTRO_CACHE_DIR: join(outDir, '.astro'),
-				C15T_DEFERRED: deferred ? '1' : '0',
-				C15T_IAB: iab ? '1' : '0',
-				C15T_UI: ui,
-				C15T_VITE_CACHE_DIR: join(outDir, '.vite'),
+				INTH_ASTRO_CACHE_DIR: join(outDir, '.astro'),
+				INTH_DEFERRED: deferred ? '1' : '0',
+				INTH_IAB: iab ? '1' : '0',
+				INTH_UI: ui,
+				INTH_VITE_CACHE_DIR: join(outDir, '.vite'),
 			},
 		}
 	);
@@ -146,10 +146,10 @@ describe('an Astro build', () => {
 				true
 			);
 			expect(
-				html.match(/data-c15t-styles="c15t-iab-first-paint"/gu)
+				html.match(/data-inth-styles="inth-iab-first-paint"/gu)
 			).toHaveLength(1);
 			expect(
-				html.indexOf('data-c15t-styles="c15t-iab-first-paint"')
+				html.indexOf('data-inth-styles="inth-iab-first-paint"')
 			).toBeLessThan(html.indexOf('</head>'));
 			expect(html).toContain('data-testid="iab-consent-banner-root"');
 			expect(html).not.toMatch(/<link[^>]*rel="stylesheet"/u);
@@ -172,8 +172,8 @@ describe('an Astro build', () => {
 			html: string;
 			island: string;
 		};
-		expect(html.match(/data-c15t-styles="c15t-first-paint"/gu)).toHaveLength(1);
+		expect(html.match(/data-inth-styles="inth-first-paint"/gu)).toHaveLength(1);
 		expect(island).toContain('data-testid="consent-banner-root"');
-		expect(island).not.toContain('data-c15t-styles');
+		expect(island).not.toContain('data-inth-styles');
 	}, 60_000);
 });

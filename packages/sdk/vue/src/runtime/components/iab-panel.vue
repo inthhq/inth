@@ -24,7 +24,7 @@ import {
 	useConsentIabSelection,
 	useConsentInit,
 	useIabTranslations,
-} from '#c15t/composables';
+} from '#inth/composables';
 
 import { useIabPreferenceTab } from '../composables/iab-preference-tab';
 import {

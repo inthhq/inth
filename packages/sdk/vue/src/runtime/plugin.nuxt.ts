@@ -54,12 +54,12 @@ const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
 	const stop = context.kernel.events.on('command:init:completed', () => {
 		stop();
 		// The key core's prefetch script stores its requests under.
-		const pending = (window as { __c15tInitialDataPromises?: object })
-			.__c15tInitialDataPromises;
+		const pending = (window as { __inthInitialDataPromises?: object })
+			.__inthInitialDataPromises;
 		if (pending && Object.keys(pending).length > 0) {
 			// oxlint-disable-next-line no-console -- Development-only diagnostic.
 			console.warn(
-				"[c15t] This page's HTML started an /init request that the app did not use, so it sent its own. A client plugin probably changed c15t's config for this route: set `routeRules: { '<route>': { c15t: { initPrefetch: false } } }`."
+				"[inth] This page's HTML started an /init request that the app did not use, so it sent its own. A client plugin probably changed inth's config for this route: set `routeRules: { '<route>': { inth: { initPrefetch: false } } }`."
 			);
 		}
 	});
@@ -71,7 +71,7 @@ const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
  * failed import renders the page without it; the script loader then starts
  * those entries after hydration.
  *
- * @param config - The merged c15t config.
+ * @param config - The merged Inth config.
  * @param state - The state the server resolved, with its clock.
  * @returns The head entry for the script.
  * @internal
@@ -102,7 +102,7 @@ export const serverScriptStartHead = async function serverScriptStartHead(
 		key: string;
 		nonce?: string;
 		tagPosition: 'bodyClose';
-	} = { innerHTML: code, key: 'c15t-server-start', tagPosition: 'bodyClose' };
+	} = { innerHTML: code, key: 'inth-server-start', tagPosition: 'bodyClose' };
 	if (config.nonce) {
 		tag.nonce = config.nonce;
 	}
@@ -138,7 +138,7 @@ interface NuxtSSRModules {
 }
 
 /**
- * Server only: which c15t chunks the page's HTML preloads.
+ * Server only: which Inth chunks the page's HTML preloads.
  *
  * A deferred visitor's browser loads the engine, which brings the stock
  * banner, after the page's priority images (`deferred/shell.ts`): the
@@ -189,15 +189,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	const runtimeConfig = useRuntimeConfig();
 	const config = computed(() => {
 		const merged = defu(
-			appConfig.c15t,
-			fromRuntimeConfig(runtimeConfig.public.c15t)
+			appConfig.inth,
+			fromRuntimeConfig(runtimeConfig.public.inth)
 		) as Partial<RuntimeConsentConfig>;
 		// `defu` skips `null`, so an app config `colorScheme: null` would fall
 		// back to the module options. Nitro replaces `null` in runtime config
 		// with `''` during the build, so a module option `colorScheme: null`
-		// arrives as `''`. Both leave `c15t-dark` to the site.
+		// arrives as `''`. Both leave `inth-dark` to the site.
 		if (
-			appConfig.c15t?.colorScheme === null ||
+			appConfig.inth?.colorScheme === null ||
 			(merged.colorScheme as string | null | undefined) === ''
 		) {
 			merged.colorScheme = null;
@@ -206,13 +206,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	});
 	// `mode` and `routePrefix` come from `nuxt.config.ts` only: the build
 	// decided from them what the client bundle and the server routes hold.
-	const modeConfig = runtimeConfig.public.c15t as NuxtConsentModeConfig;
+	const modeConfig = runtimeConfig.public.inth as NuxtConsentModeConfig;
 	const mode = readNuxtMode(modeConfig);
 	const routePrefix = readNuxtRoutePrefix(modeConfig);
 	const serverResolves = resolvesOnServer(mode);
 	// Tokens go in the head from the plugin, so the server HTML carries them
 	// for the first paint and composed surfaces without ConsentRoot get
-	// them too. The color scheme script sets `c15t-dark` in `<head>`, before
+	// them too. The color scheme script sets `inth-dark` in `<head>`, before
 	// the server-rendered banner paints. Registered before the first await,
 	// while the Nuxt context is still current.
 	//
@@ -266,7 +266,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	// must carry nobody's consent, location or request headers. The server
 	// decides once and the payload tells the browser, which then resolves
 	// the visitor itself, as on a first visit without a server render.
-	const sharedRender = useNuxtState('c15t:shared-render', () =>
+	const sharedRender = useNuxtState('inth:shared-render', () =>
 		isSharedNuxtRender({
 			eventContext:
 				typeof window === 'undefined' ? useRequestEvent()?.context : undefined,
@@ -275,7 +275,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	);
 	const shared = sharedRender.value;
 	const requestHeaders = useNuxtState(
-		'c15t:request-headers',
+		'inth:request-headers',
 		(): Record<string, string> =>
 			shared
 				? {}
@@ -288,7 +288,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	// reads the cookie itself only when the payload has none, in the engine
 	// (`deferred/engine.ts`).
 	const initialRecords = useNuxtState<HydrationRecords | undefined>(
-		'c15t:records',
+		'inth:records',
 		() => undefined
 	);
 
@@ -296,13 +296,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	// payload carries the state to the browser. `import.meta.server` keeps
 	// the resolver, and the translations it bundles, out of the client build.
 	const prefetched = useNuxtState<RequestConsentState | undefined>(
-		'c15t:consent',
+		'inth:consent',
 		() => undefined
 	);
 	// The snapshot the server rendered with, when the browser may start from
 	// it and load the consent engine after the page (`deferred/shell.ts`).
 	const boot = useNuxtState<NuxtConsentBoot | undefined>(
-		'c15t:boot',
+		'inth:boot',
 		() => undefined
 	);
 	// Read before the first await, while the Nuxt context is current.
@@ -329,9 +329,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 				request
 			);
 			// Only a resolved policy is worth the payload bytes; without one the
-			// browser runs init, and the records travel in `c15t:records`.
+			// browser runs init, and the records travel in `inth:records`.
 			if (state.initialPolicyResolution !== undefined) {
-				// The cookie's records and clock already travel in `c15t:records`;
+				// The cookie's records and clock already travel in `inth:records`;
 				// only a subject the backend named is new.
 				const { initialRecords: records, now: _now, ...rest } = state;
 				const subject = records?.subject;

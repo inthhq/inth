@@ -14,7 +14,7 @@ type InitPayload = Parameters<typeof mergeInitIntoConsentState>[1];
 /**
  * Direct-init prefetch for the `ssr` arm. The package's
  * `createConsentStateHandler({ projectUrl })` always resolves init from
- * the in-process manifest cache, which would pay `C15T_BENCH_BACKEND_LATENCY_MS`
+ * the in-process manifest cache, which would pay `INTH_BENCH_BACKEND_LATENCY_MS`
  * once per cache fill instead of once per request. The Next arm's `ssr`
  * route calls `${projectUrl}/init` server-side on every render, so this
  * loader does the same with the public helpers: read cookies and headers,
@@ -76,9 +76,9 @@ export const getDirectInitConsentState = createServerFn({
 /**
  * Manifest prefetch for the `manifest-ssr` arms. `manifestUrl` points at
  * the fixture manifest (with the cold token when set), the same source URL
- * the `/api/c15t/$` mounts use, so the loader and the routes share one
+ * the `/api/inth/$` mounts use, so the loader and the routes share one
  * in-process cache entry. The Next arm reaches the same cache by fetching
- * its own `/api/c15t/manifest` route over HTTP; Start's prefetch refuses
+ * its own `/api/inth/manifest` route over HTTP; Start's prefetch refuses
  * self-fetches, so it reads the cache directly instead.
  */
 export const getManifestConsentState = createServerFn({
@@ -87,6 +87,6 @@ export const getManifestConsentState = createServerFn({
 	createConsentStateHandler({
 		mode: manifest({ manifestUrl: getBenchManifestUrl() }),
 		projectUrl: BENCH_BACKEND_URL,
-		routePrefix: '/api/c15t',
+		routePrefix: '/api/inth',
 	})
 );

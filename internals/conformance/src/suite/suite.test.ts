@@ -197,7 +197,7 @@ const hydrateGrant = function hydrateGrant(kernel: ConsentKernel): void {
 	hydrateRecords(
 		kernel,
 		readStoredRecordsFromCookieHeader(
-			`c15t=${encodeURIComponent(raw)}`,
+			`inth=${encodeURIComponent(raw)}`,
 			undefined,
 			POLICY_NOW
 		)
@@ -639,7 +639,7 @@ test('broad GPC keeps unmapped grants and original receipts, and ends with the s
 		hydrateRecords(
 			kernel,
 			readStoredRecordsFromCookieHeader(
-				`c15t=${encodeURIComponent(record.raw)}`,
+				`inth=${encodeURIComponent(record.raw)}`,
 				undefined,
 				POLICY_NOW
 			)

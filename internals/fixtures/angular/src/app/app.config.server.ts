@@ -1,7 +1,7 @@
 import { mergeApplicationConfig } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
 import { provideServerRendering, withRoutes } from '@angular/ssr';
-import { provideC15tServer } from '@inth/angular/ssr';
+import { provideInthServer } from '@inth/angular/ssr';
 
 import { consentRoute } from '../consent.server';
 import { appConfig } from './app.config';
@@ -12,7 +12,7 @@ const serverConfig: ApplicationConfig = {
 		provideServerRendering(withRoutes(serverRoutes)),
 		// Resolves each visitor's consent before the render, through the
 		// consent route in-process, so the banner is in the first HTML.
-		provideC15tServer({ route: consentRoute }),
+		provideInthServer({ route: consentRoute }),
 	],
 };
 

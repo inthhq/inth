@@ -15,7 +15,7 @@ const SCRIPT_FILES = ['c15t.js', 'c15t.hosted.js', 'c15t.dialog.js'];
  * Stands in for the CDN: emits `@inth/sdk`'s script-tag build next to
  * the page. Vite only builds the page's Tailwind stylesheet here.
  */
-const c15tScript = (): Plugin => ({
+const inthScript = (): Plugin => ({
 	generateBundle() {
 		for (const fileName of SCRIPT_FILES) {
 			this.emitFile({
@@ -28,7 +28,7 @@ const c15tScript = (): Plugin => ({
 			});
 		}
 	},
-	name: 'c15t-script-tag',
+	name: 'inth-script-tag',
 });
 
 export default defineConfig({
@@ -40,5 +40,5 @@ export default defineConfig({
 			},
 		},
 	},
-	plugins: [tailwindcss(), c15tScript()],
+	plugins: [tailwindcss(), inthScript()],
 });

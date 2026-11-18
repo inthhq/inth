@@ -40,7 +40,7 @@ export const useCookie = function useCookie<T extends object | string | null>(
 
 			if (typeof document === 'undefined') {
 				console.warn([
-					'[c15t] For SSR support, please use Nuxt or make an issue',
+					'[inth] For SSR support, please use Nuxt or make an issue',
 				]);
 				return defaultValue;
 			}

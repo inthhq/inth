@@ -1,7 +1,7 @@
 import {
 	multipleModeToggle,
 	singleModeToggle,
-} from '@c15t/conformance/play/accordion';
+} from '@inth/conformance/play/accordion';
 import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 

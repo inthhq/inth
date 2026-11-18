@@ -18,7 +18,7 @@ import type { AdobeTargetOptions } from './vendors/functional/adobe-target';
 const options = {
 	datastreamId: '00000000-0000-4000-8000-000000000000',
 	mode: 'websdk',
-	orgId: 'C15TFAKE@AdobeOrg',
+	orgId: 'INTHFAKE@AdobeOrg',
 	version: '2.30.0',
 } as const;
 const granted = { ...deniedConsents, experience: true };

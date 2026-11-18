@@ -1,5 +1,5 @@
 /**
- * Writes the stylesheets the script-tag build inlines into `dist/c15t.css`
+ * Writes the stylesheets the script-tag build inlines into `dist/inth.css`
  * and `dist/c15t.iab.css`.
  *
  * Bundler users who mount the UI into the light DOM (`shadow: false`)
@@ -19,5 +19,5 @@ import { adapterStyles } from '../src/iab/styles';
 const dist = resolve(import.meta.dirname, '../dist');
 
 await mkdir(dist, { recursive: true });
-await writeFile(join(dist, 'c15t.css'), stylesheet);
+await writeFile(join(dist, 'inth.css'), stylesheet);
 await writeFile(join(dist, 'c15t.iab.css'), iabStylesheet + adapterStyles);

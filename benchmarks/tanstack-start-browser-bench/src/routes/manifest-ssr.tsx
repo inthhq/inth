@@ -9,11 +9,11 @@ import { consentStylesheetHead } from '../bench/stylesheets';
 
 /**
  * Inlined by Vite at build time. When the root route mounts the provider
- * (`C15T_BENCH_ROOT_PROVIDER=1`, see `src/bench/root-shell-provider.tsx`)
+ * (`INTH_BENCH_ROOT_PROVIDER=1`, see `src/bench/root-shell-provider.tsx`)
  * this route renders only
  * the page shell, with no loader and no provider of its own.
  */
-const ROOT_PROVIDER = import.meta.env.C15T_BENCH_ROOT_PROVIDER === '1';
+const ROOT_PROVIDER = import.meta.env.INTH_BENCH_ROOT_PROVIDER === '1';
 
 const ManifestSSRPage = () => {
 	// oxlint-disable-next-line no-use-before-define -- TanStack Router's file-route shape: the component reads its own route's loader data.

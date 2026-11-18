@@ -15,7 +15,7 @@ import type {
 import type { Plugin, UserConfig } from 'vite';
 
 /**
- * The c15t packages a Nuxt app's client bundle can reach, each with a
+ * The Inth packages a Nuxt app's client bundle can reach, each with a
  * specifier that resolves (none exports its `package.json`).
  */
 const CONSENT_PACKAGES = [
@@ -52,7 +52,7 @@ const escapeRegExp = (value: string): string =>
 	value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 
 /**
- * The real directory of each c15t package this module resolves, the way
+ * The real directory of each Inth package this module resolves, the way
  * Vite names their modules. A workspace or linked install resolves outside
  * `node_modules`, where core's group test would not find them.
  *
@@ -79,8 +79,8 @@ export const consentPackageDirs = function consentPackageDirs(
 };
 
 /**
- * Core's c15t chunk group, also matching the given package directories:
- * the c15t modules the entry imports statically go into one chunk, not one
+ * Core's Inth chunk group, also matching the given package directories:
+ * the Inth modules the entry imports statically go into one chunk, not one
  * small chunk for each module the consent engine shares with the first
  * load.
  *
@@ -142,7 +142,7 @@ export const nuxtConsentConfigChunkGroup = function nuxtConsentConfigChunkGroup(
 	return {
 		entriesAware: false,
 		includeDependenciesRecursively: false,
-		name: 'c15t-config',
+		name: 'inth-config',
 		tags: [],
 		test: new RegExp(`(?:${roots})${CONFIG_MODULES}`, 'u'),
 	};

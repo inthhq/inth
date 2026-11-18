@@ -1,26 +1,26 @@
 ---
 title: Attentive
-description: Load the Attentive tag only after marketing consent with the c15t attentiveTag helper, and check its requests and storage in DevTools.
-seoTitle: Attentive cookie consent with c15t
-seoDescription: Keep Attentive signup units and tracking off the page until marketing consent. Set your site slug and check withdrawal with c15t.
+description: Load the Attentive tag only after marketing consent with the Inth attentiveTag helper, and check its requests and storage in DevTools.
+seoTitle: Attentive cookie consent with Inth
+seoDescription: Keep Attentive signup units and tracking off the page until marketing consent. Set your site slug and check withdrawal with Inth.
 icon: chart-line
 group: integrations
 ---
 
 Attentive shows SMS and email signup units and tracks on-site events for its
-marketing messages. The c15t `attentiveTag` helper waits for `marketing`
+marketing messages. The Inth `attentiveTag` helper waits for `marketing`
 consent before it downloads the Attentive tag. Until then, the page makes no
 request to Attentive.
 
 Attentive has no supported way to stop a running tag. When the visitor
-withdraws, c15t reloads the page, and the next page doesn't load the tag.
+withdraws, Inth reloads the page, and the next page doesn't load the tag.
 
 ## Configure Attentive
 
 Find the site slug in your Attentive tag URL,
 `https://cdn.attn.tv/<siteSlug>/dtag.js`. If you don't have it, ask your
 Attentive contact for the slug or the full tag URL. Then remove the original
-tag from your site, so that c15t controls when it loads.
+tag from your site, so that Inth controls when it loads.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 

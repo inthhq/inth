@@ -131,7 +131,7 @@ import { clientMode } from './runtime/client-mode';
 
 export const mode = clientMode(${mode}, {
 	projectUrl: 'https://your-project.inth.app',
-	routePrefix: '/api/c15t',
+	routePrefix: '/api/inth',
 });
 `;
 

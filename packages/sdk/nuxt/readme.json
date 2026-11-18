@@ -16,7 +16,7 @@
 	],
 	"manualInstallation": ["", "```bash\npnpm add @inth/nuxt\n```"],
 	"usage": [
-		"Register the module and set `NUXT_PUBLIC_C15T_BACKEND_URL` to your Inth backend URL",
+		"Register the module and set `NUXT_PUBLIC_INTH_PROJECT_URL` to your Inth backend URL",
 		"```ts\n// nuxt.config.ts\nexport default defineNuxtConfig({\n  modules: ['@inth/nuxt'],\n})\n```",
 		"Add `ConsentRoot` and a link that opens the preference dialog to `app.vue`",
 		"```vue\n<!-- app/app.vue -->\n<template>\n  <ConsentRoot />\n  <NuxtPage />\n  <footer>\n    <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n  </footer>\n</template>\n```",

@@ -1,21 +1,21 @@
 ---
 title: Content Security Policy
-description: Allow c15t in a Nuxt app under a Content Security Policy, including the theme token style tag, same-origin routes, the backend and vendor scripts.
+description: Allow Inth in a Nuxt app under a Content Security Policy, including the theme token style tag, same-origin routes, the backend and vendor scripts.
 group: frameworks
 ---
 
-## What c15t adds to the page
+## What Inth adds to the page
 
-A Nuxt app with c15t adds these to the page, and your policy must allow them:
+A Nuxt app with Inth adds these to the page, and your policy must allow them:
 
 | What | Directive |
 | --- | --- |
-| The `<style id="c15t-css-vars">` tag with your theme tokens, in the page head | `style-src` |
+| The `<style id="inth-css-vars">` tag with your theme tokens, in the page head | `style-src` |
 | The components' CSS: inline `<style>` tags Nuxt writes for the server-rendered banner, and stylesheets Nuxt bundles with your app | `style-src` |
 | On `ssr: false` pages in `hosted()` mode, an inline `<script>` in the page head that starts `/init` | `script-src` |
 | On server-rendered pages with a banner, an inline `<script>` before its buttons that holds a tap made before hydration | `script-src` |
 | On server-rendered pages when the visitor's consent or `alwaysLoad` already lets some vendor helper entries in `scripts` run, an inline `<script>` at the end of `<body>` that starts them | `script-src` |
-| Browser requests to `/api/c15t/init` and `/api/c15t/manifest` in the default `manifest()` mode | `connect-src 'self'` |
+| Browser requests to `/api/inth/init` and `/api/inth/manifest` in the default `manifest()` mode | `connect-src 'self'` |
 | Consent saves to your backend's `/subjects`, plus `/init` in `hosted()` mode | `connect-src` |
 | Chunks Nuxt splits out, such as the browser resolver with `manifest({ resolve: 'browser' })` and the copy for a language other than English | `script-src 'self'` |
 | `<script>` elements the script loader creates for `scripts` | `script-src` |
@@ -31,7 +31,7 @@ in place.
 ## Allow the theme token style tag
 
 The module writes the `tokens` option into an inline
-`<style id="c15t-css-vars">` tag on every page. A `style-src` without
+`<style id="inth-css-vars">` tag on every page. A `style-src` without
 `'unsafe-inline'` blocks it, and the banner falls back to the default theme. The tag's content
 is the same for every visitor and only changes when you change `tokens`, so
 you can allow it with a hash:
@@ -58,7 +58,7 @@ the script.
   more is needed.
 - **With the module's `nonce` option**, the script carries that nonce.
 - **With a hash-based policy**, the script's content is the same for every
-  visitor and changes only when you change `projectUrl` or upgrade c15t. Copy
+  visitor and changes only when you change `projectUrl` or upgrade Inth. Copy
   the `sha256-...` value from the browser's `Refused to execute inline script`
   console error and add it to `script-src`.
 
@@ -92,7 +92,7 @@ hydration instead.
 ## Allow the backend
 
 In the default `manifest()` mode the browser calls your own origin for
-`/api/c15t/init`, which `'self'` covers, and sends consent saves to your
+`/api/inth/init`, which `'self'` covers, and sends consent saves to your
 backend. Add the backend's origin to `connect-src`. A `manifestUrl` or
 `geoUrl` on another origin needs that origin too. With `iab` set and an IAB
 TCF policy, the browser loads the Global Vendor List through the module's
@@ -114,12 +114,12 @@ hosts.
 The module's `nonce` option adds a nonce to every script the loader creates.
 Module options and `app.config.ts` are fixed when the app builds, so every
 response gets the same value. A nonce only protects a page when it changes on
-each response, so prefer the host allowlist for c15t's scripts.
+each response, so prefer the host allowlist for inth's scripts.
 
 ## Verify
 
 Enforce the policy, not report-only, and load a page. The banner shows your
 token colors, and the console shows no `Refused to apply inline style`,
 `Refused to connect` or `Refused to load the script` error that mentions a
-c15t element, your backend or a vendor you allowed. Click **Accept All**, and the
+Inth element, your backend or a vendor you allowed. Click **Accept All**, and the
 vendor scripts load. The save to `/subjects` succeeds.

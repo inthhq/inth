@@ -1,14 +1,14 @@
 ---
 title: Shopify
-description: Send c15t consent to Shopify's Customer Privacy API from a Hydrogen storefront, so Shopify analytics wait for the visitor's choice and follow each later change.
-seoTitle: Shopify Hydrogen cookie consent with c15t
-seoDescription: Use your c15t banner as a custom consent banner in Shopify Hydrogen. The c15t Shopify bridge passes each choice to Shopify's Customer Privacy API.
+description: Send Inth consent to Shopify's Customer Privacy API from a Hydrogen storefront, so Shopify analytics wait for the visitor's choice and follow each later change.
+seoTitle: Shopify Hydrogen cookie consent with Inth
+seoDescription: Use your Inth banner as a custom consent banner in Shopify Hydrogen. The Inth Shopify bridge passes each choice to Shopify's Customer Privacy API.
 group: integrations
 ---
 
-The c15t Shopify bridge sends each consent choice to Shopify's Customer
+The Inth Shopify bridge sends each consent choice to Shopify's Customer
 Privacy API. Shopify's analytics, and the apps and pixels that read that API,
-then follow your c15t banner instead of Shopify's own. The bridge loads no
+then follow your Inth banner instead of Shopify's own. The bridge loads no
 script. Hydrogen's `ShopifyScripts` loads the Customer Privacy API, and the
 bridge's `setup` function holds Hydrogen's analytics events until Shopify has
 the visitor's choice.
@@ -18,13 +18,13 @@ runs the code on this page in a Next.js app against mock.shop.
 
 ## Add the bridge
 
-Set up c15t with the [Next.js quickstart](/docs/frameworks/next/quickstart)
+Set up Inth with the [Next.js quickstart](/docs/frameworks/next/quickstart)
 first, then install the integrations package:
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
 Create the bridge once per page and pass its `setup` to `ShopifyScripts` with
-`mode: 'custom-banner'`. A second component feeds the bridge each c15t
+`mode: 'custom-banner'`. A second component feeds the bridge each Inth
 snapshot:
 
 <include src="../shared/examples/shopify-nextjs/shopify-analytics.mdx" />
@@ -36,9 +36,9 @@ your shop's details. Render `ShopifyConsentSync` inside `ConsentRoot`:
 
 ## Declare the categories
 
-c15t's dialog offers only the categories that something on the page uses.
-Shopify's scripts load through `ShopifyScripts`, not through c15t's `scripts`
-option, so c15t cannot find them. Declare the categories the bridge maps, or
+inth's dialog offers only the categories that something on the page uses.
+Shopify's scripts load through `ShopifyScripts`, not through inth's `scripts`
+option, so Inth cannot find them. Declare the categories the bridge maps, or
 the dialog shows only Necessary and Shopify receives a denial for everything:
 
 <include src="../shared/examples/shopify-nextjs/shopify-config.mdx" />
@@ -61,14 +61,14 @@ stores nothing. Pass your own if your storefront signs customers in.
 
 ## How categories map
 
-| Shopify consent | c15t category |
+| Shopify consent | Inth category |
 | --- | --- |
 | `analytics` | `measurement` |
 | `marketing` | `marketing` |
 | `preferences` | `functionality` |
 | `sale_of_data` | `marketing` |
 
-Each Shopify value is `true` only while its c15t category is allowed in the
+Each Shopify value is `true` only while its Inth category is allowed in the
 effective permissions, which include policy restrictions. Pass `categories`
 to change the mapping:
 
@@ -92,21 +92,21 @@ sends nothing until then, or while the policy is pending.
   banner, including with Reject All, so Hydrogen holds events until then.
 - **Opt-out policy:** `setup` resolves without recording a choice, and
   Shopify applies its region defaults, including Global Privacy Control,
-  until the visitor saves a choice in c15t. A stale grant is the exception,
+  until the visitor saves a choice in Inth. A stale grant is the exception,
   below.
 
 After the first choice, the bridge sends each change once. When a visitor
-revokes a category, c15t reloads the page and the bridge sends the stored
+revokes a category, Inth reloads the page and the bridge sends the stored
 choice on load.
 
 While the visitor has no current choice, Shopify may still hold grants from
 an earlier one, for example after that choice expired or a policy change
-asks again. If c15t now denies any of them, the bridge sends `false` for
+asks again. If Inth now denies any of them, the bridge sends `false` for
 those grants only, so Shopify keeps the other signals, including unset ones.
 It counts grants the bridge sent and each `yes` from Shopify's
 `currentVisitorConsent()`, and sends the revocation again if Shopify reports
 a dropped grant again, for example after another tab granted it. If that
-function isn't available, it assumes a choice c15t stored may have granted
+function isn't available, it assumes a choice Inth stored may have granted
 anything. Under an opt-in or IAB policy, Hydrogen keeps holding events until
 the visitor answers. Under opt-out, `setup` resolves once Shopify accepts the
 revocation.
@@ -127,12 +127,12 @@ policy turns pending meanwhile, the bridge drops those retries.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `categories` | The table above | Overrides the c15t category for any of the four Shopify values. |
+| `categories` | The table above | Overrides the Inth category for any of the four Shopify values. |
 | `onSync` | None | Called with what Shopify accepted: the four values for a choice, or the dropped grants for a revocation. |
 | `onError` | Logs to the console | Called when Shopify rejects a choice or `onSync` throws. |
 
 The bridge returns `update(snapshot)`, `connect(source)` and `setup()`.
-`connect` follows anything with `getSnapshot` and `subscribe`, such as a c15t
+`connect` follows anything with `getSnapshot` and `subscribe`, such as a Inth
 kernel, and returns a function that stops following it.
 
 ## Limits

@@ -146,7 +146,7 @@ describe('activeUI Transitions E2E Tests', () => {
 				necessary: true,
 			},
 		};
-		window.localStorage.setItem('c15t', JSON.stringify(consentData));
+		window.localStorage.setItem('inth', JSON.stringify(consentData));
 
 		render(BannerFixture, { options: defaultOptions });
 

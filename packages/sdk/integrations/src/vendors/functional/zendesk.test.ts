@@ -66,7 +66,7 @@ describe('zendeskWidget', () => {
 	it('queues functional storage and the loader reference before insertion', () => {
 		const script = zendeskWidget({ key: 'widget-key' });
 		const element = document.createElement('script');
-		element.id = 'c15t-test-id';
+		element.id = 'inth-test-id';
 		script.onBeforeLoad?.(
 			createCallbackInfo({
 				consents: allowedConsents,
@@ -83,7 +83,7 @@ describe('zendeskWidget', () => {
 		expect(window.zE?.s).toBe(element);
 		expect(window.zE?.t).toBeTypeOf('number');
 		expect(window.zEmbed).toBe(window.zE);
-		expect(element.id).toBe('c15t-test-id');
+		expect(element.id).toBe('inth-test-id');
 	});
 
 	it('preserves a loaded API and follows measurement-only changes', () => {

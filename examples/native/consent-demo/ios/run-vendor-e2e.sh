@@ -2,26 +2,26 @@
 # Real vendor SDK journey for the iOS demo: PostHog, Mixpanel, Sentry Replay and Firebase
 # Analytics against the Inth Swift helpers. Starts the capture server, generates the
 # XcodeGen project, runs VendorSDKTests per scheme on a dedicated simulator, and checks
-# Firebase's own debug log. Evidence lands in $C15T_VENDOR_E2E_OUT (or .artifacts/).
+# Firebase's own debug log. Evidence lands in $INTH_VENDOR_E2E_OUT (or .artifacts/).
 #
 #   bash examples/native/consent-demo/ios/run-vendor-e2e.sh
 #
-# C15T_VENDOR_SCHEMES      schemes to run (default: "InthConsentDemo InthUIKitDemo")
-# C15T_IOS_VENDOR_DEVICE   simulator name, created when missing (default: inth-ios-vendors)
-# C15T_IOS_DEVICE          device type for a new simulator (default: iPhone 17 Pro)
-# C15T_IOS_RUNTIME         runtime identifier for a new simulator (default: newest iOS)
-# C15T_VENDOR_SPM_DIR      cloned SwiftPM packages, kept between runs for speed
+# INTH_VENDOR_SCHEMES      schemes to run (default: "InthConsentDemo InthUIKitDemo")
+# INTH_IOS_VENDOR_DEVICE   simulator name, created when missing (default: inth-ios-vendors)
+# INTH_IOS_DEVICE          device type for a new simulator (default: iPhone 17 Pro)
+# INTH_IOS_RUNTIME         runtime identifier for a new simulator (default: newest iOS)
+# INTH_VENDOR_SPM_DIR      cloned SwiftPM packages, kept between runs for speed
 set -euo pipefail
 IOS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${IOS_DIR}/../../../.." && pwd)"
 RUN_ID="$(date +%Y%m%d-%H%M%S)-$$"
-OUT="${C15T_VENDOR_E2E_OUT:-${IOS_DIR}/.artifacts/vendor-e2e/${RUN_ID}}"
+OUT="${INTH_VENDOR_E2E_OUT:-${IOS_DIR}/.artifacts/vendor-e2e/${RUN_ID}}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 [[ -z "$(ls -A "${OUT}")" ]] || { echo "Use an empty evidence directory: ${OUT}" >&2; exit 2; }
-SCHEMES="${C15T_VENDOR_SCHEMES:-InthConsentDemo InthUIKitDemo}"
-DEVICE_NAME="${C15T_IOS_VENDOR_DEVICE:-inth-ios-vendors}"
-SPM_DIR="${C15T_VENDOR_SPM_DIR:-${HOME}/Library/Caches/inth-ios-vendor-sdks/SourcePackages}"
+SCHEMES="${INTH_VENDOR_SCHEMES:-InthConsentDemo InthUIKitDemo}"
+DEVICE_NAME="${INTH_IOS_VENDOR_DEVICE:-inth-ios-vendors}"
+SPM_DIR="${INTH_VENDOR_SPM_DIR:-${HOME}/Library/Caches/inth-ios-vendor-sdks/SourcePackages}"
 WORK="$(mktemp -d /tmp/inth-vendor-e2e.XXXXXX)"
 CAPTURE_PID=""; DEVICE=""; LOG_PID=""
 # Firebase cannot reach the capture server; its own debug log is the evidence. Debug
@@ -66,7 +66,7 @@ cat "${OUT}/python.txt"
 
 # Port 0 lets the OS pick a free port; the server reports it in vendor-capture-ready.
 STARTED="${SECONDS}"
-"${PYTHON}" "${REPO_ROOT}/scripts/vendor_capture.py" --port "${C15T_VENDOR_PORT:-0}" --out "${OUT}" > "${OUT}/capture.log" 2>&1 &
+"${PYTHON}" "${REPO_ROOT}/scripts/vendor_capture.py" --port "${INTH_VENDOR_PORT:-0}" --out "${OUT}" > "${OUT}/capture.log" 2>&1 &
 CAPTURE_PID=$!
 for _ in $(seq 1 240); do
   kill -0 "${CAPTURE_PID}" || { cat "${OUT}/capture.log"; exit 1; }
@@ -98,10 +98,10 @@ for runtime, devices in json.load(sys.stdin)["devices"].items():
             print(device["udid"]); raise SystemExit
 ' "${DEVICE_NAME}")"
 if [[ -z "${DEVICE}" ]]; then
-  DEVICE_TYPE="${C15T_IOS_DEVICE:-iPhone 17 Pro}"
+  DEVICE_TYPE="${INTH_IOS_DEVICE:-iPhone 17 Pro}"
   # Newest iOS runtime that runs this device type and that the selected Xcode's simulator
   # SDK supports. A runner can carry newer runtimes than its pinned Xcode.
-  RUNTIME="${C15T_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c '
+  RUNTIME="${INTH_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c '
 import json, sys
 version = lambda text: tuple(int(part) for part in text.split(".")[:2])
 sdk, device = version(sys.argv[1]), sys.argv[2]
@@ -132,7 +132,7 @@ LOG_PID=$!
 
 for scheme in ${SCHEMES}; do
   # TEST_RUNNER_ variables reach the XCUITest runner, which passes them on to the app.
-  TEST_RUNNER_C15T_VENDOR_BASE="${BASE}" TEST_RUNNER_C15T_CAPTURE_DIR="${OUT}/${scheme}" \
+  TEST_RUNNER_INTH_VENDOR_BASE="${BASE}" TEST_RUNNER_INTH_CAPTURE_DIR="${OUT}/${scheme}" \
   xcodebuild test -project "${WORK}/project/InthConsentDemo.xcodeproj" -scheme "${scheme}" \
     -destination "platform=iOS Simulator,id=${DEVICE}" \
     -only-testing:"${scheme}UITests/VendorSDKTests" \
@@ -141,7 +141,7 @@ for scheme in ${SCHEMES}; do
     -test-timeouts-enabled YES -default-test-execution-time-allowance 600 \
     > "${OUT}/${scheme}-test.log" 2>&1 || { tail -n 60 "${OUT}/${scheme}-test.log"; exit 1; }
   grep -E 'vendor-step' "${OUT}/${scheme}-test.log" || true
-  # The journey skips itself without C15T_VENDOR_BASE; a skip must not pass as proof.
+  # The journey skips itself without INTH_VENDOR_BASE; a skip must not pass as proof.
   xcrun xcresulttool get test-results summary --path "${OUT}/${scheme}.xcresult" --format json \
     > "${OUT}/${scheme}-summary.json"
   python3 -c 'import json, sys

@@ -23,7 +23,7 @@ const COPY = {
 };
 
 const KEY = {
-	branding: 'c15t',
+	branding: 'inth',
 	copy: staticBannerCopyHash(COPY),
 	language: 'en',
 	policy: 'policy-fingerprint',
@@ -31,7 +31,7 @@ const KEY = {
 
 const answer = (changes: Record<string, unknown> = {}) => ({
 	init: {
-		branding: 'c15t',
+		branding: 'inth',
 		policyResolution: {
 			fingerprints: { policy: 'policy-fingerprint' },
 			status: 'matched',
@@ -42,7 +42,7 @@ const answer = (changes: Record<string, unknown> = {}) => ({
 	producerPolicyContract: '1',
 });
 
-const keys = storedAnswerKeys('c15t');
+const keys = storedAnswerKeys('inth');
 const stored = {
 	cookies: [...keys.cookies, keys.notice],
 	local: [...keys.local, keys.notice],
@@ -99,7 +99,7 @@ beforeEach(() => {
 afterEach(() => {
 	vi.unstubAllGlobals();
 	document.body.innerHTML = '';
-	document.cookie = 'c15t=; max-age=0';
+	document.cookie = 'inth=; max-age=0';
 });
 
 describe('static banner script', () => {
@@ -112,7 +112,7 @@ describe('static banner script', () => {
 	});
 
 	test('a returning visitor with a consent cookie never sees it', async () => {
-		document.cookie = 'c15t=stored-record';
+		document.cookie = 'inth=stored-record';
 		let answered: (value: unknown) => void = () => undefined;
 		const banner = mount(
 			new Promise((resolve) => {
@@ -127,7 +127,7 @@ describe('static banner script', () => {
 	});
 
 	test('a stored notice dismissal counts as a returning visitor', () => {
-		localStorage.setItem('c15t-notice', '1');
+		localStorage.setItem('inth-notice', '1');
 		expect(mount(Promise.resolve(answer())).isConnected).toBe(false);
 	});
 
@@ -178,7 +178,7 @@ describe('static banner script', () => {
 	test('a choice stored while /init was in flight keeps it hidden', async () => {
 		const banner = mount(
 			Promise.resolve().then(() => {
-				document.cookie = 'c15t=stored-in-another-tab';
+				document.cookie = 'inth=stored-in-another-tab';
 				return answer();
 			})
 		);

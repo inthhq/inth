@@ -83,7 +83,7 @@ import {
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
 import {
-	c15tProtocolHeaders,
+	inthProtocolHeaders,
 	readProducerPolicyContract,
 } from '../transports/version-header';
 import type { KernelConfig } from '../types';
@@ -109,7 +109,7 @@ import type { RequestHeaderSource } from './request-origin';
  * Where every adapter mounts its consent routes unless told otherwise. A
  * render treats URLs under it on its own origin as its own routes.
  */
-export const DEFAULT_CONSENT_ROUTE_PREFIX = '/api/c15t';
+export const DEFAULT_CONSENT_ROUTE_PREFIX = '/api/inth';
 
 /**
  * Marks a hosted request a render sends to its own origin. If a page answers
@@ -234,7 +234,7 @@ export interface ResolveRequestConsentOptions {
 	 * fetch its origin again, so a prefix that answers with a page cannot
 	 * loop.
 	 *
-	 * @default ['/api/c15t']
+	 * @default ['/api/inth']
 	 */
 	ownRoutes?: readonly string[];
 	/**
@@ -265,7 +265,7 @@ export interface ResolveRequestConsentOptions {
 	 * Extra request headers to forward upstream, such as a token a private
 	 * backend needs. The forwarding rule:
 	 *
-	 * - Always: the c15t protocol headers, the resolved country, region,
+	 * - Always: the Inth protocol headers, the resolved country, region,
 	 *   language and GPC signal, the `user-agent`, and the experiment arm
 	 *   while the visitor has no stored choice.
 	 * - Hosted mode, only over `https`, to a loopback host, or in-process:
@@ -903,7 +903,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				? options.fetchGvl({ fetch: configuredFetch(), language, reference })
 				: fetchCachedGvl({
 						fetch: options.fetch as ManifestFetch | undefined,
-						headers: c15tProtocolHeaders,
+						headers: inthProtocolHeaders,
 						label: options.adapter,
 						language,
 						url: reference.url,
@@ -931,7 +931,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 					const target = resolveTarget(providerReference.url);
 					return fetchCachedAdTechProviders({
 						fetch: target.fetch as typeof globalThis.fetch,
-						headers: c15tProtocolHeaders,
+						headers: inthProtocolHeaders,
 						reference: { ...providerReference, url: target.url },
 					});
 				},
@@ -1052,7 +1052,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				headers[CONSENT_EXPERIMENT_HEADER] = formatExperimentHeader(arm);
 			}
 			nameThePage(headers, target);
-			Object.assign(headers, c15tProtocolHeaders);
+			Object.assign(headers, inthProtocolHeaders);
 			if (target.sameOrigin) {
 				headers[RENDER_REQUEST_HEADER] = '1';
 			}

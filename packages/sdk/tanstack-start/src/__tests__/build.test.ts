@@ -39,12 +39,12 @@ afterEach(async () => {
 
 describe('TanStack Start manifest generation', () => {
 	test('serves the snapshot to the server and keeps it out of the client', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-tanstack-manifest-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-tanstack-manifest-'));
 		directories.push(root);
 		const fetchSpy = vi.fn<typeof globalThis.fetch>(() =>
 			Promise.resolve(
 				Response.json({
-					branding: 'c15t',
+					branding: 'inth',
 					revision: 'tanstack-build',
 					schemaVersion: 2,
 				})
@@ -65,7 +65,7 @@ describe('TanStack Start manifest generation', () => {
 	});
 
 	const createRoot = async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-tanstack-manifest-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-tanstack-manifest-'));
 		directories.push(root);
 		return root;
 	};
@@ -117,16 +117,16 @@ describe('TanStack Start manifest generation', () => {
 		});
 		plugin.configResolved({ command: 'build', root });
 		await expect(buildGenerated(plugin, 'server')).rejects.toThrow(
-			"during the build (backend unavailable). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"during the build (backend unavailable). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
-	test('reads VITE_C15T_BACKEND_URL when projectUrl is left out', async () => {
+	test('reads VITE_INTH_PROJECT_URL when projectUrl is left out', async () => {
 		const root = await createRoot();
 		const fetchSpy = vi.fn<typeof globalThis.fetch>(() =>
 			Promise.resolve(
 				Response.json({
-					branding: 'c15t',
+					branding: 'inth',
 					revision: 'tanstack-build',
 					schemaVersion: 2,
 				})
@@ -135,7 +135,7 @@ describe('TanStack Start manifest generation', () => {
 		const plugin = consentManifest({ fetch: fetchSpy });
 		plugin.configResolved({
 			command: 'build',
-			env: { VITE_C15T_BACKEND_URL: 'https://env.example.com' },
+			env: { VITE_INTH_PROJECT_URL: 'https://env.example.com' },
 			root,
 		});
 		await buildGenerated(plugin, 'server');
@@ -151,7 +151,7 @@ describe('TanStack Start manifest generation', () => {
 		const logger = { info: vi.fn(), warn: vi.fn() };
 		const plugin = consentManifest({
 			fetch: fetchSpy,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		await plugin.configResolved({ command: 'build', logger, root });
 		const server = await buildGenerated(plugin, 'server');
@@ -166,7 +166,7 @@ describe('TanStack Start manifest backend URL', () => {
 		vi.fn<typeof globalThis.fetch>(() =>
 			Promise.resolve(
 				Response.json({
-					branding: 'c15t',
+					branding: 'inth',
 					revision: 'tanstack-build',
 					schemaVersion: 2,
 				})
@@ -174,7 +174,7 @@ describe('TanStack Start manifest backend URL', () => {
 		);
 
 	const tempRoot = async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-tanstack-manifest-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-tanstack-manifest-'));
 		directories.push(root);
 		return root;
 	};
@@ -186,13 +186,13 @@ describe('TanStack Start manifest backend URL', () => {
 			fetch: fetchSpy,
 			projectUrl: 'https://consent.example.com',
 		}).configResolved({ env, root: await tempRoot() });
-		expect(env.VITE_C15T_BACKEND_URL).toBe('https://consent.example.com');
+		expect(env.VITE_INTH_PROJECT_URL).toBe('https://consent.example.com');
 	});
 
 	test('keeps a variable the app already set', async () => {
 		const fetchSpy = manifestResponse();
 		const env: Record<string, unknown> = {
-			VITE_C15T_BACKEND_URL: '/api/c15t',
+			VITE_INTH_PROJECT_URL: '/api/inth',
 		};
 		const plugin = consentManifest({
 			fetch: fetchSpy,
@@ -203,7 +203,7 @@ describe('TanStack Start manifest backend URL', () => {
 		expect(String(fetchSpy.mock.calls[0]?.[0])).toBe(
 			'https://consent.example.com/manifest'
 		);
-		expect(env.VITE_C15T_BACKEND_URL).toBe('/api/c15t');
+		expect(env.VITE_INTH_PROJECT_URL).toBe('/api/inth');
 	});
 
 	test("with onBuildError: 'fail', vite build fails without a backend URL", async () => {
@@ -214,7 +214,7 @@ describe('TanStack Start manifest backend URL', () => {
 			root: await tempRoot(),
 		});
 		await expect(buildGenerated(plugin, 'server')).rejects.toThrow(
-			/VITE_C15T_BACKEND_URL \(or VITE_INTH_PROJECT_URL\)/u
+			/VITE_INTH_PROJECT_URL \(or VITE_INTH_PROJECT_URL\)/u
 		);
 	});
 
@@ -232,7 +232,7 @@ describe('TanStack Start manifest backend URL', () => {
 			'export const snapshot = undefined;'
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
-			expect.stringContaining('VITE_C15T_BACKEND_URL')
+			expect.stringContaining('VITE_INTH_PROJECT_URL')
 		);
 	});
 });
@@ -243,7 +243,7 @@ describe('TanStack Start backend URL variables', () => {
 		env: Record<string, unknown>,
 		options: { projectUrl?: string } = {}
 	) => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-inth-env-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-inth-env-'));
 		try {
 			const plugin = consentManifest({
 				...options,
@@ -274,27 +274,27 @@ describe('TanStack Start backend URL variables', () => {
 		}
 	};
 	const INTH = 'https://inth.example.com';
-	const C15T = 'https://c15t.example.com';
+	const INTH = 'https://inth.example.com';
 
 	test('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
 		const { projectUrl, env } = await resolveProjectUrl({
 			VITE_INTH_PROJECT_URL: INTH,
 		});
 		expect(projectUrl).toBe(INTH);
-		expect(env.VITE_C15T_BACKEND_URL).toBe(INTH);
+		expect(env.VITE_INTH_PROJECT_URL).toBe(INTH);
 	});
 
-	test('VITE_C15T_BACKEND_URL wins when both are set', async () => {
+	test('VITE_INTH_PROJECT_URL wins when both are set', async () => {
 		const { projectUrl } = await resolveProjectUrl({
-			VITE_C15T_BACKEND_URL: C15T,
+			VITE_INTH_PROJECT_URL: INTH,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(projectUrl).toBe(C15T);
+		expect(projectUrl).toBe(INTH);
 	});
 
 	test('an explicit projectUrl beats both variables', async () => {
 		const { projectUrl } = await resolveProjectUrl(
-			{ VITE_C15T_BACKEND_URL: C15T, VITE_INTH_PROJECT_URL: INTH },
+			{ VITE_INTH_PROJECT_URL: INTH, VITE_INTH_PROJECT_URL: INTH },
 			{ projectUrl: 'https://option.example.com' }
 		);
 		expect(projectUrl).toBe('https://option.example.com');
@@ -303,7 +303,7 @@ describe('TanStack Start backend URL variables', () => {
 
 describe('TanStack Start first-paint sheets', () => {
 	const importer =
-		'/app/node_modules/.pnpm/@c15t+react@3/node_modules/@inth/react/dist/components/prompt/atoms/root.js';
+		'/app/node_modules/.pnpm/@inth+react@3/node_modules/@inth/react/dist/components/prompt/atoms/root.js';
 	/** What `consentManifest()` resolves `id` to in one Vite environment. */
 	const resolveSheet = async (
 		id: string,

@@ -56,17 +56,17 @@ describe('hosted()', () => {
 			.mockResolvedValue(new Response(JSON.stringify({ ok: true })));
 		const mode = hosted({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: '/api/c15t/',
+			projectUrl: '/api/inth/',
 		});
 
 		expect(mode.kind).toBe('hosted');
 		await mode(context).save?.(payload);
-		expect(fetchSpy.mock.calls[0]?.[0]).toBe('/api/c15t/subjects');
+		expect(fetchSpy.mock.calls[0]?.[0]).toBe('/api/inth/subjects');
 	});
 
 	test('forwards initUrl and assertDecisionInputs to the hosted transport', async () => {
 		const init = {
-			branding: 'c15t',
+			branding: 'inth',
 			hasConsented: false,
 			location: { countryCode: 'DE', regionCode: 'BE' },
 			policy: {
@@ -123,19 +123,19 @@ describe('hosted()', () => {
 	test('carries its options as enumerable data', () => {
 		const mode = hosted({
 			headers: { 'accept-language': 'de' },
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		expect({ ...mode }).toEqual({
 			headers: { 'accept-language': 'de' },
 			kind: 'hosted',
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 			type: 'hosted',
 		});
 	});
 
 	test('recognizes its own factories, not wrappers that copy them', () => {
-		const options = { projectUrl: '/api/c15t' };
+		const options = { projectUrl: '/api/inth' };
 		const mode = hosted(options);
 		const wrapper = Object.assign(
 			(providerContext: ProviderTransportContext) => mode(providerContext),
@@ -167,9 +167,9 @@ describe('hosted()', () => {
 		};
 
 		expect(await save({})).toBe('saved');
-		expect(await save({ initUrl: '/api/c15t/init' })).toBe('refused');
+		expect(await save({ initUrl: '/api/inth/init' })).toBe('refused');
 		expect(
-			await save({ assertDecisionInputs: false, initUrl: '/api/c15t/init' })
+			await save({ assertDecisionInputs: false, initUrl: '/api/inth/init' })
 		).toBe('saved');
 		expect(await save({ assertDecisionInputs: true })).toBe('refused');
 	});

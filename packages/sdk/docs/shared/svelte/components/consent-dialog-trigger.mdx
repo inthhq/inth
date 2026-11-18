@@ -22,7 +22,7 @@ first render.
 | `showWhen` | `'always'` or `'never'` | `'always'` | `'never'` hides it. |
 | `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
 | `ariaLabel` | `string` | `'Open privacy settings'` | Accessible name. Translate it yourself; it does not come from `i18n`. |
-| `noStyle` | `boolean` | `false` | Drops c15t's classes, including the fixed positioning. |
+| `noStyle` | `boolean` | `false` | Drops inth's classes, including the fixed positioning. |
 | `class` | `string` | none | Extra class on the button. |
 | `onclick` | `(event: MouseEvent) => void` | none | Runs before the dialog opens. Call `event.preventDefault()` to stop it. |
 | `onPositionChange` | `(corner) => void` | none | Runs after a drag moves it to another corner. |
@@ -54,5 +54,5 @@ controls.
 ## Style the trigger
 
 The button carries `data-testid="consent-dialog-trigger"`,
-`data-c15t-trigger="true"` and `data-c15t-rights`. Its colors come from the
-`--c15t-*` tokens; [theme tokens](/docs/customization/tokens) lists them.
+`data-inth-trigger="true"` and `data-inth-rights`. Its colors come from the
+`--inth-*` tokens; [theme tokens](/docs/customization/tokens) lists them.

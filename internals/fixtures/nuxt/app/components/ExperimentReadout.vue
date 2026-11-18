@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Demo only: the banner-shape experiment readout. `C15T_NUXT_EXPERIMENT=1`
+ * Demo only: the banner-shape experiment readout. `INTH_NUXT_EXPERIMENT=1`
  * puts the experiment in the module config (see nuxt.config.ts) and the arm
  * comes from `useExperiment()`. Module config is serializable, so it takes
  * no callbacks; this component listens to the kernel's events instead, lists
@@ -14,7 +14,7 @@ const experiment = useExperiment();
 const kernel = useConsentKernel();
 const experimentEvents = ref<
 	{
-		name: 'c15t_surface_shown' | 'c15t_choice_recorded';
+		name: 'inth_surface_shown' | 'inth_choice_recorded';
 		arm: string;
 		detail: string;
 	}[]
@@ -38,14 +38,14 @@ onMounted(() => {
 			}
 			pushToDataLayer({
 				arm: event.experiment.arm,
-				event: 'c15t_surface_shown',
+				event: 'inth_surface_shown',
 				experiment_id: event.experiment.id,
 				surface: event.surface,
 			});
 			experimentEvents.value.push({
 				arm: event.experiment.arm,
 				detail: event.surface,
-				name: 'c15t_surface_shown',
+				name: 'inth_surface_shown',
 			});
 		}),
 		kernel.events.on('choice:recorded', (event) => {
@@ -55,13 +55,13 @@ onMounted(() => {
 			pushToDataLayer({
 				arm: event.experiment.arm,
 				consent_action: event.consentAction,
-				event: 'c15t_choice_recorded',
+				event: 'inth_choice_recorded',
 				experiment_id: event.experiment.id,
 			});
 			experimentEvents.value.push({
 				arm: event.experiment.arm,
 				detail: event.consentAction,
-				name: 'c15t_choice_recorded',
+				name: 'inth_choice_recorded',
 			});
 		}),
 	];
@@ -97,7 +97,7 @@ onUnmounted(() => {
 		</ul>
 		<p>
 			The same events are pushed to <code>window.dataLayer</code>. Build with
-			<code>C15T_NUXT_EXPERIMENT_ARM=wall</code> to run the wall arm the way a
+			<code>INTH_NUXT_EXPERIMENT_ARM=wall</code> to run the wall arm the way a
 			flag provider would.
 		</p>
 	</section>

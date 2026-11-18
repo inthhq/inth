@@ -1,35 +1,35 @@
 ---
 title: Embeds
-description: Keep YouTube videos, maps and other iframes out of an Angular page until their consent category is allowed, with c15t-consent-gate, *c15tIfConsent or the iframe blocker.
+description: Keep YouTube videos, maps and other iframes out of an Angular page until their consent category is allowed, with inth-consent-gate, *inthIfConsent or the iframe blocker.
 group: frameworks
 ---
 
 ## Pick a way to gate the embed
 
 A YouTube video, a map or a social post in an iframe contacts its vendor as
-soon as it loads. c15t offers three ways to keep it from loading before
+soon as it loads. Inth offers three ways to keep it from loading before
 consent:
 
 | Your markup | Use | Placeholder |
 | --- | --- | --- |
-| A component template you write | `<c15t-consent-gate>` around the iframe | Built in, or your own `ng-template` |
-| A template where you want your own fallback, or a condition on several categories | `*c15tIfConsent` on the iframe | Your `else` template, or none |
+| A component template you write | `<inth-consent-gate>` around the iframe | Built in, or your own `ng-template` |
+| A template where you want your own fallback, or a condition on several categories | `*inthIfConsent` on the iframe | Your `else` template, or none |
 | HTML you do not control, such as CMS content or `[innerHTML]` | The iframe blocker with `data-category` and `data-src` | None; the iframe stays empty |
 
 All three use the visitor's effective permission, and all three remove the
 embed again when the visitor withdraws it.
 
-## Wrap the iframe in c15t-consent-gate
+## Wrap the iframe in inth-consent-gate
 
 <include src="../../shared/examples/angular/youtube-embed.mdx" />
 
-The iframe is in an `ng-template c15tConsentGateContent`, so Angular creates
+The iframe is in an `ng-template inthConsentGateContent`, so Angular creates
 it only while measurement is allowed and destroys it when measurement is
 withdrawn. The browser never requests it before. The
-`c15tConsentGatePlaceholder` template replaces the built-in placeholder and
-includes a `c15tConsentDialogLink` button, so a visitor can allow the category
-from the embed's own spot. Keep `<c15t-consent-dialog>` rendered for that
-button. [c15t-consent-gate](./components/consent-gate) lists its inputs.
+`inthConsentGatePlaceholder` template replaces the built-in placeholder and
+includes a `inthConsentDialogLink` button, so a visitor can allow the category
+from the embed's own spot. Keep `<inth-consent-dialog>` rendered for that
+button. [inth-consent-gate](./components/consent-gate) lists its inputs.
 
 Use the content template for anything with side effects. Without it, the gate
 projects its children with `<ng-content>`: Angular creates projected nodes
@@ -41,14 +41,14 @@ Pick the category the vendor's embed needs. YouTube and maps usually fit
 
 ## Render content only while consent holds
 
-`*c15tIfConsent` works like `@if` with a consent condition. It takes a
+`*inthIfConsent` works like `@if` with a consent condition. It takes a
 category name, or a condition such as `{ and: ['functionality', 'marketing'] }`,
 and an optional `else` template:
 
 <include src="../../shared/examples/angular/if-consent.mdx" />
 
 The directive renders on the server too, from the state the server resolved,
-so its output can be in the first HTML. `<c15t-consent-gate>` renders an
+so its output can be in the first HTML. `<inth-consent-gate>` renders an
 empty host on the server and fills it one frame after the first browser
 render.
 
@@ -81,9 +81,9 @@ but drops `<iframe>` elements, so CMS HTML with iframes needs
 `DomSanitizer.bypassSecurityTrustHtml()` for content you trust.
 
 The blocker has no placeholder. Style the empty iframe, or place a note and a
-`c15tConsentDialogLink` button next to it.
+`inthConsentDialogLink` button next to it.
 
-Pass `iframeBlocker: false` to `provideC15t()` to turn the blocker off.
+Pass `iframeBlocker: false` to `provideInth()` to turn the blocker off.
 
 ## Vendor guides
 

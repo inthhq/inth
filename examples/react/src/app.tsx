@@ -4,7 +4,7 @@ export const App = () => {
 	const measurement = useConsent('measurement');
 	return (
 		<main>
-			<h1>c15t with React</h1>
+			<h1>inth with React</h1>
 			<p>
 				PostHog{' '}
 				{measurement ? 'is allowed to load' : 'waits for measurement consent'}.

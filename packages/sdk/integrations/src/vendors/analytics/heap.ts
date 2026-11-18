@@ -69,7 +69,7 @@ export interface HeapReadyCallback {
 /**
  * Minimal public heap.js API exposed on `window.heap`.
  *
- * Before the real SDK loads, c15t creates an array-backed stub with these
+ * Before the real SDK loads, Inth creates an array-backed stub with these
  * methods. The config loader calls `heap.init(envId, clientConfig,
  * serverConfig)`, and heap.js drains `window.heapReadyCb` by invoking each
  * stored callback.
@@ -261,7 +261,7 @@ declare global {
  * Heap configuration script chain-loads the versioned heap.js runtime.
  *
  * Heap does not document a browser opt-out API that can make an already loaded
- * runtime inert for c15t's purposes, so c15t gates the load on `measurement`
+ * runtime inert for inth's purposes, so Inth gates the load on `measurement`
  * consent and unloads the script when that consent is revoked.
  */
 export const heapManifest = {
@@ -326,7 +326,7 @@ export interface HeapOptions {
 	/**
 	 * Heap environment/app id.
 	 *
-	 * Heap's app UI commonly shows this as a numeric string. c15t validates only
+	 * Heap's app UI commonly shows this as a numeric string. Inth validates only
 	 * that the value is a non-empty string after trimming because Heap's public
 	 * install docs describe it generically as `YOUR_APP_ID`.
 	 */
@@ -335,7 +335,7 @@ export interface HeapOptions {
 	 * Optional heap.js client configuration.
 	 *
 	 * Values must be JSON-serializable: plain objects, arrays, strings, finite
-	 * numbers, booleans, and `null`. c15t adds `shouldFetchServerConfig: false`
+	 * numbers, booleans, and `null`. Inth adds `shouldFetchServerConfig: false`
 	 * to match Heap's current web installation snippet.
 	 */
 	clientConfig?: Record<string, unknown>;
@@ -439,7 +439,7 @@ const resolveHeapScriptUrl = function resolveHeapScriptUrl(
  * `heap: missing or invalid envId` with `console.error` and returns a script
  * that never loads.
  *
- * Heap autocaptures interactions as soon as heap.js loads. c15t therefore
+ * Heap autocaptures interactions as soon as heap.js loads. Inth therefore
  * gates the config loader on `measurement` consent and unloads the script when
  * that consent is revoked.
  *

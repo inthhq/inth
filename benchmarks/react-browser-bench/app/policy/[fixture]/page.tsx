@@ -1,5 +1,5 @@
-import { policyBenchFixtures } from '@c15t/benchmarking/policy-fixtures';
-import type { PolicyBenchFixtureName } from '@c15t/benchmarking/policy-fixtures';
+import { policyBenchFixtures } from '@inth/benchmarking/policy-fixtures';
+import type { PolicyBenchFixtureName } from '@inth/benchmarking/policy-fixtures';
 import { notFound } from 'next/navigation';
 
 import { PolicyBenchmarkPage } from '../../_bench/policy-page';

@@ -23,15 +23,15 @@
  *   for named base arms
  * - `BENCHMARK_EXPECTED_SUITES` — comma list restricting which expected
  *   suites are required (partial local runs); every suite by default
- * - `C15T_BENCH_ONLY` / `C15T_BENCH_SKIP` — the suites and scenarios the
+ * - `INTH_BENCH_ONLY` / `INTH_BENCH_SKIP` — the suites and scenarios the
  *   runner measured (see `src/selection.ts`); only those are required
  * - `BENCHMARK_NEW_ON_HEAD` — comma list of result packages the base revision
  *   has no bench for (a gate target new on the head; `scripts/benchmark-run.ts`
  *   sets it). Their missing base results are not failures: relative budgets
  *   are skipped and reported, and absolute budgets still apply
  * - `BENCHMARK_ENFORCE=true` — exit non-zero on any failure above
- * - `C15T_BENCH_BACKEND_LATENCY_MS` (alias `C15T_BENCH_INIT_LATENCY_MS`) and
- *   `C15T_BENCH_PROFILE` — the condition the browser benches ran under, which
+ * - `INTH_BENCH_BACKEND_LATENCY_MS` (alias `INTH_BENCH_INIT_LATENCY_MS`) and
+ *   `INTH_BENCH_PROFILE` — the condition the browser benches ran under, which
  *   their expected keys carry; 200 ms and `none` by default
  */
 import { execFileSync } from 'node:child_process';
@@ -257,7 +257,7 @@ const NEXTJS_DIALOG_CSS_TARBALL_BYTES = 4487;
 const isNextjsTarballResult = (
 	result: BenchmarkResult | undefined
 ): result is BenchmarkResult =>
-	result?.package === '@c15t/next-bundle-bench' &&
+	result?.package === '@inth/next-bundle-bench' &&
 	result.suite === 'artifact' &&
 	result.scenario === 'tarballs';
 

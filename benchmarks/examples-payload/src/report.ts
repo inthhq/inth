@@ -1,7 +1,7 @@
 /**
  * Markdown for one examples payload run.
  */
-import { EXAMPLES_PAYLOAD_BOUNDARY_METRICS } from '@c15t/benchmarking/examples-payload';
+import { EXAMPLES_PAYLOAD_BOUNDARY_METRICS } from '@inth/benchmarking/examples-payload';
 
 export interface ReportInput {
 	commitSha: string;

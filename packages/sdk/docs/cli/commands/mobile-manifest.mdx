@@ -6,21 +6,21 @@ group: cli
 
 ## Bundle the manifest into a native build
 
-`c15t mobile-manifest` fetches the hosted `/manifest` and writes it as the
+`inth mobile-manifest` fetches the hosted `/manifest` and writes it as the
 policy resource the iOS and Android SDKs read before the first network
 response. Run it as a build step so each build carries the latest policy.
 
 ```sh
 npx @c15t/cli mobile-manifest \
   --backend-url https://your-project.inth.app \
-  --out c15t-policy.json \
+  --out inth-policy.json \
   --build release
 ```
 
 | Flag | Purpose |
 | --- | --- |
 | `--backend-url` | Required. The project URL from your Inth dashboard, such as `https://your-project.inth.app`. |
-| `--out` | Where to write the resource. Defaults to `c15t-policy.json`. |
+| `--out` | Where to write the resource. Defaults to `inth-policy.json`. |
 | `--build` | `release` (default) or `debug`. Decides what a failed fetch means. |
 | `--allow-stale-manifest` | Reuse the last fetched copy at `--out` when the fetch fails. |
 | `--expires-in-days` | Days until devices report `policyStale`. Defaults to 30. |
@@ -29,8 +29,8 @@ npx @c15t/cli mobile-manifest \
 | `--dry-run` | The app is built with `dryRun`. `--backend-url` then takes any `https` URL, or `http` on `localhost`, `127.0.0.1` or `[::1]`. The command still fetches and writes the resource. |
 
 In a project with `@c15t/cli` installed, `npx` runs that copy. Without it,
-`npx @c15t/cli` downloads the package; `npx c15t` does not work, because the
-`c15t` package on npm has no executable.
+`npx @c15t/cli` downloads the package; `npx inth` does not work, because the
+`inth` package on npm has no executable.
 
 ## The project URL
 
@@ -46,7 +46,7 @@ Pass `--dry-run` for that build, so the command accepts the URL the app uses:
 ```sh
 npx @c15t/cli mobile-manifest \
   --backend-url http://localhost:8787 \
-  --out c15t-policy.json \
+  --out inth-policy.json \
   --build debug \
   --dry-run
 ```

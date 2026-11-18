@@ -12,7 +12,7 @@ import {
 } from '../session-report';
 
 const manifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			categories: ['marketing'],
@@ -114,7 +114,7 @@ describe('resolveSessionReportProjectUrl', () => {
 		).toBe('https://consent.example.com');
 		// A relative URL cannot be fetched from a server, and the app's own
 		// proxy route would count the visitor twice on the way through.
-		expect(resolveSessionReportProjectUrl({ projectUrl: '/api/c15t' })).toBe(
+		expect(resolveSessionReportProjectUrl({ projectUrl: '/api/inth' })).toBe(
 			undefined
 		);
 		expect(resolveSessionReportProjectUrl({})).toBe(undefined);
@@ -162,7 +162,7 @@ describe('forwardSessionReportHeaders', () => {
 
 describe('reportConsentSession', () => {
 	const JOURNEY_ID = '3b241101-e2bb-4255-8caf-4136c566a962';
-	const journeyURL = `https://shop.example.com/api/c15t/init?journey=${JOURNEY_ID}&journeyScope=page&stored=1`;
+	const journeyURL = `https://shop.example.com/api/inth/init?journey=${JOURNEY_ID}&journeyScope=page&stored=1`;
 
 	test('reads the journey from the request URL, with the Origin as domain', async () => {
 		const init = await resolveInit();
@@ -223,7 +223,7 @@ describe('reportConsentSession', () => {
 			adapter: '@inth/svelte',
 			fetch: fetchSpy,
 			headers: new Headers({
-				cookie: 'c15t=secret',
+				cookie: 'inth=secret',
 				'user-agent': 'UA',
 				'x-forwarded-for': '203.0.113.42',
 			}),
@@ -274,7 +274,7 @@ describe('reportConsentSession', () => {
 			fetch: unused,
 			init: init as never,
 			manifest,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 			source: 'render',
 		});
 		expect(unused).not.toHaveBeenCalled();
@@ -491,7 +491,7 @@ describe('createManifestTransport report option', () => {
 			.mockResolvedValue(new Response(null, { status: 204 }));
 		const transport = createManifestTransport({
 			fetch: fetchSpy,
-			headers: { cookie: 'c15t=secret', 'x-forwarded-for': '203.0.113.42' },
+			headers: { cookie: 'inth=secret', 'x-forwarded-for': '203.0.113.42' },
 			projectUrl: 'https://consent.example.com',
 			report: { adapter: '@inth/nextjs', source: 'render' },
 			snapshot: manifest,

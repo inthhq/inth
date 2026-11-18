@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * The `/consent-example` layout with the banner-shape experiment.
-	 * `?experiment=1` runs it and lets c15t pick the arm; `&arm=wall` sets
+	 * `?experiment=1` runs it and lets Inth pick the arm; `&arm=wall` sets
 	 * the arm the way a flag provider would. Without the param the provider
 	 * gets no `experiment` option.
 	 */

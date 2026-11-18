@@ -188,7 +188,7 @@ const LoadedScripts = ({ scripts }: HarnessDiagnosticsProps) => {
 	useEffect(() => {
 		const updateLoaded = () => {
 			const scriptNodes = Array.from(
-				document.head.querySelectorAll('script[id^="c15t"]')
+				document.head.querySelectorAll('script[id^="inth"]')
 			);
 			setLoaded(
 				scriptNodes.map((script) => {
@@ -272,7 +272,7 @@ const LoadedScripts = ({ scripts }: HarnessDiagnosticsProps) => {
 			</table>
 			{loaded.length === 0 ? (
 				<p style={{ color: '#94a3b8', fontSize: 13, marginTop: 12 }}>
-					No c15t-managed scripts in the DOM yet. Click &quot;Accept All&quot;
+					No inth-managed scripts in the DOM yet. Click &quot;Accept All&quot;
 					or toggle a category.
 				</p>
 			) : null}

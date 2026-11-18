@@ -1369,7 +1369,7 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		);
 		await settle();
 		expect(client.captureException).toHaveBeenCalledWith(error, {
-			captureContext: { tags: { 'c15t.integration': 'sentry' } },
+			captureContext: { tags: { 'inth.integration': 'sentry' } },
 		});
 
 		await kernel.commands.save(deniedConsents);
@@ -1540,7 +1540,7 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		expect(client.addEventProcessor).toHaveBeenCalledOnce();
 	});
 
-	it('warns when Sentry.init ran before c15t and infers IP addresses', () => {
+	it('warns when Sentry.init ran before inth and infers IP addresses', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { script } = setup({ client: { userInfo: true } });
 		mount(script);
@@ -1551,7 +1551,7 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		);
 	});
 
-	it('does not warn about IP addresses when c15t starts Sentry', async () => {
+	it('does not warn about IP addresses when inth starts Sentry', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { client } = createClient({ userInfo: true });
 		const current: { client?: SentryClient } = {};
@@ -2485,7 +2485,7 @@ describe('Sentry loaded from the CDN', () => {
 		expect(initOptions.integrations([{ name: 'Default' }])).toEqual([
 			{
 				beforeSetup: expect.any(Function),
-				name: 'C15tConsent',
+				name: 'InthConsent',
 				setup: expect.any(Function),
 			},
 			{ name: 'Default' },

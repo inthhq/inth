@@ -6,8 +6,8 @@ import './globals.css';
 import { ServerConsent } from './server-consent';
 
 export const metadata: Metadata = {
-	description: 'Packed-artifact c15t consumer for production benchmarks',
-	title: 'c15t production consumer',
+	description: 'Packed-artifact inth consumer for production benchmarks',
+	title: 'inth production consumer',
 };
 
 /**

@@ -13,8 +13,8 @@ import {
 	safeCommitSha,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking';
-import type { BenchmarkResult } from '@c15t/benchmarking';
+} from '@inth/benchmarking';
+import type { BenchmarkResult } from '@inth/benchmarking';
 import { chromium } from 'playwright';
 import type * as PlaywrightTypes from 'playwright';
 
@@ -426,7 +426,7 @@ const run = async function run(): Promise<void> {
 				'TaskDuration approximates total main-thread work to first paint.',
 				'ScriptDuration captures JS evaluation time specifically.',
 			],
-			package: '@c15t/vite-react-repro',
+			package: '@inth/vite-react-repro',
 			runtime: 'playwright',
 			scenario: 'first-paint',
 			schemaVersion: BENCHMARK_SCHEMA_VERSION,

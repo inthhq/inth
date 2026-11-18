@@ -197,7 +197,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 	// A client that stops being current with a load in flight keeps a one-shot
 	// guard until it completes, even after chat ownership ends.
 	const pendingGuards = new Map<HubSpotConversationsClient, () => void>();
-	// Clients showing a widget c15t loaded or adopted. Only the current one may.
+	// Clients showing a widget Inth loaded or adopted. Only the current one may.
 	const loadedClients = new WeakSet<HubSpotConversationsClient>();
 	let requestSync: (() => void) | undefined;
 	const readWidgetLoaded = (conversations: HubSpotConversationsClient) => {
@@ -249,7 +249,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 	};
 
 	// The current client's own listener handles its completion. Any other late
-	// load follows one rule: only the current client may show c15t's widget.
+	// load follows one rule: only the current client may show inth's widget.
 	const settleLateLoad = (conversations: HubSpotConversationsClient) => {
 		if (started && conversations === client) {
 			return;
@@ -302,7 +302,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 		next: HubSpotConversationsClient
 	) => {
 		if (previous && loadedClients.has(previous)) {
-			// Only the current client may show c15t's widget.
+			// Only the current client may show inth's widget.
 			loadedClients.delete(previous);
 			previous.widget.remove();
 		}
@@ -652,7 +652,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 };
 
 /**
- * Loads HubSpot after marketing consent and forwards c15t's consent categories.
+ * Loads HubSpot after marketing consent and forwards inth's consent categories.
  *
  * @param options - Public portal ID, region, loader condition and chat choice.
  * @returns A consent-gated HubSpot script, or a skipped script for an invalid ID.
@@ -664,7 +664,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
  *
  * Set `chat: true` to enable chat after functionality consent. The loader remains
  * on revocation to prevent reinjection. Consent signals, cookie revocation and
- * widget removal cannot unload HubSpot's child scripts. Keep c15t's default
+ * widget removal cannot unload HubSpot's child scripts. Keep inth's default
  * reload on revocation enabled to stop the current page's running code.
  *
  * Remove other HubSpot installations. An existing `hs-script-loader` script is

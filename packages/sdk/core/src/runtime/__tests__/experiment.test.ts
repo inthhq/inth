@@ -68,8 +68,8 @@ beforeEach(() => {
 });
 afterEach(() => {
 	vi.restoreAllMocks();
-	delete (window as { c15t?: unknown }).c15t;
-	delete (window as { __c15tExperiment?: unknown }).__c15tExperiment;
+	delete (window as { inth?: unknown }).inth;
+	delete (window as { __inthExperiment?: unknown }).__inthExperiment;
 });
 
 /** Wait for the lazily loaded controller to release the held prompt. */
@@ -91,7 +91,7 @@ describe('runtime experiments', () => {
 		await vi.waitFor(() => expect(shown).toHaveLength(1));
 		const assignment = first.runtime.kernel.getSnapshot().experiment;
 		expect(assignment).toMatchObject({
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'banner-shape',
 		});
 		// The first impression already carries the arm.
@@ -156,7 +156,7 @@ describe('runtime experiments', () => {
 			EXPERIMENT_STORAGE_KEY,
 			JSON.stringify({ arm: 'bar', id: 'banner-shape' })
 		);
-		(window as { __c15tExperiment?: unknown }).__c15tExperiment = {
+		(window as { __inthExperiment?: unknown }).__inthExperiment = {
 			arm: 'floating',
 			id: 'banner-shape',
 		};
@@ -181,7 +181,7 @@ describe('runtime experiments', () => {
 			EXPERIMENT_STORAGE_KEY,
 			JSON.stringify({ arm: 'bar', id: 'banner-shape' })
 		);
-		(window as { __c15tExperiment?: unknown }).__c15tExperiment = early;
+		(window as { __inthExperiment?: unknown }).__inthExperiment = early;
 		const { runtime } = createRuntime();
 		runtime.start();
 		await settled(runtime);
@@ -278,7 +278,7 @@ describe('runtime experiments', () => {
 		second.runtime.dispose();
 	});
 
-	test('a c15t-picked arm is on /init too', async () => {
+	test('a inth-picked arm is on /init too', async () => {
 		const { runtime, transport } = createRuntime({
 			split: { bar: 1, control: 0, floating: 0 },
 		});

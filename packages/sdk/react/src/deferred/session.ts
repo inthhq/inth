@@ -126,4 +126,4 @@ export interface DeferredSession {
 export const DeferredSessionContext = createContext<DeferredSession | null>(
 	null
 );
-DeferredSessionContext.displayName = 'C15tDeferredSessionContext';
+DeferredSessionContext.displayName = 'InthDeferredSessionContext';

@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 
-const SWITCH_ROOT_CONTEXT_KEY = Symbol('c15t-svelte-switch-root');
+const SWITCH_ROOT_CONTEXT_KEY = Symbol('inth-svelte-switch-root');
 
 export interface SwitchRootContextValue {
 	readonly checked: boolean;

@@ -7,7 +7,7 @@ import type { ConsentManifest } from './consent-manifest';
 import { parseConsentManifest } from './consent-manifest-schema';
 
 const scriptSources = {
-	// c15t checks each entry when it loads the script, so the schema keeps
+	// Inth checks each entry when it loads the script, so the schema keeps
 	// one it could not use and fields it does not know.
 	broken: { src: 'http://acme.inth.app/scripts/broken.js' },
 	held: null,
@@ -20,13 +20,13 @@ const scriptSources = {
 };
 
 const manifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'script-sources',
 	schemaVersion: 2,
 } satisfies ConsentManifest;
 
 const initOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: null, regionCode: null },
 	policyResolution: resolveInitFromManifest(manifest, {}).policyResolution,
 	translations: {

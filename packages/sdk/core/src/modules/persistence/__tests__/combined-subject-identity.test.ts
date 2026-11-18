@@ -381,7 +381,7 @@ test.each(STORAGE)(
 		const recorded = subjectIdOf(first.kernel) as string;
 		await save(first.kernel, 'none');
 		first.handle.dispose();
-		// An older c15t on another tab, or a server response, stored its own
+		// An older Inth on another tab, or a server response, stored its own
 		// ID meanwhile.
 		const other = generateSubjectId();
 		document.cookie = `${keys.subject}=${other}; path=/`;

@@ -63,7 +63,7 @@ afterEach(async () => {
 	// the real update module. Let those imports land before queueing more.
 	await vi.dynamicImportSettled();
 	vi.doUnmock('../provider-update');
-	delete (window as { c15t?: unknown }).c15t;
+	delete (window as { inth?: unknown }).inth;
 });
 
 describe('update() and the update module', () => {

@@ -17,7 +17,7 @@ import {
 } from './e2e-test-utils';
 import { adrollPixel } from './vendors/ads-and-pixels/adroll';
 
-const account = { advertiserId: 'c15t-advertiser', pixelId: 'c15t-pixel' };
+const account = { advertiserId: 'inth-advertiser', pixelId: 'inth-pixel' };
 const vendorGlobals = [
 	'adroll',
 	'adroll_adv_id',
@@ -74,7 +74,7 @@ describe('AdRoll production core loader contract', () => {
 		]);
 		expect(append).toHaveBeenCalledOnce();
 		expect(document.querySelector('script')?.src).toBe(
-			'https://s.adroll.com/j/c15t-advertiser/roundtrip.js'
+			'https://s.adroll.com/j/inth-advertiser/roundtrip.js'
 		);
 	});
 

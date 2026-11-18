@@ -37,7 +37,7 @@ final class PreferencesAlignmentTests: XCTestCase {
         reveal(customize)
         customize.tap()
 
-        let prefix = iab ? "inth.iab" : "inth.prefs"
+        let prefix = iab ? "c15t.iab" : "inth.prefs"
         let save = app.buttons[prefix + ".save"]
         for presentation in ["fullscreen", "standing"] {
             XCTAssertTrue(save.waitForExistence(timeout: 5))

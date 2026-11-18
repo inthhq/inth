@@ -10,7 +10,7 @@ import { KernelContext } from '../context';
 import { ConsentDraftProvider, useConsentDraft } from '../draft';
 import { ConsentProvider } from '../provider';
 
-const STORAGE_KEY = 'c15t';
+const STORAGE_KEY = 'inth';
 const nextFrame = () =>
 	new Promise((resolve) => {
 		requestAnimationFrame(() => resolve(undefined));

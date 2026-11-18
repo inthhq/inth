@@ -11,7 +11,7 @@ const committed = resolve(
 );
 
 it('keeps the malformed bundled-resource fixture in step with its generator', () => {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-invalid-resources-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-invalid-resources-'));
 	try {
 		const result = spawnSync(
 			'bun',

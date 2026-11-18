@@ -106,7 +106,7 @@ const deriveProjectUrl = function deriveProjectUrl(
 	try {
 		// Parse relative URLs too, without mistaking a host named "manifest"
 		// for the endpoint. The base is only used to inspect the pathname.
-		const parsed = new URL(trimmed, 'https://c15t.invalid');
+		const parsed = new URL(trimmed, 'https://inth.invalid');
 		if (
 			!['http:', 'https:'].includes(parsed.protocol) ||
 			!parsed.pathname.endsWith('/manifest')
@@ -248,12 +248,12 @@ const createManifestSource = function createManifestSource(
 			: `${projectUrl}/manifest`);
 	if (!(options.snapshot || manifestUrl)) {
 		throw new Error(
-			'c15t: manifest() needs `snapshot`, `manifestUrl` or `projectUrl`.'
+			'inth: manifest() needs `snapshot`, `manifestUrl` or `projectUrl`.'
 		);
 	}
 	if (projectUrl === undefined) {
 		throw new Error(
-			'c15t: manifest() needs `projectUrl` unless `manifestUrl` ends in `/manifest`. Pass the consent API URL, or an empty string for this origin.'
+			'inth: manifest() needs `projectUrl` unless `manifestUrl` ends in `/manifest`. Pass the consent API URL, or an empty string for this origin.'
 		);
 	}
 	const getFetch = (): typeof globalThis.fetch =>

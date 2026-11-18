@@ -138,7 +138,7 @@ describe('extractRelevantHeaders', () => {
 		});
 	});
 
-	it('should add c15t headers when corresponding headers are present', () => {
+	it('should add inth headers when corresponding headers are present', () => {
 		const headers = new Headers();
 
 		// Country headers

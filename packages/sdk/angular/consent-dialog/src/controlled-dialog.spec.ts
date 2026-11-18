@@ -4,14 +4,14 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { ConsentDialog } from './consent-dialog';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialog],
 	selector: 'test-controlled-dialog',
-	template: `<c15t-consent-dialog [(open)]="open" />`,
+	template: `<inth-consent-dialog [(open)]="open" />`,
 })
 class ControlledDialog {
 	readonly open = signal<boolean | undefined>(true);
@@ -21,7 +21,7 @@ class ControlledDialog {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialog],
 	selector: 'test-controlled-dialog-trigger',
-	template: `<c15t-consent-dialog
+	template: `<inth-consent-dialog
 		[(open)]="open"
 		[showTrigger]="true"
 	/>`,
@@ -35,10 +35,10 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-describe('<c15t-consent-dialog [(open)]>', () => {
+describe('<inth-consent-dialog [(open)]>', () => {
 	test('closes on Escape when the parent owns open', async () => {
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ ...testOptions(), disableAnimation: true })],
+			providers: [provideInth({ ...testOptions(), disableAnimation: true })],
 		});
 		const fixture = TestBed.createComponent(ControlledDialog);
 		const consent = TestBed.inject(ConsentManager);
@@ -73,7 +73,7 @@ describe('<c15t-consent-dialog [(open)]>', () => {
 		['reject', 'consent-widget-reject-button'],
 	])("closes the parent's open after %s", async (_name, testId) => {
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ ...testOptions(), disableAnimation: true })],
+			providers: [provideInth({ ...testOptions(), disableAnimation: true })],
 		});
 		const fixture = TestBed.createComponent(ControlledDialog);
 		await vi.waitFor(async () => {
@@ -98,7 +98,7 @@ describe('<c15t-consent-dialog [(open)]>', () => {
 
 	test('the trigger opens it, and hides while it is open', async () => {
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ ...testOptions(), disableAnimation: true })],
+			providers: [provideInth({ ...testOptions(), disableAnimation: true })],
 		});
 		const fixture = TestBed.createComponent(ControlledWithTrigger);
 		const trigger = () =>

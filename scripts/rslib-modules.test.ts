@@ -34,7 +34,7 @@ afterEach(async () => {
 });
 
 const temporaryDirectory = function temporaryDirectory() {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-modules-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-modules-'));
 	directories.push(directory);
 	return directory;
 };

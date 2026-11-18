@@ -194,7 +194,7 @@ test('disposing the runtime cancels a pending external reload', async () => {
 	expect(reload).not.toHaveBeenCalled();
 });
 
-test('all framework preference setters delegate without opening c15t UI, and errors reach callbacks', async () => {
+test('all framework preference setters delegate without opening inth UI, and errors reach callbacks', async () => {
 	const error = new Error('CMP unavailable');
 	const openPreferences = vi.fn<() => void | Promise<void>>();
 	const onError = vi.fn();

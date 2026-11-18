@@ -22,7 +22,7 @@ import { manifestNeedsLocation } from '../transports/manifest-browser-location';
 import type { InitContext } from '../types';
 
 const everywhereManifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			...policyRulePresets.europeOptIn(),

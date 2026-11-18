@@ -11,11 +11,11 @@ group: frameworks
 ## Reuse cached policy data
 
 Use runtime manifest caching when policy changes must reach your app without
-a rebuild. Set the mode in `c15t.config.ts`:
+a rebuild. Set the mode in `inth.config.ts`:
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { defineConsentConfig, manifest } from '@inth/nextjs';
 
 export default defineConsentConfig({ mode: manifest({ source: 'runtime' }) });
@@ -74,18 +74,18 @@ without it.
 
 The app server still connects to the backend, and each save takes an extra
 hop through your server. Measure your deployment to check the effect on
-latency. Vendor scripts, pixels and iframes keep their own URLs; only c15t
-requests move. The same setup works with a self-hosted c15t backend.
+latency. Vendor scripts, pixels and iframes keep their own URLs; only Inth
+requests move. The same setup works with a self-hosted Inth backend.
 
 Set `routePrefix` and `proxy: true` in the config, and keep `projectUrl`
 absolute:
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { defineConsentConfig } from '@inth/nextjs';
 
-export default defineConsentConfig({ proxy: true, routePrefix: '/api/c15t' });
+export default defineConsentConfig({ proxy: true, routePrefix: '/api/inth' });
 ```
 
 Then mount the consent route with `proxy: true`, so it forwards saves to the
@@ -93,7 +93,7 @@ backend. In the App Router:
 
 {/* example: fragment */}
 
-```ts title="app/api/c15t/[...c15t]/route.ts"
+```ts title="app/api/inth/[...inth]/route.ts"
 import { createConsentRoute } from '@inth/nextjs/api';
 
 export const { DELETE, GET, OPTIONS, PATCH, POST, PUT } = createConsentRoute({
@@ -105,7 +105,7 @@ In the Pages Router:
 
 {/* example: fragment */}
 
-```ts title="pages/api/c15t/[...c15t].ts"
+```ts title="pages/api/inth/[...inth].ts"
 import { createPagesConsentRoute } from '@inth/nextjs/pages';
 
 export default createPagesConsentRoute({ proxy: true });
@@ -115,17 +115,17 @@ What the route serves:
 
 | Request | Handled by |
 | --- | --- |
-| `GET /api/c15t/init` | The route, from the bundled manifest, for this request's location, language and privacy signal |
-| `GET /api/c15t/manifest` | The route, serving the bundled manifest |
-| `POST /api/c15t/subjects` and other consent paths | Forwarded to your backend because `proxy: true` |
+| `GET /api/inth/init` | The route, from the bundled manifest, for this request's location, language and privacy signal |
+| `GET /api/inth/manifest` | The route, serving the bundled manifest |
+| `POST /api/inth/subjects` and other consent paths | Forwarded to your backend because `proxy: true` |
 | Any other path | `404`, so the route is never an open proxy |
 
 Keep these details right:
 
-- `proxy: true` in `c15t.config.ts` points the browser at `routePrefix` for
+- `proxy: true` in `inth.config.ts` points the browser at `routePrefix` for
   init and saves. `resolveConsent`, `withConsentProps` and the consent route
   keep the absolute `projectUrl` from the config or
-  `NEXT_PUBLIC_C15T_BACKEND_URL`, so the server never fetches its own route
+  `NEXT_PUBLIC_INTH_PROJECT_URL`, so the server never fetches its own route
   and `withConsentManifest` still downloads the manifest from the backend.
 - `proxy` needs `routePrefix`. Without it, `defineConsentConfig` throws
   ``@inth/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.``
@@ -184,7 +184,7 @@ work once a response is sent, register it with the platform so it can finish.
 Pass `onBackgroundRevalidate` to the route; it is called inside the handler
 with the refresh promise, which never rejects:
 
-```ts title="app/api/c15t/[...c15t]/route.ts"
+```ts title="app/api/inth/[...inth]/route.ts"
 import { createConsentRoute } from '@inth/nextjs/api';
 import { after } from 'next/server';
 
@@ -229,14 +229,14 @@ also confirm browser consent requests use your origin.
 
 ## Know when ConsentRoot loads its engine
 
-`ConsentRoot` keeps c15t's consent engine out of the page's first-load
+`ConsentRoot` keeps inth's consent engine out of the page's first-load
 JavaScript. The engine is the code that stores consent, saves choices and
 renders the banner in React. The server still renders the whole root, so the
 banner, its styles and any [scripts the server starts](/docs/frameworks/next/rendering#start-allowed-scripts-before-hydration)
 are in the first HTML.
 
 In the browser the page under `ConsentRoot` hydrates at once. Until the engine
-loads, c15t's hooks return the consent state the server rendered with, and
+loads, inth's hooks return the consent state the server rendered with, and
 most of their actions, such as `useSetActiveUI()`, wait for the engine and run
 when it arrives. The banner keeps its server HTML.
 
@@ -305,7 +305,7 @@ some entries with callbacks (see below).
 
 Some pages need the engine sooner. `ConsentRoot` loads it at once when:
 
-- a `scripts` entry, in `c15t.config.ts` or on `ConsentRoot`, may run for
+- a `scripts` entry, in `inth.config.ts` or on `ConsentRoot`, may run for
   this visitor (`alwaysLoad`, or a category such as `necessary` that is
   allowed) and nothing else starts it: the server did not start it from the
   HTML, and it is not a plain `src` entry `ConsentRoot` starts itself for a
@@ -381,7 +381,7 @@ covers. There is nothing to configure. The code that decides ships with
 
 Next.js assigns chunk file names in the browser build, and the server
 rendering `ConsentRoot` cannot read them. So the browser records the engine's
-chunk URLs in `localStorage` (key `c15t-engine-chunks`) the first time it
+chunk URLs in `localStorage` (key `inth-engine-chunks`) the first time it
 loads the engine. It records only URLs under `/_next/static/`, never the
 consent-gated scripts that start while the engine loads. When the server
 renders a visitor the engine must serve at once, `ConsentRoot` adds a small
@@ -391,7 +391,7 @@ the preload runs only when the stored-choice check before it finds the
 choice changed in the browser; otherwise their engine waits for the page's
 priority images and nothing is preloaded. A root that must load the engine
 at once anyway gets no check and the plain preload: a `scripts` entry on
-`ConsentRoot` or in `c15t.config.ts` that needs the script loader, a root
+`ConsentRoot` or in `inth.config.ts` that needs the script loader, a root
 with `persistence: false`, `options.consentSource`, `options.enabled:
 false`, an experiment or a `networkBlocker`. The record is
 tied to the page's build, so after a deploy nothing stale is fetched; the

@@ -6,11 +6,11 @@ allprojects {
         exclusiveContent {
             forRepository {
                 maven {
-                    url = uri(System.getenv('C15T_MAVEN_URL') ?: 'https://maven.pkg.github.com/inthhq/c15t-private')
+                    url = uri(System.getenv('INTH_MAVEN_URL') ?: 'https://maven.pkg.github.com/inthhq/inth-private')
                     if (url.scheme == 'https') {
                         credentials {
-                            username = System.getenv('C15T_MAVEN_USERNAME')
-                            password = System.getenv('C15T_MAVEN_TOKEN')
+                            username = System.getenv('INTH_MAVEN_USERNAME')
+                            password = System.getenv('INTH_MAVEN_TOKEN')
                         }
                     }
                 }

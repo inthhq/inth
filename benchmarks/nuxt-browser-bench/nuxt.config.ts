@@ -1,11 +1,11 @@
 import { fileURLToPath } from 'node:url';
 
-import { baselineServerOutputDir } from '@c15t/benchmarking/nuxt-baseline';
+import { baselineServerOutputDir } from '@inth/benchmarking/nuxt-baseline';
 
 const getBenchManifestUrl = function getBenchManifestUrl() {
-	const token = process.env.C15T_BENCH_COLD_MANIFEST_TOKEN;
+	const token = process.env.INTH_BENCH_COLD_MANIFEST_TOKEN;
 	const base =
-		process.env.C15T_BENCH_MANIFEST_URL ??
+		process.env.INTH_BENCH_MANIFEST_URL ??
 		'http://127.0.0.1:4313/api/bench-consent/manifest';
 	return token
 		? `${base}${base.includes('?') ? '&' : '?'}cold=${encodeURIComponent(token)}`
@@ -13,11 +13,11 @@ const getBenchManifestUrl = function getBenchManifestUrl() {
 };
 
 /**
- * Zero-consent baseline build: C15T_BENCH_BASELINE=1 omits the @inth/nuxt
+ * Zero-consent baseline build: INTH_BENCH_BASELINE=1 omits the @inth/nuxt
  * module (and its config) entirely so the /baseline scenario measures the
  * page's own floor. Two-build pattern, same as the CSS experiment.
  */
-const baselineBuild = process.env.C15T_BENCH_BASELINE === '1';
+const baselineBuild = process.env.INTH_BENCH_BASELINE === '1';
 const config = {
 	...(baselineBuild && {
 		// Own asset prefix, so the consent gate can route the control page's
@@ -34,7 +34,7 @@ const config = {
 		// The route plugin switches this page to browser resolution, which
 		// the server cannot see in an `ssr: false` shell, so its HTML must
 		// not start the hosted `/init` request.
-		'/client-manifest': { c15t: { initPrefetch: false }, ssr: false },
+		'/client-manifest': { inth: { initPrefetch: false }, ssr: false },
 	},
 	runtimeConfig: {
 		public: {
@@ -82,7 +82,7 @@ if (baselineBuild) {
 	});
 } else {
 	Object.assign(config, {
-		c15t: {
+		inth: {
 			consentCategories: [
 				'necessary',
 				'functionality',

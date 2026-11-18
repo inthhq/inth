@@ -69,7 +69,7 @@ describe('resolveConsent: no backend URL', () => {
 	test('returns the cookie and header state without fetching', async () => {
 		const fetchSpy = vi.fn();
 		vi.stubGlobal('fetch', fetchSpy);
-		headerStore.set('cookie', 'c15t=c.necessary:1,c.marketing:1,i.t:1');
+		headerStore.set('cookie', 'inth=c.necessary:1,c.marketing:1,i.t:1');
 		headerStore.set('x-vercel-ip-country', 'DE');
 
 		const state = await resolveConsent({ fetch: fetchSpy });
@@ -97,7 +97,7 @@ describe('resolveConsent: cookies', () => {
 		// re-rendered into the first HTML (the re-prompt zombie).
 		headerStore.set(
 			'cookie',
-			'c15t=c.necessary:1,c.marketing:1,c.measurement:0,i.t:1234567890'
+			'inth=c.necessary:1,c.marketing:1,c.measurement:0,i.t:1234567890'
 		);
 		const config = await resolveConsent();
 		expect(config.initialRecords?.choice?.version).toBe(3);
@@ -108,7 +108,7 @@ describe('resolveConsent: cookies', () => {
 	});
 
 	test('ignores malformed cookie values', async () => {
-		headerStore.set('cookie', 'c15t=not-a-consent-payload');
+		headerStore.set('cookie', 'inth=not-a-consent-payload');
 		const config = await resolveConsent();
 		expect(config.initialRecords?.choice).toBeNull();
 		expect(Object.hasOwn(config, 'initialHasConsented')).toBe(false);
@@ -210,7 +210,7 @@ describe('resolveConsent: fluid-compute safety', () => {
 			choice,
 			version: 3,
 		});
-		return `c15t=${encodeURIComponent(raw)}`;
+		return `inth=${encodeURIComponent(raw)}`;
 	};
 
 	/** A request context of its own, not the shared mutable stores above. */

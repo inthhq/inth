@@ -91,7 +91,7 @@ test('useEventDispatcher keeps one dispatcher and pageview history through conse
 	await screen.getByRole('button', { name: 'revoke and track' }).click();
 	expect(capture).toHaveBeenCalledTimes(1);
 
-	// Turning c15t off swaps the kernel, and the dispatcher follows it.
+	// Turning Inth off swaps the kernel, and the dispatcher follows it.
 	await screen.rerender(
 		<App
 			enabled={false}

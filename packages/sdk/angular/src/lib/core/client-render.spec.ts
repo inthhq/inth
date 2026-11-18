@@ -22,18 +22,18 @@ import { afterEach, describe, expect, test } from 'vitest';
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentBanner } from '../banner/consent-banner';
 import { Branding } from '../shared/branding';
-import { provideC15t } from './provide-c15t';
+import { provideInth } from './provide-inth';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [Branding, ConsentBanner],
 	selector: 'test-host',
 	template: `<a
-			c15t-branding
+			inth-branding
 			variant="banner-tag"
 			data-testid="branding"
 		></a>
-		<c15t-consent-banner [disableAnimation]="true" />`,
+		<inth-consent-banner [disableAnimation]="true" />`,
 })
 class Host {}
 
@@ -47,7 +47,7 @@ const policy = normalizePolicyRule({
 
 const firstRender = (prefetch?: RuntimePrefetch) => {
 	TestBed.configureTestingModule({
-		providers: [provideC15t({ ...testOptions(), prefetch })],
+		providers: [provideInth({ ...testOptions(), prefetch })],
 	});
 	const fixture = TestBed.createComponent(Host);
 	fixture.detectChanges();
@@ -81,7 +81,7 @@ describe('client-only first render', () => {
 		const appRef = await createApplication({
 			providers: [
 				provideZonelessChangeDetection(),
-				provideC15t({ ...testOptions(), prefetch: resolvedPrefetch() }),
+				provideInth({ ...testOptions(), prefetch: resolvedPrefetch() }),
 			],
 		});
 		const host = document.createElement('test-host');

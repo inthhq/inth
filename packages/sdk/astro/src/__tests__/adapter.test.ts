@@ -79,7 +79,7 @@ describe('dialog adapter registry', () => {
 describe('dialog surface registry', () => {
 	it('points at the integration when nothing registered a surface', () => {
 		expect(() => requireDialogSurface('solid' as never)).toThrowError(
-			/c15t\(\) is missing from astro.config/u
+			/inth\(\) is missing from astro.config/u
 		);
 	});
 

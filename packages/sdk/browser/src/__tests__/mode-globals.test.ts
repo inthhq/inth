@@ -11,12 +11,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createGlobal } from '../global';
 import { autoInit, installGlobal } from '../global-base';
-import type { C15tGlobalBase } from '../global-base';
+import type { InthGlobalBase } from '../global-base';
 import { createHostedGlobal } from '../hosted-global';
 import { createTestingGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
-/** A query pair c15t adds to `/init`. */
+/** A query pair Inth adds to `/init`. */
 const INIT_PAIR =
 	/^(?:v|contract|country|region|gpc|experiment|journey|journeyScope|stored)=/u;
 
@@ -35,7 +35,7 @@ const pathOf = (url: unknown): string => {
 	return kept.length > 0 ? `${base}?${kept.join('&')}` : base;
 };
 
-const testWindow = window as Window & { c15t?: unknown };
+const testWindow = window as Window & { inth?: unknown };
 const policy = {
 	...policyRulePresets.europeOptIn(),
 	categories: ['measurement'] as const,
@@ -72,13 +72,13 @@ const optionsFor = function optionsFor(
 	};
 };
 
-const installed = function installed(): C15tGlobalBase {
-	return testWindow.c15t as C15tGlobalBase;
+const installed = function installed(): InthGlobalBase {
+	return testWindow.inth as InthGlobalBase;
 };
 
 const loadTag = async function loadTag(
 	mode: 'hosted' | 'testing'
-): Promise<C15tGlobalBase> {
+): Promise<InthGlobalBase> {
 	vi.resetModules();
 	if (mode === 'hosted') {
 		await import('../entries/cdn');
@@ -103,7 +103,7 @@ const ping = function ping(): GPPPingData | undefined {
 
 afterEach(() => {
 	installed()?.dispose?.();
-	testWindow.c15t = undefined;
+	testWindow.inth = undefined;
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 	localStorage.clear();
@@ -162,7 +162,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 		const currentScript = vi
 			.spyOn(document, 'currentScript', 'get')
 			.mockReturnValue(script);
-		testWindow.c15t = [
+		testWindow.inth = [
 			['config', { consentCategories: ['measurement'], enabled: false }],
 		];
 		const api = installGlobal(create());
@@ -196,7 +196,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 		);
 		vi.stubGlobal('fetch', fetchSpy);
 		const loaded = vi.fn();
-		testWindow.c15t = [
+		testWindow.inth = [
 			[
 				'config',
 				{
@@ -247,7 +247,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 			vi.fn<typeof fetch>(() => Promise.resolve(Response.json({ ok: true })))
 		);
 		const consent = vi.fn();
-		testWindow.c15t = [
+		testWindow.inth = [
 			['config', optionsFor(mode)],
 			['on', 'consent', consent],
 			['acceptAll'],
@@ -270,7 +270,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 	});
 
 	it('reuses the first global when the bundle or generic bundle loads again', async () => {
-		testWindow.c15t = [['config', optionsFor(mode)]];
+		testWindow.inth = [['config', optionsFor(mode)]];
 		const first = installGlobal(create());
 		first.init();
 		await first.ready();
@@ -301,7 +301,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 			if (mode === 'testing') {
 				config.policy = [california];
 			}
-			testWindow.c15t = [['config', config]];
+			testWindow.inth = [['config', config]];
 			if (order === 'before') {
 				await loadGPP();
 			}
@@ -327,7 +327,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 
 describe('default CDN entry', () => {
 	it('selects hosted from the backend tag without an explicit mode', async () => {
-		testWindow.c15t = [
+		testWindow.inth = [
 			[
 				'config',
 				{
@@ -364,7 +364,7 @@ describe('default CDN entry', () => {
 				Promise.resolve(
 					Response.json(
 						{
-							branding: 'c15t',
+							branding: 'inth',
 							hosting: 'inth',
 							location: { countryCode: 'DE', regionCode: null },
 							policyResolution: writePolicyResolutionWire(resolution),
@@ -416,14 +416,14 @@ describe('default CDN entry', () => {
 		['manifest mode', { mode: 'manifest' }, /only hosted mode/u],
 		[
 			'inline manifest',
-			{ manifest: { branding: 'c15t', revision: '1', schemaVersion: 2 } },
+			{ manifest: { branding: 'inth', revision: '1', schemaVersion: 2 } },
 			/manifest inputs/u,
 		],
 		['manifest URL', { manifestUrl: '/manifest' }, /manifest inputs/u],
 	])('rejects %s before starting', async (_name, options, error) => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fetchSpy);
-		testWindow.c15t = [
+		testWindow.inth = [
 			[
 				'config',
 				{ projectUrl: 'https://consent.example.test', ui: false, ...options },
@@ -443,7 +443,7 @@ describe('default CDN entry', () => {
 		);
 
 		await expect(loadTag('hosted')).rejects.toThrow(/data-mode/u);
-		expect(testWindow.c15t).toBeUndefined();
+		expect(testWindow.inth).toBeUndefined();
 	});
 });
 
@@ -451,7 +451,7 @@ describe('testing CDN entry', () => {
 	it('resolves policy presets without a backend or explicit mode', async () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fetchSpy);
-		testWindow.c15t = [
+		testWindow.inth = [
 			[
 				'config',
 				{

@@ -30,7 +30,7 @@ beforeEach(() => {
 	localStorage.clear();
 	clearStoredConsentRecords();
 	// A clear keeps its epoch and the subject ID; start every test without.
-	for (const key of ['c15t-epoch', 'c15t-sid']) {
+	for (const key of ['inth-epoch', 'inth-sid']) {
 		document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 	}
 	vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -149,16 +149,16 @@ test('hydrates readable choices without clearing an unreadable notice record', a
 	kernel.set.privacySignals({ gpc: true });
 	vi.advanceTimersByTime(0);
 	const before = kernel.getSnapshot();
-	const storedChoice = localStorage.getItem('c15t');
+	const storedChoice = localStorage.getItem('inth');
 	expect(storedChoice).not.toBeNull();
 	vi.spyOn(document, 'cookie', 'get').mockImplementation(() => {
 		throw new DOMException('Cookies blocked', 'SecurityError');
 	});
 	vi.spyOn(localStorage, 'getItem').mockImplementation((key) => {
-		if (key === 'c15t-notice') {
+		if (key === 'inth-notice') {
 			throw new DOMException('Record blocked', 'SecurityError');
 		}
-		return key === 'c15t' ? storedChoice : null;
+		return key === 'inth' ? storedChoice : null;
 	});
 
 	const stored = readStoredRecords(undefined, NOW);
@@ -179,8 +179,8 @@ test.each(['getter', 'methods', 'missing'] as const)(
 		writer.dispose();
 		const saved = source.getSnapshot();
 		const { cookie } = document;
-		expect(cookie).toContain('c15t=');
-		expect(cookie).toContain('c15t-notice=');
+		expect(cookie).toContain('inth=');
+		expect(cookie).toContain('inth-notice=');
 		localStorage.clear();
 		restrictStorage(restriction);
 
@@ -195,7 +195,7 @@ test.each(['getter', 'methods', 'missing'] as const)(
 
 		reader.clear();
 		// The clear epoch is the only thing left.
-		expect(document.cookie).toMatch(/^c15t-epoch=\d+$/u);
+		expect(document.cookie).toMatch(/^inth-epoch=\d+$/u);
 		expect(restored.getSnapshot().explicitChoice).toBeNull();
 		expect(restored.getSnapshot().noticeDismissal).toBeNull();
 	}
@@ -213,8 +213,8 @@ test.each(['getter', 'methods', 'missing'] as const)(
 		// Flush the deferred writes without advancing the receipt expiry timer.
 		expect(() => vi.advanceTimersByTime(0)).not.toThrow();
 		writer.dispose();
-		expect(document.cookie).toContain('c15t=');
-		expect(document.cookie).toContain('c15t-notice=');
+		expect(document.cookie).toContain('inth=');
+		expect(document.cookie).toContain('inth-notice=');
 		const restored = createKernel();
 		persist(restored);
 		expect(restored.getSnapshot().explicitChoice).toEqual(
@@ -236,7 +236,7 @@ test('a server-seeded start reads the subject from localStorage when cookies can
 	void kernel.commands.save({ measurement: false });
 	vi.advanceTimersByTime(0);
 	handle.dispose();
-	for (const key of ['c15t-sid']) {
+	for (const key of ['inth-sid']) {
 		document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 		localStorage.removeItem(key);
 	}
@@ -265,9 +265,9 @@ test('focus keeps a used subject ID when cookies cannot be read', async () => {
 	await kernel.commands.save({ measurement: false });
 	vi.advanceTimersByTime(0);
 	const own = kernel.getSnapshot().subject?.subjectId;
-	// A `c15t-sid` copy an older c15t runtime in another tab wrote is not
+	// A `inth-sid` copy an older Inth runtime in another tab wrote is not
 	// read.
-	localStorage.setItem('c15t-sid', 'sub_other_tab');
+	localStorage.setItem('inth-sid', 'sub_other_tab');
 	vi.spyOn(document, 'cookie', 'get').mockImplementation(() => {
 		throw new DOMException('Cookies blocked', 'SecurityError');
 	});
@@ -443,7 +443,7 @@ test.each([
 		other.set.subjectId('sub_next');
 		await settleAll();
 		otherHandle.dispose();
-		for (const key of ['c15t-notice', 'c15t-vendors', 'c15t-sid']) {
+		for (const key of ['inth-notice', 'inth-vendors', 'inth-sid']) {
 			window.dispatchEvent(new StorageEvent('storage', { key }));
 		}
 		window.dispatchEvent(new Event('focus'));
@@ -497,7 +497,7 @@ test.each(['can be read', 'cannot be read'] as const)(
 		other.set.subjectId('sub_next');
 		await settleAll();
 		otherHandle.dispose();
-		window.dispatchEvent(new StorageEvent('storage', { key: 'c15t-notice' }));
+		window.dispatchEvent(new StorageEvent('storage', { key: 'inth-notice' }));
 		window.dispatchEvent(new Event('focus'));
 		await settleAll();
 		expect(tab.getSnapshot().subject?.subjectId).toBe('sub_server');

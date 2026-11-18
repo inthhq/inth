@@ -40,10 +40,10 @@ remount.
 | `onChoiceRecorded` | The visitor clicks Accept All, Reject All or Save Settings, in the stock UI or through `useSaveConsents()`. | `snapshot`, the state after the choice; `confirmed`, the categories this action recorded; `actionAt`, the time as a millisecond timestamp |
 | `onPermissionsChanged` | Any effective permission changes value. | `snapshot`, the state after the change; `previous`, the permissions before it |
 | `onError` | A consent command fails in the browser, such as a failed `/init` request or a save the backend rejects. | `error`, a message string |
-| `onBeforeConsentRevocationReload` | A save withdrew a granted category or vendor, right before c15t reloads the page. | `preferences`, the permissions after the save |
+| `onBeforeConsentRevocationReload` | A save withdrew a granted category or vendor, right before Inth reloads the page. | `preferences`, the permissions after the save |
 
 The type for the whole object is `ConsentProviderCallbacks` from
-`@inth/tanstack-start`. Callbacks run after c15t updates its state, so
+`@inth/tanstack-start`. Callbacks run after Inth updates its state, so
 `snapshot` and hooks such as `useConsent()` already hold the new values.
 
 `resolveConsent` on the server has no error callback. When the manifest
@@ -78,7 +78,7 @@ when consent changes.
 
 ## Before a revocation reload
 
-Removing a script tag cannot stop code that already ran, so c15t reloads the
+Removing a script tag cannot stop code that already ran, so Inth reloads the
 page after an accept, reject or save turns off a category or vendor that was
 granted. The reload waits for the save request to finish. Right before it,
 `onBeforeConsentRevocationReload` runs synchronously. Use it to call a

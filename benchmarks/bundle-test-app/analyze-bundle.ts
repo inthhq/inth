@@ -3,9 +3,9 @@ import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { artifactBudgets, bundleBudgets } from '@c15t/benchmarking/budgets';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
+import { artifactBudgets, bundleBudgets } from '@inth/benchmarking/budgets';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
 import {
 	getEnvironment,
 	safeBaseSha,
@@ -13,7 +13,7 @@ import {
 	safeGitDirty,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 
 import { measureAsset } from './measure-assets';
 import { runTarballSize } from './measure-tarball';
@@ -35,7 +35,7 @@ interface RouteSize {
 	jsBrotli: number;
 	cssBrotli: number;
 	totalGzip: number;
-	c15tAddition: number;
+	inthAddition: number;
 }
 
 const HOST = '127.0.0.1';
@@ -163,7 +163,7 @@ const analyzeRouteSizes = async function analyzeRouteSizes() {
 				return sizes.reduce((sum, size) => sum + size.brotli, 0);
 			};
 			routes.push({
-				c15tAddition: 0,
+				inthAddition: 0,
 				cssBrotli: await brotliTotal(styles),
 				cssGzip: cssTotal,
 				jsBrotli: await brotliTotal(scripts),
@@ -176,7 +176,7 @@ const analyzeRouteSizes = async function analyzeRouteSizes() {
 	);
 
 	for (const route of routes) {
-		route.c15tAddition =
+		route.inthAddition =
 			route.route === '/' ? 0 : route.totalGzip - baselineGzip;
 	}
 
@@ -316,11 +316,11 @@ const main = async function main() {
 				summarizeMetric('jsBrotliSize', 'bytes', [route.jsBrotli]),
 				summarizeMetric('cssBrotliSize', 'bytes', [route.cssBrotli]),
 				summarizeMetric(routeFixture(route).name, 'bytes', [
-					route.c15tAddition,
+					route.inthAddition,
 				]),
 			],
 			notes: ['Route-level client bundle size benchmark.'],
-			package: '@c15t/next-bundle-bench',
+			package: '@inth/next-bundle-bench',
 			runtime: 'next',
 			scenario: ROUTE_TO_SCENARIO[route.route] ?? route.route,
 			schemaVersion: BENCHMARK_SCHEMA_VERSION,
@@ -355,7 +355,7 @@ const main = async function main() {
 				nextjsIncludesDialogRules: nextjsTarball.includesDialogRules,
 			},
 			metrics: [
-				// packages/sdk/core is @inth/sdk/engine; the c15t umbrella is a separate package.
+				// packages/sdk/core is @inth/sdk/engine; the Inth umbrella is a separate package.
 				summarizeMetric('@inth/sdk-core', 'bytes', [coreTarball.size]),
 				summarizeMetric('@inth/react', 'bytes', [reactTarball.size]),
 				summarizeMetric('@inth/nextjs', 'bytes', [nextjsTarball.size]),
@@ -366,7 +366,7 @@ const main = async function main() {
 				...reactTarball.notes,
 				...nextjsTarball.notes,
 			],
-			package: '@c15t/next-bundle-bench',
+			package: '@inth/next-bundle-bench',
 			runtime: 'npm-pack',
 			scenario: 'tarballs',
 			schemaVersion: BENCHMARK_SCHEMA_VERSION,

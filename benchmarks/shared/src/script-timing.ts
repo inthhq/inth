@@ -2,7 +2,7 @@
  * Script resource timing for the browser benches, split at the first
  * idle-time preload.
  *
- * c15t loads some code it expects to need soon (the preference dialog, the
+ * Inth loads some code it expects to need soon (the preference dialog, the
  * persistence writer) from a `requestIdleCallback` callback once the page
  * has loaded. The benches sample resources until `load` + 250 ms, so those
  * preloads used to become the page's "last app script" and moved
@@ -103,7 +103,7 @@ export const benchScriptTimingExpression = `(() => {
 			transferSize: entry.transferSize,
 			encodedBodySize: entry.encodedBodySize,
 		}));
-	const tasks = window.__c15tBenchIdleTasks;
+	const tasks = window.__inthBenchIdleTasks;
 	const idleTasks = Array.isArray(tasks)
 		? tasks.map((task) => ({
 				startMs: task.startMs,

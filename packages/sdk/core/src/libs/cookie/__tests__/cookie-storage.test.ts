@@ -288,11 +288,11 @@ describe('writeCookie reporting', () => {
 		const { writeCookie } = await import('../operations');
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-		expect(writeCookie('c15t', { consents: { necessary: true } })).toEqual({
+		expect(writeCookie('inth', { consents: { necessary: true } })).toEqual({
 			attempted: true,
 			verified: true,
 		});
-		setCookie('c15t', { consents: { necessary: true } });
+		setCookie('inth', { consents: { necessary: true } });
 
 		expect(warn).not.toHaveBeenCalled();
 	});
@@ -309,12 +309,12 @@ describe('writeCookie reporting', () => {
 			},
 		});
 		try {
-			const report = writeCookie('c15t', 'value');
+			const report = writeCookie('inth', 'value');
 			expect(report.attempted).toBe(false);
 			expect(report.verified).toBe(false);
 			expect(report.error).toBeInstanceOf(Error);
 
-			expect(() => setCookie('c15t', 'value')).not.toThrow();
+			expect(() => setCookie('inth', 'value')).not.toThrow();
 			expect(warn).toHaveBeenCalledTimes(1);
 		} finally {
 			if (descriptor) {

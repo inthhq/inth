@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/repo-scripts",
+	"name": "@inth/repo-scripts",
 	"private": true,
 	"description": "Repository tooling for the SDK: docs generation, fixtures, publish checks and their tests.",
 	"license": "Apache-2.0",

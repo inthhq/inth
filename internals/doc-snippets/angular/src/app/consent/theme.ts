@@ -1,7 +1,7 @@
 // #region docs:theme
 import type { Theme } from '@inth/angular';
 
-// Pass as `theme` to provideC15t() in app.config.ts. Slots and
+// Pass as `theme` to provideInth() in app.config.ts. Slots and
 // consentActions apply in the browser; color and other tokens do not.
 export const theme: Theme = {
 	consentActions: {

@@ -8,20 +8,20 @@ import { setupScrollLock } from '@inth/sdk/ui/utils';
  *
  * @example
  * ```html
- * <div class="overlay" [c15tScrollLock]="open()"></div>
+ * <div class="overlay" [inthScrollLock]="open()"></div>
  * ```
  */
-@Directive({ selector: '[c15tScrollLock]' })
+@Directive({ selector: '[inthScrollLock]' })
 export class ScrollLock {
 	/** Whether scrolling is locked. A bare attribute locks it. */
-	readonly c15tScrollLock = input<boolean | ''>(true);
+	readonly inthScrollLock = input<boolean | ''>(true);
 
 	constructor() {
 		if (!isPlatformBrowser(inject(PLATFORM_ID))) {
 			return;
 		}
 		effect((onCleanup) => {
-			if (this.c15tScrollLock() !== false) {
+			if (this.inthScrollLock() !== false) {
 				onCleanup(setupScrollLock());
 			}
 		});

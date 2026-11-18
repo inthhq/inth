@@ -7,7 +7,7 @@ definePageMeta({
 	alias: ['/prerendered/consent-example', '/cached/consent-example'],
 });
 
-// Demo only: the branded theme overrides c15t tokens from
+// Demo only: the branded theme overrides Inth tokens from
 // `consent-example.css` so the test suite can switch designs in place.
 const setTheme = (theme: string) => {
 	document.documentElement.dataset.consentExampleTheme = theme;

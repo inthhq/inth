@@ -11,7 +11,7 @@ let argsPath: string;
 let backendPath: string;
 
 beforeEach(async () => {
-	directory = await mkdtemp(join(tmpdir(), 'c15t-compat-prepare-'));
+	directory = await mkdtemp(join(tmpdir(), 'inth-compat-prepare-'));
 	argsPath = join(directory, 'args');
 	backendPath = join(directory, 'backend');
 	// A real child process records the command and build environment, without

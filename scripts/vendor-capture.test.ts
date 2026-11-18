@@ -35,7 +35,7 @@ let stop: () => void = () => {
 };
 
 beforeAll(async () => {
-	const out = await mkdtemp(join(tmpdir(), 'c15t-vendor-capture-'));
+	const out = await mkdtemp(join(tmpdir(), 'inth-vendor-capture-'));
 	const server = spawn(
 		'python3',
 		[

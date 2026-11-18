@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/script-lifecycle-bench",
+	"name": "@inth/script-lifecycle-bench",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -13,7 +13,7 @@
 		"start": "next start"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",
 		"next": "16.2.10",

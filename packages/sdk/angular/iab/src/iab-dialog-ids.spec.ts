@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
-import type { C15tProviderOptions } from '../../src/lib/core/options';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import type { InthProviderOptions } from '../../src/lib/core/options';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
 import { IABConsentDialog } from './iab-consent-dialog';
 
@@ -12,8 +12,8 @@ import { IABConsentDialog } from './iab-consent-dialog';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [IABConsentDialog],
 	selector: 'test-two-iab-dialogs',
-	template: `<c15t-iab-consent-dialog [open]="true" />
-		<c15t-iab-consent-dialog
+	template: `<inth-iab-consent-dialog [open]="true" />
+		<inth-iab-consent-dialog
 			[open]="true"
 			initialTab="vendors"
 		/>`,
@@ -30,11 +30,11 @@ describe('two IAB dialogs open at once', () => {
 	test('each describes itself with its own description', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					...iabTestOptions(),
-				} as C15tProviderOptions),
+				} as InthProviderOptions),
 			],
 		});
 		const fixture = TestBed.createComponent(TwoDialogs);

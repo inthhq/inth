@@ -22,7 +22,7 @@ const fixture = v.parse(
 		)
 	)
 );
-const evidenceDirectory = process.env.C15T_AC_SAVE_EVIDENCE_DIR;
+const evidenceDirectory = process.env.INTH_AC_SAVE_EVIDENCE_DIR;
 
 describe('native Additional Consent backend contract', () => {
 	it('uses official AC v2 examples accepted by the backend format', () => {
@@ -35,7 +35,7 @@ describe('native Additional Consent backend contract', () => {
 		'validates actual Swift and Kotlin outgoing bodies against the save schema',
 		() => {
 			if (!evidenceDirectory) {
-				throw new Error('Run native suites with C15T_AC_SAVE_EVIDENCE_DIR.');
+				throw new Error('Run native suites with INTH_AC_SAVE_EVIDENCE_DIR.');
 			}
 			for (const platform of ['swift', 'kotlin']) {
 				for (const row of fixture.cases) {

@@ -1,7 +1,7 @@
 /**
  * The stylesheets the stock Angular surfaces add themselves.
  *
- * An app that imports no c15t stylesheet still gets styled surfaces. Each
+ * An app that imports no Inth stylesheet still gets styled surfaces. Each
  * surface calls `ConsentStyles.ensure()` with the sheets it renders, before
  * its elements paint. The sheets go into `<head>` as `<style>` elements,
  * once per page. On the server the same elements land in the rendered HTML,
@@ -74,7 +74,7 @@ export const SURFACE_SCOPES = {
 } as const;
 
 /** Marks the `<style>` elements that hold a sheet; the value is its `id`. */
-export const STYLE_ATTRIBUTE = 'data-c15t-styles';
+export const STYLE_ATTRIBUTE = 'data-inth-styles';
 
 /** Every stock surface, for a caller that names none. */
 const ANY_SURFACE = '[data-testid^="consent-"],[data-testid^="iab-consent-"]';
@@ -99,7 +99,7 @@ export const PENDING_REVEAL_MS = 3000;
 const pendingScopes = new WeakMap<Element, Set<string>>();
 
 /** Marks the element of a deferred sheet whose text is still loading. */
-const PENDING_ATTRIBUTE = 'data-c15t-pending';
+const PENDING_ATTRIBUTE = 'data-inth-pending';
 
 /**
  * Fills a deferred sheet's element with its text. A failed load removes
@@ -136,7 +136,7 @@ const nonceOf = function nonceOf(element: Element | null): string | undefined {
  * Insert each sheet the document does not hold yet into `<head>`, in order.
  *
  * Elements stay when the surface is destroyed, so the next surface finds
- * them. Without a `nonce`, new elements take the nonce of an earlier c15t
+ * them. Without a `nonce`, new elements take the nonce of an earlier Inth
  * sheet, else of a page script.
  *
  * @param document - The document to insert into.
@@ -215,7 +215,7 @@ export const ensureSurfaceStyles = function ensureSurfaceStyles(
 /**
  * Adds the stock surfaces' stylesheets to the page.
  *
- * Provided by `provideC15t()`. A surface calls {@link ConsentStyles.ensure}
+ * Provided by `provideInth()`. A surface calls {@link ConsentStyles.ensure}
  * before its first render with the sheets it renders and its resolved
  * `noStyle`.
  *

@@ -1,7 +1,7 @@
 /**
- * Content Security Policy support for the inline code c15t renders.
+ * Content Security Policy support for the inline code Inth renders.
  *
- * `Astro.locals.c15t.nonce` reaches every inline element, and the hashes
+ * `Astro.locals.inth.nonce` reaches every inline element, and the hashes
  * the integration hands to Astro's own CSP cover every one of them.
  *
  * The boot payload changes per visitor, so a hash-based policy cannot
@@ -14,7 +14,7 @@
 
 import { createHash } from 'node:crypto';
 
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -26,7 +26,7 @@ import { INLINE_IAB_STYLES_CSS } from '../inline-styles';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../types';
 import { testRule } from './policy-fixture';
 
 const NONCE = 'r4nd0m-n0nce';
@@ -46,15 +46,15 @@ const IAB_POLICY = {
 	scopeMode: 'permissive',
 } as const;
 
-const shared: C15tAstroOptions = {
+const shared: InthAstroOptions = {
 	colorScheme: 'system',
 	theme: { colors: { primary: 'oklch(0.6 0.2 250)' } },
 };
 
 const buildLocals = async function buildLocals(
-	options: C15tAstroOptions,
+	options: InthAstroOptions,
 	nonce: string | undefined
-): Promise<C15tLocals> {
+): Promise<InthLocals> {
 	const locals = await resolveConsentContext({
 		headers: new Headers(),
 		options: resolveOptions({ ...shared, ...options }),
@@ -95,7 +95,7 @@ const surfaces = [
 describe.each(surfaces)('%s', (_name, component, options) => {
 	it('puts the request nonce on every inline script and style', async () => {
 		const html = await container.renderToString(component, {
-			locals: { c15t: await buildLocals(options, NONCE) },
+			locals: { inth: await buildLocals(options, NONCE) },
 		});
 		const tags = inlineTags(html);
 
@@ -106,17 +106,17 @@ describe.each(surfaces)('%s', (_name, component, options) => {
 		for (const tag of tags) {
 			expect(tag).toContain(`nonce="${NONCE}"`);
 		}
-		expect(html).toMatch(/<script[^>]*data-c15t-config[^>]*>\{/u);
+		expect(html).toMatch(/<script[^>]*data-inth-config[^>]*>\{/u);
 		// The browser only moves marked elements onto a ClientRouter page's
-		// live nonce, so every inline script carries a c15t marker.
+		// live nonce, so every inline script carries a Inth marker.
 		for (const tag of tags.filter((value) => value.startsWith('<script'))) {
-			expect(tag).toMatch(/data-c15t-(?:config|boot|inline)/u);
+			expect(tag).toMatch(/data-inth-(?:config|boot|inline)/u);
 		}
 	});
 
 	it('renders no nonce attribute without one', async () => {
 		const html = await container.renderToString(component, {
-			locals: { c15t: await buildLocals(options, undefined) },
+			locals: { inth: await buildLocals(options, undefined) },
 		});
 		expect(html).not.toContain('nonce=');
 	});
@@ -128,7 +128,7 @@ describe('<ConsentBanner /> rendered as a server island', () => {
 		// own, with its own nonce, and passes the page's nonce as a prop.
 		const html = await container.renderToString(ConsentBanner, {
 			locals: {
-				c15t: await buildLocals(
+				inth: await buildLocals(
 					{ mode: testingMode({ policy: [testRule] }) },
 					'island-request-nonce'
 				),
@@ -199,7 +199,7 @@ describe("Astro's own CSP", () => {
 		async (_name, component, options) => {
 			const locals = await buildLocals(options, undefined);
 			const html = await container.renderToString(component, {
-				locals: { c15t: locals },
+				locals: { inth: locals },
 			});
 			const rendered = governedInlineCode(html);
 			const hashes = await buildInlineCodeHashes(locals.options);
@@ -242,7 +242,7 @@ describe("Astro's own CSP", () => {
 					undefined
 				);
 				return container.renderToString(ConsentBanner, {
-					locals: { c15t: locals },
+					locals: { inth: locals },
 				});
 			})
 		);
@@ -316,7 +316,7 @@ describe("Astro's own CSP", () => {
 		const siteHash = sha256('window.__fromEntrypoint = true;');
 		const options = resolveOptions({
 			...shared,
-			clientEntrypoint: './src/c15t.client.ts',
+			clientEntrypoint: './src/inth.client.ts',
 			mode: testingMode({ policy: [testRule] }),
 		});
 		const csp = await buildAstroCsp(

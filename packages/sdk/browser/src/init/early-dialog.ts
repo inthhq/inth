@@ -19,7 +19,7 @@
 import type { ConsentSnapshot } from '@inth/sdk-core';
 
 import { stylesheet } from '../generated/dialog-styles';
-import type { C15tGlobalBase } from '../global-base';
+import type { InthGlobalBase } from '../global-base';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { createDialog } from '../ui/dialog';
 import { prefersReducedMotion } from '../ui/dom';
@@ -29,8 +29,8 @@ import type { InitUI } from './boot';
 
 /** What the init script hands the dialog. @internal */
 export interface EarlyDialogHost {
-	/** The stand-in `window.c15t`. */
-	standIn: Pick<C15tGlobalBase, 'getSnapshot' | 'subscribe'> & {
+	/** The stand-in `window.inth`. */
+	standIn: Pick<InthGlobalBase, 'getSnapshot' | 'subscribe'> & {
 		acceptAll: () => unknown;
 		rejectAll: () => unknown;
 	};

@@ -1,4 +1,4 @@
-import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
@@ -32,7 +32,7 @@ vi.mock('#imports', async () => {
 	return {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
 		useAppConfig: () => ({
-			c15t: {
+			inth: {
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				disableAnimation: true,
 				iframeBlocker: false,
@@ -49,7 +49,7 @@ vi.mock('#imports', async () => {
 		useRequestHeaders: () => nuxt.headers,
 		useRequestURL: () => new URL('https://app.example/'),
 		useRuntimeConfig: () => ({
-			public: { c15t: { mode: { type: 'hosted' } } },
+			public: { inth: { mode: { type: 'hosted' } } },
 		}),
 		useState: (key: string, init: () => unknown) => {
 			if (!nuxt.state.has(key)) {
@@ -85,7 +85,7 @@ const resolution = writePolicyResolutionWire(
 );
 
 const visitorInit: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: resolution,
 	translations: { language: 'en', translations },
@@ -95,7 +95,7 @@ const visitorInit: InitOutput = {
 // route without this cookie; a prerender never has one.
 const visitorHeaders = {
 	'accept-language': 'de-DE',
-	cookie: 'c15t=unreadable',
+	cookie: 'inth=unreadable',
 	'x-vercel-ip-country': 'DE',
 };
 
@@ -130,7 +130,7 @@ const renderOnServer = async function renderOnServer(
 			nuxt.fetches += 1;
 			return Promise.resolve(
 				new Response(JSON.stringify(nuxt.response), {
-					headers: { [C15T_POLICY_CONTRACT_HEADER]: '1' },
+					headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
 				})
 			);
 		})
@@ -179,8 +179,8 @@ test.each([
 		const html = await renderOnServer(payload, { context: eventContext });
 
 		expect(nuxt.fetches).toBe(0);
-		expect(stateValue('c15t:records')).toBeUndefined();
-		expect(stateValue('c15t:request-headers')).toEqual({});
+		expect(stateValue('inth:records')).toBeUndefined();
+		expect(stateValue('inth:request-headers')).toEqual({});
 		expect(nuxt.cookies).toEqual([]);
 		expect(html).not.toContain('consent-banner-root');
 	}
@@ -193,9 +193,9 @@ test('a per-request render still prefetches for its visitor', async () => {
 	);
 
 	expect(nuxt.fetches).toBe(1);
-	expect(stateValue('c15t:records')).toBeDefined();
+	expect(stateValue('inth:records')).toBeDefined();
 	expect(nuxt.cookies).toEqual([]);
-	expect(stateValue('c15t:request-headers')).toMatchObject({
+	expect(stateValue('inth:request-headers')).toMatchObject({
 		'accept-language': 'de-DE',
 		'x-vercel-ip-country': 'DE',
 	});
@@ -225,7 +225,7 @@ test('the browser resolves a prerendered page itself and keeps a stored rejectio
 		value: false,
 	};
 	localStorage.setItem(
-		'c15t',
+		'inth',
 		JSON.stringify({
 			categories: { marketing: denial, measurement: denial },
 			version: 3,
@@ -241,7 +241,7 @@ test('the browser resolves a prerendered page itself and keeps a stored rejectio
 				new Response(JSON.stringify(visitorInit), {
 					headers: {
 						'content-type': 'application/json',
-						[C15T_POLICY_CONTRACT_HEADER]: '1',
+						[INTH_POLICY_CONTRACT_HEADER]: '1',
 					},
 					status: 200,
 				})

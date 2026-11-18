@@ -135,7 +135,7 @@ afterEach(() => {
 			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 		}
 	}
-	(window as { __c15tStarted?: unknown }).__c15tStarted = undefined;
+	(window as { __inthStarted?: unknown }).__inthStarted = undefined;
 });
 
 test('a save the outbox cannot keep goes to the engine, which records it once', async () => {
@@ -165,7 +165,7 @@ test('a save the outbox cannot keep goes to the engine, which records it once', 
 	});
 	// The record is stored, nothing is queued, and nothing is announced:
 	// the engine records the choice.
-	expect(JSON.parse(localStorage.getItem('c15t') ?? 'null')).toMatchObject({
+	expect(JSON.parse(localStorage.getItem('inth') ?? 'null')).toMatchObject({
 		categories: { marketing: { value: true } },
 	});
 	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();

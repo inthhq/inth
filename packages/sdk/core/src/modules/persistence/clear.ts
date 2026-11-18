@@ -1,5 +1,5 @@
 /**
- * Clearing stored records: every c15t record removed, then the clear epoch
+ * Clearing stored records: every Inth record removed, then the clear epoch
  * stored.
  *
  * First-load code, unlike the other writes in `writer/`. `clear()` runs it
@@ -30,7 +30,7 @@ const removeLocalStorageKey = function removeLocalStorageKey(
  * Removes explicit choices (configured and legacy keys, cookie and
  * localStorage), the notice dismissal and the vendor denials with their
  * cookie projections, the legacy `<key>-privacy` record an alpha may have
- * left, the `<key>-sid` subject ID c15t 3.2 stored before any choice, and
+ * left, the `<key>-sid` subject ID Inth 3.2 stored before any choice, and
  * the IAB records. Cookie deletion uses the same domain handling
  * as writes so a cross-subdomain cookie is actually removed.
  *
@@ -72,7 +72,7 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 	}
 	removeLegacySubjectId(config, cookie);
 	// Addon bytes must be removed even when the addon is not mounted.
-	removeLocalStorageKey('c15t-iab-authority-v1');
+	removeLocalStorageKey('inth-iab-authority-v1');
 	removeLocalStorageKey('euconsent-v2');
 	deleteCookie('euconsent-v2', cookie, config);
 	deleteCookie('euconsent-v2');

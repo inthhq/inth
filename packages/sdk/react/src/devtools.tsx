@@ -42,7 +42,7 @@ export interface ConsentDevToolsProps extends Omit<
 }
 
 /** Backward-compatible props name for {@link ConsentDevTools}. */
-export type C15TDevToolsProps = ConsentDevToolsProps;
+export type InthDevToolsProps = ConsentDevToolsProps;
 
 /** Compatible props name for the {@link DevTools} alias. */
 export type DevToolsProps = ConsentDevToolsProps;
@@ -50,7 +50,7 @@ export type DevToolsProps = ConsentDevToolsProps;
 const requireKernel = (kernel: ConsentKernel | null): ConsentKernel => {
 	if (!kernel) {
 		throw new Error(
-			'c15t: DevTools must be rendered inside <ConsentProvider> from @inth/react.'
+			'inth: DevTools must be rendered inside <ConsentProvider> from @inth/react.'
 		);
 	}
 	return kernel;
@@ -104,7 +104,7 @@ const useStableServices = (
 };
 
 /**
- * Mounts the c15t DevTools engine for the nearest v3 consent provider.
+ * Mounts the Inth DevTools engine for the nearest v3 consent provider.
  *
  * @param props - Presentation options passed to the DevTools engine.
  * @returns `null`; the engine mounts its interface into `document.body`.
@@ -178,10 +178,10 @@ export const ConsentDevTools = ({
 export const DevTools = ConsentDevTools;
 
 /** Backward-compatible name for {@link ConsentDevTools}. */
-export const C15TDevTools = ConsentDevTools;
+export const InthDevTools = ConsentDevTools;
 
-/** Props for the embedded c15t panel used by TanStack Devtools. */
-export interface C15tTanStackDevtoolsPanelProps
+/** Props for the embedded Inth panel used by TanStack Devtools. */
+export interface InthTanStackDevtoolsPanelProps
 	extends
 		HTMLAttributes<HTMLDivElement>,
 		Pick<
@@ -196,7 +196,7 @@ export interface C15tTanStackDevtoolsPanelProps
 	disabled?: boolean;
 	/**
 	 * Color scheme of the surrounding devtools shell. Omit to follow the
-	 * operating system. {@link c15tDevtools} passes TanStack's theme.
+	 * operating system. {@link inthDevtools} passes TanStack's theme.
 	 */
 	theme?: TanStackDevtoolsTheme;
 }
@@ -220,11 +220,11 @@ export interface TanStackDevtoolsPlugin {
 	) => ReactElement;
 }
 
-/** Options for {@link c15tDevtools}. */
-export interface C15tDevtoolsPluginOptions extends C15tTanStackDevtoolsPanelProps {
-	/** Stable plugin identifier. @default 'c15t' */
+/** Options for {@link inthDevtools}. */
+export interface InthDevtoolsPluginOptions extends InthTanStackDevtoolsPanelProps {
+	/** Stable plugin identifier. @default 'inth' */
 	id?: string;
-	/** Display name shown by TanStack Devtools. @default 'c15t' */
+	/** Display name shown by TanStack Devtools. @default 'inth' */
 	name?: string;
 	/** Whether TanStack Devtools opens this plugin initially. @default false */
 	defaultOpen?: boolean;
@@ -247,13 +247,13 @@ const assignRef = (
 	}
 };
 
-/** Embeds c15t DevTools inside a TanStack Devtools plugin panel. */
-export const C15tTanStackDevtoolsPanel = forwardRef<
+/** Embeds Inth DevTools inside a TanStack Devtools plugin panel. */
+export const InthTanStackDevtoolsPanel = forwardRef<
 	HTMLDivElement,
-	C15tTanStackDevtoolsPanelProps
+	InthTanStackDevtoolsPanelProps
 >(
 	// oxlint-disable-next-line prefer-arrow-callback -- A named function gives the forwarded component a display name.
-	function C15tTanStackDevtoolsPanel(
+	function InthTanStackDevtoolsPanel(
 		{
 			disabled = false,
 			clearRecords,
@@ -314,7 +314,7 @@ export const C15tTanStackDevtoolsPanel = forwardRef<
 
 		// Inherited through the shadow root; the panel reads it as its scheme.
 		const schemeStyle = theme
-			? ({ '--c15t-dev-tools-color-scheme': theme } as CSSProperties)
+			? ({ '--inth-dev-tools-color-scheme': theme } as CSSProperties)
 			: undefined;
 
 		return (
@@ -328,16 +328,16 @@ export const C15tTanStackDevtoolsPanel = forwardRef<
 );
 
 /**
- * Create a c15t plugin configuration for React TanStack Devtools.
+ * Create a Inth plugin configuration for React TanStack Devtools.
  * @param options - Plugin identity, initial state, and embedded panel options.
  * @returns Plugin configuration whose panel binds to the nearest provider.
  */
-export const c15tDevtools = (
-	options: C15tDevtoolsPluginOptions = {}
+export const inthDevtools = (
+	options: InthDevtoolsPluginOptions = {}
 ): TanStackDevtoolsPlugin => {
 	const {
-		id = 'c15t',
-		name = 'c15t',
+		id = 'inth',
+		name = 'inth',
 		defaultOpen = false,
 		...panelProps
 	} = options;
@@ -349,7 +349,7 @@ export const c15tDevtools = (
 		// Older TanStack releases pass the theme string instead of props, and
 		// some pass nothing; then the `theme` option applies.
 		render: (_element, props) =>
-			createElement(C15tTanStackDevtoolsPanel, {
+			createElement(InthTanStackDevtoolsPanel, {
 				...panelProps,
 				theme:
 					(typeof props === 'string' ? props : props?.theme) ??
@@ -358,8 +358,8 @@ export const c15tDevtools = (
 	};
 };
 
-/** Backward-compatible alias for {@link c15tDevtools}. */
-export const c15tDevtoolsPlugin = c15tDevtools;
+/** Backward-compatible alias for {@link inthDevtools}. */
+export const inthDevtoolsPlugin = inthDevtools;
 
 export type {
 	DevToolsInstance,

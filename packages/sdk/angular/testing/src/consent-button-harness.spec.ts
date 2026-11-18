@@ -15,20 +15,20 @@ import { ConsentButtonHarness } from './consent-button-harness';
 	selector: 'test-button-host',
 	template: `
 		<button
-			c15t-consent-button
+			inth-consent-button
 			action="accept"
 		>
 			Allow all
 		</button>
 		<button
-			c15t-consent-button
+			inth-consent-button
 			[action]="'reject'"
 			data-action="reject"
 		>
 			Only necessary
 		</button>
 		<button
-			c15t-consent-button
+			inth-consent-button
 			[action]="'customize'"
 		>
 			Settings

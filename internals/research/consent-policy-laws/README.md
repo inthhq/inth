@@ -179,7 +179,7 @@ The research does expose behavior the current engine cannot fully represent:
    application gates. A five-category Accept All cannot cover them automatically.
 3. **Timing.** Singapore/Brunei deemed-notification waiting periods and
    California's restriction on asking an opted-out user to opt back in need
-   durable state. c15t now suppresses automatic choice prompts while any
+   durable state. Inth now suppresses automatic choice prompts while any
    in-scope refusal applies. Hosts must preserve those refusals across their
    storage/identity boundaries and avoid their own premature opt-in requests.
 4. **Location uncertainty.** A known unmatched location can use the no-prompt

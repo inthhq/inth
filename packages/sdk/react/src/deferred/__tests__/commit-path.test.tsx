@@ -68,7 +68,7 @@ const loadCommit = async () => {
 };
 
 const config = (): KernelConfig => ({
-	initialBranding: 'c15t',
+	initialBranding: 'inth',
 	initialLocation: { countryCode: 'DE', regionCode: null },
 	initialOverrides: { country: 'DE', language: 'en' },
 	...policyFixture({}, { categories: ['marketing'], id: 'gdpr' }),
@@ -281,7 +281,7 @@ beforeEach(() => {
 	effects.length = 0;
 	localStorage.clear();
 	Reflect.deleteProperty(window, '__ran');
-	Reflect.deleteProperty(window, '__c15tStarted');
+	Reflect.deleteProperty(window, '__inthStarted');
 });
 
 afterEach(() => {
@@ -367,7 +367,7 @@ test('an accept before the engine is recorded without it; the engine takes it ov
 		uiSource: 'banner',
 	});
 	expect(onPermissionsChanged).toHaveBeenCalledTimes(1);
-	expect(JSON.parse(localStorage.getItem('c15t') ?? 'null')).toMatchObject({
+	expect(JSON.parse(localStorage.getItem('inth') ?? 'null')).toMatchObject({
 		categories: { marketing: { value: true } },
 		version: 3,
 	});
@@ -538,7 +538,7 @@ test('a reject tapped before hydration is replayed through the commit path', asy
 	});
 	expect(streamed.doc.querySelector('main')?.dataset.activeUi).toBe('none');
 	expect(
-		JSON.parse(localStorage.getItem('c15t') ?? 'null')?.categories
+		JSON.parse(localStorage.getItem('inth') ?? 'null')?.categories
 	).toMatchObject({ marketing: { value: false } });
 	expect(ran('page')).toBe(0);
 
@@ -641,7 +641,7 @@ test('a tap after the live options changed waits for the engine and records noth
 		setTimeout(resolve, 50);
 	});
 	// Nothing recorded through the old config; the engine is asked for.
-	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(localStorage.getItem('inth')).toBeNull();
 	expect(queuedSaves()).toHaveLength(0);
 	expect(engine.loadEngine).toHaveBeenCalled();
 	await act(() => {
@@ -670,7 +670,7 @@ test('customize hides the banner and opens the dialog without the engine; its sa
 		tapBanner(streamed, 'customize');
 		// Read in the tap's task: in this harness the banner is in the
 		// iframe, so the root's check finds it gone at the next frame.
-		hidden = document.getElementById('c15t-early-commit') !== null;
+		hidden = document.getElementById('inth-early-commit') !== null;
 	});
 	// Hidden by the root, which shows it again if the dialog closes.
 	expect(hidden).toBe(true);
@@ -704,7 +704,7 @@ test('customize hides the banner and opens the dialog without the engine; its sa
 	// stores it once it has loaded.
 	await vi.waitFor(() => {
 		expect(
-			JSON.parse(localStorage.getItem('c15t') ?? 'null')?.categories
+			JSON.parse(localStorage.getItem('inth') ?? 'null')?.categories
 		).toMatchObject({ marketing: { value: false } });
 	});
 	expect(transportSave).not.toHaveBeenCalled();
@@ -808,7 +808,7 @@ test("an accept takes effect in the tap's task, with its scripts started; the co
 	// `useSnapshot()`'s effect ran with the choice before the next task.
 	expect((await seen).at(-1)).toEqual({ chose: true, marketing: true });
 	// Nothing stored or announced yet: that is the commit chunk's work.
-	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(localStorage.getItem('inth')).toBeNull();
 	expect(onChoiceRecorded).not.toHaveBeenCalled();
 	await vi.waitFor(() => {
 		expect(ran('page')).toBe(1);
@@ -821,7 +821,7 @@ test("an accept takes effect in the tap's task, with its scripts started; the co
 		expect(onChoiceRecorded).toHaveBeenCalledTimes(1);
 		expect(queuedSaves()).toHaveLength(1);
 	});
-	expect(JSON.parse(localStorage.getItem('c15t') ?? 'null')).toMatchObject({
+	expect(JSON.parse(localStorage.getItem('inth') ?? 'null')).toMatchObject({
 		categories: { marketing: { value: true } },
 		version: 3,
 	});
@@ -878,12 +878,12 @@ test("a reject takes effect in the tap's task and starts nothing", async () => {
 	tapBanner(streamed, 'reject');
 	expect((await seen).at(-1)).toEqual({ chose: false, marketing: false });
 	expect(inserted('page') + inserted('root')).toBe(0);
-	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(localStorage.getItem('inth')).toBeNull();
 
 	commitGate.release();
 	await vi.waitFor(() => {
 		expect(
-			JSON.parse(localStorage.getItem('c15t') ?? 'null')?.categories
+			JSON.parse(localStorage.getItem('inth') ?? 'null')?.categories
 		).toMatchObject({ marketing: { value: false } });
 	});
 	await act(() => {
@@ -933,11 +933,11 @@ test("a save from the early dialog takes effect in the click's task", async () =
 	accept.click();
 	expect(inserted('page')).toBe(1);
 	expect((await seen).at(-1)).toEqual({ chose: true, marketing: true });
-	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(localStorage.getItem('inth')).toBeNull();
 
 	commitGate.release();
 	await vi.waitFor(() => {
-		expect(localStorage.getItem('c15t')).not.toBeNull();
+		expect(localStorage.getItem('inth')).not.toBeNull();
 	});
 	await act(() => {
 		engine.release();
@@ -970,11 +970,11 @@ test('an accept tapped before hydration takes effect when the root mounts, befor
 		expect(effects.at(-1)).toEqual({ chose: true, marketing: true });
 	});
 	expect(inserted('page')).toBe(1);
-	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(localStorage.getItem('inth')).toBeNull();
 
 	commitGate.release();
 	await vi.waitFor(() => {
-		expect(localStorage.getItem('c15t')).not.toBeNull();
+		expect(localStorage.getItem('inth')).not.toBeNull();
 	});
 	await act(() => {
 		engine.release();
@@ -1011,10 +1011,10 @@ test('scripts a page registers after a tap made before hydration start from the 
 		expect(ran('late')).toBe(1);
 	});
 	expect(
-		(window as unknown as { __c15tStarted?: Record<string, unknown> })
-			.__c15tStarted?.late
+		(window as unknown as { __inthStarted?: Record<string, unknown> })
+			.__inthStarted?.late
 	).toBeDefined();
-	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(localStorage.getItem('inth')).toBeNull();
 
 	commitGate.release();
 	await act(() => {
@@ -1136,7 +1136,7 @@ test('a save the outbox cannot keep goes to the engine, which records it once', 
 	// The record is stored, nothing is queued, and nothing is announced:
 	// the engine records the tap.
 	expect(main?.dataset.marketing).toBe('true');
-	expect(JSON.parse(localStorage.getItem('c15t') ?? 'null')).toMatchObject({
+	expect(JSON.parse(localStorage.getItem('inth') ?? 'null')).toMatchObject({
 		categories: { marketing: { value: true } },
 	});
 	expect(queuedSaves()).toEqual([]);

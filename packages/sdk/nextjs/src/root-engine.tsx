@@ -56,7 +56,7 @@ const warnMissingConfig = function warnMissingConfig(): void {
 	}
 	warnedMissingConfig = true;
 	console.warn(
-		'[c15t] ConsentRoot found no config. Export `defineConsentConfig()` as the default export of c15t.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.'
+		'[inth] ConsentRoot found no config. Export `defineConsentConfig()` as the default export of inth.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.'
 	);
 };
 
@@ -64,7 +64,7 @@ const warnMissingConfig = function warnMissingConfig(): void {
  * The transport for the config's mode, or for `options.mode`.
  *
  * @throws {Error} When the mode needs a backend URL and neither the config
- * nor `NEXT_PUBLIC_C15T_BACKEND_URL` (or `NEXT_PUBLIC_INTH_PROJECT_URL`)
+ * nor `NEXT_PUBLIC_INTH_PROJECT_URL` (or `NEXT_PUBLIC_INTH_PROJECT_URL`)
  * sets one.
  */
 const createMode = function createMode(
@@ -292,7 +292,7 @@ const ServerScriptStart = ({
 		// Runs a granted vendor's setup and inserts its tag before the page
 		// hydrates. The script loader adopts the tag.
 		<script
-			// oxlint-disable-next-line react/no-danger -- c15t's own code; serverScriptStart escapes `<` in every value.
+			// oxlint-disable-next-line react/no-danger -- inth's own code; serverScriptStart escapes `<` in every value.
 			dangerouslySetInnerHTML={{ __html: code ?? '' }}
 			nonce={options.nonce}
 			suppressHydrationWarning
@@ -380,7 +380,7 @@ const CheckedBootData = ({
 
 /** The provider options and what renders after the page, from the props. */
 const useRootOptions = function useRootOptions(props: ConsentRootProps) {
-	// Read at render, not at module top level: `c15t.config.ts` imports
+	// Read at render, not at module top level: `inth.config.ts` imports
 	// `@inth/nextjs`, so the browser graph has a cycle through this module.
 	const config = props.config ?? userConfig;
 	if (

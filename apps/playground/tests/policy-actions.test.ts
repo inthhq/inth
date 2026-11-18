@@ -7,7 +7,7 @@ import type { Browser } from 'playwright';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const port = process.env.C15T_EXAMPLE_TEST_PORT ?? '43128';
+const port = process.env.INTH_EXAMPLE_TEST_PORT ?? '43128';
 const origin = `http://127.0.0.1:${port}`;
 let browser: Browser;
 let server: ChildProcess;

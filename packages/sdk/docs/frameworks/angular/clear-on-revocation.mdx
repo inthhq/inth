@@ -1,6 +1,6 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns in an Angular app when that category is denied, with the clearOnRevocation option of provideC15t.
+description: Delete the first-party cookies and Web Storage keys a consent category owns in an Angular app when that category is denied, with the clearOnRevocation option of provideInth.
 group: frameworks
 ---
 
@@ -11,16 +11,16 @@ already wrote. List the ones each optional category owns:
 
 <include src="../../shared/examples/angular/clear-on-revocation.mdx" />
 
-Then pass the configuration to `provideC15t()` in `src/app/app.config.ts`.
-When a category is denied, c15t deletes its entries:
+Then pass the configuration to `provideInth()` in `src/app/app.config.ts`.
+When a category is denied, Inth deletes its entries:
 
 {/* example: fragment */}
 
 ```ts title="src/app/app.config.ts (partial)"
-provideC15t({ mode, scripts, clearOnRevocation });
+provideInth({ mode, scripts, clearOnRevocation });
 ```
 
-`provideC15t()` reads `clearOnRevocation` once, when the application starts;
+`provideInth()` reads `clearOnRevocation` once, when the application starts;
 `updateOptions()` does not change it. For a shared runtime, pass it to
 `createConsentRuntime()` instead.
 

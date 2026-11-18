@@ -22,11 +22,11 @@ import { useSnapshot } from '../index';
 import { ConsentProvider } from '../provider';
 import { policyFixture } from './policy-fixture';
 
-const BACKEND = 'https://consent.example/api/c15t';
+const BACKEND = 'https://consent.example/api/inth';
 
 const initBody = (id: string) =>
 	JSON.stringify({
-		branding: 'c15t',
+		branding: 'inth',
 		location: { countryCode: 'DE', regionCode: null },
 		policyResolution: writePolicyResolutionWire(
 			policyFixture({}, { id }).initialPolicyResolution
@@ -40,7 +40,7 @@ let backendFetch: ReturnType<typeof vi.fn>;
 beforeEach(() => {
 	localStorage.clear();
 	sessionStorage.clear();
-	delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
+	delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 	respond = [];
 	backendFetch = vi.fn(
 		() =>
@@ -190,7 +190,7 @@ test('sends nothing during render for a returning visitor', async () => {
 	});
 	const persistence = createPersistence({ kernel: earlier });
 	await earlier.commands.save('all');
-	await vi.waitFor(() => expect(document.cookie).toMatch(/(?:^|; )c15t=/u));
+	await vi.waitFor(() => expect(document.cookie).toMatch(/(?:^|; )inth=/u));
 	try {
 		const atRender: number[] = [];
 		const atMount: number[] = [];
@@ -230,7 +230,7 @@ test('an unmount before the answer leaves nothing for the next provider', async 
 
 	// The next provider asks for its own answer: the old request was
 	// neither kept for it nor applied anywhere.
-	delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
+	delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 	const second = await render(
 		<ConsentProvider
 			options={{ mode: registeredMode(true), persistence: false }}

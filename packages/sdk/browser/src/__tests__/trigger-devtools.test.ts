@@ -6,7 +6,7 @@ import type { DevToolsInstance } from '@inth/sdk-dev-tools';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mountDevTools } from '../devtools';
-import type { C15tGlobalBase } from '../global-base';
+import type { InthGlobalBase } from '../global-base';
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type {
 	ConsentClient,
@@ -16,7 +16,7 @@ import type {
 } from '../types';
 import { mountConsentUI } from '../ui/mount';
 
-const testWindow = window as Window & { c15t?: unknown };
+const testWindow = window as Window & { inth?: unknown };
 const clients: ConsentClient[] = [];
 const panels: DevToolsInstance[] = [];
 
@@ -57,12 +57,12 @@ const action = function action(
 	root: ParentNode,
 	name: 'preferences' | 'devtools'
 ): HTMLButtonElement | null {
-	return root.querySelector(`[data-c15t-trigger-action="${name}"]`);
+	return root.querySelector(`[data-inth-trigger-action="${name}"]`);
 };
 
 const order = function order(root: ParentNode): (string | undefined)[] {
 	return [...root.querySelectorAll<HTMLElement>('[role="toolbar"] button')].map(
-		(button) => button.dataset.c15tTriggerAction
+		(button) => button.dataset.inthTriggerAction
 	);
 };
 
@@ -70,8 +70,8 @@ afterEach(() => {
 	for (const panel of panels.splice(0)) {
 		panel.destroy();
 	}
-	(testWindow.c15t as C15tGlobalBase | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobalBase | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	for (const client of clients.splice(0)) {
 		client.dispose();
 	}
@@ -83,18 +83,18 @@ describe('trigger with DevTools', () => {
 	it('stays a single button without DevTools', async () => {
 		const { root } = await start();
 
-		const trigger = root.querySelector<HTMLElement>('[data-c15t-trigger]');
+		const trigger = root.querySelector<HTMLElement>('[data-inth-trigger]');
 		expect(trigger?.getAttribute('data-testid')).toBe('consent-dialog-trigger');
 		expect(trigger?.hidden).toBe(false);
 		expect(root.querySelector('[role="toolbar"]')).toBeNull();
 	});
 
-	it('draws the whole c15t mark on the button and the toolbar', async () => {
+	it('draws the whole inth mark on the button and the toolbar', async () => {
 		const { client, root } = await start();
 		const mark = (scope: Element | null) =>
 			scope?.querySelector('svg')?.getAttribute('viewBox');
 
-		expect(mark(root.querySelector('[data-c15t-trigger]'))).toBe('0 0 446 445');
+		expect(mark(root.querySelector('[data-inth-trigger]'))).toBe('0 0 446 445');
 		devTools(client);
 		expect(mark(action(root, 'preferences'))).toBe('0 0 446 445');
 	});
@@ -189,14 +189,14 @@ describe('c15t.devtools.js', () => {
 	it.each(['main tag first', 'DevTools tag first'])(
 		'docks to the main tag trigger, %s',
 		async (sequence) => {
-			testWindow.c15t = [['config', options]];
+			testWindow.inth = [['config', options]];
 			const [first, second] =
 				sequence === 'main tag first'
 					? (['cdn-testing', 'cdn-devtools'] as const)
 					: (['cdn-devtools', 'cdn-testing'] as const);
 			await loadTag(first);
 			await loadTag(second);
-			const api = testWindow.c15t as C15tGlobalBase;
+			const api = testWindow.inth as InthGlobalBase;
 			const client = api.client as ConsentClient;
 			await client.ready();
 

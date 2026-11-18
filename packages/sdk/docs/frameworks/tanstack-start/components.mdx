@@ -67,7 +67,7 @@ render, and `buildPrefetchScript`, the script builder behind it.
 | `@inth/tanstack-start` | `manifest`, `hosted`, `local` | The modes, as data for `createConsentStateHandler({ mode })`. See [consent modes](/docs/concepts/modes) |
 | `@inth/tanstack-start/server` | `createConsentStateHandler`, `resolveConsent`, `consentLoaderOptions`, `mergeInitIntoConsentState` | Resolve the visitor's state in a server function. `createConsentStateHandler` takes `mode`, `routePrefix`, `proxy`, `snapshot` and the `resolveConsent` options |
 | `@inth/tanstack-start/middleware` | `consentRequestMiddleware` | Read location, language and privacy headers on every request. See [geography headers](/docs/frameworks/tanstack-start/geography-headers) |
-| `@inth/tanstack-start/api` | `createConsentRoute` | Serve `/api/c15t/*` from `src/routes/api/c15t/$.ts` |
+| `@inth/tanstack-start/api` | `createConsentRoute` | Serve `/api/inth/*` from `src/routes/api/inth/$.ts` |
 | `@inth/tanstack-start/build` | `consentManifest` | Vite plugin that bundles the manifest at build time. See the [quickstart](/docs/frameworks/tanstack-start/quickstart#bundle-your-policy-at-build-time) |
 | `@inth/tanstack-start/generated` | `snapshot`, `projectUrl` | The manifest and backend URL the plugin fetched. `snapshot` is `undefined` in the browser bundle |
 | `@inth/tanstack-start/static` | `createStaticConsentResolver`, `loadStaticManifest`, `createStaticManifestModule`, `resolveUnknownLocationInit` | Lower-level helpers for a build-time manifest. See [rendering](/docs/frameworks/tanstack-start/rendering#spa-mode-prerendered-pages-and-static-hosts) |

@@ -290,8 +290,8 @@ type CustomerIoProbeWindow = Window & {
 };
 
 type PosthogProbeWindow = Window & {
-	__c15tPosthogQueueReplayExpected?: boolean;
-	__c15tPosthogQueueReplayed?: boolean;
+	__inthPosthogQueueReplayExpected?: boolean;
+	__inthPosthogQueueReplayed?: boolean;
 };
 
 /**
@@ -410,7 +410,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	{
 		bootstrapCheck: () =>
 			check(Array.isArray(window._elqQ), 'Eloqua command array'),
-		createScript: () => eloquaTracking({ siteId: 'c15t-placeholder-site' }),
+		createScript: () => eloquaTracking({ siteId: 'inth-placeholder-site' }),
 		loaderUrlSubstring: 'img.en25.com/i/elqCfg.min.js',
 		notes:
 			'Uses a non-account placeholder site ID to check that the shared loader installs its dispatcher. All opt-in, opt-out and collection endpoints are blocked; cookie response behavior and account reporting are not verified.',
@@ -479,7 +479,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 					window.FS.q[0][5] === 2,
 				'FullStory v2 six-slot init queue with capture off'
 			),
-		createScript: () => fullStory({ orgId: 'c15t-live-probe-placeholder' }),
+		createScript: () => fullStory({ orgId: 'inth-live-probe-placeholder' }),
 		loaderUrlSubstring: 'edge.fullstory.com/s/fs.js',
 		notes:
 			'A placeholder organization loads the public v2 SDK, but its settings request stays blocked, so the real dispatcher is not proven. This checks the capture-off init queue and loader reachability only. Collection stays blocked.',
@@ -517,7 +517,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	},
 	{
 		allowUrlSubstrings: ['https://messaging-assets.ada.support/'],
-		createScript: () => ada({ handle: 'c15t-live-probe-placeholder' }),
+		createScript: () => ada({ handle: 'inth-live-probe-placeholder' }),
 		loaderUrlSubstring: 'messaging-assets.ada.support/sdk.js',
 		notes:
 			'Ada is callback-only and imports the real SDK entry after consent; there is no Script.src or loader element. The entry returns HTTP 200 and can fetch rollout modules and write rollout storage during evaluation. A placeholder handle with blocked Agent APIs cannot prove start, stop, a usable conversation or data erasure. This probe records module reachability only; collection stays blocked.',
@@ -721,14 +721,14 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 					entry[0] === 'load' &&
 					Array.isArray(args) &&
 					args.length === 1 &&
-					args[0] === 'c15t-test-pixel' &&
+					args[0] === 'inth-test-pixel' &&
 					probeWindow.__vector_manager === undefined,
 			};
 		},
-		createScript: () => vector({ pixelId: 'c15t-test-pixel' }),
+		createScript: () => vector({ pixelId: 'inth-test-pixel' }),
 		loaderUrlSubstring: 'https://cdn.vector.co/pixel.js',
 		notes:
-			'Only the exact GET script URL https://cdn.vector.co/pixel.js is allowed by the batch config. The placeholder pixel proves bootstrap, manager replacement and nested queue replay only. API, settings, identity, collection, partner and other script requests stay blocked. Real account/domain settings and visitor identification are not validated. Settings require an authorized X-Request-URL; public account IDs cannot validate this test origin. Blocked empty settings responses may produce vendor JSON errors, which must remain visible. Vector has no documented complete stop API; revocation requires the normal c15t reload, and retained code may continue without it.',
+			'Only the exact GET script URL https://cdn.vector.co/pixel.js is allowed by the batch config. The placeholder pixel proves bootstrap, manager replacement and nested queue replay only. API, settings, identity, collection, partner and other script requests stay blocked. Real account/domain settings and visitor identification are not validated. Settings require an authorized X-Request-URL; public account IDs cannot validate this test origin. Blocked empty settings responses may produce vendor JSON errors, which must remain visible. Vector has no documented complete stop API; revocation requires the normal inth reload, and retained code may continue without it.',
 		// oxlint-disable-next-line complexity -- Check source-backed manager aliases, live methods, queue drain and exact pixel replay together.
 		runtimeCheck: () => {
 			// pixel.js constructs __vector_manager, aliases Vector/vector to it,
@@ -739,7 +739,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			const runtime = probeWindow.vector;
 			const instances = runtime?.instances;
 			const instance =
-				instances instanceof Map ? instances.get('c15t-test-pixel') : undefined;
+				instances instanceof Map ? instances.get('inth-test-pixel') : undefined;
 			return {
 				detail:
 					'Downloaded Vector manager replaced the stub, drained its nested queue and registered the exact placeholder pixel; account initialization is unverified',
@@ -757,7 +757,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 					runtime._queue.length === 0 &&
 					instances instanceof Map &&
 					instances.size === 1 &&
-					instance?.pixelId === 'c15t-test-pixel',
+					instance?.pixelId === 'inth-test-pixel',
 			};
 		},
 		runtimeReplacedGlobals: ['vector'],
@@ -834,9 +834,9 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		vendor: 'lucky-orange',
 	},
 	{
-		createScript: () => rb2b({ accountKey: 'C15TFAKERB2BKEY' }),
+		createScript: () => rb2b({ accountKey: 'INTHFAKERB2BKEY' }),
 		loaderUrlSubstring:
-			'ddwl4m2hdecbv.cloudfront.net/b/C15TFAKERB2BKEY/C15TFAKERB2BKEY.js.gz',
+			'ddwl4m2hdecbv.cloudfront.net/b/INTHFAKERB2BKEY/INTHFAKERB2BKEY.js.gz',
 		notes:
 			'Placeholder account key provides consent gating and endpoint reachability coverage only. Runtime initialization and visitor identification are not verified; collection is blocked.',
 		tier: 'loader-only',
@@ -883,7 +883,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			adobeTarget({
 				datastreamId: '00000000-0000-4000-8000-000000000000',
 				mode: 'websdk',
-				orgId: 'C15TFAKE@AdobeOrg',
+				orgId: 'INTHFAKE@AdobeOrg',
 				version: '2.30.0',
 			}),
 		loaderUrlSubstring: 'cdn1.adoberesources.net/alloy/2.30.0/alloy.min.js',
@@ -899,8 +899,8 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				window.AppcuesSettings?.enableURLDetection === true,
 				'Appcues settings exist before its loader executes'
 			),
-		createScript: () => appcues({ accountId: 'c15t-nonexistent-account' }),
-		loaderUrlSubstring: 'fast.appcues.com/c15t-nonexistent-account.js',
+		createScript: () => appcues({ accountId: 'inth-nonexistent-account' }),
+		loaderUrlSubstring: 'fast.appcues.com/inth-nonexistent-account.js',
 		notes:
 			'Placeholder accounts may reject the loader. This probe proves consent gating and endpoint reachability, not SDK initialization; use a real account for onboarding flows.',
 		tier: 'loader-only',
@@ -908,7 +908,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	},
 
 	{
-		allowUrlSubstrings: ['wisepops.net/h/c15tfake/loader.js?v=3'],
+		allowUrlSubstrings: ['wisepops.net/h/inthfake/loader.js?v=3'],
 		bootstrapCheck: () => {
 			const api = window.wisepops;
 			const options = api?.q?.find((args) => args[0] === 'options');
@@ -920,8 +920,8 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				'Wisepops arguments queue, snippet timestamp and denied default exist before loader execution'
 			);
 		},
-		createScript: () => wisepops({ siteId: 'c15tfake' }),
-		loaderUrlSubstring: 'wisepops.net/loader.js?v=3&h=c15tfake',
+		createScript: () => wisepops({ siteId: 'inthfake' }),
+		loaderUrlSubstring: 'wisepops.net/loader.js?v=3&h=inthfake',
 		notes:
 			'The placeholder loader redirects with HTTP 301, then returns HTTP 404. This checks the denied-default bootstrap and endpoint response only; the runner can record the redirect. It cannot validate runtime startup or a campaign. Stored grants can override the denied default, and no supported consent-denied API exists. Collection stays blocked.',
 		tier: 'loader-only',
@@ -1016,8 +1016,8 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			);
 		},
 		createScript: () =>
-			insiderTag({ partnerId: '123456', partnerName: 'c15t' }),
-		loaderUrlSubstring: 'c15t.api.useinsider.com/ins.js?id=123456',
+			insiderTag({ partnerId: '123456', partnerName: 'inth' }),
+		loaderUrlSubstring: 'inth.api.useinsider.com/ins.js?id=123456',
 		notes:
 			'The placeholder partner returns HTTP 200 with a 52-byte HTML response, not an SDK. This checks the user/page/init bootstrap and endpoint reachability only. A dedicated Web SDK-enabled account is required for runtime and consent-update validation; collection stays blocked.',
 		tier: 'loader-only',
@@ -1043,7 +1043,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				`dataLayer seeded with ${dataLayer.length} entries before load`
 			);
 		},
-		createScript: () => googleTagManager({ id: 'GTM-C15TFAKE' }),
+		createScript: () => googleTagManager({ id: 'GTM-INTHFAKE' }),
 		deniedConsentProbe: {
 			// Google Consent Mode's cookieless pings are consent-safe by design;
 			// only real collection endpoints and ad-storage cookies are
@@ -1078,7 +1078,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				`dataLayer seeded with ${dataLayer.length} entries before load`
 			);
 		},
-		createScript: () => gtag({ category: 'measurement', id: 'G-C15TFAKE' }),
+		createScript: () => gtag({ category: 'measurement', id: 'G-INTHFAKE' }),
 		deniedConsentProbe: {
 			// Consent Mode's cookieless pings (gcs=G100) are consent-safe by
 			// design, so /g/collect is deliberately NOT a violation here; the
@@ -1100,7 +1100,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		vendor: 'gtag',
 	},
 	{
-		createScript: () => ahrefsAnalytics({ key: 'C15TFAKE' }),
+		createScript: () => ahrefsAnalytics({ key: 'INTHFAKE' }),
 		loaderUrlSubstring: 'analytics.ahrefs.com/analytics.js',
 		runtimeCheck: () =>
 			check(
@@ -1122,10 +1122,10 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		createScript: () =>
 			adobeAnalytics({
 				scriptUrl:
-					'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+					'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 			}),
 		loaderUrlSubstring:
-			'assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+			'assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 		notes:
 			'Placeholder Adobe Tags embed paths return HTTP 404 from assets.adobedtm.com; runtime globals such as window._satellite require a real property.',
 
@@ -1149,7 +1149,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				(method) => typeof amplitudeRuntime[method] === 'function'
 			);
 
-			amplitudeRuntime.track?.('c15t live probe', {
+			amplitudeRuntime.track?.('inth live probe', {
 				vendor: 'amplitude',
 			});
 			const identify = amplitudeRuntime.Identify
@@ -1173,7 +1173,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		},
 		createScript: () =>
 			amplitude({
-				apiKey: 'C15TFAKEAMPLITUDEKEY',
+				apiKey: 'INTHFAKEAMPLITUDEKEY',
 				initOptions: {
 					autocapture: false,
 					defaultTracking: false,
@@ -1207,12 +1207,12 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	{
 		createScript: () =>
 			cloudflareWebAnalytics({
-				token: 'c15tfake000000000000000000000000',
+				token: 'inthfake000000000000000000000000',
 			}),
 		loaderUrlSubstring: 'static.cloudflareinsights.com/beacon.min.js',
 		runtimeCheck: () =>
 			check(
-				window.__cfBeacon?.token === 'c15tfake000000000000000000000000',
+				window.__cfBeacon?.token === 'inthfake000000000000000000000000',
 				'window.__cfBeacon token present after loader executed'
 			),
 		tier: 'full',
@@ -1220,8 +1220,8 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	},
 	{
 		allowUrlSubstrings: ['cdn.claydar.com/releases/latest/radar.min.js'],
-		createScript: () => clay({ siteId: 'c15tfake' }),
-		loaderUrlSubstring: 'static.claydar.com/init.v1.js?id=c15tfake',
+		createScript: () => clay({ siteId: 'inthfake' }),
+		loaderUrlSubstring: 'static.claydar.com/init.v1.js?id=inthfake',
 		notes:
 			'Placeholder profile verifies real loader and tracker execution; API collection requests are blocked and account configuration is unverified.',
 		runtimeCheck: () =>
@@ -1234,8 +1234,8 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		vendor: 'clay',
 	},
 	{
-		createScript: () => clearbit({ publishableKey: 'pk_c15tfake' }),
-		loaderUrlSubstring: 'tag.clearbitscripts.com/v1/pk_c15tfake/tags.js',
+		createScript: () => clearbit({ publishableKey: 'pk_inthfake' }),
+		loaderUrlSubstring: 'tag.clearbitscripts.com/v1/pk_inthfake/tags.js',
 		notes:
 			'Placeholder publishable keys return HTTP 404 JavaScript from tag.clearbitscripts.com; runtime globals are not asserted.',
 
@@ -1311,19 +1311,19 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	{
 		bootstrapCheck: () =>
 			check(
-				window.databuddyConfig?.clientId === 'db_c15tfake',
+				window.databuddyConfig?.clientId === 'db_inthfake',
 				'databuddyConfig seeded before load'
 			),
 		createScript: () =>
 			databuddy({
-				clientId: 'db_c15tfake',
+				clientId: 'db_inthfake',
 				configWhenDenied: {
-					clientId: 'db_c15tfake',
+					clientId: 'db_inthfake',
 					disabled: true,
 				},
 
 				configWhenGranted: {
-					clientId: 'db_c15tfake',
+					clientId: 'db_inthfake',
 					disabled: false,
 				},
 			}),
@@ -1337,7 +1337,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		vendor: 'databuddy',
 	},
 	{
-		createScript: () => fathomAnalytics({ site: 'C15TFAKE' }),
+		createScript: () => fathomAnalytics({ site: 'INTHFAKE' }),
 		loaderUrlSubstring: 'cdn.usefathom.com/script.js',
 		runtimeCheck: () =>
 			check(
@@ -1361,7 +1361,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				(method) => typeof heapRuntime[method] === 'function'
 			);
 
-			heapRuntime.track?.('c15t live probe', {
+			heapRuntime.track?.('inth live probe', {
 				vendor: 'heap',
 			});
 			const queuedNames = heapWindow.heapReadyCb?.map((entry) => entry.name);
@@ -1495,7 +1495,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 
 			return check(
 				hasMethods &&
-					htevents._writeKey === 'C15TFAKE' &&
+					htevents._writeKey === 'INTHFAKE' &&
 					JSON.stringify(htevents._loadOptions) ===
 						JSON.stringify({ apiHost: 'us-east-1.hightouch-events.com' }),
 				'hightouch queue methods, write key, and load options present before load'
@@ -1505,7 +1505,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			hightouch({
 				apiHost: 'us-east-1.hightouch-events.com',
 
-				writeKey: 'C15TFAKE',
+				writeKey: 'INTHFAKE',
 			}),
 		loaderUrlSubstring:
 			'cdn.hightouch-events.com/browser/release/v1-latest/events.min.js',
@@ -1528,7 +1528,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	{
 		createScript: () =>
 			logRocket({
-				appId: 'c15tfake/c15tfake',
+				appId: 'inthfake/inthfake',
 				initOptions: {
 					dom: {
 						inputSanitizer: true,
@@ -1564,7 +1564,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			),
 		createScript: () =>
 			matomoAnalytics({
-				cloudId: 'c15t-live-probe',
+				cloudId: 'inth-live-probe',
 				defaultConsent: 'required',
 				disableCookies: true,
 				enableLinkTracking: true,
@@ -1578,7 +1578,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			collectUrlSubstrings: ['matomo.php'],
 			storagePrefixes: ['_pk_'],
 		},
-		loaderUrlSubstring: 'cdn.matomo.cloud/c15t-live-probe/matomo.js',
+		loaderUrlSubstring: 'cdn.matomo.cloud/inth-live-probe/matomo.js',
 		// No runtimeCheck: cdn.matomo.cloud answers a placeholder cloud id with a
 		// 404 HTML page, so no Matomo runtime can ever exist here. Declaring an
 		// unreachable check would misreport this vendor as runtime-covered.
@@ -1602,9 +1602,9 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				}
 
 				const probeWindow = window as PosthogProbeWindow;
-				probeWindow.__c15tPosthogQueueReplayExpected = true;
+				probeWindow.__inthPosthogQueueReplayExpected = true;
 				queuedStub.push(() => {
-					probeWindow.__c15tPosthogQueueReplayed = true;
+					probeWindow.__inthPosthogQueueReplayed = true;
 				});
 
 				return check(
@@ -1631,7 +1631,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		},
 		createScript: () =>
 			posthog({
-				id: 'phc_c15tliveprobe000000000000000000000000000000000',
+				id: 'phc_inthliveprobe000000000000000000000000000000000',
 				loadMode: 'after-consent',
 			}),
 		loaderUrlSubstring: 'assets.i.posthog.com/static/array.js',
@@ -1646,15 +1646,15 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			}
 
 			if (
-				probeWindow.__c15tPosthogQueueReplayExpected &&
-				probeWindow.__c15tPosthogQueueReplayed !== true
+				probeWindow.__inthPosthogQueueReplayExpected &&
+				probeWindow.__inthPosthogQueueReplayed !== true
 			) {
 				return check(false, 'posthog SDK did not replay the snippet queue');
 			}
 
 			return check(
 				true,
-				probeWindow.__c15tPosthogQueueReplayExpected
+				probeWindow.__inthPosthogQueueReplayExpected
 					? 'posthog SDK initialized and replayed the snippet queue'
 					: 'posthog SDK reports __loaded after init'
 			);
@@ -1672,7 +1672,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	},
 	{
 		createScript: () =>
-			oneDollarStats({ devmode: 'true', hostname: 'c15t-live-probe.invalid' }),
+			oneDollarStats({ devmode: 'true', hostname: 'inth-live-probe.invalid' }),
 		loaderUrlSubstring: 'assets.onedollarstats.com/stonks.js',
 		runtimeCheck: () => {
 			const { stonks } = window as Window & {
@@ -1705,9 +1705,9 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	{
 		createScript: () =>
 			pirsch({
-				dev: 'c15t-live-probe.invalid',
+				dev: 'inth-live-probe.invalid',
 
-				identificationCode: 'c15t-live-probe',
+				identificationCode: 'inth-live-probe',
 			}),
 		loaderUrlSubstring: 'api.pirsch.io/pa.js',
 		notes:
@@ -1750,15 +1750,15 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			rudderstack({
 				consentManagement: {
 					mapping: {
-						marketing: ['c15t-marketing'],
-						measurement: ['c15t-measurement'],
+						marketing: ['inth-marketing'],
+						measurement: ['inth-measurement'],
 					},
 				},
-				dataPlaneUrl: 'https://c15t-live-probe.invalid',
-				writeKey: 'C15TFAKE',
+				dataPlaneUrl: 'https://inth-live-probe.invalid',
+				writeKey: 'INTHFAKE',
 			}),
 		deniedConsentProbe: {
-			collectUrlSubstrings: ['c15t-live-probe.invalid'],
+			collectUrlSubstrings: ['inth-live-probe.invalid'],
 			notes:
 				'Pre-consent mode: the SDK loads inert with buffered delivery and storage strategy none; any data-plane request or rl_* storage under denied consent is a violation.',
 
@@ -1798,9 +1798,9 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				'segment queue methods present before load'
 			);
 		},
-		createScript: () => segment({ writeKey: 'C15TFAKE' }),
+		createScript: () => segment({ writeKey: 'INTHFAKE' }),
 		loaderUrlSubstring:
-			'cdn.segment.com/analytics.js/v1/C15TFAKE/analytics.min.js',
+			'cdn.segment.com/analytics.js/v1/INTHFAKE/analytics.min.js',
 		notes:
 			'Placeholder write keys return HTTP 404 from cdn.segment.com; runtime is not asserted.',
 
@@ -1848,7 +1848,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	{
 		createScript: () =>
 			rybbitAnalytics({
-				siteId: 'c15t-live-probe',
+				siteId: 'inth-live-probe',
 				trackSpa: true,
 			}),
 		loaderUrlSubstring: 'app.rybbit.io/api/script.js',
@@ -1874,7 +1874,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			);
 		},
 		createScript: () =>
-			plausibleAnalytics({ domain: 'c15t-live-probe.invalid' }),
+			plausibleAnalytics({ domain: 'inth-live-probe.invalid' }),
 		loaderUrlSubstring: 'plausible.io/js/script.js',
 		runtimeCheck: () =>
 			check(
@@ -1914,7 +1914,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		},
 		createScript: () =>
 			vercelAnalytics({
-				dsn: 'https://c15t-live-probe.invalid',
+				dsn: 'https://inth-live-probe.invalid',
 			}),
 		loaderUrlSubstring: 'va.vercel-scripts.com/v1/script.js',
 		// No runtimeCheck: probed live, script.js needs a Vercel deployment
@@ -1984,7 +1984,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				typeof window.FrontChat === 'undefined',
 				'FrontChat is not seeded before the vendor loader executes'
 			),
-		createScript: () => frontChat({ chatId: 'c15tfake' }),
+		createScript: () => frontChat({ chatId: 'inthfake' }),
 		loaderUrlSubstring: 'chat-assets.frontapp.com/v1/chat.bundle.js',
 		notes:
 			'The public Front Chat loader redirects to a versioned bundle; runtime installation is still required. The chat iframe and every other third-party request are blocked. This does not validate a live chat session with a real channel.',
@@ -2012,12 +2012,12 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 			}
 
 			return check(
-				window.intercomSettings?.app_id === 'c15tfake',
+				window.intercomSettings?.app_id === 'inthfake',
 				'intercomSettings seeded before load'
 			);
 		},
-		createScript: () => intercom({ appId: 'c15tfake' }),
-		loaderUrlSubstring: 'widget.intercom.io/widget/c15tfake',
+		createScript: () => intercom({ appId: 'inthfake' }),
+		loaderUrlSubstring: 'widget.intercom.io/widget/inthfake',
 		// No runtimeCheck: probed live, the widget bundle adds no global for a
 		// placeholder app id. `typeof window.Intercom === 'function'` is
 		// satisfied by the bootstrap queue stub alone.
@@ -2045,13 +2045,13 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 					window._klOnsite.length === 0,
 				'klaviyo object and empty _klOnsite queue seeded before load'
 			),
-		createScript: () => klaviyo({ publicApiKey: 'c15tfk' }),
-		loaderUrlSubstring: 'static.klaviyo.com/onsite/js/c15tfk/klaviyo.js',
+		createScript: () => klaviyo({ publicApiKey: 'inthfk' }),
+		loaderUrlSubstring: 'static.klaviyo.com/onsite/js/inthfk/klaviyo.js',
 		notes:
 			'The loader serves its module manifest for any well-formed key, so the probe asserts the real runtime against a placeholder account. Form configuration and every a.klaviyo.com request are blocked; this does not validate a real account.',
 		runtimeCheck: () =>
 			check(
-				(window as KlaviyoWindow).klaviyoModulesObject?.companyId === 'c15tfk',
+				(window as KlaviyoWindow).klaviyoModulesObject?.companyId === 'inthfk',
 				'klaviyoModulesObject registered for the placeholder account after Klaviyo.js executed'
 			),
 		runtimeReplacedGlobals: ['klaviyo'],
@@ -2091,7 +2091,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				'oaiq command queue exists before load'
 			);
 		},
-		createScript: () => openaiPixel({ pixelId: 'c15t_live_probe_placeholder' }),
+		createScript: () => openaiPixel({ pixelId: 'inth_live_probe_placeholder' }),
 		loaderUrlSubstring: 'bzrcdn.openai.com/sdk/oaiq.min.js',
 		runtimeCheck: () => {
 			// The CDN loader sets loaded and replaces the stub with command methods.
@@ -2161,7 +2161,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				'reddit pixel queue seeded before load'
 			);
 		},
-		createScript: () => redditPixel({ pixelId: 't2_c15tfake' }),
+		createScript: () => redditPixel({ pixelId: 't2_inthfake' }),
 		loaderUrlSubstring: 'redditstatic.com/ads/pixel.js',
 		runtimeCheck: () =>
 			check(
@@ -2185,7 +2185,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 				'tiktok queue methods present before load'
 			);
 		},
-		createScript: () => tiktokPixel({ pixelId: 'C15TFAKE' }),
+		createScript: () => tiktokPixel({ pixelId: 'INTHFAKE' }),
 		loaderUrlSubstring: 'analytics.tiktok.com/i18n/pixel/events.js',
 		runtimeCheck: () => {
 			const queue = window.ttq as

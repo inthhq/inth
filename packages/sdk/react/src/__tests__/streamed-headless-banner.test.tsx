@@ -25,7 +25,7 @@ const policyConfig = function policyConfig(
 	rule: Partial<PolicyRule> = {}
 ): KernelConfig {
 	return {
-		initialBranding: 'c15t',
+		initialBranding: 'inth',
 		initialLocation: { countryCode: 'DE', regionCode: null },
 		initialOverrides: { country: 'DE', language: 'en' },
 		...policyFixture(

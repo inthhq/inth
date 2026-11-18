@@ -30,7 +30,7 @@ export type ConsentDevToolsProps = Omit<
 >;
 
 /** Backward-compatible props name for {@link ConsentDevTools}. */
-export type C15TDevToolsProps = ConsentDevToolsProps;
+export type InthDevToolsProps = ConsentDevToolsProps;
 
 /** Compatible props name for the {@link DevTools} alias. */
 export type DevToolsProps = ConsentDevToolsProps;
@@ -137,7 +137,7 @@ const useProviderDevTools = (
 };
 
 /**
- * Mounts the c15t DevTools engine for the nearest Vue consent provider.
+ * Mounts the Inth DevTools engine for the nearest Vue consent provider.
  *
  * @returns A renderless Vue component; the engine mounts into `document.body`.
  * @throws {Error} When rendered outside a consent provider.
@@ -170,7 +170,7 @@ export const ConsentDevTools = defineComponent({
 });
 
 /**
- * Embeds c15t DevTools in its parent element instead of floating over the
+ * Embeds Inth DevTools in its parent element instead of floating over the
  * page. Use it to host the panel in another devtools UI or a debug page;
  * give the parent a height.
  *
@@ -208,7 +208,7 @@ export const ConsentDevToolsPanel = defineComponent({
 export const DevTools = ConsentDevTools;
 
 /** Backward-compatible name for {@link ConsentDevTools}. */
-export const C15TDevTools = ConsentDevTools;
+export const InthDevTools = ConsentDevTools;
 
 export default ConsentDevTools;
 

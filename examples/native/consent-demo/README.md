@@ -12,10 +12,10 @@ and IAB TCF and Additional Consent modes on the setup screen. Release builds
 require hosted setup and exclude the fixture picker.
 
 Android Debug builds also read three string extras from the launch intent, in any
-mode: `C15T_DEMO_FIRST_LAYER` (`page`, `sheet` or `prompt`),
-`C15T_DEMO_APPEARANCE` (`c15t` or `system`) and
-`C15T_DEMO_SAVE_PLACEMENT` (`bottom` or `top`). For example, add
-`--es C15T_DEMO_FIRST_LAYER sheet --es C15T_DEMO_APPEARANCE system` to
+mode: `INTH_DEMO_FIRST_LAYER` (`page`, `sheet` or `prompt`),
+`INTH_DEMO_APPEARANCE` (`inth` or `system`) and
+`INTH_DEMO_SAVE_PLACEMENT` (`bottom` or `top`). For example, add
+`--es INTH_DEMO_FIRST_LAYER sheet --es INTH_DEMO_APPEARANCE system` to
 `adb shell am start`.
 
 Keep simulator code signing enabled. The project uses ad-hoc simulator signing
@@ -43,7 +43,7 @@ can supply hosted certification evidence.
 
 The iOS demo links PostHog, Mixpanel, Sentry and Firebase Analytics, pinned in
 `ios/project.yml`. They start only in a Debug fixture launch that sets
-`C15T_VENDOR_BASE`, so the demo behaves as before for everyone else.
+`INTH_VENDOR_BASE`, so the demo behaves as before for everyone else.
 `ios/VendorSDKs/vendor-sdk-harness.swift` configures each SDK with collection
 off, binds it to the measurement category through the Inth Swift helpers, and
 adds Probe vendors and Flush buttons above the consent screens.
@@ -87,7 +87,7 @@ anonymous `distinct_id` under the `inth-vendor-evidence` logcat tag.
 Run it by dispatching the Depot CI workflow on `canary`:
 
 ```sh
-depot ci dispatch --org YOUR_DEPOT_ORG_ID --repo inthhq/c15t-private \
+depot ci dispatch --org YOUR_DEPOT_ORG_ID --repo inthhq/inth-private \
   --workflow android-posthog-live.yml --ref canary
 ```
 

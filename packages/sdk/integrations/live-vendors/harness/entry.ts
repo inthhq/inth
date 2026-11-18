@@ -3,7 +3,7 @@
  *
  * Bundled with `Bun.build` and served into a real Chromium page by the
  * runner. Exposes a small window API that loads one vendor script through the
- * production `c15t` script loader and runs the probe checks defined in
+ * production `inth` script loader and runs the probe checks defined in
  * `../vendors`.
  */
 import { createConsentKernel } from '@inth/sdk/engine';
@@ -20,7 +20,7 @@ import { getLiveVendorProbeConfig, liveVendorProbeConfigs } from '../vendors';
 
 declare global {
 	interface Window {
-		__c15tLiveVendorProbe?: LiveVendorProbeHarness;
+		__inthLiveVendorProbe?: LiveVendorProbeHarness;
 	}
 }
 
@@ -235,4 +235,4 @@ const harness: LiveVendorProbeHarness = {
 	},
 };
 
-window.__c15tLiveVendorProbe = harness;
+window.__inthLiveVendorProbe = harness;

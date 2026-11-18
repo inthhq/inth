@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
 	description: 'Deterministic browser benchmarks for @inth/nextjs',
-	title: 'c15t Next.js Browser Bench',
+	title: 'inth Next.js Browser Bench',
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (

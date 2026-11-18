@@ -8,8 +8,8 @@
  * report can put the two suites in one table.
  *
  * The measured arms run against the shipped `@inth/svelte/kit` layer
- * (`c15tHandle`, `loadConsent`, `createConsentRoute`); the
- * `baseline` arms render the same shell with no c15t in the route's module
+ * (`inthHandle`, `loadConsent`, `createConsentRoute`); the
+ * `baseline` arms render the same shell with no Inth in the route's module
  * graph at all, which is the floor `consentTax = bannerVisible − floor`
  * subtracts.
  */
@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import type {
 	BenchPerfMetrics,
 	readBenchNavigationTiming,
-} from '@c15t/benchmarking/browser';
+} from '@inth/benchmarking/browser';
 import {
 	applyBenchThrottleProfile,
 	benchNavigationTimingExpression,
@@ -34,24 +34,24 @@ import {
 	benchScenarioKey,
 	resolveBenchBackendLatencyMs,
 	parseBenchThrottleProfile,
-} from '@c15t/benchmarking/browser';
-import { sveltekitBrowserBudgetsForScenario } from '@c15t/benchmarking/budgets';
+} from '@inth/benchmarking/browser';
+import { sveltekitBrowserBudgetsForScenario } from '@inth/benchmarking/budgets';
 import {
 	analyzeServerHtmlStream,
 	bannerMarkupMarkers,
 	readServerHtmlStream,
-} from '@c15t/benchmarking/html-stream';
-import type { ServerHtmlStreamAnalysis } from '@c15t/benchmarking/html-stream';
-import { createRepeatVisitorCookie } from '@c15t/benchmarking/nuxt-repeat-visitor';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
-import type { BenchScriptTiming } from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/html-stream';
+import type { ServerHtmlStreamAnalysis } from '@inth/benchmarking/html-stream';
+import { createRepeatVisitorCookie } from '@inth/benchmarking/nuxt-repeat-visitor';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
+import type { BenchScriptTiming } from '@inth/benchmarking/script-timing';
 import {
 	benchScriptTimingExpression,
 	scriptTimingGlossary,
 	summarizeBenchScripts,
 	summarizeIdlePreloadMetrics,
-} from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/script-timing';
 import {
 	getEnvironment,
 	median,
@@ -61,22 +61,22 @@ import {
 	summarizeMetric,
 	summarizeNullableMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import {
 	assertVisitBannerState,
 	coldStateMetadata,
 	describeColdState,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import type {
 	BenchColdState,
 	BenchVisitKind,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import {
 	serverHtmlMetadata,
 	summarizeServerHtmlMetrics,
 	summarizeVisitTimingMetrics,
 	visitMetricGlossary,
-} from '@c15t/benchmarking/visit-metrics';
+} from '@inth/benchmarking/visit-metrics';
 import { chromium } from 'playwright';
 import type * as PlaywrightTypes from 'playwright';
 
@@ -110,14 +110,14 @@ interface SvelteKitBrowserBenchState {
 
 declare global {
 	interface Window {
-		__c15tSvelteBench?: SvelteKitBrowserBenchState;
+		__inthSvelteBench?: SvelteKitBrowserBenchState;
 		/** Written by `$lib/script-probe.svelte` on the `scripts` arms. */
-		__c15tSvelteBenchScripts?: {
+		__inthSvelteBenchScripts?: {
 			acceptClickMs?: number;
 			heldRequestMs?: number;
 		};
 		/** Written by the stand-in third-party script when it runs. */
-		__c15tBenchScriptExecutedMs?: number;
+		__inthBenchScriptExecutedMs?: number;
 	}
 }
 
@@ -163,14 +163,14 @@ const awaitServerExit = async function awaitServerExit(
 };
 const bannerRootTestId = 'consent-banner-root';
 const bannerAcceptButtonTestId = 'consent-banner-accept-button';
-const bannerElementTimingName = 'c15t-consent-banner';
+const bannerElementTimingName = 'inth-consent-banner';
 
 /**
  * Escape hatch for machines whose Playwright browser cache does not hold the
  * headless shell this Playwright version pins — point it at any Chromium
  * build and the suite runs unchanged.
  */
-const chromiumExecutablePath = process.env.C15T_BENCH_CHROMIUM_PATH;
+const chromiumExecutablePath = process.env.INTH_BENCH_CHROMIUM_PATH;
 
 const readCliFlag = function readCliFlag(name: string): string | undefined {
 	const index = process.argv.indexOf(name);
@@ -184,28 +184,28 @@ const readCliFlag = function readCliFlag(name: string): string | undefined {
 };
 
 const PORT = Number(
-	readCliFlag('--port') ?? process.env.C15T_BENCH_PORT ?? '4333'
+	readCliFlag('--port') ?? process.env.INTH_BENCH_PORT ?? '4333'
 );
 const BASE_URL = `http://${HOST}:${PORT}`;
 
 const iterations = Number(
 	readCliFlag('--iterations') ??
-		process.env.C15T_BENCH_ITERATIONS ??
+		process.env.INTH_BENCH_ITERATIONS ??
 		process.env.BENCH_ITERATIONS ??
 		'7'
 );
 const warmupIterations = Number(
 	readCliFlag('--warmup') ??
-		process.env.C15T_BENCH_WARMUP_ITERATIONS ??
+		process.env.INTH_BENCH_WARMUP_ITERATIONS ??
 		process.env.BENCH_WARMUP_ITERATIONS ??
 		'1'
 );
 const throttleProfile = parseBenchThrottleProfile(
-	readCliFlag('--profile') ?? process.env.C15T_BENCH_PROFILE
+	readCliFlag('--profile') ?? process.env.INTH_BENCH_PROFILE
 );
 const backendLatencyMs = resolveBenchBackendLatencyMs(readCliFlag, process.env);
 const scenarioFilter =
-	readCliFlag('--scenario') ?? process.env.C15T_BENCH_SCENARIO;
+	readCliFlag('--scenario') ?? process.env.INTH_BENCH_SCENARIO;
 
 const allScenarios = [
 	{ name: 'baseline', path: '/baseline' },
@@ -282,9 +282,9 @@ const collectScriptTiming = async function collectScriptTiming(
 ): Promise<ScriptTimingSample> {
 	await page.waitForFunction(
 		(waitForHold) =>
-			typeof window.__c15tBenchScriptExecutedMs === 'number' &&
+			typeof window.__inthBenchScriptExecutedMs === 'number' &&
 			(!waitForHold ||
-				typeof window.__c15tSvelteBenchScripts?.heldRequestMs === 'number'),
+				typeof window.__inthSvelteBenchScripts?.heldRequestMs === 'number'),
 		returning,
 		{ timeout: 30_000 }
 	);
@@ -293,9 +293,9 @@ const collectScriptTiming = async function collectScriptTiming(
 			.getEntriesByType('resource')
 			.find((candidate) => new URL(candidate.name).pathname === path);
 		return {
-			acceptClickMs: window.__c15tSvelteBenchScripts?.acceptClickMs ?? null,
-			executedMs: window.__c15tBenchScriptExecutedMs ?? null,
-			heldRequestMs: window.__c15tSvelteBenchScripts?.heldRequestMs ?? null,
+			acceptClickMs: window.__inthSvelteBenchScripts?.acceptClickMs ?? null,
+			executedMs: window.__inthBenchScriptExecutedMs ?? null,
+			heldRequestMs: window.__inthSvelteBenchScripts?.heldRequestMs ?? null,
 			startMs: entry?.startTime ?? null,
 		};
 	}, benchScriptPath);
@@ -329,7 +329,7 @@ const measureInteractionLatency = async function measureInteractionLatency(
 		const startedAt = performance.now();
 		await page.click('#open-preferences');
 		await page.waitForFunction(
-			() => window.__c15tSvelteBench?.activeUI === 'dialog',
+			() => window.__inthSvelteBench?.activeUI === 'dialog',
 			undefined,
 			{ timeout: 30_000 }
 		);
@@ -337,13 +337,13 @@ const measureInteractionLatency = async function measureInteractionLatency(
 	}
 
 	const before = await page.evaluate(
-		() => window.__c15tSvelteBench?.onConsentSetCount ?? 0
+		() => window.__inthSvelteBench?.onConsentSetCount ?? 0
 	);
 	const startedAt = performance.now();
 	await page.click(`[data-testid="${bannerAcceptButtonTestId}"]`);
 	await page.waitForFunction(
 		(expected) => {
-			const state = window.__c15tSvelteBench;
+			const state = window.__inthSvelteBench;
 			return (
 				!!state &&
 				state.onConsentSetCount > expected &&
@@ -431,7 +431,7 @@ const seedRepeatVisitorCookie = async function seedRepeatVisitorCookie(
 			domain: HOST,
 			expires: Math.floor(Date.now() / 1000) + 60 * 60,
 			httpOnly: false,
-			name: 'c15t',
+			name: 'inth',
 			path: '/',
 			sameSite: 'Lax',
 			secure: false,
@@ -494,7 +494,7 @@ const collectScenarioMetrics = async function collectScenarioMetrics(
 	await page.waitForLoadState('domcontentloaded');
 	await page.waitForFunction(
 		(targetScenario) => {
-			const state = window.__c15tSvelteBench;
+			const state = window.__inthSvelteBench;
 			return (
 				!!state &&
 				state.scenario === targetScenario &&
@@ -507,7 +507,7 @@ const collectScenarioMetrics = async function collectScenarioMetrics(
 	await page.waitForLoadState('load');
 	await page.waitForTimeout(250);
 
-	const state = await page.evaluate(() => window.__c15tSvelteBench);
+	const state = await page.evaluate(() => window.__inthSvelteBench);
 	const navEntry = (await page.evaluate(
 		benchNavigationTimingExpression
 	)) as Awaited<ReturnType<typeof readBenchNavigationTiming>>;
@@ -737,7 +737,7 @@ const run = async function run() {
 				const coldState = scenarioColdState(scenario.name);
 				const serverHtml = await readServerHtml(
 					scenario.path,
-					visit === 'fresh' ? undefined : `c15t=${createRepeatVisitorCookie()}`
+					visit === 'fresh' ? undefined : `inth=${createRepeatVisitorCookie()}`
 				);
 				const outputScenario = resultScenarioName(scenario.name);
 
@@ -909,7 +909,7 @@ const run = async function run() {
 						...visitMetricGlossary,
 						...scriptTimingGlossary,
 					],
-					package: '@c15t/sveltekit-browser-bench',
+					package: '@inth/sveltekit-browser-bench',
 					runtime: 'playwright',
 					scenario: outputScenario,
 					schemaVersion: BENCHMARK_SCHEMA_VERSION,

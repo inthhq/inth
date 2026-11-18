@@ -11,10 +11,10 @@ the cache and filter by the vendor's domain:
 2. Click Reject, then reload. There is still no vendor request.
 3. Open Privacy settings and allow the helper's category. The vendor script
    loads without a page reload.
-4. Turn the category off again and save. c15t reloads the page, and the new
+4. Turn the category off again and save. Inth reloads the page, and the new
    page makes no vendor request.
 
-c15t reloads on revocation because removing a script element does not stop
+Inth reloads on revocation because removing a script element does not stop
 code that already ran. The vendor's listeners, timers and queued events stay
 alive until the page unloads. If you set `reloadOnConsentRevoked: false`, stop
 the vendor yourself. Register a callback-only script whose `onConsentChange`

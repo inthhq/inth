@@ -1,4 +1,4 @@
-import { buttonRenders } from '@c15t/conformance/play/button';
+import { buttonRenders } from '@inth/conformance/play/button';
 import { buttonVariants } from '@inth/sdk/ui/styles/primitives';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 

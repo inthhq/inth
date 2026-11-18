@@ -66,8 +66,8 @@ const runTabScript = (view: Window): void => {
 
 const panelRoot = (view: Window): HTMLElement | null =>
 	view.document
-		.querySelector('[data-c15t-dev-tools-host]')
-		?.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]') ?? null;
+		.querySelector('[data-inth-dev-tools-host]')
+		?.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]') ?? null;
 
 describe('Nuxt DevTools tab bridge', () => {
 	test('mounts an embedded panel for the app kernel into the tab page', async () => {
@@ -76,7 +76,7 @@ describe('Nuxt DevTools tab bridge', () => {
 		document.documentElement.classList.add('dark');
 		const view = createTabFrame();
 		runTabScript(view);
-		expect(view.document.getElementById('c15t-devtools-waiting')?.hidden).toBe(
+		expect(view.document.getElementById('inth-devtools-waiting')?.hidden).toBe(
 			false
 		);
 
@@ -86,9 +86,9 @@ describe('Nuxt DevTools tab bridge', () => {
 			timeout: 2000,
 		});
 		const root = panelRoot(view);
-		expect(root?.classList).toContain('c15t-dev-tools--embedded');
+		expect(root?.classList).toContain('inth-dev-tools--embedded');
 		expect(root?.style.colorScheme).toBe('dark');
-		expect(view.document.getElementById('c15t-devtools-waiting')?.hidden).toBe(
+		expect(view.document.getElementById('inth-devtools-waiting')?.hidden).toBe(
 			true
 		);
 

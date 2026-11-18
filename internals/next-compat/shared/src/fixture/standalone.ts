@@ -3,7 +3,7 @@
  *
  * @remarks
  * Cells that ship a server mount the fixture handlers inside the app under
- * `/api/c15t`. A static export has no server, so the suite's global setup
+ * `/api/inth`. A static export has no server, so the suite's global setup
  * runs this one beside the static file server instead. The browser then
  * calls it cross-origin, which is why every response carries CORS headers
  * and `OPTIONS` preflights are answered here; the in-app mounts never need
@@ -22,7 +22,7 @@ export interface FixtureServerOptions {
 	host?: string;
 	/** Port to bind; `0` picks a free one. Defaults to `0`. */
 	port?: number;
-	/** Path prefix the handlers are mounted under. Defaults to `/api/c15t`. */
+	/** Path prefix the handlers are mounted under. Defaults to `/api/inth`. */
 	basePath?: string;
 }
 
@@ -128,7 +128,7 @@ const listen = async function listen(
 export const startFixtureServer = async function startFixtureServer({
 	host = '127.0.0.1',
 	port = 0,
-	basePath = '/api/c15t',
+	basePath = '/api/inth',
 }: FixtureServerOptions = {}): Promise<FixtureServer> {
 	const server = createServer(createHandler(basePath));
 	const boundPort = await listen(server, host, port);

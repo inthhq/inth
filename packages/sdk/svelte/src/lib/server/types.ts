@@ -8,11 +8,11 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 /**
  * How the request is read: the consent cookie name and explicit
  * geo/language overrides. Shared by {@link ResolveConsentOptions},
- * `c15tHandle` and `loadConsent`.
+ * `inthHandle` and `loadConsent`.
  */
 export interface ConsentRequestOptions {
 	/**
-	 * Cookie name holding persisted consent. Defaults to `c15t` — the
+	 * Cookie name holding persisted consent. Defaults to `inth` — the
 	 * persistence module's storage key. Set this only if you customized
 	 * `storageConfig.storageKey` client-side; it must match.
 	 */
@@ -42,7 +42,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	/** Cookie header to read instead of `headers.get('cookie')`. */
 	cookieHeader?: string | null;
 	/**
-	 * c15t backend base URL, absolute or origin-relative. When set, the
+	 * Inth backend base URL, absolute or origin-relative. When set, the
 	 * helper calls `${projectUrl}/init` and folds the response into the
 	 * returned state when no snapshot is supplied. With a snapshot, an
 	 * absolute backend URL receives session reports. Without either, only

@@ -1,6 +1,6 @@
 ---
 title: Content Security Policy
-description: Write a Content Security Policy for a SvelteKit app using c15t with SvelteKit's csp option, covering vendor hosts, c15t's style elements, the server-rendered theme style and style attributes.
+description: Write a Content Security Policy for a SvelteKit app using Inth with SvelteKit's csp option, covering vendor hosts, inth's style elements, the server-rendered theme style and style attributes.
 group: frameworks
 ---
 
@@ -9,7 +9,7 @@ group: frameworks
 SvelteKit writes the `Content-Security-Policy` header when you set its `csp`
 option. In SvelteKit 3 that option goes to the `sveltekit()` plugin in
 `vite.config.ts`. SvelteKit adds nonces or hashes to its own inline scripts.
-Add the hosts c15t and your vendors need to the directives:
+Add the hosts Inth and your vendors need to the directives:
 
 {/* example: fragment */}
 
@@ -40,17 +40,17 @@ provider's `nonce` prop cannot reuse it. Allow vendor hosts in `script-src`
 instead. Host sources still apply next to SvelteKit's nonces, as long as the
 list has no `'strict-dynamic'`.
 
-The `<link rel="modulepreload">` tag that `c15tHandle` adds for the script
+The `<link rel="modulepreload">` tag that `inthHandle` adds for the script
 loader and network blocker chunk takes the nonce SvelteKit put on its own
 scripts, unless the provider has a `nonce` of its own. The chunk is on your
 own origin, so `'self'` covers it too.
 
 ## Allow the banner's tap script
 
-A server-rendered `ConsentBanner` puts an inline `<script data-c15t-early-tap>`
+A server-rendered `ConsentBanner` puts an inline `<script data-inth-early-tap>`
 ahead of its markup. It holds a tap made before the page hydrates; see
 [taps before hydration](./rendering#taps-before-hydration). The script takes
-the provider's `nonce`, or else `c15tHandle` gives it the nonce SvelteKit put
+the provider's `nonce`, or else `inthHandle` gives it the nonce SvelteKit put
 on its own scripts, so `mode: 'nonce'` and `mode: 'auto'` on a page rendered
 for each request admit it. Its text is the same on every page, so on a
 prerendered page you can allow it by the SHA-256 hash of its text. A policy
@@ -59,7 +59,7 @@ that blocks it changes nothing else: a tap before hydration then does nothing.
 ## Allow the server start script
 
 When the visitor's consent already allows some vendor helper entries in
-`scripts`, through a stored choice or a policy that asks for none, `c15tHandle`
+`scripts`, through a stored choice or a policy that asks for none, `inthHandle`
 adds an inline `<script>` at the end of `<body>`. It runs those entries' setup
 and inserts their tags before the page hydrates, and the script loader adopts
 the tags. Entries with `alwaysLoad` start this way whatever the visitor chose.
@@ -74,17 +74,17 @@ entry takes precedence for that entry's tag.
 If your policy blocks the script, the script loader starts those entries
 after hydration instead.
 
-## Allow c15t's style elements
+## Allow inth's style elements
 
-c15t's components add their rules as `<style>` elements. On a server-rendered
-page, `c15tHandle` writes the banner's rules into the HTML `<head>` with the
+inth's components add their rules as `<style>` elements. On a server-rendered
+page, `inthHandle` writes the banner's rules into the HTML `<head>` with the
 provider's `nonce`, or else the nonce SvelteKit put on its own scripts, so a
 nonce-based policy admits them. A prerendered page under `mode: 'auto'` gets
-hashes instead of nonces, so there is no nonce for `c15tHandle` to copy.
+hashes instead of nonces, so there is no nonce for `inthHandle` to copy.
 
 The standard and IAB dialogs and other components that first render in the
 browser use the provider's `nonce`, or inherit the nonce from an existing
-c15t style or a page script. Your `style-src` must allow that nonce.
+Inth style or a page script. Your `style-src` must allow that nonce.
 
 For a prerendered page, or when your policy does not allow those nonces, set
 `styles={false}` on `ConsentRoot` and import
@@ -93,7 +93,7 @@ For a prerendered page, or when your policy does not allow those nonces, set
 
 ## Allow the generated theme
 
-The `<style id="c15t-theme">` element from
+The `<style id="inth-theme">` element from
 [customize](./customize#render-brand-tokens-on-the-server) is inline CSS that
 you render with `{@html}`. SvelteKit's `csp` option adds no nonce or hash to it, so a
 `style-src` without `'unsafe-inline'` blocks it and the banner falls back to
@@ -108,7 +108,7 @@ adding it does not help under `mode: 'nonce'` or `'auto'`.
 In the browser, Svelte sets `style` values through the DOM, which a policy
 does not block. Server-rendered HTML is different. A `style` attribute in the
 HTML is inline style, and `style-src` without `'unsafe-inline'` blocks it.
-c15t renders `style` attributes for theme slot `style` values and for the
+Inth renders `style` attributes for theme slot `style` values and for the
 position of `ConsentDialogTrigger`. Svelte does not set them again during
 hydration, so a blocked value stays unapplied.
 
@@ -117,7 +117,7 @@ attributes with a separate `style-src-attr 'unsafe-inline'` directive.
 
 ## Server requests
 
-`loadConsent`, `c15tHandle` and the manifest route call the backend from your
+`loadConsent`, `inthHandle` and the manifest route call the backend from your
 server, which the browser's policy does not govern. Only the browser's own
 requests, such as saving a choice, need the backend in `connect-src`. With
 the [consent proxy](./rendering#save-consent-through-your-own-origin), those

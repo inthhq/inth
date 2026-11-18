@@ -24,7 +24,7 @@
  * runtime config, with `app.config.ts` merged over them. A page whose
  * config the browser changes before the plugin runs (for example a client
  * plugin that changes the consent config per route) turns the script off with
- * the route rule `c15t: { initPrefetch: false }`; otherwise its early
+ * the route rule `inth: { initPrefetch: false }`; otherwise its early
  * request goes unused.
  *
  * The script carries the backend URL and protocol headers, nothing from the
@@ -36,7 +36,7 @@ import type { RuntimeConsentConfig } from '../kernel';
 import { readNuxtMode } from '../nuxt-mode';
 import type { NuxtResolvedModeConfig } from '../nuxt-mode';
 
-/** The `c15t` key of a Nitro route rule. */
+/** The `inth` key of a Nitro route rule. */
 export interface InitPrefetchRouteRule {
 	/** `false` writes no `/init` script into this route's HTML shell. */
 	initPrefetch?: boolean;
@@ -45,13 +45,13 @@ export interface InitPrefetchRouteRule {
 /** What {@link buildInitPrefetchTag} decides from. */
 export interface InitPrefetchInput {
 	/**
-	 * The c15t config the browser starts with: the public runtime config,
+	 * The Inth config the browser starts with: the public runtime config,
 	 * with the app config merged over it.
 	 */
 	config: Partial<RuntimeConsentConfig> & NuxtResolvedModeConfig;
 	/** Whether the HTML is a shell the server did not render (`ssr: false`). */
 	shell: boolean;
-	/** The route's `c15t` route rule, if any. */
+	/** The route's `inth` route rule, if any. */
 	routeRule?: InitPrefetchRouteRule;
 	/**
 	 * A nonce for this response, such as `nuxt-security`'s. Wins over the

@@ -39,7 +39,7 @@ const adobeTarget = (options: AdobeTargetOptions): Script => {
 const webSdkOptions = {
 	datastreamId: '00000000-0000-4000-8000-000000000000',
 	mode: 'websdk',
-	orgId: 'C15TFAKE@AdobeOrg',
+	orgId: 'INTHFAKE@AdobeOrg',
 	version: '2.30.0',
 } as const;
 
@@ -124,7 +124,7 @@ describe('adobeTarget', () => {
 			category: { and: ['experience', 'marketing'] },
 			datastreamId: ` ${webSdkOptions.datastreamId} `,
 			nonce: ' nonce ',
-			orgId: ' C15TFAKE@AdobeOrg ',
+			orgId: ' INTHFAKE@AdobeOrg ',
 			version: ' 2.30.0 ',
 		});
 		expect(script.category).toEqual({ and: ['experience', 'marketing'] });

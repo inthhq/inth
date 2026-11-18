@@ -24,7 +24,7 @@ const upstream = () =>
 	);
 
 const request = (path: string, init?: RequestInit) =>
-	new Request(`https://app.example.com/api/c15t/${path}`, init);
+	new Request(`https://app.example.com/api/inth/${path}`, init);
 
 describe('createConsentRoute', () => {
 	test('serves the deployment snapshot without fetching an upstream manifest', async () => {

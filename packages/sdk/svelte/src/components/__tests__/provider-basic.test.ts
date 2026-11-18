@@ -4,7 +4,7 @@
  * Mirrors: packages/sdk/react/src/providers/__tests__/provider-basic.test.tsx
  */
 
-import { IAB_FIXTURE_CMP_ID, MINIMAL_GVL } from '@c15t/conformance';
+import { IAB_FIXTURE_CMP_ID, MINIMAL_GVL } from '@inth/conformance';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -21,9 +21,9 @@ import ConsentProvider from '../../lib/components/consent-provider.svelte';
 const mockFetch = vi.fn();
 window.fetch = mockFetch;
 
-type WindowWithC15t = Window & {
+type WindowWithInth = Window & {
 	__tcfapi?: unknown;
-	c15t?: {
+	inth?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -32,8 +32,8 @@ type WindowWithC15t = Window & {
 
 describe('ConsentProvider Basic Request Behavior', () => {
 	beforeEach(() => {
-		delete (window as WindowWithC15t).c15t;
-		delete (window as WindowWithC15t).__tcfapi;
+		delete (window as WindowWithInth).inth;
+		delete (window as WindowWithInth).__tcfapi;
 		vi.resetAllMocks();
 
 		mockFetch.mockResolvedValue(
@@ -52,11 +52,11 @@ describe('ConsentProvider Basic Request Behavior', () => {
 
 	afterEach(() => {
 		vi.clearAllMocks();
-		delete (window as WindowWithC15t).c15t;
-		delete (window as WindowWithC15t).__tcfapi;
+		delete (window as WindowWithInth).inth;
+		delete (window as WindowWithInth).__tcfapi;
 	});
 
-	test('should install window.c15t with Svelte offline identity', async () => {
+	test('should install window.inth with Svelte offline identity', async () => {
 		const result = render(ProviderOnlyFixture, {
 			options: {
 				mode: testOffline(),
@@ -64,15 +64,15 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		});
 
 		await vi.waitFor(() => {
-			expect((window as WindowWithC15t).c15t).toMatchObject({
+			expect((window as WindowWithInth).inth).toMatchObject({
 				mode: 'offline',
 				pkg: '@inth/svelte',
 			});
 		});
-		expect(typeof (window as WindowWithC15t).c15t?.version).toBe('string');
+		expect(typeof (window as WindowWithInth).inth?.version).toBe('string');
 
 		result.unmount();
-		expect((window as WindowWithC15t).c15t).toBeUndefined();
+		expect((window as WindowWithInth).inth).toBeUndefined();
 	});
 
 	test('disposes the kernel when the provider unmounts', () => {
@@ -98,12 +98,12 @@ describe('ConsentProvider Basic Request Behavior', () => {
 	test('hosted() reports hosted mode and calls the init URL', async () => {
 		const result = render(ProviderOnlyFixture, {
 			options: {
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			},
 		});
 
 		await vi.waitFor(() => {
-			expect((window as WindowWithC15t).c15t).toMatchObject({
+			expect((window as WindowWithInth).inth).toMatchObject({
 				mode: 'hosted',
 				pkg: '@inth/svelte',
 			});
@@ -112,7 +112,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 			// The query carries the protocol inputs and the consent journey.
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringMatching(
-					/^\/api\/c15t\/init\?v=[^&]+&contract=1&journey=/u
+					/^\/api\/inth\/init\?v=[^&]+&contract=1&journey=/u
 				),
 				expect.objectContaining({ method: 'GET' })
 			);
@@ -126,7 +126,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		mockFetch.mockResolvedValueOnce(
 			new Response(
 				JSON.stringify({
-					branding: 'c15t',
+					branding: 'inth',
 					cmpId: IAB_FIXTURE_CMP_ID,
 					customVendors: [],
 					gvl: MINIMAL_GVL,
@@ -148,7 +148,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 			},
 			options: {
 				iab: { enabled: true, vendors: [755] },
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			},
 		});
 
@@ -156,7 +156,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		// rather than a synchronous mount.
 		await vi.waitFor(
 			() => {
-				expect((window as WindowWithC15t).__tcfapi).toBeTypeOf('function');
+				expect((window as WindowWithInth).__tcfapi).toBeTypeOf('function');
 				expect(
 					(mountedKernel as ConsentKernel | null)?.getSnapshot().iab?.cmpId
 				).toBe(IAB_FIXTURE_CMP_ID);
@@ -165,7 +165,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		);
 
 		result.unmount();
-		expect((window as WindowWithC15t).__tcfapi).toBeUndefined();
+		expect((window as WindowWithInth).__tcfapi).toBeUndefined();
 	});
 
 	test('throws when there is no backend URL', () => {

@@ -49,7 +49,7 @@ export const vercelAnalyticsManifest = {
 				'data-dsn': '{{dsn}}',
 				'data-endpoint': '{{endpoint}}',
 
-				'data-sdkn': 'c15t',
+				'data-sdkn': 'inth',
 			},
 
 			defer: true,

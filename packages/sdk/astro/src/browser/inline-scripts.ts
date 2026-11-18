@@ -7,7 +7,7 @@
  * moment consent allows it.
  *
  * ```astro
- * <script data-c15t-category="measurement" is:inline type="text/plain">
+ * <script data-inth-category="measurement" is:inline type="text/plain">
  *   console.log('only with measurement consent');
  * </script>
  * ```
@@ -15,14 +15,14 @@
  * `is:inline` matters: without it Astro hoists the tag into a bundled
  * module and runs it regardless of consent.
  *
- * `data-c15t-category` accepts one category name. The tag is left alone
+ * `data-inth-category` accepts one category name. The tag is left alone
  * until consent is granted, then replaced by a live `<script>` in the same
- * position. Add `data-c15t-vendor` with a vendor id to also wait until the
+ * position. Add `data-inth-vendor` with a vendor id to also wait until the
  * visitor has not turned that vendor off. Revoking consent does not un-run a script that already
  * executed, so the element is marked and skipped instead.
  *
  * Under a nonce-based Content Security Policy, put the page's nonce on the
- * tag (`nonce={Astro.locals.c15t.nonce}`). Activation creates a new
+ * tag (`nonce={Astro.locals.inth.nonce}`). Activation creates a new
  * script, which a policy with `'strict-dynamic'` runs without checking a
  * nonce, so a tag injected into the page would otherwise run once its
  * category is granted. With a page nonce, tags without it are skipped.
@@ -32,21 +32,21 @@ import { allConsentNames, has, isVendorDenied } from '@inth/sdk/engine';
 import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk/engine';
 
 /** Attribute that marks a script for consent gating. */
-export const CATEGORY_ATTRIBUTE = 'data-c15t-category';
+export const CATEGORY_ATTRIBUTE = 'data-inth-category';
 
 /**
  * Attribute naming the vendor a gated script belongs to. The script runs
  * once its category is allowed and the visitor has not turned the vendor
  * off. Only read alongside {@link CATEGORY_ATTRIBUTE}.
  */
-export const VENDOR_ATTRIBUTE = 'data-c15t-vendor';
+export const VENDOR_ATTRIBUTE = 'data-inth-vendor';
 
 /**
  * Set once a gated script has been activated (`true`), rejected for an
  * unknown category (`invalid`), or refused for lacking the page nonce
  * (`untrusted`).
  */
-export const ACTIVATED_ATTRIBUTE = 'data-c15t-activated';
+export const ACTIVATED_ATTRIBUTE = 'data-inth-activated';
 
 /**
  * Whether an inert tag is the page's own under its nonce.
@@ -69,7 +69,7 @@ const isTrusted = function isTrusted(
 	}
 	// biome-ignore lint/suspicious/noConsole: security diagnostic for the page author.
 	console.warn(
-		`@inth/astro: skipped a ${CATEGORY_ATTRIBUTE} script without the page's CSP nonce. Add nonce={Astro.locals.c15t.nonce} to your own gated tags.`,
+		`@inth/astro: skipped a ${CATEGORY_ATTRIBUTE} script without the page's CSP nonce. Add nonce={Astro.locals.inth.nonce} to your own gated tags.`,
 		element
 	);
 	element.setAttribute(ACTIVATED_ATTRIBUTE, 'untrusted');

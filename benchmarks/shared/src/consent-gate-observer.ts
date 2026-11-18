@@ -193,7 +193,7 @@ export const gateObserverScript = function gateObserverScript(
 		requestAnimationFrame(tick);
 	};
 	requestAnimationFrame(tick);
-	window.__c15tGate = {
+	window.__inthGate = {
 		arm(selector, action) {
 			armedSelector = selector;
 			armedAction = action;

@@ -1,10 +1,10 @@
 :root {
 	--preference-item-gap: 0.75rem;
-	--preference-item-leading-gap: var(--c15t-space-sm);
-	--preference-item-content-color: var(--c15t-text-muted);
-	--preference-item-duration: var(--c15t-duration-normal);
-	--preference-item-ease: var(--c15t-easing);
-	--preference-item-focus-ring: var(--c15t-primary);
+	--preference-item-leading-gap: var(--inth-space-sm);
+	--preference-item-content-color: var(--inth-text-muted);
+	--preference-item-duration: var(--inth-duration-normal);
+	--preference-item-ease: var(--inth-easing);
+	--preference-item-focus-ring: var(--inth-primary);
 }
 
 @layer components {
@@ -27,7 +27,7 @@
 		border: 0;
 		padding: 0;
 		text-align: left;
-		color: var(--c15t-text);
+		color: var(--inth-text);
 		cursor: pointer;
 	}
 
@@ -51,14 +51,14 @@
 	}
 
 	.title {
-		color: var(--c15t-text);
+		color: var(--inth-text);
 		font: inherit;
 		margin: 0;
 		min-width: 0;
 	}
 
 	.meta {
-		color: var(--c15t-text-muted);
+		color: var(--inth-text-muted);
 		font: inherit;
 		margin: 0;
 	}

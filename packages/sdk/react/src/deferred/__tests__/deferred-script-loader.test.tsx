@@ -22,7 +22,7 @@ import { isRunnableNow, scriptsNeedEngine } from '../runnable';
 /**
  * Leaves what a server render with id `id` leaves in the test's document:
  * boot data carrying the id, and the page object its inline scripts write.
- * c15t's modules run in the test's window, so that is where they look.
+ * inth's modules run in the test's window, so that is where they look.
  */
 const leavePageRender = (
 	pageObject: Record<string, unknown>,
@@ -30,13 +30,13 @@ const leavePageRender = (
 ): (() => void) => {
 	const boot = document.createElement('script');
 	boot.type = 'application/json';
-	boot.setAttribute('data-c15t-boot', '');
+	boot.setAttribute('data-inth-boot', '');
 	boot.textContent = JSON.stringify({ i: id, s: {} });
 	document.head.prepend(boot);
-	(globalThis as Record<string, unknown>).__c15tRender = { id, ...pageObject };
+	(globalThis as Record<string, unknown>).__inthRender = { id, ...pageObject };
 	return () => {
 		boot.remove();
-		Reflect.deleteProperty(globalThis, '__c15tRender');
+		Reflect.deleteProperty(globalThis, '__inthRender');
 	};
 };
 
@@ -263,7 +263,7 @@ describe('useScriptLoader for a returning visitor who chose', () => {
 	});
 
 	test("the loader gives a script's own code its element id", async () => {
-		const seen = globalThis as { __c15tSeenId?: string };
+		const seen = globalThis as { __inthSeenId?: string };
 		const kernel = createConsentKernel(
 			policyFixture({ marketing: true, measurement: true })
 		);
@@ -275,18 +275,18 @@ describe('useScriptLoader for a returning visitor who chose', () => {
 					category: 'necessary',
 					id: 'reads-its-id',
 					src: `data:text/javascript,${encodeURIComponent(
-						'window.__c15tSeenId=document.currentScript&&document.currentScript.id'
+						'window.__inthSeenId=document.currentScript&&document.currentScript.id'
 					)}`,
 				},
 			],
 		});
 		try {
 			await vi.waitFor(() => {
-				expect(seen.__c15tSeenId).toBe('c15t-script-reads-its-id');
+				expect(seen.__inthSeenId).toBe('inth-script-reads-its-id');
 			});
 		} finally {
 			loader.dispose();
-			Reflect.deleteProperty(globalThis, '__c15tSeenId');
+			Reflect.deleteProperty(globalThis, '__inthSeenId');
 		}
 	});
 
@@ -332,7 +332,7 @@ describe('scripts a hook started before its loader', () => {
 		)) {
 			script.remove();
 		}
-		Reflect.deleteProperty(globalThis, '__c15tStarted');
+		Reflect.deleteProperty(globalThis, '__inthStarted');
 	});
 
 	test('are not started for a hook that unmounted before a commit made the loader ready', async () => {
@@ -507,8 +507,8 @@ describe('scripts a hook started before its loader', () => {
 		await screen.unmount();
 		expect(inPage()).toBe(false);
 		expect(
-			(globalThis as { __c15tStarted?: Record<string, unknown> })
-				.__c15tStarted?.['owned-early']
+			(globalThis as { __inthStarted?: Record<string, unknown> })
+				.__inthStarted?.['owned-early']
 		).toBeUndefined();
 	});
 
@@ -527,8 +527,8 @@ describe('scripts a hook started before its loader', () => {
 		);
 		await vi.waitFor(() => expect(inPage()).toBe(false));
 		expect(
-			(globalThis as { __c15tStarted?: Record<string, unknown> })
-				.__c15tStarted?.['owned-early']
+			(globalThis as { __inthStarted?: Record<string, unknown> })
+				.__inthStarted?.['owned-early']
 		).toBeUndefined();
 	});
 });

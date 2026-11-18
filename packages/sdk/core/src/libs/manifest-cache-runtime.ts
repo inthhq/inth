@@ -2,7 +2,7 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 
-import { c15tProtocolHeaders } from '../transports/version-header';
+import { inthProtocolHeaders } from '../transports/version-header';
 import { parseCacheDirectiveSeconds } from './cache-directive';
 import { failedResponseError } from './failed-response';
 
@@ -580,7 +580,7 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
 	}
 	if (!options.projectUrl) {
 		throw new Error(
-			'c15t manifest cache: `projectUrl` or `manifestUrl` is required.'
+			'inth manifest cache: `projectUrl` or `manifestUrl` is required.'
 		);
 	}
 	return `${trimSlash(options.projectUrl)}/manifest`;
@@ -682,7 +682,7 @@ export interface FetchCachedManifestOptions {
 	 * unless the host is a loopback address. Requests with identity headers
 	 * reject redirects so credentials cannot reach an unvalidated target.
 	 * Headers the cache already sends with the same value (`accept:
-	 * application/json` and the c15t protocol headers) are not part of the key.
+	 * application/json` and the Inth protocol headers) are not part of the key.
 	 */
 	headers?: Record<string, string>;
 	/**
@@ -742,7 +742,7 @@ const PUBLIC_MANIFEST_HEADERS = new Set([
 	'sec-gpc',
 	'user-agent',
 	...CONSENT_REQUEST_HEADER_NAMES,
-	...Object.keys(c15tProtocolHeaders),
+	...Object.keys(inthProtocolHeaders),
 ]);
 
 const findIdentityHeader = function findIdentityHeader(
@@ -774,7 +774,7 @@ const assertCredentialTransport = function assertCredentialTransport(
 	}
 	if (url.protocol === 'http:' && !LOOPBACK_HOSTS.has(url.hostname)) {
 		throw new Error(
-			`c15t manifest cache: refusing to send credentials over http to ${url.host} (${identityHeader}). Use https, or a loopback host for local development.`
+			`inth manifest cache: refusing to send credentials over http to ${url.host} (${identityHeader}). Use https, or a loopback host for local development.`
 		);
 	}
 };
@@ -821,7 +821,7 @@ const defaultRequestHeaders = function defaultRequestHeaders(): Record<
 	string,
 	string
 > {
-	return { accept: 'application/json', ...c15tProtocolHeaders };
+	return { accept: 'application/json', ...inthProtocolHeaders };
 };
 
 /**
@@ -926,7 +926,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 		// `status` lets a host tell a backend without `/manifest` (404) from
 		// one that is failing, including through a `backoff` error's `cause`.
 		throw await failedResponseError(
-			'c15t manifest cache: backend /manifest',
+			'inth manifest cache: backend /manifest',
 			response
 		);
 	}
@@ -1015,7 +1015,7 @@ const assertNotBackingOff = function assertNotBackingOff(
 		failure.failures === 1 ? 'request' : `${failure.failures} requests`;
 	throw new ManifestUnavailableError(
 		'backoff',
-		`c15t manifest cache: the last ${what} for this manifest failed; retrying in ${retryAfterMs} ms.`,
+		`inth manifest cache: the last ${what} for this manifest failed; retrying in ${retryAfterMs} ms.`,
 		{ cause: failure.error, retryAfterMs }
 	);
 };
@@ -1050,7 +1050,7 @@ const waitForFill = function waitForFill(
 		}
 		return new ManifestUnavailableError(
 			'timeout',
-			`c15t manifest cache: no manifest within ${timeoutMs} ms; the request continues in the background.`
+			`inth manifest cache: no manifest within ${timeoutMs} ms; the request continues in the background.`
 		);
 	};
 	const remaining = fill.startedAt + timeoutMs - Date.now();
@@ -1087,7 +1087,7 @@ export const withResolutionBudget = function withResolutionBudget<Value>(
 		() =>
 			new ManifestUnavailableError(
 				'timeout',
-				`c15t: consent resolution did not finish within ${budgetMs} ms.`
+				`inth: consent resolution did not finish within ${budgetMs} ms.`
 			)
 	);
 };
@@ -1134,7 +1134,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 ): Promise<CachedManifestResponse> {
 	const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
 	if (!fetchImpl) {
-		throw new Error('c15t manifest cache: a fetch implementation is required.');
+		throw new Error('inth manifest cache: a fetch implementation is required.');
 	}
 
 	const cache = options.cache ?? defaultManifestCache;
@@ -1177,7 +1177,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 			? setTimeout(() => {
 					controller.abort(
 						new Error(
-							`c15t manifest cache: fetch timed out after ${MANIFEST_FETCH_TIMEOUT_MS} ms.`
+							`inth manifest cache: fetch timed out after ${MANIFEST_FETCH_TIMEOUT_MS} ms.`
 						)
 					);
 				}, MANIFEST_FETCH_TIMEOUT_MS)

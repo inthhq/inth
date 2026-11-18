@@ -642,7 +642,7 @@ export interface InitResponse {
 	branding?: KernelBranding;
 	/** Who runs the backend that answered. */
 	hosting?: KernelHosting;
-	/** What the Inth script registry tells c15t, such as its `sources`. */
+	/** What the Inth script registry tells Inth, such as its `sources`. */
 	scriptRegistry?: ScriptRegistryWire;
 	/** Signed token for write-time consistency. Sent back on save. */
 	policySnapshotToken?: string;

@@ -36,7 +36,7 @@ export const fetchManifest = async function fetchManifest(
 	);
 	if (!response.ok) {
 		throw await failedResponseError(
-			'c15t manifest transport: /manifest',
+			'inth manifest transport: /manifest',
 			response
 		);
 	}

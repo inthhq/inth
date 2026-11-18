@@ -21,7 +21,7 @@ vi.mock('@inth/nextjs/generated-manifest', async () => ({
 const config = defineConsentConfig({
 	mode: manifest(),
 	projectUrl: 'https://consent.example.com',
-	routePrefix: '/api/c15t',
+	routePrefix: '/api/inth',
 });
 
 const fetch = vi.fn<typeof globalThis.fetch>(() =>
@@ -43,8 +43,8 @@ describe('generated manifest default', () => {
 		const { GET } = createConsentRoute({ config });
 
 		const response = await GET(
-			new Request('https://app.example.com/api/c15t/manifest'),
-			{ params: Promise.resolve({ c15t: ['manifest'] }) }
+			new Request('https://app.example.com/api/inth/manifest'),
+			{ params: Promise.resolve({ inth: ['manifest'] }) }
 		);
 
 		expect(await response.json()).toEqual(MANIFEST_FIXTURE);
@@ -83,8 +83,8 @@ describe('generated manifest default', () => {
 		});
 
 		const response = await GET(
-			new Request('https://app.example.com/api/c15t/manifest'),
-			{ params: Promise.resolve({ c15t: ['manifest'] }) }
+			new Request('https://app.example.com/api/inth/manifest'),
+			{ params: Promise.resolve({ inth: ['manifest'] }) }
 		);
 
 		expect(await response.json()).toMatchObject({ revision: 'live' });
@@ -102,8 +102,8 @@ describe('generated manifest default', () => {
 		});
 
 		const response = await GET(
-			new Request('https://app.example.com/api/c15t/manifest'),
-			{ params: Promise.resolve({ c15t: ['manifest'] }) }
+			new Request('https://app.example.com/api/inth/manifest'),
+			{ params: Promise.resolve({ inth: ['manifest'] }) }
 		);
 
 		expect(await response.json()).toMatchObject({ revision: 'up' });

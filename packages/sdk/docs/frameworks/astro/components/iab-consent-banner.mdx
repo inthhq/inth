@@ -1,6 +1,6 @@
 ---
 title: IABConsentBanner
-description: Render the IAB TCF 2.4 banner as server HTML on an Astro site with c15t, with the purposes, partner count and actions TCF requires, its props, accessibility and styling attributes.
+description: Render the IAB TCF 2.4 banner as server HTML on an Astro site with Inth, with the purposes, partner count and actions TCF requires, its props, accessibility and styling attributes.
 group: frameworks
 ---
 
@@ -56,7 +56,7 @@ A visitor who has already chosen gets no banner markup.
 | `models` | `string[]` | `['iab']` | Consent models this banner responds to |
 | `scrollLock` | `boolean` | From `presentation` | Makes the banner blocking, with a backdrop, scroll lock and focus trap |
 | `hideBranding` | `boolean` | `false` | Removes the "Secured by" tag |
-| `noStyle` | `boolean` | `false` | Renders the markup without c15t's class names |
+| `noStyle` | `boolean` | `false` | Renders the markup without inth's class names |
 | `class` | `string` | None | Extra class on the banner root |
 | `force` | `boolean` | `false` | Renders the banner even when the server decided to hide it |
 
@@ -81,7 +81,7 @@ not read `theme.consentActions`. Theme tokens still apply.
 
 | Element | Attributes |
 | --- | --- |
-| Root | `data-testid="iab-consent-banner-root"`, `data-position`, `data-blocking`, `data-c15t-visible` |
+| Root | `data-testid="iab-consent-banner-root"`, `data-position`, `data-blocking`, `data-inth-visible` |
 | Backdrop | `data-testid="iab-consent-banner-overlay"` |
 | Card and footer | `data-testid="iab-consent-banner-card"`, `data-testid="iab-consent-banner-footer"` |
 | Partners button | `data-testid="iab-consent-banner-partners-link"` |

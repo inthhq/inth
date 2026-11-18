@@ -1,20 +1,20 @@
 ---
 title: Salesforce Account Engagement
-description: Gate Salesforce Account Engagement tracking on marketing consent, configure its consent API or classic Pardot snippet, and verify revocation with c15t.
-seoTitle: Salesforce Pardot cookie consent with c15t
-seoDescription: Load Account Engagement only after marketing consent. Configure Pardot tracking, revoke consent and verify vendor requests with c15t.
+description: Gate Salesforce Account Engagement tracking on marketing consent, configure its consent API or classic Pardot snippet, and verify revocation with Inth.
+seoTitle: Salesforce Pardot cookie consent with Inth
+seoDescription: Load Account Engagement only after marketing consent. Configure Pardot tracking, revoke consent and verify vendor requests with Inth.
 icon: chart-line
 group: integrations
 ---
 
 Account Engagement, formerly Pardot, tracks visitors and prospects for
-Salesforce B2B marketing. The c15t `pardotTracking` helper waits for
+Salesforce B2B marketing. The Inth `pardotTracking` helper waits for
 `marketing` consent before it creates Pardot globals or downloads the tracker.
 The default mode uses Account Engagement's Tracking and Consent API. The
 helper also supports the classic `pd.js` snippet.
 
 When the visitor withdraws, consent mode calls `pdt('revokeConsent')`. Classic
-mode has no revoke call. In both modes, c15t reloads the page, and the reload
+mode has no revoke call. In both modes, Inth reloads the page, and the reload
 stops the running tracker.
 
 ## Configure Salesforce Account Engagement

@@ -15,7 +15,7 @@ import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { testRule } from './policy-fixture';
 
 /**
@@ -53,7 +53,7 @@ let root: Root | null = null;
  * @returns The page client.
  */
 const start = async function start(
-	options: Omit<C15tAstroOptions, 'mode'>,
+	options: Omit<InthAstroOptions, 'mode'>,
 	rule: Partial<PolicyRule> = {}
 ): Promise<AstroConsentClient> {
 	const resolved = resolveOptions({
@@ -66,7 +66,7 @@ const start = async function start(
 		headers: new Headers(),
 		options: resolved,
 	});
-	globals.__c15tAstroConfig = JSON.parse(JSON.stringify(config));
+	globals.__inthAstroConfig = JSON.parse(JSON.stringify(config));
 	client = boot(resolved);
 	return client;
 };
@@ -149,9 +149,9 @@ beforeEach(() => {
 	globals.IS_REACT_ACT_ENVIRONMENT = true;
 	localStorage.clear();
 	document.body.innerHTML = '';
-	globals.__c15tAstro = undefined;
-	globals.__c15tAstroConfig = undefined;
-	globals.__c15tAstroActions = undefined;
+	globals.__inthAstro = undefined;
+	globals.__inthAstroConfig = undefined;
+	globals.__inthAstroActions = undefined;
 });
 
 afterEach(() => {

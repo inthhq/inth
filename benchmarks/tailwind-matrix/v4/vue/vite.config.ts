@@ -5,6 +5,6 @@ import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	plugins: [vue(), consentManifest({ projectUrl: '/api/c15t' }), tailwindcss()],
+	plugins: [vue(), consentManifest({ projectUrl: '/api/inth' }), tailwindcss()],
 });
 // #endregion docs:vite-config

@@ -8,7 +8,7 @@ import { expect, it } from 'vitest';
 import { resolveBenchmarkRevisions } from './benchmark-revisions';
 
 it('keeps a PR bundle baseline valid when its base branch advances after the event', () => {
-	const cwd = mkdtempSync(join(tmpdir(), 'c15t-pr-benchmark-revisions-'));
+	const cwd = mkdtempSync(join(tmpdir(), 'inth-pr-benchmark-revisions-'));
 	const git = (...args: string[]) =>
 		execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 	try {
@@ -37,7 +37,7 @@ it('keeps a PR bundle baseline valid when its base branch advances after the eve
 });
 
 it('accepts trusted history and rejects an unmerged baseline before running code', () => {
-	const cwd = mkdtempSync(join(tmpdir(), 'c15t-benchmark-revisions-'));
+	const cwd = mkdtempSync(join(tmpdir(), 'inth-benchmark-revisions-'));
 	const git = (...args: string[]) =>
 		execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 	try {

@@ -1,6 +1,6 @@
-# c15t benchmarks
+# Inth benchmarks
 
-This directory contains the internal benchmark platform for `c15t`, `@inth/react`, and `@inth/nextjs`.
+This directory contains the internal benchmark platform for `inth`, `@inth/react`, and `@inth/nextjs`.
 
 ## Performance suites
 
@@ -9,19 +9,19 @@ This directory contains the internal benchmark platform for `c15t`, `@inth/react
 - `micro`
   Runs diagnostic mitata microbenchmarks with `bun run bench:micro`. These are excluded from routine CI because the public-operation runtime suite already covers the release gates.
 - `bundle-test-app`
-  Builds a dedicated Next app and records route-level client script size plus publish tarball sizes for `c15t`, `@inth/react`, and `@inth/nextjs`.
+  Builds a dedicated Next app and records route-level client script size plus publish tarball sizes for `inth`, `@inth/react`, and `@inth/nextjs`.
 - `react-browser-bench`
   Runs Playwright against a React-flavoured benchmark app with local deterministic API routes, plus `saved-consent-accept` and `saved-consent-reject` visits.
 - `nextjs-browser-bench`
   Runs Playwright against a Next integration benchmark app covering client, manifest, SSR, and saved-consent paths.
 - `nextjs-browser-bench` (`bench:production-consumer`)
-  Packs c15t (or installs a published version) into a Next.js consumer outside the workspace, with the aggregate stylesheet, a custom theme, server consent under a Suspense boundary, and the deferred dialog. Measures arms interleaved and reports stylesheet count, bytes, and cross-stylesheet class overlap per route. Not wired into CI. See [the visit-definitions report](./reports/visit-definitions-2026-09-25/README.md).
+  Packs Inth (or installs a published version) into a Next.js consumer outside the workspace, with the aggregate stylesheet, a custom theme, server consent under a Suspense boundary, and the deferred dialog. Measures arms interleaved and reports stylesheet count, bytes, and cross-stylesheet class overlap per route. Not wired into CI. See [the visit-definitions report](./reports/visit-definitions-2026-09-25/README.md).
 - `tanstack-start-browser-bench`
   Runs Playwright against a TanStack Start integration benchmark app with the same fixture, scenarios, and metrics as the Next arm, plus a proxied-save arm. See its README for the head-to-head numbers.
 - `nuxt-browser-bench`
   Runs Playwright against a Nuxt app on `@inth/nuxt`, covering SSR, client SPA, manifest and repeat-visitor paths plus a zero-consent baseline build.
 - `sveltekit-browser-bench`
-  Runs Playwright against a SvelteKit app on `@inth/svelte/kit` (`c15tHandle`, `loadConsent`, `createConsentRoute`), with the same scenario names as the Nuxt suite and zero-consent baseline routes.
+  Runs Playwright against a SvelteKit app on `@inth/svelte/kit` (`inthHandle`, `loadConsent`, `createConsentRoute`), with the same scenario names as the Nuxt suite and zero-consent baseline routes.
 - `astro-browser-bench`
   Runs Playwright against an Astro app on `@inth/astro`, covering the server-rendered banner in manifest and hosted modes, the `server:defer` banner island, a repeat visitor, and a zero-consent baseline built without the integration.
 - `script-lifecycle-bench`
@@ -37,7 +37,7 @@ This directory contains the internal benchmark platform for `c15t`, `@inth/react
 - `bundle-test-app/client-payload`
   Builds one Next.js consumer with no consent library, v2, and several v3 setups, installed from npm or packed tarballs, and attributes initial, dialog-open and first-accept JS/CSS to packages and modules through production source maps. Run by hand; see `benchmarks/reports/client-payload-2026-09-25/`.
 - `examples-payload`
-  Builds and starts every starter in `examples/` against a fixture backend (`/manifest`, `/init`, `/subjects`, `/c15t.js`), with all four `*_C15T_BACKEND_URL` variables pointed at it and `*.inth.app` routed to it. Records first-load JS, CSS and HTML bytes, the extra JS that opening the dialog and accepting load, emitted client JS, banner time, init/manifest/cross-origin requests, and the gzip bytes of first-load assets that carry a boundary marker (snapshot, manifest resolver, offline policy, non-English copy, IAB, devtools). `--root <checkout>` measures another worktree's own examples, so base and head never share example code: `bunx tsx benchmarks/examples-payload/run.ts --root ../c15t-base --out .benchmarks/base/examples-payload`. The `examples` profile runs it for both revisions.
+  Builds and starts every starter in `examples/` against a fixture backend (`/manifest`, `/init`, `/subjects`, `/c15t.js`), with all four `*_INTH_PROJECT_URL` variables pointed at it and `*.inth.app` routed to it. Records first-load JS, CSS and HTML bytes, the extra JS that opening the dialog and accepting load, emitted client JS, banner time, init/manifest/cross-origin requests, and the gzip bytes of first-load assets that carry a boundary marker (snapshot, manifest resolver, offline policy, non-English copy, IAB, devtools). `--root <checkout>` measures another worktree's own examples, so base and head never share example code: `bunx tsx benchmarks/examples-payload/run.ts --root ../inth-base --out .benchmarks/base/examples-payload`. The `examples` profile runs it for both revisions.
 - `bundle-test-app` (`bench:entries`, `ordinary-react` entry)
   Builds a synthetic esbuild entry for the ordinary non-IAB React path and reports `iabInputBytes`, `devtoolsInputBytes`, and `allLocalesInputBytes` from the metafile so the import boundary is measured, not assumed.
 - `shared`
@@ -48,7 +48,7 @@ This directory contains the internal benchmark platform for `c15t`, `@inth/react
 ### Consent tax
 
 `sveltekit-browser-bench`, `astro-browser-bench` and `nuxt-browser-bench` all
-ship a zero-consent `baseline` arm: the same app shell with no c15t in the
+ship a zero-consent `baseline` arm: the same app shell with no Inth in the
 route's module graph. Subtracting it from a measured arm's `bannerVisibleMs`
 gives the consent tax — the part of the number that is the library rather than
 the host framework — the way the July gate report's "desktop-real" addendum
@@ -83,7 +83,7 @@ dependency absent from the base manifest fails before measurement. `.ci-reports/
 records both SHAs and the fixture overlay; base, head and comparison evidence
 sit alongside it. A failed measurement cannot reuse a previous report.
 
-CI runs one benchmark package per runner, except `@c15t/core-benchmarks`:
+CI runs one benchmark package per runner, except `@inth/core-benchmarks`:
 each policy fixture takes about 30 seconds a pass, so `scripts/benchmark-plan.ts`
 splits the package across three runners. That makes four parallel jobs for
 `quick` and ten for `full`. A planning job resolves both revisions to commit IDs before
@@ -98,12 +98,12 @@ run the whole profile sequentially unless `BENCHMARK_PACKAGE` selects one
 package, for example:
 
 ```sh
-BENCHMARK_PACKAGE=@c15t/react-browser-bench bun scripts/benchmark-run.ts full
+BENCHMARK_PACKAGE=@inth/react-browser-bench bun scripts/benchmark-run.ts full
 ```
 
 `BENCHMARK_SHARD` selects one shard by its matrix `id` instead, for example
-`BENCHMARK_SHARD=core-benchmarks-california`. A shard sets `C15T_BENCH_ONLY`
-and `C15T_BENCH_SKIP` to comma lists of `suite` or `suite:scenario`; the bench
+`BENCHMARK_SHARD=core-benchmarks-california`. A shard sets `INTH_BENCH_ONLY`
+and `INTH_BENCH_SKIP` to comma lists of `suite` or `suite:scenario`; the bench
 scripts measure only the selected scenarios, and the comparison expects only
 them. The last core-benchmarks shard skips the fixtures listed before it, so a
 new policy fixture runs there by default.
@@ -112,9 +112,9 @@ Unknown packages, shards and packages outside the selected profile fail before
 any measurement. Each job enforces every expected result and budget in its
 share and uploads `runtime-benchmarks-<id>` with pooled base and head results,
 each round's raw results under `rounds/`, the comparison and provenance files.
-The matrix `id` is the shard id, or the package name with `@c15t/` removed,
+The matrix `id` is the shard id, or the package name with `@inth/` removed,
 for example `runtime-benchmarks-react-browser-bench` for
-`@c15t/react-browser-bench`. A failed job does not cancel the remaining matrix jobs.
+`@inth/react-browser-bench`. A failed job does not cancel the remaining matrix jobs.
 Rounds split browser and script-lifecycle iterations, so pooled sample counts
 meet or exceed a single pass because each round rounds its count up. Core
 microbenchmarks run their full 5,000 iterations every round, and warmups repeat every round. Budget thresholds are unchanged. Browser benches
@@ -209,7 +209,7 @@ running, and the Customize dialog. Every framework bench and the script tag
 serve the same two routes:
 
 - a gate page: CookieBench's article (`article-workload-v1` markup and CSS)
-  with a 477 KB hero (`fetchpriority="high"`), the stock c15t banner and
+  with a 477 KB hero (`fetchpriority="high"`), the stock Inth banner and
   dialog set up the way CookieBench's fixture for that framework sets them up,
   and two gated scripts (one `measurement`, one `marketing`);
 - a control page: the same article with no consent library in its module
@@ -228,7 +228,7 @@ are the control to its LCP, the gate page to its LCP, the gate page through
 an Accept tap, the gate page through a Customize tap, and the gate page as a
 returning visitor who accepted, to its LCP and both gated scripts. The
 returning visit starts from the storage of a visitor who accepted and came
-back once, so it is a third visit: what c15t records on a second visit,
+back once, so it is a third visit: what Inth records on a second visit,
 such as the engine's chunk list, is in place.
 
 Once per run, the gate also replays a visitor who changes their mind. They
@@ -238,7 +238,7 @@ the dialog. The gate then counts requests for a gated script on the next
 visit, for about 3 s after the page is ready. It replays this three times
 per run and reports the total, since a leak can depend on timing. These
 setup visits run at the same profile: unthrottled, a dynamic import can
-finish before the scripts it would have overlapped start, and what c15t
+finish before the scripts it would have overlapped start, and what Inth
 records changes. Taps happen once
 `html[data-consent-ready="true"]` matches, as in CookieBench. The order
 alternates between iterations. The page observer (`consent-gate-observer.ts`)
@@ -262,11 +262,11 @@ what CookieBench's does:
 `lcpMs`, `controlLcpMs`, `fcpMs` and `controlFcpMs` are reported too, without budgets.
 
 Results use suite `consent-gate` and scenario `consent-gate:latency-200ms`.
-The script tag reports under `@c15t/script-lifecycle-bench`, and Nuxt
+The script tag reports under `@inth/script-lifecycle-bench`, and Nuxt
 reports under `@inth/vue`. Angular's gate page and control page are two
-Angular apps in `angular-browser-bench`: `provideC15tServer()` needs
-`provideC15t()` in the root injector, so an app set up as the rendering
-guide says loads c15t on every route. Its `run-gate.ts` puts a small router
+Angular apps in `angular-browser-bench`: `provideInthServer()` needs
+`provideInth()` in the root injector, so an app set up as the rendering
+guide says loads Inth on every route. Its `run-gate.ts` puts a small router
 in front of the two servers. `consentGateBudgets()` in `shared/src/budgets.ts`
 holds the budgets and their rationale. All of them fail the gate:
 
@@ -348,7 +348,7 @@ to its step summary:
 
 ```sh
 bun run bench:gate                          # head vs origin/canary, every target
-bun run bench:gate --base origin/canary --package @c15t/nuxt-browser-bench
+bun run bench:gate --base origin/canary --package @inth/nuxt-browser-bench
 ```
 
 `--base` defaults to `origin/canary` for the gate (`BENCHMARK_BASE_REF`
@@ -358,9 +358,9 @@ quiet as the machine, so close other heavy work before you trust a local
 failure.
 
 To measure one bench's gate without a comparison, run
-`bun run --cwd benchmarks/<bench> bench:gate`, with `C15T_BENCH_ITERATIONS`
+`bun run --cwd benchmarks/<bench> bench:gate`, with `INTH_BENCH_ITERATIONS`
 setting the number of iterations. To add a target, give its bench gate and
-control routes built from `@c15t/benchmarking/consent-gate-page`, plus a
+control routes built from `@inth/benchmarking/consent-gate-page`, plus a
 `scripts/run-gate.ts` that calls `runConsentGate`. Then add the target to
 `consentGateTargets` (budgets), `consentGatePackages` (expected results),
 `gateTargetPackages` (`scripts/benchmark-plan.ts`) and the selection in
@@ -416,7 +416,7 @@ The gate fails, with `BENCHMARK_ENFORCE=true`, on anything that would otherwise 
 Environment:
 
 - `BENCHMARK_BASE_DIR`, `BENCHMARK_HEAD_DIR`, `BENCHMARK_COMPARE_DIR`
-- `BENCHMARK_EXPECTED_PACKAGES=@c15t/core-benchmarks` restricts the expected package set. Unknown or empty selections fail.
+- `BENCHMARK_EXPECTED_PACKAGES=@inth/core-benchmarks` restricts the expected package set. Unknown or empty selections fail.
 - `BENCHMARK_EXPECTED_SUITES=core-runtime,policy-runtime` restricts the expectation to the suites a partial local run produced. Omit it for a full gate.
 - `BENCHMARK_ARM_BASE_DIRS=v2=/path/to/v2-artifacts` supplies artifacts for a named base arm. A required arm that is missing fails an enforced release-profile run.
 
@@ -477,22 +477,22 @@ BENCH_ITERATIONS=10 SCRIPT_COUNTS=5,10,25,50 bun run bench:script-count
 Browser benchmark runners also accept deterministic environment knobs:
 
 ```bash
-C15T_BENCH_ITERATIONS=1 bun run bench -- --profile none --backend-latency-ms 0
-C15T_BENCH_ITERATIONS=10 bun run bench -- --profile mobile
+INTH_BENCH_ITERATIONS=1 bun run bench -- --profile none --backend-latency-ms 0
+INTH_BENCH_ITERATIONS=10 bun run bench -- --profile mobile
 ```
 
 - `--profile none|mobile` selects the Playwright CDP throttle profile. `mobile`
   applies 4x CPU throttling and Fast-4G-like network conditions (170 ms RTT on
   every request, assets included).
-- `--backend-latency-ms <n>` (or `C15T_BENCH_BACKEND_LATENCY_MS`) makes the
+- `--backend-latency-ms <n>` (or `INTH_BENCH_BACKEND_LATENCY_MS`) makes the
   local consent backend answer after `n` milliseconds. **The default is 200 ms**,
   so every bench measures against a backend a network hop away. Use `0` for a
   quick local run. The old `--init-latency-ms`, `--init-latency` and
-  `C15T_BENCH_INIT_LATENCY_MS` names still work as aliases.
+  `INTH_BENCH_INIT_LATENCY_MS` names still work as aliases.
 - The delay applies to every consent-backend endpoint a bench calls: `/init`,
   `/manifest` (including `304` revalidations), `/subjects` saves, and the
   production consumer's `/sessions`. Requests that reach the backend through
-  the app's own `/api/c15t/*` routes or proxies, and server-side SSR fetches,
+  the app's own `/api/inth/*` routes or proxies, and server-side SSR fetches,
   pay it too, as they would in production. Static assets, the app's HTML and
   the bench's own `stats` control endpoints are not delayed.
 - `script-lifecycle-bench` keeps an instant backend. Its timed window awaits
@@ -508,10 +508,10 @@ C15T_BENCH_ITERATIONS=10 bun run bench -- --profile mobile
   example `ssr:profile-none:latency-200ms`, and so does the output file name.
 
 `scripts/benchmark-run.ts` applies the same latency to the base and head
-measurements (`--backend-latency-ms` or `C15T_BENCH_BACKEND_LATENCY_MS`,
+measurements (`--backend-latency-ms` or `INTH_BENCH_BACKEND_LATENCY_MS`,
 default 200) and records it in `provenance.json`. The comparison gate expects
 browser-runtime keys under that condition, read from the same variables and
-`C15T_BENCH_PROFILE`.
+`INTH_BENCH_PROFILE`.
 
 With 200 ms on the backend, any arm that waits on it shows the round trip in
 its absolute timings: client arms in `bannerReadyMs`, SSR arms in TTFB. Budgets
@@ -536,7 +536,7 @@ Bundle size is measured separately by `bundle-test-app` because it is build anal
 Shared fixtures live in `shared/src/fixtures.ts`.
 
 - `tiny`, `small`, `medium`, `large`, `xlarge` scale translation payload, script volume, and UI complexity.
-- c15t currently exposes five built-in consent categories, so larger fixtures scale primarily via translation/script complexity rather than additional category names.
+- Inth currently exposes five built-in consent categories, so larger fixtures scale primarily via translation/script complexity rather than additional category names.
 - `core-benchmarks` measures script-manager reconciliation speed only. It does not measure remote third-party script latency.
 - Policy fixtures (`shared/src/policy-fixtures.ts`) are built from the schema package's own preset builders and resolve the same semantic deployment on either side of the policy-rule contract: `optin-choice-eu` (Europe opt-in + world default, German visitor), `optout-california` (California opt-out + world default, Californian visitor), and `optout-default-world` (three packs resolving to the world default, Brazilian visitor). The runner asserts the intended preset matched so a fixture cannot degrade into the empty fallback.
 - Browser startup benches expose app-startup script waterfall metrics, not CDN speed for third-party scripts.

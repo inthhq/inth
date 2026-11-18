@@ -9,8 +9,8 @@
  *
  * `/consent-example` is the HTML quickstart page. Its tag loads
  * `c15t.js` from a `https://your-project.inth.app` placeholder, exactly as a
- * reader copies it. A c15t backend serves that file with its own URL built
- * in. This server swaps the tag for the local build with `C15T_BACKEND_URL`
+ * reader copies it. A Inth backend serves that file with its own URL built
+ * in. This server swaps the tag for the local build with `INTH_PROJECT_URL`
  * as `data-project-url`, and any other placeholder or CDN prefix for the same,
  * so the page runs the code the docs show against this checkout.
  *
@@ -27,7 +27,7 @@
  *
  * ```sh
  * bun run --cwd internals/fixtures/script-tag dev
- * C15T_BACKEND_URL=https://your-project.inth.app bun run --cwd internals/fixtures/script-tag dev
+ * INTH_PROJECT_URL=https://your-project.inth.app bun run --cwd internals/fixtures/script-tag dev
  * ```
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -47,7 +47,7 @@ const published = (file: string, region: string): string => {
 };
 const cdnPrefix = 'https://cdn.jsdelivr.net/npm/@inth/sdk@alpha/dist/';
 const backendPlaceholder = 'https://your-project.inth.app';
-const projectUrl = process.env.C15T_BACKEND_URL;
+const projectUrl = process.env.INTH_PROJECT_URL;
 
 // `c15t.js` loads `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
 // `c15t.dialog.js` from next to itself, so the server carries them too.
@@ -98,7 +98,7 @@ const renderConsentExample = function renderConsentExample(
 ): Response {
 	if (!projectUrl) {
 		return new Response(
-			'Set C15T_BACKEND_URL to your Inth backend URL to open /consent-example.',
+			'Set INTH_PROJECT_URL to your Inth backend URL to open /consent-example.',
 			{ status: 500 }
 		);
 	}
@@ -118,7 +118,7 @@ const renderConsentExample = function renderConsentExample(
 	if (design === 'headless') {
 		// Swap the stock tag for the headless build and the page's own bar.
 		html = html
-			.replace(/<script\s+src="[^"]*\/c15t\.js"[\s\S]*?<\/script>/u, '')
+			.replace(/<script\s+src="[^"]*\/inth\.js"[\s\S]*?<\/script>/u, '')
 			.replace(
 				'</body>',
 				`${published('headless-bar.html', 'headless-bar')}</body>`
@@ -129,7 +129,7 @@ const renderConsentExample = function renderConsentExample(
 	html = html
 		.replace(
 			new RegExp(
-				`src="${backendPlaceholder.replaceAll('.', '\\.')}/(c15t(?:\\.headless|\\.iab)?\\.js)"`,
+				`src="${backendPlaceholder.replaceAll('.', '\\.')}/(inth(?:\\.headless|\\.iab)?\\.js)"`,
 				'gu'
 			),
 			`src="/$1" data-project-url="${projectUrl}"`

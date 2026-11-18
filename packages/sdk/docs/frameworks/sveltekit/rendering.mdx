@@ -6,23 +6,23 @@ group: frameworks
 
 ## Pick a rendering path
 
-`c15tHandle()` in `src/hooks.server.ts` holds the config for the whole app.
+`inthHandle()` in `src/hooks.server.ts` holds the config for the whole app.
 Its `mode` option decides where each visitor's policy comes from. Import the
 modes from `@inth/svelte/kit`: they are plain data, which `loadConsent`
 sends to the browser.
 
-| Your app | Where consent resolves | `c15tHandle()` options |
+| Your app | Where consent resolves | `inthHandle()` options |
 | --- | --- | --- |
 | Server-rendered pages, recommended | Root layout load, from a build-time manifest | None. See the [quickstart](/docs/frameworks/sveltekit/quickstart). |
 | Policy changes must apply without a rebuild | Root layout load, from a manifest fetched at runtime | `mode: manifest({ source: 'runtime' })`. See [fetch the manifest at runtime](#fetch-the-manifest-at-runtime). |
 | Backend resolves every visit | Root layout load calls the backend's `/init` | `mode: hosted()`. See [ask the backend on every request](#ask-the-backend-on-every-request). |
-| A server app with some prerendered pages | Server for most pages, the browser on prerendered ones | `routePrefix: '/api/c15t'` and a consent route. See [prerender some pages](#prerender-some-pages). |
+| A server app with some prerendered pages | Server for most pages, the browser on prerendered ones | `routePrefix: '/api/inth'` and a consent route. See [prerender some pages](#prerender-some-pages). |
 | A fully static site with `adapter-static` | The browser | `mode: hosted()`. See [build a static site](#build-a-static-site). |
 | SPA mode, `ssr = false` | The browser | See [use SPA mode](#use-spa-mode). |
 
 Every path uses the same root layout: `loadConsent` as the server load and
 `ConsentRoot` with `state={data.consent}`. The quickstart's code is the
-`examples/sveltekit` app in the c15t repository.
+`examples/sveltekit` app in the Inth repository.
 [Data fetching](/docs/concepts/data-fetching) compares `/init`, the manifest
 and browser resolution in general.
 
@@ -41,14 +41,14 @@ directly or through the
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle, manifest } from '@inth/svelte/kit';
+import { inthHandle, manifest } from '@inth/svelte/kit';
 
-export const handle = c15tHandle({ mode: manifest({ source: 'runtime' }) });
+export const handle = inthHandle({ mode: manifest({ source: 'runtime' }) });
 ```
 
 Keep `consentManifest` in `vite.config.ts`: it supplies the backend URL. Set
 `consentManifest({ onBuildError: 'runtime' })` so a build does not depend on
-the backend, or pass `c15tHandle({ projectUrl })`. `loadConsent` fetches
+the backend, or pass `inthHandle({ projectUrl })`. `loadConsent` fetches
 `${projectUrl}/manifest`, or the URL in `manifest({ manifestUrl })`.
 
 The server caches the manifest in memory for as long as its `s-maxage`
@@ -73,9 +73,9 @@ pages the server did not resolve:
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle, hosted } from '@inth/svelte/kit';
+import { inthHandle, hosted } from '@inth/svelte/kit';
 
-export const handle = c15tHandle({ mode: hosted() });
+export const handle = inthHandle({ mode: hosted() });
 ```
 
 `hosted()` reads the backend URL from `consentManifest`, or from the hook's
@@ -91,7 +91,7 @@ build.
 A page the server resolved needs no route. The browser needs one only when it
 resolves consent itself, such as on a prerendered page, and you want it to
 ask your own origin instead of the backend. Add a catch-all route at
-`src/routes/api/c15t/[...path]/+server.ts`:
+`src/routes/api/inth/[...path]/+server.ts`:
 
 <include src="../../shared/examples/sveltekit/route-handlers.mdx" />
 
@@ -101,25 +101,25 @@ browser:
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle } from '@inth/svelte/kit';
+import { inthHandle } from '@inth/svelte/kit';
 
-export const handle = c15tHandle({ routePrefix: '/api/c15t' });
+export const handle = inthHandle({ routePrefix: '/api/inth' });
 ```
 
 `createConsentRoute()` returns `GET`, which serves two paths:
 
 | Request | Response |
 | --- | --- |
-| `GET /api/c15t/init` | The visitor's resolved policy, like the backend's `/init`. `Cache-Control: private, no-store`. |
-| `GET /api/c15t/manifest` | The manifest, with the backend's `Cache-Control` and `ETag`. Answers `If-None-Match` with `304`. |
+| `GET /api/inth/init` | The visitor's resolved policy, like the backend's `/init`. `Cache-Control: private, no-store`. |
+| `GET /api/inth/manifest` | The manifest, with the backend's `Cache-Control` and `ETag`. Answers `If-None-Match` with `304`. |
 
 The route resolves from the snapshot `consentManifest` downloaded and reads
 the backend URL from it, so it needs no options. It also reads what you pass
-to `c15tHandle()`: a `snapshot`, a `projectUrl`, and the mode's own
+to `inthHandle()`: a `snapshot`, a `projectUrl`, and the mode's own
 `projectUrl` or `manifestUrl`. Set them once, on the handle. Options you pass
 to `createConsentRoute()` win.
 
-This route file exports `GET` only, so a `POST` or `PATCH` to `/api/c15t`
+This route file exports `GET` only, so a `POST` or `PATCH` to `/api/inth`
 gets a `405`. Consent saves go to the backend URL directly, unless you turn
 on the proxy described in
 [save consent through your own origin](#save-consent-through-your-own-origin).
@@ -131,7 +131,7 @@ export the write handlers from the same catch-all route:
 
 {/* example: fragment */}
 
-```ts title="src/routes/api/c15t/[...path]/+server.ts"
+```ts title="src/routes/api/inth/[...path]/+server.ts"
 import { createConsentRoute } from '@inth/svelte/kit';
 
 export const { GET, POST, PATCH, PUT, DELETE, OPTIONS } = createConsentRoute({
@@ -144,16 +144,16 @@ Then point saves at the route:
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle } from '@inth/svelte/kit';
+import { inthHandle } from '@inth/svelte/kit';
 
-export const handle = c15tHandle({
-	projectUrl: '/api/c15t',
-	routePrefix: '/api/c15t',
+export const handle = inthHandle({
+	projectUrl: '/api/inth',
+	routePrefix: '/api/inth',
 });
 ```
 
 The route skips a handle `projectUrl` that points at itself, and forwards to
-the backend URL `consentManifest` read from `PUBLIC_C15T_BACKEND_URL` or
+the backend URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` or
 `PUBLIC_INTH_PROJECT_URL`. To
 forward somewhere else, pass `createConsentRoute({ projectUrl, proxy: true })`.
 With the proxy on, `GET`
@@ -174,7 +174,7 @@ never resolved against the request's `Host` header.
 The route and `loadConsent` use only `fetch`, so they run on Node and edge
 adapters alike. Some runtimes stop work once a response is sent, which would
 cut off the background manifest refresh and the visit report. When the
-adapter exposes `event.platform.context.waitUntil`, c15t registers that work
+adapter exposes `event.platform.context.waitUntil`, Inth registers that work
 there automatically. Netlify does, as do Cloudflare and Vercel edge on
 SvelteKit 2.
 
@@ -184,7 +184,7 @@ the platform's own `waitUntil` as `onBackgroundRevalidate`:
 
 {/* example: fragment */}
 
-```ts title="src/routes/api/c15t/[...path]/+server.ts (partial)"
+```ts title="src/routes/api/inth/[...path]/+server.ts (partial)"
 import { createConsentRoute } from '@inth/svelte/kit';
 import { waitUntil } from 'cloudflare:workers'; // Vercel: '@vercel/functions'
 
@@ -217,29 +217,29 @@ this callback otherwise. The framework-free `resolveConsent` helper also
 accepts `onBackgroundRevalidate`; it has no event from which to find a
 platform hook.
 
-## Resolve request context once with c15tHandle
+## Resolve request context once with inthHandle
 
-The quickstart installs `c15tHandle` in `src/hooks.server.ts`. It holds the
+The quickstart installs `inthHandle` in `src/hooks.server.ts`. It holds the
 consent config for the app and reads the consent cookie and headers once per
 request for every load and endpoint:
 
 <include src="../../shared/examples/sveltekit/hooks.mdx" />
 
-It stores the result on `event.locals.c15t`, which `loadConsent` reuses, and
+It stores the result on `event.locals.inth`, which `loadConsent` reuses, and
 rewrites the location headers into one normalized form. Compose it with your
-own handles through `sequence(c15tHandle(), yourHandle)` from
+own handles through `sequence(inthHandle(), yourHandle)` from
 `@sveltejs/kit/hooks`.
 
 | Option | Default | What it does |
 | --- | --- | --- |
 | `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. |
-| `routePrefix` | none | Where [`createConsentRoute()`](#serve-the-consent-route) is mounted, such as `/api/c15t`. Without it, the browser asks the backend's `/init` when it resolves consent itself. |
-| `projectUrl` | The URL `consentManifest` read from `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL` | The backend. |
+| `routePrefix` | none | Where [`createConsentRoute()`](#serve-the-consent-route) is mounted, such as `/api/inth`. Without it, the browser asks the backend's `/init` when it resolves consent itself. |
+| `projectUrl` | The URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` or `PUBLIC_INTH_PROJECT_URL` | The backend. |
 | `snapshot` | The manifest `consentManifest` downloaded | A manifest of your own to resolve with. |
-| `cookieName` | `c15t` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
+| `cookieName` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | from headers | Forces one input for every request. |
 
-`c15tHandle` sets no cookie. The visitor's subject ID (`sub_…`) lives in
+`inthHandle` sets no cookie. The visitor's subject ID (`sub_…`) lives in
 the consent records their first save writes, and `loadConsent` reads it from
 those cookies.
 
@@ -247,7 +247,7 @@ Server-rendered pages that call `loadConsent` hold the visitor's consent, so
 keep them out of shared caches. Prerendered pages hold none:
 `loadConsent` returns no visitor state while SvelteKit prerenders.
 
-`c15tHandle` also writes a server-rendered banner's rules into the HTML
+`inthHandle` also writes a server-rendered banner's rules into the HTML
 `<head>` as `<style>` elements, so the banner is styled before hydration. A
 first visit's page holds only the banner's rules and the theme tokens, not the
 trigger's, `ConsentGate`'s or the dialog's. The
@@ -257,7 +257,7 @@ browser and stay hidden until they arrive, unless `ConsentRoot` sets
 `styles={false}` and the app imports `@inth/svelte/styles.css`.
 
 When the visitor's consent already allows some `scripts` entries, through a
-stored choice or a policy that asks for none, `c15tHandle` adds an inline script
+stored choice or a policy that asks for none, `inthHandle` adds an inline script
 at the end of `<body>`. After first paint, it runs those entries' setup and
 inserts their tags, so they start loading before the page hydrates. Entries with
 `alwaysLoad` start this way whatever the visitor chose. The script loader adopts
@@ -273,7 +273,7 @@ from the HTML: its scripts start after hydration.
 To start every `scripts` entry after hydration instead, pass
 `scriptLoader={{ serverStart: false }}` to `ConsentRoot`.
 
-Type `event.locals.c15t` in `src/app.d.ts`:
+Type `event.locals.inth` in `src/app.d.ts`:
 
 <include src="../../shared/examples/sveltekit/app-locals.mdx" />
 
@@ -296,7 +296,7 @@ cached.
 
 A prerendered page is built once and sent to every visitor, so it cannot
 contain one visitor's consent. SvelteKit runs the root layout load while it
-builds those pages. `loadConsent` and `c15tHandle` read SvelteKit's
+builds those pages. `loadConsent` and `inthHandle` read SvelteKit's
 `building` flag, so they return no visitor's consent and no policy then, and
 make no backend request. Prerendering a page needs only the page option:
 
@@ -310,7 +310,7 @@ app keep the banner in their HTML.
 Where the browser asks depends on the handle:
 
 - With [`routePrefix` and the consent route](#serve-the-consent-route), it
-  asks your own `/api/c15t/init`, which resolves from the bundled snapshot.
+  asks your own `/api/inth/init`, which resolves from the bundled snapshot.
 - Without them, it asks the backend's `/init`.
 
 ## Build a static site
@@ -325,16 +325,16 @@ export const prerender = true;
 ```
 
 The browser resolves consent on every page. Server routes such as
-`/api/c15t` do not exist after a static build, so it has to ask the backend
+`/api/inth` do not exist after a static build, so it has to ask the backend
 directly. Starting from the quickstart, set `hosted()` as the mode and keep
 the rest:
 
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle, hosted } from '@inth/svelte/kit';
+import { inthHandle, hosted } from '@inth/svelte/kit';
 
-export const handle = c15tHandle({ mode: hosted() });
+export const handle = inthHandle({ mode: hosted() });
 ```
 
 The hook and `loadConsent` still run while SvelteKit prerenders, and return
@@ -352,7 +352,7 @@ There is no server HTML to start from, so `ConsentRoot` renders its children
 once the consent engine has loaded, and the banner appears with them.
 
 With a static SPA fallback page and no server, no server load runs. Delete
-`+layout.server.ts` and the c15t handle, and render `ConsentProvider` with a
+`+layout.server.ts` and the Inth handle, and render `ConsentProvider` with a
 browser mode in `+layout.svelte`:
 
 {/* example: fragment */}
@@ -360,10 +360,10 @@ browser mode in `+layout.svelte`:
 ```svelte title="src/routes/+layout.svelte (partial)"
 <script lang="ts">
 	import { ConsentProvider, hosted } from '@inth/svelte';
-	import { PUBLIC_C15T_BACKEND_URL } from '$env/static/public';
+	import { PUBLIC_INTH_PROJECT_URL } from '$env/static/public';
 </script>
 
-<ConsentProvider projectUrl={PUBLIC_C15T_BACKEND_URL} mode={hosted()} {scripts}>
+<ConsentProvider projectUrl={PUBLIC_INTH_PROJECT_URL} mode={hosted()} {scripts}>
 ```
 
 The browser resolves consent through the backend's `/init`.
@@ -405,7 +405,7 @@ The page then preloads neither the engine nor the script loader. An Accept all
 or Reject all tapped before the engine loads takes effect in the tap's own
 task: the consent state the getters return changes, and the `scripts` entries
 the choice allows start, if they are a plain `src` with element attributes. A
-moment later c15t stores the consent record, queues the save and calls
+moment later Inth stores the consent record, queues the save and calls
 `onChoiceRecorded` and `onPermissionsChanged`. The engine then loads, starts
 from that record and sends the save. It records nothing a second time.
 Customize opens the dialog without the engine, and a save from the dialog

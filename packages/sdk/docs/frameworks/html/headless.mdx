@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Render your own consent banner and preferences in plain HTML with c15t.headless.js, the ui event and data-c15t-action buttons, while c15t keeps resolving the policy, storing choices and gating scripts.
+description: Render your own consent banner and preferences in plain HTML with c15t.headless.js, the ui event and data-inth-action buttons, while Inth keeps resolving the policy, storing choices and gating scripts.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ headless build keeps everything except the UI:
 
 - policy resolution, stored choices and backend saves;
 - gated scripts, gated iframes and the network blocker;
-- `window.c15t`, its events and the `data-c15t-action` page hooks.
+- `window.inth`, its events and the `data-inth-action` page hooks.
 
 It ships no banner, no preference dialog, no trigger and no CSS. Before you
 switch, check whether [customize](/docs/frameworks/html/customize) covers the
@@ -22,7 +22,7 @@ change, because a custom UI takes on every duty the stock one handles.
 
 This block replaces the stock tag. It loads the headless build, then renders a
 bar with Accept, Reject, Preferences and Save controls. The accept, reject,
-customize and dismiss buttons are `data-c15t-action` buttons, so they need no
+customize and dismiss buttons are `data-inth-action` buttons, so they need no
 code. One `ui` listener shows the bar, switches it into preferences mode and
 swaps the buttons for a notice:
 
@@ -30,25 +30,25 @@ swaps the buttons for a notice:
 
 Put the block at the end of `<body>`.
 
-## Follow the surface c15t wants shown
+## Follow the surface Inth wants shown
 
-c15t still decides which surface should show. The `ui` event reports it:
+Inth still decides which surface should show. The `ui` event reports it:
 
 | `ui` payload | What your page shows |
 | --- | --- |
 | `'banner'` | The first prompt. Read `promptRequirement.kind` to choose between a choice and a notice. |
-| `'dialog'` | Your preferences view. A `data-c15t-action="customize"` button, a `#c15t-preferences` link or `c15t.openDialog()` asked for it. |
+| `'dialog'` | Your preferences view. A `data-inth-action="customize"` button, a `#inth-preferences` link or `inth.openDialog()` asked for it. |
 | `'none'` | Nothing. Hide the bar. |
 
 A `ui` listener added after the policy resolved runs at once with the current
 surface, so a late script does not miss the first banner. Your own controls
-change the surface with `c15t.showBanner()`, `c15t.openDialog()` and
-`c15t.closeDialog()`, or the matching `data-c15t-action` values. None of them
+change the surface with `inth.showBanner()`, `inth.openDialog()` and
+`inth.closeDialog()`, or the matching `data-inth-action` values. None of them
 records anything.
 
 ## Read the prompt the policy requires
 
-`c15t.getSnapshot()` returns the fields a custom UI renders from:
+`inth.getSnapshot()` returns the fields a custom UI renders from:
 
 | Field | What it tells your UI |
 | --- | --- |
@@ -60,9 +60,9 @@ records anything.
 | `effectivePermissions` | Whether each category is allowed right now. |
 | `explicitChoice` | What the visitor recorded, if anything. |
 
-Use `c15t.has(category)` to set each switch in your preferences view to the
+Use `inth.has(category)` to set each switch in your preferences view to the
 current permission. Save exactly what the switches show with
-`c15t.save({ measurement: true, marketing: false })`.
+`inth.save({ measurement: true, marketing: false })`.
 
 ## What your UI must handle
 
@@ -91,8 +91,8 @@ To replace only the banner, keep `c15t.js` and turn the stock banner off:
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', { ui: { banner: false } }]);
+  window.inth = window.inth || [];
+  inth.push(['config', { ui: { banner: false } }]);
 </script>
 ```
 

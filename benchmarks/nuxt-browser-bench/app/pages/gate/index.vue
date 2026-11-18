@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Consent gate page: CookieBench's Nuxt fixture (`with-c15t-nuxt/app/consent.vue`)
+ * Consent gate page: CookieBench's Nuxt fixture (`with-inth-nuxt/app/consent.vue`)
  * on this bench's local backend. The module's build-time `manifest()` mode
  * resolves each visitor on the server (the route plugin leaves `/gate` on
  * it), app.vue mounts the static `<ConsentRoot />`, and this page registers
@@ -11,10 +11,10 @@ import {
 	gatePageHTML,
 	gateScripts,
 	updateGateBridge,
-} from '@c15t/benchmarking/consent-gate-page';
+} from '@inth/benchmarking/consent-gate-page';
 import { onMounted, watch } from 'vue';
 
-import { useConsentSnapshot, useScriptLoader } from '#c15t/composables';
+import { useConsentSnapshot, useScriptLoader } from '#inth/composables';
 
 const snapshot = useConsentSnapshot();
 // The scripts come from the page URL, so they register in the browser, as

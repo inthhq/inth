@@ -1,4 +1,4 @@
-// Refuses an SDK or mobile release while it would publish c15t artifacts.
+// Refuses an SDK or mobile release while it would publish Inth artifacts.
 // The SDK, React Native, Swift and Android release workflows run this before
 // any publish step. They stay off until the packages carry Inth names and the
 // owner sets the product's release variable and registry credentials.
@@ -7,7 +7,7 @@ import path from "node:path";
 
 export type ReleaseProduct = "android" | "react-native" | "sdk" | "swift";
 
-const c15tName = /^(?:c15t$|@c15t\/)/u;
+const inthName = /^(?:inth$|@inth\/)/u;
 
 const readJson = (file: string) => {
   const manifest: { name: string; private?: boolean } = JSON.parse(
@@ -70,13 +70,13 @@ export const releaseRefusals = (
   }
   const legacy = names.filter(
     (name) =>
-      c15tName.test(name) ||
-      name.startsWith("com.c15t") ||
-      name.toLowerCase().startsWith("c15t")
+      inthName.test(name) ||
+      name.startsWith("com.inth") ||
+      name.toLowerCase().startsWith("inth")
   );
   if (legacy.length > 0) {
     refusals.push(
-      `These still carry c15t names and must not publish from this repository: ${legacy.join(", ")}.`
+      `These still carry inth names and must not publish from this repository: ${legacy.join(", ")}.`
     );
   }
   return refusals;

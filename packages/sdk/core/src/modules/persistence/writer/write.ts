@@ -67,7 +67,7 @@ export const writeChoiceToStorage = function writeChoiceToStorage(
 		now,
 	});
 	if (result.ok === false) {
-		console.warn('[c15t] Consent record was not written.', result.issues);
+		console.warn('[inth] Consent record was not written.', result.issues);
 	}
 };
 
@@ -115,7 +115,7 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 	}
 	const result = store.writeStoredVendorChoice(record, storageConfig, now);
 	if (result.ok === false) {
-		console.warn('[c15t] Vendor choice was not written.', result.issues);
+		console.warn('[inth] Vendor choice was not written.', result.issues);
 		return;
 	}
 	// A server render reads the cookie only. When the browser dropped it, most
@@ -124,7 +124,7 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 	// let it pass silently.
 	if (result.written && !result.written.cookie) {
 		console.warn(
-			'[c15t] Vendor choice cookie was not stored; the localStorage copy is current but a server render will not see it. Shorten vendor ids or deny fewer vendors.',
+			'[inth] Vendor choice cookie was not stored; the localStorage copy is current but a server render will not see it. Shorten vendor ids or deny fewer vendors.',
 			result.written.cookieDetail
 		);
 	}

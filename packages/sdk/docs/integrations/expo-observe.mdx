@@ -1,7 +1,7 @@
 ---
 title: Expo Observe
-description: Gate Expo Observe (EAS Observe) in Expo apps with c15t. Observe records on the device from native launch, so c15t can only turn its sending on and off.
-seoTitle: Expo Observe consent in Expo apps with c15t
+description: Gate Expo Observe (EAS Observe) in Expo apps with Inth. Observe records on the device from native launch, so Inth can only turn its sending on and off.
+seoTitle: Expo Observe consent in Expo apps with Inth
 seoDescription: Hold back Expo Observe launch metrics, events and crash reports until measurement consent. Covers what Observe sends, when it starts and its limits.
 group: integrations
 ---
@@ -11,10 +11,10 @@ Observe, measures app startup and records events and crash reports on your
 users' devices. The `expo-observe` package has no consent API and no way to
 turn recording off. It does have a persisted switch that stops sending:
 `Observe.configure({ dispatchingEnabled })`. This page connects that switch to
-c15t's `measurement` category.
+inth's `measurement` category.
 
 Recording on the device starts before React Native loads and keeps going
-whatever you pass to `configure`. c15t decides whether Observe's queue leaves
+whatever you pass to `configure`. Inth decides whether Observe's queue leaves
 the device. It cannot stop Observe from writing that queue.
 
 ## What Observe collects and sends
@@ -41,7 +41,7 @@ personally identifiable information. The iOS privacy manifest in
 `expo-observe` declares crash data, performance data, other diagnostic data,
 a device ID and product interaction, all marked as not linked to the user and
 not used for tracking. Whether that data needs consent where your app ships is
-a question for your privacy counsel. c15t can't answer it for you.
+a question for your privacy counsel. Inth can't answer it for you.
 
 Observe sends its data over OTLP to `https://o.expo.dev/<project id>`, or to
 the `extra.eas.observe.endpointUrl` in your app config. It needs
@@ -74,7 +74,7 @@ build with sending off. It also has no API that delays recording until later.
 
 ## Choose the category
 
-Use `measurement`, the c15t category for analytics and performance
+Use `measurement`, the Inth category for analytics and performance
 measurement. `dispatchingEnabled` covers metrics, events, spans and errors
 together. If your legal review lets crash reports run without consent, SDK 58
 can send them alone: keep `dispatchingEnabled: true` and pass `sampleRate: 0`
@@ -83,7 +83,7 @@ JavaScript errors and crash reports. SDK 57 and earlier have no
 `errorSampleRate`, and `sampleRate` covers errors too, so there you can only
 gate everything together.
 
-## Gate sending with c15t
+## Gate sending with Inth
 
 Complete the [Expo setup](/docs/frameworks/react-native/expo) and include
 `measurement` in your Inth policy and the plugin's `consentCategories`. Then
@@ -140,7 +140,7 @@ background before the effect has run, Observe can still send with the earlier
 saved value.
 
 **Recording itself.** Observe writes metrics, events and crash reports to the
-device whatever the consent state. c15t cannot change that.
+device whatever the consent state. Inth cannot change that.
 
 If your app cannot accept these gaps, you have three honest options:
 

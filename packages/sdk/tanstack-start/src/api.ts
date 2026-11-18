@@ -4,20 +4,20 @@
  * Mount one splat server route and both endpoints exist:
  *
  * ```ts
- * // src/routes/api/c15t/$.ts
+ * // src/routes/api/inth/$.ts
  * import { createFileRoute } from '@tanstack/react-router';
  * import { createConsentRoute } from '@inth/tanstack-start/api';
  *
- * export const Route = createFileRoute('/api/c15t/$')({
+ * export const Route = createFileRoute('/api/inth/$')({
  *   server: { handlers: createConsentRoute() },
  * });
  * ```
  *
- * - `GET /api/c15t/manifest` passes the cached backend manifest through
+ * - `GET /api/inth/manifest` passes the cached backend manifest through
  *   with its cache headers, so browsers and CDNs can cache it.
- * - `GET /api/c15t/init` resolves init in-process from that manifest for
+ * - `GET /api/inth/init` resolves init in-process from that manifest for
  *   the request's geo, language, and GPC signal. Pass
- *   `routePrefix: '/api/c15t'` to `createConsentStateHandler()` to use it;
+ *   `routePrefix: '/api/inth'` to `createConsentStateHandler()` to use it;
  *   a client language switch re-hits it.
  *
  * The backend URL and the policy snapshot default to what
@@ -54,7 +54,7 @@ export interface ConsentRouteOptions {
 	/**
 	 * Backend base URL that serves `/manifest`, for example
 	 * `https://your-project.inth.app`. Defaults to the URL
-	 * `consentManifest()` read from `VITE_C15T_BACKEND_URL` or
+	 * `consentManifest()` read from `VITE_INTH_PROJECT_URL` or
 	 * `VITE_INTH_PROJECT_URL`. The proxy forwards to it.
 	 */
 	projectUrl?: string;
@@ -130,7 +130,7 @@ export interface ConsentRouteOptions {
 	 * the client IP chain in `x-forwarded-for` only under
 	 * `trustForwardedHeaders` (a client-controlled chain would let a visitor
 	 * choose the address the backend sees), and adds
-	 * `x-forwarded-host`, `x-forwarded-proto`, the c15t version header, and
+	 * `x-forwarded-host`, `x-forwarded-proto`, the Inth version header, and
 	 * `x-c15t-proxy: @inth/tanstack-start`. The hosted backend sits behind
 	 * Vercel Firewall or Cloudflare, and a bare server-to-server fetch (server
 	 * TLS fingerprint, no user agent, one egress IP for every visitor) scores
@@ -194,19 +194,19 @@ export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
 
 /**
  * Creates the handlers for the same-origin consent route,
- * `src/routes/api/c15t/$.ts`. The splat names the consent path.
+ * `src/routes/api/inth/$.ts`. The splat names the consent path.
  *
  * @param options - Backend, snapshot, fetch, GVL, cache, and proxy
  * options. The backend URL and snapshot default to what
  * `consentManifest()` provides.
- * @returns Handlers for `createFileRoute('/api/c15t/$')({ server: { handlers } })`.
+ * @returns Handlers for `createFileRoute('/api/inth/$')({ server: { handlers } })`.
  * With `proxy` off the set is `GET`; with it on, `POST`, `PATCH`, `PUT`,
  * `DELETE` and `OPTIONS` join. Manifest and init requests fail when there
  * is no snapshot, backend URL or `manifestUrl`. Proxy writes need a
  * backend URL.
  * @example
  * ```ts
- * export const Route = createFileRoute('/api/c15t/$')({
+ * export const Route = createFileRoute('/api/inth/$')({
  *   server: { handlers: createConsentRoute() },
  * });
  * ```
@@ -214,7 +214,7 @@ export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
  * ```ts
  * // Saves go through the route too. Pass `proxy: true` and the same
  * // `routePrefix` to createConsentStateHandler().
- * export const Route = createFileRoute('/api/c15t/$')({
+ * export const Route = createFileRoute('/api/inth/$')({
  *   server: { handlers: createConsentRoute({ proxy: true }) },
  * });
  * ```

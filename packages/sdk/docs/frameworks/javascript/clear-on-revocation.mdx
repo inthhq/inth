@@ -8,7 +8,7 @@ group: frameworks
 
 Gating stops new requests, but it leaves the cookies and storage keys a vendor
 already wrote. List the ones each optional category owns in
-`clearOnRevocation`. When that category is denied, c15t deletes them:
+`clearOnRevocation`. When that category is denied, Inth deletes them:
 
 {/* example: fragment */}
 
@@ -35,7 +35,7 @@ created.
 
 ## Attach cleanup to your own kernel
 
-If you assemble c15t modules yourself, attach cleanup in the browser after
+If you assemble Inth modules yourself, attach cleanup in the browser after
 persistence and the script loader:
 
 <include src="../../shared/examples/javascript/clear-on-revocation.mdx" />

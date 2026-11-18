@@ -25,8 +25,8 @@ export interface ScriptSourceWire {
 export type ScriptSourcesWire = Record<string, ScriptSourceWire | null>;
 
 /**
- * What the Inth script registry tells c15t, on a manifest or `/init`.
- * Fields c15t does not know are ignored, so a later backend can add them.
+ * What the Inth script registry tells Inth, on a manifest or `/init`.
+ * Fields Inth does not know are ignored, so a later backend can add them.
  */
 export interface ScriptRegistryWire {
 	/** Where the registry serves each script, by script `id`. */
@@ -35,7 +35,7 @@ export interface ScriptRegistryWire {
 
 /**
  * The registry on a manifest or `/init`. Only the outer object is checked:
- * c15t checks `sources` and each entry when it loads a script, so one bad
+ * Inth checks `sources` and each entry when it loads a script, so one bad
  * entry cannot reject the rest of the response. Anything but an object
  * reads as absent.
  */

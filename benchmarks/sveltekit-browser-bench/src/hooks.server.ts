@@ -1,6 +1,6 @@
 /**
- * `c15tHandle()` resolves the consent cookie and the geo/language/GPC
- * headers once per request onto `event.locals.c15t`, together with the mode
+ * `inthHandle()` resolves the consent cookie and the geo/language/GPC
+ * headers once per request onto `event.locals.inth`, together with the mode
  * each arm's `loadConsent` resolves with.
  *
  * Two handles, picked by path:
@@ -10,31 +10,31 @@
  *   page's TTFB. This is the arm manifest mode is measured against.
  * - Every other route resolves `manifest()` on the server from the
  *   fixture's manifest, fetched at runtime and cached in-process. The
- *   browser saves through `/api/c15t` and re-inits through the app's own
+ *   browser saves through `/api/inth` and re-inits through the app's own
  *   consent route (`createConsentRoute`) under the same prefix.
  */
-import { c15tHandle, hosted, manifest } from '@inth/svelte/kit';
-import type { C15tHandle } from '@inth/svelte/kit';
+import { inthHandle, hosted, manifest } from '@inth/svelte/kit';
+import type { InthHandle } from '@inth/svelte/kit';
 
-const hostedHandle = c15tHandle({
+const hostedHandle = inthHandle({
 	mode: hosted(),
 	projectUrl: '/api/bench-consent',
 });
 
-const manifestHandle = c15tHandle({
+const manifestHandle = inthHandle({
 	mode: manifest({
 		manifestUrl: '/api/bench-consent/manifest',
 		source: 'runtime',
 	}),
-	projectUrl: '/api/c15t',
-	routePrefix: '/api/c15t',
+	projectUrl: '/api/inth',
+	routePrefix: '/api/inth',
 });
 
 const isHostedArm = function isHostedArm(pathname: string): boolean {
 	return pathname === '/ssr' || pathname.startsWith('/ssr/');
 };
 
-export const handle: C15tHandle = (input) =>
+export const handle: InthHandle = (input) =>
 	isHostedArm(input.event.url.pathname)
 		? hostedHandle(input)
 		: manifestHandle(input);

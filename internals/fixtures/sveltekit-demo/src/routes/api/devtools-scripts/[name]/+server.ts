@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		await delay(800);
 	}
 	return new Response(
-		`window.dispatchEvent(new CustomEvent('c15t:demo-script-loaded', { detail: ${JSON.stringify(params.name)} }));`,
+		`window.dispatchEvent(new CustomEvent('inth:demo-script-loaded', { detail: ${JSON.stringify(params.name)} }));`,
 		{
 			headers: {
 				'Cache-Control': 'no-store',

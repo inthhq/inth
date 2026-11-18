@@ -1,6 +1,6 @@
 {
 	"title": "@inth/sdk-iab: IAB TCF 2.4 and GPP Addon",
-	"description": "IAB TCF 2.4 and Global Privacy Platform (GPP) addon for c15t with TC String and GPP string generation, GVL support, TCF and GPP APIs, and programmatic advertising consent workflows.",
+	"description": "IAB TCF 2.4 and Global Privacy Platform (GPP) addon for inth with TC String and GPP string generation, GVL support, TCF and GPP APIs, and programmatic advertising consent workflows.",
 	"features": [
 		"IAB TCF 2.4 support for programmatic advertising consent",
 		"TC String generation and storage",
@@ -12,7 +12,7 @@
 	],
 	"prerequisites": [
 		"Node.js 20.19 or later",
-		"c15t 3.x",
+		"inth 3.x",
 		"Use [Inth](https://inth.com) for a hosted IAB TCF-certified CMP setup with a managed CMP ID, or register your own CMP with IAB Europe and configure your own CMP ID"
 	],
 	"manualInstallation": [
@@ -26,7 +26,7 @@
 		"```css\n@import \"@inth/react/iab/styles.css\";\n```"
 	],
 	"usage": [
-		"Configure c15t with the IAB consent model for jurisdictions that require TCF workflows",
+		"Configure inth with the IAB consent model for jurisdictions that require TCF workflows",
 		"Use the React IAB components for a prebuilt TCF banner and preference center",
 		"Use headless APIs when you need a custom IAB consent experience",
 		"Use `createGPP` from `@inth/sdk-iab/gpp` to signal US state opt-outs and GPC to ad tech; see the [IAB GPP docs](https://c15t.com/docs/frameworks/javascript/gpp)",
@@ -36,6 +36,6 @@
 	"quickStartLink": "https://c15t.com/docs/frameworks/react/iab",
 	"showCLIGeneration": false,
 	"customSections": {
-		"Related Packages": "- [@inth/react](https://www.npmjs.com/package/@inth/react): React IAB consent banner, dialog, and hooks through @inth/react/iab\n- [@c15t/backend](https://www.npmjs.com/package/@c15t/backend): Backend configuration for IAB TCF, GVL, CMP registration, and custom vendors\n- [c15t](https://www.npmjs.com/package/c15t): the consent engine and every framework adapter in one install"
+		"Related Packages": "- [@inth/react](https://www.npmjs.com/package/@inth/react): React IAB consent banner, dialog, and hooks through @inth/react/iab\n- [@c15t/backend](https://www.npmjs.com/package/@c15t/backend): Backend configuration for IAB TCF, GVL, CMP registration, and custom vendors\n- [inth](https://www.npmjs.com/package/inth): the consent engine and every framework adapter in one install"
 	}
 }

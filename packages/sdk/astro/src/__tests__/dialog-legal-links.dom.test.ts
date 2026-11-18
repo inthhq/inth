@@ -51,7 +51,7 @@ afterEach(async () => {
 		// oxlint-disable-next-line no-await-in-loop -- Tear down in reverse mount order.
 		await step();
 	}
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig = undefined;
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = undefined;
 	localStorage.clear();
 });
 
@@ -64,7 +64,7 @@ const renderDialogHost = function renderDialogHost(
 	legalLinks: string | null
 ): void {
 	const host = document.createElement('div');
-	host.setAttribute('data-c15t-dialog-host', 'preferences');
+	host.setAttribute('data-inth-dialog-host', 'preferences');
 	if (legalLinks !== null) {
 		host.setAttribute('data-legal-links', legalLinks);
 	}
@@ -89,7 +89,7 @@ const openReactDialog = async function openReactDialog(): Promise<void> {
 	);
 	cleanup.push(() => {
 		client.dispose();
-		document.getElementById('c15t-dialog-host')?.remove();
+		document.getElementById('inth-dialog-host')?.remove();
 	});
 	await client.openDialog();
 	await vi.waitFor(
@@ -144,7 +144,7 @@ describe('the Vue preferences dialog', () => {
 		);
 		cleanup.push(() => {
 			client.dispose();
-			document.getElementById('c15t-dialog-host')?.remove();
+			document.getElementById('inth-dialog-host')?.remove();
 		});
 		await client.openDialog();
 

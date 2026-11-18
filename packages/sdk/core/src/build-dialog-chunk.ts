@@ -41,10 +41,10 @@ const ENGINE_BANNER =
 	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]components[\\/]prompt[\\/]index\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]prompt\.vue)$/u;
 
 /**
- * c15t's chunks that load only when a visitor asks for them: the standalone
+ * inth's chunks that load only when a visitor asks for them: the standalone
  * preference widget, the IAB preference center, the deferred dialog's
  * wrapper and the save path outside a preference surface. They may import
- * the dialog's files and decide nothing. Any other chunk outside c15t's
+ * the dialog's files and decide nothing. Any other chunk outside inth's
  * loaders counts as loaded with the page.
  */
 const ON_DEMAND =
@@ -292,7 +292,7 @@ const resolveSpecifier = function resolveSpecifier(
 	if (inPackage.length <= 1) {
 		return inPackage[0];
 	}
-	// Several files of one package: c15t's packages publish `dist/<subpath>`
+	// Several files of one package: inth's packages publish `dist/<subpath>`
 	// for `<name>/<subpath>`, and `dist/index` for the package itself.
 	const subpath = specifier.slice(name.length + 1);
 	const files =
@@ -462,7 +462,7 @@ const hashOf = function hashOf(text: string): string {
 	return hash.toString(36);
 };
 
-/** Who loads a module: the page, or one of c15t's on-demand loaders. */
+/** Who loads a module: the page, or one of inth's on-demand loaders. */
 type Loader = 'page' | 'dialog' | 'engine' | 'tap';
 
 /** The on-demand loaders a group may serve, in group-name order. */
@@ -470,10 +470,10 @@ const ON_DEMAND_LOADERS = ['dialog', 'engine', 'tap'] as const;
 
 /** Group names, by the loaders that need their modules. */
 const GROUP_NAMES: Record<string, string> = {
-	dialog: 'c15t-dialog',
-	'dialog+engine': 'c15t-dialog-engine',
-	'dialog+engine+tap': 'c15t-dialog-shared',
-	'dialog+tap': 'c15t-dialog-tap',
+	dialog: 'inth-dialog',
+	'dialog+engine': 'inth-dialog-engine',
+	'dialog+engine+tap': 'inth-dialog-shared',
+	'dialog+tap': 'inth-dialog-tap',
 };
 
 /**
@@ -488,11 +488,11 @@ const GROUP_NAMES: Record<string, string> = {
  * arrived in waves, a round trip each.
  *
  * Each module the dialog includes is filed by the loaders that include it:
- * the dialog alone (`c15t-dialog`), the dialog and the engine
- * (`c15t-dialog-engine`), the dialog and what an accept or reject before
- * the engine loads (`c15t-dialog-tap`), or all three
- * (`c15t-dialog-shared`), plus the dialog's stylesheets
- * (`c15t-dialog-styles`). Every chunk that imports one of these files
+ * the dialog alone (`inth-dialog`), the dialog and the engine
+ * (`inth-dialog-engine`), the dialog and what an accept or reject before
+ * the engine loads (`inth-dialog-tap`), or all three
+ * (`inth-dialog-shared`), plus the dialog's stylesheets
+ * (`inth-dialog-styles`). Every chunk that imports one of these files
  * needs all of it, so the engine and an accept fetch no dialog code, and a
  * Customize tap fetches three or four files. A module anything else
  * includes (an entry, a route, a component the app loads on demand, the
@@ -639,7 +639,7 @@ export const createDialogChunkGroup =
 			}
 		};
 		return {
-			debugName: 'c15t-dialog',
+			debugName: 'inth-dialog',
 			includeDependenciesRecursively: false,
 			name(id, context) {
 				infoOf = (candidate) => context.getModuleInfo(candidate);
@@ -667,7 +667,7 @@ export const createDialogChunkGroup =
 					// Only sheets nothing but the dialog loads: the banner keeps
 					// its own.
 					return pages.length === 0 && loaded.length === 1
-						? 'c15t-dialog-styles'
+						? 'inth-dialog-styles'
 						: null;
 				}
 				const name = GROUP_NAMES[loaded.join('+')];
@@ -735,7 +735,7 @@ export const createDialogChunkPlugin = function createDialogChunkPlugin(
 	const signatures = new Map<string | undefined, unknown>();
 	return {
 		apply: 'build',
-		name: 'c15t:dialog-chunk',
+		name: 'inth:dialog-chunk',
 		options(options) {
 			signatures.set(this.environment?.name, options.preserveEntrySignatures);
 			return undefined;

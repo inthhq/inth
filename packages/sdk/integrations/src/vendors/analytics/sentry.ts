@@ -132,7 +132,7 @@ interface SentryIntegration {
 	name: string;
 }
 
-/** SDK initialization options with c15t's consent integration installed first. */
+/** SDK initialization options with inth's consent integration installed first. */
 export interface SentryInitOptions extends Record<string, unknown> {
 	integrations: (defaults: SentryIntegration[]) => SentryIntegration[];
 }
@@ -199,12 +199,12 @@ interface SentrySharedOptions {
 	 * Receives Sentry CDN load and start failures, and Replay load, start
 	 * and stop failures. Without it, the adapter reports them to an
 	 * available Sentry client with the tag
-	 * `c15t.integration: sentry`.
+	 * `inth.integration: sentry`.
 	 */
 	onError?: (error: unknown) => void;
 }
 
-/** c15t loads Sentry from Sentry's CDN and calls `Sentry.init`. */
+/** Inth loads Sentry from Sentry's CDN and calls `Sentry.init`. */
 export interface SentryCdnOptions extends SentrySharedOptions {
 	/** Your project's DSN, from Sentry's project settings. */
 	dsn: string;
@@ -238,7 +238,7 @@ export interface SentrySdkOptions extends SentrySharedOptions {
 	/**
 	 * Returns the app's Sentry client. Pass `getClient` from your Sentry SDK.
 	 * It is read on every consent change, so the adapter also works when
-	 * c15t starts before `Sentry.init`.
+	 * Inth starts before `Sentry.init`.
 	 */
 	getClient: () => SentryClient | undefined;
 	/**
@@ -249,7 +249,7 @@ export interface SentrySdkOptions extends SentrySharedOptions {
 	/**
 	 * Starts Sentry with the supplied options, including the consent integration.
 	 * Pass your SDK's `init`, or a callback that forwards these options to it.
-	 * c15t calls it once, when `loadMode` allows Sentry to run. Required with
+	 * Inth calls it once, when `loadMode` allows Sentry to run. Required with
 	 * `loadMode: 'after-consent'`. Ignoring the supplied options leaves startup
 	 * captures unprotected.
 	 */
@@ -337,7 +337,7 @@ interface GateOptions {
 	setUser?: (user: SentryUser | null) => void;
 	/** Whether error monitoring waits for `measurement`. */
 	errorsGated: boolean;
-	/** Whether c15t calls `Sentry.init`, so it sees the client from the start. */
+	/** Whether Inth calls `Sentry.init`, so it sees the client from the start. */
 	startsSentry: boolean;
 	/** Starts Sentry the first time it may run. */
 	start?: () => Promise<void>;
@@ -359,7 +359,7 @@ const defaultCategory: AllConsentNames = 'measurement';
 const errorsCategory: AllConsentNames = 'measurement';
 /** Retry until a late-initialized SDK client appears or the adapter is removed. */
 const clientRetryMs = 100;
-const errorTags = { 'c15t.integration': 'sentry' };
+const errorTags = { 'inth.integration': 'sentry' };
 const urlDetailsPattern = /[?#]/u;
 /** Initial permissions used to decide whether early IP inference needs a warning. */
 const ALL_DENIED: ConsentState = {
@@ -402,7 +402,7 @@ const isProduction = (): boolean =>
 
 const warn = (message: string): void => {
 	if (!isProduction()) {
-		console.warn(`[c15t] ${message}`);
+		console.warn(`[inth] ${message}`);
 	}
 };
 
@@ -944,7 +944,7 @@ const createGate = (options: GateOptions) => {
 			!has(options.piiCategory, ALL_DENIED)
 		) {
 			warn(
-				'Sentry.init ran before c15t, so its first session can infer the visitor IP address before consent. Pass init to sentry(), or disable SDK collection and filter startup events as described in the Sentry integration guide.'
+				'Sentry.init ran before inth, so its first session can infer the visitor IP address before consent. Pass init to sentry(), or disable SDK collection and filter startup events as described in the Sentry integration guide.'
 			);
 		}
 		const existing = findReplay(client);
@@ -1350,10 +1350,10 @@ const withConsentInitOptions = (
 			return [
 				{
 					beforeSetup: beforeCapture,
-					name: 'C15tConsent',
+					name: 'InthConsent',
 					setup: beforeCapture,
 				},
-				...list.filter((integration) => integration.name !== 'C15tConsent'),
+				...list.filter((integration) => integration.name !== 'InthConsent'),
 			];
 		},
 	};
@@ -1401,7 +1401,7 @@ const getCategory = (
 ): HasCondition<AllConsentNames> => {
 	const afterConsent = options.loadMode === 'after-consent';
 	// The loader registers the categories a script names. Naming the feature
-	// categories here lets c15t offer them; `necessary` keeps it always true.
+	// categories here lets Inth offer them; `necessary` keeps it always true.
 	const features: HasCondition<AllConsentNames> = {
 		or: [
 			...new Set<HasCondition<AllConsentNames>>([
@@ -1594,7 +1594,7 @@ const createSentryScript = (options: SentryOptions): Script => {
 	}
 	if (errorsGated && !options.init) {
 		throw new Error(
-			"sentry: pass init with loadMode 'after-consent', so c15t can start Sentry after consent"
+			"sentry: pass init with loadMode 'after-consent', so inth can start Sentry after consent"
 		);
 	}
 	const { init } = options;
@@ -1637,10 +1637,10 @@ const createSentryScript = (options: SentryOptions): Script => {
 const reuseSentryScript = createScriptReuse<SentryOptions>();
 
 /**
- * Run Sentry with c15t consent: error monitoring, Session Replay and user
+ * Run Sentry with Inth consent: error monitoring, Session Replay and user
  * data.
  *
- * Pass `dsn` and c15t loads Sentry from Sentry's CDN, pinned and with
+ * Pass `dsn` and Inth loads Sentry from Sentry's CDN, pinned and with
  * subresource integrity, then calls `Sentry.init`. Pass `getClient` instead
  * when your app runs the Sentry SDK itself.
  *
@@ -1659,8 +1659,8 @@ const reuseSentryScript = createScriptReuse<SentryOptions>();
  * Distinct configurations targeting the same client also share consent:
  * every active configuration must allow each feature before it can run.
  *
- * @param options - A DSN for c15t to load Sentry, or your Sentry SDK functions.
- * @returns A script for the c15t script loader.
+ * @param options - A DSN for Inth to load Sentry, or your Sentry SDK functions.
+ * @returns A script for the Inth script loader.
  * @throws {Error} If `pii.user` is set without `setUser`, or
  *   `loadMode: 'after-consent'` is set with `getClient` but without `init`.
  * @remarks When `dsn` is blank, or neither `dsn` nor `getClient` is passed,

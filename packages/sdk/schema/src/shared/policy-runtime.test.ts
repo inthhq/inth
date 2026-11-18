@@ -55,7 +55,7 @@ const goldenVectors = [
 	{
 		expected:
 			'022db6788d676d5212e4249243ac3ee4f6b5e2dd77a298b4d4443d4c5826c6ac',
-		input: 'c15t',
+		input: 'inth',
 		label: 'short ascii',
 	},
 	{
@@ -116,7 +116,7 @@ describe('hashSha256Hex', () => {
 			writable: true,
 		});
 
-		await expect(hashSha256Hex('c15t')).resolves.toBe(
+		await expect(hashSha256Hex('inth')).resolves.toBe(
 			goldenVectors[1].expected
 		);
 	});

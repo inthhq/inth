@@ -1,26 +1,26 @@
 ---
 title: Mixpanel
-description: Connect Mixpanel tracking to c15t consent on the web, Swift, Android, React Native and Expo, including startup, withdrawal and reset handling.
-seoTitle: Mixpanel consent for web and mobile with c15t
-seoDescription: Control Mixpanel tracking with c15t on the web, Swift, Android, React Native and Expo. Configure startup, opt-out, reset and withdrawal.
+description: Connect Mixpanel tracking to Inth consent on the web, Swift, Android, React Native and Expo, including startup, withdrawal and reset handling.
+seoTitle: Mixpanel consent for web and mobile with Inth
+seoDescription: Control Mixpanel tracking with Inth on the web, Swift, Android, React Native and Expo. Configure startup, opt-out, reset and withdrawal.
 icon: mixpanel
 group: integrations
 ---
 
-Connect Mixpanel to c15t with the [web script helper](#web) or the
+Connect Mixpanel to Inth with the [web script helper](#web) or the
 [mobile SDK helpers](#mobile) for Swift, Android, React Native and Expo.
 The web helper uses `measurement`; mobile helpers default to that category.
 Startup and queue behavior differ by SDK.
 
 ## Web
 
-The c15t `mixpanelAnalytics` helper loads the Mixpanel SDK on every page, before
+The Inth `mixpanelAnalytics` helper loads the Mixpanel SDK on every page, before
 the visitor chooses. The helper uses `alwaysLoad`, but its category is
 `measurement`. After the SDK loads, the helper calls
 `mixpanel.opt_out_tracking()` while `measurement` has no consent. It calls
 `mixpanel.opt_in_tracking()` while `measurement` has consent. If the visitor
 withdraws consent, the helper calls `mixpanel.opt_out_tracking()` again. By
-default, c15t also reloads the page.
+default, Inth also reloads the page.
 
 ### Configure Mixpanel
 
@@ -80,7 +80,7 @@ Named instances and `people.*` calls are not queued.
    out. Call `mixpanel.track('Test')`; no tracking request goes to Mixpanel.
 3. Open Privacy settings and allow measurement. Without a reload,
    `has_opted_out_tracking()` returns `false` and tracking requests appear.
-4. Turn measurement off again and save. c15t reloads the page, and the new
+4. Turn measurement off again and save. Inth reloads the page, and the new
    page loads the SDK opted out.
 
 See the [consent verification guide](/docs/guides/verify-consent) for
@@ -89,7 +89,7 @@ navigation and hosting checks.
 ## Mobile
 
 Use the bundled Mixpanel helper to submit opt-in and opt-out commands as native
-c15t permission changes. It defaults to `measurement`. Pending or denied
+Inth permission changes. It defaults to `measurement`. Pending or denied
 permission submits opt-out; an allowed category submits opt-in.
 
 The helper ships in `InthApple`, `inth-android` and
@@ -114,7 +114,7 @@ For strict startup, defer vendor initialization until native permission allows i
 A JavaScript connection cannot stop collection that began before JavaScript.
 Native SDKs need a [native startup gate](/docs/frameworks/react-native/native-behaviour).
 Expo needs a development or release build containing both native modules;
-Expo Go does not load c15t's native engine.
+Expo Go does not load inth's native engine.
 
 ### Connect Swift
 
@@ -122,7 +122,7 @@ Add this owner to your app target:
 
 <include src="../shared/examples/native/core-swift/AppleInstallation/swift-mixpanel-binding.mdx" />
 
-After c15t installation and the permitted vendor setup, connect the configured
+After Inth installation and the permitted vendor setup, connect the configured
 instance. `core` is the installed `ConsentCore`:
 
 {/* example: fragment */}
@@ -184,14 +184,14 @@ await mixpanelConsent.ready;
 
 `onError` receives vendor callback failures. Handle rejections from `ready`,
 `sync()` and `disconnect()` too. With Mixpanel RN 4.0.0, opt-in/out methods
-return `void` and discard the native promises. c15t serializes their submission;
+return `void` and discard the native promises. Inth serializes their submission;
 its promises cannot confirm that Mixpanel's native queue finished or report
 native failures that Mixpanel does not return. Keep app-side event calls behind
 current permission.
 
 ### Understand opt-in, reset and withdrawal
 
-Mixpanel's opt-in API emits its own `$opt_in` event. c15t skips unchanged
+Mixpanel's opt-in API emits its own `$opt_in` event. Inth skips unchanged
 permissions, but construction with an existing grant, a later grant and explicit
 `sync()` can submit opt-in. Use `sync()` after an app-owned vendor reset has
 completed, rather than on every render or screen change.

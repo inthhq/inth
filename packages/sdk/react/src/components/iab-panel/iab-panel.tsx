@@ -1,6 +1,6 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type * as InthCoreTypes from '@inth/sdk/engine';
 /**
  * @packageDocumentation
  * Provides the IAB TCF 2.4 compliant consent dialog component.
@@ -49,7 +49,7 @@ import { useIABDisplayModel } from './hooks/use-display-model';
 import type { VendorId } from './types';
 import { useIABTranslations } from './use-iab-translations';
 
-const DEFAULT_MODELS: C15tCoreTypes.Model[] = ['iab'];
+const DEFAULT_MODELS: InthCoreTypes.Model[] = ['iab'];
 
 const dialogFocusTargetProps = { tabIndex: -1 } as const;
 
@@ -116,7 +116,7 @@ export interface IABConsentDialogProps {
 	 * Which consent models this dialog responds to.
 	 * @default ['iab']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.

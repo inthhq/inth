@@ -22,52 +22,52 @@ describe('resolveRequestProjectUrl', () => {
 
 	test('resolves a relative URL against the request URL', () => {
 		expect(
-			resolveRequestProjectUrl('/api/c15t/', {
+			resolveRequestProjectUrl('/api/inth/', {
 				requestUrl: 'http://localhost:5173/some/page?x=1',
 			})
-		).toBe('http://localhost:5173/api/c15t');
+		).toBe('http://localhost:5173/api/inth');
 	});
 
 	test('ignores forged forwarding headers by default', () => {
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: new Headers(FORGED),
 				requestUrl: 'https://app.example.com/',
 			})
-		).toBe('https://app.example.com/api/c15t');
+		).toBe('https://app.example.com/api/inth');
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: new Headers({ ...FORGED, host: 'app.example.com' }),
 			})
-		).toBe('https://app.example.com/api/c15t');
+		).toBe('https://app.example.com/api/inth');
 	});
 
 	test('falls back to the host header, over https for domain names', () => {
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: { host: 'localhost:3000' },
 			})
-		).toBe('http://localhost:3000/api/c15t');
+		).toBe('http://localhost:3000/api/inth');
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: { host: '127.0.0.1:3000' },
 			})
-		).toBe('http://127.0.0.1:3000/api/c15t');
+		).toBe('http://127.0.0.1:3000/api/inth');
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: { host: 'app:3000' },
 			})
-		).toBe('http://app:3000/api/c15t');
+		).toBe('http://app:3000/api/inth');
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: { host: 'app.example.com' },
 			})
-		).toBe('https://app.example.com/api/c15t');
+		).toBe('https://app.example.com/api/inth');
 	});
 
 	test('does not fall back to the referer', () => {
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: new Headers({ referer: 'https://attacker.example/' }),
 			})
 		).toBeNull();
@@ -75,7 +75,7 @@ describe('resolveRequestProjectUrl', () => {
 
 	test('honours forwarding headers when the app trusts them', () => {
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: new Headers({
 					'x-forwarded-host': 'edge.example.com, internal:3000',
 					'x-forwarded-proto': 'https',
@@ -83,36 +83,36 @@ describe('resolveRequestProjectUrl', () => {
 				requestUrl: 'http://127.0.0.1:3000/',
 				trustForwardedHeaders: true,
 			})
-		).toBe('https://edge.example.com/api/c15t');
+		).toBe('https://edge.example.com/api/inth');
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: new Headers({
 					forwarded: 'for=1.2.3.4;host="edge.example.com";proto=https',
 				}),
 				requestUrl: 'http://127.0.0.1:3000/',
 				trustForwardedHeaders: true,
 			})
-		).toBe('https://edge.example.com/api/c15t');
+		).toBe('https://edge.example.com/api/inth');
 	});
 
 	test('honours a trusted forwarded scheme without a forwarded host', () => {
 		const headers = { host: 'localhost:3000', 'x-forwarded-proto': 'https' };
-		expect(resolveRequestProjectUrl('/api/c15t', { headers })).toBe(
-			'http://localhost:3000/api/c15t'
+		expect(resolveRequestProjectUrl('/api/inth', { headers })).toBe(
+			'http://localhost:3000/api/inth'
 		);
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers,
 				trustForwardedHeaders: true,
 			})
-		).toBe('https://localhost:3000/api/c15t');
+		).toBe('https://localhost:3000/api/inth');
 		expect(
-			resolveRequestProjectUrl('/api/c15t', {
+			resolveRequestProjectUrl('/api/inth', {
 				headers: new Headers({ 'x-forwarded-ssl': 'on' }),
 				requestUrl: 'http://app.example.com/page',
 				trustForwardedHeaders: true,
 			})
-		).toBe('https://app.example.com/api/c15t');
+		).toBe('https://app.example.com/api/inth');
 	});
 
 	test('rejects a host header that is not a bare authority', () => {
@@ -123,7 +123,7 @@ describe('resolveRequestProjectUrl', () => {
 			'x?y',
 		]) {
 			expect(
-				resolveRequestProjectUrl('/api/c15t', { headers: { host } })
+				resolveRequestProjectUrl('/api/inth', { headers: { host } })
 			).toBeNull();
 		}
 	});
@@ -138,7 +138,7 @@ describe('resolveRequestProjectUrl', () => {
 				resolveRequestProjectUrl('/\\attacker.example/api', options) ?? ''
 			).origin
 		).toBe('https://app.example.com');
-		expect(resolveRequestProjectUrl('api/c15t', options)).toBeNull();
+		expect(resolveRequestProjectUrl('api/inth', options)).toBeNull();
 		expect(resolveRequestProjectUrl('ftp://x.example', options)).toBeNull();
 	});
 });

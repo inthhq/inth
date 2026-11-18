@@ -1,5 +1,5 @@
-import { dialogFocusManagement } from '@c15t/conformance/play/consent-dialog';
-import { triggerOpensDialog } from '@c15t/conformance/play/consent-dialog-trigger';
+import { dialogFocusManagement } from '@inth/conformance/play/consent-dialog';
+import { triggerOpensDialog } from '@inth/conformance/play/consent-dialog-trigger';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { expect, waitFor, within } from 'storybook/test';
 
@@ -49,7 +49,7 @@ export const DialogFocusManagement: Story = {
 
 export const CustomOffset: Story = {
 	beforeEach: () => {
-		window.localStorage.removeItem('c15t:dialog-trigger-position');
+		window.localStorage.removeItem('inth:dialog-trigger-position');
 	},
 	play: async () => {
 		const trigger = await within(document.body).findByTestId(

@@ -44,7 +44,7 @@ const policyConfig = function policyConfig(
 	values: Parameters<typeof policyFixture>[0] = {}
 ): KernelConfig {
 	return {
-		initialBranding: 'c15t',
+		initialBranding: 'inth',
 		initialLocation: { countryCode: 'DE', regionCode: null },
 		initialOverrides: { country: 'DE', language: 'en' },
 		...policyFixture(values, {
@@ -155,7 +155,7 @@ const pixel = (id: string): Script => ({
 });
 
 /**
- * Whether `id` was inserted. c15t's modules run in the test's window, so
+ * Whether `id` was inserted. inth's modules run in the test's window, so
  * that is the document they insert into.
  */
 const started = (id: string): boolean =>
@@ -164,7 +164,7 @@ const started = (id: string): boolean =>
 /**
  * Leaves what a server render with id `id` leaves in the test's document:
  * boot data carrying the id, and the page object its inline scripts write.
- * c15t's modules run in the test's window, so that is where they look.
+ * inth's modules run in the test's window, so that is where they look.
  */
 const leavePageRender = (
 	pageObject: Record<string, unknown>,
@@ -172,14 +172,14 @@ const leavePageRender = (
 ): (() => void) => {
 	const boot = document.createElement('script');
 	boot.type = 'application/json';
-	boot.setAttribute('data-c15t-boot', '');
+	boot.setAttribute('data-inth-boot', '');
 	boot.textContent = JSON.stringify({ i: id, s: {} });
 	document.head.prepend(boot);
-	(globalThis as Record<string, unknown>).__c15tRender = { id, ...pageObject };
+	(globalThis as Record<string, unknown>).__inthRender = { id, ...pageObject };
 	return () => {
 		boot.remove();
-		Reflect.deleteProperty(globalThis, '__c15tRender');
-		Reflect.deleteProperty(globalThis, '__c15tEndedRenders');
+		Reflect.deleteProperty(globalThis, '__inthRender');
+		Reflect.deleteProperty(globalThis, '__inthEndedRenders');
 	};
 };
 
@@ -280,7 +280,7 @@ afterEach(() => {
 	page = undefined;
 	leftPageRender?.();
 	leftPageRender = undefined;
-	Reflect.deleteProperty(globalThis, '__c15tStarted');
+	Reflect.deleteProperty(globalThis, '__inthStarted');
 	for (const script of document.querySelectorAll(
 		'script[src*="/never-served/"]'
 	)) {
@@ -417,7 +417,7 @@ test('once the engine loads unprompted, the banner hydrates in place and works',
 
 test('the engine starts as the root chunk runs for an app that loaded IABProvider, whatever the visitor', async () => {
 	const { page: streamed } = await serve(policyConfig());
-	const provider = Symbol.for('c15t.react.iab-provider');
+	const provider = Symbol.for('inth.react.iab-provider');
 	const host = globalThis as Record<symbol, unknown>;
 	const before = host[provider];
 	try {
@@ -446,7 +446,7 @@ test('a returning visitor with consent: a preload the check can skip, and the en
 		Array.from(streamed.doc.querySelectorAll('script:not([type])')).some(
 			(script) =>
 				script.textContent?.includes(ENGINE_CHUNKS_KEY) &&
-				script.textContent.includes('__c15tRender')
+				script.textContent.includes('__inthRender')
 		)
 	).toBe(true);
 
@@ -716,7 +716,7 @@ test("a root that unmounts before its engine ends its render for the server star
 		/>
 	);
 	const render = () =>
-		(globalThis as { __c15tRender?: { id?: string } }).__c15tRender?.id;
+		(globalThis as { __inthRender?: { id?: string } }).__inthRender?.id;
 	await tick(20);
 	expect(render()).toBe('test-render');
 	await hydrated.unmount();
@@ -731,9 +731,9 @@ test('a server start that streams in after the root unmounted inserts nothing', 
 	const config = policyConfig({}, { marketing: true });
 	const { boot, page: streamed } = await serve(config);
 	leftPageRender = leavePageRender({});
-	Reflect.deleteProperty(globalThis, '__c15tRender');
+	Reflect.deleteProperty(globalThis, '__inthRender');
 	// An earlier test's loader marked the document; this page's has not run.
-	Reflect.deleteProperty(globalThis, '__c15tLoaderRan');
+	Reflect.deleteProperty(globalThis, '__inthLoaderRan');
 	const hydrated = await streamed.hydrate(
 		<ClientPage
 			boot={boot}
@@ -772,16 +772,16 @@ test('the page keeps every ended render id, up to the last 1,000', () => {
 		const leave = leavePageRender({}, `render-${index}`);
 		endPageRender(`render-${index}`);
 		// The next render gets its own boot data; the list stays.
-		const ended = (globalThis as Record<string, unknown>).__c15tEndedRenders;
+		const ended = (globalThis as Record<string, unknown>).__inthEndedRenders;
 		leave();
-		(globalThis as Record<string, unknown>).__c15tEndedRenders = ended;
+		(globalThis as Record<string, unknown>).__inthEndedRenders = ended;
 	}
 	const ended = (globalThis as Record<string, unknown>)
-		.__c15tEndedRenders as string[];
+		.__inthEndedRenders as string[];
 	expect(ended).toHaveLength(1000);
 	expect(ended[0]).toBe('render-1');
 	expect(ended.at(-1)).toBe('render-1000');
-	Reflect.deleteProperty(globalThis, '__c15tEndedRenders');
+	Reflect.deleteProperty(globalThis, '__inthEndedRenders');
 });
 
 test("an ended render's late server start leaves a newer render's page object alone", async () => {
@@ -791,7 +791,7 @@ test("an ended render's late server start leaves a newer render's page object al
 	const { boot, page: streamed } = await serve(config);
 	storedChoice(streamed.doc, () => true);
 	// An earlier test's loader marked the document; this page's has not run.
-	Reflect.deleteProperty(globalThis, '__c15tLoaderRan');
+	Reflect.deleteProperty(globalThis, '__inthLoaderRan');
 	const hydrated = await streamed.hydrate(
 		<ClientPage
 			boot={boot}
@@ -809,7 +809,7 @@ test("an ended render's late server start leaves a newer render's page object al
 	await hydrated.unmount();
 	await tick(20);
 	const renderB = { id: 'render-b', starts: {} };
-	(globalThis as Record<string, unknown>).__c15tRender = renderB;
+	(globalThis as Record<string, unknown>).__inthRender = renderB;
 
 	const code = serverScriptStart(
 		{
@@ -824,7 +824,7 @@ test("an ended render's late server start leaves a newer render's page object al
 	new Function(code ?? '')();
 	await tick(100);
 	expect(started('late-pixel')).toBe(false);
-	expect((globalThis as Record<string, unknown>).__c15tRender).toBe(renderB);
+	expect((globalThis as Record<string, unknown>).__inthRender).toBe(renderB);
 	expect(renderB).toEqual({ id: 'render-b', starts: {} });
 });
 
@@ -895,7 +895,7 @@ test("a root whose live options change ends its render for the server start's in
 	const liveKey = { key: 'at-mount', listeners: new Set<() => void>() };
 	let idInRender: string | undefined;
 	const Spy = () => {
-		idInRender = (globalThis as { __c15tRender?: { id?: string } }).__c15tRender
+		idInRender = (globalThis as { __inthRender?: { id?: string } }).__inthRender
 			?.id;
 		return null;
 	};
@@ -953,12 +953,12 @@ test("a root checks the stored choice through its own render's check, not a newe
 	storedChoice(streamed.doc, () => true);
 	// Render B's boot element and page object replaced render A's before A's
 	// session started its scripts; B's check passes, A's is gone.
-	const element = document.querySelector('script[data-c15t-boot]');
+	const element = document.querySelector('script[data-inth-boot]');
 	if (element) {
 		element.textContent = JSON.stringify({ i: 'render-b', s: {} });
 	}
 	Object.assign(globalThis, {
-		__c15tRender: { current: () => true, id: 'render-b', starts: {} },
+		__inthRender: { current: () => true, id: 'render-b', starts: {} },
 	});
 	const loadEngine = vi.fn(
 		() =>
@@ -993,13 +993,13 @@ test('a root ends the render its own boot data names, not a newer one the page h
 	// the root's session was created.
 	expect(boot.i).toBe('test-render');
 	storedChoice(streamed.doc, () => true);
-	const element = document.querySelector('script[data-c15t-boot]');
+	const element = document.querySelector('script[data-inth-boot]');
 	expect(element).not.toBeNull();
 	if (element) {
 		element.textContent = JSON.stringify({ i: 'render-b', s: {} });
 	}
 	const newer = { current: () => true, id: 'render-b', starts: {} };
-	Object.assign(globalThis, { __c15tRender: newer });
+	Object.assign(globalThis, { __inthRender: newer });
 	const liveKey = { key: 'at-mount', listeners: new Set<() => void>() };
 	const LivePage = (props: Parameters<typeof ClientPage>[0]) => {
 		const live = useSyncExternalStore(
@@ -1043,9 +1043,9 @@ test('a root ends the render its own boot data names, not a newer one the page h
 	await hydrated.unmount();
 	await tick(20);
 	// Render B's page object is still the page's.
-	expect((globalThis as Record<string, unknown>).__c15tRender).toBe(newer);
+	expect((globalThis as Record<string, unknown>).__inthRender).toBe(newer);
 	expect(
-		(globalThis as { __c15tEndedRenders?: string[] }).__c15tEndedRenders ?? []
+		(globalThis as { __inthEndedRenders?: string[] }).__inthEndedRenders ?? []
 	).not.toContain('render-b');
 });
 
@@ -1065,12 +1065,12 @@ const serverStartedElement = (
 ): HTMLScriptElement => {
 	const element = document.createElement('script');
 	element.src = `/never-served/${key}.js`;
-	Object.assign(element, { __c15tStartRender: render });
+	Object.assign(element, { __inthStartRender: render });
 	document.head.append(element);
 	const scope = globalThis as Record<string, unknown>;
-	const registry = (scope.__c15tStarted ?? {}) as Record<string, unknown>;
+	const registry = (scope.__inthStarted ?? {}) as Record<string, unknown>;
 	registry[key] = element;
-	scope.__c15tStarted = registry;
+	scope.__inthStarted = registry;
 	return element;
 };
 
@@ -1088,11 +1088,11 @@ test("a root's delayed cleanup leaves a newer render alone and releases its own 
 	// before A's cleanup runs: its boot data, its page object and what its
 	// server start inserted.
 	const takeOver = () => {
-		const bootData = document.querySelector('script[data-c15t-boot]');
+		const bootData = document.querySelector('script[data-inth-boot]');
 		if (bootData) {
 			bootData.textContent = JSON.stringify({ i: 'render-b', s: {} });
 		}
-		(globalThis as Record<string, unknown>).__c15tRender = renderB;
+		(globalThis as Record<string, unknown>).__inthRender = renderB;
 		theirs = serverStartedElement('b-pixel', 'render-b');
 	};
 	const hydrated = await streamed.hydrate(
@@ -1115,10 +1115,10 @@ test("a root's delayed cleanup leaves a newer render alone and releases its own 
 	await hydrated.unmount();
 	await tick(20);
 
-	expect((globalThis as Record<string, unknown>).__c15tRender).toBe(renderB);
+	expect((globalThis as Record<string, unknown>).__inthRender).toBe(renderB);
 	expect(renderB).toEqual({ id: 'render-b', starts: { 'b-pixel': 1 } });
 	expect(theirs?.isConnected).toBe(true);
-	expect((globalThis as Record<string, unknown>).__c15tEndedRenders).toEqual([
+	expect((globalThis as Record<string, unknown>).__inthEndedRenders).toEqual([
 		'test-render',
 	]);
 	expect(own.isConnected).toBe(false);
@@ -1334,7 +1334,7 @@ test("a page object from another render is not this root's", async () => {
 	const config = policyConfig({}, { marketing: true });
 	const { boot, page: streamed } = await serve(config);
 	leftPageRender = leavePageRender({ current: () => true, starts: {} });
-	(globalThis as Record<string, unknown>).__c15tRender = {
+	(globalThis as Record<string, unknown>).__inthRender = {
 		current: () => true,
 		failed: 1,
 		id: 'an-earlier-render',

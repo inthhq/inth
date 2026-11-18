@@ -37,7 +37,7 @@ describe('createDevTools', () => {
 			const tools = createDevTools({ kernel, maxEvents });
 			instances.push(tools);
 			const launcher = tools.element?.querySelector<HTMLButtonElement>(
-				'button[aria-label="Open c15t DevTools"]'
+				'button[aria-label="Open inth DevTools"]'
 			);
 			launcher?.focus();
 			for (let index = 0; index < 110; index += 1) {
@@ -169,7 +169,7 @@ describe('createDevTools', () => {
 	it('opens from an accessible icon-only launcher', () => {
 		const devTools = createInstance();
 		const launcher = devTools.element?.querySelector<HTMLButtonElement>(
-			'button[aria-label="Open c15t DevTools"]'
+			'button[aria-label="Open inth DevTools"]'
 		);
 
 		expect(launcher?.textContent).toBe('');
@@ -197,7 +197,7 @@ describe('createDevTools', () => {
 			expect(devTools.getState().isOpen).toBe(false);
 			await vi.waitFor(() => {
 				expect(activeElementOf(devTools)?.getAttribute('aria-label')).toBe(
-					'Open c15t DevTools'
+					'Open inth DevTools'
 				);
 			});
 		}
@@ -207,11 +207,11 @@ describe('createDevTools', () => {
 		const tools = createDevTools({ kernel, shadow: false });
 		instances.push(tools);
 
-		expect(document.querySelector('[data-c15t-dev-tools-host]')).toBeNull();
+		expect(document.querySelector('[data-inth-dev-tools-host]')).toBeNull();
 		expect(document.body.contains(tools.element)).toBe(true);
 		expect(
-			document.head.querySelector('#c15t-dev-tools-styles')?.textContent
-		).toContain('.c15t-dev-tools');
+			document.head.querySelector('#inth-dev-tools-styles')?.textContent
+		).toContain('.inth-dev-tools');
 	});
 
 	// Shadow content is not a child, so the host matches `:empty`, and
@@ -223,7 +223,7 @@ describe('createDevTools', () => {
 		try {
 			createInstance();
 			const host = document.querySelector<HTMLElement>(
-				'[data-c15t-dev-tools-host]'
+				'[data-inth-dev-tools-host]'
 			);
 
 			expect(host?.matches(':empty')).toBe(true);
@@ -235,7 +235,7 @@ describe('createDevTools', () => {
 
 	it('keeps the embedded panel open on Escape', () => {
 		const devTools = createInstance(undefined, document.body);
-		devTools.element?.classList.add('c15t-dev-tools--embedded');
+		devTools.element?.classList.add('inth-dev-tools--embedded');
 		devTools.open();
 		devTools.element?.dispatchEvent(
 			new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })
@@ -267,8 +267,8 @@ describe('createDevTools', () => {
 		const devTools = createInstance();
 
 		expect(devTools.element).toBeInstanceOf(HTMLElement);
-		expect('__c15tDevTools' in window).toBe(false);
-		expect('c15tStore' in window).toBe(false);
+		expect('__inthDevTools' in window).toBe(false);
+		expect('inthStore' in window).toBe(false);
 	});
 
 	it('unsubscribes from the kernel and removes its DOM on destroy', () => {
@@ -359,7 +359,7 @@ describe('vendors on the consents tab', () => {
 		const tools = createInstance(kernel);
 		tools.open();
 		const rows = [
-			...(tools.element?.querySelectorAll('.c15t-dev-tools__check') ?? []),
+			...(tools.element?.querySelectorAll('.inth-dev-tools__check') ?? []),
 		].map((row) => row.textContent);
 		expect(rows.find((row) => row?.includes('Meta Pixel'))).toContain('Denied');
 		// Not denied, but its category is off: the gate still blocks it.
@@ -397,7 +397,7 @@ describe('embedded panel', () => {
 		});
 		instances.push(tools);
 		expect(tools.getState().isOpen).toBe(true);
-		expect(tools.element?.classList).toContain('c15t-dev-tools--embedded');
+		expect(tools.element?.classList).toContain('inth-dev-tools--embedded');
 		tools.element?.dispatchEvent(
 			new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })
 		);
@@ -436,18 +436,18 @@ describe('docking', () => {
 		const tools = createInstance();
 		const root = tools.element;
 		tools.dock({ block: 72, inline: 20, position: 'top-left' });
-		expect(root?.classList).toContain('c15t-dev-tools--docked');
-		expect(root?.classList).toContain('c15t-dev-tools--top-left');
-		expect(root?.classList).not.toContain('c15t-dev-tools--bottom-right');
-		expect(root?.style.getPropertyValue('--c15t-dev-tools-dock-block')).toBe(
+		expect(root?.classList).toContain('inth-dev-tools--docked');
+		expect(root?.classList).toContain('inth-dev-tools--top-left');
+		expect(root?.classList).not.toContain('inth-dev-tools--bottom-right');
+		expect(root?.style.getPropertyValue('--inth-dev-tools-dock-block')).toBe(
 			'72px'
 		);
 
 		tools.open();
 		tools.dock(null);
-		expect(root?.classList).not.toContain('c15t-dev-tools--docked');
-		expect(root?.classList).toContain('c15t-dev-tools--bottom-right');
-		expect(root?.style.getPropertyValue('--c15t-dev-tools-dock-block')).toBe(
+		expect(root?.classList).not.toContain('inth-dev-tools--docked');
+		expect(root?.classList).toContain('inth-dev-tools--bottom-right');
+		expect(root?.style.getPropertyValue('--inth-dev-tools-dock-block')).toBe(
 			''
 		);
 		expect(tools.getState().isOpen).toBe(true);

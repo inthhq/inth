@@ -76,7 +76,7 @@ test('the quickstart remounted before its rejection is stored restores the rejec
 	await expect
 		.element(first.getByTestId('quickstart-state'))
 		.toHaveTextContent('false|false');
-	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(localStorage.getItem('inth')).toBeNull();
 
 	await first.unmount();
 	const returning = await render(app);
@@ -90,7 +90,7 @@ test('the quickstart remounted before its rejection is stored restores the rejec
 
 	openWriterGate();
 	await vi.waitFor(() => {
-		expect(localStorage.getItem('c15t')).toContain('marketing');
+		expect(localStorage.getItem('inth')).toContain('marketing');
 	});
 	await expect
 		.element(returning.getByTestId('quickstart-state'))

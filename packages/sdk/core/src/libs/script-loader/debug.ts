@@ -4,7 +4,7 @@ import type {
 	ScriptDebugListener,
 } from './types';
 
-const REGISTRY_KEY = '__c15tScriptDebugListeners';
+const REGISTRY_KEY = '__inthScriptDebugListeners';
 let fallbackListeners: Set<ScriptDebugListener> | null = null;
 
 const getListeners = function getListeners(): Set<ScriptDebugListener> {
@@ -38,7 +38,7 @@ export const emitScriptDebugEvent = function emitScriptDebugEvent(
 		try {
 			listener(fullEvent);
 		} catch (error) {
-			console.error('Failed to handle c15t script debug event listener', error);
+			console.error('Failed to handle inth script debug event listener', error);
 		}
 	}
 

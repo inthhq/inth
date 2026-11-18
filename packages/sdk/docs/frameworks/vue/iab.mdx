@@ -1,19 +1,19 @@
 ---
 title: IAB TCF
-description: Turn on IAB TCF in a Vue app with the c15t Vue plugin's iab option, so visitors under an IAB policy get the IAB banner, preference centre and __tcfapi.
+description: Turn on IAB TCF in a Vue app with the Inth Vue plugin's iab option, so visitors under an IAB policy get the IAB banner, preference centre and __tcfapi.
 group: frameworks
 ---
 
 ## Turn on IAB TCF
 
-IAB TCF is off until you turn it on. Pass `iab` to the c15tVue plugin; an
+IAB TCF is off until you turn it on. Pass `iab` to the inthVue plugin; an
 empty object is enough:
 
 <include src="../../shared/examples/vue/iab-opt-in.mdx" />
 
 With `iab` set, `ConsentRoot` renders the IAB banner and preference centre in
 place of the standard ones while the visitor's policy uses the `iab` model and
-names your CMP ID, and c15t installs `__tcfapi`. Configure the CMP ID and
+names your CMP ID, and Inth installs `__tcfapi`. Configure the CMP ID and
 vendors in your Inth project, or see
 [IAB TCF for a self-hosted backend](/docs/self-host/guides/iab-tcf). No extra
 component or stylesheet is needed; the IAB components include their own
@@ -25,7 +25,7 @@ plugin reads `iab` once, when it is installed.
 
 If a visitor's policy uses the `iab` model and the backend sends its vendor
 list while IAB is off, the app throws an `IABUnavailableError` (code
-`C15T_IAB_UNAVAILABLE`). The standard banner does not handle the IAB model,
+`INTH_IAB_UNAVAILABLE`). The standard banner does not handle the IAB model,
 so the visitor would otherwise get no working consent UI. When the policy
 arrives with `prefetch`, `app.use()` throws. When the browser resolves the
 policy itself, the plugin throws the error as an uncaught error and
@@ -50,7 +50,7 @@ use vendors from your list whose declarations allow each restriction.
 {/* example: fragment */}
 
 ```ts title="src/main.ts (partial)"
-app.use(c15tVue, {
+app.use(inthVue, {
 	iab: {
 		publisherRestrictions: [
 			// Vendors 10 and 755 may not use purpose 4.

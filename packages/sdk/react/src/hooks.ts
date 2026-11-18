@@ -139,7 +139,7 @@ export const useHasConsentUI = function useHasConsentUI(): boolean {
 	return useKernelSelector(hasConsentUI);
 };
 
-/** Whether c15t or an external CMP offers a preferences control. */
+/** Whether Inth or an external CMP offers a preferences control. */
 export const useHasConsentPreferences =
 	function useHasConsentPreferences(): boolean {
 		return useKernelSelector(hasConsentPreferences);

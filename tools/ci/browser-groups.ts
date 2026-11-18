@@ -1,4 +1,4 @@
-// The browser integration groups from the c15t repository's CI planner. Each
+// The browser integration groups from the Inth repository's CI planner. Each
 // group runs through scripts/ci-browser.ts with a list of targets; a target is
 // selected when its fixture, starter, Storybook or bench is selected.
 
@@ -13,7 +13,7 @@ interface SelectedWorkspace {
   scripts: string[];
 }
 
-const acceptance = "@c15t/fixture-acceptance";
+const acceptance = "@inth/fixture-acceptance";
 
 // Example id, then its directory under internals/fixtures.
 const examples: [string, string][] = [

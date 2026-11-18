@@ -4,7 +4,7 @@
  * `@inth/sdk` ships under `lib/<part>/dist/`. Vite may append a query such as
  * `?transform-only` to the file name.
  */
-const C15T_INSTALLED_STYLESHEET_PATH =
+const INTH_INSTALLED_STYLESHEET_PATH =
 	/(?:^|[\\/])node_modules[\\/]@inth[\\/](?!cli[\\/])[^\\/]+(?:[\\/]lib[\\/][^\\/]+)?[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
 
 /**
@@ -33,7 +33,7 @@ const workspacePackageCache = new Map<string, boolean>();
  * that is missing (Node before 20.16), workspace paths do not match;
  * installed packages still do.
  */
-const isC15tWorkspacePackage = function isC15tWorkspacePackage(
+const isInthWorkspacePackage = function isInthWorkspacePackage(
 	directory: string
 ): boolean {
 	const cached = workspacePackageCache.get(directory);
@@ -96,7 +96,7 @@ export interface PostcssTailwind3PluginCreator {
 }
 
 /**
- * Whether a file is a built stylesheet from a c15t package, the files whose
+ * Whether a file is a built stylesheet from a Inth package, the files whose
  * `@layer` blocks `@inth/sdk/ui/postcss-tailwind3` unwraps.
  *
  * Installed packages match by path. A workspace path such as
@@ -107,44 +107,44 @@ export interface PostcssTailwind3PluginCreator {
  * @param filePath - Absolute path of a CSS file.
  * @returns `true` for `dist/` stylesheets of the `@inth/*` SDK packages.
  */
-export const isC15tUiStylesheetPath = function isC15tUiStylesheetPath(
+export const isInthUiStylesheetPath = function isInthUiStylesheetPath(
 	filePath: string
 ): boolean {
-	if (C15T_INSTALLED_STYLESHEET_PATH.test(filePath)) {
+	if (INTH_INSTALLED_STYLESHEET_PATH.test(filePath)) {
 		return true;
 	}
 	const directory = WORKSPACE_STYLESHEET_PATH.exec(filePath)?.groups?.directory;
-	return directory !== undefined && isC15tWorkspacePackage(directory);
+	return directory !== undefined && isInthWorkspacePackage(directory);
 };
 
 /**
- * Tailwind 3 compatibility plugin for c15t component styles.
+ * Tailwind 3 compatibility plugin for Inth component styles.
  *
  * Tailwind 3's PostCSS plugin hijacks `@layer components`: it errors when a
  * standalone stylesheet contains `@layer components` without a matching
  * `@tailwind components` directive in the same processing graph, and it also
- * tree-shakes layer contents against the Tailwind content scan. c15t's hashed
- * CSS Module classes (`c15t-ui-*`) are generated into dist class maps and never
+ * tree-shakes layer contents against the Tailwind content scan. inth's hashed
+ * CSS Module classes (`inth-ui-*`) are generated into dist class maps and never
  * appear verbatim in application source, so Tailwind 3 can purge the component
- * rules. This plugin unwraps `@layer` blocks that come from a built c15t
+ * rules. This plugin unwraps `@layer` blocks that come from a built Inth
  * stylesheet before Tailwind runs, restoring Tailwind 3's v2-era semantics:
- * c15t base styles win by specificity, and overrides use important-modifier
- * utilities such as `!bg-blue-600` or c15t theme slots.
+ * Inth base styles win by specificity, and overrides use important-modifier
+ * utilities such as `!bg-blue-600` or Inth theme slots.
  *
  * Each block is judged by the file it was written in, not the file being
  * processed. Vite and `postcss-import` inline an app's
  * `@import '@inth/svelte/styles.css'` into the app's stylesheet, and Astro
  * processes `@inth/astro/styles.css`, which imports `@inth/sdk/ui/styles.css`;
- * in both, the root is not a c15t file but the layered rules are.
+ * in both, the root is not a Inth file but the layered rules are.
  */
-const c15tTailwind3: PostcssTailwind3PluginCreator = Object.assign(
+const inthTailwind3: PostcssTailwind3PluginCreator = Object.assign(
 	(): PostcssTailwind3Plugin => ({
 		Once(root: PostcssRoot) {
 			const rootFile = root.source?.input?.file ?? '';
 
 			root.walkAtRules('layer', (rule: PostcssAtRule) => {
 				const file = rule.source?.input?.file ?? rootFile;
-				if (!isC15tUiStylesheetPath(file)) {
+				if (!isInthUiStylesheetPath(file)) {
 					return;
 				}
 
@@ -158,13 +158,13 @@ const c15tTailwind3: PostcssTailwind3PluginCreator = Object.assign(
 			});
 		},
 
-		postcssPlugin: 'c15t-tailwind3',
+		postcssPlugin: 'inth-tailwind3',
 	}),
 	{ postcss: true as const }
 );
 
-export { c15tTailwind3 };
-export default c15tTailwind3;
+export { inthTailwind3 };
+export default inthTailwind3;
 
 /**
  * Pre-instantiated plugin for loaders that reach this ESM module through
@@ -176,4 +176,4 @@ export default c15tTailwind3;
  * CommonJS build. The plugin takes no options, so a shared instance is
  * equivalent to calling the creator.
  */
-export const postcss: PostcssTailwind3Plugin = c15tTailwind3();
+export const postcss: PostcssTailwind3Plugin = inthTailwind3();

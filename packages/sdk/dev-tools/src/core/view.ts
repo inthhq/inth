@@ -53,10 +53,10 @@ let nextViewId = 0;
 
 /** In a wide pane, these sections sit side by side instead of stacking. */
 const asColumn = (section: HTMLElement): HTMLElement => {
-	section.classList.add('c15t-dev-tools__section--column');
+	section.classList.add('inth-dev-tools__section--column');
 	return section;
 };
-const LIGHT_DOM_STYLE_ID = 'c15t-dev-tools-styles';
+const LIGHT_DOM_STYLE_ID = 'inth-dev-tools-styles';
 
 /** DOM view owned by a DevTools instance. */
 export interface DevToolsView {
@@ -127,13 +127,13 @@ const renderVendors = function renderVendors(
 		}
 		return categoryAllowed ? 'Allowed' : 'Blocked by category';
 	};
-	const list = createElement(document, 'div', 'c15t-dev-tools__control-list');
+	const list = createElement(document, 'div', 'inth-dev-tools__control-list');
 	for (const vendor of declared) {
-		const item = createElement(document, 'div', 'c15t-dev-tools__check');
+		const item = createElement(document, 'div', 'inth-dev-tools__check');
 		const gate = status(vendor);
 		item.append(
 			createElement(document, 'span', undefined, vendor.name ?? vendor.id),
-			createElement(document, 'span', 'c15t-dev-tools__badge', vendor.source),
+			createElement(document, 'span', 'inth-dev-tools__badge', vendor.source),
 			createState(
 				document,
 				'Access',
@@ -146,7 +146,7 @@ const renderVendors = function renderVendors(
 				createElement(
 					document,
 					'span',
-					'c15t-dev-tools__muted',
+					'inth-dev-tools__muted',
 					'Slug only. Declare a name and privacy policy URL to show it.'
 				)
 			);
@@ -180,13 +180,13 @@ function renderConsents(
 		const stale = createElement(
 			document,
 			'p',
-			'c15t-dev-tools__muted',
+			'inth-dev-tools__muted',
 			'Policy changed. Discard the draft and review the current choices before saving.'
 		);
 		stale.setAttribute('role', 'alert');
 		section.append(stale);
 	}
-	const list = createElement(document, 'div', 'c15t-dev-tools__control-list');
+	const list = createElement(document, 'div', 'inth-dev-tools__control-list');
 
 	const displayed = new Set(getConsentCategories());
 	const defaults = getPresentation?.()?.preferences?.defaults;
@@ -194,7 +194,7 @@ function renderConsents(
 		displayed.has(category)
 	)) {
 		const enabled = readSelection(snapshot, draft, name, defaults);
-		const label = createElement(document, 'label', 'c15t-dev-tools__check');
+		const label = createElement(document, 'label', 'inth-dev-tools__check');
 		const input = createElement(document, 'input');
 		input.type = 'checkbox';
 		input.setAttribute('role', 'switch');
@@ -217,7 +217,7 @@ function renderConsents(
 		);
 		if (name === 'necessary') {
 			label.append(
-				createElement(document, 'span', 'c15t-dev-tools__badge', 'Always on')
+				createElement(document, 'span', 'inth-dev-tools__badge', 'Always on')
 			);
 		}
 		const allowed = snapshot.effectivePermissions[name];
@@ -239,14 +239,14 @@ function renderConsents(
 			createElement(
 				document,
 				'p',
-				'c15t-dev-tools__muted',
+				'inth-dev-tools__muted',
 				'Categories are derived from IAB choices. Use the IAB tab to edit and save vendors and purposes.'
 			)
 		);
 		container.append(section);
 		return;
 	}
-	const actions = createElement(document, 'div', 'c15t-dev-tools__actions');
+	const actions = createElement(document, 'div', 'inth-dev-tools__actions');
 	actions.append(
 		createButton(
 			document,
@@ -305,7 +305,7 @@ const renderScripts = (
 		viewState.scriptSearch
 	);
 	filter.input.placeholder = 'Search by name, category, or URL';
-	const list = createElement(document, 'div', 'c15t-dev-tools__script-list');
+	const list = createElement(document, 'div', 'inth-dev-tools__script-list');
 	const renderList = (): void => {
 		list.replaceChildren();
 		const query = viewState.scriptSearch.toLowerCase();
@@ -319,7 +319,7 @@ const renderScripts = (
 				createElement(
 					document,
 					'p',
-					'c15t-dev-tools__empty',
+					'inth-dev-tools__empty',
 					state.scripts.length
 						? 'No scripts match your search.'
 						: 'No script loader is configured for this consent provider.'
@@ -331,7 +331,7 @@ const renderScripts = (
 			const detail = createElement(
 				document,
 				'details',
-				'c15t-dev-tools__script'
+				'inth-dev-tools__script'
 			);
 			detail.open = viewState.expandedScripts.has(key);
 			detail.addEventListener('toggle', () => {
@@ -347,25 +347,25 @@ const renderScripts = (
 			const summary = createElement(
 				document,
 				'summary',
-				'c15t-dev-tools__script-summary'
+				'inth-dev-tools__script-summary'
 			);
 			const name = createElement(
 				document,
 				'span',
-				'c15t-dev-tools__script-name',
+				'inth-dev-tools__script-name',
 				script.id
 			);
 			const status = createElement(
 				document,
 				'span',
-				'c15t-dev-tools__status',
+				'inth-dev-tools__status',
 				script.status[0]?.toUpperCase() + script.status.slice(1)
 			);
 			status.dataset.status = script.status;
 			const source = createElement(
 				document,
 				'span',
-				'c15t-dev-tools__script-meta',
+				'inth-dev-tools__script-meta',
 				script.src ??
 					(script.callbackOnly ? 'Callback-only integration' : 'Inline script')
 			);
@@ -376,13 +376,13 @@ const renderScripts = (
 			const body = createElement(
 				document,
 				'div',
-				'c15t-dev-tools__script-body'
+				'inth-dev-tools__script-body'
 			);
 			body.append(
 				createElement(
 					document,
 					'p',
-					'c15t-dev-tools__muted',
+					'inth-dev-tools__muted',
 					script.src ??
 						(script.callbackOnly
 							? 'Callback-only integration'
@@ -405,7 +405,7 @@ const renderScripts = (
 					createElement(
 						document,
 						'p',
-						'c15t-dev-tools__muted',
+						'inth-dev-tools__muted',
 						script.lastEvent.message
 					)
 				);
@@ -415,7 +415,7 @@ const renderScripts = (
 					createElement(
 						document,
 						'p',
-						'c15t-dev-tools__muted',
+						'inth-dev-tools__muted',
 						'An existing element was reused. Its network load result is unknown.'
 					)
 				);
@@ -425,7 +425,7 @@ const renderScripts = (
 					createElement(
 						document,
 						'p',
-						'c15t-dev-tools__muted',
+						'inth-dev-tools__muted',
 						'Consent was revoked, but this script is configured to stay on the page.'
 					)
 				);
@@ -446,7 +446,7 @@ const renderScripts = (
 		'External resources',
 		'Scripts and iframes currently in the page. Presence does not confirm successful loading.'
 	);
-	const results = createElement(document, 'div', 'c15t-dev-tools__script-list');
+	const results = createElement(document, 'div', 'inth-dev-tools__script-list');
 	const scanPage = (): void => {
 		results.replaceChildren();
 		// Scan the page running this code, which owns the kernel. An
@@ -471,7 +471,7 @@ const renderScripts = (
 				element.tagName === 'SCRIPT'
 					? state.scripts.find((script) => script.elementId === element.id)
 					: undefined;
-			const row = createElement(document, 'div', 'c15t-dev-tools__script-body');
+			const row = createElement(document, 'div', 'inth-dev-tools__script-body');
 			row.append(
 				createElement(
 					document,
@@ -479,7 +479,7 @@ const renderScripts = (
 					undefined,
 					`${element.tagName.toLowerCase()} · ${managed ? managed.id : 'Not managed by this provider'}`
 				),
-				createElement(document, 'p', 'c15t-dev-tools__muted', url.href)
+				createElement(document, 'p', 'inth-dev-tools__muted', url.href)
 			);
 			results.append(row);
 		}
@@ -488,7 +488,7 @@ const renderScripts = (
 				createElement(
 					document,
 					'p',
-					'c15t-dev-tools__empty',
+					'inth-dev-tools__empty',
 					'No external scripts or iframes found.'
 				)
 			);
@@ -513,7 +513,7 @@ function renderLocation(
 			: createElement(
 					document,
 					'p',
-					'c15t-dev-tools__empty',
+					'inth-dev-tools__empty',
 					'No location has been resolved yet.'
 				)
 	);
@@ -523,7 +523,7 @@ function renderLocation(
 		'Overrides',
 		'Test how consent changes by location, language, or privacy signal.'
 	);
-	const form = createElement(document, 'form', 'c15t-dev-tools__form');
+	const form = createElement(document, 'form', 'inth-dev-tools__form');
 	const country = createTextField(
 		document,
 		'Country',
@@ -539,7 +539,7 @@ function renderLocation(
 		'Language',
 		snapshot.overrides.language ?? ''
 	);
-	const gpcField = createElement(document, 'label', 'c15t-dev-tools__field');
+	const gpcField = createElement(document, 'label', 'inth-dev-tools__field');
 	gpcField.append(createElement(document, 'span', undefined, 'GPC'));
 	const gpc = createElement(document, 'select');
 	gpc.dataset.focusKey = 'field:GPC';
@@ -558,7 +558,7 @@ function renderLocation(
 			: String(snapshot.overrides.gpc);
 	gpcField.append(gpc);
 
-	const actions = createElement(document, 'div', 'c15t-dev-tools__actions');
+	const actions = createElement(document, 'div', 'inth-dev-tools__actions');
 	const apply = createButton(
 		document,
 		'Apply and refresh',
@@ -608,7 +608,7 @@ function renderLocation(
 /**
  * The presentation experiment arm this visitor runs, with the impression
  * times a choice or dismissal is measured from. Shows a developer the arm
- * their flag provider (or c15t) assigned without opening the console.
+ * their flag provider (or Inth) assigned without opening the console.
  */
 const createExperimentSection = function createExperimentSection(
 	document: Document,
@@ -625,7 +625,7 @@ const createExperimentSection = function createExperimentSection(
 	if (!experiment) {
 		return section;
 	}
-	const stats = createElement(document, 'dl', 'c15t-dev-tools__stats');
+	const stats = createElement(document, 'dl', 'inth-dev-tools__stats');
 	stats.append(
 		createStat(document, 'Experiment', experiment.id),
 		createStat(document, 'Arm', experiment.arm),
@@ -662,7 +662,7 @@ function renderPolicy(
 	getPresentation?: () => ConsentPresentation | undefined
 ): void {
 	const summary = createSection(document, 'Policy and interaction');
-	const stats = createElement(document, 'dl', 'c15t-dev-tools__stats');
+	const stats = createElement(document, 'dl', 'inth-dev-tools__stats');
 	stats.append(
 		createStat(document, 'Resolution', snapshot.resolution.status),
 		createStat(document, 'Model', snapshot.model ?? 'Unresolved'),
@@ -769,7 +769,7 @@ function renderEvents(
 			createElement(
 				document,
 				'p',
-				'c15t-dev-tools__empty',
+				'inth-dev-tools__empty',
 				'Consent changes and requests will appear here as they happen.'
 			)
 		);
@@ -777,13 +777,13 @@ function renderEvents(
 		return;
 	}
 
-	const list = createElement(document, 'ol', 'c15t-dev-tools__event-list');
+	const list = createElement(document, 'ol', 'inth-dev-tools__event-list');
 	for (const event of state.events) {
-		const item = createElement(document, 'li', 'c15t-dev-tools__event');
+		const item = createElement(document, 'li', 'inth-dev-tools__event');
 		const header = createElement(
 			document,
 			'div',
-			'c15t-dev-tools__event-header'
+			'inth-dev-tools__event-header'
 		);
 		header.append(
 			createElement(document, 'code', undefined, event.type),
@@ -800,7 +800,7 @@ function renderEvents(
 			const data = createElement(
 				document,
 				'details',
-				'c15t-dev-tools__event-data'
+				'inth-dev-tools__event-data'
 			);
 			data.open = viewState.expandedEvents.has(event.id);
 			data.addEventListener('toggle', () => {
@@ -837,7 +837,7 @@ function renderActions(
 		'Test consent flows',
 		'Preview the banner and preferences, or refresh consent data.'
 	);
-	const actions = createElement(document, 'div', 'c15t-dev-tools__action-grid');
+	const actions = createElement(document, 'div', 'inth-dev-tools__action-grid');
 	actions.append(
 		createButton(
 			document,
@@ -948,7 +948,7 @@ function renderTab(
 
 // oxlint-disable-next-line func-style -- Named helpers aid stack traces.
 function positionClass(position: DevToolsPosition): string {
-	return `c15t-dev-tools--${position}`;
+	return `inth-dev-tools--${position}`;
 }
 
 const POSITIONS = [
@@ -968,19 +968,19 @@ function applyPlacement(root: HTMLElement, state: DevToolsState): void {
 	for (const corner of POSITIONS) {
 		root.classList.toggle(positionClass(corner), corner === position);
 	}
-	root.classList.toggle('c15t-dev-tools--docked', state.dock !== null);
+	root.classList.toggle('inth-dev-tools--docked', state.dock !== null);
 	if (state.dock) {
 		root.style.setProperty(
-			'--c15t-dev-tools-dock-inline',
+			'--inth-dev-tools-dock-inline',
 			`${state.dock.inline}px`
 		);
 		root.style.setProperty(
-			'--c15t-dev-tools-dock-block',
+			'--inth-dev-tools-dock-block',
 			`${state.dock.block}px`
 		);
 	} else {
-		root.style.removeProperty('--c15t-dev-tools-dock-inline');
-		root.style.removeProperty('--c15t-dev-tools-dock-block');
+		root.style.removeProperty('--inth-dev-tools-dock-inline');
+		root.style.removeProperty('--inth-dev-tools-dock-block');
 	}
 }
 
@@ -1001,21 +1001,21 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 	}
 
 	nextViewId += 1;
-	const viewId = `c15t-dev-tools-${nextViewId}`;
+	const viewId = `inth-dev-tools-${nextViewId}`;
 	const panelId = `${viewId}-panel`;
 	const root = createElement(
 		document,
 		'div',
-		`c15t-dev-tools ${positionClass(options.stateManager.getState().position)}`
+		`inth-dev-tools ${positionClass(options.stateManager.getState().position)}`
 	);
 	if (options.embedded) {
-		root.classList.add('c15t-dev-tools--embedded');
+		root.classList.add('inth-dev-tools--embedded');
 	}
-	root.dataset.c15tDevTools = viewId;
+	root.dataset.inthDevTools = viewId;
 	root.addEventListener('keydown', (event) => {
 		if (
 			event.key === 'Escape' &&
-			!root.classList.contains('c15t-dev-tools--embedded')
+			!root.classList.contains('inth-dev-tools--embedded')
 		) {
 			event.stopPropagation();
 			options.stateManager.setOpen(false);
@@ -1115,7 +1115,7 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 	function renderPanel(state: DevToolsState): void {
 		const sameTab = renderedState?.activeTab === state.activeTab;
 		const scrollTop = sameTab
-			? (root.querySelector('.c15t-dev-tools__content')?.scrollTop ?? 0)
+			? (root.querySelector('.inth-dev-tools__content')?.scrollTop ?? 0)
 			: 0;
 		const drafts = new Map<string, string>();
 		if (
@@ -1124,7 +1124,7 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 		) {
 			for (const field of root.querySelectorAll<
 				HTMLInputElement | HTMLSelectElement
-			>('.c15t-dev-tools__field input, .c15t-dev-tools__field select')) {
+			>('.inth-dev-tools__field input, .inth-dev-tools__field select')) {
 				if (field.dataset.focusKey) {
 					drafts.set(field.dataset.focusKey, field.value);
 				}
@@ -1141,39 +1141,39 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 
 		const toggle = createButton(
 			document,
-			state.isOpen ? 'Close c15t DevTools' : 'Open c15t DevTools',
+			state.isOpen ? 'Close inth DevTools' : 'Open inth DevTools',
 			() => options.stateManager.setOpen(!state.isOpen),
 			'primary'
 		);
-		toggle.classList.add('c15t-dev-tools__toggle');
+		toggle.classList.add('inth-dev-tools__toggle');
 		toggle.replaceChildren(createLogo(document));
-		toggle.setAttribute('aria-label', 'Open c15t DevTools');
+		toggle.setAttribute('aria-label', 'Open inth DevTools');
 		toggle.hidden = state.isOpen;
 		toggle.setAttribute('aria-expanded', String(state.isOpen));
 		toggle.setAttribute('aria-controls', panelId);
 		root.append(toggle);
 
-		const panel = createElement(document, 'section', 'c15t-dev-tools__panel');
+		const panel = createElement(document, 'section', 'inth-dev-tools__panel');
 		panel.id = panelId;
 		panel.hidden = !state.isOpen;
-		panel.setAttribute('aria-label', 'c15t consent developer tools');
-		const header = createElement(document, 'header', 'c15t-dev-tools__header');
-		const title = createElement(document, 'h2', 'c15t-dev-tools__title');
-		title.setAttribute('aria-label', 'c15t DevTools');
+		panel.setAttribute('aria-label', 'inth consent developer tools');
+		const header = createElement(document, 'header', 'inth-dev-tools__header');
+		const title = createElement(document, 'h2', 'inth-dev-tools__title');
+		title.setAttribute('aria-label', 'inth DevTools');
 		title.append(
 			createLogo(document),
 			createElement(document, 'span', undefined, 'DevTools')
 		);
-		const close = createButton(document, 'Close c15t DevTools', () => {
+		const close = createButton(document, 'Close inth DevTools', () => {
 			options.stateManager.setOpen(false);
 		});
 		close.textContent = '×';
-		close.setAttribute('aria-label', 'Close c15t DevTools');
-		close.classList.add('c15t-dev-tools__close');
+		close.setAttribute('aria-label', 'Close inth DevTools');
+		close.classList.add('inth-dev-tools__close');
 		header.append(title, close);
 		panel.append(header);
 
-		const tabList = createElement(document, 'div', 'c15t-dev-tools__tabs');
+		const tabList = createElement(document, 'div', 'inth-dev-tools__tabs');
 		tabList.setAttribute('role', 'tablist');
 		tabList.setAttribute('aria-label', 'DevTools views');
 		TABS.forEach((tab, index) => {
@@ -1213,7 +1213,7 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 		});
 		panel.append(tabList);
 
-		const content = createElement(document, 'div', 'c15t-dev-tools__content');
+		const content = createElement(document, 'div', 'inth-dev-tools__content');
 		content.id = `${viewId}-tabpanel`;
 		content.setAttribute('role', 'tabpanel');
 		content.setAttribute('aria-labelledby', `${viewId}-tab-${state.activeTab}`);
@@ -1237,7 +1237,7 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 		root.append(panel);
 		for (const field of root.querySelectorAll<
 			HTMLInputElement | HTMLSelectElement
-		>('.c15t-dev-tools__field input, .c15t-dev-tools__field select')) {
+		>('.inth-dev-tools__field input, .inth-dev-tools__field select')) {
 			const draft = field.dataset.focusKey
 				? drafts.get(field.dataset.focusKey)
 				: undefined;
@@ -1252,7 +1252,7 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 			focusAfterRender(
 				state.isOpen
 					? `[data-tab="${state.activeTab}"]`
-					: '.c15t-dev-tools__toggle'
+					: '.inth-dev-tools__toggle'
 			);
 			wasOpen = state.isOpen;
 		} else if (focusKey) {
@@ -1282,9 +1282,9 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 	const host =
 		options.shadow === false || typeof parent.attachShadow !== 'function'
 			? null
-			: createElement(document, 'div', 'c15t-dev-tools-host');
+			: createElement(document, 'div', 'inth-dev-tools-host');
 	if (host) {
-		host.dataset.c15tDevToolsHost = viewId;
+		host.dataset.inthDevToolsHost = viewId;
 		// Shadow content is not a child, so the host matches `:empty`, and
 		// themes such as Shopify's Dawn hide `div:empty`. Page rules beat
 		// `:host`, so only an inline `!important` keeps the host displayed.

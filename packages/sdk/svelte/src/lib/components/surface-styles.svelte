@@ -13,7 +13,7 @@
 	/**
 	 * Gives a stock surface its stylesheets: inserts them in the browser
 	 * before the surface's elements render, and leaves a marker in the
-	 * server-rendered `<head>` that `c15tHandle` turns into `<style>`
+	 * server-rendered `<head>` that `inthHandle` turns into `<style>`
 	 * elements. Renders nothing with the provider's `styles: false` or
 	 * `noStyle`.
 	 */

@@ -9,21 +9,21 @@
  */
 
 // core
-export { provideC15t } from './lib/core/provide-c15t';
-export { C15T_OPTIONS } from './lib/core/options';
+export { provideInth } from './lib/core/provide-inth';
+export { INTH_OPTIONS } from './lib/core/options';
 // Private (`ɵ`): the TransferState key `@inth/angular/ssr` writes.
 export {
-	C15T_SERVER_STATE as ɵC15T_SERVER_STATE,
-	C15T_SERVER_STATE_GATE as ɵC15T_SERVER_STATE_GATE,
+	INTH_SERVER_STATE as ɵINTH_SERVER_STATE,
+	INTH_SERVER_STATE_GATE as ɵINTH_SERVER_STATE_GATE,
 	ServerStateGate as ɵServerStateGate,
 } from './lib/core/server-state';
 export type {
-	C15tCallbacks,
-	C15tOptions,
-	C15tProviderOptions,
-	C15tResolvedOptions,
-	C15tRuntimeOptions,
-	C15tSharedOptions,
+	InthCallbacks,
+	InthOptions,
+	InthProviderOptions,
+	InthResolvedOptions,
+	InthRuntimeOptions,
+	InthSharedOptions,
 	NetworkBlockerOptions,
 	PersistenceOptions,
 	ProviderIABOptions,

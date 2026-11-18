@@ -7,7 +7,7 @@
  * prerendered one, throws there: at boot for a config that already carries
  * the vendor list, or as an uncaught error once `/init` sends it.
  */
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -27,7 +27,7 @@ beforeEach(() => {
 	for (const cookie of document.cookie.split(';')) {
 		document.cookie = `${cookie.split('=')[0]?.trim()}=; max-age=0; path=/`;
 	}
-	globals.__c15tAstro = undefined;
+	globals.__inthAstro = undefined;
 });
 
 afterEach(() => {
@@ -35,12 +35,12 @@ afterEach(() => {
 	client = null;
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
-	globals.__c15tAstroConfig = undefined;
+	globals.__inthAstroConfig = undefined;
 });
 
 describe('an `iab` policy on a site without `iab`', () => {
 	it('throws at boot for a config that carries the vendor list', () => {
-		globals.__c15tAstroConfig = {
+		globals.__inthAstroConfig = {
 			initialIab: { cmpId: 28, enabled: true, gvl: MINIMAL_GVL },
 			initialPolicyResolution: testResolution({
 				categories: ['marketing'],
@@ -71,7 +71,7 @@ describe('an `iab` policy on a site without `iab`', () => {
 				'fetch',
 				vi.fn(() => Promise.resolve(iabInitResponse(gvl)))
 			);
-			globals.__c15tAstroConfig = { initialPolicyPending: true };
+			globals.__inthAstroConfig = { initialPolicyPending: true };
 			client = boot(resolveOptions(SITE));
 
 			await vi.waitFor(() => {
@@ -86,7 +86,7 @@ describe('an `iab` policy on a site without `iab`', () => {
 			'fetch',
 			vi.fn(() => Promise.resolve(iabInitResponse('null')))
 		);
-		globals.__c15tAstroConfig = { initialPolicyPending: true };
+		globals.__inthAstroConfig = { initialPolicyPending: true };
 		client = boot(resolveOptions(SITE));
 
 		await vi.waitFor(() => {

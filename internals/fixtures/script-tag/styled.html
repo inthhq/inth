@@ -6,7 +6,7 @@
 			name="viewport"
 			content="width=device-width, initial-scale=1"
 		/>
-		<title>Style the c15t banner</title>
+		<title>Style the inth banner</title>
 		<style>
 			body {
 				font-family: system-ui, sans-serif;
@@ -20,19 +20,19 @@
 				font: inherit;
 			}
 			/* This selector reaches the widget only in light DOM mode. */
-			[data-c15t-ui] [data-testid='consent-banner-card'] {
+			[data-inth-ui] [data-testid='consent-banner-card'] {
 				border: 3px solid #0a66ff;
 			}
 		</style>
 		<script>
 			const shadow =
 				new URLSearchParams(location.search).get('shadow') !== 'false';
-			window.c15t = [
+			window.inth = [
 				[
 					'config',
 					{
 						overrides: { country: 'DE' },
-						storageConfig: { storageKey: 'c15t-styling-example' },
+						storageConfig: { storageKey: 'inth-styling-example' },
 						presentation: {
 							prompt: { variant: 'floating', position: 'bottom-right' },
 						},
@@ -77,13 +77,13 @@
 		</p>
 		<button
 			type="button"
-			data-c15t-action="banner"
+			data-inth-action="banner"
 		>
 			Show banner
 		</button>
 		<button
 			type="button"
-			data-c15t-action="customize"
+			data-inth-action="customize"
 		>
 			Cookie preferences
 		</button>

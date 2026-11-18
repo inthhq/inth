@@ -290,13 +290,13 @@ describe('findPrefetchedInitFor and primeInitRequest', () => {
 					credentials: 'same-origin',
 					gpc: false,
 					language: null,
-					projectUrl: 'https://app.example.com/api/c15t',
+					projectUrl: 'https://app.example.com/api/inth',
 					region: null,
 				},
 			},
 		};
-		expect(findPrefetchedInitFor('/api/c15t')).toBe(promise);
-		expect(findPrefetchedInitFor('https://app.example.com/api/c15t/')).toBe(
+		expect(findPrefetchedInitFor('/api/inth')).toBe(promise);
+		expect(findPrefetchedInitFor('https://app.example.com/api/inth/')).toBe(
 			promise
 		);
 		expect(findPrefetchedInitFor('/api/other')).toBeUndefined();

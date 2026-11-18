@@ -1,6 +1,6 @@
 ---
 title: Geography headers
-description: Which request headers c15t reads for country, region, language and Global Privacy Control in TanStack Start, where the server functions and consent route send them, and how to test another location.
+description: Which request headers Inth reads for country, region, language and Global Privacy Control in TanStack Start, where the server functions and consent route send them, and how to test another location.
 group: frameworks
 ---
 
@@ -8,22 +8,22 @@ group: frameworks
 
 Your consent policy picks a rule by the visitor's country and region, such as
 opt-in in Europe, opt-out in US states with privacy laws, and no banner where
-no law applies. In TanStack Start, the c15t server helpers read that location from
+no law applies. In TanStack Start, the Inth server helpers read that location from
 request headers your host or CDN adds. They never look up an IP address. With
 no location header, the policy resolves with its rule for an unknown location.
 
 ## Which headers are read
 
 `consentRequestMiddleware`, `createConsentStateHandler`, `resolveConsent` and
-the `/api/c15t/init` route read the same headers, in this order. The first one
+the `/api/inth/init` route read the same headers, in this order. The first one
 with a value wins.
 
 | Input | Headers, highest priority first | Set by |
 | --- | --- | --- |
-| Country | `x-c15t-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | c15t override, Cloudflare, Vercel, CloudFront, generic proxies |
-| Region | `x-c15t-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | c15t override, Cloudflare, Vercel, generic proxies |
+| Country | `x-c15t-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic proxies |
+| Region | `x-c15t-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic proxies |
 | Language | `accept-language`, negotiated by quality value to a primary tag such as `de` | The browser |
-| Global Privacy Control | `x-c15t-gpc`, `sec-gpc`. Only `1` and `0` count | c15t override, the browser |
+| Global Privacy Control | `x-c15t-gpc`, `sec-gpc`. Only `1` and `0` count | Inth override, the browser |
 
 Vercel adds its country and region headers to every request. Cloudflare adds
 `cf-ipcountry`; for `cf-region-code`, turn on Cloudflare's visitor location
@@ -61,7 +61,7 @@ There it reads and writes the headers and sets `context.consent` the same way,
 and returns the function's result unchanged.
 
 Some runtimes hand middleware a request whose headers cannot change. The
-middleware also keeps the values for that request, and the c15t helpers read
+middleware also keeps the values for that request, and the Inth helpers read
 them from there first, so they still see the location. Pass
 `normalizeHeaders: false` to leave the request headers untouched.
 
@@ -75,7 +75,7 @@ A subject ID with an unpaired UTF-16 surrogate, such as `'sub_\uD800'`,
 reaches the browser changed. In tests with `@tanstack/react-start` 1.169.1,
 the state a server render sends replaced the surrogate with U+FFFD; IDs in
 valid Unicode, paired surrogates included, arrived unchanged. When the
-browser also held the visitor's records in localStorage, c15t started with
+browser also held the visitor's records in localStorage, Inth started with
 the original ID. When the request's cookies were the only copy, such as a
 record an older or external writer left there, the browser took the changed
 ID and saved it.
@@ -116,7 +116,7 @@ What happens next depends on your
 | Code | What it does with the location |
 | --- | --- |
 | `createConsentStateHandler` and `resolveConsent` | Resolve the visitor's policy in the Start server, from the bundled manifest or, with runtime fetching, a cached one. The manifest request to your backend carries no visitor location, only headers you name in `forwardHeaders` |
-| `/api/c15t/init` from `createConsentRoute` | Resolves the policy in the Start server from the same inputs, for the browser's init request |
+| `/api/inth/init` from `createConsentRoute` | Resolves the policy in the Start server from the same inputs, for the browser's init request |
 | `createConsentRoute({ proxy: true })` | Forwards the location headers, `accept-language`, `sec-gpc`, `user-agent`, `origin`, `sec-fetch-site` and `referer` to your backend on proxied requests such as `POST /subjects` |
 | A state without `routePrefix` | The browser calls your backend's `/init` directly, and the backend reads the location its own host adds |
 
@@ -125,8 +125,8 @@ even though the browser's init request goes to your backend.
 
 ## Forwarding headers are ignored by default
 
-A relative `projectUrl` or `manifestUrl`, such as `/api/c15t`, resolves
-against the URL the Start server received the request under. c15t does not
+A relative `projectUrl` or `manifestUrl`, such as `/api/inth`, resolves
+against the URL the Start server received the request under. Inth does not
 read `x-forwarded-host`, `x-forwarded-proto` or `forwarded` for this, because
 any client can send them. If it did, a visitor could point the server's
 manifest fetch, or the proxied consent save, at a host of their choosing.
@@ -191,7 +191,7 @@ curl -s -H 'x-c15t-country: US' -H 'x-c15t-region: CA' http://localhost:3000/ | 
 Use the port your server listens on. The first request prints `1` under a
 policy that asks Europe for opt-in. What the second prints depends on your
 policy's rule for California. With the consent route mounted, request
-`/api/c15t/init` with the same headers. Its JSON has `location` and
+`/api/inth/init` with the same headers. Its JSON has `location` and
 `policyResolution` for that location.
 
 ## Verify

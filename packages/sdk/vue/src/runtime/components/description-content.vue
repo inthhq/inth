@@ -9,7 +9,7 @@
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import { computed } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '#c15t/composables';
+import { useConsentConfig, useConsentInit } from '#inth/composables';
 
 import { useConsentSnapshot } from '../composables/kernel';
 import { slotAttrs } from '../utils/slot-attrs';

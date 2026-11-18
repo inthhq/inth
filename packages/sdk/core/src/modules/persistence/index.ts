@@ -36,7 +36,7 @@
  *   the records another tab stores carry. `clear()` keeps the ID in memory.
  *   Only `set.subjectId(null)` replaces it with a new one. `keepSubject`
  *   and external permissions turn all of this off.
- * - Startup removes a `<key>-sid` copy that c15t 3.2 stored before any
+ * - Startup removes a `<key>-sid` copy that Inth 3.2 stored before any
  *   choice. It is the only startup write, and only when such a copy exists.
  * - Choice envelope writes follow `choice:recorded` and `subject:resolved`.
  *   Vendor and notice records follow `subject:resolved` too, since they

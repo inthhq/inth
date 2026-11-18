@@ -9,7 +9,7 @@
  */
 import type { BenchmarkFramework, MetricBudget } from './schema';
 
-export const EXAMPLES_PAYLOAD_PACKAGE = '@c15t/examples-payload-bench';
+export const EXAMPLES_PAYLOAD_PACKAGE = '@inth/examples-payload-bench';
 
 /**
  * - `server`: a server-framework client (Next, Nuxt server output, TanStack

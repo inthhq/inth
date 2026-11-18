@@ -2,7 +2,7 @@
 	"$schema": "../node_modules/@angular-devkit/schematics/collection-schema.json",
 	"schematics": {
 		"ng-add": {
-			"description": "Add the c15t consent banner and dialog to an Angular application.",
+			"description": "Add the inth consent banner and dialog to an Angular application.",
 			"factory": "./ng-add/index#ngAdd",
 			"schema": "./ng-add/schema.json"
 		}

@@ -1,6 +1,6 @@
-## c15t's IAB CMP registration
+## inth's IAB CMP registration
 
-Inth makes c15t. Inth's legal entity, Consent Management Inc., is registered
+Inth makes Inth. Inth's legal entity, Consent Management Inc., is registered
 with IAB Europe as a CMP under CMP ID 490. The
 [IAB Europe CMP list](https://iabeurope.eu/cmp-list/) shows it under the name
 Consent Management Inc.
@@ -34,9 +34,9 @@ the entry for the language the banner shows, then English. A custom UI gets
 the same links from `resolveIABVendorUrls(vendor, language)` in
 `@inth/sdk/iab/headless`, or from `policyUrl` and `legitimateInterestUrl` on the
 vendors `processGVLForDialog` returns when you pass it `language`. Vendor lists
-older than GVL v3 have a single `policyUrl` field, which c15t still reads.
+older than GVL v3 have a single `policyUrl` field, which Inth still reads.
 
-c15t shows a vendor link only when it is an absolute `http:` or `https:` URL
+Inth shows a vendor link only when it is an absolute `http:` or `https:` URL
 with a host. It drops any other link, such as another scheme, a relative path
 or a protocol-relative URL. The privacy policy then becomes `''`, the
 legitimate interest and storage disclosure links become `null`, and the stock
@@ -48,29 +48,29 @@ on custom vendors. A custom UI can check other links with
 
 A custom vendor in `customVendors` declares its own legal bases: `purposes`
 for consent and `legIntPurposes` for legitimate interest. TCF Policies
-Appendix A allows purposes 1, 3, 4, 5 and 6 only with consent, so c15t ignores
+Appendix A allows purposes 1, 3, 4, 5 and 6 only with consent, so Inth ignores
 those purposes in `legIntPurposes`. Accept All never signals legitimate
 interest for them, `setPurposeLegitimateInterest` refuses them, and the stock
 preference centres offer no objection for them. For a custom vendor whose
 `legIntPurposes` lists only those purposes, Accept All sets no vendor
 legitimate interest signal, `setVendorLegitimateInterest` refuses to set one,
-and a saved choice from an earlier release loses it when c15t restores it.
+and a saved choice from an earlier release loses it when Inth restores it.
 
 If a custom vendor processes one of those purposes, move it from
 `legIntPurposes` to `purposes`. Earlier releases turned such an entry into a
 legitimate interest signal. After Accept All, `__tcfapi` reported it until
-c15t's state next changed, for example when the preference centre opened, or
+inth's state next changed, for example when the preference centre opened, or
 until a reload. IAB Europe's CMP Validator check 9 reads that report and flags
 it. The TC string never carried those bits.
 
 ## Consent scope
 
-c15t stores TCF choices per site and browser, which the TCF calls
+Inth stores TCF choices per site and browser, which the TCF calls
 service-specific scope. It does not sync TC strings across devices, and every
 TC string it writes has `IsServiceSpecific` set to `1`.
 
 Do not use `/consent/check` or your own account data to skip the TCF banner on
 another device. That turns the choice into multi-device scope, which the TCF
-requires you to disclose in the first layer, and c15t does not show that
-disclosure. The `isServiceSpecific` option is deprecated. c15t ignores it and
+requires you to disclose in the first layer, and Inth does not show that
+disclosure. The `isServiceSpecific` option is deprecated. Inth ignores it and
 logs a warning when you pass `false`.

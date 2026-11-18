@@ -75,7 +75,7 @@ coverage.json
 i18n.cache
 .test-apps/
 .benchmarks/
-.c15t-state.json
+.inth-state.json
 apps/bundle-bench-react/.bundle-bench-dist/
 live-vendors-report.json
 __pycache__/

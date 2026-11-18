@@ -135,33 +135,33 @@ describe('cookie cleanup', () => {
 
 describe('web storage cleanup', () => {
 	test.each(['euconsent-v2', 'euconsent-*'])(
-		'preserves IAB consent records matched by %s and c15t*',
+		'preserves IAB consent records matched by %s and inth*',
 		(tcStringTarget) => {
-			localStorage.setItem('c15t-iab-authority-v1', 'authority');
+			localStorage.setItem('inth-iab-authority-v1', 'authority');
 			localStorage.setItem('euconsent-v2', 'tc-string');
 			document.cookie = 'euconsent-v2=tc-string; Path=/';
-			localStorage.setItem('c15t-analytics', 'tracking');
+			localStorage.setItem('inth-analytics', 'tracking');
 			attach({
 				measurement: {
 					cookies: [tcStringTarget],
-					localStorage: ['c15t*', tcStringTarget],
+					localStorage: ['inth*', tcStringTarget],
 				},
 			});
-			expect(localStorage.getItem('c15t-iab-authority-v1')).toBe('authority');
+			expect(localStorage.getItem('inth-iab-authority-v1')).toBe('authority');
 			expect(localStorage.getItem('euconsent-v2')).toBe('tc-string');
 			expect(document.cookie).toContain('euconsent-v2=tc-string');
-			expect(localStorage.getItem('c15t-analytics')).toBeNull();
+			expect(localStorage.getItem('inth-analytics')).toBeNull();
 		}
 	);
 
 	test('removes targeted session data even when names match consent records', () => {
-		const keys = ['c15t', 'c15t-notice', 'custom', 'euconsent-v2'];
+		const keys = ['inth', 'inth-notice', 'custom', 'euconsent-v2'];
 		for (const key of keys) {
 			sessionStorage.setItem(key, 'tracking');
 		}
 		sessionStorage.setItem('unrelated', 'keep');
 		attach(
-			{ measurement: { sessionStorage: ['c15t*', 'custom', 'euconsent-v2'] } },
+			{ measurement: { sessionStorage: ['inth*', 'custom', 'euconsent-v2'] } },
 			createConsentKernel(),
 			'custom'
 		);
@@ -199,11 +199,11 @@ describe('web storage cleanup', () => {
 			STORAGE_KEY,
 			PENDING_SAVES_STORAGE_KEY,
 			SUBJECT_REASSIGNMENTS_STORAGE_KEY,
-			'c15t-notice',
-			'c15t-notice-subject',
-			'c15t-notice-cookie-miss',
-			'c15t-privacy',
-			'c15t-sid',
+			'inth-notice',
+			'inth-notice-subject',
+			'inth-notice-cookie-miss',
+			'inth-privacy',
+			'inth-sid',
 			'custom',
 			'custom-notice',
 			'custom-notice-subject',
@@ -211,15 +211,15 @@ describe('web storage cleanup', () => {
 			'custom-privacy',
 			'custom-sid',
 		];
-		for (const key of [...protectedKeys, 'c15t-analytics']) {
+		for (const key of [...protectedKeys, 'inth-analytics']) {
 			window.localStorage.setItem(key, 'value');
 			document.cookie = `${key}=value; Path=/`;
 		}
 		attach(
 			{
 				measurement: {
-					cookies: ['c15t*', 'custom*', STORAGE_KEY],
-					localStorage: ['c15t*', 'custom*', STORAGE_KEY],
+					cookies: ['inth*', 'custom*', STORAGE_KEY],
+					localStorage: ['inth*', 'custom*', STORAGE_KEY],
 				},
 			},
 			createConsentKernel(),
@@ -238,8 +238,8 @@ describe('web storage cleanup', () => {
 		)) {
 			expect(document.cookie).toContain(`${key}=value`);
 		}
-		expect(window.localStorage.getItem('c15t-analytics')).toBeNull();
-		expect(document.cookie).not.toContain('c15t-analytics');
+		expect(window.localStorage.getItem('inth-analytics')).toBeNull();
+		expect(document.cookie).not.toContain('inth-analytics');
 	});
 
 	test('continues after one storage backend is inaccessible', () => {

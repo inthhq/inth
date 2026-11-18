@@ -85,7 +85,7 @@ export interface UmamiAnalyticsOptions {
 	/**
 	 * Optional global hook name used for Umami's `data-before-send` attribute.
 	 *
-	 * Callback functions are intentionally not supported here because the c15t
+	 * Callback functions are intentionally not supported here because the Inth
 	 * manifest runtime cannot serialize custom JavaScript functions.
 	 */
 	beforeSend?: string;

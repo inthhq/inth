@@ -40,8 +40,8 @@ The docs no longer publish code from this app. The Vue quickstart quotes
 `examples/vue`, and the other Vue docs snippets live in
 `internals/doc-snippets/vue`.
 
-- `vite.config.ts` adds the c15t Vite plugin.
-- `src/main.ts` installs `c15tVue` with the backend URL and `scripts`.
+- `vite.config.ts` adds the Inth Vite plugin.
+- `src/main.ts` installs `inthVue` with the backend URL and `scripts`.
 - `src/scripts.ts` holds the vendor configuration.
 - `src/App.vue` mounts `ConsentRoot` and `ConsentDialogLink`.
 - `src/VideoEmbed.vue` gates the YouTube iframe with `ConsentGate`.
@@ -52,17 +52,17 @@ The docs no longer publish code from this app. The Vue quickstart quotes
 `src/entry.ts` mounts the branded setup for `?design=branded`, the headless
 setup for `/headless`, the experiment setup for `?experiment=1`, and `main.ts`
 otherwise. `src/test-backend.ts` lets the acceptance suite replace the backend
-URL through `VITE_C15T_BACKEND_URL`. `src/HomePage.vue` holds the page content
+URL through `VITE_INTH_PROJECT_URL`. `src/HomePage.vue` holds the page content
 and loads DevTools in development builds.
 
 ## Banner experiment
 
-Open `/?experiment=1` to run the banner-shape experiment: c15t picks the
+Open `/?experiment=1` to run the banner-shape experiment: Inth picks the
 `control` arm (the default banner) or the `wall` arm, and the page shows
-`banner-shape · <arm> · c15t`. Open `/?experiment=1&arm=wall` to set the arm
+`banner-shape · <arm> · inth`. Open `/?experiment=1&arm=wall` to set the arm
 the way a flag provider would (`assignedBy: host`); any other `arm` value runs
 `control`. `src/experiment-main.ts` installs the plugin with the experiment from
 `src/experiment.ts`, whose `onSurfaceShown` and `onChoiceRecorded` callbacks
-list each impression and choice under the arm as `c15t_surface_shown` and
-`c15t_choice_recorded` and push the same events to `window.dataLayer`.
+list each impression and choice under the arm as `inth_surface_shown` and
+`inth_choice_recorded` and push the same events to `window.dataLayer`.
 See https://c15t.com/docs/guides/banner-experiments.

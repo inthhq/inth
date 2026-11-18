@@ -22,7 +22,7 @@ export interface TabsRootContextValue {
 }
 
 export const tabsRootKey: InjectionKey<TabsRootContextValue> =
-	Symbol('c15t-vue-tabs-root');
+	Symbol('inth-vue-tabs-root');
 
 /**
  * Publish the root's state to its sub-components.

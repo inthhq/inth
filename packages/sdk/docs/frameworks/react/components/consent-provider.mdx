@@ -16,7 +16,7 @@ The [quickstart](/docs/frameworks/react/quickstart) does this in
 
 `hosted()` from `@inth/react` asks the backend's `/init` for the visitor's
 policy on each page load, and sends consent choices to the same backend. It
-uses the backend URL `consentManifest()` read from `VITE_C15T_BACKEND_URL` or
+uses the backend URL `consentManifest()` read from `VITE_INTH_PROJECT_URL` or
 `VITE_INTH_PROJECT_URL`. Set one to the backend URL from your Inth project. To
 resolve a bundled policy in the browser instead, pass `manifest()` from
 `@inth/react`; see
@@ -59,10 +59,10 @@ the provider to change them. `scripts`, `vendors`, `networkBlocker`,
 | `presentation` | Banner and dialog shape, position and blocking |
 | `experiment` | A/B test of `presentation`, read once at mount. See [banner experiments](/docs/guides/banner-experiments) |
 | `journey` | Random id that links each `/init` to the save that follows. See [session reports](/docs/concepts/data-fetching#link-an-init-to-the-save-that-follows) |
-| `colorScheme` | `'light'`, `'dark'`, `'system'`, or `null` to leave the `c15t-dark` class alone |
+| `colorScheme` | `'light'`, `'dark'`, `'system'`, or `null` to leave the `inth-dark` class alone |
 | `noStyle`, `disableAnimation` | Drop the built-in styles, or turn off animations |
 | `preloadDialog` | When the deferred `ConsentDialog` starts loading: `'idle'` (default) or `'intent'`; see [ConsentDialog](/docs/frameworks/react/components/consent-dialog#behavior) |
-| `nonce` | Content Security Policy nonce for script elements c15t inserts |
+| `nonce` | Content Security Policy nonce for script elements Inth inserts |
 | `enabled` | Set `false` only when you deliberately bypass consent enforcement |
 
 `enabled: false` grants categories and allows gated loading while suppressing

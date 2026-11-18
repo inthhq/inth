@@ -6,7 +6,7 @@ const Home = () => {
 			<div className="css-layer-home-copy">
 				<p className="css-layer-home-eyebrow">Tailwind CSS 4 Environment</p>
 				<h1 className="css-layer-home-title">
-					c15t component-layer review routes
+					inth component-layer review routes
 				</h1>
 				<p className="css-layer-home-description">
 					This app isolates the Tailwind CSS 4 pipeline. Use it beside the TW3

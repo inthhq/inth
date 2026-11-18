@@ -1,18 +1,18 @@
 ---
 title: Optimizely
-description: Load Optimizely Web Experimentation and Personalization after experience consent with c15t, choose a consent category and understand revocation limits.
-seoTitle: Optimizely cookie consent with c15t
-seoDescription: Gate Optimizely Web Experimentation on experience consent with c15t. Configure the project snippet, handle page flicker and understand reload limits.
+description: Load Optimizely Web Experimentation and Personalization after experience consent with Inth, choose a consent category and understand revocation limits.
+seoTitle: Optimizely cookie consent with Inth
+seoDescription: Gate Optimizely Web Experimentation on experience consent with Inth. Configure the project snippet, handle page flicker and understand reload limits.
 icon: flask-conical
 group: integrations
 ---
 
 Optimizely Web runs A/B tests and personalization by changing the page in the
-browser. The c15t `optimizelyWeb` helper waits for `experience` consent before
+browser. The Inth `optimizelyWeb` helper waits for `experience` consent before
 it loads the Optimizely Web Experimentation or Personalization snippet. Until
 then, the helper creates no Optimizely global and makes no Optimizely request.
 
-On withdrawal, c15t removes the snippet and reloads the page. The running SDK
+On withdrawal, Inth removes the snippet and reloads the page. The running SDK
 can't be unloaded, so without the reload it keeps changing the page and
 sending events.
 
@@ -21,7 +21,7 @@ sending events.
 In Optimizely, open **Settings > Implementation** and copy the project number
 just before `.js` in the snippet URL. Replace the example project number below
 with yours. Use one Optimizely snippet per page. Remove the original
-Optimizely snippet and any tag-manager copy so c15t controls when it loads.
+Optimizely snippet and any tag-manager copy so Inth controls when it loads.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -49,14 +49,14 @@ condition.
 
 ### Page flicker
 
-After consent, c15t inserts the loader into `<head>` with `async: false`.
+After consent, Inth inserts the loader into `<head>` with `async: false`.
 Optimizely activates the configured experiments when the snippet runs. The
 helper doesn't call `sendEvents`, start a second SDK or replace an existing
 `window.optimizely`.
 
 Optimizely recommends a synchronous snippet near the start of `<head>` and
 warns against loading it through a tag manager. A script inserted at runtime
-with `async: false` doesn't block the HTML parser. While c15t waits for
+with `async: false` doesn't block the HTML parser. While Inth waits for
 consent, visitors can see the original page before Optimizely applies a
 variation. Plan your experiments for this flicker and for visitors who don't
 grant consent.
@@ -70,7 +70,7 @@ consent gate.
 ### Revocation
 
 Keep your provider's `reloadOnConsentRevoked` enabled. When a visitor revokes
-the mapped category or turns off the Optimizely vendor, c15t removes the
+the mapped category or turns off the Optimizely vendor, Inth removes the
 loader and reloads the page after pending saves settle. The new page keeps the
 snippet blocked until consent is granted again.
 
@@ -82,7 +82,7 @@ don't trigger the provider's visitor-action reload.
 Removing the loader doesn't unload the running SDK, undo its page changes or
 delete its cookies and localStorage. A browser can also finish running an
 in-flight script after its element is removed. Optimizely can keep running
-until the page unloads, including while c15t waits for a save to finish. The
+until the page unloads, including while Inth waits for a save to finish. The
 reload ends it in the current document. If you turn reloads off, the helper
 can't make Optimizely stop tracking or changing the page after revocation.
 
@@ -98,7 +98,7 @@ For a deliberate persistent opt-out, import `optOutOptimizely` from
 existing SDK or queue, and does nothing if neither exists.
 
 Optimizely records this choice in the ten-year `optimizelyOptOut` cookie.
-Granting consent again in c15t doesn't clear that cookie, so the helper never
+Granting consent again in Inth doesn't clear that cookie, so the helper never
 calls this utility on ordinary revocation. The command returns no completion
 promise and doesn't undo changes already applied to the page. Keep the page
 reload enabled when you use it.
@@ -107,7 +107,7 @@ To reverse an explicit opt-out after the visitor grants consent, follow
 Optimizely's [cookie implementation guidance](https://support.optimizely.com/hc/en-us/articles/22060116282509-Cookie-implementation-options):
 delete `optimizelyOptOut` or set its value to `false`, using the cookie's
 existing domain and path, then reload or navigate to another page. On that
-page, c15t must allow the snippet to load. Optimizely's API reference warns
+page, Inth must allow the snippet to load. Optimizely's API reference warns
 that an opt-in command alone can't restart a snippet blocked by the opt-out
 cookie. Your app must reset the cookie; `optimizelyWeb` and `optOutOptimizely`
 don't.

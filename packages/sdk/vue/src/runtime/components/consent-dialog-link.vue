@@ -25,7 +25,7 @@ const label = computed(
 		v-if="hasConsentUi"
 		type="button"
 		data-testid="consent-dialog-link"
-		:data-c15t-rights="policy.rights.join(' ')"
+		:data-inth-rights="policy.rights.join(' ')"
 		@click="activeUI = 'manager'"
 	>
 		<slot>{{ label }}</slot>

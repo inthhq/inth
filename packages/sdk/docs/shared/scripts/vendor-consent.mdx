@@ -19,7 +19,7 @@ group: reference
   the visitor turns it on and saves. Other helper vendors stay hidden.
 
   A visitor allows marketing, then switches off X Pixel. Other marketing
-  scripts load; X Pixel does not. c15t loads a script, network request or
+  scripts load; X Pixel does not. Inth loads a script, network request or
   iframe that names a vendor only when both are true:
 
   - Its category is allowed.
@@ -27,7 +27,7 @@ group: reference
 
   A vendor switch never grants a category. With marketing denied, X Pixel stays
   blocked whatever its own switch says. You do not need IAB TCF for this. Under
-  an `iab` policy, c15t ignores vendor slugs and takes vendor consent from the
+  an `iab` policy, Inth ignores vendor slugs and takes vendor consent from the
   TC string instead; see [IAB TCF](./iab).
 </section>
 
@@ -61,10 +61,10 @@ group: reference
 
   Your own scripts can set `vendorDetails` too. A script with a `vendor` slug
   and no `name` and `privacyPolicyUrl` from any source still loads with its
-  category, but the dialog has no switch for it. In development, c15t logs a
+  category, but the dialog has no switch for it. In development, Inth logs a
   console warning that names the slug. Production builds skip the warning.
 
-  A self-hosted backend can declare vendors too. `/init` returns them and c15t
+  A self-hosted backend can declare vendors too. `/init` returns them and Inth
   merges them with the vendors in code. When both declare the same `id`, the
   code declaration wins.
 </section>
@@ -92,7 +92,7 @@ group: reference
   and the visitor has not switched it off. An id that nothing declares, in
   `vendors`, on a script or iframe, or from the backend, reads as not allowed.
   A typo such as `x-pixle` or a vendor you forgot to declare never looks like
-  consent. In development, c15t logs a console warning that names the id.
+  consent. In development, Inth logs a console warning that names the id.
 </section>
 
 <section id="dialog">
@@ -105,9 +105,9 @@ group: reference
 </section>
 
 <section id="storage">
-  ## What c15t stores
+  ## What Inth stores
 
-  c15t stores only the vendors a visitor switched off, and sends the full
+  Inth stores only the vendors a visitor switched off, and sends the full
   vendor map to the backend with the consent record. Under an opt-out policy,
   every vendor starts on. Turning a vendor off that was on reloads the page,
   the same as withdrawing a category, so code the vendor already ran stops.
@@ -136,7 +136,7 @@ group: reference
   1. Register `xPixel()` and declare the vendors from this page. Open Privacy
      settings. The marketing row lists X Pixel with a switch.
   2. Allow marketing and save. `uwt.js` loads.
-  3. Open Privacy settings, switch X Pixel off and save. c15t reloads the
+  3. Open Privacy settings, switch X Pixel off and save. Inth reloads the
      page. After the reload there is no `uwt.js` request, and other marketing
      scripts still load.
   4. Reload again. The X Pixel switch is still off.

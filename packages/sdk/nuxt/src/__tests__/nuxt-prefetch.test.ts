@@ -1,5 +1,5 @@
 /**
- * The Nuxt module stops Nuxt prefetching c15t chunks a page loads only
+ * The Nuxt module stops Nuxt prefetching Inth chunks a page loads only
  * after its first banner, or only when it configures them. Every finished
  * prefetch queues main-thread work, and on a page whose `/init` answer
  * arrives while they land, the banner waits behind them.
@@ -18,7 +18,7 @@ import type { ClientManifestChunk } from '../prefetch';
 
 /** The shared parts @inth/sdk installs under its `lib/`. */
 const SDK_PARTS = new Set(['core', 'iab', 'schema', 'translations', 'ui']);
-const c15t = (path: string) =>
+const inth = (path: string) =>
 	SDK_PARTS.has(path.split('/')[0] ?? '')
 		? `../node_modules/@inth/sdk/lib/${path}`
 		: `../node_modules/@inth/${path}`;
@@ -36,12 +36,12 @@ const createManifest = (): Record<string, ClientManifestChunk> => ({
 	},
 	'node_modules/nuxt/dist/app/entry.js': {
 		dynamicImports: [
-			c15t('core/dist/modules/script-loader/loader.js'),
-			c15t('core/dist/runtime/provider-update.js'),
-			c15t('vue/dist/runtime/components/manager.vue'),
-			c15t('vue/dist/runtime/components/iab-prompt.vue'),
-			c15t('iab/dist/index.js'),
-			c15t('core/dist/transports/manifest-browser.js'),
+			inth('core/dist/modules/script-loader/loader.js'),
+			inth('core/dist/runtime/provider-update.js'),
+			inth('vue/dist/runtime/components/manager.vue'),
+			inth('vue/dist/runtime/components/iab-prompt.vue'),
+			inth('iab/dist/index.js'),
+			inth('core/dist/transports/manifest-browser.js'),
 			'node_modules/nuxt/dist/app/components/error-404.vue',
 		],
 		imports: ['_vue.js', '_shared-kernel.js'],
@@ -49,36 +49,36 @@ const createManifest = (): Record<string, ClientManifestChunk> => ({
 		prefetch: true,
 		src: 'node_modules/nuxt/dist/app/entry.js',
 	},
-	[c15t('core/dist/modules/script-loader/loader.js')]: {
+	[inth('core/dist/modules/script-loader/loader.js')]: {
 		isDynamicEntry: true,
 		prefetch: true,
-		src: c15t('core/dist/modules/script-loader/loader.js'),
+		src: inth('core/dist/modules/script-loader/loader.js'),
 	},
-	[c15t('core/dist/runtime/provider-update.js')]: {
+	[inth('core/dist/runtime/provider-update.js')]: {
 		isDynamicEntry: true,
 		prefetch: true,
-		src: c15t('core/dist/runtime/provider-update.js'),
+		src: inth('core/dist/runtime/provider-update.js'),
 	},
-	[c15t('vue/dist/runtime/components/manager.vue')]: {
+	[inth('vue/dist/runtime/components/manager.vue')]: {
 		imports: ['_dialog-shared.js', '_vue.js', '_shared-kernel.js'],
 		isDynamicEntry: true,
 		prefetch: true,
-		src: c15t('vue/dist/runtime/components/manager.vue'),
+		src: inth('vue/dist/runtime/components/manager.vue'),
 	},
-	[c15t('vue/dist/runtime/components/iab-prompt.vue')]: {
+	[inth('vue/dist/runtime/components/iab-prompt.vue')]: {
 		isDynamicEntry: true,
 		prefetch: true,
-		src: c15t('vue/dist/runtime/components/iab-prompt.vue'),
+		src: inth('vue/dist/runtime/components/iab-prompt.vue'),
 	},
-	[c15t('iab/dist/index.js')]: {
+	[inth('iab/dist/index.js')]: {
 		isDynamicEntry: true,
 		prefetch: true,
-		src: c15t('iab/dist/index.js'),
+		src: inth('iab/dist/index.js'),
 	},
-	[c15t('core/dist/transports/manifest-browser.js')]: {
+	[inth('core/dist/transports/manifest-browser.js')]: {
 		isDynamicEntry: true,
 		prefetch: true,
-		src: c15t('core/dist/transports/manifest-browser.js'),
+		src: inth('core/dist/transports/manifest-browser.js'),
 	},
 });
 
@@ -105,7 +105,7 @@ describe('stopPrefetchingConsentChunks', () => {
 
 	test('drops the IAB banner, its CMP and their styles unless the build turns IAB on', () => {
 		const manifest = createManifest();
-		const banner = manifest[c15t('vue/dist/runtime/components/iab-prompt.vue')];
+		const banner = manifest[inth('vue/dist/runtime/components/iab-prompt.vue')];
 		if (banner) {
 			banner.css = ['iab-prompt.css'];
 			banner.imports = ['_iab-headless.js'];
@@ -115,8 +115,8 @@ describe('stopPrefetchingConsentChunks', () => {
 		stopPrefetchingConsentChunks(manifest, '/app', isConsentFile);
 
 		for (const key of [
-			c15t('iab/dist/index.js'),
-			c15t('vue/dist/runtime/components/iab-prompt.vue'),
+			inth('iab/dist/index.js'),
+			inth('vue/dist/runtime/components/iab-prompt.vue'),
 			'_iab-headless.js',
 			'iab-prompt.css',
 		]) {
@@ -145,9 +145,9 @@ describe('stopPrefetchingConsentChunks', () => {
 		stopPrefetchingConsentChunks(manifest, '/app', isConsentFile);
 
 		for (const key of [
-			c15t('core/dist/modules/script-loader/loader.js'),
-			c15t('core/dist/runtime/provider-update.js'),
-			c15t('vue/dist/runtime/components/manager.vue'),
+			inth('core/dist/modules/script-loader/loader.js'),
+			inth('core/dist/runtime/provider-update.js'),
+			inth('vue/dist/runtime/components/manager.vue'),
 			'_dialog-shared.js',
 			'dialog.css',
 		]) {
@@ -166,7 +166,7 @@ describe('stopPrefetchingConsentChunks', () => {
 		stopPrefetchingConsentChunks(client, '/app', isConsentFile, {
 			browserResolve: true,
 		});
-		const key = c15t('core/dist/transports/manifest-browser.js');
+		const key = inth('core/dist/transports/manifest-browser.js');
 
 		expect(hosted[key]?.prefetch).toBe(false);
 		expect(client[key]?.prefetch).toBe(true);
@@ -200,7 +200,7 @@ describe('stopPrefetchingConsentChunks', () => {
 });
 
 describe('preloadConsentBanner', () => {
-	const banner = c15t('vue/dist/runtime/components/prompt.vue');
+	const banner = inth('vue/dist/runtime/components/prompt.vue');
 	const entry = 'node_modules/nuxt/dist/app/entry.js';
 	const createBannerManifest = (): Record<string, ClientManifestChunk> => ({
 		'_vue.js': {},
@@ -226,7 +226,7 @@ describe('preloadConsentBanner', () => {
 		expect(manifest[entry]?.dynamicImports).toEqual([banner]);
 	});
 
-	test('leaves a manifest without the c15t banner alone', () => {
+	test('leaves a manifest without the inth banner alone', () => {
 		const manifest = createBannerManifest();
 		preloadConsentBanner(manifest, '/app', () => false);
 
@@ -236,7 +236,7 @@ describe('preloadConsentBanner', () => {
 
 describe('preloadBrowserResolver', () => {
 	test("lists core's browser resolver among the entry imports", () => {
-		const resolver = c15t('core/dist/transports/manifest-browser.js');
+		const resolver = inth('core/dist/transports/manifest-browser.js');
 		const entry = 'node_modules/nuxt/dist/app/entry.js';
 		const manifest: Record<string, ClientManifestChunk> = {
 			[resolver]: { isDynamicEntry: true, src: resolver },
@@ -250,30 +250,30 @@ describe('preloadBrowserResolver', () => {
 
 describe('breakEntryImportCycles', () => {
 	const entry = 'node_modules/nuxt/dist/app/entry.js';
-	// Rolldown's manifest for the c15t chunk group lists the entry among the
+	// Rolldown's manifest for the Inth chunk group lists the entry among the
 	// group's imports although the entry imports the group statically.
 	const cyclicManifest = (): Record<string, ClientManifestChunk> => ({
-		'_c15t.js': { imports: ['_vue.js', entry] },
+		'_inth.js': { imports: ['_vue.js', entry] },
 		'_vue.js': {},
-		[c15t('vue/dist/runtime/components/prompt.vue')]: {
-			imports: ['_vue.js', '_c15t.js', entry],
+		[inth('vue/dist/runtime/components/prompt.vue')]: {
+			imports: ['_vue.js', '_inth.js', entry],
 			isDynamicEntry: true,
 		},
-		[entry]: { imports: ['_vue.js', '_c15t.js'], isEntry: true },
+		[entry]: { imports: ['_vue.js', '_inth.js'], isEntry: true },
 	});
 
 	test('drops the entry from chunks the entry imports', () => {
 		const manifest = cyclicManifest();
 		breakEntryImportCycles(manifest);
-		expect(manifest['_c15t.js']?.imports).toEqual(['_vue.js']);
-		expect(manifest[entry]?.imports).toEqual(['_vue.js', '_c15t.js']);
+		expect(manifest['_inth.js']?.imports).toEqual(['_vue.js']);
+		expect(manifest[entry]?.imports).toEqual(['_vue.js', '_inth.js']);
 	});
 
 	test('keeps the entry in chunks that load on demand', () => {
 		const manifest = cyclicManifest();
 		breakEntryImportCycles(manifest);
 		expect(
-			manifest[c15t('vue/dist/runtime/components/prompt.vue')]?.imports
+			manifest[inth('vue/dist/runtime/components/prompt.vue')]?.imports
 		).toContain(entry);
 	});
 });

@@ -23,11 +23,11 @@ const apps = [
 	{
 		buildOutput: 'benchmarks/nextjs-browser-bench/.next/BUILD_ID',
 		dir: 'benchmarks/nextjs-browser-bench',
-		env: { C15T_BENCH_COLD_MANIFEST_TOKEN: String(Date.now()) },
+		env: { INTH_BENCH_COLD_MANIFEST_TOKEN: String(Date.now()) },
 		label: 'Next.js manifest SSR',
 		path: '/manifest-ssr',
 		port: 4312,
-		probeName: '__c15tNextBench',
+		probeName: '__inthNextBench',
 		startCommand: ['./node_modules/.bin/next', ['start', '--port', '4312']],
 	},
 	{
@@ -38,7 +38,7 @@ const apps = [
 		label: 'Nuxt manifest SSR',
 		path: '/ssr-manifest',
 		port: 4313,
-		probeName: '__c15tNuxtBench',
+		probeName: '__inthNuxtBench',
 		startCommand: ['node', ['.output/server/index.mjs']],
 	},
 	{
@@ -52,16 +52,16 @@ const apps = [
 		label: 'SvelteKit manifest SSR',
 		path: '/ssr-manifest',
 		port: 4314,
-		probeName: '__c15tSvelteBench',
+		probeName: '__inthSvelteBench',
 		startCommand: ['node', ['build/index.js']],
 	},
 ].map((app) => ({ ...app, dir: join(repository, app.dir) }));
 
 /**
  * Optional app filter for local runs: a comma-separated list matched against
- * each app directory name or label, for example `C15T_E2E_APPS=sveltekit`.
+ * each app directory name or label, for example `INTH_E2E_APPS=sveltekit`.
  */
-const selectedApps = (process.env.C15T_E2E_APPS ?? '')
+const selectedApps = (process.env.INTH_E2E_APPS ?? '')
 	.split(',')
 	.map((entry) => entry.trim().toLowerCase())
 	.filter(Boolean);
@@ -104,7 +104,7 @@ const ensureBuilt = (app) =>
 			'turbo',
 			'run',
 			'build',
-			`--filter=@c15t/${app.dir.split('/').at(-1)}`,
+			`--filter=@inth/${app.dir.split('/').at(-1)}`,
 		],
 		{ cwd: repository }
 	);
@@ -130,12 +130,12 @@ const newPage = async function newPage(browser, app, headers = {}) {
 		viewport: { height: 900, width: 1280 },
 	});
 	await context.addInitScript(() => {
-		window.__c15tLayoutShiftScore = 0;
+		window.__inthLayoutShiftScore = 0;
 		try {
 			const observer = new PerformanceObserver((list) => {
 				for (const entry of list.getEntries()) {
 					if (!entry.hadRecentInput) {
-						window.__c15tLayoutShiftScore += entry.value ?? 0;
+						window.__inthLayoutShiftScore += entry.value ?? 0;
 					}
 				}
 			});
@@ -180,7 +180,7 @@ const verifyFreshVisit = async function verifyFreshVisit(browser, app) {
 	);
 	await gotoSettled(page, url);
 	await page.locator(bannerSelector).first().waitFor({ state: 'visible' });
-	const cls = await page.evaluate(() => window.__c15tLayoutShiftScore ?? 0);
+	const cls = await page.evaluate(() => window.__inthLayoutShiftScore ?? 0);
 	assertEqual(cls, 0, `${app.label}: layout shift score`);
 	console.log(`✓ ${app.label}: fresh visit renders the banner server-side`);
 };
@@ -250,12 +250,12 @@ const verifyNoZombie = async function verifyNoZombie(browser, app) {
 	await gotoSettled(page, url);
 	await page.locator(acceptSelector).first().waitFor({ state: 'visible' });
 	await page.locator(acceptSelector).first().click();
-	await page.waitForFunction(() => document.cookie.includes('c15t='));
+	await page.waitForFunction(() => document.cookie.includes('inth='));
 
 	const cookies = await context.cookies(url);
 	assert(
-		cookies.some((cookie) => cookie.name === 'c15t'),
-		`${app.label}: c15t cookie was not set`
+		cookies.some((cookie) => cookie.name === 'inth'),
+		`${app.label}: inth cookie was not set`
 	);
 
 	const html = await fetchHtml(context, url, {
@@ -283,7 +283,7 @@ const verifyNoZombie = async function verifyNoZombie(browser, app) {
 	console.log(`✓ ${app.label}: no re-prompt / no zombie`);
 };
 
-const readC15tVersion = function readC15tVersion() {
+const readInthVersion = function readInthVersion() {
 	const packageJson = JSON.parse(
 		readFileSync(
 			new URL('../../../../packages/sdk/core/package.json', import.meta.url)
@@ -327,9 +327,9 @@ const hasMarketingCategory = function hasMarketingCategory(init) {
 const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 	const base = `http://127.0.0.1:${app.port}`;
 
-	// --- /api/c15t/manifest: cached proxy of the upstream manifest ---
+	// --- /api/inth/manifest: cached proxy of the upstream manifest ---
 	const { response: manifestResponse, body: manifest } =
-		await fetchJsonResponse(app, `${base}/api/c15t/manifest`);
+		await fetchJsonResponse(app, `${base}/api/inth/manifest`);
 	assertEqual(
 		manifest.schemaVersion,
 		2,
@@ -378,7 +378,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		'"nuxt-browser-bench-manifest"',
 		`${app.label}: nitro manifest etag passthrough`
 	);
-	const conditional = await fetch(`${base}/api/c15t/manifest`, {
+	const conditional = await fetch(`${base}/api/inth/manifest`, {
 		headers: { 'if-none-match': etag },
 	});
 	assertEqual(
@@ -387,13 +387,13 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		`${app.label}: nitro manifest if-none-match status`
 	);
 	console.log(
-		`✓ ${app.label}: Nitro /api/c15t/manifest proxies the manifest (schema fields, cache headers, 304)`
+		`✓ ${app.label}: Nitro /api/inth/manifest proxies the manifest (schema fields, cache headers, 304)`
 	);
 
-	// --- /api/c15t/init: manifest-resolved init, geo/GPC/language aware ---
+	// --- /api/inth/init: manifest-resolved init, geo/GPC/language aware ---
 	const { body: init, response: initResponse } = await fetchJsonResponse(
 		app,
-		`${base}/api/c15t/init`,
+		`${base}/api/inth/init`,
 		{
 			'accept-language': 'en;q=0.2, de-DE;q=0.9',
 			'cf-ipcountry': 'US',
@@ -426,7 +426,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		'matched',
 		`${app.label}: nitro matched policy`
 	);
-	assertEqual(init.branding, 'c15t', `${app.label}: nitro init branding`);
+	assertEqual(init.branding, 'inth', `${app.label}: nitro init branding`);
 	assertEqual(
 		init.location?.countryCode,
 		'FR',
@@ -467,17 +467,17 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		`${app.label}: nitro init language override`
 	);
 	console.log(
-		`✓ ${app.label}: Nitro /api/c15t/init resolves init from the manifest (geo/GPC/language aware)`
+		`✓ ${app.label}: Nitro /api/inth/init resolves init from the manifest (geo/GPC/language aware)`
 	);
 
 	// --- x-c15t-version on the proxy's upstream manifest fetch ---
 	// The Nitro handlers fetch the upstream manifest (the bench fixture)
-	// with `c15tVersionHeaders`; the fixture records what it received.
+	// with `inthVersionHeaders`; the fixture records what it received.
 	const { body: versionHeaders } = await fetchJsonResponse(
 		app,
 		`${base}/api/bench-consent/version-headers`
 	);
-	const expectedVersion = readC15tVersion();
+	const expectedVersion = readInthVersion();
 	assertEqual(
 		versionHeaders.manifest,
 		expectedVersion,
@@ -490,7 +490,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 
 const selected = apps.filter(isSelectedApp);
 if (!selected.length) {
-	throw new Error('No SSR journey targets matched C15T_E2E_APPS.');
+	throw new Error('No SSR journey targets matched INTH_E2E_APPS.');
 }
 
 for (const app of selected) {
@@ -532,7 +532,7 @@ for (const app of selected) {
 		test('global privacy control', () => verifyGpc(browser, app));
 		test('language resolution', () => verifyLanguage(browser, app));
 		test('no banner returns after consent', () => verifyNoZombie(browser, app));
-		if (app.probeName === '__c15tNuxtBench') {
+		if (app.probeName === '__inthNuxtBench') {
 			test("a returning visitor gets the banner's preloads at low priority, a new one does not", async () => {
 				const { context, page, url } = await newPage(browser, app);
 				const preloads = (html) =>
@@ -547,7 +547,7 @@ for (const app of selected) {
 				expect(fresh.filter((link) => link.low)).toEqual([]);
 				await gotoSettled(page, url);
 				await page.locator(acceptSelector).first().click();
-				await page.waitForFunction(() => document.cookie.includes('c15t='));
+				await page.waitForFunction(() => document.cookie.includes('inth='));
 				const cookies = await context.cookies(url);
 				// A returning visitor sees none: the banner's chunks wait behind
 				// the page's own. Only links the returning page adds (the engine
@@ -569,7 +569,7 @@ for (const app of selected) {
 				).toBe(true);
 			});
 		}
-		if (app.probeName === '__c15tNextBench') {
+		if (app.probeName === '__inthNextBench') {
 			test.each([
 				['/ssr', 1],
 				['/manifest-ssr', 0],
@@ -591,7 +591,7 @@ for (const app of selected) {
 				}
 			);
 		}
-		if (app.probeName === '__c15tNextBench') {
+		if (app.probeName === '__inthNextBench') {
 			// The engine's chunk list is learned from the bundler adding an
 			// import's chunk scripts within the import() call; only a real
 			// build shows that it does. A returning visitor who chose gets no
@@ -604,14 +604,14 @@ for (const app of selected) {
 				const learned = () =>
 					page.evaluate(
 						() =>
-							JSON.parse(localStorage.getItem('c15t-engine-chunks') ?? 'null')
+							JSON.parse(localStorage.getItem('inth-engine-chunks') ?? 'null')
 								?.u ?? []
 					);
 				await page.goto(`${base}/typical-install`);
 				await page.getByTestId('consent-banner-accept-button').click();
 				// The server reads the choice only once it is stored; a quick
 				// next visit could otherwise still be a new one.
-				await page.waitForFunction(() => document.cookie.includes('c15t='));
+				await page.waitForFunction(() => document.cookie.includes('inth='));
 				await expect.poll(learned).not.toEqual([]);
 				for (const visit of [2, 3]) {
 					await page.goto(`${base}/typical-install`, {
@@ -634,15 +634,15 @@ for (const app of selected) {
 						expect(url, `visit ${visit}: learned URL`).toMatch(
 							new RegExp(`^${base}/_next/static/`, 'u')
 						);
-						// Next.js preloads some of its own chunks; c15t adds none.
+						// Next.js preloads some of its own chunks; Inth adds none.
 						expect(preloaded, `visit ${visit}: preloaded`).not.toContain(url);
 					}
 					// The server left the stored-choice check, and it still holds.
 					expect(
 						await page.evaluate(
 							() =>
-								typeof window.__c15tRender?.current === 'function' &&
-								window.__c15tRender.current()
+								typeof window.__inthRender?.current === 'function' &&
+								window.__inthRender.current()
 						),
 						`visit ${visit}: stored choice current`
 					).toBe(true);

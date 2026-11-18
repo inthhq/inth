@@ -66,7 +66,7 @@ describe('ConsentDialogLink', () => {
 			expect(link).toHaveAttribute('data-mode', 'stroke');
 			expect(link).toHaveAttribute('data-size', 'small');
 			expect(link).toHaveAttribute(
-				'data-c15t-rights',
+				'data-inth-rights',
 				'disclosure preferences'
 			);
 		});

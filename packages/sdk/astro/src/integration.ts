@@ -1,19 +1,19 @@
 /**
- * The `c15t()` Astro integration.
+ * The `inth()` Astro integration.
  *
  * It wires these into an Astro app:
  *
  * 1. A `pre`-order middleware that resolves consent for every request into
- *    `Astro.locals.c15t`, and the `App.Locals` type for it.
+ *    `Astro.locals.inth`, and the `App.Locals` type for it.
  * 2. A page-level boot script that starts the one consent client the page
  *    shares — Astro islands never share a component tree, so the client is
  *    a page singleton rather than a provider. The consent engine behind it
- *    is a virtual module (`virtual:c15t/engine`) the client imports when
+ *    is a virtual module (`virtual:inth/engine`) the client imports when
  *    it needs it.
  * 3. In `manifest()` mode, one catch-all route under `routePrefix` that
  *    answers `init` and `manifest`, with the same semantics as the Next.js
  *    consent route.
- * 4. A virtual module (`virtual:c15t/options`) carrying the serialized
+ * 4. A virtual module (`virtual:inth/options`) carrying the serialized
  *    options to all of the above.
  * 5. The component stylesheet, on every page.
  */
@@ -26,31 +26,31 @@ import type { AstroIntegration } from 'astro';
 
 import { createClassMapPlugin } from './libs/class-map-plugin';
 import type {
-	C15tAstroOptions,
-	C15tMiddlewareOptions,
-	C15tResolvedOptions,
-	C15tUIAdapterName,
+	InthAstroOptions,
+	InthMiddlewareOptions,
+	InthResolvedOptions,
+	InthUIAdapterName,
 } from './types';
 
-const VIRTUAL_ID = 'virtual:c15t/options';
+const VIRTUAL_ID = 'virtual:inth/options';
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
-const ENGINE_ID = 'virtual:c15t/engine';
+const ENGINE_ID = 'virtual:inth/engine';
 const RESOLVED_ENGINE_ID = `\0${ENGINE_ID}`;
 
 /**
- * Variables the top-level `projectUrl` defaults to, in order: the c15t one,
+ * Variables the top-level `projectUrl` defaults to, in order: the Inth one,
  * then the Inth project URL other Inth SDKs share.
  */
-const BACKEND_URL_ENVS = ['PUBLIC_C15T_BACKEND_URL', 'PUBLIC_INTH_PROJECT_URL'];
+const BACKEND_URL_ENVS = ['PUBLIC_INTH_PROJECT_URL', 'PUBLIC_INTH_PROJECT_URL'];
 
 /** Where the injected route lives unless `routePrefix` says otherwise. */
-const DEFAULT_ROUTE_PREFIX = '/api/c15t';
+const DEFAULT_ROUTE_PREFIX = '/api/inth';
 
 /** Files tried, in order, when `clientEntrypoint` is unset. */
 const CLIENT_ENTRYPOINT_CANDIDATES = [
-	'src/c15t.client.ts',
-	'src/c15t.client.js',
-	'src/c15t.client.mjs',
+	'src/inth.client.ts',
+	'src/inth.client.js',
+	'src/inth.client.mjs',
 ];
 
 /** Maps an `@inth/astro/...` specifier to what Astro should load. */
@@ -60,7 +60,7 @@ export type EntryResolver = (specifier: string) => string;
  * Create a resolver for this package's own entry points.
  *
  * Astro and Vite resolve what the integration hands them from the site's
- * root. A site that installed the `c15t` package rather than `@inth/astro`
+ * root. A site that installed the `inth` package rather than `@inth/astro`
  * cannot see `@inth/astro` from there under a strict package manager such
  * as pnpm, so a bare specifier would fail to resolve. A file path always
  * does. `createRequire` resolves the package's own exports on every Node
@@ -100,7 +100,7 @@ const IAB_DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/iab-dialog.css';
  * than one failed build per missing package.
  */
 const UI_ADAPTERS: Record<
-	C15tUIAdapterName,
+	InthUIAdapterName,
 	{
 		astroIntegration: string;
 		packages: string[];
@@ -144,7 +144,7 @@ const UI_ADAPTERS: Record<
 };
 
 /** Every supported `ui` value, for the error a bad one produces. */
-const UI_ADAPTER_NAMES = Object.keys(UI_ADAPTERS) as C15tUIAdapterName[];
+const UI_ADAPTER_NAMES = Object.keys(UI_ADAPTERS) as InthUIAdapterName[];
 
 /**
  * The `ui` adapter for a site that did not set one: the framework of the
@@ -157,7 +157,7 @@ const UI_ADAPTER_NAMES = Object.keys(UI_ADAPTERS) as C15tUIAdapterName[];
  */
 export const inferUIAdapter = function inferUIAdapter(
 	installed: Iterable<string>
-): C15tUIAdapterName {
+): InthUIAdapterName {
 	const names = new Set(installed);
 	const registered = UI_ADAPTER_NAMES.filter((name) =>
 		names.has(UI_ADAPTERS[name].astroIntegration)
@@ -166,13 +166,13 @@ export const inferUIAdapter = function inferUIAdapter(
 };
 
 const resolveMiddleware = function resolveMiddleware(
-	options: C15tAstroOptions
-): C15tResolvedOptions['middleware'] {
-	const raw: C15tMiddlewareOptions =
+	options: InthAstroOptions
+): InthResolvedOptions['middleware'] {
+	const raw: InthMiddlewareOptions =
 		typeof options.middleware === 'boolean'
 			? { enabled: options.middleware }
 			: (options.middleware ?? {});
-	const resolved: C15tResolvedOptions['middleware'] = {
+	const resolved: InthResolvedOptions['middleware'] = {
 		enabled: raw.enabled ?? true,
 		skip: raw.skip ?? [],
 	};
@@ -198,7 +198,7 @@ const resolveMiddleware = function resolveMiddleware(
  * root would catch every page.
  */
 const resolveRoutePrefix = function resolveRoutePrefix(
-	routePrefix: C15tAstroOptions['routePrefix']
+	routePrefix: InthAstroOptions['routePrefix']
 ): string | undefined {
 	if (routePrefix === false) {
 		return undefined;
@@ -206,7 +206,7 @@ const resolveRoutePrefix = function resolveRoutePrefix(
 	const prefix = routePrefix ?? DEFAULT_ROUTE_PREFIX;
 	if (typeof prefix !== 'string' || !prefix.startsWith('/')) {
 		throw new Error(
-			`@inth/astro: \`routePrefix\` must be a path that starts with "/", such as '/api/c15t', or false. Got ${JSON.stringify(prefix)}.`
+			`@inth/astro: \`routePrefix\` must be a path that starts with "/", such as '/api/inth', or false. Got ${JSON.stringify(prefix)}.`
 		);
 	}
 	return normalizeRoutePrefix('@inth/astro', prefix);
@@ -233,7 +233,7 @@ const MODE_TYPES = new Set(['manifest', 'hosted', 'testing']);
  * @throws {Error} When the mode is not mode data, or has nowhere to go.
  */
 const resolveMode = function resolveMode(
-	mode: C15tAstroOptions['mode'],
+	mode: InthAstroOptions['mode'],
 	projectUrl: string | undefined
 ): ConsentMode {
 	if (mode === undefined) {
@@ -249,7 +249,7 @@ const resolveMode = function resolveMode(
 		);
 	}
 	const envHint =
-		'Set PUBLIC_C15T_BACKEND_URL (or PUBLIC_INTH_PROJECT_URL) in .env, or pass `projectUrl` to c15t().';
+		'Set PUBLIC_INTH_PROJECT_URL (or PUBLIC_INTH_PROJECT_URL) in .env, or pass `projectUrl` to inth().';
 	if (mode.type === 'hosted' && projectUrl === undefined) {
 		throw new Error(
 			`@inth/astro: hosted() needs a backend URL to ask for each visitor's policy. ${envHint}`
@@ -314,17 +314,17 @@ const findFunction = function findFunction(
  * in `scripts` would lose its `onBeforeLoad` and an `onRequestBlocked`
  * would never run.
  *
- * @param options - The options passed to `c15t()`.
+ * @param options - The options passed to `inth()`.
  * @throws {Error} Naming the first function found and where it belongs.
  */
 const assertSerializable = function assertSerializable(
-	options: C15tAstroOptions
+	options: InthAstroOptions
 ): void {
 	const { mode: _mode, ...serialized } = options;
-	const found = findFunction(serialized, 'c15t()', new Set());
+	const found = findFunction(serialized, 'inth()', new Set());
 	if (found) {
 		throw new Error(
-			`@inth/astro: ${found} is a function. c15t() options are serialized into the page as JSON, which drops functions. Move it to src/c15t.client.ts, whose default export (a C15tClientOptionsExtension) can hold scripts with callbacks, \`callbacks\` and \`networkBlocker.onRequestBlocked\`.`
+			`@inth/astro: ${found} is a function. inth() options are serialized into the page as JSON, which drops functions. Move it to src/inth.client.ts, whose default export (a InthClientOptionsExtension) can hold scripts with callbacks, \`callbacks\` and \`networkBlocker.onRequestBlocked\`.`
 		);
 	}
 };
@@ -332,7 +332,7 @@ const assertSerializable = function assertSerializable(
 /**
  * Normalize user options into the serializable shape every consumer reads.
  *
- * @param options - The options passed to `c15t()`, with `projectUrl`
+ * @param options - The options passed to `inth()`, with `projectUrl`
  * already defaulted from the environment.
  * @returns Options with defaults applied.
  * @throws {Error} When an option holds a function, `mode` is not mode data
@@ -341,8 +341,8 @@ const assertSerializable = function assertSerializable(
  * resolve one.
  */
 export const resolveOptions = function resolveOptions(
-	options: C15tAstroOptions = {}
-): C15tResolvedOptions {
+	options: InthAstroOptions = {}
+): InthResolvedOptions {
 	assertSerializable(options);
 	const mode = resolveMode(options.mode, options.projectUrl);
 	// A JavaScript `astro.config.mjs` has no type checking, so `ui: 'solid'`
@@ -375,7 +375,7 @@ export const resolveOptions = function resolveOptions(
 		routePrefix,
 		...rest
 	} = options;
-	const resolved: C15tResolvedOptions = {
+	const resolved: InthResolvedOptions = {
 		...rest,
 		// `null` is the other adapters' spelling of `'none'`. The default is
 		// `'system'`, not React's `.dark` mirroring: the banner is server
@@ -406,8 +406,8 @@ export const resolveOptions = function resolveOptions(
  * @internal
  */
 export const toClientOptions = function toClientOptions(
-	resolved: C15tResolvedOptions
-): Partial<C15tResolvedOptions> {
+	resolved: InthResolvedOptions
+): Partial<InthResolvedOptions> {
 	// `inlineStyles` stays: the engine adds the first-paint rules a page
 	// left out when the dialog opens.
 	const {
@@ -432,7 +432,7 @@ export const toClientOptions = function toClientOptions(
  *
  * A path starting with `.` resolves from the project root; an absolute path
  * or a package specifier is used as it is. Unset, the first of
- * `src/c15t.client.ts`, `.js` and `.mjs` that exists.
+ * `src/inth.client.ts`, `.js` and `.mjs` that exists.
  *
  * @param configured - The configured `clientEntrypoint`.
  * @param root - The Astro project root.
@@ -507,7 +507,7 @@ interface VirtualOptionsPlugin extends VitePluginLike {
 }
 
 const createVirtualOptionsPlugin = function createVirtualOptionsPlugin(
-	resolved: C15tResolvedOptions
+	resolved: InthResolvedOptions
 ): VirtualOptionsPlugin {
 	const serialized = JSON.stringify(resolved);
 	const serializedClient = JSON.stringify(toClientOptions(resolved));
@@ -521,7 +521,7 @@ const createVirtualOptionsPlugin = function createVirtualOptionsPlugin(
 			// catalogue.
 			return `export default ${options?.ssr ? serialized : serializedClient};`;
 		},
-		name: 'c15t:options',
+		name: 'inth:options',
 		resolveId(id: string) {
 			return id === VIRTUAL_ID ? RESOLVED_VIRTUAL_ID : undefined;
 		},
@@ -529,7 +529,7 @@ const createVirtualOptionsPlugin = function createVirtualOptionsPlugin(
 };
 
 /**
- * Serves `virtual:c15t/engine`, the module the page's client imports to
+ * Serves `virtual:inth/engine`, the module the page's client imports to
  * load the consent engine (see {@link buildBootScript}).
  *
  * @param source - The module's source.
@@ -542,7 +542,7 @@ const createVirtualEnginePlugin = function createVirtualEnginePlugin(
 		load(id) {
 			return id === RESOLVED_ENGINE_ID ? source : undefined;
 		},
-		name: 'c15t:engine',
+		name: 'inth:engine',
 		resolveId(id: string) {
 			return id === ENGINE_ID ? RESOLVED_ENGINE_ID : undefined;
 		},
@@ -582,7 +582,7 @@ interface PageRuntimeModule {
  * @returns The factories to import and register.
  */
 const pageRuntimeModules = function pageRuntimeModules(
-	resolved: C15tResolvedOptions
+	resolved: InthResolvedOptions
 ): PageRuntimeModule[] {
 	const modules: PageRuntimeModule[] = [];
 	if ((resolved.scripts?.length ?? 0) > 0 || resolved.clientEntrypoint) {
@@ -627,7 +627,7 @@ const pageRuntimeModules = function pageRuntimeModules(
  * @returns The export name.
  */
 const transportExport = function transportExport(
-	resolved: C15tResolvedOptions,
+	resolved: InthResolvedOptions,
 	hasAdapter: boolean
 ): 'hostedTransport' | 'lazyTransport' | 'testingTransport' {
 	if (resolved.mode.type === 'testing') {
@@ -643,7 +643,7 @@ const transportExport = function transportExport(
 export interface BootScripts {
 	/** The page script, injected at the `page` stage: the first load. */
 	page: string;
-	/** `virtual:c15t/engine`, which the page's client imports. */
+	/** `virtual:inth/engine`, which the page's client imports. */
 	engine: string;
 }
 
@@ -656,7 +656,7 @@ export interface BootScripts {
  * the server rendered the banner from, answers the delegated listener and
  * records a banner choice before the engine loads. The engine (the
  * runtime, its transport, persistence and the runtime modules) is
- * `virtual:c15t/engine`, behind `import()`.
+ * `virtual:inth/engine`, behind `import()`.
  *
  * The adapter and island specifiers are written here, not in `adapter.ts`
  * or the `.astro` components, because this is the one place that knows
@@ -672,7 +672,7 @@ export interface BootScripts {
  * @returns The page script and the engine module.
  */
 export const buildBootScript = function buildBootScript(
-	resolved: C15tResolvedOptions,
+	resolved: InthResolvedOptions,
 	resolveEntry: EntryResolver,
 	hasAdapter = false
 ): BootScripts {
@@ -761,7 +761,7 @@ export const buildBootScript = function buildBootScript(
  * add or with `styles: false`.
  */
 export const buildStylesImport = function buildStylesImport(
-	resolved: C15tResolvedOptions,
+	resolved: InthResolvedOptions,
 	resolveEntry: EntryResolver
 ): string {
 	const quote = (specifier: string): string =>
@@ -789,7 +789,7 @@ export const buildStylesImport = function buildStylesImport(
  * The Vite plugins the app needs for the configured `ui`.
  *
  * `@inth/vue` resolves its own runtime specifiers (`#imports`,
- * `#c15t/composables`) through its package `imports`, but ships `.vue`
+ * `#inth/composables`) through its package `imports`, but ships `.vue`
  * files, which Vite's dependency pre-bundling cannot load, so the `vue`
  * adapter keeps it out of pre-bundling.
  *
@@ -797,12 +797,12 @@ export const buildStylesImport = function buildStylesImport(
  * be a second copy, so their class maps resolve without it.
  *
  * @param resolved - The resolved integration options.
- * @param engineSource - The `virtual:c15t/engine` module from
+ * @param engineSource - The `virtual:inth/engine` module from
  * {@link buildBootScript}. Without it the module is not served.
  * @returns Vite plugins to merge into the app config.
  */
 export const buildVitePlugins = function buildVitePlugins(
-	resolved: C15tResolvedOptions,
+	resolved: InthResolvedOptions,
 	engineSource?: string
 ): VitePluginLike[] {
 	const plugins: VitePluginLike[] = [createVirtualOptionsPlugin(resolved)];
@@ -833,7 +833,7 @@ export const buildVitePlugins = function buildVitePlugins(
  * a site without one.
  */
 const routeIsPrerendered = function routeIsPrerendered(
-	resolved: C15tResolvedOptions,
+	resolved: InthResolvedOptions,
 	hasAdapter: boolean
 ): boolean {
 	return (
@@ -848,8 +848,8 @@ const routeIsPrerendered = function routeIsPrerendered(
  * `routePrefix: false`. Hosted and testing pages never call it.
  */
 const injectsRoute = function injectsRoute(
-	resolved: C15tResolvedOptions
-): resolved is C15tResolvedOptions & { routePrefix: string } {
+	resolved: InthResolvedOptions
+): resolved is InthResolvedOptions & { routePrefix: string } {
 	return (
 		resolved.routePrefix !== undefined && resolved.mode.type === 'manifest'
 	);
@@ -879,7 +879,7 @@ const missingAdapterMessage = function missingAdapterMessage(
  * @throws {Error} When the fetch fails in `'fail'` mode.
  */
 const bundleBuildManifest = async function bundleBuildManifest(
-	resolved: C15tResolvedOptions,
+	resolved: InthResolvedOptions,
 	command: 'build' | 'dev',
 	logger: { info: (message: string) => void; warn: (message: string) => void }
 ): Promise<void> {
@@ -907,10 +907,10 @@ const bundleBuildManifest = async function bundleBuildManifest(
 
 /**
  * The `App.Locals` declaration the integration adds to `.astro/types.d.ts`,
- * so a site types `Astro.locals.c15t` without an `env.d.ts` line.
+ * so a site types `Astro.locals.inth` without an `env.d.ts` line.
  *
  * It names the package the site itself depends on: under a strict package
- * manager, a site that installed `c15t` cannot see `@inth/astro`.
+ * manager, a site that installed `inth` cannot see `@inth/astro`.
  *
  * @param root - The Astro project root.
  * @returns The declaration file's content.
@@ -933,8 +933,8 @@ export const buildLocalsTypes = async function buildLocalsTypes(
 	return [
 		'declare namespace App {',
 		'	interface Locals {',
-		'		/** Consent context resolved by the c15t middleware. */',
-		`		c15t: import('${source}').C15tLocals;`,
+		'		/** Consent context resolved by the inth middleware. */',
+		`		inth: import('${source}').InthLocals;`,
 		'	}',
 		'}',
 		'',
@@ -946,7 +946,7 @@ export const buildLocalsTypes = async function buildLocalsTypes(
  * or `.env` in the project root, the `ui` from the registered integrations,
  * and where the client entrypoint is.
  *
- * @param options - The options passed to `c15t()`.
+ * @param options - The options passed to `inth()`.
  * @param config - Astro's config, as `astro:config:setup` has it.
  * @param command - The Astro command.
  * @returns The resolved options.
@@ -954,10 +954,10 @@ export const buildLocalsTypes = async function buildLocalsTypes(
  * {@link resolveClientEntrypoint} does.
  */
 const resolveSiteOptions = async function resolveSiteOptions(
-	options: C15tAstroOptions,
+	options: InthAstroOptions,
 	config: { root?: URL; integrations?: { name: string }[] } | undefined,
 	command: string
-): Promise<C15tResolvedOptions> {
+): Promise<InthResolvedOptions> {
 	const { fileURLToPath } = await import('node:url');
 	const root = config?.root;
 	const projectUrl =
@@ -987,10 +987,10 @@ const resolveSiteOptions = async function resolveSiteOptions(
 };
 
 /**
- * Create the c15t Astro integration.
+ * Create the Inth Astro integration.
  *
  * @param options - Consent configuration for the site. Everything here is
- * serialized into the page; callbacks belong in `src/c15t.client.ts`.
+ * serialized into the page; callbacks belong in `src/inth.client.ts`.
  * @returns The Astro integration to list in `astro.config.mjs`.
  * @throws {Error} When an option holds a function, the mode has no backend
  * URL, the Astro integration for the dialog's `ui` is not listed in
@@ -1001,22 +1001,22 @@ const resolveSiteOptions = async function resolveSiteOptions(
  * import node from '@astrojs/node';
  * import svelte from '@astrojs/svelte';
  * import { defineConfig } from 'astro/config';
- * import c15t from '@inth/astro';
+ * import Inth from '@inth/astro';
  *
- * // Reads PUBLIC_C15T_BACKEND_URL from .env.
+ * // Reads PUBLIC_INTH_PROJECT_URL from .env.
  * export default defineConfig({
  *   adapter: node({ mode: 'standalone' }),
- *   integrations: [svelte(), c15t()],
+ *   integrations: [svelte(), inth()],
  *   output: 'server',
  * });
  * ```
  */
-export const c15t = function c15t(
-	options: C15tAstroOptions = {}
+export const inth = function inth(
+	options: InthAstroOptions = {}
 ): AstroIntegration {
 	// Checked here as well, so a bad option fails before Astro starts.
 	assertSerializable(options);
-	let resolved: C15tResolvedOptions | undefined;
+	let resolved: InthResolvedOptions | undefined;
 	// Recorded at `astro:config:setup`, which runs before `astro:config:done`.
 	let command: string | undefined;
 
@@ -1031,7 +1031,7 @@ export const c15t = function c15t(
 					filename: 'locals.d.ts',
 				});
 				// Astro would stop the build on its own, with a generic
-				// "no adapter" error that never mentions the route c15t added.
+				// "no adapter" error that never mentions the route Inth added.
 				// Only the build needs an adapter: `astro dev` and `astro sync`
 				// accept on-demand routes without one.
 				if (
@@ -1054,7 +1054,7 @@ export const c15t = function c15t(
 					return;
 				}
 				logger.error(
-					`the preference-centre and IAB dialogs render as ${resolved.ui} islands, so ${adapter.astroIntegration} must be installed and listed in astro.config before c15t(). Install ${adapter.packages.join(', ')} and run \`npx astro add ${resolved.ui}\`, or pass \`requireUIIntegration: false\` if you only use the server-rendered banner.`
+					`the preference-centre and IAB dialogs render as ${resolved.ui} islands, so ${adapter.astroIntegration} must be installed and listed in astro.config before inth(). Install ${adapter.packages.join(', ')} and run \`npx astro add ${resolved.ui}\`, or pass \`requireUIIntegration: false\` if you only use the server-rendered banner.`
 				);
 				throw new Error(
 					`@inth/astro: ui: ${JSON.stringify(resolved.ui)} needs ${adapter.astroIntegration}. Install it, or set \`requireUIIntegration: false\` for a banner-only site.`
@@ -1078,7 +1078,7 @@ export const c15t = function c15t(
 					await bundleBuildManifest(site, command, logger);
 				}
 				const resolveEntry = await createOwnEntryResolver();
-				// Tailwind 3 unwraps c15t's cascade layer in the stylesheets it
+				// Tailwind 3 unwraps inth's cascade layer in the stylesheets it
 				// builds (`@inth/react/postcss-tailwind3`). Inlined rules skip that
 				// build and would lose to its preflight.
 				if (site.inlineStyles && (await usesTailwind3(root))) {
@@ -1137,4 +1137,4 @@ export const c15t = function c15t(
 	};
 };
 
-export default c15t;
+export default inth;

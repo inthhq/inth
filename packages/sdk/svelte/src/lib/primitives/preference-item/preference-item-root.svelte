@@ -37,8 +37,8 @@
 	);
 	const dataState = $derived(getPreferenceItemState(open));
 	const dataDisabled = $derived(getDataDisabled(disabled));
-	const contentId = `c15t-preference-item-content-${componentId}`;
-	const triggerId = `c15t-preference-item-trigger-${componentId}`;
+	const contentId = `inth-preference-item-content-${componentId}`;
+	const triggerId = `inth-preference-item-trigger-${componentId}`;
 
 	const setOpen = function setOpen(nextOpen: boolean) {
 		open = nextOpen;

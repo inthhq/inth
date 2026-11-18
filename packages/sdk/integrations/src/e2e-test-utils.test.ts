@@ -19,7 +19,7 @@ describe('vendor contract cleanup', () => {
 
 	it('removes the Trade Desk bootstrap globals', () => {
 		loadScripts(
-			[theTradeDeskPixel({ advertiserId: 'c15tfake', pixelIds: ['c15tfake'] })],
+			[theTradeDeskPixel({ advertiserId: 'inthfake', pixelIds: ['inthfake'] })],
 			grantedMarketingConsents
 		);
 		expect(window.ttdConversionEvents).toBeTypeOf('function');
@@ -34,11 +34,11 @@ describe('vendor contract cleanup', () => {
 
 	it('removes the LiveIntent bootstrap and SDK configuration', () => {
 		loadScripts(
-			[liveIntentTag({ tagId: 'c15t-tag' })],
+			[liveIntentTag({ tagId: 'inth-tag' })],
 			grantedMarketingConsents
 		);
 		expect(window.liQ).toEqual([]);
-		window.LI = { appId: 'c15t-tag' };
+		window.LI = { appId: 'inth-tag' };
 
 		clearAllScripts();
 		resetVendorGlobals();

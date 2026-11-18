@@ -1,6 +1,6 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls in a Nuxt app until their consent category is allowed, with rules in the c15t module options.
+description: Hold fetch and XMLHttpRequest calls in a Nuxt app until their consent category is allowed, with rules in the Inth module options.
 group: frameworks
 ---
 
@@ -18,7 +18,7 @@ Rules are plain data, so they can go in the module options:
 
 ```ts title="nuxt.config.ts"
 export default defineNuxtConfig({
-	c15t: {
+	inth: {
 		networkBlocker: {
 			rules: [{ category: 'measurement', domain: 'google-analytics.com' }],
 		},
@@ -27,14 +27,14 @@ export default defineNuxtConfig({
 ```
 
 Module options reach the browser as JSON, so the `onRequestBlocked` callback
-goes under the `c15t` key of `app/app.config.ts`. Rules you set there are
+goes under the `inth` key of `app/app.config.ts`. Rules you set there are
 added to the rules from `nuxt.config.ts`:
 
 {/* example: fragment */}
 
 ```ts title="app/app.config.ts"
 export default defineAppConfig({
-	c15t: {
+	inth: {
 		networkBlocker: {
 			onRequestBlocked: (info) => console.info('Blocked', info.url),
 			rules: [],
@@ -71,7 +71,7 @@ and fires an `error` event. Requests that match no rule are not delayed.
 ## When blocking starts
 
 The blocker runs in the browser only. It starts holding matching requests
-when the c15t plugin runs, before your app hydrates. While consent is
+when the Inth plugin runs, before your app hydrates. While consent is
 unknown, a matching request waits instead of failing. Once the policy and the
 stored choice apply, a waiting request is sent if consent allows it and
 blocked otherwise. When the server resolves the policy, in the default `manifest()` mode or `hosted()`,
@@ -85,10 +85,10 @@ server code.
 ## What it cannot stop
 
 The blocker sees only browser `fetch` and `XMLHttpRequest` calls made after
-the c15t plugin runs. It cannot stop:
+the Inth plugin runs. It cannot stop:
 
 - Scripts you add to the page head with `useHead` or `app.head`, and Nuxt
-  plugins that run before the c15t plugin.
+  plugins that run before the Inth plugin.
 - Code that saved its own reference to `fetch` before the plugin ran.
 - `navigator.sendBeacon`, `WebSocket`, `EventSource`, and requests from
   `<img>`, `<script>` and `<iframe>` elements, web workers and service

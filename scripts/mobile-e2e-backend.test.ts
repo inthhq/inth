@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { it, expect } from 'vitest';
 
 it('keeps observer routes reachable while the consent backend is unavailable', async () => {
-	const out = await mkdtemp(join(tmpdir(), 'c15t-backend-'));
+	const out = await mkdtemp(join(tmpdir(), 'inth-backend-'));
 	const process = spawn(
 		'python3',
 		[
@@ -73,7 +73,7 @@ it('keeps observer routes reachable while the consent backend is unavailable', a
 });
 
 it('exposes fixed expiry controls only in the expiry fixture', async () => {
-	const out = await mkdtemp(join(tmpdir(), 'c15t-expiry-backend-'));
+	const out = await mkdtemp(join(tmpdir(), 'inth-expiry-backend-'));
 	const process = spawn(
 		'python3',
 		[

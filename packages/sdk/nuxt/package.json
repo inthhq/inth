@@ -1,7 +1,7 @@
 {
 	"name": "@inth/nuxt",
 	"version": "3.2.0-canary.0",
-	"description": "Nuxt module for c15t cookie consent: banner, consent dialog, preference center, consent route and build-time manifest.",
+	"description": "Nuxt module for inth cookie consent: banner, consent dialog, preference center, consent route and build-time manifest.",
 	"keywords": [
 		"banner",
 		"ccpa",
@@ -94,8 +94,8 @@
 		"ufo": "^1.6.1"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@nuxt/module-builder": "^1.0.2",
 		"@types/node": "25.5.0",
 		"@vitejs/plugin-vue": "6.0.7",

@@ -34,13 +34,13 @@ export const setupTextDirection = function setupTextDirection(
 ) {
 	const direction = getTextDirection(language);
 	if (direction === 'rtl') {
-		document.body.classList.add('c15t-rtl');
+		document.body.classList.add('inth-rtl');
 	} else {
-		document.body.classList.remove('c15t-rtl');
+		document.body.classList.remove('inth-rtl');
 	}
 
 	return () => {
-		document.body.classList.remove('c15t-rtl');
+		document.body.classList.remove('inth-rtl');
 	};
 };
 
@@ -134,9 +134,9 @@ const toCSSPixels = (element: HTMLElement, width: number): number =>
  * `padding-right` instead, which keeps in-flow content still.
  *
  * Padding cannot hold fixed-position elements, so the lock also sets
- * `--c15t-scroll-lock-gap` on `<html>` to the width the viewport gained.
+ * `--inth-scroll-lock-gap` on `<html>` to the width the viewport gained.
  * A page offsets its own fixed elements with it, such as
- * `right: calc(1rem + var(--c15t-scroll-lock-gap, 0px))`. The variable is
+ * `right: calc(1rem + var(--inth-scroll-lock-gap, 0px))`. The variable is
  * only set while the lock pads `<body>`.
  *
  * @returns Cleanup function to restore scroll
@@ -146,7 +146,7 @@ const toCSSPixels = (element: HTMLElement, width: number): number =>
  * .site-header {
  * 	position: fixed;
  * 	inset-inline: 0;
- * 	padding-right: var(--c15t-scroll-lock-gap, 0px);
+ * 	padding-right: var(--inth-scroll-lock-gap, 0px);
  * }
  * ```
  */
@@ -198,7 +198,7 @@ export const setupScrollLock = function setupScrollLock() {
 		const fillGap = (gap: number) => {
 			const width = `${toCSSPixels(body, gap)}px`;
 			setStyle(body, 'padding-right', width);
-			setStyle(root, '--c15t-scroll-lock-gap', width);
+			setStyle(root, '--inth-scroll-lock-gap', width);
 		};
 
 		// While <html> has visible overflow, <body>'s overflow is what the

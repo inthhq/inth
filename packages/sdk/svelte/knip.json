@@ -26,7 +26,7 @@
 		"**/__tests__/**",
 		"type-tests/**"
 	],
-	"ignoreDependencies": ["@c15t/typescript-config", "c15t", "sveltekit-3"],
+	"ignoreDependencies": ["@inth/typescript-config", "inth", "sveltekit-3"],
 	"rules": {
 		"exports": "warn",
 		"types": "warn",

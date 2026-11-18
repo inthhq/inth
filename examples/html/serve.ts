@@ -1,5 +1,5 @@
 /**
- * Serves this site on http://localhost:4173. The page loads c15t from
+ * Serves this site on http://localhost:4173. The page loads Inth from
  * jsDelivr, so there is nothing to build. Cookies need an http origin, so
  * opening `index.html` from disk is not enough to try accept and reload.
  */

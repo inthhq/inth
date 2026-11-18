@@ -1,7 +1,7 @@
 import {
 	startsClosedByDefault,
 	toggleOpenClose,
-} from '@c15t/conformance/play/collapsible';
+} from '@inth/conformance/play/collapsible';
 import { Collapsible } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
@@ -24,8 +24,8 @@ const { consentTypes } = enTranslations;
 
 const rootStyle: React.CSSProperties = {
 	'--collapsible-gap': '0.75rem',
-	border: '1px solid var(--c15t-border)',
-	borderRadius: 'var(--c15t-radius-md)',
+	border: '1px solid var(--inth-border)',
+	borderRadius: 'var(--inth-radius-md)',
 	padding: '1rem',
 	width: '32rem',
 } as React.CSSProperties;

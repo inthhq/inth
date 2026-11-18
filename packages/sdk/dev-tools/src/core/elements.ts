@@ -27,7 +27,7 @@ export function createButton(
 	const button = createElement(
 		document,
 		'button',
-		`c15t-dev-tools__button c15t-dev-tools__button--${variant}`,
+		`inth-dev-tools__button inth-dev-tools__button--${variant}`,
 		label
 	);
 	button.type = 'button';
@@ -43,24 +43,24 @@ export function createSection(
 	description?: string,
 	action?: HTMLElement
 ): HTMLElement {
-	const section = createElement(document, 'section', 'c15t-dev-tools__section');
+	const section = createElement(document, 'section', 'inth-dev-tools__section');
 	// Title and description sit closer to each other than to the content.
 	const heading = createElement(
 		document,
 		'div',
-		'c15t-dev-tools__section-heading'
+		'inth-dev-tools__section-heading'
 	);
 	heading.append(createElement(document, 'h3', undefined, title));
 	if (description) {
 		heading.append(
-			createElement(document, 'p', 'c15t-dev-tools__muted', description)
+			createElement(document, 'p', 'inth-dev-tools__muted', description)
 		);
 	}
 	if (action) {
 		const header = createElement(
 			document,
 			'div',
-			'c15t-dev-tools__section-header'
+			'inth-dev-tools__section-header'
 		);
 		header.append(heading, action);
 		section.append(header);
@@ -81,10 +81,10 @@ export function createState(
 	value: string,
 	state: string
 ): HTMLElement {
-	const pill = createElement(document, 'span', 'c15t-dev-tools__state');
+	const pill = createElement(document, 'span', 'inth-dev-tools__state');
 	pill.dataset.state = state;
 	pill.append(
-		createElement(document, 'span', 'c15t-dev-tools__sr-only', `${prefix}: `),
+		createElement(document, 'span', 'inth-dev-tools__sr-only', `${prefix}: `),
 		createElement(document, 'span', undefined, value)
 	);
 	return pill;
@@ -95,7 +95,7 @@ export function createCodeBlock(
 	document: Document,
 	value: unknown
 ): HTMLElement {
-	const output = createElement(document, 'pre', 'c15t-dev-tools__code');
+	const output = createElement(document, 'pre', 'inth-dev-tools__code');
 	output.textContent = serializeDiagnostic(value);
 	return output;
 }
@@ -106,7 +106,7 @@ export function createStat(
 	label: string,
 	value: string
 ): HTMLElement {
-	const row = createElement(document, 'div', 'c15t-dev-tools__stat');
+	const row = createElement(document, 'div', 'inth-dev-tools__stat');
 	row.append(
 		createElement(document, 'dt', undefined, label),
 		createElement(document, 'dd', undefined, value)
@@ -120,7 +120,7 @@ export function createTextField(
 	labelText: string,
 	value: string
 ): { field: HTMLElement; input: HTMLInputElement } {
-	const field = createElement(document, 'label', 'c15t-dev-tools__field');
+	const field = createElement(document, 'label', 'inth-dev-tools__field');
 	field.append(createElement(document, 'span', undefined, labelText));
 	const input = createElement(document, 'input');
 	input.type = 'text';

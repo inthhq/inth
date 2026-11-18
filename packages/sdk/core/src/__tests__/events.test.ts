@@ -117,7 +117,7 @@ test('a runtime dispatcher follows the provider: its scripts, live consent, and 
 	events.track('add_to_cart');
 	expect(globals.posthog.capture).toHaveBeenCalledTimes(1);
 
-	// Turning c15t off swaps the kernel; the same dispatcher follows it.
+	// Turning Inth off swaps the kernel; the same dispatcher follows it.
 	await runtime.update({ ...options, enabled: false });
 	events.track('add_to_cart');
 	expect(globals.posthog.capture).toHaveBeenLastCalledWith('add_to_cart', {});

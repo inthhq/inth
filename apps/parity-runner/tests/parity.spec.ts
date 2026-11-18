@@ -23,7 +23,7 @@
  * Solid is primitives-only and excluded from this core adapter contract.
  */
 
-import { diffComputedStyleMap } from '@c15t/conformance';
+import { diffComputedStyleMap } from '@inth/conformance';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 

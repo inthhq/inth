@@ -44,7 +44,7 @@ const config: StorybookConfig = {
 			resolve: {
 				alias: [
 					{
-						find: /^@c15t\/conformance\/(?<capture1>.*)$/u,
+						find: /^@inth\/conformance\/(?<capture1>.*)$/u,
 						replacement: path.resolve(
 							storybookDir,
 							'../../../internals/conformance/src/$1'
@@ -94,7 +94,7 @@ const config: StorybookConfig = {
 						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
 					{
-						find: /^c15t$/u,
+						find: /^inth$/u,
 						replacement: workspace('packages/sdk/core/src/index.ts'),
 					},
 					{

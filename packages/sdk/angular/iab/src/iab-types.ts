@@ -11,7 +11,7 @@
  * `@inth/sdk/iab/headless` is pure derivation with no TCF encoder behind it,
  * so importing it here does not pull the CMP API into an app that never
  * mounts an IAB surface — the components that import this module are
- * themselves only reachable from `<c15t-iab-consent-banner>`/`<c15t-iab-consent-dialog>`.
+ * themselves only reachable from `<inth-iab-consent-banner>`/`<inth-iab-consent-dialog>`.
  */
 
 import type { GlobalVendorList } from '@inth/sdk/engine';

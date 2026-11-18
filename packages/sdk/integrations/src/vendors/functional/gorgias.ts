@@ -57,7 +57,7 @@ interface GorgiasLoad {
  *
  * Disables Segment when measurement is denied, using Gorgias's documented
  * readiness wrapper. Gorgias has no documented analytics re-enable or full
- * shutdown API. Keep c15t's default reload on consent revocation enabled.
+ * shutdown API. Keep inth's default reload on consent revocation enabled.
  *
  * @param options - Gorgias installation key and snippet version.
  * @returns The consent-gated Gorgias Chat script configuration.

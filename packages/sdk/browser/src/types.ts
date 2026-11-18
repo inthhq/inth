@@ -131,13 +131,13 @@ export interface ConsentUIOptions {
 	 *
 	 * In the shadow root, page CSS still reaches each part through
 	 * `::part()`: every element `theme.slots` can name carries its slot key
-	 * as a part, as in `[data-c15t-ui]::part(consentBannerCard)`.
+	 * as a part, as in `[data-inth-ui]::part(consentBannerCard)`.
 	 */
 	shadow?: boolean;
 	/**
 	 * Colour scheme. `'system'` follows `prefers-color-scheme`. `null`
 	 * leaves the scheme to the page: the UI is dark while `<html>` has a
-	 * `dark` or `c15t-dark` class, and follows it as it changes. The script
+	 * `dark` or `inth-dark` class, and follows it as it changes. The script
 	 * tag reads `data-color-scheme`, with `none` for `null`.
 	 *
 	 * @default 'system'
@@ -222,7 +222,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	'consentSource' | 'persistence' | 'scriptLoader' | 'vendors'
 > {
 	/**
-	 * Content Security Policy nonce for the elements c15t adds to the page:
+	 * Content Security Policy nonce for the elements Inth adds to the page:
 	 * the stock UI's `<style>` element and every `<script>` the `scripts`
 	 * option loads. Set it when your CSP allows styles or scripts by nonce
 	 * instead of `'unsafe-inline'`. A script's own `nonce` takes precedence.
@@ -230,9 +230,9 @@ export interface ConsentClientBaseOptions extends Pick<
 	 * The script-tag build reads `data-nonce`, then the tag's own `nonce`, so
 	 * `<script nonce="…" src=".../c15t.js">` needs nothing else.
 	 *
-	 * With a nonce set, inert `<script type="text/plain" data-c15t-category>`
+	 * With a nonce set, inert `<script type="text/plain" data-inth-category>`
 	 * tags run only when they carry the same nonce; others are skipped with
-	 * a warning and marked `data-c15t-activated="untrusted"`. Activation
+	 * a warning and marked `data-inth-activated="untrusted"`. Activation
 	 * creates a new script, which a `'strict-dynamic'` policy runs without a
 	 * nonce, so injected markup would otherwise run once consent is granted.
 	 * The configured nonce is never copied onto an inert tag.
@@ -308,7 +308,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	experiment?: ConsentExperiment;
 	/** UI options, or `false` for headless use. */
 	ui?: ConsentUIOptions | false;
-	/** Package name reported on `window.c15t`. */
+	/** Package name reported on `window.inth`. */
 	pkg?: string;
 }
 
@@ -345,14 +345,14 @@ export interface ConsentClientOptions extends ConsentClientBaseOptions {
 
 /**
  * What the script-tag builds accept, from the tag's `data-*` attributes
- * and `c15t.push(['config', {...}])`. A no-code site can queue
+ * and `inth.push(['config', {...}])`. A no-code site can queue
  * serializable options, transport factories, callbacks, and DOM
  * containers that way.
  */
 export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	/**
 	 * Transport. A name picks one of the built-in modes; a factory from
-	 * `c15t.manifest()` is used as is. Defaults to `manifest` when a
+	 * `inth.manifest()` is used as is. Defaults to `manifest` when a
 	 * manifest is given, otherwise `hosted`.
 	 */
 	mode?: ProviderTransportFactory | ConsentModeName;
@@ -564,7 +564,7 @@ export interface ConsentClient {
 	 * a new `ui` listener receives the surface currently up, so wiring
 	 * attached after a fast init misses nothing. A listener that throws is
 	 * reported with `console.error`; the listeners after it and the matching
-	 * `c15t:*` document event still run.
+	 * `inth:*` document event still run.
 	 *
 	 * @param event - The event name.
 	 * @param listener - Called with the event payload.

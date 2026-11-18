@@ -5,6 +5,6 @@
 }
 
 :root {
-	--c15t-fade-in-animation: fadeIn var(--c15t-duration-normal)
-		var(--c15t-easing-out) forwards;
+	--inth-fade-in-animation: fadeIn var(--inth-duration-normal)
+		var(--inth-easing-out) forwards;
 }

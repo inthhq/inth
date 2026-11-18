@@ -68,7 +68,7 @@ it('lists Google ad tech providers with their privacy policy and a consent switc
 
 	const root = client.ui?.root;
 	const vendorsTab = root?.querySelector<HTMLButtonElement>(
-		'#c15t-iab-vendors-tab'
+		'#inth-iab-vendors-tab'
 	);
 	const vendorCount = Object.keys(completeGVL.vendors).length;
 	expect(vendorsTab?.textContent).toContain(`(${vendorCount + 1})`);
@@ -113,7 +113,7 @@ it('shows a provider list that lands after the dialog rendered', async () => {
 	const root = client.ui?.root;
 	const vendorCount = Object.keys(completeGVL.vendors).length;
 	const vendorsTab = root?.querySelector<HTMLButtonElement>(
-		'#c15t-iab-vendors-tab'
+		'#inth-iab-vendors-tab'
 	);
 	expect(vendorsTab?.textContent).toContain(`(${vendorCount})`);
 

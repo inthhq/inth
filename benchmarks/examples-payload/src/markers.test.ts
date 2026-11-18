@@ -57,7 +57,7 @@ describe('findBoundaries', () => {
 			'{id:"quebec_opt_in"}',
 			'{title:"Wir respektieren deine Privatsph\\xE4re."}',
 			'window.__tcfapi=function(){}',
-			'className:"c15t-dev-tools__panel"',
+			'className:"inth-dev-tools__panel"',
 		].join(';');
 		expect(findBoundaries(chunk, markers).sort()).toEqual(
 			[

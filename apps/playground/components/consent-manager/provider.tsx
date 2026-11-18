@@ -19,7 +19,7 @@ import { useEffect, useState } from 'react';
 import { createDemoScripts } from '../../lib/demo-scripts';
 import { useThemePreset } from './theme-switcher';
 
-const SEARCH_CHANGE_EVENT = 'c15t:search-change';
+const SEARCH_CHANGE_EVENT = 'inth:search-change';
 const DEFAULT_BACKEND_URL = 'https://test-consent-io.inth.app/';
 
 const internalAnalyticsVendor = {

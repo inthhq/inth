@@ -88,12 +88,12 @@ const CollapsibleRoot = createForwardRef<HTMLDivElement, CollapsibleRootProps>(
 		const finalNoStyle = contextNoStyle || noStyle;
 		const contextValue = useMemo(
 			() => ({
-				contentId: `c15t-collapsible-content-${reactId}`,
+				contentId: `inth-collapsible-content-${reactId}`,
 				disabled,
 				noStyle: finalNoStyle,
 				open: isOpen,
 				setOpen: setIsOpen,
-				triggerId: `c15t-collapsible-trigger-${reactId}`,
+				triggerId: `inth-collapsible-trigger-${reactId}`,
 			}),
 			[disabled, finalNoStyle, isOpen, reactId, setIsOpen]
 		);

@@ -2,7 +2,7 @@
  * Browser-resolved manifest transport for the `client-manifest` arm.
  *
  * The SvelteKit layer resolves manifests on the server by default
- * (`c15tHandle` with `manifest()`, plus `createConsentRoute`). This arm
+ * (`inthHandle` with `manifest()`, plus `createConsentRoute`). This arm
  * exists so the suite can price the alternative: fetch the CDN-cacheable
  * manifest once and resolve `/init` in the page, trading an `/init`
  * round-trip for the resolver plus the translation catalogue.

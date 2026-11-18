@@ -28,7 +28,7 @@ export interface ConsentBoot {
 }
 
 /** The `TransferState` key of the boot. @internal */
-export const C15T_BOOT = makeStateKey<ConsentBoot>('c15t-boot');
+export const INTH_BOOT = makeStateKey<ConsentBoot>('inth-boot');
 
 /**
  * The boot with the vendor list put back, when the server left it out.

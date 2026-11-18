@@ -83,7 +83,7 @@ const renderFooter = function renderFooter(
 						{
 							class: model.classes.rightLink,
 							'data-action': 'right',
-							'data-c15t-action': 'customize',
+							'data-inth-action': 'customize',
 							'data-right': right,
 							'data-testid': `consent-banner-right-link-${right}`,
 							style: model.styles.rightLink,
@@ -112,7 +112,7 @@ const renderFooter = function renderFooter(
 						{
 							class: className,
 							'data-action': action,
-							'data-c15t-action': action,
+							'data-inth-action': action,
 							'data-mode': mode,
 							'data-size': props.noStyle ? undefined : 'small',
 							'data-testid': `consent-banner-${action}-button`,

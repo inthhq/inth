@@ -1,4 +1,4 @@
-import { C15T_VERSION_HEADER } from '@inth/sdk/engine';
+import { INTH_VERSION_HEADER } from '@inth/sdk/engine';
 import type { InitOutput, SSRInitialData } from '@inth/sdk/engine';
 
 import { version } from '../version';
@@ -170,7 +170,7 @@ const performInitFetch = async function performInitFetch(
  *
  * @remarks
  * This is the framework-agnostic SSR data fetching function. It accepts
- * a standard Web API Headers object and performs the fetch to the c15t backend.
+ * a standard Web API Headers object and performs the fetch to the Inth backend.
  *
  * Framework-specific packages (like @inth/nextjs) wrap this function
  * with their own header resolution logic.
@@ -253,7 +253,7 @@ export const fetchSSRData = async function fetchSSRData(
 
 	// Preserve an incoming client version; direct SSR requests use this
 	// package's version so the backend can attribute them to a release.
-	const initHeaders = { [C15T_VERSION_HEADER]: version, ...relevantHeaders };
+	const initHeaders = { [INTH_VERSION_HEADER]: version, ...relevantHeaders };
 	if (overrides?.country) {
 		initHeaders['x-c15t-country'] = overrides.country;
 		if (debug) {

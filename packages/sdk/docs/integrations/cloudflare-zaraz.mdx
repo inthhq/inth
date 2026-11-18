@@ -1,37 +1,37 @@
 ---
 title: Cloudflare Zaraz
-description: Sync c15t permissions to Cloudflare Zaraz purposes with the c15t cloudflareZaraz bridge, which runs on every page without loading a script, and check the tools it controls.
-seoTitle: Cloudflare Zaraz consent with c15t
-seoDescription: Connect your cookie banner to Cloudflare Zaraz. The c15t cloudflareZaraz helper turns on each Zaraz purpose only while its c15t category has consent.
+description: Sync Inth permissions to Cloudflare Zaraz purposes with the Inth cloudflareZaraz bridge, which runs on every page without loading a script, and check the tools it controls.
+seoTitle: Cloudflare Zaraz consent with Inth
+seoDescription: Connect your cookie banner to Cloudflare Zaraz. The Inth cloudflareZaraz helper turns on each Zaraz purpose only while its Inth category has consent.
 icon: cloudflare-web-analytics
 group: integrations
 ---
 
-The c15t `cloudflareZaraz` helper connects c15t consent to Cloudflare Zaraz
+The Inth `cloudflareZaraz` helper connects Inth consent to Cloudflare Zaraz
 under the `necessary` category. The helper loads no script. Cloudflare loads
 Zaraz and its tools for every visitor, so the Zaraz purposes control which tools
 run. When the Zaraz consent API is ready, the helper calls
-`zaraz.consent.set()`. A purpose is `true` only while the c15t category that you
+`zaraz.consent.set()`. A purpose is `true` only while the Inth category that you
 map to it in `purposes` has consent. When a purpose changes to `true`, the
 helper calls `zaraz.consent.sendQueuedEvents()`.
 
 ## Configure Cloudflare Zaraz
 
-`cloudflareZaraz` connects c15t to an existing Zaraz installation. It inserts
-no script and configures no tools. Zaraz loads the tools; c15t decides which
+`cloudflareZaraz` connects Inth to an existing Zaraz installation. It inserts
+no script and configures no tools. Zaraz loads the tools; Inth decides which
 purposes they may use. In the Zaraz dashboard:
 
-1. Enable Consent Management and create purposes for the c15t categories you
+1. Enable Consent Management and create purposes for the Inth categories you
    use.
 2. Assign a purpose to every tool that needs permission. Zaraz runs a tool
    without a purpose regardless of consent.
-3. Turn off automatic display of the Zaraz consent modal. c15t owns the UI.
+3. Turn off automatic display of the Zaraz consent modal. Inth owns the UI.
 4. Turn off **Automatic Pageview Tracking**, and automatic SPA pageviews too if
    your app sends them itself.
 5. Copy the purpose IDs, not the purpose names, into the mapping below.
 
 Zaraz keeps its own consent cookie. An automatic pageview can run with a grant
-from a previous visit before c15t applies the current permissions. With
+from a previous visit before Inth applies the current permissions. With
 automatic pageviews off, send the first pageview from `onReady`, which runs
 after the first synchronization. DOM-ready, timer and click triggers you add in
 Zaraz can still run before the bridge starts; audit them. Cloudflare documents
@@ -72,7 +72,7 @@ once.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `purposes` | Required | Maps c15t categories to Zaraz purpose IDs. A category can list several IDs. An empty mapping, a blank ID, an ID with surrounding whitespace or an ID mapped twice throws. |
+| `purposes` | Required | Maps Inth categories to Zaraz purpose IDs. A category can list several IDs. An empty mapping, a blank ID, an ID with surrounding whitespace or an ID mapped twice throws. |
 | `hideBuiltInModal` | `true` | Hides the Zaraz modal if it is visible. Also turn off auto-display in Zaraz. |
 | `sendQueuedEvents` | `true` | Calls `zaraz.consent.sendQueuedEvents()` after a purpose changes from denied to allowed. Set `false` to discard pageviews Zaraz queued before consent. |
 | `onReady` | None | Runs once after the first successful synchronization, even when every purpose is denied. |
@@ -92,7 +92,7 @@ optional category, whatever the categories allow. See
 
 When the Zaraz consent API is ready, the bridge reads `zaraz.consent.getAll()`
 and sets each returned purpose to `true` only if its mapped category is
-allowed in c15t's effective permissions, which include policy restrictions.
+allowed in inth's effective permissions, which include policy restrictions.
 Purposes you did not map are set to `false`. If the API is not ready,
 the bridge waits for the `zarazConsentAPIReady` event and applies the latest
 permissions; it does not poll. On each consent change it calls
@@ -122,9 +122,9 @@ a tool's own requests show whether it respected that.
 3. Open Privacy settings and allow measurement. Without a reload, the
    measurement purposes become `true`, the queued pageview replays and
    measurement tools send requests. Marketing tools stay silent.
-4. Turn measurement off again and save. c15t reloads the page, and the new
+4. Turn measurement off again and save. Inth reloads the page, and the new
    page starts with every purpose `false`.
-5. In the console, call `zaraz.consent.set()` to grant a purpose that c15t
+5. In the console, call `zaraz.consent.set()` to grant a purpose that Inth
    denies, then reload. The bridge sets it back to `false` before `onReady`
    runs.
 

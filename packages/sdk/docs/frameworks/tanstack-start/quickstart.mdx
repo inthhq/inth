@@ -38,13 +38,13 @@ later routers.
 If you're upgrading an existing app to TanStack Start 1.0, upgrade Node.js to
 22.12 or later and Vite to 8 or later first. Start 1.0 also renames
 `.inputValidator()` on `createServerFn()` and `createMiddleware()` to
-`.validator()`, so rename any calls in your app. c15t doesn't call it.
+`.validator()`, so rename any calls in your app. Inth doesn't call it.
 
-## Install c15t
+## Install Inth
 
 <CommandTabs command="@inth/tanstack-start @inth/integrations" mode="install" />
 
-`c15t` contains the TanStack Start adapter at `@inth/tanstack-start`.
+`inth` contains the TanStack Start adapter at `@inth/tanstack-start`.
 `@inth/integrations` holds the vendor loaders used below.
 
 ## Bundle your policy at build time
@@ -59,15 +59,15 @@ plugin downloads your project's public policy from `${projectUrl}/manifest` and 
 `undefined`, so the policy stays on the server. No file is written into your
 project.
 
-Set `VITE_C15T_BACKEND_URL` to your project's backend URL, exactly as Inth
+Set `VITE_INTH_PROJECT_URL` to your project's backend URL, exactly as Inth
 shows it, including any path prefix, in `.env` or wherever you build:
 
 ```sh title=".env"
-VITE_C15T_BACKEND_URL=https://your-project.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
 If your app already sets `VITE_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `VITE_C15T_BACKEND_URL` wins.
+too. When both are set, `VITE_INTH_PROJECT_URL` wins.
 
 The example app's `.env` points at `https://example-inth.inth.app`, a demo
 project. The server function and `ConsentRoot` read the URL from the plugin,
@@ -97,7 +97,7 @@ What each part does:
 - **`getConsentState`** runs on the server. `createConsentStateHandler()`
   takes no options here: it uses `manifest()`, the default mode, and reads the
   backend URL and the snapshot from `consentManifest()`. It reads
-  the `c15t` cookie and the location headers your host or CDN adds, such as
+  the `inth` cookie and the location headers your host or CDN adds, such as
   `cf-ipcountry` or `x-vercel-ip-country`, then resolves this visitor's policy
   from the bundled snapshot, so the render never waits on Inth.
   [Geography headers](/docs/frameworks/tanstack-start/geography-headers) lists
@@ -159,7 +159,7 @@ options for the test only.
 2. **Before a choice.** There are no requests to `posthog.com`.
 3. **Reject All.** The banner closes and the vendor requests stay absent.
 4. **Reload and view source again.** The HTML no longer contains the banner,
-   because the server read the stored rejection from the `c15t` cookie.
+   because the server read the stored rejection from the `inth` cookie.
 5. **Privacy settings.** The footer link opens the dialog with **Analytics** (the
    `measurement` category) and **Marketing** off. Turn on **Analytics** and
    save. PostHog's `array.js` loads.
@@ -180,4 +180,4 @@ release checklist.
 - [Components](/docs/frameworks/tanstack-start/components) and
   [hooks](/docs/frameworks/tanstack-start/hooks).
 - The runnable app in `examples/tanstack-start` of the
-  [c15t repository](https://github.com/c15t/c15t) contains this setup.
+  [Inth repository](https://github.com/c15t/c15t) contains this setup.

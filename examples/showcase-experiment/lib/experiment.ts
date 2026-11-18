@@ -15,7 +15,7 @@ export const bannerExperiment = defineExperiment({
 		bar: { prompt: { variant: 'bar' } },
 	},
 	id: 'banner-layout',
-	// Used only when the flag lookup returns nothing and c15t picks the arm.
+	// Used only when the flag lookup returns nothing and Inth picks the arm.
 	split: { bar: 50, control: 50 },
 });
 
@@ -36,8 +36,8 @@ const readFlag = (): string | undefined =>
 	process.env.NEXT_PUBLIC_BANNER_LAYOUT;
 
 /**
- * The arm the flag assigned, or `undefined` to let c15t pick one by
- * `split`. c15t records who assigned the arm (`host` or `c15t`) with every
+ * The arm the flag assigned, or `undefined` to let Inth pick one by
+ * `split`. Inth records who assigned the arm (`host` or `inth`) with every
  * impression and choice.
  */
 export const bannerArmFromFlag = (): BannerArm | undefined => {

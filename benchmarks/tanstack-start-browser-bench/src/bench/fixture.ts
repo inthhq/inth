@@ -13,17 +13,17 @@ export type BenchConsentFixtureCounts = Record<
 >;
 
 const globalWithBenchCounts = globalThis as typeof globalThis & {
-	__c15tTanstackBenchFixtureCounts?: BenchConsentFixtureCounts;
+	__inthTanstackBenchFixtureCounts?: BenchConsentFixtureCounts;
 };
 
 const getMutableBenchConsentFixtureCounts =
 	function getMutableBenchConsentFixtureCounts(): BenchConsentFixtureCounts {
-		globalWithBenchCounts.__c15tTanstackBenchFixtureCounts ??= {
+		globalWithBenchCounts.__inthTanstackBenchFixtureCounts ??= {
 			init: 0,
 			manifest: 0,
 			subjects: 0,
 		};
-		return globalWithBenchCounts.__c15tTanstackBenchFixtureCounts;
+		return globalWithBenchCounts.__inthTanstackBenchFixtureCounts;
 	};
 
 export const recordBenchConsentFixtureExecution =
@@ -32,7 +32,7 @@ export const recordBenchConsentFixtureExecution =
 	): void {
 		const counts = getMutableBenchConsentFixtureCounts();
 		counts[endpoint] += 1;
-		console.log(`[c15t-bench-fixture] ${endpoint} count=${counts[endpoint]}`);
+		console.log(`[inth-bench-fixture] ${endpoint} count=${counts[endpoint]}`);
 	};
 
 export const getBenchConsentFixtureCounts =
@@ -108,7 +108,7 @@ const { fingerprints } = resolution;
 const policyResolution = writePolicyResolutionWire(resolution);
 
 export const benchConsentInitResponse = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: {
 		countryCode: null,
 		regionCode: null,
@@ -121,7 +121,7 @@ export const benchConsentInitResponse = {
 };
 
 export const benchConsentManifestResponse = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [{ fingerprints, match: { fallback: true }, rule }],
 	revision: 'nextjs-browser-bench-manifest',
 	schemaVersion: 2,
@@ -142,7 +142,7 @@ export const benchConsentManifestResponse = {
 };
 
 /**
- * Sleep for `C15T_BENCH_BACKEND_LATENCY_MS`, modelling the consent backend's
+ * Sleep for `INTH_BENCH_BACKEND_LATENCY_MS`, modelling the consent backend's
  * round trip. Every fixture endpoint (init, manifest, subjects) calls it, so
  * server-side fetches pay it as well as browser ones. The runner always sets
  * the variable (200 ms by default); when it is unset the app runs outside a
@@ -150,7 +150,7 @@ export const benchConsentManifestResponse = {
  */
 export const applyBenchConsentLatency =
 	async function applyBenchConsentLatency() {
-		const latencyMs = Number(process.env.C15T_BENCH_BACKEND_LATENCY_MS ?? '0');
+		const latencyMs = Number(process.env.INTH_BENCH_BACKEND_LATENCY_MS ?? '0');
 		if (Number.isFinite(latencyMs) && latencyMs > 0) {
 			await sleep(latencyMs);
 		}

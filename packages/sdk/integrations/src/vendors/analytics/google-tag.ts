@@ -102,7 +102,7 @@ export interface GtagOptions {
 	category: AllConsentNames;
 
 	/**
-	 * Custom mapping from c15t consent categories to Google Consent Mode v2 types.
+	 * Custom mapping from Inth consent categories to Google Consent Mode v2 types.
 	 * Overrides the default mapping when provided.
 	 *
 	 * @default
@@ -119,7 +119,7 @@ export interface GtagOptions {
 	consentMapping?: Record<string, string[]>;
 
 	/**
-	 * When c15t loads `gtag/js`.
+	 * When Inth loads `gtag/js`.
 	 *
 	 * - `always`: load on every page, before the visitor chooses. The helper
 	 *   sends `gtag('consent', 'default', ...)` with the current permissions
@@ -138,7 +138,7 @@ export interface GtagOptions {
 	 * `necessary` is always allowed, so pair this mode with `measurement` or
 	 * `marketing`.
 	 *
-	 * After a withdrawal c15t reloads the page by default. With
+	 * After a withdrawal Inth reloads the page by default. With
 	 * `reloadOnConsentRevoked: false`, the loaded tag stays on the page and
 	 * receives an `update` that denies the withdrawn types.
 	 *

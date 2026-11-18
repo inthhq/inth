@@ -19,10 +19,10 @@ import {
 	resolveManifestSourceUrl,
 	waitUntilFromLocals,
 } from '../server';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 
 const MANIFEST = await buildConsentManifestFromConfig({
-	branding: 'c15t',
+	branding: 'inth',
 	policyRules: [
 		policyRulePresets.europeOptIn(),
 		policyRulePresets.worldOptOutNoPrompt(),
@@ -35,7 +35,7 @@ const request = (path: string, headers: Record<string, string> = {}) =>
 	new Request(`https://site.example.com${path}`, { headers });
 
 const options = (
-	astroOptions: C15tAstroOptions = {
+	astroOptions: InthAstroOptions = {
 		mode: manifestMode(),
 		projectUrl: BACKEND,
 	}
@@ -69,10 +69,10 @@ describe('createConsentRouteHandlers', () => {
 			await createConsentRouteHandlers({
 				fetch,
 				options: options({ mode, projectUrl: BACKEND }),
-			}).manifest(request('/api/c15t/manifest'));
+			}).manifest(request('/api/inth/manifest'));
 			expect(fetch.mock.calls[0]?.[0]).toBe(expected);
 		}
-		expect(resolveManifestSourceUrl(request('/api/c15t/init'), options())).toBe(
+		expect(resolveManifestSourceUrl(request('/api/inth/init'), options())).toBe(
 			`${BACKEND}/manifest`
 		);
 	});
@@ -87,7 +87,7 @@ describe('createConsentRouteHandlers', () => {
 			}),
 		});
 		const response = await handlers.init(
-			request('/api/c15t/init', { 'x-c15t-country': 'DE' })
+			request('/api/inth/init', { 'x-c15t-country': 'DE' })
 		);
 		expect(response.status).toBe(200);
 		expect(
@@ -106,7 +106,7 @@ describe('createConsentRouteHandlers', () => {
 		});
 		const payload = await (
 			await handlers.init(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					'accept-language': 'fr',
 					'x-c15t-country': 'DE',
 				})
@@ -120,9 +120,9 @@ describe('createConsentRouteHandlers', () => {
 			fetch: upstream(),
 			options: options(),
 		});
-		const manifest = await handlers.GET(request('/api/c15t/manifest'));
-		const init = await handlers.GET(request('/api/c15t/init'));
-		const other = await handlers.GET(request('/api/c15t/subjects'));
+		const manifest = await handlers.GET(request('/api/inth/manifest'));
+		const init = await handlers.GET(request('/api/inth/init'));
+		const other = await handlers.GET(request('/api/inth/subjects'));
 		expect(manifest.headers.get('cache-control')).toBe('s-maxage=60');
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
 		expect(other.status).toBe(404);
@@ -133,7 +133,7 @@ describe('createConsentRouteHandlers', () => {
 		await createConsentRouteHandlers({
 			fetch: upstream(),
 			options: options(),
-		}).init(request('/api/c15t/init'), {
+		}).init(request('/api/inth/init'), {
 			locals: { cfContext: { waitUntil } },
 		});
 		expect(waitUntil).toHaveBeenCalledTimes(1);
@@ -165,7 +165,7 @@ describe('waitUntilFromLocals', () => {
 
 it('serves Astro manifest SSR references through the same-origin init route', async () => {
 	const manifest = await buildConsentManifestFromConfig({
-		branding: 'c15t',
+		branding: 'inth',
 		iab: {
 			cmpId: 28,
 			enabled: true,

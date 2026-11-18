@@ -50,7 +50,7 @@ const vitePreview = (port: number) => [
 export const starterTargets: StarterTarget[] = [
 	{
 		// The layout passes consent without awaiting it, so the banner mounts
-		// after hydration. NEXT_PUBLIC_C15T_BACKEND_URL from the shared
+		// after hydration. NEXT_PUBLIC_INTH_PROJECT_URL from the shared
 		// environment is where both Next.js builds download the bundled
 		// manifest and where the browser saves choices.
 		directory: 'examples/nextjs',
@@ -83,7 +83,7 @@ export const starterTargets: StarterTarget[] = [
 		start: () => ['run', 'start'],
 	},
 	{
-		// NUXT_PUBLIC_C15T_BACKEND_URL from the shared environment is where
+		// NUXT_PUBLIC_INTH_PROJECT_URL from the shared environment is where
 		// the build downloads the bundled manifest, and at runtime it moves
 		// the browser and the module's server routes too.
 		directory: 'examples/nuxt',
@@ -101,7 +101,7 @@ export const starterTargets: StarterTarget[] = [
 		start: vitePreview,
 	},
 	{
-		// PUBLIC_C15T_BACKEND_URL from the shared environment is where the
+		// PUBLIC_INTH_PROJECT_URL from the shared environment is where the
 		// build downloads the bundled manifest and where the browser saves.
 		// The Node adapter reads PORT and HOST.
 		directory: 'examples/astro',
@@ -111,7 +111,7 @@ export const starterTargets: StarterTarget[] = [
 		start: () => ['run', 'start'],
 	},
 	{
-		// PUBLIC_C15T_BACKEND_URL from the shared environment is where the
+		// PUBLIC_INTH_PROJECT_URL from the shared environment is where the
 		// browser asks for each visitor's policy and saves.
 		directory: 'examples/astro-static',
 		id: 'astro-static',
@@ -127,7 +127,7 @@ export const starterTargets: StarterTarget[] = [
 		],
 	},
 	{
-		// PUBLIC_C15T_BACKEND_URL from the shared environment is where the
+		// PUBLIC_INTH_PROJECT_URL from the shared environment is where the
 		// build downloads the bundled manifest and where the browser saves.
 		directory: 'examples/sveltekit',
 		id: 'sveltekit',
@@ -154,7 +154,7 @@ export const starterTargets: StarterTarget[] = [
 		start: () => ['run', 'start'],
 	},
 	{
-		// The oldest Angular `@inth/angular` supports. C15T_BACKEND_URL from
+		// The oldest Angular `@inth/angular` supports. INTH_PROJECT_URL from
 		// the shared environment is where the server's consent route reads
 		// the manifest and forwards saves; the browser only talks to the
 		// app. `server.ts` reads PORT and HOST.
@@ -164,7 +164,7 @@ export const starterTargets: StarterTarget[] = [
 		serverRendered: true,
 		start: () => ['run', 'start'],
 	},
-	// VITE_C15T_BACKEND_URL from the shared environment is where the
+	// VITE_INTH_PROJECT_URL from the shared environment is where the
 	// React, Vue and Svelte starters send `/init` and saves, and where the
 	// JavaScript starter's build downloads its bundled manifest. The other
 	// three use `hosted()`, so their builds carry the early `/init` script.

@@ -63,7 +63,7 @@ export const vercelSpeedInsightsManifest = {
 				'data-endpoint': '{{endpoint}}',
 				'data-sample-rate': '{{sampleRate}}',
 
-				'data-sdkn': 'c15t',
+				'data-sdkn': 'inth',
 			},
 
 			defer: true,

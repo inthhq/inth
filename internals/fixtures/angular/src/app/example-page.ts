@@ -18,7 +18,7 @@ import { YouTubeEmbed } from './youtube-embed';
 	selector: 'app-example-page',
 	template: `
 		<main>
-			<p>c15t / Angular</p>
+			<p>inth / Angular</p>
 			<h1>Consent example</h1>
 			<p>One consent setup for your analytics, advertising and video embeds.</p>
 			<nav aria-label="Banner design">
@@ -61,7 +61,7 @@ import { YouTubeEmbed } from './youtube-embed';
 				<app-youtube-embed />
 			</section>
 		</main>
-		<c15t-consent-dev-tools position="bottom-right" />
+		<inth-consent-dev-tools position="bottom-right" />
 	`,
 })
 export class ExamplePage {

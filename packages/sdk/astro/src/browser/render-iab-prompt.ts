@@ -76,7 +76,7 @@ const renderButton = function renderButton(
 		{
 			class: button.className,
 			'data-action': button.action,
-			'data-c15t-action': button.action,
+			'data-inth-action': button.action,
 			...extra,
 			'data-mode': button.mode,
 			'data-size': props.noStyle ? undefined : 'small',
@@ -113,9 +113,9 @@ const renderHeader = function renderHeader(model: IABPromptModel): HTMLElement {
 					'button',
 					{
 						class: model.classes.partnersLink,
-						'data-c15t-action': 'customize',
-						'data-c15t-dialog': 'iab',
-						'data-c15t-tab': 'vendors',
+						'data-inth-action': 'customize',
+						'data-inth-dialog': 'iab',
+						'data-inth-tab': 'vendors',
 						'data-testid': 'iab-consent-banner-partners-link',
 						type: 'button',
 					},
@@ -186,7 +186,7 @@ export const buildIABPrompt = function buildIABPrompt(
 				{ class: model.classes.actionGroup, 'data-direction': 'row' },
 				[
 					renderButton(model, props, model.customizeButton, {
-						'data-c15t-dialog': 'iab',
+						'data-inth-dialog': 'iab',
 					}),
 				]
 			),

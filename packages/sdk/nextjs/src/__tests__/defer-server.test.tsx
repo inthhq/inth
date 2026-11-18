@@ -24,7 +24,7 @@ test('the server renders the module and the capture script', async () => {
 	const html = await new Response(stream).text();
 
 	expect(load).toHaveBeenCalledTimes(1);
-	expect(html).toContain('data-c15t-deferred');
+	expect(html).toContain('data-inth-deferred');
 	expect(html).toContain('>Accept</button>');
 	expect(html).toContain(DEFER_CAPTURE_SCRIPT);
 });

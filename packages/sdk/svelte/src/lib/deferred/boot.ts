@@ -10,7 +10,7 @@
 import type { ConsentExperiment, ConsentSnapshot } from '@inth/sdk/engine';
 
 /** Attribute on the `<script type="application/json">` element. @internal */
-export const CONSENT_BOOT_ATTRIBUTE = 'data-c15t-boot';
+export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
 
 /** What the server leaves. Short keys: it travels in every page. @internal */
 export interface ConsentRootBoot {

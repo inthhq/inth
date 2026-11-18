@@ -66,7 +66,7 @@ const SOURCE_RANK: Record<VendorSource, number> = {
 const VENDOR_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/u;
 
 const invalidSlugWarning = (id: string): string =>
-	`[c15t] Vendor id "${id}" is not a lowercase slug of up to 64 characters (letters, digits, ".", "_" and "-"). It is ignored: anything it names is gated by its category only.`;
+	`[inth] Vendor id "${id}" is not a lowercase slug of up to 64 characters (letters, digits, ".", "_" and "-"). It is ignored: anything it names is gated by its category only.`;
 
 /** Whether a string is a slug the wire schema accepts. */
 export const isValidVendorId = function isValidVendorId(
@@ -490,7 +490,7 @@ export const resolveVendors = function resolveVendors(
 			continue;
 		}
 		input.onWarn?.(
-			`[c15t] Vendor "${id}" is referenced by a script or rule but has no declaration with a name and privacy policy URL. It gates loading but is hidden from the preference surface until declared in \`vendors\`.`
+			`[inth] Vendor "${id}" is referenced by a script or rule but has no declaration with a name and privacy policy URL. It gates loading but is hidden from the preference surface until declared in \`vendors\`.`
 		);
 	}
 

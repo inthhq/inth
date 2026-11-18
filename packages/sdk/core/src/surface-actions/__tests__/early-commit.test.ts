@@ -226,7 +226,7 @@ describe('storeEarlyCommit', () => {
 
 	test('a stored clear epoch is reported, so the kernel records the choice', () => {
 		expect(hasStoredClearEpoch()).toBe(false);
-		localStorage.setItem('c15t-epoch', String(NOW));
+		localStorage.setItem('inth-epoch', String(NOW));
 		expect(hasStoredClearEpoch()).toBe(true);
 	});
 });

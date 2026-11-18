@@ -1,4 +1,4 @@
-import { controlledToggle, toggleOnOff } from '@c15t/conformance/play/switch';
+import { controlledToggle, toggleOnOff } from '@inth/conformance/play/switch';
 import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 

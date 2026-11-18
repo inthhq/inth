@@ -42,7 +42,7 @@ export const readId = function readId(value: unknown): string | undefined {
  * Vendor IDs often come from environment variables, so a blank value is a
  * deployment problem rather than a code bug. Throwing during render would
  * take the consent UI down with the app, so the helper reports the problem
- * with `console.error` and hands c15t a callback-only script with no
+ * with `console.error` and hands Inth a callback-only script with no
  * callbacks: nothing is added to the page and no vendor code runs. The
  * script keeps the manifest's vendor slug and details, so the vendor stays
  * listed in the preference center while the ID is missing.

@@ -189,7 +189,7 @@ export interface DatabuddyConsentOptions {
 	scriptUrl?: string;
 
 	/**
-	 * When c15t should load the Databuddy script.
+	 * When Inth should load the Databuddy script.
 	 *
 	 * - `after-consent`: wait for measurement consent before loading Databuddy.
 	 * - `always`: load immediately and switch Databuddy's disabled flag from
@@ -224,7 +224,7 @@ export interface DatabuddyConsentOptions {
 
 	/**
 	 * Databuddy config object to seed when consent is granted at load time.
-	 * c15t sets its `disabled` key from consent. The default carries the
+	 * Inth sets its `disabled` key from consent. The default carries the
 	 * client ID and API URL, for when Databuddy cannot read them from its
 	 * script tag.
 	 * @default { apiUrl, clientId, disabled: false }
@@ -233,7 +233,7 @@ export interface DatabuddyConsentOptions {
 
 	/**
 	 * Databuddy config object to seed when consent is denied at load time,
-	 * and to set on a refusal. Used only with `loadMode: 'always'`. c15t sets
+	 * and to set on a refusal. Used only with `loadMode: 'always'`. Inth sets
 	 * its `disabled` key from consent.
 	 * @default { apiUrl, clientId, disabled: true }
 	 */
@@ -464,7 +464,7 @@ const reuseDatabuddyReplay = createScriptReuse<DatabuddyConsentOptions>();
  * granted. `replay.js` still waits for consent.
  *
  * @param options - Configuration for the Databuddy consent script
- * @returns The Databuddy script configuration object for c15t's script loader
+ * @returns The Databuddy script configuration object for inth's script loader
  * @remarks When `clientId` is missing or blank, the
  *   helper logs `databuddy: missing or invalid clientId` with
  *   `console.error` and returns a script that never loads.

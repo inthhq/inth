@@ -293,7 +293,7 @@ jobs:
         with:
           browsers: "true"
       # @inth/svelte's tests import a SvelteKit doc snippet whose tsconfig
-      # extends $app/tsconfig, which only `svelte-kit sync` writes. c15t's CI
+      # extends $app/tsconfig, which only `svelte-kit sync` writes. inth's CI
       # got it as a side effect of running type checks first in the same job.
       - name: Generate SvelteKit types the tests import
         run: pnpm --dir internals/doc-snippets/sveltekit exec svelte-kit sync
@@ -458,7 +458,7 @@ jobs:
     env:
       # Xcode versions this job accepts, most preferred first. DEVELOPER_DIR is set
       # per run instead of switched with xcode-select.
-      C15T_XCODE_VERSIONS: "27 26"
+      INTH_XCODE_VERSIONS: "27 26"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -466,7 +466,7 @@ jobs:
       - name: Select Xcode
         run: |
           target=""
-          for version in ${C15T_XCODE_VERSIONS}; do
+          for version in ${INTH_XCODE_VERSIONS}; do
             for candidate in /Applications/Xcode_${version}*.app /Applications/Xcode-${version}*.app; do
               if [ -d "${candidate}/Contents/Developer" ]; then
                 target="${candidate}"
@@ -477,7 +477,7 @@ jobs:
             fi
           done
           if [ -z "${target}" ]; then
-            echo "No Xcode ${C15T_XCODE_VERSIONS} in /Applications. This runner has:" >&2
+            echo "No Xcode ${INTH_XCODE_VERSIONS} in /Applications. This runner has:" >&2
             ls /Applications >&2
             exit 1
           fi
@@ -547,7 +547,7 @@ jobs:
       - uses: ./.github/actions/setup-sdk
       - name: Test and assemble the React Native Android binding
         env:
-          C15T_MAVEN_URL: file://${{ github.workspace }}/packages/android/build/maven-staging
+          INTH_MAVEN_URL: file://${{ github.workspace }}/packages/android/build/maven-staging
         working-directory: packages/react-native/android
         run: ./gradlew :inth-react-native:testDebugUnitTest :inth-react-native:assembleRelease --console=plain
       - name: Save Android reports

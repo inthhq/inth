@@ -279,8 +279,8 @@ describe('script-loader: DOM dedupe across loader instances', () => {
 		expect(head.children).toHaveLength(1);
 		// oxlint-disable-next-line prefer-destructuring -- Preserve declaration order, interface shape, and public compatibility.
 		const element = head.children[0];
-		expect(element?.id).toMatch(/^c15t-/u);
-		expect(element?.id).not.toBe('c15t-script-shared-anon');
+		expect(element?.id).toMatch(/^inth-/u);
+		expect(element?.id).not.toBe('inth-script-shared-anon');
 
 		const second = createScriptLoader({ kernel, scripts: [script] });
 
@@ -311,7 +311,7 @@ describe('script-loader: DOM dedupe across loader instances', () => {
 		const second = createScriptLoader({ kernel, scripts: [script] });
 
 		expect(head.children).toHaveLength(1);
-		expect(head.children[0]?.id).toBe('c15t-script-shared-stable');
+		expect(head.children[0]?.id).toBe('inth-script-shared-stable');
 
 		second.dispose();
 		expect(head.children).toHaveLength(1);
@@ -719,8 +719,8 @@ describe('script-loader: anonymizeId', () => {
 			],
 		});
 		const firstId = head.children[0]?.id;
-		expect(firstId).toMatch(/^c15t-/u);
-		expect(firstId).not.toBe('c15t-script-gtm');
+		expect(firstId).toMatch(/^inth-/u);
+		expect(firstId).not.toBe('inth-script-gtm');
 
 		// Revoke + regrant should keep the same anonymized ID.
 		void kernel.commands.save({ marketing: false });
@@ -728,7 +728,7 @@ describe('script-loader: anonymizeId', () => {
 		expect(head.children[0]?.id).toBe(firstId);
 	});
 
-	test('opt out with anonymizeId:false → element id is c15t-script-<id>', () => {
+	test('opt out with anonymizeId:false → element id is inth-script-<id>', () => {
 		const kernel = createConsentKernel({
 			initialRecords: choiceRecords({ marketing: true }),
 		});
@@ -743,7 +743,7 @@ describe('script-loader: anonymizeId', () => {
 				},
 			],
 		});
-		expect(head.children[0]?.id).toBe('c15t-script-gtm');
+		expect(head.children[0]?.id).toBe('inth-script-gtm');
 	});
 });
 

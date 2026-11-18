@@ -1,12 +1,12 @@
 ---
 title: Consent state reference
-description: How c15t saves choices, gates IAB vendors, hydrates server records and keeps browser tabs and storage in step.
+description: How Inth saves choices, gates IAB vendors, hydrates server records and keeps browser tabs and storage in step.
 group: concepts
 ---
 
 This reference covers the edge cases behind the model in
 [how consent works](/docs/concepts/how-consent-works). You need it when you
-build custom consent UI, run c15t across subdomains, or debug a choice that
+build custom consent UI, run Inth across subdomains, or debug a choice that
 changes between tabs.
 
 ## Gate IAB vendors on the TC string
@@ -28,7 +28,7 @@ feature, stay blocked.
 
 ## Categories under an IAB policy
 
-Under an IAB policy the visitor chooses TCF purposes, and c15t derives each
+Under an IAB policy the visitor chooses TCF purposes, and Inth derives each
 category from them when the choice is saved. A category is granted when the
 visitor consented to every purpose in it that a listed vendor processes on
 consent:
@@ -67,7 +67,7 @@ categories your vendor list leaves denied.
 Every visitor gets a subject ID (`sub_…`). It is in
 `snapshot.subject.subjectId` from the first snapshot.
 
-- Until the visitor acts, the ID lives in memory only. c15t stores no
+- Until the visitor acts, the ID lives in memory only. Inth stores no
   identifier and no consent record before a choice, so a reload before the
   first save starts with a new ID.
 - The first save stores the ID with the record it writes. From then on it
@@ -117,7 +117,7 @@ A replay that fails and stays queued emits `save:replayed` with `ok: false` but
 not `command:error`, since the save already reported its first failure. A save
 that leaves the queue without the backend recording it, because it ran out of
 attempts, waited more than 7 days or was refused, emits `command:error` once.
-Development builds also log a `[c15t]` console warning for each of these.
+Development builds also log a `[inth]` console warning for each of these.
 
 IAB surfaces close in the click task too, but an IAB choice is recorded only
 after its TC string is encoded, which can wait for the TCF library to load.
@@ -152,13 +152,13 @@ cover how v3 treats v2 records.
 
 ## Retry interrupted saves
 
-Before sending a recorded choice to the backend, c15t puts it in a localStorage
+Before sending a recorded choice to the backend, Inth puts it in a localStorage
 queue. If the page closes while the request is in flight, the next initialization
 retries it with the original decision time. A successful response removes the
 queued choice. A permanent rejection, such as a stale policy, removes it too.
 
 Queueing depends on the browser allowing storage. When storage is unavailable,
-c15t still attempts the request, but cannot preserve an interrupted request for
+Inth still attempts the request, but cannot preserve an interrupted request for
 the next page. A locally remembered choice alone does not prove that the backend
 received it; check the saved consent record in Inth.
 
@@ -180,16 +180,16 @@ yourself as described in
 
 The `storage` event only exists for localStorage. When localStorage is
 unavailable (blocked by the browser, a sandboxed frame or a privacy mode) and
-c15t stores in the cookie alone, another tab's change arrives only on the next
+Inth stores in the cookie alone, another tab's change arrives only on the next
 focus or visibility change, or when you call `runtime.reconcileStorage()` or
-`persistence.reconcile()`. c15t does not poll the cookie or use a
+`persistence.reconcile()`. Inth does not poll the cookie or use a
 `BroadcastChannel` for this.
 
 Browser persistence reads stored records again at these moments:
 
 | Moment | What happens |
 | --- | --- |
-| Another tab or window on the same origin changes a c15t localStorage key | Reconciles on the `storage` event |
+| Another tab or window on the same origin changes a Inth localStorage key | Reconciles on the `storage` event |
 | The page becomes visible again | Reconciles on `visibilitychange` |
 | The window regains focus | Reconciles on `focus` |
 | The network reconnects | No storage read |
@@ -242,7 +242,7 @@ read, the same way as at startup.
 Under an IAB policy, a tab adopts the TC string another tab stored, unless that
 TC string conflicts with the reconciled choice. A conflicting TC string is
 withdrawn, and `__tcfapi` reports no consent until the next save. Vendors never
-receive a stale TC string: c15t withdraws it, or holds it back, before
+receive a stale TC string: Inth withdraws it, or holds it back, before
 `__tcfapi` publishes.
 
 1. The `@inth/sdk/iab` module loads the TC string the other tab stored, with its
@@ -260,7 +260,7 @@ receive a stale TC string: c15t withdraws it, or holds it back, before
    receipt is adopted even when its TC string is identical, because TC strings
    round their time to the day and custom-vendor selections live only in the
    receipt. The receipt's expiry then applies.
-5. The TC string and its receipt (`euconsent-v2`, `c15t-iab-authority-v1`)
+5. The TC string and its receipt (`euconsent-v2`, `inth-iab-authority-v1`)
    belong to one origin. After a save on a sibling subdomain that shares the
    consent cookie, this subdomain reports no consent through `__tcfapi` until
    it saves again.
@@ -287,7 +287,7 @@ browser persistence, so nothing the visitor decided before the clear reaches
 the backend afterwards.
 
 `clearRecords()` removes every record and then stores the time of the clear,
-the clear epoch, under its own key: `c15t-epoch` in localStorage and a cookie
+the clear epoch, under its own key: `inth-epoch` in localStorage and a cookie
 of the same name (`<storageKey>-epoch` with a custom `storageKey`). Clearing
 never removes it. Every consent record written afterwards also records the
 epoch it was written under.
@@ -337,7 +337,7 @@ more than an hour.
 This changes the stored format. After a clear, the consent cookie carries
 `&e=<time>` (16 bytes) and the localStorage record an `epoch` field (22 bytes),
 and the epoch cookie itself holds a 13-digit time. Visitors who never cleared
-their records store exactly what they did before. An older c15t build rejects
+their records store exactly what they did before. An older Inth build rejects
 both the cookie and the localStorage record once they carry the epoch, so a page
 still running one treats the visitor as undecided. Under an opt-out policy that
 page grants optional categories by default until a new choice is saved, and the
@@ -384,7 +384,7 @@ runtimes still read it. A separate `<key>-notice-subject` cookie binds the
 subject ID to that acknowledgement: readers use it only while its timestamp and
 fingerprint match the notice, so removing or replacing the notice makes a stale
 identity cookie ineffective. When the subject ID changes, through a save
-response or `set.subjectId()`, c15t rewrites the acknowledgement with the new
+response or `set.subjectId()`, Inth rewrites the acknowledgement with the new
 ID, so a reload does not bring the old one back. For the same acknowledgement,
 the cookie identity wins unless a failed cookie write left a newer local
 identity or a local identity removal. That exception lasts only while both
@@ -430,7 +430,7 @@ the current `storageConfig` uses, which the clear cannot remove.
 The subject ID follows the same split. When its cookie writes succeed, the
 server render and the browser use the same ID. When the browser refuses the
 rewrite of a record cookie after the subject ID changed (the consent cookie,
-`c15t-vendors` or `c15t-notice-subject`), that cookie keeps the old ID while
+`inth-vendors` or `inth-notice-subject`), that cookie keeps the old ID while
 localStorage holds the new one. A server render then reports the old ID, and
 the browser starts with the new ID from its storage. It lasts until a later
 write of that record reaches the cookie, which may never happen while the

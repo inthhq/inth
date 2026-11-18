@@ -4,7 +4,7 @@ import type { CONSENT_CATEGORY } from '@inth/sdk/consent-record';
  * Inline consent-management widget for settings and privacy pages.
  *
  * Renders the shared consent-widget DOM contract (see
- * `@c15t/conformance` — `DOM_CONTRACT.consentWidget` and
+ * `@inth/conformance` — `DOM_CONTRACT.consentWidget` and
  * `TEST_IDS.consentWidget`): a single-open category accordion with
  * per-category switches and a policy-driven action footer. The markup,
  * class names, and ARIA attributes intentionally mirror the React and
@@ -184,11 +184,11 @@ const toggleConsent = function toggleConsent(category: CONSENT_CATEGORY) {
 };
 
 const triggerId = function triggerId(index: number): string {
-	return `c15t-preference-item-trigger-${uid}-${index}`;
+	return `inth-preference-item-trigger-${uid}-${index}`;
 };
 
 const contentId = function contentId(index: number): string {
-	return `c15t-preference-item-content-${uid}-${index}`;
+	return `inth-preference-item-content-${uid}-${index}`;
 };
 
 const labels = computed(() => {

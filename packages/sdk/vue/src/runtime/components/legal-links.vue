@@ -4,7 +4,7 @@ import type { ConsentLegalLinkKey } from '@inth/sdk/schema/config';
 import '@inth/sdk/ui/styles/components/legal-links.css';
 import { computed } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '#c15t/composables';
+import { useConsentConfig, useConsentInit } from '#inth/composables';
 
 import ConsentLink from './link.vue';
 

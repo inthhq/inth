@@ -42,7 +42,7 @@ export interface IABConfig {
 	/** Publisher country code used in the TC string. */
 	publisherCountryCode?: string;
 	/**
-	 * Ignored: c15t always encodes IsServiceSpecific=1.
+	 * Ignored: Inth always encodes IsServiceSpecific=1.
 	 *
 	 * @deprecated TCF requires IsServiceSpecific=1. Group-specific scope is
 	 * also encoded as 1. Passing `false` logs a warning once and has no

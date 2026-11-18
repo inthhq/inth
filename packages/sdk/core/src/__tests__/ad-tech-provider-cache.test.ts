@@ -181,7 +181,7 @@ describe('fetchCachedAdTechProviders', () => {
 	});
 
 	test('keeps a relative endpoint apart for each fetch that resolves it', async () => {
-		const relative = { providers: [89], url: '/api/c15t/additional-consent' };
+		const relative = { providers: [89], url: '/api/inth/additional-consent' };
 		const TENANT_A = { ...META, name: 'Meta (tenant A)' };
 		const TENANT_B = { ...META, name: 'Meta (tenant B)' };
 		const tenantA = listing(TENANT_A);

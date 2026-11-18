@@ -17,7 +17,7 @@ import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/r
 import { createConsentRuntime } from '../../runtime/index';
 import type { ConsentRuntime } from '../../runtime/types';
 import { hosted } from '../../transports/mode';
-import { c15tProtocolHeaders } from '../../transports/version-header';
+import { inthProtocolHeaders } from '../../transports/version-header';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	EARLY_TAP_HOLD_PRESSES_KEY,
@@ -110,17 +110,17 @@ const createRuntime = () => {
 					Response.json(
 						path.endsWith('/init')
 							? {
-									branding: 'c15t',
+									branding: 'inth',
 									location: { countryCode: 'DE', regionCode: null },
 									policyResolution: writePolicyResolutionWire(policy),
 									translations: { language: 'en', translations },
 								}
 							: {},
-						{ headers: c15tProtocolHeaders }
+						{ headers: inthProtocolHeaders }
 					)
 				);
 			},
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		}),
 		prefetch: { initRetry: false },
 	});
@@ -301,7 +301,7 @@ describe('replayEarlyConsentTaps', () => {
 			expect(snapshot.activeUI).toBe('none');
 			// Persistence writes after the commit.
 			await vi.waitFor(() =>
-				expect(JSON.parse(localStorage.getItem('c15t') ?? '{}')).toMatchObject({
+				expect(JSON.parse(localStorage.getItem('inth') ?? '{}')).toMatchObject({
 					categories: { marketing: { value: granted } },
 				})
 			);

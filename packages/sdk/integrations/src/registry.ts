@@ -14,7 +14,7 @@ export type IntegrationCategory =
 /**
  * Consent bucket that a built-in integration maps to by default.
  *
- * These values mirror c15t's consent categories without importing core types, so
+ * These values mirror inth's consent categories without importing core types, so
  * the registry stays safe to consume from docs and CLI code.
  */
 export type IntegrationConsentCategory =

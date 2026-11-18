@@ -7,7 +7,7 @@ import type { Overrides } from '../options/overrides';
  *
  * `/init` reads no cookie and sets none: its answer depends only on the
  * request's geo, language, GPC and declared contract. `same-origin` keeps
- * cookies on a same-origin init route (an app may gate `/api/c15t` behind
+ * cookies on a same-origin init route (an app may gate `/api/inth` behind
  * its own session), and leaves them off a cross-origin backend, which can
  * then answer with `Access-Control-Allow-Origin: *`. Saves keep
  * `include`.

@@ -16,7 +16,7 @@ export type { ConsentRequestOptions, ConsentState } from '../server/types';
 export type KitMode = ConsentMode;
 
 /**
- * What {@link c15tHandle} stores on `event.locals.c15t`.
+ * What {@link inthHandle} stores on `event.locals.inth`.
  *
  * `config` is the serializable {@link ConsentState} read from the cookie
  * and the request alone; `inputs` is the normalized geo/language/GPC
@@ -24,27 +24,27 @@ export type KitMode = ConsentMode;
  * and route handlers do not re-parse headers. `mode`, `routePrefix` and
  * `snapshot` are the handle's options, for `loadConsent`.
  */
-export interface C15tLocals {
+export interface InthLocals {
 	/** Consent state seeded from the consent cookie and request inputs. */
 	config: ConsentState;
 	/** Normalized country / region / language / GPC for this request. */
 	inputs: ConsentRequestInputs;
 	/** How `loadConsent` resolves the visitor. */
 	mode: KitMode;
-	/** The c15t backend, when the handle was given one. */
+	/** The Inth backend, when the handle was given one. */
 	projectUrl?: string;
-	/** Prefix of the app's consent route, such as `/api/c15t`. */
+	/** Prefix of the app's consent route, such as `/api/inth`. */
 	routePrefix?: string;
 	/** A manifest that replaces the one the build downloaded. */
 	snapshot?: ConsentManifest;
 	/**
 	 * The cookie name the handle actually read, when it was given one.
 	 * `loadConsent` falls back to it so a per-call geo override does not
-	 * silently re-read the default `c15t` key and lose persisted consent.
+	 * silently re-read the default `inth` key and lose persisted consent.
 	 */
 	cookieName?: string;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the handle never
+	 * @deprecated Inth no longer sets a subject cookie, so the handle never
 	 * sets this. Removed in v4.
 	 */
 	storage?: Pick<
@@ -52,17 +52,17 @@ export interface C15tLocals {
 		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays'
 	>;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the handle never
+	 * @deprecated Inth no longer sets a subject cookie, so the handle never
 	 * sets this. Removed in v4.
 	 */
 	trustForwardedHeaders?: boolean;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the handle never
+	 * @deprecated Inth no longer sets a subject cookie, so the handle never
 	 * sets this. Removed in v4. Read the request's own `Cookie` header.
 	 */
 	cookie?: string;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the handle never
+	 * @deprecated Inth no longer sets a subject cookie, so the handle never
 	 * sets this. Removed in v4.
 	 */
 	subjectCookie?: false;

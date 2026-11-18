@@ -50,7 +50,7 @@ const makeResult = function makeResult(
 			summarizeMetric(name, 'us', [median])
 		),
 		notes: [],
-		package: '@c15t/core-benchmarks',
+		package: '@inth/core-benchmarks',
 		runtime: 'test',
 		scenario,
 		schemaVersion: 1,
@@ -70,7 +70,7 @@ interface CompareRun {
 const runCompare = function runCompare(
 	env: Record<string, string>
 ): CompareRun {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-compare-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-compare-'));
 	const compareDir = join(root, 'compare');
 	let stdout = '';
 	let code = 0;
@@ -116,7 +116,7 @@ const summaryOf = function summaryOf(
 };
 
 const writeResults = function writeResults(results: BenchmarkResult[]): string {
-	const dir = mkdtempSync(join(tmpdir(), 'c15t-results-'));
+	const dir = mkdtempSync(join(tmpdir(), 'inth-results-'));
 	for (const result of results) {
 		writeJson(join(dir, `${result.scenario}.json`), result);
 	}
@@ -124,7 +124,7 @@ const writeResults = function writeResults(results: BenchmarkResult[]): string {
 };
 
 const emptyArmMap = function emptyArmMap(): string {
-	const dir = mkdtempSync(join(tmpdir(), 'c15t-arm-map-'));
+	const dir = mkdtempSync(join(tmpdir(), 'inth-arm-map-'));
 	const path = join(dir, 'arm-map.json');
 	writeFileSync(path, '{"mappings":{}}\n');
 	return path;
@@ -164,7 +164,7 @@ const tarballResult = (
 		'@inth/react': reactBytes,
 		'@inth/sdk-core': 10_000,
 	}).map(([name, value]) => summarizeMetric(name, 'bytes', [value])),
-	package: '@c15t/next-bundle-bench',
+	package: '@inth/next-bundle-bench',
 	suite: 'artifact',
 });
 
@@ -299,7 +299,7 @@ describe('run-compare gate', () => {
 		});
 		expect(run.code).not.toBe(0);
 		expect(summaryOf(run).results.missingBase).toContain(
-			'@c15t/core-benchmarks:tiny:core-runtime'
+			'@inth/core-benchmarks:tiny:core-runtime'
 		);
 		expect(summaryOf(run).budgets.missingBaseMetric).toBe(
 			coreRuntimeBudgets.length + coreRuntimeCoverageBudgets.length
@@ -451,7 +451,7 @@ describe('run-compare gate', () => {
 			BENCHMARK_BASE_DIR: writeResults(tiny),
 			BENCHMARK_HEAD_DIR: writeResults(tiny),
 			BENCHMARK_PROFILE: 'regression',
-			C15T_BENCH_ONLY: 'core-runtime:tiny',
+			INTH_BENCH_ONLY: 'core-runtime:tiny',
 		});
 		expect(shard.code).toBe(0);
 		expect(summaryOf(shard).results.expected).toBe(1);
@@ -461,15 +461,15 @@ describe('run-compare gate', () => {
 			BENCHMARK_BASE_DIR: writeResults(tiny),
 			BENCHMARK_HEAD_DIR: writeResults(tiny),
 			BENCHMARK_PROFILE: 'regression',
-			C15T_BENCH_ONLY: 'core-runtime',
-			C15T_BENCH_SKIP: 'core-runtime:large',
+			INTH_BENCH_ONLY: 'core-runtime',
+			INTH_BENCH_SKIP: 'core-runtime:large',
 		});
 		expect(missing.code).not.toBe(0);
 		expect(summaryOf(missing).results.missingHead).toContain(
-			'@c15t/core-benchmarks:small:core-runtime'
+			'@inth/core-benchmarks:small:core-runtime'
 		);
 		expect(summaryOf(missing).results.missingHead).not.toContain(
-			'@c15t/core-benchmarks:large:core-runtime'
+			'@inth/core-benchmarks:large:core-runtime'
 		);
 	});
 
@@ -556,7 +556,7 @@ it('reports unselected packages as unexpected without evaluating their failures'
 	const run = runCompare({
 		BENCHMARK_ARM_MAP: emptyArmMap(),
 		BENCHMARK_BASE_DIR: writeResults(fullCore()),
-		BENCHMARK_EXPECTED_PACKAGES: '@c15t/core-benchmarks',
+		BENCHMARK_EXPECTED_PACKAGES: '@inth/core-benchmarks',
 		BENCHMARK_HEAD_DIR: writeResults([...fullCore(), unselected]),
 		BENCHMARK_PROFILE: 'regression',
 	});
@@ -595,7 +595,7 @@ it('uses sample uncertainty for browser timings while retaining confirmed regres
 			BENCHMARK_EXPECTED_SUITES: 'browser-runtime',
 			BENCHMARK_HEAD_DIR: writeResults([browserResult(samples)]),
 			BENCHMARK_PROFILE: 'regression',
-			C15T_BENCH_ONLY: `browser-runtime:${expected.scenario}`,
+			INTH_BENCH_ONLY: `browser-runtime:${expected.scenario}`,
 		});
 	const noisy = compare([
 		...Array<number>(8).fill(80),
@@ -630,7 +630,7 @@ describe('consent gate accepted shifts', () => {
 	const lacking = shift
 		? readCommit(`${shift.untilBaseIncludes}^1`)
 		: undefined;
-	const pkg = '@c15t/nextjs-browser-bench';
+	const pkg = '@inth/nextjs-browser-bench';
 	const scenario = 'consent-gate:latency-200ms';
 	const gateResult = (
 		preferencesMs: number,
@@ -691,7 +691,7 @@ describe('consent gate accepted shifts', () => {
 });
 
 describe('consent gate target new on the head', () => {
-	const pkg = '@c15t/angular-browser-bench';
+	const pkg = '@inth/angular-browser-bench';
 	const budgets = consentGateBudgets('angular');
 	const angularGate = (bannerMs: number): BenchmarkResult => ({
 		...makeResult('consent-gate:latency-200ms', {}, budgets, 'head'),

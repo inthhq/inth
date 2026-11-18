@@ -39,7 +39,7 @@ const customMode = <Transport,>(transport: Transport) =>
 
 const BACKEND_URL = 'https://consent.example.test';
 const MANIFEST: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [createConsentManifestPolicyPack(OBSERVED_RULE)],
 	revision: 'consent-observers',
 	schemaVersion: 2,
@@ -86,9 +86,9 @@ const visitorCookie = async function visitorCookie(
 		const cookie = document.cookie
 			.split(';')
 			.map((entry) => entry.trim())
-			.find((entry) => entry.startsWith('c15t='));
+			.find((entry) => entry.startsWith('inth='));
 		if (!cookie) {
-			throw new Error(`save('${action}') wrote no c15t cookie`);
+			throw new Error(`save('${action}') wrote no inth cookie`);
 		}
 		return cookie;
 	} finally {

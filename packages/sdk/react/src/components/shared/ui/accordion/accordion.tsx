@@ -219,8 +219,8 @@ const AccordionItem = createForwardRef<HTMLDivElement, AccordionItemProps>(
 			? className
 			: variants.item({ class: className });
 		const reactId = useId().replace(/:/gu, '');
-		const contentId = `c15t-accordion-content-${reactId}`;
-		const triggerId = `c15t-accordion-trigger-${reactId}`;
+		const contentId = `inth-accordion-content-${reactId}`;
+		const triggerId = `inth-accordion-trigger-${reactId}`;
 		const contextValue = useMemo(
 			() => ({
 				contentId,

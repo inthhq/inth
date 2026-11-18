@@ -22,7 +22,7 @@ import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
 import { buildConfigScript } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tIABOptions } from '../types';
+import type { InthAstroOptions, InthIABOptions } from '../types';
 import { registerDialogAdapter } from '../ui/adapter';
 import type { ConsentDialogHandle } from '../ui/adapter';
 import { createTestPageIAB } from './page-iab';
@@ -34,7 +34,7 @@ registerRuntimeModules(onDemandRuntimeModules);
 const pageIAB = createTestPageIAB();
 registerIAB(pageIAB);
 
-const OPTIONS: C15tAstroOptions = {
+const OPTIONS: InthAstroOptions = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 	mode: testingMode({ policy: [testRule] }),
 };
@@ -78,18 +78,18 @@ let client: AstroConsentClient | null = null;
 const renderBanner = function renderBanner(): void {
 	document.body.innerHTML = `
 		<div data-testid="consent-banner-root">
-			<button data-c15t-action="reject" type="button">Reject</button>
-			<button data-c15t-action="customize" type="button">Customize</button>
-			<button data-c15t-action="accept" type="button">Accept</button>
+			<button data-inth-action="reject" type="button">Reject</button>
+			<button data-inth-action="customize" type="button">Customize</button>
+			<button data-inth-action="accept" type="button">Accept</button>
 		</div>
 	`;
 };
 
 const start = function start(
-	options: C15tAstroOptions = OPTIONS,
+	options: InthAstroOptions = OPTIONS,
 	config: Record<string, unknown> = INLINE_CONFIG
 ): AstroConsentClient {
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig = config;
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = config;
 	client = boot(resolveOptions(options));
 	return client;
 };
@@ -100,9 +100,9 @@ beforeEach(() => {
 	document.body.innerHTML = '';
 	document.head.innerHTML = '';
 	const globals = window as unknown as Record<string, unknown>;
-	globals.__c15tAstro = undefined;
-	globals.__c15tAstroConfig = undefined;
-	globals.__c15tAstroActions = undefined;
+	globals.__inthAstro = undefined;
+	globals.__inthAstroConfig = undefined;
+	globals.__inthAstroActions = undefined;
 });
 
 afterEach(() => {
@@ -215,7 +215,7 @@ const GVL = {
 			usesNonCookieAccess: false,
 		},
 	},
-} as unknown as NonNullable<C15tIABOptions['gvl']>;
+} as unknown as NonNullable<InthIABOptions['gvl']>;
 
 describe('IAB options', () => {
 	it('forwards publisher restrictions to the CMP', async () => {
@@ -238,7 +238,7 @@ describe('banner actions', () => {
 		renderBanner();
 		const booted = start();
 		document
-			.querySelector<HTMLButtonElement>('[data-c15t-action="accept"]')
+			.querySelector<HTMLButtonElement>('[data-inth-action="accept"]')
 			?.click();
 		await vi.waitFor(() => {
 			expect(booted.getConsent().effectivePermissions.marketing).toBe(true);
@@ -249,7 +249,7 @@ describe('banner actions', () => {
 		renderBanner();
 		const booted = start();
 		document
-			.querySelector<HTMLButtonElement>('[data-c15t-action="reject"]')
+			.querySelector<HTMLButtonElement>('[data-inth-action="reject"]')
 			?.click();
 		await vi.waitFor(() => {
 			expect(booted.getConsent().effectivePermissions.marketing).toBe(false);
@@ -270,7 +270,7 @@ describe('banner actions', () => {
 			);
 			await pageIAB.whenReady();
 			document
-				.querySelector<HTMLButtonElement>(`[data-c15t-action="${action}"]`)
+				.querySelector<HTMLButtonElement>(`[data-inth-action="${action}"]`)
 				?.click();
 			await vi.waitFor(() => {
 				expect(booted.getConsent().iab?.authority?.tcString).toBeTruthy();
@@ -313,13 +313,13 @@ describe('banner actions', () => {
 		await booted.acceptAll();
 		await vi.waitFor(() => {
 			expect(banner?.hidden).toBe(true);
-			expect(banner?.getAttribute('data-c15t-visible')).toBe('false');
+			expect(banner?.getAttribute('data-inth-visible')).toBe('false');
 		});
 	});
 
 	it('hides persistent controls until a policy rule is resolved', () => {
 		document.body.innerHTML = `
-			<button data-c15t-surface="trigger" data-testid="consent-dialog-trigger" type="button" hidden>Privacy</button>
+			<button data-inth-surface="trigger" data-testid="consent-dialog-trigger" type="button" hidden>Privacy</button>
 		`;
 		const trigger = document.querySelector<HTMLElement>(
 			'[data-testid="consent-dialog-trigger"]'
@@ -366,7 +366,7 @@ describe('banner actions', () => {
 			<div data-testid="${name}-overlay"></div>
 			<div data-testid="${name}-root" data-blocking="true">
 				<div data-testid="${name}-card" tabindex="-1">
-					<button data-c15t-action="accept" type="button">Accept</button>
+					<button data-inth-action="accept" type="button">Accept</button>
 				</div>
 			</div>
 		`;
@@ -498,7 +498,7 @@ describe('ClientRouter navigation', () => {
 		document.body.insertAdjacentHTML(
 			'beforeend',
 			[
-				'<script type="text/plain" data-c15t-category="measurement">',
+				'<script type="text/plain" data-inth-category="measurement">',
 				'globalThis.__navGated = true;',
 				'</script>',
 			].join('')
@@ -506,7 +506,7 @@ describe('ClientRouter navigation', () => {
 		document.dispatchEvent(new Event('astro:page-load'));
 
 		expect(
-			document.querySelector('script[data-c15t-activated="true"]')
+			document.querySelector('script[data-inth-activated="true"]')
 		).not.toBeNull();
 	});
 
@@ -540,9 +540,9 @@ describe('ClientRouter navigation', () => {
 describe('opening without an inlined resolution', () => {
 	/** Boot with the init still in flight: no server-resolved policy inlined. */
 	const startPending = function startPending(
-		options: C15tAstroOptions = OPTIONS
+		options: InthAstroOptions = OPTIONS
 	): AstroConsentClient {
-		(window as unknown as Record<string, unknown>).__c15tAstroConfig = {
+		(window as unknown as Record<string, unknown>).__inthAstroConfig = {
 			initialTranslations: INLINE_CONFIG.initialTranslations,
 		};
 		client = boot(resolveOptions(options));
@@ -746,7 +746,7 @@ describe('warming the dialog on intent', () => {
 	};
 
 	const button = (action: string) =>
-		document.querySelector<HTMLButtonElement>(`[data-c15t-action="${action}"]`);
+		document.querySelector<HTMLButtonElement>(`[data-inth-action="${action}"]`);
 
 	it('does not download the dialog on load', async () => {
 		const counts = registerCountingAdapter();
@@ -789,7 +789,7 @@ describe('warming the dialog on intent', () => {
 		renderBanner();
 		document.body.insertAdjacentHTML(
 			'beforeend',
-			'<button data-c15t-action="customize" data-c15t-dialog="iab" id="iab">Partners</button>'
+			'<button data-inth-action="customize" data-inth-dialog="iab" id="iab">Partners</button>'
 		);
 		start();
 		for (const target of [
@@ -841,11 +841,11 @@ it('forwards cleanup targets to its shared runtime', async () => {
 	);
 });
 
-it('opens the external CMP and never records its decisions as c15t choices', async () => {
+it('opens the external CMP and never records its decisions as inth choices', async () => {
 	const openPreferences = vi.fn();
 	const onPermissionsChanged = vi.fn();
 	const trigger = document.createElement('button');
-	trigger.dataset.c15tSurface = 'trigger';
+	trigger.dataset.inthSurface = 'trigger';
 	document.body.append(trigger);
 	client = boot(resolveOptions(OPTIONS), {
 		callbacks: { onPermissionsChanged },
@@ -876,7 +876,7 @@ it('getEventDispatcher sends to the page scripts and keeps one pageview history 
 	// A module that runs before boot gets a dispatcher that drops calls.
 	const early = getEventDispatcher(dispatcherOptions);
 	early.track('before_boot');
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig =
+	(window as unknown as Record<string, unknown>).__inthAstroConfig =
 		INLINE_CONFIG;
 	client = boot(resolveOptions(OPTIONS), {
 		scripts: [
@@ -932,7 +932,7 @@ describe('networkBlocker', () => {
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'));
 		const onRequestBlocked = vi.fn();
 		renderBanner();
-		(window as unknown as Record<string, unknown>).__c15tAstroConfig =
+		(window as unknown as Record<string, unknown>).__inthAstroConfig =
 			INLINE_CONFIG;
 		client = boot(
 			resolveOptions({ ...OPTIONS, networkBlocker: { rules: [] } }),
@@ -1173,7 +1173,7 @@ describe("Astro's hash-based CSP", () => {
 
 	it('names each clientEntrypoint inline script the policy has no hash for', async () => {
 		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-		(window as unknown as Record<string, unknown>).__c15tAstroConfig =
+		(window as unknown as Record<string, unknown>).__inthAstroConfig =
 			INLINE_CONFIG;
 		renderBanner();
 		client = boot(
@@ -1208,9 +1208,9 @@ describe("Astro's hash-based CSP", () => {
 describe('a CSP nonce on the page', () => {
 	const NONCE = 'p4ge-n0nce';
 
-	/** The config script the server renders with `Astro.locals.c15t.nonce`. */
+	/** The config script the server renders with `Astro.locals.inth.nonce`. */
 	const renderConfigScript = function renderConfigScript(): void {
-		document.head.innerHTML = `<script data-c15t-config nonce="${NONCE}"></script>`;
+		document.head.innerHTML = `<script data-inth-config nonce="${NONCE}"></script>`;
 	};
 
 	it('goes on the scripts the loader injects', async () => {
@@ -1237,19 +1237,19 @@ describe('a CSP nonce on the page', () => {
 	});
 
 	it('is read from a legacy buildConfigScript() script', async () => {
-		// A page that assigns `window.__c15tAstroConfig` itself renders no
-		// `data-c15t-config` element; the nonce is on its own script.
+		// A page that assigns `window.__inthAstroConfig` itself renders no
+		// `data-inth-config` element; the nonce is on its own script.
 		const legacy = document.createElement('script');
 		legacy.nonce = NONCE;
 		legacy.textContent = buildConfigScript(INLINE_CONFIG);
 		document.head.append(legacy);
 		// What running it does; jsdom here does not run scripts.
-		(window as unknown as Record<string, unknown>).__c15tAstroConfig =
+		(window as unknown as Record<string, unknown>).__inthAstroConfig =
 			INLINE_CONFIG;
 		renderBanner();
 		document.body.insertAdjacentHTML(
 			'beforeend',
-			`<script type="text/plain" data-c15t-category="measurement" nonce="${NONCE}">1</script>`
+			`<script type="text/plain" data-inth-category="measurement" nonce="${NONCE}">1</script>`
 		);
 		client = boot(resolveOptions(OPTIONS));
 		await client.acceptAll();
@@ -1257,7 +1257,7 @@ describe('a CSP nonce on the page', () => {
 		await vi.waitFor(() => {
 			expect(
 				document.querySelector<HTMLScriptElement>(
-					'script[data-c15t-activated="true"]:not([type])'
+					'script[data-inth-activated="true"]:not([type])'
 				)?.nonce
 			).toBe(NONCE);
 		});
@@ -1270,8 +1270,8 @@ describe('a CSP nonce on the page', () => {
 		document.body.insertAdjacentHTML(
 			'beforeend',
 			[
-				`<script type="text/plain" data-c15t-category="measurement" nonce="${NONCE}">1</script>`,
-				'<script type="text/plain" data-c15t-category="measurement" id="injected">2</script>',
+				`<script type="text/plain" data-inth-category="measurement" nonce="${NONCE}">1</script>`,
+				'<script type="text/plain" data-inth-category="measurement" id="injected">2</script>',
 			].join('')
 		);
 		const booted = start();
@@ -1280,16 +1280,16 @@ describe('a CSP nonce on the page', () => {
 		await vi.waitFor(() => {
 			expect(
 				document.querySelector<HTMLScriptElement>(
-					'script[data-c15t-activated="true"]:not([type])'
+					'script[data-inth-activated="true"]:not([type])'
 				)?.nonce
 			).toBe(NONCE);
 		});
 		expect(
-			document.querySelector('#injected')?.getAttribute('data-c15t-activated')
+			document.querySelector('#injected')?.getAttribute('data-inth-activated')
 		).toBe('untrusted');
 		expect(
 			document.querySelectorAll(
-				'script[data-c15t-activated="true"]:not([type])'
+				'script[data-inth-activated="true"]:not([type])'
 			)
 		).toHaveLength(1);
 		warn.mockRestore();
@@ -1302,18 +1302,18 @@ describe('a CSP nonce on the page', () => {
 
 		const incoming = document.implementation.createHTMLDocument();
 		incoming.head.innerHTML = [
-			'<script data-c15t-config nonce="next-n0nce"></script>',
-			'<script data-c15t-inline nonce="next-n0nce">0</script>',
-			'<style id="c15t-theme" nonce="next-n0nce"></style>',
-			'<style data-c15t-styles="c15t-first-paint" nonce="next-n0nce"></style>',
-			'<style data-c15t-styles="c15t-iab-first-paint" nonce="next-n0nce"></style>',
+			'<script data-inth-config nonce="next-n0nce"></script>',
+			'<script data-inth-inline nonce="next-n0nce">0</script>',
+			'<style id="inth-theme" nonce="next-n0nce"></style>',
+			'<style data-inth-styles="inth-first-paint" nonce="next-n0nce"></style>',
+			'<style data-inth-styles="inth-iab-first-paint" nonce="next-n0nce"></style>',
 			'<script nonce="unrelated">0</script>',
-			// Not c15t's, so not c15t's to hand the live nonce to.
+			// Not inth's, so not inth's to hand the live nonce to.
 			'<script id="foreign" nonce="next-n0nce">0</script>',
 		].join('');
 		incoming.body.innerHTML = [
 			document.body.innerHTML,
-			'<script type="text/plain" data-c15t-category="measurement" nonce="next-n0nce">1</script>',
+			'<script type="text/plain" data-inth-category="measurement" nonce="next-n0nce">1</script>',
 		].join('');
 		document.dispatchEvent(
 			Object.assign(new Event('astro:before-swap'), { newDocument: incoming })
@@ -1321,13 +1321,13 @@ describe('a CSP nonce on the page', () => {
 
 		const nonceOf = (selector: string) =>
 			incoming.querySelector<HTMLElement>(selector)?.getAttribute('nonce');
-		expect(nonceOf('script[data-c15t-config]')).toBe(NONCE);
-		expect(nonceOf('script[data-c15t-inline]')).toBe(NONCE);
-		expect(nonceOf('#c15t-theme')).toBe(NONCE);
-		for (const style of incoming.querySelectorAll('style[data-c15t-styles]')) {
+		expect(nonceOf('script[data-inth-config]')).toBe(NONCE);
+		expect(nonceOf('script[data-inth-inline]')).toBe(NONCE);
+		expect(nonceOf('#inth-theme')).toBe(NONCE);
+		for (const style of incoming.querySelectorAll('style[data-inth-styles]')) {
 			expect(style.getAttribute('nonce')).toBe(NONCE);
 		}
-		expect(nonceOf('script[data-c15t-category]')).toBe(NONCE);
+		expect(nonceOf('script[data-inth-category]')).toBe(NONCE);
 		expect(nonceOf('script[nonce="unrelated"]')).toBe('unrelated');
 		expect(nonceOf('#foreign')).toBe('next-n0nce');
 
@@ -1338,12 +1338,12 @@ describe('a CSP nonce on the page', () => {
 		await vi.waitFor(() => {
 			expect(
 				document.querySelector<HTMLScriptElement>(
-					'script[data-c15t-activated="true"]:not([type])'
+					'script[data-inth-activated="true"]:not([type])'
 				)?.nonce
 			).toBe(NONCE);
 		});
 		expect(
-			document.querySelector('[data-c15t-activated="untrusted"]')
+			document.querySelector('[data-inth-activated="untrusted"]')
 		).toBeNull();
 	});
 
@@ -1353,16 +1353,16 @@ describe('a CSP nonce on the page', () => {
 		renderBanner();
 		start();
 
-		// Markup injected ahead of c15t's own config script, naming a nonce
+		// Markup injected ahead of inth's own config script, naming a nonce
 		// of the attacker's choosing.
 		const incoming = document.implementation.createHTMLDocument();
 		incoming.head.innerHTML = [
-			'<script data-c15t-config nonce="planted"></script>',
-			'<script data-c15t-config nonce="next-n0nce"></script>',
+			'<script data-inth-config nonce="planted"></script>',
+			'<script data-inth-config nonce="next-n0nce"></script>',
 		].join('');
 		incoming.body.innerHTML = [
 			'<script id="payload" nonce="planted">0</script>',
-			'<script type="text/plain" data-c15t-category="measurement" nonce="planted">1</script>',
+			'<script type="text/plain" data-inth-category="measurement" nonce="planted">1</script>',
 		].join('');
 		document.dispatchEvent(
 			Object.assign(new Event('astro:before-swap'), { newDocument: incoming })
@@ -1419,7 +1419,7 @@ describe('the boot payload as a JSON data block', () => {
 				translations: { cookieBanner: { title: '</script>' } },
 			},
 		};
-		document.head.innerHTML = `<script type="application/json" data-c15t-config>${JSON.stringify(
+		document.head.innerHTML = `<script type="application/json" data-inth-config>${JSON.stringify(
 			payload
 		).replace(/</gu, '\\u003c')}</script>`;
 		renderBanner();

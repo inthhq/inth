@@ -3,7 +3,7 @@
 /**
  * A consent root whose engine loads after the page.
  *
- * The page under it hydrates at once. Until the engine loads, c15t's hooks
+ * The page under it hydrates at once. Until the engine loads, inth's hooks
  * read the snapshots the server rendered with, and their actions ask for
  * the engine and run on it when it attaches (see `deferred-kernel.ts`).
  * The stock banner keeps its server HTML until then; its inline script
@@ -218,10 +218,10 @@ const settle = async function settle(
 };
 
 /** Id of the `<style>` the early-tap script hides the banner with. */
-const EARLY_TAP_STYLE_ID = 'c15t-early-tap';
+const EARLY_TAP_STYLE_ID = 'inth-early-tap';
 
 /** The same `<style>` once the root handles the tap. */
-const COMMITTED_STYLE_ID = 'c15t-early-commit';
+const COMMITTED_STYLE_ID = 'inth-early-commit';
 
 /** The stock dialog's root. */
 const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
@@ -1048,7 +1048,7 @@ const AfterHydration = ({ children }: { children: ReactNode }): ReactNode =>
 		: null;
 
 /**
- * Renders `children` with c15t's contexts filled from the server's
+ * Renders `children` with inth's contexts filled from the server's
  * snapshots, and the engine after them once it loads.
  *
  * @internal

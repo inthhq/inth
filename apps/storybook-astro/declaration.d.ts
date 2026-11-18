@@ -1,4 +1,4 @@
-declare module 'virtual:c15t-astro-prerendered' {
+declare module 'virtual:inth-astro-prerendered' {
 	// The producer's own type, so the two cannot drift: the plugin builds
 	// this module and exports the shape it returns.
 	import type { PrerenderedVariant } from './.storybook/astro-prerender';

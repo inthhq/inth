@@ -7,7 +7,7 @@ in your Inth project and a CMP ID. IAB Europe assigns a CMP ID to a company
 when it registers as a CMP
 ([register.consensu.org/CMP](https://register.consensu.org/CMP)). Every TC
 String names the CMP that wrote it, so an ID you did not register attributes
-your visitors' consent to someone else. Example CMP IDs in c15t demos are not
+your visitors' consent to someone else. Example CMP IDs in Inth demos are not
 production configuration.
 
 `@inth/svelte` loads the TCF add-on from `@inth/sdk/iab`, which it installs as a
@@ -41,7 +41,7 @@ outside Europe:
 The IAB banner adds its first-paint rules before its elements render. The
 IAB dialog adds its rules when it opens, including the base rules it needs
 when rendered without a banner. Each sheet appears once per page. On a
-server-rendered SvelteKit page, `c15tHandle` writes the rendered components'
+server-rendered SvelteKit page, `inthHandle` writes the rendered components'
 rules into `<head>` before hydration.
 
 To run the CSS through Tailwind CSS 3 or put it in a named cascade layer,
@@ -62,7 +62,7 @@ explains when to use that option.
 
 Pass `iab={false}`, or omit it, to leave IAB off. If a visitor's policy
 then uses the `iab` model and the backend sends its vendor list, the
-provider throws an `IABUnavailableError` (code `C15T_IAB_UNAVAILABLE`) while
+provider throws an `IABUnavailableError` (code `INTH_IAB_UNAVAILABLE`) while
 rendering, on the server and in the browser: the standard banner does not
 handle the IAB model, so the visitor would otherwise get no working consent
 UI. Set `iab`, or remove the `iab` model from the policy. A backend that

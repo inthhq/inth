@@ -23,7 +23,7 @@ document.addEventListener('securitypolicyviolation', (event) => {
 	violations.push(event.effectiveDirective);
 });
 
-const options = readScriptOptions(document.getElementById('c15t-loader'));
+const options = readScriptOptions(document.getElementById('inth-loader'));
 const nonce =
 	new URLSearchParams(location.search).get('nonce') === 'off'
 		? undefined
@@ -45,4 +45,4 @@ const page: UICSPPage = {
 	ready: client.ready(),
 	violations,
 };
-Object.assign(window, { c15tUICSP: page });
+Object.assign(window, { inthUICSP: page });

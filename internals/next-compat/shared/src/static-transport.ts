@@ -2,7 +2,7 @@ import { createStaticConsentResolver } from '@inth/nextjs/static';
 import type { StaticConsentResolverOptions } from '@inth/nextjs/static';
 import {
 	buildSubjectPostBody,
-	c15tVersionHeaders,
+	inthVersionHeaders,
 	mapInitOutputToInitResponse,
 } from '@inth/sdk/transports';
 import type { KernelTransport } from '@inth/sdk/transports';
@@ -62,7 +62,7 @@ export const createStaticTransport = function createStaticTransport({
 				headers: {
 					accept: 'application/json',
 					'content-type': 'application/json',
-					...c15tVersionHeaders,
+					...inthVersionHeaders,
 				},
 				method: 'POST',
 			});

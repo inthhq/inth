@@ -5,17 +5,17 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 import { chromium } from 'playwright';
 
-const C15T_UI_STYLESHEET = 'packages/sdk/ui/dist/styles.css';
+const INTH_UI_STYLESHEET = 'packages/sdk/ui/dist/styles.css';
 
 /**
  * The v3 Tailwind override contract:
  *
- * - Tailwind 4: c15t rules live in `@layer components`; bare utilities
+ * - Tailwind 4: Inth rules live in `@layer components`; bare utilities
  *   (`bg-blue-600`) are layered after them and win without !important.
- *   `components` stays above preflight's `base` even when c15t's stylesheet
+ *   `components` stays above preflight's `base` even when inth's stylesheet
  *   loads before Tailwind's.
  * - Tailwind 3: no cascade layers exist (tw3 unwraps `@layer components`
- *   into plain rules), so c15t base selectors win over bare utilities by
+ *   into plain rules), so Inth base selectors win over bare utilities by
  *   specificity — same semantics as v2. The supported override path is the
  *   important modifier (`!bg-blue-600`), which must always win. Base styles
  *   must also survive tw3's unlayered preflight.
@@ -195,7 +195,7 @@ const verifyBanner = async function verifyBanner(page, app) {
 			);
 		}
 	} else {
-		// Tailwind 3 / no Tailwind: c15t base chrome wins — the accept button
+		// Tailwind 3 / no Tailwind: Inth base chrome wins — the accept button
 		// (variant=primary, mode=filled) must show the theme primary color.
 		assertEqual(
 			buttonStyles.backgroundColor,
@@ -248,7 +248,7 @@ const verifyBanner = async function verifyBanner(page, app) {
 /**
  * Loads `@inth/sdk/ui/styles.css` as its own stylesheet at the top of `<head>`,
  * ahead of the app's Tailwind 4 CSS, the way Astro's `page-ssr` injection
- * orders them. Cascade layers rank by first mention, so unless c15t's sheet
+ * orders them. Cascade layers rank by first mention, so unless inth's sheet
  * declares Tailwind's full layer order, `components` ranks below `base` and
  * preflight zeroes the banner's padding and borders.
  */
@@ -258,7 +258,7 @@ const verifyBannerLoadedBeforeTailwind =
 			viewport: { height: 900, width: 1280 },
 		});
 		const url = `http://127.0.0.1:${app.port}/matrix/banner`;
-		const stylesheetPath = '/__c15t-loaded-first.css';
+		const stylesheetPath = '/__inth-loaded-first.css';
 
 		try {
 			await page.route(url, async (route) => {
@@ -274,7 +274,7 @@ const verifyBannerLoadedBeforeTailwind =
 			});
 			await page.route(`**${stylesheetPath}`, async (route) => {
 				await route.fulfill({
-					body: await readFile(C15T_UI_STYLESHEET, 'utf8'),
+					body: await readFile(INTH_UI_STYLESHEET, 'utf8'),
 					contentType: 'text/css',
 				});
 			});
@@ -285,7 +285,7 @@ const verifyBannerLoadedBeforeTailwind =
 			);
 			if (!firstStylesheet.endsWith(stylesheetPath)) {
 				throw new Error(
-					`${app.label} c15t-first: expected c15t's stylesheet to load first, received ${firstStylesheet}`
+					`${app.label} inth-first: expected inth's stylesheet to load first, received ${firstStylesheet}`
 				);
 			}
 

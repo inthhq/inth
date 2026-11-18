@@ -86,7 +86,7 @@ describe('Zendesk Messaging loader contract', () => {
 			loadScripts([zendeskWidget({ key: 'widget-key' })], consents);
 			expect(queueAtAppend).toEqual([['messenger:set', 'cookies', range]]);
 			expect(referenceAtAppend).toBe(getLoader());
-			expect(getLoader().id).toMatch(/^c15t-/u);
+			expect(getLoader().id).toMatch(/^inth-/u);
 		}
 	);
 

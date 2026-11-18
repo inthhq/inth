@@ -20,7 +20,7 @@ const clearStorage = function clearStorage(): void {
 const renderHiddenBanner = function renderHiddenBanner(testId: string): void {
 	document.body.innerHTML = `
 		<div data-testid="${testId}-overlay" hidden></div>
-		<div data-testid="${testId}-root" data-c15t-visible="false" hidden></div>
+		<div data-testid="${testId}-root" data-inth-visible="false" hidden></div>
 	`;
 };
 
@@ -43,15 +43,15 @@ describe('buildBannerRevealScript', () => {
 	it('shows the banner and its overlay when nothing is stored', () => {
 		run(buildBannerRevealScript(undefined, 'consent-banner'));
 		expect(root()?.hidden).toBe(false);
-		expect(root()?.dataset.c15tVisible).toBe('true');
+		expect(root()?.dataset.inthVisible).toBe('true');
 		expect(overlay()?.hidden).toBe(false);
 	});
 
 	it.each([
-		['a consent cookie', () => (document.cookie = 'c15t=v=3; path=/')],
+		['a consent cookie', () => (document.cookie = 'inth=v=3; path=/')],
 		[
 			'a notice dismissal in localStorage',
-			() => localStorage.setItem('c15t-notice', '{}'),
+			() => localStorage.setItem('inth-notice', '{}'),
 		],
 		[
 			'a legacy record in localStorage',
@@ -65,7 +65,7 @@ describe('buildBannerRevealScript', () => {
 	});
 
 	it('ignores a leftover privacy directive from an earlier alpha', () => {
-		localStorage.setItem('c15t-privacy', '{}');
+		localStorage.setItem('inth-privacy', '{}');
 		run(buildBannerRevealScript(undefined, 'consent-banner'));
 		expect(root()?.hidden).toBe(false);
 	});
@@ -82,7 +82,7 @@ describe('buildBannerRevealScript', () => {
 		});
 
 		it('still honours a consent cookie', () => {
-			document.cookie = 'c15t=v=3; path=/';
+			document.cookie = 'inth=v=3; path=/';
 			vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
 				throw new DOMException('blocked', 'SecurityError');
 			});

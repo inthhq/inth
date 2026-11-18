@@ -1,5 +1,5 @@
 /**
- * The Nuxt module puts the c15t code a page's entry imports statically into
+ * The Nuxt module puts the Inth code a page's entry imports statically into
  * one chunk, so the first load makes one request for it instead of one per
  * module the consent engine shares with the page.
  */
@@ -20,10 +20,10 @@ describe('nuxtConsentChunkGroup', () => {
 	const workspace = '/repo/packages/sdk/core';
 	const group = nuxtConsentChunkGroup([workspace]);
 
-	test('matches an installed c15t package', () => {
+	test('matches an installed inth package', () => {
 		expect(
 			group.test.test(
-				'/app/node_modules/.pnpm/@c15t+core@3/node_modules/@inth/sdk/lib/core/dist/libs/has.js'
+				'/app/node_modules/.pnpm/@inth+core@3/node_modules/@inth/sdk/lib/core/dist/libs/has.js'
 			)
 		).toBe(true);
 	});
@@ -47,7 +47,7 @@ describe('nuxtConsentConfigChunkGroup', () => {
 
 	test.each([
 		'/app/node_modules/@inth/vue/dist/runtime/composables/config.js',
-		'/app/node_modules/.pnpm/@c15t+ui@3/node_modules/@inth/sdk/lib/ui/dist/utils/theme-slots.js',
+		'/app/node_modules/.pnpm/@inth+ui@3/node_modules/@inth/sdk/lib/ui/dist/utils/theme-slots.js',
 		'/repo/packages/sdk/schema/dist/config/defaults.js',
 	])('matches %s', (id) => {
 		expect(group.test.test(id)).toBe(true);
@@ -69,7 +69,7 @@ test('consentPackageDirs finds @inth/sdk and @inth/vue from the module', () => {
 	);
 	expect(dirs.length).toBeGreaterThan(1);
 	// Nothing to find from a directory without them.
-	const empty = mkdtempSync(join(tmpdir(), 'c15t-chunk-group-'));
+	const empty = mkdtempSync(join(tmpdir(), 'inth-chunk-group-'));
 	expect(consentPackageDirs(join(empty, 'index.js'))).toEqual([]);
 });
 

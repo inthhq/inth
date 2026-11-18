@@ -22,7 +22,7 @@ import { isRunnableNow } from './scripts';
  *
  * @internal
  */
-export const DEFERRED_ENGINE_MANIFEST_KEY = 'c15t:deferred-engine';
+export const DEFERRED_ENGINE_MANIFEST_KEY = 'inth:deferred-engine';
 
 /** State the Nuxt payload carries for a deferred browser start. @internal */
 export interface NuxtConsentBoot {
@@ -40,7 +40,7 @@ export interface NuxtConsentBoot {
  * may run now and the server did not start).
  *
  * @param snapshot - The snapshot the server rendered with.
- * @param config - The app's c15t config.
+ * @param config - The app's Inth config.
  * @param now - The clock. Defaults to `Date.now()`.
  * @returns `true` when the engine may wait.
  * @internal

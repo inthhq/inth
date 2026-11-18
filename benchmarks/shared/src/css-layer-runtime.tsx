@@ -61,8 +61,8 @@ const COMPONENTS = {
 	button: {
 		/**
 		 * Bare Tailwind utilities. Contract: these win WITHOUT !important in
-		 * Tailwind 4 (cascade layers put c15t rules in `components`, utilities
-		 * later). In Tailwind 3 (no layers) c15t base styles legitimately win
+		 * Tailwind 4 (cascade layers put Inth rules in `components`, utilities
+		 * later). In Tailwind 3 (no layers) Inth base styles legitimately win
 		 * by specificity — that env asserts the theme primary instead.
 		 */
 		primary: { className: 'bg-blue-600 text-red-500 rounded-none' },
@@ -177,7 +177,7 @@ export const CssLayerScenarioRenderer = ({
 							<p className="css-layer-checklist-label">Automated checks</p>
 							<ul className="css-layer-checklist-items">
 								<li>
-									Primary consent button keeps c15t base chrome from @layer
+									Primary consent button keeps inth base chrome from @layer
 									components.
 								</li>
 								<li>

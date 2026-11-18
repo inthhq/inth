@@ -273,8 +273,8 @@ export const createWidget = function createWidget(
 	): Row {
 		const { name } = copy;
 		const ids = {
-			content: `c15t-pref-${name}-content`,
-			trigger: `c15t-pref-${name}-trigger`,
+			content: `inth-pref-${name}-content`,
+			trigger: `inth-pref-${name}-trigger`,
 		};
 		const arrow = buildArrow();
 		const trigger = h(

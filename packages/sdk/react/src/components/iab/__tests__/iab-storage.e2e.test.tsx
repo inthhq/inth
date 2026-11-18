@@ -288,8 +288,8 @@ describe('IAB Storage E2E Tests', () => {
 		});
 	});
 
-	describe('c15t Storage Key', () => {
-		test('should use "c15t" key in localStorage', async () => {
+	describe('inth Storage Key', () => {
+		test('should use "inth" key in localStorage', async () => {
 			render(
 				<ConsentProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
@@ -305,7 +305,7 @@ describe('IAB Storage E2E Tests', () => {
 			await userEvent.click(acceptButton);
 			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
 
-			// Should use c15t key
+			// Should use Inth key
 			await vi.waitFor(
 				() => {
 					expect(getStoredConsent()).not.toBeNull();

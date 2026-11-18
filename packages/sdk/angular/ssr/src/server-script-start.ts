@@ -9,7 +9,7 @@
  * page markup, so nothing a page renders becomes a script that carries the
  * nonce.
  */
-import type { C15tProviderOptions } from '@inth/angular';
+import type { InthProviderOptions } from '@inth/angular';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import type { serverScriptStart } from '@inth/sdk/runtime/script-server-start';
 
@@ -31,7 +31,7 @@ type ServerStartOptions = Parameters<typeof serverScriptStart>[0];
  */
 export const startScriptsOnServer = async function startScriptsOnServer(
 	document: Document,
-	options: C15tProviderOptions,
+	options: InthProviderOptions,
 	state: RuntimePrefetch,
 	nonce: string | null | undefined
 ): Promise<void> {

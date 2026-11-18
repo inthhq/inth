@@ -101,8 +101,8 @@ const clearStorage = function clearStorage() {
 };
 
 const stored = () =>
-	/(?:^|; )c15t=/u.test(document.cookie) ||
-	localStorage.getItem('c15t') !== null;
+	/(?:^|; )inth=/u.test(document.cookie) ||
+	localStorage.getItem('inth') !== null;
 
 const renderPage = (
 	callbacks?: Parameters<typeof ConsentProvider>[0] extends {

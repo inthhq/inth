@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/svelte-compat-5-20",
+	"name": "@inth/svelte-compat-5-20",
 	"version": "0.0.0",
 	"private": true,
 	"description": "Compatibility fixture: the oldest Svelte and SvelteKit versions @inth/svelte supports.",

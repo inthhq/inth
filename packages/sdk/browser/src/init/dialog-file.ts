@@ -17,7 +17,7 @@ import { version } from '../version';
 import type { openEarlyDialog } from './early-dialog';
 
 /** Global `c15t.dialog.js` publishes its {@link DialogFile} on. */
-export const DIALOG_KEY = '__c15tDialog';
+export const DIALOG_KEY = '__inthDialog';
 
 /** What `c15t.dialog.js` publishes. @internal */
 export interface DialogFile {

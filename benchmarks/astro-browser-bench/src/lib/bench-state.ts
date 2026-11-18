@@ -34,7 +34,7 @@ export interface AstroBenchScriptState {
 	heldRequestMs?: number;
 }
 
-/** What `@c15t/benchmarking`'s init script publishes. */
+/** What `@inth/benchmarking`'s init script publishes. */
 export interface BenchPerfMetrics {
 	cls: number;
 	longTaskCount: number;
@@ -44,10 +44,10 @@ export interface BenchPerfMetrics {
 
 declare global {
 	interface Window {
-		__c15tAstroBench?: AstroBenchState;
-		__c15tBenchPerfMetrics?: BenchPerfMetrics;
-		__c15tAstroBenchScripts?: AstroBenchScriptState;
+		__inthAstroBench?: AstroBenchState;
+		__inthBenchPerfMetrics?: BenchPerfMetrics;
+		__inthAstroBenchScripts?: AstroBenchScriptState;
 		/** Written by the stand-in third-party script when it runs. */
-		__c15tBenchScriptExecutedMs?: number;
+		__inthBenchScriptExecutedMs?: number;
 	}
 }

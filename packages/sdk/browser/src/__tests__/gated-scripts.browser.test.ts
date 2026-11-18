@@ -29,7 +29,7 @@ const createFrame = async (src?: string): Promise<Document> => {
 const appendScript = (root: Document, body: string, external = false) => {
 	const script = root.createElement('script');
 	script.type = 'text/plain';
-	script.setAttribute('data-c15t-category', 'necessary');
+	script.setAttribute('data-inth-category', 'necessary');
 	if (external) {
 		const url = URL.createObjectURL(
 			new Blob([body], { type: 'text/javascript' })
@@ -71,8 +71,8 @@ describe('gated script execution in Chromium', () => {
 	});
 
 	it('preserves a hidden nonce so CSP permits the activated script', async () => {
-		const nonce = 'c15t-test-nonce';
-		const root = await createFrame('/__c15t-test__/gated-script-csp');
+		const nonce = 'inth-test-nonce';
+		const root = await createFrame('/__inth-test__/gated-script-csp');
 		const script = root.querySelector('script');
 		if (!script) {
 			throw new Error('Missing nonce script');
@@ -92,7 +92,7 @@ describe('gated script execution in Chromium', () => {
 
 describe("gated scripts under 'strict-dynamic'", () => {
 	const openStrictDynamic = async () => {
-		const root = await createFrame('/__c15t-test__/strict-dynamic');
+		const root = await createFrame('/__inth-test__/strict-dynamic');
 		const client = createConsentClient({
 			ui: false,
 		});
@@ -109,7 +109,7 @@ describe("gated scripts under 'strict-dynamic'", () => {
 		activateGatedScripts(client.getSnapshot(), root);
 		client.dispose();
 
-		// Why the nonce matters: the policy trusts every script c15t creates.
+		// Why the nonce matters: the policy trusts every script Inth creates.
 		await expect.poll(() => root.documentElement.dataset.trusted).toBe('true');
 		await expect
 			.poll(() => root.documentElement.dataset.externalInjected)
@@ -124,7 +124,7 @@ describe("gated scripts under 'strict-dynamic'", () => {
 		const { client, root } = await openStrictDynamic();
 
 		activateGatedScripts(client.getSnapshot(), root, {
-			nonce: 'c15t-test-nonce',
+			nonce: 'inth-test-nonce',
 		});
 		client.dispose();
 
@@ -133,7 +133,7 @@ describe("gated scripts under 'strict-dynamic'", () => {
 		expect(root.documentElement.dataset.externalInjected).toBeUndefined();
 		expect(root.documentElement.dataset.inlineInjected).toBeUndefined();
 		expect(
-			root.querySelectorAll('[data-c15t-activated="untrusted"]')
+			root.querySelectorAll('[data-inth-activated="untrusted"]')
 		).toHaveLength(2);
 		warn.mockRestore();
 	});

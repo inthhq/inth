@@ -1,11 +1,11 @@
 {
-	"extends": "@c15t/typescript-config/react-library.json",
+	"extends": "@inth/typescript-config/react-library.json",
 	"compilerOptions": {
 		"declaration": false,
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"target": "ES2022",
 		"paths": {
-			"@/components/c15t/*": ["./registry/aria/*"],
+			"@/components/inth/*": ["./registry/aria/*"],
 			"@/components/ui/*": ["./vendor/aria/components/ui/*"],
 			"@/lib/utils": ["./vendor/aria/lib/utils"]
 		}

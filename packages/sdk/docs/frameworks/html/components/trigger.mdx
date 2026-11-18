@@ -1,6 +1,6 @@
 ---
 title: Floating trigger
-description: Add the c15t floating button that reopens the preference dialog on a plain HTML site, and set its corner, size, visibility and accessible name.
+description: Add the Inth floating button that reopens the preference dialog on a plain HTML site, and set its corner, size, visibility and accessible name.
 group: frameworks
 ---
 
@@ -35,8 +35,8 @@ Pass options under `ui.trigger` in a queued `config` call:
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     ui: {
       trigger: {
         position: 'bottom-left',
@@ -61,7 +61,7 @@ banner.
 ## Drag it to another corner
 
 Visitors can drag the trigger. It snaps to the nearest corner in the direction
-they moved it, and c15t remembers that corner in the `c15t-trigger-position`
+they moved it, and Inth remembers that corner in the `inth-trigger-position`
 localStorage key. A remembered corner wins over `position` on later visits.
 Set `persistPosition: false` to always start at `position`.
 
@@ -71,7 +71,7 @@ A drag does not open the dialog. A click, Enter or Space does.
 
 The trigger is a native `button` with only an icon, so `ariaLabel` is its only
 name. Write it in the page's language; the default is English. The trigger is
-in the page's tab order after your content, because c15t appends it to the end
+in the page's tab order after your content, because Inth appends it to the end
 of `<body>`.
 
 ## Open DevTools from it

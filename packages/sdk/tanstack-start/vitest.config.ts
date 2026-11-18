@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';

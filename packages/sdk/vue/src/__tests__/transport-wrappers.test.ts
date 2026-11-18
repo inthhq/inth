@@ -45,7 +45,7 @@ const policy = normalizePolicyRule({
 });
 const fingerprints = createPolicyRuleFingerprints(policy);
 const prefetch = {
-	branding: 'c15t' as const,
+	branding: 'inth' as const,
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire({
 		fingerprints,
@@ -71,7 +71,7 @@ const modes: [
 			vi.stubGlobal('fetch', fetch);
 			return clientMode(
 				{ type: 'manifest' },
-				{ projectUrl: '/api/review', routePrefix: '/api/c15t' }
+				{ projectUrl: '/api/review', routePrefix: '/api/inth' }
 			);
 		},
 	],

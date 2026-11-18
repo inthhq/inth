@@ -231,103 +231,103 @@ export interface ConsentActionStyle {
 /**
  * CSS custom properties generated from theme tokens.
  *
- * This interface is the source of truth for documented `--c15t-*` variables.
+ * This interface is the source of truth for documented `--inth-*` variables.
  * Runtime generation in `themeToVars()` is typed against these keys.
  *
  * @public
  */
 export interface ThemeCSSVariables {
 	/** `colors.primary` (default: `hsl(228, 100%, 60%)`) */
-	'--c15t-primary'?: string;
+	'--inth-primary'?: string;
 	/** `colors.primaryHover` (default: `hsl(228, 100%, 55%)`) */
-	'--c15t-primary-hover'?: string;
+	'--inth-primary-hover'?: string;
 	/** `colors.surface` (default: `hsl(0, 0%, 100%)`) */
-	'--c15t-surface'?: string;
+	'--inth-surface'?: string;
 	/** `colors.surfaceHover` (default: `hsl(0, 0%, 98%)`) */
-	'--c15t-surface-hover'?: string;
+	'--inth-surface-hover'?: string;
 	/** `colors.border` (default: `hsl(0, 0%, 90%)`) */
-	'--c15t-border'?: string;
+	'--inth-border'?: string;
 	/** `colors.borderHover` (default: `hsl(0, 0%, 85%)`) */
-	'--c15t-border-hover'?: string;
+	'--inth-border-hover'?: string;
 	/** `colors.text` (default: `hsl(0, 0%, 10%)`) */
-	'--c15t-text'?: string;
+	'--inth-text'?: string;
 	/** `colors.textMuted` (default: `hsl(0, 0%, 40%)`) */
-	'--c15t-text-muted'?: string;
+	'--inth-text-muted'?: string;
 	/** `colors.textOnPrimary` (auto-derived from `colors.primary` when omitted) */
-	'--c15t-text-on-primary'?: string;
+	'--inth-text-on-primary'?: string;
 	/** `colors.overlay` (default: `hsla(0, 0%, 0%, 0.5)`) */
-	'--c15t-overlay'?: string;
+	'--inth-overlay'?: string;
 	/** `colors.switchTrack` (default: `hsl(0, 0%, 85%)`) */
-	'--c15t-switch-track'?: string;
+	'--inth-switch-track'?: string;
 	/** `colors.switchTrackActive` (default: `colors.primary`) */
-	'--c15t-switch-track-active'?: string;
+	'--inth-switch-track-active'?: string;
 	/** `colors.switchThumb` (default: `hsl(0, 0%, 100%)`) */
-	'--c15t-switch-thumb'?: string;
+	'--inth-switch-thumb'?: string;
 
 	/** `typography.fontFamily` (default: `system-ui, -apple-system, sans-serif`) */
-	'--c15t-font-family'?: string;
+	'--inth-font-family'?: string;
 	/** `typography.fontSize.sm` (default: `0.875rem`) */
-	'--c15t-font-size-sm'?: string;
+	'--inth-font-size-sm'?: string;
 	/** `typography.fontSize.base` (default: `1rem`) */
-	'--c15t-font-size-base'?: string;
+	'--inth-font-size-base'?: string;
 	/** `typography.fontSize.lg` (default: `1.125rem`) */
-	'--c15t-font-size-lg'?: string;
+	'--inth-font-size-lg'?: string;
 	/** `typography.fontWeight.normal` (default: `400`) */
-	'--c15t-font-weight-normal'?: string;
+	'--inth-font-weight-normal'?: string;
 	/** `typography.fontWeight.medium` (default: `500`) */
-	'--c15t-font-weight-medium'?: string;
+	'--inth-font-weight-medium'?: string;
 	/** `typography.fontWeight.semibold` (default: `600`) */
-	'--c15t-font-weight-semibold'?: string;
+	'--inth-font-weight-semibold'?: string;
 	/** `typography.lineHeight.tight` (default: `1.25`) */
-	'--c15t-line-height-tight'?: string;
+	'--inth-line-height-tight'?: string;
 	/** `typography.lineHeight.normal` (default: `1.5`) */
-	'--c15t-line-height-normal'?: string;
+	'--inth-line-height-normal'?: string;
 	/** `typography.lineHeight.relaxed` (default: `1.75`) */
-	'--c15t-line-height-relaxed'?: string;
+	'--inth-line-height-relaxed'?: string;
 
 	/** `spacing.xs` (default: `0.25rem`) */
-	'--c15t-space-xs'?: string;
+	'--inth-space-xs'?: string;
 	/** `spacing.sm` (default: `0.5rem`) */
-	'--c15t-space-sm'?: string;
+	'--inth-space-sm'?: string;
 	/** `spacing.md` (default: `1rem`) */
-	'--c15t-space-md'?: string;
+	'--inth-space-md'?: string;
 	/** `spacing.lg` (default: `1.5rem`) */
-	'--c15t-space-lg'?: string;
+	'--inth-space-lg'?: string;
 	/** `spacing.xl` (default: `2rem`) */
-	'--c15t-space-xl'?: string;
+	'--inth-space-xl'?: string;
 
 	/** `radius.sm` (default: `0.25rem`) */
-	'--c15t-radius-sm'?: string;
+	'--inth-radius-sm'?: string;
 	/** `radius.md` (default: `0.5rem`) */
-	'--c15t-radius-md'?: string;
+	'--inth-radius-md'?: string;
 	/** `radius.lg` (default: `0.75rem`) */
-	'--c15t-radius-lg'?: string;
+	'--inth-radius-lg'?: string;
 	/** `radius.full` (default: `9999px`) */
-	'--c15t-radius-full'?: string;
+	'--inth-radius-full'?: string;
 
 	/** `shadows.sm` (default: `0 1px 2px hsla(0, 0%, 0%, 0.05)`) */
-	'--c15t-shadow-sm'?: string;
+	'--inth-shadow-sm'?: string;
 	/** `shadows.md` (default: `0 4px 12px hsla(0, 0%, 0%, 0.08)`) */
-	'--c15t-shadow-md'?: string;
+	'--inth-shadow-md'?: string;
 	/** `shadows.lg` (default: `0 8px 24px hsla(0, 0%, 0%, 0.12)`) */
-	'--c15t-shadow-lg'?: string;
+	'--inth-shadow-lg'?: string;
 
 	/** `motion.duration.fast` (default: `80ms`) */
-	'--c15t-duration-fast'?: string;
+	'--inth-duration-fast'?: string;
 	/** `motion.duration.normal` (default: `150ms`) */
-	'--c15t-duration-normal'?: string;
+	'--inth-duration-normal'?: string;
 	/** `motion.duration.slow` (default: `200ms`) */
-	'--c15t-duration-slow'?: string;
+	'--inth-duration-slow'?: string;
 	/** `motion.easing` (default: `cubic-bezier(0.4, 0, 0.2, 1)`) */
-	'--c15t-easing'?: string;
+	'--inth-easing'?: string;
 	/** `motion.easingOut` (default: `cubic-bezier(0.215, 0.61, 0.355, 1)`) */
-	'--c15t-easing-out'?: string;
+	'--inth-easing-out'?: string;
 	/** `motion.easingIn` (default: `cubic-bezier(0.55, 0.055, 0.675, 0.19)`) */
-	'--c15t-easing-in'?: string;
+	'--inth-easing-in'?: string;
 	/** `motion.easingInOut` (default: `cubic-bezier(0.645, 0.045, 0.355, 1)`) */
-	'--c15t-easing-in-out'?: string;
+	'--inth-easing-in-out'?: string;
 	/** `motion.easingSpring` (default: `cubic-bezier(0.34, 1.56, 0.64, 1)`) */
-	'--c15t-easing-spring'?: string;
+	'--inth-easing-spring'?: string;
 }
 
 /**
@@ -514,7 +514,7 @@ export interface UIOptions {
 	 * Color scheme preference.
 	 * With this option, you can force the theme to be light, dark or system.
 	 * Otherwise, the theme will be detected if you have '.dark' classname in your document.
-	 * `null` leaves the `c15t-dark` class on `<html>` to something else.
+	 * `null` leaves the `inth-dark` class on `<html>` to something else.
 	 *
 	 * @see https://c15t.com/docs/customization/tokens
 	 */
@@ -530,7 +530,7 @@ export interface UIOptions {
 }
 
 /**
- * Complete theme configuration for c15t consent components (v2).
+ * Complete theme configuration for Inth consent components (v2).
  * @public
  */
 export interface Theme {

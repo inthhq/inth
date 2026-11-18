@@ -1,5 +1,5 @@
 /**
- * CMP defaults. Single source of truth for the CMP version c15t reports.
+ * CMP defaults. Single source of truth for the CMP version Inth reports.
  *
  * There is deliberately no default CMP ID. A CMP ID is assigned by IAB Europe
  * at registration, so a placeholder would produce a TC String that names a

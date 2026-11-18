@@ -349,7 +349,7 @@ const fontWeightToString = (weight?: number): string | undefined =>
 	weight ? String(weight) : undefined;
 
 type ThemeCSSVariableSuffix =
-	keyof ThemeCSSVariables extends `--c15t-${infer Suffix}` ? Suffix : never;
+	keyof ThemeCSSVariables extends `--inth-${infer Suffix}` ? Suffix : never;
 
 const themeCSSVariableResolvers: Record<
 	ThemeCSSVariableSuffix,
@@ -422,7 +422,7 @@ export const themeToVars = function themeToVars(
 	][]) {
 		const value = resolve(theme, colors);
 		if (value) {
-			vars[`--c15t-${key}`] = value;
+			vars[`--inth-${key}`] = value;
 		}
 	}
 
@@ -449,8 +449,8 @@ interface ThemeSelectors {
 // there inherit into a shadow tree, which `:root` never reaches. Outside a
 // shadow root it matches nothing, so light-DOM hosts are unaffected.
 const DEFAULT_THEME_SELECTORS: ThemeSelectors = {
-	dark: ':root.dark,:host(.dark),.dark .c15t-theme-root,:root.c15t-dark,:host(.c15t-dark),.c15t-dark .c15t-theme-root',
-	root: ':root,:host,.c15t-theme-root',
+	dark: ':root.dark,:host(.dark),.dark .inth-theme-root,:root.inth-dark,:host(.inth-dark),.inth-dark .inth-theme-root',
+	root: ':root,:host,.inth-theme-root',
 };
 
 // The same elements, each light-DOM selector repeated once so it carries
@@ -460,8 +460,8 @@ const DEFAULT_THEME_SELECTORS: ThemeSelectors = {
 // single: a shadow root gets the stylesheet and the theme from the script
 // tag's mount, which writes the theme last, so order already decides there.
 const THEME_OVERRIDE_SELECTORS: ThemeSelectors = {
-	dark: ':root:root.dark,:host(.dark),.dark .c15t-theme-root.c15t-theme-root,:root:root.c15t-dark,:host(.c15t-dark),.c15t-dark .c15t-theme-root.c15t-theme-root',
-	root: ':root:root,:host,.c15t-theme-root.c15t-theme-root',
+	dark: ':root:root.dark,:host(.dark),.dark .inth-theme-root.inth-theme-root,:root:root.inth-dark,:host(.inth-dark),.inth-dark .inth-theme-root.inth-theme-root',
+	root: ':root:root,:host,.inth-theme-root.inth-theme-root',
 };
 
 const buildThemeCSS = function buildThemeCSS(
@@ -479,7 +479,7 @@ const buildThemeCSS = function buildThemeCSS(
 	return `${root}{${colorScheme === 'dark' ? dark : serializeThemeVars(theme, false)}}
 ${colorScheme === 'system' ? `@media(prefers-color-scheme:dark){${root}{${dark}}}` : ''}
 ${selectors.dark}{${dark}}
-.c15t-no-transitions,.c15t-no-transitions *,.c15t-no-transitions *::before,.c15t-no-transitions *::after{transition: none !important;animation: none !important;}`.replace(
+.inth-no-transitions,.inth-no-transitions *,.inth-no-transitions *::before,.inth-no-transitions *::after{transition: none !important;animation: none !important;}`.replace(
 		/</gu,
 		'\\3c '
 	);
@@ -493,12 +493,12 @@ ${selectors.dark}{${dark}}
  * longer generates theme CSS. `<` is written as a CSS escape, so the result
  * is safe inside a `<style>` element.
  *
- * The light-DOM selectors (`:root`, `.c15t-theme-root`) are one
+ * The light-DOM selectors (`:root`, `.inth-theme-root`) are one
  * specificity step above the default tokens in `styles.css`, so in the
  * document the result overrides them whether it lands before or after the
  * package stylesheet. `:host` keeps the defaults' specificity, so inside a
  * shadow root put the result after the package stylesheet.
- * Apply `c15t-no-transitions` while switching themes to suppress animations.
+ * Apply `inth-no-transitions` while switching themes to suppress animations.
  * @param theme - Theme tokens to serialize.
  * @param colorScheme - Select a scheme before hydration; defaults to root classes.
  * @returns Theme CSS, including system preference rules when requested.

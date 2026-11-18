@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Directive, effect, inject, PLATFORM_ID } from '@angular/core';
-import { updateGateBridge } from '@c15t/benchmarking/consent-gate-page';
+import { updateGateBridge } from '@inth/benchmarking/consent-gate-page';
 import { ConsentManager } from '@inth/angular';
 
 /**

@@ -1,6 +1,6 @@
 # Nuxt theme
 
-Northwind Coffee's product page with c15t's stock banner and preference
+Northwind Coffee's product page with inth's stock banner and preference
 dialog in the shop's brand. Nothing is rebuilt: the components are the ones
 `ConsentRoot` renders, changed through module options in `nuxt.config.ts`.
 
@@ -10,7 +10,7 @@ dialog in the shop's brand. Nothing is rebuilt: the components are the ones
   system is in dark mode.
 - `presentation` turns the floating card into a wall: a card in the middle of
   the page that blocks it until the visitor chooses. A notice can't block, so
-  where the policy only shows a notice, c15t keeps the floating card.
+  where the policy only shows a notice, Inth keeps the floating card.
 - `components` puts a class on the card and title of the banner and the
   dialog. `app/assets/consent.css` gives the card a green top rule and a
   shadow, and the title the shop's serif.
@@ -19,11 +19,11 @@ dialog in the shop's brand. Nothing is rebuilt: the components are the ones
 
 ## The files that matter
 
-- **`nuxt.config.ts`** holds every c15t option. They are plain data, so they
+- **`nuxt.config.ts`** holds every Inth option. They are plain data, so they
   belong in module options rather than `app/app.config.ts`.
-- **`app/assets/consent.css`** styles the classes from `components`. c15t's
+- **`app/assets/consent.css`** styles the classes from `components`. inth's
   rules sit in a cascade layer, so these unlayered rules win without extra
-  specificity. They read `--c15t-primary`, so the rule follows the dark
+  specificity. They read `--inth-primary`, so the rule follows the dark
   palette.
 - **`app/app.vue`** mounts `ConsentRoot`. The footer's Privacy settings link
   is `ConsentDialogLink` with a class.
@@ -44,7 +44,7 @@ bun run --cwd examples/showcase-nuxt-theme dev
 The app's `.env` points it at the `https://example-inth.inth.app` demo
 Inth project. The module downloads that project's policy when `nuxt dev` or
 `nuxt build` starts. To use your own project, set
-`NUXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to its backend URL and add the
+`NUXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to its backend URL and add the
 app's origin to its trusted origins.
 
 ## Docs

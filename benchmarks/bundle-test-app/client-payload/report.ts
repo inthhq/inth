@@ -127,8 +127,8 @@ export const shareBy = function shareBy(
 	return shares;
 };
 
-const isC15t = (name: string) =>
-	name === 'c15t' || name.startsWith('@c15t/') || name.startsWith('c15t/');
+const isInth = (name: string) =>
+	name === 'inth' || name.startsWith('@inth/') || name.startsWith('inth/');
 
 const format = (value: number) => Math.round(value).toLocaleString('en-US');
 
@@ -325,18 +325,18 @@ const comparisonSection = function comparisonSection(
 };
 
 const moduleSection = function moduleSection(result: PayloadResult): string[] {
-	const lines = ['## c15t modules by phase', ''];
+	const lines = ['## inth modules by phase', ''];
 	for (const arm of result.arms.filter((a) => a.library !== 'none')) {
 		for (const phase of ['initial', 'dialog', 'accept'] as const) {
 			const modules = [
 				...shareBy(assetsOf(arm, phase, 'js'), 'modules').entries(),
 			]
-				.filter(([name]) => isC15t(name))
+				.filter(([name]) => isInth(name))
 				.sort((left, right) => right[1].raw - left[1].raw);
 			const raw = modules.reduce((sum, [, share]) => sum + share.raw, 0);
 			const gzip = modules.reduce((sum, [, share]) => sum + share.gzip, 0);
 			lines.push(
-				`### ${arm.name}, ${phase}: ${modules.length} c15t modules, ${format(raw)} B raw, ~${format(gzip)} B gzip`,
+				`### ${arm.name}, ${phase}: ${modules.length} inth modules, ${format(raw)} B raw, ~${format(gzip)} B gzip`,
 				''
 			);
 			if (modules.length) {
@@ -378,7 +378,7 @@ const stylesheetSection = function stylesheetSection(
 	return [
 		`## Stylesheets (route ${REPORT_ROUTE})`,
 		'',
-		'Tailwind inlines `@import`ed CSS into the app stylesheet, so its source map credits the c15t aggregate to `(app)`. Compare the app stylesheet with the baseline arm to size it.',
+		'Tailwind inlines `@import`ed CSS into the app stylesheet, so its source map credits the inth aggregate to `(app)`. Compare the app stylesheet with the baseline arm to size it.',
 		'',
 		table(['Arm', 'Phase', 'File', 'Raw', 'Gzip', 'Mapped to'], rows),
 		'',
@@ -395,7 +395,7 @@ const boundarySection = function boundarySection(
 		];
 		for (const [family, matcher] of Object.entries(BOUNDARY_CHECKS)) {
 			const hits = modules.filter(
-				([name]) => isC15t(name) && matcher.test(name)
+				([name]) => isInth(name) && matcher.test(name)
 			);
 			rows.push([
 				arm.name,
@@ -411,7 +411,7 @@ const boundarySection = function boundarySection(
 	return [
 		`## Boundary checks (initial JS, route ${REPORT_ROUTE})`,
 		'',
-		table(['Arm', 'Family', 'Matching c15t modules (raw B)'], rows),
+		table(['Arm', 'Family', 'Matching inth modules (raw B)'], rows),
 		'',
 	];
 };

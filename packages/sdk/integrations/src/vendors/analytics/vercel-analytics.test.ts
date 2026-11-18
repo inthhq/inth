@@ -46,7 +46,7 @@ describe('vercelAnalytics', () => {
 			'data-disable-auto-track': '1',
 			'data-dsn': 'dsn_123',
 			'data-endpoint': 'https://analytics.example.com/v1/events',
-			'data-sdkn': 'c15t',
+			'data-sdkn': 'inth',
 		});
 
 		script.onBeforeLoad?.(createCallbackInfo({ id: script.id }));

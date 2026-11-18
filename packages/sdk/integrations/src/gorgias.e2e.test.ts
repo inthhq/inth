@@ -70,7 +70,7 @@ describe('Gorgias Chat loader contract', () => {
 
 		updateScripts(scripts, grantedConsents);
 		const element = getLoader();
-		expect(element.id).toMatch(/^c15t-/u);
+		expect(element.id).toMatch(/^inth-/u);
 		expect(element.src).toBe('https://config.gorgias.chat/bundle-loader/key');
 		expect(window.GorgiasChat).toBeUndefined();
 	});
@@ -97,7 +97,7 @@ describe('Gorgias Chat loader contract', () => {
 			const scripts = [script, script];
 			loadScripts(scripts, grantedConsents);
 			const element = getLoader();
-			expect(element.id).toMatch(/^c15t-/u);
+			expect(element.id).toMatch(/^inth-/u);
 			expect(document.getElementById(element.id)).toBe(element);
 			expect(element.src).toBe(
 				version === 2

@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/fixture-react-native-bare",
+	"name": "@inth/fixture-react-native-bare",
 	"version": "0.0.0",
 	"private": true,
 	"description": "Bare React Native fixture for @inth/react-native: native consent kernel, built-in banner and dialog, preference centre, consent-gated loading, and a fake native stub for offline gating checks.",

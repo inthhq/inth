@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/storybook-astro",
+	"name": "@inth/storybook-astro",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -11,7 +11,7 @@
 		"test-storybook": "test-storybook --url ${STORYBOOK_URL:-http://127.0.0.1:6010}"
 	},
 	"dependencies": {
-		"@c15t/conformance": "workspace:*",
+		"@inth/conformance": "workspace:*",
 		"@inth/astro": "workspace:*",
 		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",

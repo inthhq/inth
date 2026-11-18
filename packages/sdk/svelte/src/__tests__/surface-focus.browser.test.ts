@@ -33,7 +33,7 @@ const holdSheet = function holdSheet() {
 
 const holdElement = () =>
 	document.head.querySelector<HTMLStyleElement>(
-		`style[data-c15t-styles="${HOLD_ID}"]`
+		`style[data-inth-styles="${HOLD_ID}"]`
 	);
 
 /** Whether the surface is kept off the screen, by any CSS means. */
@@ -71,7 +71,7 @@ afterEach(async () => {
 		mounted = undefined;
 	}
 	for (const sheet of document.head.querySelectorAll(
-		'style[data-c15t-styles]'
+		'style[data-inth-styles]'
 	)) {
 		sheet.remove();
 	}
@@ -85,7 +85,7 @@ describe('focus while a surface sheet loads', () => {
 		const card = await element('consent-banner-card');
 
 		// Hidden, not painted unstyled, while the sheet is on its way.
-		expect(holdElement()?.hasAttribute('data-c15t-pending')).toBe(true);
+		expect(holdElement()?.hasAttribute('data-inth-pending')).toBe(true);
 		expect(hidden(card)).toBe(true);
 
 		// A blocking banner is a modal: focus starts on it.
@@ -98,9 +98,9 @@ describe('focus while a surface sheet loads', () => {
 		accept.focus();
 		expect(document.activeElement).toBe(accept);
 
-		release(':root{--c15t-test-hold:1}');
+		release(':root{--inth-test-hold:1}');
 		await vi.waitFor(() => {
-			expect(holdElement()?.hasAttribute('data-c15t-pending')).toBe(false);
+			expect(holdElement()?.hasAttribute('data-inth-pending')).toBe(false);
 		});
 		expect(hidden(card)).toBe(false);
 		// Nothing moves focus once the sheet lands.
@@ -113,7 +113,7 @@ describe('focus while a surface sheet loads', () => {
 		const root = await element('consent-dialog-root');
 		const card = await element('consent-dialog-card');
 
-		expect(holdElement()?.hasAttribute('data-c15t-pending')).toBe(true);
+		expect(holdElement()?.hasAttribute('data-inth-pending')).toBe(true);
 		expect(hidden(card)).toBe(true);
 
 		const first = firstTabbable(root);
@@ -122,9 +122,9 @@ describe('focus while a surface sheet loads', () => {
 			expect(document.activeElement).toBe(first);
 		});
 
-		release(':root{--c15t-test-hold:1}');
+		release(':root{--inth-test-hold:1}');
 		await vi.waitFor(() => {
-			expect(holdElement()?.hasAttribute('data-c15t-pending')).toBe(false);
+			expect(holdElement()?.hasAttribute('data-inth-pending')).toBe(false);
 		});
 		expect(hidden(card)).toBe(false);
 		expect(document.activeElement).toBe(first);

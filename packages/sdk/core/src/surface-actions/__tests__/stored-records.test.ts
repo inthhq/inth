@@ -8,16 +8,16 @@ import { clearStoredRecordsFor } from '../stored-records';
 describe('clearStoredRecordsFor', () => {
 	const store = () => {
 		const stored = `c.necessary:1,c.measurement:1,i.t:${NOW}`;
-		localStorage.setItem('c15t', stored);
-		document.cookie = `c15t=${stored}; path=/`;
+		localStorage.setItem('inth', stored);
+		document.cookie = `inth=${stored}; path=/`;
 	};
 	const cleared = () =>
-		localStorage.getItem('c15t') === null &&
-		!/(?:^|; )c15t=/u.test(document.cookie);
+		localStorage.getItem('inth') === null &&
+		!/(?:^|; )inth=/u.test(document.cookie);
 
 	afterEach(() => {
 		localStorage.clear();
-		for (const name of ['c15t', 'c15t-epoch']) {
+		for (const name of ['inth', 'inth-epoch']) {
 			document.cookie = `${name}=; Max-Age=0; path=/`;
 		}
 	});

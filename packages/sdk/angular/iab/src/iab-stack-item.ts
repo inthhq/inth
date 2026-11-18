@@ -36,10 +36,10 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: { style: 'display: contents' },
 	imports: [...PREFERENCE_ITEM, ...SWITCH, ChevronRightIcon, IABPurposeItem],
-	selector: 'c15t-iab-stack-item',
+	selector: 'inth-iab-stack-item',
 	template: `
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			[(open)]="isExpanded"
 			[noStyle]="true"
 			[class]="cls(styles.stackItem)"
@@ -47,28 +47,28 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 		>
 			<div [class]="cls(styles.stackHeader)">
 				<button
-					c15tPreferenceItemTrigger
+					inthPreferenceItemTrigger
 					[class]="cls(styles.stackTrigger)"
 				>
-					<span c15tPreferenceItemLeading>
+					<span inthPreferenceItemLeading>
 						<svg
-							c15t-chevron-right-icon
+							inth-chevron-right-icon
 							[class]="cls(styles.purposeArrow)"
 							[expanded]="isExpanded()"
 						></svg>
 					</span>
 					<div
-						c15tPreferenceItemHeader
+						inthPreferenceItemHeader
 						[class]="cls(styles.stackInfo)"
 					>
 						<h3
-							c15tPreferenceItemTitle
+							inthPreferenceItemTitle
 							[class]="cls(styles.stackName)"
 						>
 							{{ stack().name }}
 						</h3>
 						<p
-							c15tPreferenceItemMeta
+							inthPreferenceItemMeta
 							[class]="cls(styles.stackMeta)"
 						>
 							{{ totalVendors() }}
@@ -81,7 +81,7 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 					</div>
 				</button>
 				<div
-					c15tPreferenceItemControl
+					inthPreferenceItemControl
 					[class]="cls(styles.stackControls)"
 				>
 					@if (someEnabled()) {
@@ -90,7 +90,7 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 					}
 					@if (consentPurposes().length > 0) {
 						<button
-							c15tSwitch
+							inthSwitch
 							[attr.aria-label]="stack().name"
 							[checked]="allEnabled()"
 							(checkedChange)="setStackConsent($event)"
@@ -98,11 +98,11 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 							data-size="medium"
 						>
 							<span
-								c15tSwitchControl
+								inthSwitchControl
 								[class]="cls(switchStyles.track)"
 							>
 								<span
-									c15tSwitchThumb
+									inthSwitchThumb
 									[class]="cls(switchStyles.thumb)"
 								></span>
 							</span>
@@ -112,16 +112,16 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 			</div>
 
 			<div
-				c15t-preference-item-content
+				inth-preference-item-content
 				[noStyle]="resolvedNoStyle()"
 			>
-				<ng-template c15tPreferenceItemBody>
+				<ng-template inthPreferenceItemBody>
 					<div [class]="cls(styles.stackDescription)">
 						<p>{{ stack().description }}</p>
 					</div>
 					<div [class]="cls(styles.stackContent)">
 						@for (purpose of stack().purposes; track purpose.id) {
-							<c15t-iab-purpose-item
+							<inth-iab-purpose-item
 								[purpose]="purpose"
 								[isEnabled]="consents()[purpose.id] ?? false"
 								[vendorConsents]="vendorConsents()"

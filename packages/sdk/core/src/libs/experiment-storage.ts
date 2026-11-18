@@ -1,6 +1,6 @@
 /**
  * The arm a browser was shown, kept under {@link EXPERIMENT_STORAGE_KEY} so
- * a visitor keeps seeing the banner they saw. Read at start, when c15t picks
+ * a visitor keeps seeing the banner they saw. Read at start, when Inth picks
  * the arm; written by the experiment controller once the banner has shown
  * it. Holds `{ id, arm }` and nothing that identifies the visitor.
  */
@@ -79,7 +79,7 @@ export const readStoredExperimentArm =
  * Window property holding the arm an early `/init` request (the inline
  * prefetch script) picked, so the runtime runs the arm that request sent.
  */
-export const EXPERIMENT_WINDOW_KEY = '__c15tExperiment';
+export const EXPERIMENT_WINDOW_KEY = '__inthExperiment';
 
 /**
  * The arm an early request of this page picked, if it is well formed.

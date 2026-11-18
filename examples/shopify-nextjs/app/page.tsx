@@ -29,7 +29,7 @@ const Page = async () => {
 			<section className="intro">
 				<h1>Everyday goods</h1>
 				<p>
-					A demo store on mock.shop. The c15t banner collects consent and sends
+					A demo store on mock.shop. The inth banner collects consent and sends
 					it to Shopify&apos;s Customer Privacy API. Hydrogen holds every
 					analytics event until you answer.
 				</p>

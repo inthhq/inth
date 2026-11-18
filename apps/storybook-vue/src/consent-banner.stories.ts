@@ -3,7 +3,7 @@ import {
 	bannerContract,
 	bannerFocusManagement,
 	bannerToDialogFlow,
-} from '@c15t/conformance/play/consent-banner';
+} from '@inth/conformance/play/consent-banner';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/manager.vue';

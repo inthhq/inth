@@ -1,7 +1,7 @@
 /**
  * Keeps `mode.type`, `mode.resolve` and `routePrefix` at the values the
  * build used. Nitro applies variables such as
- * `NUXT_PUBLIC_C15T_ROUTE_PREFIX` and `NUXT_PUBLIC_C15T_MODE_TYPE` to each
+ * `NUXT_PUBLIC_INTH_ROUTE_PREFIX` and `NUXT_PUBLIC_INTH_MODE_TYPE` to each
  * request's runtime config, which the server render reads and sends to the
  * browser. From these three the build chose where the consent route is
  * mounted, which snapshot each bundle holds and which code the browser
@@ -29,14 +29,14 @@ export type BuiltOptionName = 'resolve' | 'routePrefix' | 'type';
 
 /** The part of the runtime config the step reads and writes. */
 export interface BuiltOptionsRuntimeConfig {
-	public: { c15t?: Record<string, unknown> };
+	public: { inth?: Record<string, unknown> };
 }
 
 /** The variable Nitro maps onto each option, as a deployment sets it. */
 const VARIABLES: Record<BuiltOptionName, string> = {
-	resolve: 'NUXT_PUBLIC_C15T_MODE_RESOLVE',
-	routePrefix: 'NUXT_PUBLIC_C15T_ROUTE_PREFIX',
-	type: 'NUXT_PUBLIC_C15T_MODE_TYPE',
+	resolve: 'NUXT_PUBLIC_INTH_MODE_RESOLVE',
+	routePrefix: 'NUXT_PUBLIC_INTH_ROUTE_PREFIX',
+	type: 'NUXT_PUBLIC_INTH_MODE_TYPE',
 };
 
 /** The order options are checked and reported in. */
@@ -50,7 +50,7 @@ const OPTION_NAMES: readonly BuiltOptionName[] = [
  * The environment variable that overrides an option at runtime.
  *
  * @param name - The option.
- * @returns The variable, such as `NUXT_PUBLIC_C15T_MODE_TYPE`.
+ * @returns The variable, such as `NUXT_PUBLIC_INTH_MODE_TYPE`.
  */
 export const buildOptionVariable = function buildOptionVariable(
 	name: BuiltOptionName
@@ -58,15 +58,15 @@ export const buildOptionVariable = function buildOptionVariable(
 	return VARIABLES[name];
 };
 
-/** An option's value in a `c15t` config; `undefined` when it is unset. */
+/** An option's value in a `inth` config; `undefined` when it is unset. */
 const readOption = function readOption(
-	c15t: { mode?: unknown; routePrefix?: unknown },
+	inth: { mode?: unknown; routePrefix?: unknown },
 	name: BuiltOptionName
 ): unknown {
 	if (name === 'routePrefix') {
-		return c15t.routePrefix;
+		return inth.routePrefix;
 	}
-	const { mode } = c15t;
+	const { mode } = inth;
 	return typeof mode === 'object' && mode !== null
 		? (mode as Record<string, unknown>)[name]
 		: undefined;
@@ -90,20 +90,20 @@ export const readBuiltOption = function readBuiltOption(
  * The fixed options a runtime config no longer matches. A change to another
  * mode field, such as `manifestUrl`, is not an override.
  *
- * @param c15t - The `public.c15t` runtime config, after Nitro applied the
+ * @param Inth - The `public.inth` runtime config, after Nitro applied the
  * environment.
  * @param built - The options the build used.
  * @returns The names of the options that differ, in a stable order.
  */
 export const findOverriddenOptions = function findOverriddenOptions(
-	c15t: Record<string, unknown> | undefined,
+	inth: Record<string, unknown> | undefined,
 	built: BuiltOptions
 ): BuiltOptionName[] {
-	if (!c15t) {
+	if (!inth) {
 		return [];
 	}
 	return OPTION_NAMES.filter(
-		(name) => readOption(c15t, name) !== readOption(built, name)
+		(name) => readOption(inth, name) !== readOption(built, name)
 	);
 };
 
@@ -119,13 +119,13 @@ export const pinBuildOptions = function pinBuildOptions(
 	runtimeConfig: BuiltOptionsRuntimeConfig,
 	built: BuiltOptions
 ): void {
-	const { c15t } = runtimeConfig.public;
-	if (!c15t) {
+	const { inth } = runtimeConfig.public;
+	if (!inth) {
 		return;
 	}
 	const mode: Record<string, unknown> =
-		typeof c15t.mode === 'object' && c15t.mode !== null
-			? (c15t.mode as Record<string, unknown>)
+		typeof inth.mode === 'object' && inth.mode !== null
+			? (inth.mode as Record<string, unknown>)
 			: {};
 	mode.type = built.mode.type;
 	const resolve = readOption(built, 'resolve');
@@ -134,8 +134,8 @@ export const pinBuildOptions = function pinBuildOptions(
 	} else {
 		mode.resolve = resolve;
 	}
-	c15t.mode = mode;
-	c15t.routePrefix = built.routePrefix;
+	inth.mode = mode;
+	inth.routePrefix = built.routePrefix;
 };
 
 /**
@@ -156,7 +156,7 @@ export const createBuildOptionsGuard = function createBuildOptionsGuard(
 ): (runtimeConfig: BuiltOptionsRuntimeConfig) => void {
 	const warned = new Set<BuiltOptionName>();
 	return (runtimeConfig) => {
-		const overridden = findOverriddenOptions(runtimeConfig.public.c15t, built);
+		const overridden = findOverriddenOptions(runtimeConfig.public.inth, built);
 		if (overridden.length === 0) {
 			return;
 		}

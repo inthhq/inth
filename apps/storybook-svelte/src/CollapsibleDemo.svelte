@@ -20,7 +20,7 @@
 <Collapsible.Root
 	bind:open
 	class={classes.root()}
-	style="--collapsible-gap:0.75rem;border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);padding:1rem;width:32rem;"
+	style="--collapsible-gap:0.75rem;border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);padding:1rem;width:32rem;"
 >
 	<Collapsible.Trigger
 		class={classes.trigger()}

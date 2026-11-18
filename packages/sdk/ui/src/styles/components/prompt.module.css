@@ -2,14 +2,14 @@
 
 :root {
 	/* Typography */
-	--consent-banner-font-family: var(--c15t-font-family);
-	--consent-banner-line-height: var(--c15t-line-height-normal);
+	--consent-banner-font-family: var(--inth-font-family);
+	--consent-banner-line-height: var(--inth-line-height-normal);
 	--consent-banner-text-size-adjust: 100%;
 	--consent-banner-tab-size: 4;
 
 	/* Layout variables */
-	--consent-banner-border-radius-sm: var(--c15t-radius-sm);
-	--consent-banner-border-radius: var(--c15t-radius-lg);
+	--consent-banner-border-radius-sm: var(--inth-radius-sm);
+	--consent-banner-border-radius: var(--inth-radius-lg);
 	--consent-banner-max-width: 440px;
 	/* `widget` chips and `wall` cards size independently of the floating card. */
 	--consent-banner-widget-max-width: 20rem;
@@ -18,39 +18,39 @@
 
 	/* Spacing. The header and footer share one inset, so the text and the
 	   buttons start on the same edge. */
-	--consent-banner-padding: var(--c15t-space-lg);
-	--consent-banner-padding-mobile: var(--c15t-space-md);
+	--consent-banner-padding: var(--inth-space-lg);
+	--consent-banner-padding-mobile: var(--inth-space-md);
 
 	/* Animation variables. A banner that mounts after the page has painted
 	   fades in on the entry pair; hiding fades out on the exit pair. */
-	--consent-banner-entry-duration: var(--c15t-duration-normal);
-	--consent-banner-entry-timing: var(--c15t-easing-out);
-	--consent-banner-animation-duration: var(--c15t-duration-fast);
-	--consent-banner-animation-timing: var(--c15t-easing-in);
+	--consent-banner-entry-duration: var(--inth-duration-normal);
+	--consent-banner-entry-timing: var(--inth-easing-out);
+	--consent-banner-animation-duration: var(--inth-duration-fast);
+	--consent-banner-animation-timing: var(--inth-easing-in);
 
 	/* Border */
 	--consent-banner-border-width: 1px;
 	--consent-banner-border-width-hairline: 1px;
 
 	/* Shadow */
-	--consent-banner-shadow: var(--c15t-shadow-lg);
-	--consent-banner-shadow-dark: var(--c15t-shadow-lg);
+	--consent-banner-shadow: var(--inth-shadow-lg);
+	--consent-banner-shadow-dark: var(--inth-shadow-lg);
 
 	/* Colors */
-	--consent-banner-background-color: var(--c15t-surface);
-	--consent-banner-background-color-dark: var(--c15t-surface);
-	--consent-banner-footer-background-color: var(--c15t-surface-hover);
-	--consent-banner-footer-background-color-dark: var(--c15t-surface-hover);
-	--consent-banner-text-color: var(--c15t-text);
-	--consent-banner-text-color-dark: var(--c15t-text);
-	--consent-banner-border-color: var(--c15t-border);
-	--consent-banner-border-color-dark: var(--c15t-border);
-	--consent-banner-title-color: var(--c15t-text);
-	--consent-banner-title-color-dark: var(--c15t-text);
-	--consent-banner-description-color: var(--c15t-text-muted);
-	--consent-banner-description-color-dark: var(--c15t-text-muted);
-	--consent-banner-overlay-background-color: var(--c15t-overlay);
-	--consent-banner-overlay-background-color-dark: var(--c15t-overlay);
+	--consent-banner-background-color: var(--inth-surface);
+	--consent-banner-background-color-dark: var(--inth-surface);
+	--consent-banner-footer-background-color: var(--inth-surface-hover);
+	--consent-banner-footer-background-color-dark: var(--inth-surface-hover);
+	--consent-banner-text-color: var(--inth-text);
+	--consent-banner-text-color-dark: var(--inth-text);
+	--consent-banner-border-color: var(--inth-border);
+	--consent-banner-border-color-dark: var(--inth-border);
+	--consent-banner-title-color: var(--inth-text);
+	--consent-banner-title-color-dark: var(--inth-text);
+	--consent-banner-description-color: var(--inth-text-muted);
+	--consent-banner-description-color-dark: var(--inth-text-muted);
+	--consent-banner-overlay-background-color: var(--inth-overlay);
+	--consent-banner-overlay-background-color-dark: var(--inth-overlay);
 
 	/* Stacking. A blocking banner's z-index must stay above its overlay's. */
 	--consent-banner-z-index: 999998;
@@ -102,7 +102,7 @@
 	   arrives would move it up as its content grows, when the HTML reaches
 	   the browser in more than one piece. The completed banner is visible
 	   without waiting for JavaScript. */
-	.root[data-c15t-streamed]:not(:has(> [data-c15t-stream-end])) {
+	.root[data-inth-streamed]:not(:has(> [data-inth-stream-end])) {
 		visibility: hidden;
 	}
 
@@ -462,7 +462,7 @@
 		display: flex;
 		flex-direction: column;
 		width: min(calc(100vw - 2rem), var(--consent-banner-max-width));
-		container: c15t-banner / inline-size;
+		container: inth-banner / inline-size;
 	}
 
 	@media (min-width: 640px) {
@@ -471,13 +471,13 @@
 		}
 	}
 
-	:global(.c15t-dark) .card:not(:global(.headless)) {
+	:global(.inth-dark) .card:not(:global(.headless)) {
 		background-color: var(--consent-banner-background-color-dark);
 		border-color: var(--consent-banner-border-color-dark);
 		box-shadow: var(--consent-banner-shadow-dark);
 	}
 
-	:global(.c15t-dark) .root[data-variant='bar']:not(:global(.headless)) .card {
+	:global(.inth-dark) .root[data-variant='bar']:not(:global(.headless)) .card {
 		box-shadow: var(--consent-banner-shadow-dark);
 	}
 
@@ -489,7 +489,7 @@
 		border-color: var(--consent-banner-border-color);
 	}
 
-	:global(.c15t-dark)
+	:global(.inth-dark)
 		.card:not(:global(.headless))
 		> :not([hidden])
 		~ :not([hidden]) {
@@ -511,7 +511,7 @@
 		color: var(--consent-banner-text-color);
 	}
 
-	:global(.c15t-dark) .header:not(:global(.headless)) {
+	:global(.inth-dark) .header:not(:global(.headless)) {
 		color: var(--consent-banner-text-color-dark);
 	}
 
@@ -532,12 +532,12 @@
 		flex-direction: column;
 		gap: 0.75rem;
 		justify-content: space-between;
-		padding-block: var(--c15t-space-md);
+		padding-block: var(--inth-space-md);
 		padding-inline: var(--consent-banner-padding-mobile);
 		background-color: var(--consent-banner-footer-background-color);
 	}
 
-	:global(.c15t-dark) .footer:not(:global(.headless)) {
+	:global(.inth-dark) .footer:not(:global(.headless)) {
 		background-color: var(--consent-banner-footer-background-color-dark);
 	}
 
@@ -591,22 +591,22 @@
 		outline: none;
 		box-shadow: var(
 			--button-shadow-primary-focus,
-			0 0 0 2px var(--c15t-primary)
+			0 0 0 2px var(--inth-primary)
 		);
 	}
 
-	:global(.c15t-dark) .rightLink:not(:global(.headless)) {
+	:global(.inth-dark) .rightLink:not(:global(.headless)) {
 		color: var(--consent-banner-description-color-dark);
 	}
 
-	:global(.c15t-dark) .rightLink:not(:global(.headless)):hover {
+	:global(.inth-dark) .rightLink:not(:global(.headless)):hover {
 		color: var(--consent-banner-text-color-dark);
 	}
 
-	:global(.c15t-dark) .rightLink:not(:global(.headless)):focus-visible {
+	:global(.inth-dark) .rightLink:not(:global(.headless)):focus-visible {
 		box-shadow: var(
 			--button-shadow-primary-focus-dark,
-			0 0 0 2px var(--c15t-primary)
+			0 0 0 2px var(--inth-primary)
 		);
 	}
 
@@ -742,7 +742,7 @@
 		color: var(--consent-banner-description-color);
 	}
 
-	:global(.c15t-dark) .description:not(:global(.headless)) {
+	:global(.inth-dark) .description:not(:global(.headless)) {
 		color: var(--consent-banner-description-color-dark);
 	}
 
@@ -754,7 +754,7 @@
 		color: var(--consent-banner-description-color);
 	}
 
-	:global(.c15t-dark)
+	:global(.inth-dark)
 		.description[data-context='banner']:not(:global(.headless)) {
 		color: var(--consent-banner-description-color-dark);
 	}
@@ -766,7 +766,7 @@
 		line-height: var(--consent-dialog-description-line-height);
 	}
 
-	:global(.c15t-dark)
+	:global(.inth-dark)
 		.description[data-context='dialog']:not(:global(.headless)) {
 		color: var(--consent-dialog-muted-color-dark);
 	}
@@ -775,7 +775,7 @@
 		color: var(--consent-manager-text-muted-color);
 	}
 
-	:global(.c15t-dark)
+	:global(.inth-dark)
 		.description[data-context='manager']:not(:global(.headless)) {
 		color: var(--consent-manager-text-muted-color-dark);
 	}
@@ -791,7 +791,7 @@
 		color: var(--consent-banner-title-color);
 	}
 
-	:global(.c15t-dark) .title:not(:global(.headless)) {
+	:global(.inth-dark) .title:not(:global(.headless)) {
 		color: var(--consent-banner-title-color-dark);
 	}
 
@@ -842,7 +842,7 @@
 			var(--consent-banner-animation-timing);
 	}
 
-	:global(.c15t-dark) .overlay:not(:global(.headless)) {
+	:global(.inth-dark) .overlay:not(:global(.headless)) {
 		background-color: var(--consent-banner-overlay-background-color-dark);
 	}
 

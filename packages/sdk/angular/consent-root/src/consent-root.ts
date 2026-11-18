@@ -15,20 +15,20 @@ import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
  *
  * @example
  * ```html
- * <c15t-consent-root [legalLinks]="['privacyPolicy']" />
+ * <inth-consent-root [legalLinks]="['privacyPolicy']" />
  * ```
  */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, ConsentDialog],
-	selector: 'c15t-consent-root',
-	template: `<c15t-consent-banner
+	selector: 'inth-consent-root',
+	template: `<inth-consent-banner
 			[noStyle]="noStyle()"
 			[disableAnimation]="disableAnimation()"
 			[hideBranding]="hideBranding()"
 			[legalLinks]="legalLinks()"
 		/>
-		<c15t-consent-dialog
+		<inth-consent-dialog
 			[noStyle]="noStyle()"
 			[disableAnimation]="disableAnimation()"
 			[hideBranding]="hideBranding()"
@@ -46,7 +46,7 @@ export class ConsentRoot {
 	/** Which of the provider's legal links both surfaces show. */
 	readonly legalLinks = input<LegalLinkSelection | undefined>(undefined);
 	/**
-	 * Render a `<c15t-consent-dialog-trigger>` with the dialog. Pass an
+	 * Render a `<inth-consent-dialog-trigger>` with the dialog. Pass an
 	 * object to set the trigger's inputs.
 	 */
 	readonly showTrigger = input<boolean | ConsentDialogTriggerOptions>(false);

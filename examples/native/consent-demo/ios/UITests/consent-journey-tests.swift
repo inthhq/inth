@@ -30,7 +30,7 @@ final class ConsentJourneyTests: XCTestCase {
     func button(_ id: String) -> XCUIElement { app.buttons[id] }
     func openStandingPreferences() {
         let gone = NSPredicate { _, _ in
-            !self.button("inth.prefs.save").exists && !self.button("inth.iab.save").exists && !self.button("inth.first-layer.accept-all").exists
+            !self.button("inth.prefs.save").exists && !self.button("c15t.iab.save").exists && !self.button("inth.first-layer.accept-all").exists
         }
         expectation(for: gone, evaluatedWith: app)
         waitForExpectations(timeout: 5)
@@ -204,40 +204,40 @@ final class ConsentJourneyTests: XCTestCase {
         button("inth.first-layer.customize").tap()
         XCTAssertTrue(app.switches["inth.prefs.category.experience.switch"].waitForExistence(timeout: 5))
         // One purpose consent on, so a partner consent later shows as Partly on rather than Off.
-        let storage = app.switches["inth.iab.purpose.1.consent"]
+        let storage = app.switches["c15t.iab.purpose.1.consent"]
         reveal(storage); storage.tap(); XCTAssertEqual(storage.value as? String, "1")
-        let purpose = app.switches["inth.iab.purpose.7.consent"]
+        let purpose = app.switches["c15t.iab.purpose.7.consent"]
         reveal(purpose); capture("ios-iab-centre")
-        let details = button("inth.iab.purpose.7.details"); reveal(details); details.tap()
+        let details = button("c15t.iab.purpose.7.details"); reveal(details); details.tap()
         // Text actions size their own 44pt target; a frame outside the button would leave 18pt.
-        let viewPartners = button("inth.iab.purpose.7.view-partners"); reveal(viewPartners)
+        let viewPartners = button("c15t.iab.purpose.7.view-partners"); reveal(viewPartners)
         XCTAssertGreaterThanOrEqual(viewPartners.frame.height, 44)
         XCTAssertGreaterThanOrEqual(details.frame.height, 44)
-        let li = app.switches["inth.iab.purpose.7.li"]
+        let li = app.switches["c15t.iab.purpose.7.li"]
         reveal(li); XCTAssertEqual(li.value as? String, "1") // Starts not objected to; one tap objects.
         li.tap(); XCTAssertEqual(li.value as? String, "0")
-        XCTAssertFalse(app.switches["inth.iab.purpose.1.li"].exists)
+        XCTAssertFalse(app.switches["c15t.iab.purpose.1.li"].exists)
         // The explanation of legitimate interest sits under the purposes it applies to.
-        let explanation = app.staticTexts["inth.iab.legitimate-interest-explanation"]
+        let explanation = app.staticTexts["c15t.iab.legitimate-interest-explanation"]
         reveal(explanation); XCTAssertTrue(explanation.label.contains("right to object"))
-        let partners = button("inth.iab.partners"); reveal(partners); partners.tap()
-        let search = app.textFields["inth.iab.vendors.search"]
+        let partners = button("c15t.iab.partners"); reveal(partners); partners.tap()
+        let search = app.textFields["c15t.iab.vendors.search"]
         XCTAssertTrue(search.waitForExistence(timeout: 3)); capture("ios-partner-list")
         search.tap(); search.typeText("elan")
-        XCTAssertTrue(button("inth.iab.vendors.vendor.1").exists); capture("ios-partner-search")
-        button("inth.iab.vendors.vendor.1").tap()
-        let consent = app.switches["inth.iab.vendor.1.consent"]
+        XCTAssertTrue(button("c15t.iab.vendors.vendor.1").exists); capture("ios-partner-search")
+        button("c15t.iab.vendors.vendor.1").tap()
+        let consent = app.switches["c15t.iab.vendor.1.consent"]
         XCTAssertTrue(consent.waitForExistence(timeout: 3)); consent.tap()
-        let vendorLI = app.switches["inth.iab.vendor.1.li"]; XCTAssertEqual(vendorLI.value as? String, "1"); vendorLI.tap(); XCTAssertEqual(vendorLI.value as? String, "0")
+        let vendorLI = app.switches["c15t.iab.vendor.1.li"]; XCTAssertEqual(vendorLI.value as? String, "1"); vendorLI.tap(); XCTAssertEqual(vendorLI.value as? String, "0")
         capture("ios-partner-details")
-        button("inth.iab.vendor.back").tap()
-        XCTAssertTrue(app.staticTexts["inth.iab.vendors.vendor.1.status"].waitForExistence(timeout: 3))
-        XCTAssertEqual(app.staticTexts["inth.iab.vendors.vendor.1.status"].label, "Partly on")
+        button("c15t.iab.vendor.back").tap()
+        XCTAssertTrue(app.staticTexts["c15t.iab.vendors.vendor.1.status"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.staticTexts["c15t.iab.vendors.vendor.1.status"].label, "Partly on")
         capture("ios-partner-status")
-        button("inth.iab.vendors.back").tap()
-        let features = app.staticTexts["inth.iab.features-standard-text"]; reveal(features); XCTAssertFalse(features.label.isEmpty)
-        let ac0 = button("inth.iab.other-partners")
-        let consentStorage = app.staticTexts["inth.iab.consent-storage"]; reveal(consentStorage)
+        button("c15t.iab.vendors.back").tap()
+        let features = app.staticTexts["c15t.iab.features-standard-text"]; reveal(features); XCTAssertFalse(features.label.isEmpty)
+        let ac0 = button("c15t.iab.other-partners")
+        let consentStorage = app.staticTexts["c15t.iab.consent-storage"]; reveal(consentStorage)
         XCTAssertTrue(consentStorage.label.contains("for up to 365 days"), consentStorage.label)
         capture("ios-iab-consent-storage")
         reveal(ac0, backwards: true)
@@ -248,7 +248,7 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["inth.ac.intro"].label.contains("Google works with these ad tech providers"))
         XCTAssertFalse(app.staticTexts["inth.ac.intro"].label.contains("Purposes 1"))
         button("inth.ac.back").tap()
-        button("inth.iab.save").tap()
+        button("c15t.iab.save").tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
         let summary = app.staticTexts["fixture.state.iab"].label
         XCTAssertTrue(summary.contains("purposeObjections=[7]"), summary)
@@ -261,7 +261,7 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("inth.first-layer.accept-all").waitForExistence(timeout: 10)); button("inth.first-layer.accept-all").tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["fixture.state.iab"].label.contains("ac=2~10.20~dv."))
-        openStandingPreferences(); button("inth.iab.reject-all").tap()
+        openStandingPreferences(); button("c15t.iab.reject-all").tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["fixture.state.permission.marketing"].label, "marketing: false")
     }
@@ -274,13 +274,13 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("inth.first-layer.partner-count").exists)
         XCTAssertEqual(button("inth.first-layer.reject-all").frame.width, button("inth.first-layer.accept-all").frame.width, accuracy: 1)
         customize.tap()
-        let save = button("inth.iab.save")
+        let save = button("c15t.iab.save")
         XCTAssertTrue(save.waitForExistence(timeout: 5))
         // One Save, above the list; Reject All and Accept All stay equal in the footer.
         XCTAssertLessThan(save.frame.maxY, footer.frame.minY)
-        XCTAssertEqual(button("inth.iab.reject-all").frame.width, button("inth.iab.accept-all").frame.width, accuracy: 1)
-        XCTAssertTrue(footer.frame.contains(button("inth.iab.reject-all").frame))
-        let storage = app.switches["inth.iab.purpose.1.consent"]
+        XCTAssertEqual(button("c15t.iab.reject-all").frame.width, button("c15t.iab.accept-all").frame.width, accuracy: 1)
+        XCTAssertTrue(footer.frame.contains(button("c15t.iab.reject-all").frame))
+        let storage = app.switches["c15t.iab.purpose.1.consent"]
         reveal(storage); XCTAssertEqual(storage.value as? String, "0"); storage.tap()
         save.tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
@@ -313,7 +313,7 @@ final class ConsentJourneyTests: XCTestCase {
             XCTAssertTrue(partners.exists, layout)
             XCTAssertGreaterThanOrEqual(partners.frame.height, 44, layout)
             partners.tap()
-            XCTAssertTrue(button("inth.iab.vendors.vendor.1").waitForExistence(timeout: 5), layout)
+            XCTAssertTrue(button("c15t.iab.vendors.vendor.1").waitForExistence(timeout: 5), layout)
             app.terminate()
         }
     }
@@ -383,12 +383,12 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
         capture("ios-brand-first-layer")
         button("inth.first-layer.customize").tap()
-        XCTAssertTrue(button("inth.iab.save").waitForExistence(timeout: 5))
+        XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5))
         capture("ios-brand-preferences")
-        let partners = button("inth.iab.partners"); reveal(partners); partners.tap()
-        XCTAssertTrue(button("inth.iab.vendors.vendor.1").waitForExistence(timeout: 5))
+        let partners = button("c15t.iab.partners"); reveal(partners); partners.tap()
+        XCTAssertTrue(button("c15t.iab.vendors.vendor.1").waitForExistence(timeout: 5))
         capture("ios-brand-partners")
-        button("inth.iab.vendors.back").tap()
+        button("c15t.iab.vendors.back").tap()
         button("inth.prefs.cancel").tap()
         XCTAssertTrue(accept.waitForExistence(timeout: 5))
         accept.tap()
@@ -521,45 +521,45 @@ final class ConsentJourneyTests: XCTestCase {
         reveal(count); XCTAssertTrue(count.isHittable); XCTAssertGreaterThanOrEqual(count.frame.height, 44)
         capture("ios-ax5-iab-first-layer")
         reveal(customize); customize.tap()
-        let save = button("inth.iab.save")
+        let save = button("c15t.iab.save")
         XCTAssertTrue(save.waitForExistence(timeout: 5)); XCTAssertTrue(save.isHittable)
         XCTAssertFalse(app.scrollViews["inth.footer"].exists)
         XCTAssertGreaterThanOrEqual(footer.frame.minY, app.frame.height * 0.7)
-        let reject = button("inth.iab.reject-all"), accept = button("inth.iab.accept-all")
+        let reject = button("c15t.iab.reject-all"), accept = button("c15t.iab.accept-all")
         reveal(reject); XCTAssertTrue(reject.isHittable)
         XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
         XCTAssertLessThanOrEqual(reject.frame.maxY, accept.frame.minY + 0.5)
         capture("ios-ax5-iab-preferences")
-        let purpose = app.switches["inth.iab.purpose.7.consent"]
+        let purpose = app.switches["c15t.iab.purpose.7.consent"]
         reveal(purpose); purpose.tap(); XCTAssertEqual(purpose.value as? String, "1")
-        let details = button("inth.iab.purpose.7.details"); reveal(details); details.tap()
-        let viewPartners = button("inth.iab.purpose.7.view-partners"); reveal(viewPartners)
+        let details = button("c15t.iab.purpose.7.details"); reveal(details); details.tap()
+        let viewPartners = button("c15t.iab.purpose.7.view-partners"); reveal(viewPartners)
         XCTAssertGreaterThanOrEqual(viewPartners.frame.height, 44)
         capture("ios-ax5-iab-purpose-details")
         viewPartners.tap()
-        let search = app.textFields["inth.iab.vendors.search"]
+        let search = app.textFields["c15t.iab.vendors.search"]
         XCTAssertTrue(search.waitForExistence(timeout: 3))
-        XCTAssertTrue(button("inth.iab.vendors.filter.purpose.clear").exists)
+        XCTAssertTrue(button("c15t.iab.vendors.filter.purpose.clear").exists)
         capture("ios-ax5-partner-list")
         search.tap(); search.typeText("elan")
-        let vendor = button("inth.iab.vendors.vendor.1")
+        let vendor = button("c15t.iab.vendors.vendor.1")
         XCTAssertTrue(vendor.waitForExistence(timeout: 3))
         capture("ios-ax5-partner-search")
         // Return puts the keyboard away; the result row is then reached like any other row.
         search.typeText("\n")
         reveal(vendor); vendor.tap()
-        let consent = app.switches["inth.iab.vendor.1.consent"]
+        let consent = app.switches["c15t.iab.vendor.1.consent"]
         XCTAssertTrue(consent.waitForExistence(timeout: 3)); reveal(consent); consent.tap()
         XCTAssertEqual(consent.value as? String, "1")
         capture("ios-ax5-partner-details")
-        button("inth.iab.vendor.back").tap()
-        XCTAssertTrue(app.staticTexts["inth.iab.vendors.vendor.1.status"].waitForExistence(timeout: 3))
-        button("inth.iab.vendors.back").tap()
+        button("c15t.iab.vendor.back").tap()
+        XCTAssertTrue(app.staticTexts["c15t.iab.vendors.vendor.1.status"].waitForExistence(timeout: 3))
+        button("c15t.iab.vendors.back").tap()
         // The special-feature title scales with the rest of the page; test15 tolerates the audit's Dynamic
         // Type finding on this row on that basis. It is about 20pt tall at the default size.
-        let feature = button("inth.iab.special-feature.1.details"); reveal(feature)
+        let feature = button("c15t.iab.special-feature.1.details"); reveal(feature)
         XCTAssertGreaterThan(feature.staticTexts.firstMatch.frame.height, 60, "special-feature title does not scale")
-        let ac = button("inth.iab.other-partners"); reveal(ac); ac.tap()
+        let ac = button("c15t.iab.other-partners"); reveal(ac); ac.tap()
         XCTAssertTrue(app.textFields["inth.ac.search"].waitForExistence(timeout: 3))
         let provider = app.switches["inth.ac.provider.10.switch"]
         reveal(provider); provider.tap(); XCTAssertEqual(provider.value as? String, "1")
@@ -680,12 +680,12 @@ final class ConsentJourneyTests: XCTestCase {
             guard screen == "ax-partner-search-keyboard",
                   let element = issue.element,
                   element.elementType == .textField,
-                  element.identifier == "inth.iab.vendors.search" else { return false }
+                  element.identifier == "c15t.iab.vendors.search" else { return false }
             auditTolerated[screen, default: 0] += 1
             return auditTolerated[screen]! <= 1
         case .dynamicType:
             guard screen == "ax-iab-preferences", let element = issue.element else { return false }
-            let row = [app.switches["inth.iab.special-feature.1.switch"], button("inth.iab.special-feature.1.details")]
+            let row = [app.switches["c15t.iab.special-feature.1.switch"], button("c15t.iab.special-feature.1.details")]
             return row.contains { $0.exists && $0.frame.insetBy(dx: -1, dy: -1).contains(element.frame) }
         default:
             return false
@@ -760,21 +760,21 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("inth.first-layer.partner-count").label.range(of: #"^\d+ partners$"#, options: .regularExpression) != nil, button("inth.first-layer.partner-count").label)
         audit("ax-iab-first-layer")
         button("inth.first-layer.customize").tap()
-        XCTAssertTrue(button("inth.iab.save").waitForExistence(timeout: 5))
-        let details = button("inth.iab.purpose.7.details"); reveal(details)
+        XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5))
+        let details = button("c15t.iab.purpose.7.details"); reveal(details)
         XCTAssertEqual(details.value as? String, "Collapsed"); details.tap(); XCTAssertEqual(details.value as? String, "Expanded")
         audit("ax-iab-preferences")
-        let partners = button("inth.iab.partners"); reveal(partners); partners.tap()
-        let search = app.textFields["inth.iab.vendors.search"]
+        let partners = button("c15t.iab.partners"); reveal(partners); partners.tap()
+        let search = app.textFields["c15t.iab.vendors.search"]
         XCTAssertTrue(search.waitForExistence(timeout: 3))
-        XCTAssertEqual(button("inth.iab.vendors.back").label, "Back")
+        XCTAssertEqual(button("c15t.iab.vendors.back").label, "Back")
         search.tap(); search.typeText("elan")
-        XCTAssertTrue(button("inth.iab.vendors.vendor.1").waitForExistence(timeout: 3))
+        XCTAssertTrue(button("c15t.iab.vendors.vendor.1").waitForExistence(timeout: 3))
         XCTAssertTrue(app.keyboards.firstMatch.exists)
         audit("ax-partner-search-keyboard")
         // The audit can give the keyboard up; the result row is reachable either way.
-        button("inth.iab.vendors.vendor.1").tap()
-        XCTAssertTrue(app.switches["inth.iab.vendor.1.consent"].waitForExistence(timeout: 3))
+        button("c15t.iab.vendors.vendor.1").tap()
+        XCTAssertTrue(app.switches["c15t.iab.vendor.1.consent"].waitForExistence(timeout: 3))
         audit("ax-partner-details")
         // Largest accessibility size: the audit covers dynamic type and hit regions on the page layout.
         app.terminate(); launch(fail: true, arguments: Self.ax5)
@@ -868,15 +868,15 @@ final class ConsentJourneyTests: XCTestCase {
         if sheetOK.waitForExistence(timeout: 3) { sheetOK.tap(); usleep(600_000); sheetOK.doubleTap(); sleep(1) }
         XCTAssertTrue(button("inth.first-layer.customize").waitForExistence(timeout: 10)); sleep(1)
         button("inth.first-layer.customize").tap(); usleep(800_000); button("inth.first-layer.customize").doubleTap()
-        XCTAssertTrue(button("inth.iab.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-00-preferences-arrival")
+        XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-00-preferences-arrival")
         app.swipeRight(); usleep(900_000); capture("vo-iab-01-preferences-next")
-        let partners = button("inth.iab.partner-count")
+        let partners = button("c15t.iab.partner-count")
         partners.tap(); usleep(800_000); capture("vo-iab-02-partner-count-focused")
         partners.doubleTap()
-        XCTAssertTrue(app.textFields["inth.iab.vendors.search"].waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-03-partners-arrival")
+        XCTAssertTrue(app.textFields["c15t.iab.vendors.search"].waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-03-partners-arrival")
         for step in 4...6 { app.swipeRight(); usleep(900_000); capture(String(format: "vo-iab-%02d-partners-next", step)) }
-        button("inth.iab.vendors.back").tap(); usleep(800_000); button("inth.iab.vendors.back").doubleTap()
-        XCTAssertTrue(button("inth.iab.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-07-back-to-preferences")
+        button("c15t.iab.vendors.back").tap(); usleep(800_000); button("c15t.iab.vendors.back").doubleTap()
+        XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-07-back-to-preferences")
     }
     /// Diagnostic behind the pass order in `audit`: from the state test15 audits as ax-iab-preferences, runs the
     /// categories one at a time and in combinations, printing the findings and the position of the "IAB
@@ -889,7 +889,7 @@ final class ConsentJourneyTests: XCTestCase {
         let rounds = Int(ProcessInfo.processInfo.environment["C15T_AUDIT_ROUNDS"] ?? "") ?? 2
         func frames(_ tag: String) {
             let partners = app.staticTexts["IAB partners"].firstMatch
-            let row = button("inth.iab.partners")
+            let row = button("c15t.iab.partners")
             print("ax-diag \(tag) footer=\(footer.exists ? "\(footer.frame)" : "none") partnersText=\(partners.exists ? "\(partners.frame)" : "absent") partnersRow=\(row.exists ? "\(row.frame)" : "absent")")
         }
         func run(_ types: XCUIAccessibilityAuditType, _ tag: String) {
@@ -910,8 +910,8 @@ final class ConsentJourneyTests: XCTestCase {
             launch("fresh-online-iab")
             XCTAssertTrue(button("inth.first-layer.customize").waitForExistence(timeout: 10))
             button("inth.first-layer.customize").tap()
-            XCTAssertTrue(button("inth.iab.save").waitForExistence(timeout: 5))
-            let details = button("inth.iab.purpose.7.details"); reveal(details); details.tap()
+            XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5))
+            let details = button("c15t.iab.purpose.7.details"); reveal(details); details.tap()
             XCTAssertEqual(details.value as? String, "Expanded")
             let r = "diag-r\(round)"
             capture("\(r)-00-before"); dumpAccessibility("\(r)-00-before"); frames("\(r)-00-before")

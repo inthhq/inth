@@ -5,7 +5,7 @@
  * options are serialized once at build time into a virtual module that the
  * middleware, the `.astro` components and the injected client boot script
  * all import. Callbacks and other live values belong in the module named
- * by {@link C15tAstroOptions.clientEntrypoint}.
+ * by {@link InthAstroOptions.clientEntrypoint}.
  */
 
 import type {
@@ -43,21 +43,21 @@ import type { Theme } from '@inth/sdk/ui/theme';
  * dialog. Unset, the integration picks the one of `@astrojs/svelte`,
  * `@astrojs/react` and `@astrojs/vue` the site registers.
  */
-export type C15tUIAdapterName = 'svelte' | 'react' | 'vue';
+export type InthUIAdapterName = 'svelte' | 'react' | 'vue';
 
 /**
  * How the consent surfaces pick light or dark.
  *
- * Dark mode is the `c15t-dark` class on `<html>`, not a
+ * Dark mode is the `inth-dark` class on `<html>`, not a
  * `prefers-color-scheme` block, so something has to set it. `'system'`
  * follows `prefers-color-scheme` and keeps following it; `'light'` and
- * `'dark'` pin it. `'none'` leaves the class to the site: c15t never adds
+ * `'dark'` pin it. `'none'` leaves the class to the site: Inth never adds
  * or removes it, so a site with its own theme switch toggles it itself.
  */
-export type C15tColorScheme = 'light' | 'dark' | 'system' | 'none';
+export type InthColorScheme = 'light' | 'dark' | 'system' | 'none';
 
 /** How the integration registers its `pre`-order middleware. */
-export interface C15tMiddlewareOptions {
+export interface InthMiddlewareOptions {
 	/**
 	 * Register `@inth/astro/middleware` at all.
 	 *
@@ -73,7 +73,7 @@ export interface C15tMiddlewareOptions {
 	 * decision it never renders. A path matches when it is the pathname
 	 * exactly or a parent segment of it, so `'/api'` covers `/api/health`.
 	 *
-	 * `Astro.locals.c15t` is left unset on a skipped route.
+	 * `Astro.locals.inth` is left unset on a skipped route.
 	 *
 	 * @example ['/api/webhooks', '/healthz']
 	 */
@@ -95,25 +95,25 @@ export interface C15tMiddlewareOptions {
 	 */
 	timeoutMs?: number | false;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the middleware
+	 * @deprecated Inth no longer sets a subject cookie, so the middleware
 	 * reads nothing from this. Removed in v4.
 	 */
 	trustForwardedHeaders?: boolean;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so this does
+	 * @deprecated Inth no longer sets a subject cookie, so this does
 	 * nothing. Removed in v4.
 	 */
 	subjectCookie?: boolean;
 }
 
-/** Options accepted by the `c15t()` Astro integration. */
-export interface C15tAstroOptions {
+/** Options accepted by the `inth()` Astro integration. */
+export interface InthAstroOptions {
 	/**
 	 * Your Inth backend: the browser saves consent there with
 	 * `POST /subjects`, `manifest()` reads `${projectUrl}/manifest`, and
 	 * `hosted()` asks its `/init`. Required unless `mode` is `testing()`.
 	 *
-	 * Defaults to `PUBLIC_C15T_BACKEND_URL`, then `PUBLIC_INTH_PROJECT_URL`,
+	 * Defaults to `PUBLIC_INTH_PROJECT_URL`, then `PUBLIC_INTH_PROJECT_URL`,
 	 * read from the environment or a `.env` file in the project root when
 	 * `astro.config.mjs` loads.
 	 */
@@ -147,7 +147,7 @@ export interface C15tAstroOptions {
 	 * `${routePrefix}/manifest`. `/` is rejected: a catch-all route at the
 	 * site root would catch every page.
 	 *
-	 * @default '/api/c15t'
+	 * @default '/api/inth'
 	 */
 	routePrefix?: string | false;
 	/**
@@ -155,7 +155,7 @@ export interface C15tAstroOptions {
 	 * default) logs a warning, and the server fetches the policy at
 	 * runtime, asking the backend's `/init` while the manifest is
 	 * unavailable. `'fail'` stops `astro build` and `astro dev`. The
-	 * `C15T_ON_BUILD_ERROR` environment variable
+	 * `INTH_ON_BUILD_ERROR` environment variable
 	 * overrides this option. The fetch waits at most 10 seconds.
 	 */
 	onBuildError?: 'fail' | 'runtime';
@@ -185,13 +185,13 @@ export interface C15tAstroOptions {
 	 * and still turn one vendor off in the preference dialog, which lists a
 	 * switch per vendor under its category. Scripts with a matching
 	 * `vendor`, iframes with `data-vendor` and inert tags with
-	 * `data-c15t-vendor` then stay blocked. Declarations merge with vendors
+	 * `data-inth-vendor` then stay blocked. Declarations merge with vendors
 	 * the backend manifest returns; presentation declared here wins.
 	 * Unrelated to `iab.vendors`, which lists IAB vendor IDs.
 	 *
 	 * @example
 	 * ```js
-	 * c15t({
+	 * inth({
 	 *   vendors: [
 	 *     {
 	 *       id: 'posthog',
@@ -231,7 +231,7 @@ export interface C15tAstroOptions {
 	 * Block `fetch` and XHR requests that match these rules until the
 	 * visitor's consent allows them. Omitted or `false` disables it.
 	 * `onRequestBlocked` is a callback, so it belongs in
-	 * {@link C15tClientOptionsExtension.networkBlocker}.
+	 * {@link InthClientOptionsExtension.networkBlocker}.
 	 */
 	networkBlocker?:
 		| Omit<RuntimeNetworkBlockerOptions, 'onRequestBlocked'>
@@ -241,9 +241,9 @@ export interface C15tAstroOptions {
 	 * IAB TCF configuration. `false` disables it.
 	 *
 	 * Only the serializable fields are accepted here; a live GVL fetcher
-	 * belongs in {@link C15tAstroOptions.clientEntrypoint}.
+	 * belongs in {@link InthAstroOptions.clientEntrypoint}.
 	 */
-	iab?: C15tIABOptions | false;
+	iab?: InthIABOptions | false;
 
 	/**
 	 * IAB Global Privacy Platform (GPP). `true` or an options object installs
@@ -253,12 +253,12 @@ export interface C15tAstroOptions {
 	 *
 	 * The GPP code loads with a dynamic `import()` only when this is set, so
 	 * pages without it download none of it. The TCF EU section also needs
-	 * {@link C15tAstroOptions.iab}. GPP stays off when a `consentSource` in
-	 * {@link C15tAstroOptions.clientEntrypoint} owns consent.
+	 * {@link InthAstroOptions.iab}. GPP stays off when a `consentSource` in
+	 * {@link InthAstroOptions.clientEntrypoint} owns consent.
 	 *
 	 * @example
 	 * ```js
-	 * c15t({
+	 * inth({
 	 *   gpp: { usFallback: 'none' },
 	 * });
 	 * ```
@@ -269,11 +269,11 @@ export interface C15tAstroOptions {
 	storageConfig?: StorageConfig;
 
 	/** Locale and message overrides. */
-	i18n?: C15tI18nOptions;
+	i18n?: InthI18nOptions;
 
 	/**
 	 * Theme tokens applied to the banner and dialog surfaces. The server
-	 * renders them as a `<style id="c15t-theme">` next to the config script.
+	 * renders them as a `<style id="inth-theme">` next to the config script.
 	 */
 	theme?: Theme;
 
@@ -285,7 +285,7 @@ export interface C15tAstroOptions {
 	 * tiny inline script in `<head>`, so the server-rendered banner is
 	 * already dark on its first paint rather than flashing light.
 	 *
-	 * `'none'` hands the `c15t-dark` class on `<html>` to the site: c15t
+	 * `'none'` hands the `inth-dark` class on `<html>` to the site: Inth
 	 * neither sets nor clears it, on boot, on ClientRouter navigation or when
 	 * a dialog opens. Use it when the site's own theme switch toggles it.
 	 * `null` means the same, as it does in the React, Vue and Svelte
@@ -293,7 +293,7 @@ export interface C15tAstroOptions {
 	 *
 	 * @default 'system'
 	 */
-	colorScheme?: C15tColorScheme | null;
+	colorScheme?: InthColorScheme | null;
 
 	/**
 	 * Skip the banner's entry animation and the dialogs' enter and exit
@@ -319,14 +319,14 @@ export interface C15tAstroOptions {
 	 * JavaScript. Whichever it is, the matching Astro integration has to be
 	 * listed in `astro.config`.
 	 */
-	ui?: C15tUIAdapterName;
+	ui?: InthUIAdapterName;
 
 	/**
-	 * Deliver c15t's styles. `<ConsentScript />`, or the banner on a layout
+	 * Deliver inth's styles. `<ConsentScript />`, or the banner on a layout
 	 * without it, inlines the first-paint rules into the HTML, so no
 	 * stylesheet link holds back the page's first paint. The client links
 	 * the dialog's rules before mounting it. With
-	 * {@link C15tAstroOptions.iab} set, IAB banner rules are also inlined,
+	 * {@link InthAstroOptions.iab} set, IAB banner rules are also inlined,
 	 * and its panel rules load only when the IAB dialog opens.
 	 *
 	 * A Tailwind CSS 3 site links the full base and IAB stylesheets through
@@ -341,20 +341,20 @@ export interface C15tAstroOptions {
 	styles?: boolean;
 
 	/**
-	 * Module whose default export is a {@link C15tClientOptionsExtension},
+	 * Module whose default export is a {@link InthClientOptionsExtension},
 	 * for anything that cannot be serialized: callbacks, a custom GVL
 	 * fetcher, scripts with lifecycle hooks such as the
 	 * `@inth/integrations` helpers.
 	 *
 	 * A relative path resolves from the project root. Unset, the integration
-	 * uses `src/c15t.client.ts`, `.js` or `.mjs` when the file exists.
+	 * uses `src/inth.client.ts`, `.js` or `.mjs` when the file exists.
 	 *
 	 * @example './src/consent-client.ts'
 	 */
 	clientEntrypoint?: string;
 
 	/**
-	 * Register the `pre`-order middleware that populates `Astro.locals.c15t`.
+	 * Register the `pre`-order middleware that populates `Astro.locals.inth`.
 	 *
 	 * `false` is the same as `{ enabled: false }`. The middleware already
 	 * skips the integration's own route under `routePrefix`, so a site that
@@ -363,10 +363,10 @@ export interface C15tAstroOptions {
 	 *
 	 * @default true
 	 */
-	middleware?: boolean | C15tMiddlewareOptions;
+	middleware?: boolean | InthMiddlewareOptions;
 
 	/**
-	 * Fail the build when the Astro integration for {@link C15tAstroOptions.ui}
+	 * Fail the build when the Astro integration for {@link InthAstroOptions.ui}
 	 * is missing. Set to `false` for banner-only sites, which render no
 	 * island at all.
 	 *
@@ -380,10 +380,10 @@ export interface C15tAstroOptions {
  *
  * The serializable subset of the runtime's `RuntimeIABOptions`: a custom
  * fetcher cannot survive the trip into the injected boot script, so that
- * belongs in {@link C15tAstroOptions.clientEntrypoint} instead. A vendor
- * list itself is plain JSON and does travel — see {@link C15tIABOptions.gvl}.
+ * belongs in {@link InthAstroOptions.clientEntrypoint} instead. A vendor
+ * list itself is plain JSON and does travel — see {@link InthIABOptions.gvl}.
  */
-export interface C15tIABOptions {
+export interface InthIABOptions {
 	/** Set `false` to keep IAB configured but inert. */
 	enabled?: boolean;
 	/**
@@ -411,7 +411,7 @@ export interface C15tIABOptions {
 	/** Publisher country code used in the TC string. */
 	publisherCountryCode?: string;
 	/**
-	 * Ignored: c15t always encodes IsServiceSpecific=1.
+	 * Ignored: Inth always encodes IsServiceSpecific=1.
 	 *
 	 * @deprecated TCF requires IsServiceSpecific=1. Group-specific scope is
 	 * also encoded as 1. Passing `false` logs a warning once and has no
@@ -429,13 +429,13 @@ export interface C15tIABOptions {
 	 *
 	 * Goes through the shared in-process cache in `@inth/sdk/server`, so
 	 * concurrent renders collapse onto one download. Ignored when
-	 * {@link C15tIABOptions.gvl} is set.
+	 * {@link InthIABOptions.gvl} is set.
 	 */
 	gvlUrl?: string;
 }
 
 /** Locale configuration accepted by the integration. */
-export interface C15tI18nOptions {
+export interface InthI18nOptions {
 	/** Force a locale instead of negotiating `Accept-Language`. */
 	locale?: string;
 	/** Per-language message overrides, deep-merged over the defaults. */
@@ -451,9 +451,9 @@ export interface C15tI18nOptions {
 /**
  * Non-serializable additions merged over the integration options in the
  * browser. Default-export this from
- * {@link C15tAstroOptions.clientEntrypoint}.
+ * {@link InthAstroOptions.clientEntrypoint}.
  */
-export interface C15tClientOptionsExtension {
+export interface InthClientOptionsExtension {
 	/**
 	 * Scripts added to the integration's `scripts`.
 	 *
@@ -461,14 +461,14 @@ export interface C15tClientOptionsExtension {
 	 * (`textContent`) script from here, because this module only runs in
 	 * the browser. The browser logs the hash of each one the policy lacks;
 	 * add it to the CSP config's `scriptDirective.hashes`, or move a script
-	 * without callbacks into the integration's `scripts` option, which c15t
+	 * without callbacks into the integration's `scripts` option, which Inth
 	 * hashes for you.
 	 */
 	scripts?: Script[];
 	/** Overrides cleanup targets from the integration options. */
 	clearOnRevocation?: ClearOnRevocationConfig;
 	/**
-	 * Replaces {@link C15tAstroOptions.networkBlocker}. Use it to pass
+	 * Replaces {@link InthAstroOptions.networkBlocker}. Use it to pass
 	 * `onRequestBlocked`.
 	 */
 	networkBlocker?: RuntimeNetworkBlockerOptions | false;
@@ -490,30 +490,30 @@ export interface C15tClientOptionsExtension {
  *
  * @internal
  */
-export interface C15tResolvedOptions extends Omit<
-	C15tAstroOptions,
+export interface InthResolvedOptions extends Omit<
+	InthAstroOptions,
 	'middleware' | 'mode' | 'requireUIIntegration' | 'routePrefix'
 > {
 	/** The configured mode; on the server, with the build's snapshot. */
 	mode: ConsentMode;
 	/** The injected route's prefix, without a trailing slash. Unset with `routePrefix: false`. */
 	routePrefix?: string;
-	ui: C15tUIAdapterName;
-	colorScheme: C15tColorScheme;
+	ui: InthUIAdapterName;
+	colorScheme: InthColorScheme;
 	middleware: Required<
 		Omit<
-			C15tMiddlewareOptions,
+			InthMiddlewareOptions,
 			'subjectCookie' | 'timeoutMs' | 'trustForwardedHeaders'
 		>
 	> &
 		Pick<
-			C15tMiddlewareOptions,
+			InthMiddlewareOptions,
 			'subjectCookie' | 'timeoutMs' | 'trustForwardedHeaders'
 		>;
 	/**
 	 * Whether the components inline the first-paint rules and the client
 	 * links the dialog's when it opens. `false` with `styles: false`, and on
-	 * a Tailwind CSS 3 site, whose PostCSS build has to process c15t's rules:
+	 * a Tailwind CSS 3 site, whose PostCSS build has to process inth's rules:
 	 * the integration then adds `@inth/astro/styles.css` to every page.
 	 */
 	inlineStyles: boolean;
@@ -521,7 +521,7 @@ export interface C15tResolvedOptions extends Omit<
 	 * Set when the site turned on Astro's CSP and has a `clientEntrypoint`.
 	 * The browser checks the inline scripts that module adds against it.
 	 */
-	csp?: C15tBrowserCsp;
+	csp?: InthBrowserCsp;
 }
 
 /**
@@ -530,15 +530,15 @@ export interface C15tResolvedOptions extends Omit<
  *
  * @internal
  */
-export interface C15tBrowserCsp {
+export interface InthBrowserCsp {
 	/** The digest the policy's hashes use. */
 	algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512';
-	/** Every script hash the policy allows: c15t's and the site's own. */
+	/** Every script hash the policy allows: inth's and the site's own. */
 	scriptHashes: string[];
 }
 
 /** Consent context the middleware attaches to every request. */
-export interface C15tLocals {
+export interface InthLocals {
 	/**
 	 * Server-resolved kernel configuration. `<ConsentScript />` and
 	 * `<ConsentBanner />` inline it as a JSON data block (see
@@ -547,7 +547,7 @@ export interface C15tLocals {
 	config: KernelConfig;
 
 	/**
-	 * The kernel snapshot derived from {@link C15tLocals.config}. Components
+	 * The kernel snapshot derived from {@link InthLocals.config}. Components
 	 * read translations, policy UI hints and consent state from here so the
 	 * server and the browser agree on first paint.
 	 */
@@ -564,7 +564,7 @@ export interface C15tLocals {
 	prerendered: boolean;
 
 	/**
-	 * Whether a policy rule is resolved for this request. Every c15t consent
+	 * Whether a policy rule is resolved for this request. Every Inth consent
 	 * surface renders nothing until one is: an unconfigured, failed, or
 	 * unmatched resolution leaves nothing to consent to, and the browser shows
 	 * the surfaces on its own once a later init supplies a rule.
@@ -591,15 +591,15 @@ export interface C15tLocals {
 	};
 
 	/** The integration options, as the browser will receive them. */
-	options: C15tResolvedOptions;
+	options: InthResolvedOptions;
 
 	/**
 	 * Content Security Policy nonce for this request.
 	 *
-	 * c15t's middleware leaves it unset. Set it from your own middleware,
-	 * which runs after c15t's, when your policy allows inline code by nonce
+	 * inth's middleware leaves it unset. Set it from your own middleware,
+	 * which runs after inth's, when your policy allows inline code by nonce
 	 * instead of `'unsafe-inline'`. Every inline `<script>` and `<style>`
-	 * the c15t components render carries it, and the browser runtime puts
+	 * the Inth components render carries it, and the browser runtime puts
 	 * it on the scripts it loads, the gated inline scripts it activates and
 	 * the dialog stylesheets it links.
 	 *
@@ -610,8 +610,8 @@ export interface C15tLocals {
 	 *
 	 * export const onRequest = defineMiddleware(async (context, next) => {
 	 *   const nonce = crypto.randomUUID();
-	 *   if (context.locals.c15t) {
-	 *     context.locals.c15t.nonce = nonce;
+	 *   if (context.locals.inth) {
+	 *     context.locals.inth.nonce = nonce;
 	 *   }
 	 *   const response = await next();
 	 *   response.headers.set(

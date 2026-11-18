@@ -97,7 +97,7 @@ export const determineCategory = function determineCategory(
  * `data-src` for their own lazy loading. Only a marked iframe is restored
  * when its last gate attribute is removed.
  */
-export const PAUSED_ATTRIBUTE = 'data-c15t-paused';
+export const PAUSED_ATTRIBUTE = 'data-inth-paused';
 
 /** Move a paused `data-src` back to `src` when it is a web URL. */
 const restoreSource = function restoreSource(iframe: HTMLIFrameElement): void {
@@ -150,7 +150,7 @@ export const reconcileIframe = function reconcileIframe(
 	if (category === null) {
 		// oxlint-disable-next-line no-console -- config bug the site owner must fix
 		console.warn(
-			`[c15t] iframe-blocker: invalid data-category "${iframe.getAttribute(
+			`[inth] iframe-blocker: invalid data-category "${iframe.getAttribute(
 				'data-category'
 			)}". Must be one of: ${allConsentNames.join(', ')}. The iframe stays blocked.`
 		);

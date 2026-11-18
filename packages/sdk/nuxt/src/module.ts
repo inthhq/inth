@@ -44,7 +44,7 @@ import type { Plugin as VitePlugin } from 'vite';
 import { consentPackageDirs, groupConsentChunks } from './chunk-group';
 import { readComposableExports } from './composable-exports';
 import { GLOBAL_COMPONENTS } from './global-components';
-import type { C15tNuxtConfig, ModuleOptions } from './nuxt-options';
+import type { InthNuxtConfig, ModuleOptions } from './nuxt-options';
 import {
 	breakEntryImportCycles,
 	createPackageCheck,
@@ -75,8 +75,8 @@ export { defineTheme, type Theme } from '@inth/sdk/ui/theme';
 export type * from '@inth/vue';
 
 export type {
-	C15tNuxtAppConfig,
-	C15tNuxtConfig,
+	InthNuxtAppConfig,
+	InthNuxtConfig,
 	ConsentModuleOptions,
 	ModuleOptions,
 } from './nuxt-options';
@@ -126,8 +126,8 @@ const addDevToolsTab = (
 		tabs.push({
 			category: 'app',
 			icon: joinURL(baseURL, DEVTOOLS_ICON_ROUTE),
-			name: 'c15t',
-			title: 'c15t',
+			name: 'inth',
+			title: 'inth',
 			view: { src: joinURL(baseURL, DEVTOOLS_PAGE_ROUTE), type: 'iframe' },
 		});
 	});
@@ -138,7 +138,7 @@ const renderSnapshotModule = (snapshot: ConsentManifest | undefined): string =>
 	`export default ${snapshot ? JSON.stringify(snapshot) : 'undefined'};`;
 
 /** Variable the module reads the backend URL from when none is set. */
-const BACKEND_URL_ENV = 'NUXT_PUBLIC_C15T_BACKEND_URL';
+const BACKEND_URL_ENV = 'NUXT_PUBLIC_INTH_PROJECT_URL';
 
 /**
  * The Inth project URL, shared with other Inth SDKs. Read when
@@ -150,13 +150,13 @@ const INTH_URL_ENV = 'NUXT_PUBLIC_INTH_PROJECT_URL';
  * Where the backend URL came from, so the runtime knows whether
  * `NUXT_PUBLIC_INTH_PROJECT_URL` may replace it on a running server.
  */
-type ProjectUrlSource = 'option' | 'c15t-env' | 'inth-env' | 'none';
+type ProjectUrlSource = 'option' | 'inth-env' | 'inth-env' | 'none';
 
 /**
  * The variable the app reads at runtime also gives the build its backend
  * when the config sets none. Read like every other framework integration:
  * the environment first (Nuxt loads `.env` into it before the config), then
- * the `.env` files in the root. `NUXT_PUBLIC_C15T_BACKEND_URL` wins over
+ * the `.env` files in the root. `NUXT_PUBLIC_INTH_PROJECT_URL` wins over
  * `NUXT_PUBLIC_INTH_PROJECT_URL`.
  */
 const fillProjectUrlFromEnv = (
@@ -170,10 +170,10 @@ const fillProjectUrlFromEnv = (
 		mode: nuxt.options.dev ? 'development' : 'production',
 		root: nuxt.options.rootDir,
 	};
-	const fromC15t = readBuildEnv([BACKEND_URL_ENV], envOptions);
-	if (fromC15t) {
-		options.projectUrl = fromC15t;
-		return 'c15t-env';
+	const fromInth = readBuildEnv([BACKEND_URL_ENV], envOptions);
+	if (fromInth) {
+		options.projectUrl = fromInth;
+		return 'inth-env';
 	}
 	const fromInth = readBuildEnv([INTH_URL_ENV], envOptions);
 	if (fromInth) {
@@ -194,7 +194,7 @@ const readModuleMode = function readModuleMode(
 ): NuxtMode {
 	if (typeof options.mode === 'function') {
 		throw new TypeError(
-			"@inth/nuxt: `c15t.mode` in nuxt.config.ts is a transport. Import `manifest` or `hosted` from '@inth/nuxt', which return plain data, or omit `mode` to read the manifest."
+			"@inth/nuxt: `inth.mode` in nuxt.config.ts is a transport. Import `manifest` or `hosted` from '@inth/nuxt', which return plain data, or omit `mode` to read the manifest."
 		);
 	}
 	return readNuxtMode(options);
@@ -243,7 +243,7 @@ const assertManifestBackend = function assertManifestBackend(
 		? `manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest download, but the browser saves consent with POST \${projectUrl}/subjects`
 		: `manifest() needs a backend URL: the browser saves consent with POST \${projectUrl}/subjects`;
 	throw new Error(
-		`@inth/nuxt: ${reason}, and the consent route only answers GET. Set ${BACKEND_URL_ENV} (or ${INTH_URL_ENV}), or \`c15t.projectUrl\` in nuxt.config.ts.`
+		`@inth/nuxt: ${reason}, and the consent route only answers GET. Set ${BACKEND_URL_ENV} (or ${INTH_URL_ENV}), or \`inth.projectUrl\` in nuxt.config.ts.`
 	);
 };
 
@@ -329,7 +329,7 @@ const warnStaticServerResolution = function warnStaticServerResolution(
 		mode.resolve !== 'browser'
 	) {
 		useLogger('@inth/nuxt').warn(
-			"`nuxt generate` deploys no server, so `manifest()` cannot resolve the policy there. Set `c15t: { mode: manifest({ resolve: 'browser' }), routePrefix: false }`, or omit `mode` to use the hosted backend."
+			"`nuxt generate` deploys no server, so `manifest()` cannot resolve the policy there. Set `inth: { mode: manifest({ resolve: 'browser' }), routePrefix: false }`, or omit `mode` to use the hosted backend."
 		);
 	}
 };
@@ -349,14 +349,14 @@ const withoutSnapshot = function withoutSnapshot(mode: NuxtMode): NuxtMode {
  * `routePrefix`: the build chose the consent route, the snapshots and the
  * browser code from the module's, so the server and the browser must run
  * those. The `build-options` server plugin does the same for runtime
- * variables such as `NUXT_PUBLIC_C15T_ROUTE_PREFIX`.
+ * variables such as `NUXT_PUBLIC_INTH_ROUTE_PREFIX`.
  */
 const publishOptions = function publishOptions(
 	options: Omit<ModuleOptions, 'devtools' | 'initPrefetch' | 'onBuildError'>,
 	mode: NuxtMode,
 	nuxt: Nuxt
 ): void {
-	const existing = nuxt.options.runtimeConfig.public.c15t as
+	const existing = nuxt.options.runtimeConfig.public.inth as
 		| Record<string, unknown>
 		| undefined;
 	const built: BuiltOptions = {
@@ -369,7 +369,7 @@ const publishOptions = function publishOptions(
 			JSON.stringify(existing[name]) !== JSON.stringify(built[name])
 		) {
 			useLogger('@inth/nuxt').warn(
-				`\`runtimeConfig.public.c15t.${name}\` is ignored: the build uses \`c15t.${name}\` (${JSON.stringify(built[name])}). Set it there.`
+				`\`runtimeConfig.public.inth.${name}\` is ignored: the build uses \`inth.${name}\` (${JSON.stringify(built[name])}). Set it there.`
 			);
 		}
 	}
@@ -385,18 +385,18 @@ const publishOptions = function publishOptions(
 	// as the string it holds, while the option also takes `false`.
 	const publicRuntimeConfig: Record<string, unknown> =
 		nuxt.options.runtimeConfig.public;
-	publicRuntimeConfig.c15t = published;
+	publicRuntimeConfig.inth = published;
 };
 
 /** The modules the snapshot templates declare, with their documentation. */
 const SNAPSHOT_MODULES = [
-	['#c15t/manifest-snapshot', 'The server snapshot for the consent route.'],
+	['#inth/manifest-snapshot', 'The server snapshot for the consent route.'],
 	[
 		'#@inth/sdk/server-manifest-snapshot',
 		'The server snapshot for a server render without a consent route.',
 	],
 	[
-		'#c15t/client-manifest-snapshot',
+		'#inth/client-manifest-snapshot',
 		"The snapshot for `manifest({ resolve: 'browser' })`; otherwise `undefined`.",
 	],
 ] as const;
@@ -411,17 +411,17 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		routePrefix: DEFAULT_NUXT_ROUTE_PREFIX,
 	}),
 	meta: {
-		configKey: 'c15t',
+		configKey: 'inth',
 		name: '@inth/nuxt',
 	},
 	async setup({ devtools, initPrefetch, onBuildError, ...options }, nuxt) {
 		const projectUrlSource = fillProjectUrlFromEnv(options, nuxt);
 		// Nuxt merges module options with `defu`, which skips `null`, so a
-		// `colorScheme: null` under the `c15t` key would arrive unset and
-		// mirror a `dark` class. Read it back: `null` leaves `c15t-dark` to
+		// `colorScheme: null` under the `inth` key would arrive unset and
+		// mirror a `dark` class. Read it back: `null` leaves `inth-dark` to
 		// the site.
-		const configured = (nuxt.options as { c15t?: Partial<C15tNuxtConfig> })
-			.c15t;
+		const configured = (nuxt.options as { inth?: Partial<InthNuxtConfig> })
+			.inth;
 		if (configured?.colorScheme === null) {
 			options.colorScheme = null;
 		}
@@ -445,16 +445,16 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 
 		// Source builds ship .ts, dist builds ship .js — alias whichever exists
 		// (hardcoding .ts broke every consumer of the published package).
-		nuxt.options.alias['#c15t/composables'] = ['index.ts', 'index.js']
+		nuxt.options.alias['#inth/composables'] = ['index.ts', 'index.js']
 			.map((file) => runtime.resolve(`./runtime/composables/${file}`))
 			.find((path) => existsSync(path)) as string;
 
-		nuxt.options.runtimeConfig.c15t = defu(
-			nuxt.options.runtimeConfig.c15t ?? {},
+		nuxt.options.runtimeConfig.inth = defu(
+			nuxt.options.runtimeConfig.inth ?? {},
 			{
 				// Empty, so the consent route uses the public value, which
-				// `NUXT_PUBLIC_C15T_BACKEND_URL` replaces at runtime. The key
-				// exists so `NUXT_C15T_BACKEND_URL` can give the route an
+				// `NUXT_PUBLIC_INTH_PROJECT_URL` replaces at runtime. The key
+				// exists so `NUXT_INTH_PROJECT_URL` can give the route an
 				// address of its own.
 				[PROJECT_URL_RUNTIME_KEY]: '',
 				// The `/init` script reads it: with `ssr: false` for the whole
@@ -467,17 +467,17 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// runtime config, Nitro would replace every `null` in it with `''`
 		// during the build, and the route would reject each policy pack.
 		nuxt.options.nitro.virtual ||= {};
-		nuxt.options.nitro.virtual['#c15t/manifest-snapshot'] = () =>
+		nuxt.options.nitro.virtual['#inth/manifest-snapshot'] = () =>
 			renderSnapshotModule(serverSnapshot);
 		// A server render without a consent route resolves from the same
 		// snapshot. Only the server render imports it.
 		nuxt.options.alias['#@inth/sdk/server-manifest-snapshot'] = addTemplate({
-			filename: 'c15t-server-manifest-snapshot.mjs',
+			filename: 'inth-server-manifest-snapshot.mjs',
 			getContents: () => renderSnapshotModule(serverSnapshot),
 		}).dst;
 		// The browser bundle holds a snapshot only for browser resolution.
-		nuxt.options.alias['#c15t/client-manifest-snapshot'] = addTemplate({
-			filename: 'c15t-client-manifest-snapshot.mjs',
+		nuxt.options.alias['#inth/client-manifest-snapshot'] = addTemplate({
+			filename: 'inth-client-manifest-snapshot.mjs',
 			getContents: () => renderSnapshotModule(clientSnapshot),
 		}).dst;
 
@@ -485,7 +485,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 
 		// Transpile/inline the module runtime by directory, not just package
 		// name. When the module is registered through an aliasing package
-		// (e.g. the `c15t` umbrella re-exporting `@inth/vue`), the runtime
+		// (e.g. the `inth` umbrella re-exporting `@inth/vue`), the runtime
 		// files can resolve through a symlink chain whose real path carries no
 		// `node_modules/@inth/vue` segment, so a name-only pattern misses them
 		// and Nitro externalizes server-handler imports with broken relative
@@ -516,9 +516,9 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			});
 		}
 
-		// Type the `c15t` key of `app.config.ts`. A type template reaches the
+		// Type the `inth` key of `app.config.ts`. A type template reaches the
 		// app's types whichever package registered the module, including the
-		// `c15t` umbrella. It imports the option types from the declarations
+		// `inth` umbrella. It imports the option types from the declarations
 		// next to this file: the source in this repo, `module.d.mts` once built.
 		// `CustomAppConfig` types `useAppConfig()`. `AppConfigInput` types
 		// `defineAppConfig()`: it extended `CustomAppConfig` until Nuxt 4.6,
@@ -532,19 +532,19 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 				.replace(/\.d\.mts$/u, '.mjs');
 			addTypeTemplate(
 				{
-					filename: 'types/c15t-app-config.d.ts',
+					filename: 'types/inth-app-config.d.ts',
 					getContents: () =>
 						[
-							`import type { C15tNuxtAppConfig } from ${JSON.stringify(specifier)};`,
+							`import type { InthNuxtAppConfig } from ${JSON.stringify(specifier)};`,
 							'',
 							"declare module '@nuxt/schema' {",
 							'\tinterface CustomAppConfig {',
-							'\t\t/** c15t options, merged over the `c15t` module options. */',
-							'\t\tc15t?: Partial<C15tNuxtAppConfig>;',
+							'\t\t/** inth options, merged over the `inth` module options. */',
+							'\t\tinth?: Partial<InthNuxtAppConfig>;',
 							'\t}',
 							'\tinterface AppConfigInput {',
-							'\t\t/** c15t options, merged over the `c15t` module options. */',
-							'\t\tc15t?: Partial<C15tNuxtAppConfig>;',
+							'\t\t/** inth options, merged over the `inth` module options. */',
+							'\t\tinth?: Partial<InthNuxtAppConfig>;',
 							'\t}',
 							'}',
 							'',
@@ -558,7 +558,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			// snapshot virtual. The plugin imports the client snapshot.
 			addTypeTemplate(
 				{
-					filename: 'types/c15t-manifest-snapshot.d.ts',
+					filename: 'types/inth-manifest-snapshot.d.ts',
 					getContents: () =>
 						SNAPSHOT_MODULES.flatMap(([id, description]) => [
 							`declare module '${id}' {`,
@@ -575,17 +575,17 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			);
 		}
 
-		// Type the `c15t` key of a route rule, in `nuxt.config.ts` (node), in
+		// Type the `inth` key of a route rule, in `nuxt.config.ts` (node), in
 		// pages (`defineRouteRules`) and in Nitro.
 		addTypeTemplate(
 			{
-				filename: 'types/c15t-route-rules.d.ts',
+				filename: 'types/inth-route-rules.d.ts',
 				getContents: () =>
 					[
 						"declare module 'nitropack/types' {",
 						'\tinterface NitroRouteConfig {',
-						'\t\t/** c15t options for the routes this rule matches. */',
-						'\t\tc15t?: {',
+						'\t\t/** inth options for the routes this rule matches. */',
+						'\t\tinth?: {',
 						'\t\t\t/**',
 						'\t\t\t * `false` writes no early `/init` script into the HTML of an',
 						'\t\t\t * `ssr: false` route.',
@@ -605,7 +605,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		addPlugin(runtime.resolve('./runtime/plugin.nuxt'));
 		// The build chose the route, the snapshots and the browser code from
 		// `mode` and `routePrefix`; a runtime override such as
-		// `NUXT_PUBLIC_C15T_ROUTE_PREFIX` would make the browser disagree.
+		// `NUXT_PUBLIC_INTH_ROUTE_PREFIX` would make the browser disagree.
 		const built: BuiltOptions = {
 			mode: withoutSnapshot(mode),
 			routePrefix: options.routePrefix ?? false,
@@ -617,14 +617,14 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// (`build:manifest` below runs before Nitro builds). The plugin
 		// preloads them at low priority.
 		let bannerFiles: string[] = [];
-		nuxt.options.nitro.virtual['#c15t/banner-preload-files'] = () =>
+		nuxt.options.nitro.virtual['#inth/banner-preload-files'] = () =>
 			`export default ${JSON.stringify(bannerFiles)};\n`;
 		addServerPlugin(
 			runtime.resolve('./runtime/server/banner-preload-priority.nuxt')
 		);
-		// Nuxt applies `NUXT_PUBLIC_C15T_BACKEND_URL` on a running server by
+		// Nuxt applies `NUXT_PUBLIC_INTH_PROJECT_URL` on a running server by
 		// itself. The Inth variable needs a plugin, and only while neither the
-		// option nor the c15t variable gave the build its URL.
+		// option nor the Inth variable gave the build its URL.
 		if (projectUrlSource === 'inth-env' || projectUrlSource === 'none') {
 			addServerPlugin(
 				runtime.resolve('./runtime/server/inth-project-url.nuxt')
@@ -670,11 +670,11 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			dev: false,
 			server: false,
 		});
-		// One chunk for the c15t code the first load runs, not one request
+		// One chunk for the Inth code the first load runs, not one request
 		// per module the consent engine shares with it. These groups come
 		// from the `config` hook, so they precede the dialog group above,
 		// which `outputOptions` appends: a module both match stays in the
-		// first-load or `c15t-config` chunk.
+		// first-load or `inth-config` chunk.
 		addVitePlugin(
 			() => groupConsentChunks(consentPackageDirs(import.meta.url)),
 			{
@@ -683,10 +683,10 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			}
 		);
 
-		// c15t loads what a page needs when it needs it; Nuxt would prefetch
-		// every lazy c15t chunk on every page, and each finished download
+		// Inth loads what a page needs when it needs it; Nuxt would prefetch
+		// every lazy Inth chunk on every page, and each finished download
 		// queues main-thread work in front of the banner. Nuxt would also
-		// link c15t stylesheets it already inlines into the HTML, and each
+		// link Inth stylesheets it already inlines into the HTML, and each
 		// link holds back the first paint: they become preloads.
 		// IAB chunks keep their hints only when the module options turn IAB
 		// on. `app.config.ts` can turn it on too, but the build cannot read

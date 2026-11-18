@@ -42,8 +42,8 @@ import type { DialogPreload } from './dialog-warming';
 import { registeredDefaultTranslations } from './translation-defaults';
 import type { ConsentManagerOptions } from './types';
 
-const CONSENT_CONTEXT_KEY = Symbol('c15t-v3-consent');
-const THEME_CONTEXT_KEY = Symbol('c15t-v3-theme');
+const CONSENT_CONTEXT_KEY = Symbol('inth-v3-consent');
+const THEME_CONTEXT_KEY = Symbol('inth-v3-theme');
 
 export type SaveType = 'all' | 'custom' | 'necessary';
 
@@ -138,7 +138,7 @@ export interface ConsentManagerState extends Pick<
 	manager: null;
 	model: Model;
 	/**
-	 * Whether a policy rule is resolved for this visitor. Every c15t consent
+	 * Whether a policy rule is resolved for this visitor. Every Inth consent
 	 * surface renders nothing until one is: an unconfigured, failed, or
 	 * unmatched resolution leaves nothing to consent to, and the surfaces
 	 * appear on their own once a later init supplies a rule.
@@ -151,7 +151,7 @@ export interface ConsentManagerState extends Pick<
 	 * the permissions it grants apply. `false` until a rule is resolved.
 	 */
 	hasConsentUi: boolean;
-	/** Whether c15t or an external CMP offers a preferences control. */
+	/** Whether Inth or an external CMP offers a preferences control. */
 	hasConsentPreferences: boolean;
 	legalLinks: ConsentManagerOptions['legalLinks'];
 	translationConfig: TranslationConfig;
@@ -554,7 +554,7 @@ export const getConsentContext =
 		);
 		if (!context) {
 			throw new Error(
-				'c15t: no v3 consent context. Wrap your app with <ConsentProvider options={...}> from @inth/svelte.'
+				'inth: no v3 consent context. Wrap your app with <ConsentProvider options={...}> from @inth/svelte.'
 			);
 		}
 		return context;

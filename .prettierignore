@@ -12,5 +12,5 @@
 /packages/native-protocol/
 /oxlint.sdk.config.ts
 /oxfmt.sdk.config.ts
-# c15t CLI mobile manifest code, kept as imported until Scriptc can compile it.
-/packages/cli/vendor/c15t-mobile/
+# inth CLI mobile manifest code, kept as imported until Scriptc can compile it.
+/packages/cli/vendor/inth-mobile/

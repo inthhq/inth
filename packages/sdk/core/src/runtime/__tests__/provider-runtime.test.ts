@@ -154,7 +154,7 @@ afterEach(() => {
 		runtime.dispose();
 	}
 	vi.restoreAllMocks();
-	delete (window as { c15t?: unknown }).c15t;
+	delete (window as { inth?: unknown }).inth;
 });
 
 describe('update()', () => {
@@ -1314,7 +1314,7 @@ describe('lazyRuntimeModule', () => {
 
 		await vi.waitFor(() =>
 			expect(warn).toHaveBeenCalledWith(
-				'c15t: a runtime module failed to load and stays inactive.',
+				'inth: a runtime module failed to load and stays inactive.',
 				error
 			)
 		);

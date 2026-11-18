@@ -22,7 +22,7 @@ declare global {
  *
  * Defines GTM as a declarative integration:
  * - Initializes dataLayer and gtag function before the container loads
- * - Maps c15t consent categories to Google Consent Mode v2 types
+ * - Maps Inth consent categories to Google Consent Mode v2 types
  * - Signals consent state via `gtag('consent', 'default'|'update', ...)`
  */
 export const googleTagManagerManifest = {
@@ -122,7 +122,7 @@ export interface GoogleTagManagerOptions {
 	updateEventName?: string;
 
 	/**
-	 * Custom mapping from c15t consent categories to Google Consent Mode v2 types.
+	 * Custom mapping from Inth consent categories to Google Consent Mode v2 types.
 	 * Overrides the default mapping when provided.
 	 *
 	 * @default
@@ -139,7 +139,7 @@ export interface GoogleTagManagerOptions {
 	consentMapping?: Record<string, string[]>;
 
 	/**
-	 * When c15t loads `gtm.js`.
+	 * When Inth loads `gtm.js`.
 	 *
 	 * - `always`: load on every page, before the visitor chooses. The helper
 	 *   sends `gtag('consent', 'default', ...)` with the current permissions
@@ -157,7 +157,7 @@ export interface GoogleTagManagerOptions {
 	 * choice. Under an `opt-out` or `none` policy, optional categories are
 	 * allowed before a choice, so the container loads on the first page.
 	 *
-	 * After a withdrawal c15t reloads the page by default. With
+	 * After a withdrawal Inth reloads the page by default. With
 	 * `reloadOnConsentRevoked: false`, the loaded container stays on the page
 	 * and receives an `update` that denies the withdrawn types.
 	 *
@@ -185,7 +185,7 @@ export interface GoogleTagManagerOptions {
 /**
  * Creates a Google Tag Manager script.
  * GTM can be used for managing the consent of other scripts via Google Tag Manager consent mode.
- * We recommend using c15t's script loader instead so your script logic is centralised.
+ * We recommend using inth's script loader instead so your script logic is centralised.
  *
  * By default the container loads before a choice and passes Google Consent
  * Mode v2 signals. Set `loadMode: 'after-consent'` to keep every request to
@@ -256,7 +256,7 @@ export const googleTagManager = function googleTagManager({
 
 	const gtmScript: Script = {
 		...resolved,
-		attributes: { ...resolved.attributes, 'data-c15t-layer': dataLayer },
+		attributes: { ...resolved.attributes, 'data-inth-layer': dataLayer },
 	};
 
 	if (loadMode === 'after-consent') {

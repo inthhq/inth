@@ -110,11 +110,11 @@ describe('styles/sheets', async () => {
 
 	test('each sheet has its own id', () => {
 		expect(sheets.map((sheet) => sheet.id)).toEqual([
-			'c15t-first-paint',
-			'c15t-dialog',
-			'c15t-primitives',
-			'c15t-iab-first-paint',
-			'c15t-iab-dialog',
+			'inth-first-paint',
+			'inth-dialog',
+			'inth-primitives',
+			'inth-iab-first-paint',
+			'inth-iab-dialog',
 		]);
 	});
 
@@ -153,7 +153,7 @@ describe('styles/sheets', async () => {
 		// `html.dark` (0,1,1).
 		const selectors = new Set(
 			ruleList(firstPaint.css)
-				.filter((rule) => rule.split('|')[2]?.includes('--c15t-'))
+				.filter((rule) => rule.split('|')[2]?.includes('--inth-'))
 				.map((rule) => rule.split('|')[1] ?? '')
 		);
 
@@ -161,7 +161,7 @@ describe('styles/sheets', async () => {
 		for (const selector of selectors) {
 			expect(selector).not.toMatch(/(?<!:where\():root/u);
 		}
-		expect([...selectors].join('\n')).toContain('html.c15t-dark');
+		expect([...selectors].join('\n')).toContain('html.inth-dark');
 	});
 
 	test('primitives applies what styles/primitives.css applies', () => {
@@ -183,7 +183,7 @@ describe('styles/sheets', async () => {
 			[
 				...readDist(
 					join(DIST_DIR, 'styles', 'components', `${name}.js`)
-				).matchAll(/c15t-ui-[\w-]+/gu),
+				).matchAll(/inth-ui-[\w-]+/gu),
 			].map((match) => match[0])
 		);
 		const selectors = ruleList(firstPaint.css)
@@ -223,7 +223,7 @@ describe('styles/sheets', async () => {
 			.join('\n');
 		const panelClasses = [
 			...readDist(join(DIST_DIR, 'styles/components/iab-panel.js')).matchAll(
-				/c15t-ui-[\w-]+/gu
+				/inth-ui-[\w-]+/gu
 			),
 		].map((match) => match[0]);
 		expect(panelClasses.length).toBeGreaterThan(0);

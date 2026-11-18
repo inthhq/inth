@@ -3,7 +3,7 @@
 import Foundation
 import XCTest
 
-/// The `com.inth.gpp*` keys are how an RN or Expo app turns GPP on without installing the
+/// The `com.c15t.gpp*` keys are how an RN or Expo app turns GPP on without installing the
 /// core itself. These tests read the plist the way the launch hook does.
 final class InthBridgeGPPConfigurationTests: XCTestCase {
     private typealias Key = InthBridgeConfiguration.InfoPlistKey

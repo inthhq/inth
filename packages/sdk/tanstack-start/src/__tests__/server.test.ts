@@ -43,7 +43,7 @@ describe('resolveConsent without projectUrl: cookies', () => {
 			.mockRejectedValue(new Error('resolveConsent must not fetch'));
 		try {
 			const state = await resolveConsent({
-				cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1',
+				cookie: 'inth=c.necessary:1,c.marketing:1,i.t:1',
 				'x-vercel-ip-country': 'DE',
 			});
 			expect(fetchSpy).not.toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('resolveConsent without projectUrl: cookies', () => {
 		// Returning visitors must not get the banner re-rendered into the
 		// first HTML: the server has to see what the client persisted.
 		const state = await resolveConsent({
-			cookie: 'c15t=c.necessary:1,c.marketing:1,c.measurement:0,i.t:1234567890',
+			cookie: 'inth=c.necessary:1,c.marketing:1,c.measurement:0,i.t:1234567890',
 		});
 		expect(!!state.initialRecords?.choice).toBe(true);
 		expect(state.initialRecords?.choice?.categories).toMatchObject({
@@ -70,7 +70,7 @@ describe('resolveConsent without projectUrl: cookies', () => {
 
 	test('ignores malformed cookie values', async () => {
 		const state = await resolveConsent({
-			cookie: 'c15t=not-a-consent-payload',
+			cookie: 'inth=not-a-consent-payload',
 		});
 		expect(state.initialRecords?.choice).toBeNull();
 		expect(state.initialRecords?.choice).toBeNull();

@@ -2,7 +2,7 @@
  * `@inth/svelte/vite` — build-time help for Svelte and SvelteKit apps.
  *
  * {@link consentManifest} serves the consent manifest the build downloads.
- * In a SvelteKit build it also lets `c15tHandle` preload the on-demand
+ * In a SvelteKit build it also lets `inthHandle` preload the on-demand
  * chunk that holds the script loader and the network blocker, on the pages
  * that configure `scripts` or blocker rules, so it arrives with the app's
  * code instead of one round trip after it.
@@ -72,7 +72,7 @@ export const createServerGeneratedPlugin =
 					keepCore(environment.resolve?.external);
 				}
 			},
-			name: 'c15t:svelte-server-generated',
+			name: 'inth:svelte-server-generated',
 		};
 	};
 
@@ -204,13 +204,13 @@ export const writeChunkHrefs = async function writeChunkHrefs(
 };
 
 /**
- * Vite plugin that tells `c15tHandle` where the client build put the
+ * Vite plugin that tells `inthHandle` where the client build put the
  * chunk that holds the script loader and the network blocker.
  *
  * SvelteKit builds the server first, so the server cannot know client
  * chunk names. After the client build writes its chunks, this plugin
  * writes their URLs into the server output, before SvelteKit prerenders
- * and before an adapter copies it. `c15tHandle` then adds a
+ * and before an adapter copies it. `inthHandle` then adds a
  * `<link rel="modulepreload">` for that chunk to every page whose provider
  * has non-empty `scripts` or blocker rules. Pages without either get no
  * link and never fetch the chunk.
@@ -245,7 +245,7 @@ export const createModulePreloadPlugin =
 				)?.options;
 				kit = options?.kit ?? options;
 			},
-			name: 'c15t:module-preload',
+			name: 'inth:module-preload',
 			async writeBundle(_options, bundle) {
 				// SvelteKit 3 builds every environment with one plugin instance;
 				// SvelteKit 2 starts a separate client build.
@@ -310,7 +310,7 @@ interface OutputHookContext {
 	meta: { rolldownVersion?: string; watchMode: boolean };
 }
 
-/** The plugin that puts c15t's shared first-load modules in one chunk. */
+/** The plugin that puts inth's shared first-load modules in one chunk. */
 export interface FirstLoadChunkPlugin {
 	apply: 'build';
 	name: string;
@@ -321,14 +321,14 @@ export interface FirstLoadChunkPlugin {
 }
 
 /**
- * Puts the small c15t modules that `ConsentRoot`'s first-load code shares
+ * Puts the small Inth modules that `ConsentRoot`'s first-load code shares
  * with the consent engine into one chunk, in the browser build of a Vite
  * that bundles with Rolldown (Vite 8).
  *
  * Rolldown gives each set of modules that the same chunks import a chunk
  * of its own. The engine, the commit path and the dialog each share a
  * different few of those modules with the page, so without this the page
- * fetches about a dozen c15t files of a few hundred bytes, each with its
+ * fetches about a dozen Inth files of a few hundred bytes, each with its
  * own request and headers. Every module in the group already loads with a
  * page that renders `ConsentRoot`, so the page loads no more code, and the
  * on-demand chunks import from the merged one. Rollup (Vite 7 and earlier)
@@ -346,7 +346,7 @@ export const createFirstLoadChunkPlugin =
 	function createFirstLoadChunkPlugin(): FirstLoadChunkPlugin {
 		return {
 			apply: 'build',
-			name: 'c15t:first-load-chunk',
+			name: 'inth:first-load-chunk',
 			outputOptions(options) {
 				const { codeSplitting } = options;
 				if (
@@ -367,8 +367,8 @@ export const createFirstLoadChunkPlugin =
 						groups: [
 							...(settings.groups ?? []),
 							{
-								debugName: 'c15t',
-								name: 'c15t',
+								debugName: 'inth',
+								name: 'inth',
 								test: FIRST_LOAD_SHARED,
 							},
 						],
@@ -390,15 +390,15 @@ export const createFirstLoadChunkPlugin =
  * `undefined`. A Svelte single-page app receives it in the browser.
  * `projectUrl` is public and reaches both.
  *
- * `projectUrl` defaults to `PUBLIC_C15T_BACKEND_URL` (SvelteKit), then
- * `VITE_C15T_BACKEND_URL`, then the Inth variables `PUBLIC_INTH_PROJECT_URL`
+ * `projectUrl` defaults to `PUBLIC_INTH_PROJECT_URL` (SvelteKit), then
+ * `VITE_INTH_PROJECT_URL`, then the Inth variables `PUBLIC_INTH_PROJECT_URL`
  * and `VITE_INTH_PROJECT_URL`, including `.env` files. When
- * `VITE_C15T_BACKEND_URL` is unset, the plugin sets
- * `import.meta.env.VITE_C15T_BACKEND_URL` to the URL it used, so app code
+ * `VITE_INTH_PROJECT_URL` is unset, the plugin sets
+ * `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used, so app code
  * reads the same value. A missing URL or a failed fetch warns, and
  * `snapshot` is `undefined`, so the policy is read at runtime, from the
  * backend's `/init` while the manifest is unavailable. Set
- * `onBuildError: 'fail'` or `C15T_ON_BUILD_ERROR=fail` to stop the build
+ * `onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail` to stop the build
  * instead. In a Svelte
  * single-page app whose policy depends on the visitor's location, the
  * build warns and suggests `hosted()`. With `manifest({ manifestUrl })` or
@@ -407,9 +407,9 @@ export const createFirstLoadChunkPlugin =
  *
  * In a SvelteKit build it also writes the URL of the on-demand chunk that
  * holds the script loader and the network blocker into the server output,
- * so `c15tHandle` adds a `<link rel="modulepreload">` for it to every page
+ * so `inthHandle` adds a `<link rel="modulepreload">` for it to every page
  * whose provider has `scripts` or blocker rules. With Vite 8 it puts the
- * small modules c15t's first-load code shares with the consent engine into
+ * small modules inth's first-load code shares with the consent engine into
  * one chunk ({@link createFirstLoadChunkPlugin}).
  *
  * @param options - Backend URL, `onBuildError` and `source`. Appends
@@ -438,8 +438,8 @@ export const consentManifest = (
 		// A Svelte single-page app only: SvelteKit resolves on the server.
 		adviseHostedForLocation: true,
 		envNames: [
-			'PUBLIC_C15T_BACKEND_URL',
-			'VITE_C15T_BACKEND_URL',
+			'PUBLIC_INTH_PROJECT_URL',
+			'VITE_INTH_PROJECT_URL',
 			'PUBLIC_INTH_PROJECT_URL',
 			'VITE_INTH_PROJECT_URL',
 		],

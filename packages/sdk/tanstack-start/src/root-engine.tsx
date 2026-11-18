@@ -88,7 +88,7 @@ const transportFor = function transportFor(
 	);
 };
 
-/** The kind a mode reports through `window.c15t.mode`. */
+/** The kind a mode reports through `window.inth.mode`. */
 const kindOf = function kindOf(
 	mode: ConsentMode | undefined
 ): ProviderTransportFactory['kind'] {
@@ -138,7 +138,7 @@ const deferredTransport = function deferredTransport(
 				async save(payload, saveContext) {
 					const transport = await load();
 					if (!transport.save) {
-						throw new Error('c15t: the init transport cannot save.');
+						throw new Error('inth: the init transport cannot save.');
 					}
 					return await transport.save(payload, saveContext);
 				},
@@ -380,7 +380,7 @@ const ServerScriptStart = ({
 		// Runs a granted vendor's setup and inserts its tag before the page
 		// hydrates. The script loader adopts the tag.
 		<script
-			// oxlint-disable-next-line react/no-danger -- c15t's own code; serverScriptStart escapes `<` in every value.
+			// oxlint-disable-next-line react/no-danger -- inth's own code; serverScriptStart escapes `<` in every value.
 			dangerouslySetInnerHTML={{ __html: code ?? '' }}
 			nonce={options.nonce}
 			suppressHydrationWarning

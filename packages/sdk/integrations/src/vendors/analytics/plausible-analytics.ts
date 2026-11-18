@@ -195,7 +195,7 @@ export interface PlausibleAnalyticsOptions {
 /**
  * Creates a Plausible Analytics script.
  *
- * Models Plausible's queue bootstrap and loader attributes as a c15t-managed
+ * Models Plausible's queue bootstrap and loader attributes as a inth-managed
  * script. Supports both the new `scriptId`-based loader and the legacy
  * `domain` + extension-based loader.
  *

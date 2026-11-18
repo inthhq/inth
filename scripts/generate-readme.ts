@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 // Default support and contributing sections
 const DEFAULT_SUPPORT_SECTIONS = [
-	'Join our [Discord community](https://c15t.link/discord)',
+	'Join our [Discord community](https://inth.link/discord)',
 	'Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)',
 	'Visit [inth.com](https://inth.com) and use the chat widget',
 	'Contact our support team via email [support@inth.com](mailto:support@inth.com)',
@@ -31,7 +31,7 @@ Do not open a public issue for a security vulnerability. Report it privately thr
 - Give us time to release a fix before you disclose it`;
 
 const SOCIAL_PROOF_LINE =
-	'c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/c15t/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.';
+	'inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.';
 
 /**
  * Renders the shared hosting section with Inth links tagged for one package.
@@ -41,7 +41,7 @@ const SOCIAL_PROOF_LINE =
  */
 const renderHostingSection = (npmBadgeName: string) => `## Hosting
 
-c15t needs somewhere to keep policies and consent records. Pick one:
+inth needs somewhere to keep policies and consent records. Pick one:
 
 - **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName})**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
 - **Self-hosted**: Run [\`@c15t/backend\`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
@@ -229,13 +229,13 @@ ${[
 	}),
 	renderThemeAwareBadge({
 		alt: 'Discord',
-		href: 'https://c15t.link/discord',
+		href: 'https://inth.link/discord',
 		src: 'https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'Skills',
-		href: 'https://skills.sh/c15t/skills/c15t',
-		src: 'https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline',
+		href: 'https://skills.sh/inth/skills/inth',
+		src: 'https://shieldcn.dev/skills/inth/skills/inth.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'Made by Inth',
@@ -253,7 +253,7 @@ ${[
   <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName}" target="_blank" rel="noopener noreferrer">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="../docs/assets/c15t-banner-readme-dark.png">
-      <img src="../docs/assets/c15t-banner-readme-light.png" alt="c15t: the open standard for cookie banners">
+      <img src="../docs/assets/c15t-banner-readme-light.png" alt="inth: the open standard for cookie banners">
     </picture>
   </a>
 </p>`;
@@ -290,7 +290,7 @@ ${config.features.map((f) => `- ${f}`).join('\n')}`;
 Easiest setup with @c15t/cli:
 
 \`\`\`bash
-# Set up c15t in your project
+# Set up inth in your project
 pnpm dlx @c15t/cli setup
 # Alternatives:
 # npx @c15t/cli setup
@@ -300,7 +300,7 @@ pnpm dlx @c15t/cli setup
 The CLI will:
 
 - Install necessary packages
-- Configure your c15t instance
+- Configure your inth instance
 - Set up environment variables
 - Add consent management components to your app
 `;
@@ -387,7 +387,7 @@ See the [documentation](${config.docsLink}) for guides, API reference, and examp
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at \`node_modules/${config.packageName}/AGENTS.md\`. It indexes every guide in \`node_modules/${config.packageName}/docs/\`.
 
-On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with \`npx skills add c15t/skills\`.`;
+On the web, every page of the [inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the inth agent skills with \`npx skills add inth/skills\`.`;
 	}
 
 	const hostingBlock = config.showHosting

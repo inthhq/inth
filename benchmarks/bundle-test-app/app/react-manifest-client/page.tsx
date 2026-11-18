@@ -70,7 +70,7 @@ const ReactManifestClientPage = () => {
 	const transport = useMemo(
 		() =>
 			createManifestTransport({
-				manifestUrl: '/api/c15t/manifest',
+				manifestUrl: '/api/inth/manifest',
 				projectUrl: '/api/bench-consent',
 			}),
 		[]
@@ -100,7 +100,7 @@ const ReactManifestClientPage = () => {
 						padding: '2rem',
 					}}
 				>
-					<h1 style={{ marginTop: 0 }}>c15t live test harness</h1>
+					<h1 style={{ marginTop: 0 }}>inth live test harness</h1>
 					<p style={{ color: '#555', lineHeight: 1.5 }}>
 						Check/uncheck a category to stage your choice. Click{' '}
 						<strong>Save</strong> to commit to the kernel — only then do scripts

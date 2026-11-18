@@ -33,7 +33,7 @@ export const importDialog = (): Promise<typeof DialogModule> =>
  * holds the inline script's text, which the first-load chunk can do
  * without. A test keeps them equal.
  */
-export const EARLY_TAPS_KEY = '__c15tEarlyTaps';
+export const EARLY_TAPS_KEY = '__inthEarlyTaps';
 export const BANNER_ROOT = '[data-testid="consent-banner-root"]';
 
 /**
@@ -72,7 +72,7 @@ export const earlyTapQueue = function earlyTapQueue():
  * before the root scheduled its engine is `failed` in the render's page
  * object. @internal
  */
-export const SERVER_START_FAILED = '__c15tServerStartFailed';
+export const SERVER_START_FAILED = '__inthServerStartFailed';
 
 /** Load anyway after this long. */
 export const DEFERRED_ENGINE_TIMEOUT_MS = 10_000;

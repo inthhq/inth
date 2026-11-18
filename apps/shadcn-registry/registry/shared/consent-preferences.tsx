@@ -76,7 +76,7 @@ function ConsentVendors({ category }: { category: AllConsentNames }) {
                 <span id={nameId} className="font-medium">
                   {name}
                 </span>
-                {/* A vendor declared disabled has no switch, since c15t ignores grants for it. */}
+                {/* A vendor declared disabled has no switch, since inth ignores grants for it. */}
                 {vendor.disabled !== true && (
                   <Switch
                     size="sm"

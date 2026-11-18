@@ -59,7 +59,7 @@ export interface NamespaceProps {
 	/**
 	 * Global namespace for the consent manager store.
 	 *
-	 * @defaultValue "c15tStore"
+	 * @defaultValue "inthStore"
 	 */
 	namespace?: string;
 }

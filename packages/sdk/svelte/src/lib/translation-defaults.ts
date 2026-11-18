@@ -20,7 +20,7 @@ import type { TranslationConfig } from '@inth/sdk/engine';
 
 /** Global key the engine registers the defaults under. @internal */
 export const DEFAULT_TRANSLATIONS_KEY = Symbol.for(
-	'c15t.svelte.defaultTranslations'
+	'inth.svelte.defaultTranslations'
 );
 
 /**

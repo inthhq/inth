@@ -1,6 +1,6 @@
 ---
 title: Callbacks
-description: Run your own code on an Astro site when a visitor records a consent choice, when permissions change, before a revocation reload and on errors, with c15t callbacks in the client entrypoint.
+description: Run your own code on an Astro site when a visitor records a consent choice, when permissions change, before a revocation reload and on errors, with Inth callbacks in the client entrypoint.
 group: frameworks
 ---
 
@@ -24,7 +24,7 @@ Then add them to the client entrypoint from the
 import { callbacks } from './consent-callbacks';
 import { scripts } from './scripts';
 
-export default { callbacks, scripts } satisfies C15tClientOptionsExtension;
+export default { callbacks, scripts } satisfies InthClientOptionsExtension;
 ```
 
 ## Choose the callback
@@ -34,7 +34,7 @@ export default { callbacks, scripts } satisfies C15tClientOptionsExtension;
 | `onChoiceRecorded` | The visitor selects accept, reject or save | `{ snapshot, confirmed, actionAt }` |
 | `onPermissionsChanged` | Any effective permission changes value | `{ snapshot, previous }` |
 | `onBeforeConsentRevocationReload` | A save turned off a category that was allowed, just before the page reloads | `{ preferences }` |
-| `onError` | c15t reports an error, such as a failed request | `{ error }`, a message string |
+| `onError` | Inth reports an error, such as a failed request | `{ error }`, a message string |
 
 ## `onChoiceRecorded` versus `onPermissionsChanged`
 
@@ -59,7 +59,7 @@ that.
 
 ## Stop code when consent is withdrawn
 
-By default, c15t reloads the page after a save turns off a category that was
+By default, Inth reloads the page after a save turns off a category that was
 allowed, because it cannot stop code that has already run.
 `onBeforeConsentRevocationReload` runs synchronously just before that reload.
 Use it for quick work, such as calling a vendor's opt-out API. The reload does

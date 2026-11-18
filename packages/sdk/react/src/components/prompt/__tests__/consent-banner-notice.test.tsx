@@ -84,7 +84,7 @@ describe('ConsentBanner notice prompt', () => {
 		expect(controls[0]?.dataset.mode).toBeUndefined();
 		expect(controls[0]?.tagName).toBe('BUTTON');
 		expect(controls[0]).toHaveClass(bannerStyles.rightLink);
-		expect(controls[0]?.dataset.c15tRights).toContain('opt-out');
+		expect(controls[0]?.dataset.inthRights).toContain('opt-out');
 		expect(query('consent-banner-right-link-preferences')).toBeNull();
 
 		const footer = query('consent-banner-footer');

@@ -13,7 +13,7 @@ export const SiteHeader = () => {
 				className="site-name"
 				href="/"
 			>
-				c15t Supply
+				inth Supply
 			</Link>
 			<Link
 				className="cart-link"

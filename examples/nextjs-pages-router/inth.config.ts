@@ -1,0 +1,15 @@
+// #region docs:pages-config title="inth.config.ts"
+import { posthog } from '@inth/integrations/posthog';
+import { defineConsentConfig } from '@inth/nextjs';
+
+export default defineConsentConfig({
+	routePrefix: '/api/inth',
+	scripts: [
+		posthog({
+			id: 'phc_your_project_key',
+			initOptions: { cookieless_mode: 'never' },
+			loadMode: 'after-consent',
+		}),
+	],
+});
+// #endregion docs:pages-config

@@ -6,11 +6,11 @@ import {
 	buildRegistry,
 	scanImports,
 	toFrameworkSource,
-	uiC15tImports,
+	uiInthImports,
 } from '../build-registry';
 import {
-	c15tEntryByFramework,
-	c15tRange,
+	inthEntryByFramework,
+	inthRange,
 	frameworks,
 	itemName,
 	styles,
@@ -124,19 +124,19 @@ describe('buildRegistry', () => {
 		}
 	});
 
-	it('gives each framework UI files that import only its own c15t entry', () => {
+	it('gives each framework UI files that import only its own inth entry', () => {
 		for (const framework of frameworks) {
-			const allowed = uiC15tImports.map((spec) =>
-				spec.replace('@inth/react', c15tEntryByFramework[framework])
+			const allowed = uiInthImports.map((spec) =>
+				spec.replace('@inth/react', inthEntryByFramework[framework])
 			);
 			for (const { name } of uiItems) {
 				const built = item('radix-nova', itemName(framework, name));
 				for (const { content } of built?.files ?? []) {
-					const c15t = scanImports(content).filter((spec) =>
+					const inth = scanImports(content).filter((spec) =>
 						spec.startsWith('@inth/')
 					);
-					expect(c15t.length).toBeGreaterThan(0);
-					for (const spec of c15t) {
+					expect(inth.length).toBeGreaterThan(0);
+					for (const spec of inth) {
 						expect(allowed).toContain(spec);
 					}
 				}
@@ -144,7 +144,7 @@ describe('buildRegistry', () => {
 		}
 	});
 
-	it('puts the c15t branding on every surface the stock UI brands', () => {
+	it('puts the inth branding on every surface the stock UI brands', () => {
 		for (const { name: style } of styles) {
 			for (const framework of frameworks) {
 				const branding = `${baseUrl}/${style}/${itemName(framework, 'consent-branding')}.json`;
@@ -180,7 +180,7 @@ describe('buildRegistry', () => {
 			'from "@tanstack/react-start"'
 		);
 		expect(manager?.dependencies).toEqual([
-			`@inth/tanstack-start@${c15tRange}`,
+			`@inth/tanstack-start@${inthRange}`,
 		]);
 	});
 
@@ -206,13 +206,13 @@ describe('buildRegistry', () => {
 		expect(file?.content).not.toContain('"use client"');
 	});
 
-	it('installs components under components/c15t and the Next.js config at the root', () => {
+	it('installs components under components/inth and the Next.js config at the root', () => {
 		const manager = item('base-vega', 'next-consent-manager');
 		expect(
 			manager?.files.map(({ path: file, target }) => target ?? file)
 		).toEqual([
-			'~/c15t.config.ts',
-			'registry/base-vega/components/c15t/consent-manager.tsx',
+			'~/inth.config.ts',
+			'registry/base-vega/components/inth/consent-manager.tsx',
 		]);
 	});
 });

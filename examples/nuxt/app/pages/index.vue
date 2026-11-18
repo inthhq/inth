@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<h1>c15t with Nuxt</h1>
+		<h1>inth with Nuxt</h1>
 		<p>
 			PostHog loads once you allow measurement. Use Privacy settings to change
 			your choice.

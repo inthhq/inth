@@ -10,7 +10,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { injectEventDispatcher } from './event-dispatcher';
 
 const capture = vi.fn();
@@ -36,7 +36,7 @@ afterEach(() => {
 test('follows the provider scripts, live consent and one pageview history', async () => {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({
+			provideInth({
 				iframeBlocker: false,
 				mode: offlineMode([
 					{
@@ -80,7 +80,7 @@ test('follows the provider scripts, live consent and one pageview history', asyn
 
 test('throws outside an injection context', () => {
 	expect(() => injectEventDispatcher()).toThrow(/injection context/u);
-	// And without provideC15t, as `inject(ConsentManager)` does.
+	// And without provideInth, as `inject(ConsentManager)` does.
 	expect(() =>
 		runInInjectionContext(Injector.create({ providers: [] }), () =>
 			injectEventDispatcher()

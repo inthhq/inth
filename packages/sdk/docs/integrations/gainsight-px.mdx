@@ -1,7 +1,7 @@
 ---
 title: Gainsight PX
 description: Gate Gainsight PX product analytics and in-app engagements on consent, configure the aptrinsic snippet and disable tracking when consent is withdrawn.
-seoTitle: Gainsight PX cookie consent with c15t
+seoTitle: Gainsight PX cookie consent with Inth
 seoDescription: Load Gainsight PX after analytics consent. Configure user and account identity, choose a consent category and disable the tag when consent is withdrawn.
 icon: chart-no-axes-combined
 group: integrations
@@ -16,7 +16,7 @@ through PX's config API and requests a session reset.
 
 Copy the product/channel key from **Administration > Products** in Gainsight PX.
 Remove any existing PX snippet or tag-manager installation so it cannot load
-outside c15t.
+outside Inth.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -30,7 +30,7 @@ outside c15t.
 | --- | --- | --- |
 | `productKey` | Required | Product/channel key assigned to `aptrinsic.p` and the loader's `a` query parameter. Changing the key after this helper starts PX throws an error and requires a page reload. Blank values log an error and skip installation. |
 | `category` | `measurement` | Consent category or condition for the whole SDK. Choose `experience` if it fits your use of analytics and engagements. |
-| `config` | None | JSON-serializable PX startup configuration assigned to `aptrinsic.c`. Changing it after PX starts throws and requires a page reload. c15t owns `enableTag`; do not set it yourself. |
+| `config` | None | JSON-serializable PX startup configuration assigned to `aptrinsic.c`. Changing it after PX starts throws and requires a page reload. Inth owns `enableTag`; do not set it yourself. |
 | `user` | None | User identify payload with a required `id`. The helper queues it only after mapped consent. |
 | `account` | None | Optional account identify payload with a required `id`. Sent only when `user` is also supplied. |
 | `scriptUrl` | `https://web-sdk.aptrinsic.com/api/aptrinsic.js?a=<productKey>` | Full loader override. Other PX requests still use the endpoints configured by the SDK. |
@@ -55,7 +55,7 @@ use the API names from **Administration > Attributes**.
 
 The optional identity is part of the script configuration. For a later login or
 account change, call PX's `identify` API only while the visitor still permits
-this vendor. c15t does not gate event calls made elsewhere in your application.
+this vendor. Inth does not gate event calls made elsewhere in your application.
 
 ## Loading and revocation
 
@@ -93,7 +93,7 @@ When hydrating a server-started loader, use the same
 `productKey`, `config`, `user`, `account` and `scriptUrl` on the server and client.
 The loader compares the server setup with the client options before adopting
 the server's element. This check also runs when PX finishes startup before
-hydration. c15t retains the startup settings separately from PX's queue so the
+hydration. Inth retains the startup settings separately from PX's queue so the
 check still works after PX replaces its function stub. A mismatch throws before
 registration or replacement and leaves the existing setup intact. If identity
 changes between render and hydration, reload the page with the current options.
@@ -119,7 +119,7 @@ before startup if it is registered after PX starts, preserving the current
 configuration and its consent handling. Reload the page before installing a
 different product.
 PX's asynchronous `tagKey` API queues commands during reconfiguration and can
-defer opt-out until after queued identity calls, so c15t does not use it.
+defer opt-out until after queued identity calls, so Inth does not use it.
 
 Keep the same `config` after startup too, including after disposal. Adding,
 removing or changing a configuration value throws before registration or

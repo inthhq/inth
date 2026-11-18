@@ -3,7 +3,7 @@ import { defineEventHandler, setResponseHeader } from 'h3';
 import { DEVTOOLS_ICON_ROUTE } from '../devtools/constants';
 import { DEVTOOLS_ICON_SVG, renderDevToolsPage } from '../devtools/page';
 
-/** Serves the c15t Nuxt DevTools tab page and its icon. Development only. */
+/** Serves the Inth Nuxt DevTools tab page and its icon. Development only. */
 export default defineEventHandler((event) => {
 	setResponseHeader(event, 'Cache-Control', 'no-store');
 	if (event.path.split('?')[0]?.endsWith(DEVTOOLS_ICON_ROUTE)) {

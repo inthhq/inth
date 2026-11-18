@@ -2,9 +2,9 @@
  * `dist/c15t.hosted.js`, the engine and stock UI behind `c15t.js`.
  *
  * Loaded by the init script (`c15t.js`, `./cdn-init.ts`), it replaces the
- * init script's stand-in `window.c15t`, replays the calls made to it,
+ * init script's stand-in `window.inth`, replays the calls made to it,
  * takes over its banner and starts from any choice it recorded. Loaded on
- * its own, it installs `window.c15t` and initialises from its own tag's
+ * its own, it installs `window.inth` and initialises from its own tag's
  * `data-*` attributes and queued `config` calls, as a one-file install.
  * Either way it initialises unless the tag carries `data-manual`. The
  * preference centre is `c15t.dialog.js`, which it loads when it first

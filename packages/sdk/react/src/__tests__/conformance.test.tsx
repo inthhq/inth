@@ -3,7 +3,7 @@ import {
 	IAB_FIXTURE_CMP_VERSION,
 	MINIMAL_GVL,
 	runConformanceSuite,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 /**
  * React conformance entry point.
  *
@@ -16,7 +16,7 @@ import type {
 	MountResult,
 	SuiteApi,
 	TestDriver,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import type {
 	AllConsentNames,
 	ConsentKernel,

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
-import { provideC15t } from '../core/provide-c15t';
+import { provideInth } from '../core/provide-inth';
 import { ConsentButton } from './consent-button';
 
 @Component({
@@ -13,7 +13,7 @@ import { ConsentButton } from './consent-button';
 	selector: 'test-host',
 	template: `
 		<button
-			c15t-consent-button
+			inth-consent-button
 			action="accept"
 			variant="primary"
 			class="mine"
@@ -22,7 +22,7 @@ import { ConsentButton } from './consent-button';
 			Accept
 		</button>
 		<button
-			c15t-consent-button
+			inth-consent-button
 			action="customize"
 			data-testid="customize"
 		>
@@ -35,7 +35,7 @@ class Host {}
 const boot = async () => {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({
+			provideInth({
 				...testOptions(),
 				legalLinks: {
 					privacyPolicy: { href: '/privacy' },

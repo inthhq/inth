@@ -21,7 +21,7 @@ export interface GateProxyOptions {
 	/** Path prefix to directory, served as static files. */
 	directories?: Record<string, string>;
 	/**
-	 * Answer c15t's hosted endpoints under this prefix (init, subjects)
+	 * Answer inth's hosted endpoints under this prefix (init, subjects)
 	 * after `backendLatencyMs`, the way every bench's own fixture backend does.
 	 */
 	backendPrefix?: string;

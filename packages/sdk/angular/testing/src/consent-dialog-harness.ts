@@ -14,7 +14,7 @@ export interface ConsentDialogHarnessFilters extends BaseHarnessFilters {
 }
 
 /**
- * Drives `<c15t-consent-dialog>`: the preference center in a modal.
+ * Drives `<inth-consent-dialog>`: the preference center in a modal.
  *
  * The dialog renders into `<body>`, outside the component that declares it,
  * so find it with `TestbedHarnessEnvironment.documentRootLoader(fixture)`,

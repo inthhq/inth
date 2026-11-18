@@ -5,7 +5,7 @@ import legalStyles from '@inth/sdk/ui/styles/components/legal-links';
 import '@inth/sdk/ui/styles/components/legal-links.css';
 import { computed } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '#c15t/composables';
+import { useConsentConfig, useConsentInit } from '#inth/composables';
 
 const props = defineProps<{
 	context: 'banner' | 'dialog' | 'manager';

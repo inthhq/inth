@@ -2,7 +2,7 @@ import type { PolicyBenchFixture } from './policy-fixtures';
 import type { MetricBudget, MetricBudgetResult } from './schema';
 
 /**
- * v3 budget constants for `c15t`, `@inth/react`, and `@inth/nextjs`.
+ * v3 budget constants for `inth`, `@inth/react`, and `@inth/nextjs`.
  *
  * These use `percent-lte` with NEGATIVE thresholds, meaning the v3 measurement
  * must IMPROVE by at least |threshold|% against the base branch. The base
@@ -100,7 +100,7 @@ export const artifactV3Budgets: MetricBudget[] = [
 	{
 		comparator: 'percent-lte',
 		description:
-			'v3 @inth/sdk/engine tarball must be at least 30% smaller than the v2 core package (published as c15t).',
+			'v3 @inth/sdk/engine tarball must be at least 30% smaller than the v2 core package (published as inth).',
 		metric: '@inth/sdk-core',
 		threshold: -30,
 	},
@@ -596,7 +596,7 @@ export const policyRuntimeBudgetsForFixture =
 	};
 
 /**
- * Browser policy scenarios (`@c15t/react-browser-bench` `policy-*`).
+ * Browser policy scenarios (`@inth/react-browser-bench` `policy-*`).
  * Prompt readiness and render/request invariants for a fresh visitor
  * resolving a real, source-emitted init payload.
  */
@@ -667,8 +667,8 @@ export const cookieProjectionBudgets: MetricBudget[] = [
 	{
 		comparator: 'absolute-lte',
 		description:
-			'Total c15t cookie bytes on the page after a choice stay within 320 bytes (allowance).',
-		metric: 'c15tCookieBytes',
+			'Total inth cookie bytes on the page after a choice stay within 320 bytes (allowance).',
+		metric: 'inthCookieBytes',
 		threshold: 320,
 	},
 	{
@@ -691,7 +691,7 @@ export const noticeProjectionBudgets: MetricBudget[] = [
 		comparator: 'absolute-lte',
 		description:
 			'Partial choice and notice with the compatible notice-subject companion measure 416 bytes including names and separators; 464 bytes preserves headroom for encoding growth.',
-		metric: 'c15tCookieBytes',
+		metric: 'inthCookieBytes',
 		threshold: 464,
 	},
 	{
@@ -975,7 +975,7 @@ const nextjsInitRequestBudget = function nextjsInitRequestBudget(
 };
 
 /**
- * Budgets for one `@c15t/nextjs-browser-bench` scenario. `-cold` / `-steady`
+ * Budgets for one `@inth/nextjs-browser-bench` scenario. `-cold` / `-steady`
  * manifest suffixes share the base scenario's budgets.
  */
 export const nextjsBrowserBudgetsForScenario =
@@ -1086,7 +1086,7 @@ export const nuxtBrowserBudgetsForScenario =
 		];
 	};
 
-/** Budgets for one `@c15t/react-browser-bench` scenario. */
+/** Budgets for one `@inth/react-browser-bench` scenario. */
 export const reactBrowserBudgetsForScenario =
 	function reactBrowserBudgetsForScenario(scenario: string): MetricBudget[] {
 		switch (scenario) {
@@ -1107,7 +1107,7 @@ export const reactBrowserBudgetsForScenario =
 		}
 	};
 
-/** Budgets for one `@c15t/script-lifecycle-bench` scenario by primary metric. */
+/** Budgets for one `@inth/script-lifecycle-bench` scenario by primary metric. */
 export const scriptLifecycleBudgetsForMetric =
 	function scriptLifecycleBudgetsForMetric(metric: string): MetricBudget[] {
 		return scriptLifecycleBudgets.filter((budget) =>
@@ -1448,7 +1448,7 @@ const gateTapCeilingExceptionsMs: Partial<Record<ConsentGateTarget, number>> =
  * waits for client JavaScript (about 1,000 ms or more at this profile).
  * React here is client-rendered inside Next.js, and the script tag injects
  * its banner from JavaScript, so neither has a server-rendered bar. Angular
- * renders its banner on the server through `provideC15tServer()`; CookieBench
+ * renders its banner on the server through `provideInthServer()`; CookieBench
  * has no Angular round yet, so it takes the same ceiling.
  */
 const gateBannerCeilingMs: Partial<Record<ConsentGateTarget, number>> = {

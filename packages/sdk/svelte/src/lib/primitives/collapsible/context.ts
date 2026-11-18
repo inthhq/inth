@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 
-const COLLAPSIBLE_ROOT_CONTEXT_KEY = Symbol('c15t-svelte-collapsible-root');
+const COLLAPSIBLE_ROOT_CONTEXT_KEY = Symbol('inth-svelte-collapsible-root');
 
 export interface CollapsibleRootContextValue {
 	readonly contentId: string;

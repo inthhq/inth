@@ -15,7 +15,7 @@ import {
 	useConsentActiveUI,
 	useConsentConfig,
 	useConsentInit,
-} from '#c15t/composables';
+} from '#inth/composables';
 
 import {
 	useConsentKernel,
@@ -36,10 +36,10 @@ const config = useConsentConfig();
 const policy = usePolicyRule();
 const init = useConsentInit();
 
-const STORAGE_KEY = 'c15t:dialog-trigger-position';
+const STORAGE_KEY = 'inth:dialog-trigger-position';
 const FALLBACK_OFFSET = 20;
 const TOOLBAR_LABEL = 'Privacy controls';
-const DEVTOOLS_LABEL = 'c15t DevTools';
+const DEVTOOLS_LABEL = 'inth DevTools';
 
 const mounted = useMounted();
 const { width, height } = useWindowSize();
@@ -347,8 +347,8 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 			dir="ltr"
 			tabindex="-1"
 			:data-corner="corner"
-			data-c15t-trigger-toolbar="true"
-			data-c15t-trigger="true"
+			data-inth-trigger-toolbar="true"
+			data-inth-trigger="true"
 			:data-dragging="isDragging ? true : undefined"
 			:data-disable-animation="config.disableAnimation ? true : undefined"
 			:style="[config.components?.trigger?.toolbar?.style, triggerStyle]"
@@ -369,11 +369,11 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 					kind === 'devtools' ? DEVTOOLS_LABEL : config.triggerAriaLabel
 				"
 				:aria-expanded="kind === 'devtools' ? devToolsOpen : undefined"
-				:data-c15t-rights="
+				:data-inth-rights="
 					kind === 'preferences' ? policy.rights.join(' ') : undefined
 				"
-				:data-c15t-trigger-action="kind"
-				:data-c15t-trigger-item="kind"
+				:data-inth-trigger-action="kind"
+				:data-inth-trigger-item="kind"
 				:data-right="kind === 'preferences' ? preferencesRight : undefined"
 				:tabindex="kind === focusedItem ? 0 : -1"
 				@click="selectItem(kind)"
@@ -418,8 +418,8 @@ const selectItem = function selectItem(kind: ToolbarItemKind) {
 			"
 			type="button"
 			data-testid="consent-dialog-trigger"
-			data-c15t-trigger="true"
-			:data-c15t-rights="policy.rights.join(' ')"
+			data-inth-trigger="true"
+			:data-inth-rights="policy.rights.join(' ')"
 			:data-size="config.triggerSize"
 			:data-dragging="isDragging ? true : undefined"
 			:data-disable-animation="config.disableAnimation ? true : undefined"

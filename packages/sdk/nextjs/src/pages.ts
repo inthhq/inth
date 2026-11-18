@@ -143,21 +143,21 @@ const toPagesApiHandler = function toPagesApiHandler(
 
 /**
  * One Pages Router API route for every consent path,
- * `pages/api/c15t/[...c15t].ts`: `GET /manifest` and `GET /init`, and 404
+ * `pages/api/inth/[...inth].ts`: `GET /manifest` and `GET /init`, and 404
  * for anything else unless `proxy` forwards it to the backend. The Pages
  * Router counterpart of `createConsentRoute`.
  *
  * Pages without `getServerSideProps` resolve consent in the browser, which
- * asks this route when `c15t.config.ts` sets `routePrefix: '/api/c15t'`.
- * With `proxy: true` here and in `c15t.config.ts`, browser saves come here
- * too. Everything defaults to `c15t.config.ts`.
+ * asks this route when `inth.config.ts` sets `routePrefix: '/api/inth'`.
+ * With `proxy: true` here and in `inth.config.ts`, browser saves come here
+ * too. Everything defaults to `inth.config.ts`.
  *
- * @param options - Overrides of `c15t.config.ts`, caching, and `proxy`.
+ * @param options - Overrides of `inth.config.ts`, caching, and `proxy`.
  * @param param - The catch-all parameter's name, from the file name.
  * @returns The API route's default export.
  * @example
  * ```ts
- * // pages/api/c15t/[...c15t].ts
+ * // pages/api/inth/[...inth].ts
  * import { createPagesConsentRoute } from '@inth/nextjs/pages';
  *
  * export default createPagesConsentRoute();
@@ -165,7 +165,7 @@ const toPagesApiHandler = function toPagesApiHandler(
  */
 export const createPagesConsentRoute = function createPagesConsentRoute(
 	options: NextConsentRouteOptions = {},
-	param = 'c15t'
+	param = 'inth'
 ): PagesApiHandler {
 	const handlers: Partial<NextConsentProxyRouteHandlers> &
 		Pick<NextConsentProxyRouteHandlers, 'GET'> = createConsentRoute(options);
@@ -210,7 +210,7 @@ export type WithConsentPropsOptions = Omit<
 	/**
 	 * The client's `storageConfig`. `storageKey` names the consent cookie,
 	 * like `cookieName`, and wins over it. The other fields are deprecated:
-	 * c15t no longer sets a subject cookie, so nothing reads them. They are
+	 * Inth no longer sets a subject cookie, so nothing reads them. They are
 	 * removed in v4.
 	 */
 	storage?: Pick<
@@ -219,7 +219,7 @@ export type WithConsentPropsOptions = Omit<
 	>;
 
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so this does
+	 * @deprecated Inth no longer sets a subject cookie, so this does
 	 * nothing. Removed in v4.
 	 */
 	subjectCookie?: boolean;
@@ -227,7 +227,7 @@ export type WithConsentPropsOptions = Omit<
 
 /**
  * `getServerSideProps` that resolves the visitor's consent from
- * `c15t.config.ts` and adds it to the page's props as `consent`, for
+ * `inth.config.ts` and adds it to the page's props as `consent`, for
  * `<ConsentRoot state={pageProps.consent}>` in `pages/_app.tsx`. The state
  * is JSON-safe, as Next.js requires of props.
  *

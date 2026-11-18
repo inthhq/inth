@@ -46,7 +46,7 @@ export interface NextjsBenchState {
 
 declare global {
 	interface Window {
-		__c15tNextBench?: NextjsBenchState;
+		__inthNextBench?: NextjsBenchState;
 	}
 }
 
@@ -57,8 +57,8 @@ export const getState = function getState(
 		return undefined;
 	}
 
-	if (!window.__c15tNextBench || window.__c15tNextBench.scenario !== scenario) {
-		window.__c15tNextBench = {
+	if (!window.__inthNextBench || window.__inthNextBench.scenario !== scenario) {
+		window.__inthNextBench = {
 			activeUI: 'none',
 			activeUiHistory: [],
 			mountCount: 0,
@@ -70,7 +70,7 @@ export const getState = function getState(
 		};
 	}
 
-	return window.__c15tNextBench;
+	return window.__inthNextBench;
 };
 
 /**

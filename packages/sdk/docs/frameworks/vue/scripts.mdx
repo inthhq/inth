@@ -1,6 +1,6 @@
 ---
 title: Scripts
-description: Load vendor scripts by consent category in a Vue app with the c15t Vue plugin, and what happens when a visitor withdraws consent.
+description: Load vendor scripts by consent category in a Vue app with the Inth Vue plugin, and what happens when a visitor withdraws consent.
 group: frameworks
 ---
 
@@ -8,7 +8,7 @@ group: frameworks
 
 A banner does not stop a script you load with a `<script>` tag in
 `index.html` or a vendor SDK you initialize yourself. Remove those loaders and
-register the vendor with c15t instead, so c15t loads it only while its
+register the vendor with Inth instead, so Inth loads it only while its
 category is allowed.
 
 Pass the helpers from `@inth/integrations` to the plugin as `scripts`:
@@ -39,7 +39,7 @@ page as it does for configured scripts.
 
 ## Embeds and other requests
 
-Scripts cover vendor code c15t loads for you. For the rest:
+Scripts cover vendor code Inth loads for you. For the rest:
 
 - [Embeds](/docs/frameworks/vue/embeds) gates iframes with `ConsentGate` or
   the iframe blocker.
@@ -49,7 +49,7 @@ Scripts cover vendor code c15t loads for you. For the rest:
 ## When a visitor withdraws consent
 
 Removing a script tag cannot stop code that already ran. When a save turns off
-a category or vendor that was allowed, c15t reloads the page so the new
+a category or vendor that was allowed, Inth reloads the page so the new
 document starts with only permitted code. Set `reloadOnConsentRevoked: false`
 to handle revocation yourself, or use the
 [`onBeforeConsentRevocationReload` callback](/docs/frameworks/vue/callbacks#before-a-revocation-reload)
@@ -75,7 +75,7 @@ adds a nonce to every script the loader creates. See
 ## Send your own analytics events
 
 `useEventDispatcher()` from `@inth/vue/vue-plugin` returns the app's event dispatcher. It
-sends to the `scripts` in your c15t config and checks consent when an event
+sends to the `scripts` in your Inth config and checks consent when an event
 goes out. Call it in `setup` and send a pageview each time the route changes:
 
 <include src="../../shared/examples/vue/analytics-events.mdx" />

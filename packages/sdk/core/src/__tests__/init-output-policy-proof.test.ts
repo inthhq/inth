@@ -28,7 +28,7 @@ const matched: PolicyResolution = {
 };
 // A legacy response intentionally omits policyResolution and carries stale proof.
 const payload = {
-	branding: 'c15t',
+	branding: 'inth',
 	cmpId: 123,
 	location: { countryCode: 'DE', regionCode: null },
 	policy: { id: rule.id, model: 'opt-in' },

@@ -36,10 +36,10 @@ export interface StorageConfig {
 	/**
 	 * Custom storage key for localStorage and cookies
 	 *
-	 * @default 'c15t'
+	 * @default 'inth'
 	 *
 	 * @remarks
-	 * The default changed from 'privacy-consent-storage' to 'c15t' in v1.8+
+	 * The default changed from 'privacy-consent-storage' to 'inth' in v1.8+
 	 * to reduce cookie size. Legacy data is automatically migrated.
 	 *
 	 */

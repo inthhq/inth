@@ -9,7 +9,7 @@ export const getConsentState = createServerFn({ method: 'GET' }).handler(
 	createConsentStateHandler()
 );
 export const getRoutedConsentState = createServerFn({ method: 'GET' }).handler(
-	createConsentStateHandler({ routePrefix: '/api/c15t' })
+	createConsentStateHandler({ routePrefix: '/api/inth' })
 );
 expectTypeOf(
 	createConsentStateHandler()

@@ -84,7 +84,7 @@ describe('storedChoiceCheckScript', () => {
 			throw new Error('the fixture grants marketing');
 		}
 		localStorage.setItem(
-			'c15t',
+			'inth',
 			encodeStoredConsentEnvelopeJson({
 				categories: {
 					marketing: {
@@ -114,7 +114,7 @@ describe('storedChoiceCheckScript', () => {
 			throw new Error('the fixture decides marketing');
 		}
 		localStorage.setItem(
-			'c15t',
+			'inth',
 			encodeStoredConsentEnvelopeJson({
 				categories: {
 					marketing: {

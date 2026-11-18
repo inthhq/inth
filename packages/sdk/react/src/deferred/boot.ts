@@ -10,7 +10,7 @@
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 
 /** Attribute on the `<script type="application/json">` element. @internal */
-export const CONSENT_BOOT_ATTRIBUTE = 'data-c15t-boot';
+export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
 
 /** What the server leaves. @internal */
 export interface ConsentBoot {
@@ -80,7 +80,7 @@ export interface PageRender {
 export const pageRender = function pageRender(
 	renderId: string | undefined = readConsentBoot()?.i
 ): PageRender | undefined {
-	const render = (globalThis as Record<string, unknown>).__c15tRender as
+	const render = (globalThis as Record<string, unknown>).__inthRender as
 		| PageRender
 		| undefined;
 	const id = render?.id;
@@ -117,13 +117,13 @@ export const endPageRender = function endPageRender(
 		return;
 	}
 	const page = globalThis as Record<string, unknown>;
-	const recorded = page.__c15tEndedRenders;
+	const recorded = page.__inthEndedRenders;
 	const ended = Array.isArray(recorded) ? (recorded as unknown[]) : [];
 	if (!ended.includes(id)) {
 		ended.push(id);
 		ended.splice(0, Math.max(0, ended.length - ENDED_RENDERS_LIMIT));
 	}
-	page.__c15tEndedRenders = ended;
+	page.__inthEndedRenders = ended;
 	// Only this render's own page object: a newer render's stays as it is.
 	const render = pageRender(id);
 	if (render) {
@@ -434,7 +434,7 @@ export type { RootEngineInputs } from '@inth/sdk/surface-actions/plain-scripts';
 export const iabProviderLoaded = function iabProviderLoaded(): boolean {
 	return (
 		(globalThis as Record<symbol, unknown>)[
-			Symbol.for('c15t.react.iab-provider')
+			Symbol.for('inth.react.iab-provider')
 		] === true
 	);
 };
@@ -455,7 +455,7 @@ export const whenIABProviderLoads = function whenIABProviderLoads(
 		return;
 	}
 	const host = globalThis as Record<symbol, (() => void)[] | undefined>;
-	const key = Symbol.for('c15t.react.iab-provider-waiters');
+	const key = Symbol.for('inth.react.iab-provider-waiters');
 	host[key] = [...(host[key] ?? []), run];
 };
 

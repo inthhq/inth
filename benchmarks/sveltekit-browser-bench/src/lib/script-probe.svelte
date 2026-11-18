@@ -19,8 +19,8 @@
 
 	declare global {
 		interface Window {
-			__c15tSvelteBenchScripts?: SvelteBenchScriptState;
-			__c15tBenchScriptExecutedMs?: number;
+			__inthSvelteBenchScripts?: SvelteBenchScriptState;
+			__inthBenchScriptExecutedMs?: number;
 		}
 	}
 </script>
@@ -62,7 +62,7 @@
 	};
 
 	onMount(() => {
-		window.__c15tSvelteBenchScripts = state;
+		window.__inthSvelteBenchScripts = state;
 		if (returning) {
 			void sendGatedRequest();
 		}

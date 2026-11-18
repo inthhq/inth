@@ -182,7 +182,7 @@ describe('package exports: @inth/sdk-ui/styles/components/<name> triple', () => 
 
 			expect(resolvedPath).toContain('/dist/styles/components/');
 			expect(resolvedPath).toMatch(new RegExp(`/${filename}\\.css$`, 'u'));
-			expect(readFileSync(resolvedPath, 'utf-8')).toContain('c15t-ui-');
+			expect(readFileSync(resolvedPath, 'utf-8')).toContain('inth-ui-');
 		});
 
 		test(`@inth/sdk-ui/styles/components/${name}.module.css → dist JS class map`, () => {
@@ -284,7 +284,7 @@ describe('package exports: node condition serves class maps without CSS imports'
 			};
 			expect(Object.keys(classMap.default).length).toBeGreaterThan(0);
 			for (const className of Object.values(classMap.default)) {
-				expect(className).toMatch(/^c15t-ui-/u);
+				expect(className).toMatch(/^inth-ui-/u);
 			}
 		});
 	}
@@ -382,7 +382,7 @@ describe('package exports: aggregated stylesheets', () => {
 			const contents = readFileSync(resolvedPath, 'utf-8');
 
 			expect(resolvedPath).toContain('/dist/');
-			expect(contents).toContain('c15t-ui-');
+			expect(contents).toContain('inth-ui-');
 			expect(contents).toContain('@keyframes');
 			expect(/@layer\b/u.test(contents)).toBe(!entry.endsWith('.tw3.css'));
 			expect(contents.includes('@layer components')).toBe(

@@ -26,11 +26,11 @@
 		"```css\n/* app/globals.css */\n@import \"@inth/nextjs/styles.css\";\n```"
 	],
 	"usage": [
-		"Set `NEXT_PUBLIC_C15T_BACKEND_URL` to your Inth backend URL in `.env`",
-		"Wrap `next.config.ts` in `withConsentManifest`, which downloads your policy at build time and finds `c15t.config.ts`",
+		"Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your Inth backend URL in `.env`",
+		"Wrap `next.config.ts` in `withConsentManifest`, which downloads your policy at build time and finds `inth.config.ts`",
 		"```ts\n// next.config.ts\nimport { withConsentManifest } from '@inth/nextjs/build'\nimport type { NextConfig } from 'next'\n\nconst nextConfig = {} satisfies NextConfig\n\nexport default withConsentManifest(nextConfig)\n```",
-		"Export the config from `c15t.config.ts` at the project root",
-		"```ts\n// c15t.config.ts\nimport { defineConsentConfig } from '@inth/nextjs'\n\nexport default defineConsentConfig({})\n```",
+		"Export the config from `inth.config.ts` at the project root",
+		"```ts\n// inth.config.ts\nimport { defineConsentConfig } from '@inth/nextjs'\n\nexport default defineConsentConfig({})\n```",
 		"Render `ConsentRoot` with `ConsentBanner` and `ConsentDialog` in the root layout, and pass it `resolveConsent()`",
 		"```tsx\n// app/layout.tsx\nimport {\n  ConsentBanner,\n  ConsentDialog,\n  ConsentDialogLink,\n  ConsentRoot,\n} from '@inth/nextjs'\nimport { resolveConsent } from '@inth/nextjs/server'\nimport type { ReactNode } from 'react'\n\nimport './globals.css'\n\nexport default function RootLayout({ children }: { children: ReactNode }) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {/* Not awaited: the page renders while consent resolves. */}\n        <ConsentRoot state={resolveConsent()}>\n          {children}\n          <ConsentBanner />\n          <ConsentDialog />\n          <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n        </ConsentRoot>\n      </body>\n    </html>\n  )\n}\n```",
 		"For the full setup, see the [Next.js quickstart](https://c15t.com/docs/frameworks/next/quickstart)"

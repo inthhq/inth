@@ -1,8 +1,8 @@
 ---
 title: Braze
-description: Keep the Braze SDK disabled until c15t consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
-seoTitle: Braze consent for mobile apps with c15t
-seoDescription: Enable and disable the Braze SDK from c15t consent and set Google DMA consent attributes in Swift, Android, React Native and Expo apps.
+description: Keep the Braze SDK disabled until Inth consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
+seoTitle: Braze consent for mobile apps with Inth
+seoDescription: Enable and disable the Braze SDK from Inth consent and set Google DMA consent attributes in Swift, Android, React Native and Expo apps.
 group: integrations
 ---
 
@@ -16,7 +16,7 @@ helpers. The two attributes come from the shared
 [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types).
 
 The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. c15t adds no Braze dependency. The web has
+`@inth/react-native/integrations`. Inth adds no Braze dependency. The web has
 no Braze helper.
 
 ## What the helper changes
@@ -39,7 +39,7 @@ straight away and does **not** write `false` to the two attributes first.
 Braze would drop that write: disabling cancels in-flight requests, and the
 data flush on Swift, Android and React Native (`requestImmediateDataFlush`)
 reports neither success nor failure. Stopping collection at once is the safe
-choice for the user, so c15t does not send a write it cannot confirm.
+choice for the user, so Inth does not send a write it cannot confirm.
 
 So Braze's servers keep whatever the attributes last said, which can be
 `true`, and Audience Sync can go on treating the user as consented. To close
@@ -53,7 +53,7 @@ that gap:
   your backend with Braze's [`/users/track` endpoint](https://www.braze.com/docs/api/endpoints/user_data/post_user_track),
   and remove the user from synced audiences with an Audience Sync step, as
   Braze's [Audience Sync guide](https://braze.com/docs/partners/canvas_audience_sync/google_audience_sync)
-  requires for withdrawn consent. c15t does not do this for you.
+  requires for withdrawn consent. Inth does not do this for you.
 
 ## Before you start
 

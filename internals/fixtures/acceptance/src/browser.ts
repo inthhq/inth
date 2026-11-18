@@ -165,10 +165,10 @@ export const privacySettings = (page: Page) =>
 		.first();
 
 /**
- * Waits until c15t has started in the page. Server HTML shows controls such
+ * Waits until Inth has started in the page. Server HTML shows controls such
  * as Privacy settings before the framework hydrates, and a click on one
  * then does nothing. Every framework adapter starts its runtime after
- * mount, and starting installs the `window.c15t` object. The script-tag
+ * mount, and starting installs the `window.inth` object. The script-tag
  * build replaces the array a page may queue calls on with its API.
  * `@inth/sdk` from npm installs no global; its pages are not hydrated,
  * so callers skip this wait there.
@@ -177,7 +177,7 @@ export const waitForConsentRuntime = async function waitForConsentRuntime(
 	page: Page
 ): Promise<void> {
 	await page.waitForFunction(() => {
-		const api = (window as { c15t?: unknown }).c15t;
+		const api = (window as { inth?: unknown }).inth;
 		return typeof api === 'object' && api !== null && !Array.isArray(api);
 	});
 };
@@ -289,7 +289,7 @@ export const recordConsentMotion = function recordConsentMotion(): void {
 		'[data-testid^="consent-banner"], [data-testid^="consent-dialog"]:not([data-testid^="consent-dialog-trigger"])';
 	const record: string[] = [];
 	const seen = new WeakSet<Animation>();
-	Object.assign(window, { __c15tMotion: record });
+	Object.assign(window, { __inthMotion: record });
 	const scan = () => {
 		for (const animation of document.getAnimations()) {
 			if (seen.has(animation)) {
@@ -320,5 +320,5 @@ export const recordConsentMotion = function recordConsentMotion(): void {
 /** What {@link recordConsentMotion} recorded so far. */
 export const readConsentMotion = (page: Page): Promise<string[]> =>
 	page.evaluate(
-		() => (window as unknown as { __c15tMotion?: string[] }).__c15tMotion ?? []
+		() => (window as unknown as { __inthMotion?: string[] }).__inthMotion ?? []
 	);

@@ -677,7 +677,7 @@ export const PolicyDemo = () => {
 				<header className="border-border/80 flex flex-col gap-6 border-b pb-8 lg:flex-row lg:items-end lg:justify-between">
 					<div className="max-w-2xl space-y-3">
 						<p className="label-pixel text-muted-foreground">
-							c15t / example demo
+							inth / example demo
 						</p>
 						<h1 className="max-w-[14ch] text-3xl font-semibold tracking-[-0.04em] text-balance sm:text-4xl">
 							Policy-first consent flows.

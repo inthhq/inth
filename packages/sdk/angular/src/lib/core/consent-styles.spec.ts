@@ -13,13 +13,13 @@ import {
 	STYLE_ATTRIBUTE,
 	SURFACE_SCOPES,
 } from './consent-styles';
-import { provideC15t } from './provide-c15t';
+import { provideInth } from './provide-inth';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner],
 	selector: 'test-styled-banner',
-	template: `<c15t-consent-banner [noStyle]="false" />`,
+	template: `<inth-consent-banner [noStyle]="false" />`,
 })
 class StyledBanner {}
 
@@ -27,7 +27,7 @@ class StyledBanner {}
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner],
 	selector: 'test-default-banner',
-	template: `<c15t-consent-banner />`,
+	template: `<inth-consent-banner />`,
 })
 class DefaultBanner {}
 
@@ -35,7 +35,7 @@ class DefaultBanner {}
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialogTrigger],
 	selector: 'test-triggers',
-	template: `<c15t-consent-dialog-trigger
+	template: `<inth-consent-dialog-trigger
 		[noStyle]="own"
 		[persistPosition]="false"
 	/>`,
@@ -48,7 +48,7 @@ class Trigger {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialogPanel],
 	selector: 'test-default-panel',
-	template: `<c15t-consent-dialog-panel [open]="true" />`,
+	template: `<inth-consent-dialog-panel [open]="true" />`,
 })
 class DefaultPanel {}
 
@@ -56,7 +56,7 @@ class DefaultPanel {}
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentWidget],
 	selector: 'test-default-widget',
-	template: `<c15t-consent-widget />`,
+	template: `<inth-consent-widget />`,
 })
 class DefaultWidget {}
 
@@ -69,7 +69,7 @@ const render = async <ComponentType>(
 ) => {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({ ...testOptions(), disableAnimation: true, noStyle: true }),
+			provideInth({ ...testOptions(), disableAnimation: true, noStyle: true }),
 		],
 	});
 	const fixture = TestBed.createComponent(component);
@@ -126,7 +126,7 @@ describe('ConsentStyles', () => {
 	describe('a sheet that is still loading', () => {
 		/** The selectors the pending rules hide, as the page holds them now. */
 		const hidden = (element: Element): boolean =>
-			[...document.head.querySelectorAll('style[data-c15t-pending]')].some(
+			[...document.head.querySelectorAll('style[data-inth-pending]')].some(
 				(style) => {
 					const selector = /\{(?<selector>[^{}]+)\{opacity/u.exec(
 						style.textContent ?? ''

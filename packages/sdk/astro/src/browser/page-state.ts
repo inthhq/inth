@@ -10,15 +10,15 @@ import type { KernelConfig } from '@inth/sdk/engine';
 import type { AstroConsentClient } from '../client-types';
 
 /** Where the page's consent client lives. */
-export const GLOBAL_KEY = '__c15tAstro';
+export const GLOBAL_KEY = '__inthAstro';
 /** Where a page's own `buildConfigScript()` puts the boot payload. */
-export const CONFIG_KEY = '__c15tAstroConfig';
+export const CONFIG_KEY = '__inthAstroConfig';
 /** The colour-scheme listener's disposer. */
-export const COLOR_SCHEME_KEY = '__c15tAstroColorScheme';
+export const COLOR_SCHEME_KEY = '__inthAstroColorScheme';
 /** Set once the delegated banner listener is installed. */
-export const ACTIONS_KEY = '__c15tAstroActions';
+export const ACTIONS_KEY = '__inthAstroActions';
 
-/** `window` with c15t's slots. */
+/** `window` with inth's slots. */
 export type ClientWindow = Window &
 	typeof globalThis & {
 		[GLOBAL_KEY]?: AstroConsentClient;
@@ -44,7 +44,7 @@ export const configScripts = function configScripts(
 ): HTMLScriptElement[] {
 	return Array.from(root.scripts).filter(
 		(element) =>
-			element.hasAttribute('data-c15t-config') ||
+			element.hasAttribute('data-inth-config') ||
 			element.textContent?.startsWith(`window.${CONFIG_KEY}=`)
 	);
 };
@@ -58,7 +58,7 @@ export const nonceOf = function nonceOf(
 
 /**
  * The nonce the server put on the config data block, from
- * `Astro.locals.c15t.nonce`, or on a page's own `buildConfigScript()`
+ * `Astro.locals.inth.nonce`, or on a page's own `buildConfigScript()`
  * script.
  *
  * Read through the `nonce` property first: browsers hide the attribute's
@@ -71,10 +71,10 @@ export const readPageNonce = function readPageNonce(
 	root: Document = document
 ): string | undefined {
 	// A page that still assigns the payload with `buildConfigScript()` has
-	// no `data-c15t-config` element; its own script carries the nonce.
+	// no `data-inth-config` element; its own script carries the nonce.
 	const scripts = configScripts(root);
 	const script =
-		scripts.find((element) => element.hasAttribute('data-c15t-config')) ??
+		scripts.find((element) => element.hasAttribute('data-inth-config')) ??
 		scripts[0];
 	return script ? nonceOf(script) : undefined;
 };

@@ -22,7 +22,7 @@ export type HeadlessConsentAction =
  * The state and actions a custom banner or dialog needs, with the policy's
  * presentation already resolved.
  *
- * Provided by `provideC15t()`. Build your own consent UI on it when the
+ * Provided by `provideInth()`. Build your own consent UI on it when the
  * stock surfaces don't fit; the policy still decides which actions show.
  *
  * @example

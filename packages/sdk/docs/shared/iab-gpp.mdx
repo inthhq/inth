@@ -1,6 +1,6 @@
 ## How the policy decides the section
 
-The policy rule c15t matched for the visitor decides whether a section
+The policy rule Inth matched for the visitor decides whether a section
 applies. The visitor's location only picks which US section carries it.
 
 | Matched rule and visitor | Section in the GPP string |
@@ -27,7 +27,7 @@ there get the fallback, `usnat` by default. So does a US visitor whose region
 the geo headers did not supply.
 
 The MSPA US National specification describes `usnat` for MSPA signatories
-that chose the national approach. Without `mspaMode`, c15t reports the
+that chose the national approach. Without `mspaMode`, Inth reports the
 fallback as a transaction the MSPA does not cover (`MspaCoveredTransaction:
 2`), which still carries the opt-outs to vendors such as Prebid.js. If you
 reserve `usnat` for the national approach, set `usFallback: 'none'`; those
@@ -46,14 +46,14 @@ visitors then get no section until their state resolves.
   GPC subsection. It is reported even when the rule does not map GPC to a
   category, so give US rules a `privacySignals.gpc` mapping if the opt-outs
   should follow it too.
-- Sensitive data and known-child consents: `0` (not applicable). c15t has no
+- Sensitive data and known-child consents: `0` (not applicable). Inth has no
   category for them, so the string states that you do not process sensitive
-  data or knowingly process children's data. If you do, GPP from c15t does
+  data or knowingly process children's data. If you do, GPP from Inth does
   not describe your processing; collect and signal that consent separately.
 - `MspaCoveredTransaction`: `2` (not covered) unless you set `mspaMode`.
 
 The notice fields are your attestation, made through the rule's rights:
-c15t cannot see whether your privacy notice is on the page. Show the notices
+Inth cannot see whether your privacy notice is on the page. Show the notices
 the rule promises, including a persistent opt-out control.
 
 ## GPP options
@@ -64,7 +64,7 @@ uses the defaults, as props on `ConsentGPP` in React, or to `mountGPP()` in
 
 | Option | Default | Effect |
 | --- | --- | --- |
-| `cmpId` | the IAB CMP ID c15t holds, else `1` | CMP ID reported by `ping`. The GPP specification has string creators without a registered ID, including MSPA US National creators, use `1`. A TCF EU section needs the registered ID its TC String names. |
+| `cmpId` | the IAB CMP ID Inth holds, else `1` | CMP ID reported by `ping`. The GPP specification has string creators without a registered ID, including MSPA US National creators, use `1`. A TCF EU section needs the registered ID its TC String names. |
 | `usApproach` | `'state'` | `'state'` uses the visitor's state section. `'national'` reports `usnat` for every US visitor; the MSPA reserves it for signatories that chose the national approach. |
 | `usFallback` | `'usnat'` | Under the state approach, the section for a US visitor whose state is unknown or has no section: `'usnat'` or `'none'`. |
 | `mspaMode` | unset | `'opt-out-option'` or `'service-provider'`. Set it only if you signed the IAB Multi-State Privacy Agreement; the transaction is then reported as covered. In service provider mode the opt-outs are reported as not applicable. |
@@ -98,21 +98,21 @@ and while a new TC String is decoded. Listeners added with
 `addEventListener` get `signalStatus: 'not ready'`, then `cmpDisplayStatus`
 and `sectionChange` events, then `signalStatus: 'ready'`.
 
-## Ad tags that load before c15t
+## Ad tags that load before Inth
 
-c15t installs `__gpp` in the browser once consent starts, after it loads the
-GPP code. Vendor scripts that call `__gpp` earlier need a stub. c15t takes over
+Inth installs `__gpp` in the browser once consent starts, after it loads the
+GPP code. Vendor scripts that call `__gpp` earlier need a stub. Inth takes over
 the calls and listeners a stub queued, whether the stub keeps listeners on
 `__gpp.events`, as the GPP specification's sample does, or returns them from
 `__gpp('events')`, as `@iabgpp/stub` does. Call `initializeGPPStub()` from
 `@inth/sdk/iab/gpp` in your first script, or use the IAB's own stub snippet.
-When another stub already answers iframes, c15t leaves that to it, so each
+When another stub already answers iframes, Inth leaves that to it, so each
 iframe call gets one reply.
 
-If a CMP that has already loaded owns `__gpp`, c15t leaves it in place.
+If a CMP that has already loaded owns `__gpp`, Inth leaves it in place.
 The `gpp` option reports the conflict to the `onError` callback,
 `ConsentGPP` logs it, and `mountGPP()` and `createGPP()` throw. Run one GPP
 CMP per page.
 
 GPP signals what the visitor chose; it does not block scripts. Gate vendor
-scripts with c15t's script loading as well.
+scripts with inth's script loading as well.

@@ -7,7 +7,7 @@ import { createContext, useContext, useMemo, useState } from 'react';
 
 /** One experiment event the page lists. */
 export interface ExperimentLogEntry {
-	name: 'c15t_surface_shown' | 'c15t_choice_recorded';
+	name: 'inth_surface_shown' | 'inth_choice_recorded';
 	arm: string;
 	/** The surface shown, or the consent action recorded. */
 	detail: string;
@@ -23,7 +23,7 @@ export interface ExperimentReadoutState {
 
 /**
  * The experiment readout, or `null` when the default root is mounted. Only
- * `src/experiment-root.tsx`, selected by `C15T_EXPERIMENT=1`, provides it.
+ * `src/experiment-root.tsx`, selected by `INTH_EXPERIMENT=1`, provides it.
  */
 export const ExperimentReadoutContext =
 	createContext<ExperimentReadoutState | null>(null);
@@ -72,13 +72,13 @@ export const useExperimentLog = function useExperimentLog(run: string) {
 				pushToDataLayer({
 					arm: experiment.arm,
 					consent_action: consentAction,
-					event: 'c15t_choice_recorded',
+					event: 'inth_choice_recorded',
 					experiment_id: experiment.id,
 				});
 				append({
 					arm: experiment.arm,
 					detail: consentAction,
-					name: 'c15t_choice_recorded',
+					name: 'inth_choice_recorded',
 				});
 			},
 			onSurfaceShown: ({ experiment, surface }: OnSurfaceShownPayload) => {
@@ -87,14 +87,14 @@ export const useExperimentLog = function useExperimentLog(run: string) {
 				}
 				pushToDataLayer({
 					arm: experiment.arm,
-					event: 'c15t_surface_shown',
+					event: 'inth_surface_shown',
 					experiment_id: experiment.id,
 					surface,
 				});
 				append({
 					arm: experiment.arm,
 					detail: surface,
-					name: 'c15t_surface_shown',
+					name: 'inth_surface_shown',
 				});
 			},
 		};
@@ -117,7 +117,7 @@ export interface ExperimentSearch {
  * Read the experiment switch from the request URL. This runs in the root
  * loader, on the server for the first render, so the arm is known before
  * anything renders, the same as a server-resolved feature flag. `&arm=wall`
- * is `wall`, any other `arm` is `control`, and no `arm` lets c15t pick.
+ * is `wall`, any other `arm` is `control`, and no `arm` lets Inth pick.
  */
 export const experimentSearch = function experimentSearch(
 	search: string

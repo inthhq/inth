@@ -1,5 +1,5 @@
 /**
- * Read consent that a c15t mobile app injected into its WebView.
+ * Read consent that a Inth mobile app injected into its WebView.
  *
  * The Swift, Kotlin and React Native WebView helpers add a script that runs
  * at document start, in the main frame, on origins the app lists. It defines
@@ -129,9 +129,9 @@ const readInjected = (): InjectedConsent | null => {
 };
 
 /**
- * Use the consent a c15t mobile app injected into its WebView.
+ * Use the consent a Inth mobile app injected into its WebView.
  *
- * Pass the result as `consentSource`. Inside a WebView that a c15t mobile
+ * Pass the result as `consentSource`. Inside a WebView that a Inth mobile
  * app configured for this origin, it returns a source that reads the
  * native app's decision: no banner shows, nothing is stored or sent from
  * the page, and the page follows the app's choice as it changes. A request
@@ -139,7 +139,7 @@ const readInjected = (): InjectedConsent | null => {
  * show its own preferences.
  *
  * Everywhere else, including a normal browser and server rendering, it
- * returns `undefined`, so c15t behaves as if `consentSource` were not set.
+ * returns `undefined`, so Inth behaves as if `consentSource` were not set.
  *
  * Call it once, when you build the options. The native script runs before
  * any page script, so the injected state is already there.
@@ -152,7 +152,7 @@ const readInjected = (): InjectedConsent | null => {
  * import { webViewConsentSource } from '@inth/sdk/engine';
  *
  * const options = {
- * 	mode: hosted({ projectUrl: '/api/c15t' }),
+ * 	mode: hosted({ projectUrl: '/api/inth' }),
  * 	consentSource: webViewConsentSource(),
  * };
  * ```

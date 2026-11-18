@@ -7,21 +7,21 @@ import type {
 import { evaluateCategoryGate } from '@inth/sdk-core/surface-actions/plain-scripts';
 
 /** Attribute that names the category an inert `<script>` waits on. */
-export const CATEGORY_ATTRIBUTE = 'data-c15t-category';
+export const CATEGORY_ATTRIBUTE = 'data-inth-category';
 
 /**
  * Attribute that names the vendor an inert `<script>` belongs to. The tag
  * runs once its category is allowed and the visitor has not turned that
  * vendor off. Only read alongside {@link CATEGORY_ATTRIBUTE}.
  */
-export const VENDOR_ATTRIBUTE = 'data-c15t-vendor';
+export const VENDOR_ATTRIBUTE = 'data-inth-vendor';
 
 /**
  * Set once a gated script has been activated (`true`), rejected for an
  * unknown category (`invalid`), or refused for lacking the page nonce
  * (`untrusted`).
  */
-export const ACTIVATED_ATTRIBUTE = 'data-c15t-activated';
+export const ACTIVATED_ATTRIBUTE = 'data-inth-activated';
 
 /**
  * Whether an inert tag may be activated under the configured nonce.
@@ -306,9 +306,9 @@ const standaloneActivators = new WeakMap<
 >();
 
 /**
- * Run inert `<script type="text/plain" data-c15t-category="…">` tags whose
+ * Run inert `<script type="text/plain" data-inth-category="…">` tags whose
  * categories the snapshot grants. A tag that also carries
- * `data-c15t-vendor="…"` waits until that vendor is allowed as well. Non-async scripts run in document order,
+ * `data-inth-vendor="…"` waits until that vendor is allowed as well. Non-async scripts run in document order,
  * waiting for each external script to load or fail before continuing.
  *
  * Call again when consent changes so waiting scripts use the latest snapshot.

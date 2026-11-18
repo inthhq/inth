@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Render your own consent banner and preferences in JavaScript, or connect a framework without a c15t adapter such as Solid, with createConsentRuntime from @inth/sdk/runtime.
+description: Render your own consent banner and preferences in JavaScript, or connect a framework without a Inth adapter such as Solid, with createConsentRuntime from @inth/sdk/runtime.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ lifecycle they handle for you.
 | API | Use it when |
 | --- | --- |
 | `createConsentRuntime` from `@inth/sdk/runtime` | You render the UI yourself, connect a UI framework, or share one consent state between several parts of the page. This page covers it. |
-| `init` from `@inth/sdk/headless` | You want the `@inth/sdk` client without its UI: `data-c15t-action` buttons, `on('ui', ...)` and `acceptAll()` work as with the stock UI. |
+| `init` from `@inth/sdk/headless` | You want the `@inth/sdk` client without its UI: `data-inth-action` buttons, `on('ui', ...)` and `acceptAll()` work as with the stock UI. |
 | `createConsentKernel` from `@inth/sdk/engine` | You assemble every module yourself. See the [consent kernel API](/docs/frameworks/javascript/api/kernel#create-a-kernel-yourself). |
 
 The [createConsentRuntime reference](/docs/frameworks/javascript/api/runtime)
@@ -115,7 +115,7 @@ banner do not need it.
 
 `kernel.commands.save()` records a choice. The kernel hides the banner once no
 prompt is owed, but a dialog the visitor opened stays open. To close surfaces
-the way every c15t adapter does, wrap your clicks in the functions from
+the way every Inth adapter does, wrap your clicks in the functions from
 `@inth/sdk/surface-actions`:
 
 | Function | What it does |
@@ -124,7 +124,7 @@ the way every c15t adapter does, wrap your clicks in the functions from
 | `saveConsentBlanket(kernel, 'all' \| 'none', runtime.iab)` | Accept all or reject all. Under an IAB policy it goes through the CMP so the TC string records it. |
 | `saveIABConsentSurface(kernel, () => runtime.iab.save())` | Closes an IAB surface in the click task and brings it back if the CMP recorded nothing, for example when the vendor list failed to load. |
 | `showConsentSurface(kernel, 'banner' \| 'dialog' \| 'none')` | Opens or closes a surface. `'none'` with the dialog open brings the banner back while the policy still owes a choice or a notice. A pending save started before it can no longer close or reopen anything. |
-| `hasConsentUI(snapshot)` | Whether the policy owes any c15t banner or dialog. `false` until a rule resolves, for a `none` rule without rights, and while an external CMP owns the decision. |
+| `hasConsentUI(snapshot)` | Whether the policy owes any Inth banner or dialog. `false` until a rule resolves, for a `none` rule without rights, and while an external CMP owns the decision. |
 | `hasConsentPreferences(snapshot)` | Whether a privacy settings control has somewhere to go: `hasConsentUI`, or an external CMP. |
 
 A draft's save records in the same call, so it closes the dialog the same way:
@@ -150,7 +150,7 @@ loading. Call it once, in the browser. `runtime.dispose()` removes everything
 browser stores the page for Back and Forward navigation.
 
 The complete script, with the preference dialog, is
-`internals/doc-snippets/javascript/src/headless.ts` in the c15t repository.
+`internals/doc-snippets/javascript/src/headless.ts` in the Inth repository.
 
 ## What your UI must handle
 
@@ -176,7 +176,7 @@ Read [how consent works](/docs/concepts/how-consent-works) for the difference
 between a permission and a recorded choice, then run the
 [verification checklist](/docs/guides/verify-consent).
 
-## Use c15t with Solid
+## Use Inth with Solid
 
 There is no published Solid adapter. Create the runtime as above and read it
 through a signal:
@@ -204,7 +204,7 @@ tree.
 ## Use the browser client without its UI
 
 `@inth/sdk/headless` gives you the `@inth/sdk` client with no banner or
-stylesheet. Page hooks such as `data-c15t-action="accept"` still work, and the
+stylesheet. Page hooks such as `data-inth-action="accept"` still work, and the
 `ui` event says which surface to show:
 
 {/* example: fragment */}

@@ -5,10 +5,10 @@
  * Its own module so the boot script can look for the spot without pulling
  * in the banner's class maps and stylesheet.
  */
-export const PROMPT_SLOT_ATTRIBUTE = 'data-c15t-prompt-slot';
+export const PROMPT_SLOT_ATTRIBUTE = 'data-inth-prompt-slot';
 
 /** The same, for `<IABConsentBanner />`. */
-export const IAB_PROMPT_SLOT_ATTRIBUTE = 'data-c15t-iab-prompt-slot';
+export const IAB_PROMPT_SLOT_ATTRIBUTE = 'data-inth-iab-prompt-slot';
 
 /**
  * The consent models an `<IABConsentBanner />` spot answers, so the boot

@@ -80,7 +80,7 @@ const policy = normalizePolicyRule({
 });
 
 const init = {
-	branding: 'c15t',
+	branding: 'inth',
 	cmpId: 28,
 	customVendors: [],
 	gvl: completeGVL,

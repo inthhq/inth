@@ -1,9 +1,9 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type * as InthCoreTypes from '@inth/sdk/engine';
 /**
  * @packageDocumentation
- * Default implementation of the Consent Dialog that ships with c15t.
+ * Default implementation of the Consent Dialog that ships with Inth.
  *
  * The new compound-component API exposes all primitives (Root, Card, etc.).
  * This default export simply composes those primitives so consumers that
@@ -114,7 +114,7 @@ export interface ConsentDialogProps {
 	 * Which consent models this dialog responds to.
 	 * @default ['opt-in', 'opt-out', 'none']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.

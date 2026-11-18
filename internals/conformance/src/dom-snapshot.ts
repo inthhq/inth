@@ -17,7 +17,7 @@ const S_SCOPED_CLASS = /\bs-[a-z0-9]{6,}\b/gu;
 // oxlint-disable-next-line prefer-named-capture-group -- This package supports pre-ES2018 declaration targets.
 const CSS_MODULE_CLASS = /^_([^_]+)_[^_]+_\d+$/u;
 // oxlint-disable-next-line prefer-named-capture-group -- This package supports pre-ES2018 declaration targets.
-const SVELTE_CSS_MODULE_CLASS = /^c15t-ui-(.+)-[A-Za-z0-9]+$/u;
+const SVELTE_CSS_MODULE_CLASS = /^inth-ui-(.+)-[A-Za-z0-9]+$/u;
 const AUTO_ID_VALUE = /^(?::r[0-9a-z]+:|radix-[a-z0-9-]+|ark-[a-z0-9-]+)$/u;
 
 const STRIP_ATTRS = new Set([

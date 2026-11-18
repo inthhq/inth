@@ -1,5 +1,5 @@
 /**
- * The `<key>-sid` subject ID c15t 3.2 stored before any choice. Nothing
+ * The `<key>-sid` subject ID Inth 3.2 stored before any choice. Nothing
  * writes it now; startup and `clear()` remove a copy an earlier version
  * left. Its own module with no record code, so a runtime that mounts no
  * persistence can remove it without loading persistence.
@@ -35,7 +35,7 @@ const parentDomains = function parentDomains(): string[] {
 };
 
 /**
- * The ID a `<key>-sid` copy from c15t 3.2 holds, `null` for none: the cookie
+ * The ID a `<key>-sid` copy from Inth 3.2 holds, `null` for none: the cookie
  * copy, else the localStorage one. Only for a visitor whose stored records
  * carry no ID, such as one an older version wrote: 3.2 used this ID for
  * them, so it is kept with their records before the copy goes.
@@ -68,7 +68,7 @@ export const readLegacySubjectId = function readLegacySubjectId(
 };
 
 /**
- * Removes the `<key>-sid` subject ID that c15t 3.2 stored on the first page
+ * Removes the `<key>-sid` subject ID that Inth 3.2 stored on the first page
  * load, before the visitor chose anything. The ID now lives only in memory
  * until a save records it, so a copy left from an earlier version goes.
  *

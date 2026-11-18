@@ -471,7 +471,7 @@ export interface ConsentBannerRightLinkProps extends Omit<
  * `rightLink` class and the `banner.rightLink` slot so the primary action
  * beside it keeps the emphasis. The label comes from the `rights`
  * translations and children override it. Carries `data-action="right"`,
- * `data-right`, and `data-c15t-rights` for styling hooks. With `asChild`
+ * `data-right`, and `data-inth-rights` for styling hooks. With `asChild`
  * the child element, such as a link to a dedicated opt-out page, receives
  * the same class, attributes, and click handling.
  *
@@ -517,7 +517,7 @@ const ConsentBannerRightLink = createForwardRef<
 				{...mergedProps}
 				data-action="right"
 				data-right={right}
-				data-c15t-rights={policy.rights.join(' ')}
+				data-inth-rights={policy.rights.join(' ')}
 				data-testid={`consent-banner-right-link-${right}`}
 				onClick={handleClick}
 				{...props}

@@ -131,11 +131,11 @@ export interface SaveOutboxOptions {
  */
 const SAVE_FAILED_WARNINGS = {
 	queued:
-		'[c15t] Consent save failed. The choice is kept in this browser and queued, and is resent on the next init or when the browser comes back online.',
+		'[inth] Consent save failed. The choice is kept in this browser and queued, and is resent on the next init or when the browser comes back online.',
 	rejected:
-		'[c15t] The backend refused the consent save, so it will not be resent. The choice is kept in this browser only.',
+		'[inth] The backend refused the consent save, so it will not be resent. The choice is kept in this browser only.',
 	unstored:
-		'[c15t] Consent save failed, and storage refused to queue it, so it will not be resent. The choice is kept in this browser only.',
+		'[inth] Consent save failed, and storage refused to queue it, so it will not be resent. The choice is kept in this browser only.',
 } as const;
 
 const warnSaveFailed = function warnSaveFailed(

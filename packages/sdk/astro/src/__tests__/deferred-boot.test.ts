@@ -9,7 +9,7 @@ import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../types';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;
@@ -19,8 +19,8 @@ beforeAll(async () => {
 });
 
 const buildLocals = async function buildLocals(
-	options: Partial<C15tAstroOptions> = {}
-): Promise<C15tLocals> {
+	options: Partial<InthAstroOptions> = {}
+): Promise<InthLocals> {
 	return await resolveConsentContext({
 		headers: new Headers(),
 		options: resolveOptions({
@@ -32,8 +32,8 @@ const buildLocals = async function buildLocals(
 };
 
 const BOOT =
-	/<script[^>]*type="application\/json"[^>]*data-c15t-boot[^>]*>(?<json>[^<]*)<\/script>/u;
-const FIRST_PAINT = /<style[^>]*data-c15t-styles="c15t-first-paint"/u;
+	/<script[^>]*type="application\/json"[^>]*data-inth-boot[^>]*>(?<json>[^<]*)<\/script>/u;
+const FIRST_PAINT = /<style[^>]*data-inth-styles="inth-first-paint"/u;
 
 const bootOf = function bootOf(html: string): { d: boolean; s: unknown } {
 	const match = html.match(BOOT);
@@ -89,7 +89,7 @@ describe('canDeferEngine', () => {
 		'loads the engine at once for %s',
 		async (_label, options, blocking) => {
 			const { options: resolved, snapshot } = await buildLocals(
-				options as Partial<C15tAstroOptions>
+				options as Partial<InthAstroOptions>
 			);
 			expect(canDeferEngine(snapshot, resolved, blocking)).toBe(false);
 		}
@@ -120,7 +120,7 @@ describe('<ConsentBanner /> boot data', () => {
 	it('leaves the snapshot and the early-tap script ahead of the banner', async () => {
 		const locals = await buildLocals();
 		const html = await container.renderToString(ConsentBanner, {
-			locals: { c15t: { ...locals, nonce: 'n0' } },
+			locals: { inth: { ...locals, nonce: 'n0' } },
 		});
 		const boot = bootOf(html);
 		expect(boot.d).toBe(true);
@@ -136,7 +136,7 @@ describe('<ConsentBanner /> boot data', () => {
 
 	it('marks a banner the engine must serve at once, without the early-tap script', async () => {
 		const html = await container.renderToString(ConsentBanner, {
-			locals: { c15t: await buildLocals({ gpp: true }) },
+			locals: { inth: await buildLocals({ gpp: true }) },
 		});
 		expect(bootOf(html).d).toBe(false);
 		expect(html).not.toContain(EARLY_CONSENT_TAP_SCRIPT);
@@ -144,7 +144,7 @@ describe('<ConsentBanner /> boot data', () => {
 
 	it('leaves no early-tap script inside a server island, which arrives after the page script', async () => {
 		const html = await container.renderToString(ConsentBanner, {
-			locals: { c15t: await buildLocals() },
+			locals: { inth: await buildLocals() },
 			props: { inlineStyles: false },
 		});
 		expect(html).not.toContain(EARLY_CONSENT_TAP_SCRIPT);
@@ -153,7 +153,7 @@ describe('<ConsentBanner /> boot data', () => {
 	it('leaves the snapshot on a page without a banner, without letting the engine wait', async () => {
 		const locals = await buildLocals();
 		const html = await container.renderToString(ConsentScript, {
-			locals: { c15t: { ...locals, shouldShowBanner: false } },
+			locals: { inth: { ...locals, shouldShowBanner: false } },
 		});
 		expect(bootOf(html).d).toBe(false);
 		expect(html).not.toContain(EARLY_CONSENT_TAP_SCRIPT);
@@ -162,7 +162,7 @@ describe('<ConsentBanner /> boot data', () => {
 	it('never lets the engine wait on a page every visitor shares', async () => {
 		const locals = await buildLocals();
 		const html = await container.renderToString(ConsentScript, {
-			locals: { c15t: { ...locals, prerendered: true } },
+			locals: { inth: { ...locals, prerendered: true } },
 		});
 		expect(bootOf(html).d).toBe(false);
 	});
@@ -172,16 +172,16 @@ describe('first-paint rules for a visitor the server shows no banner', () => {
 	it('are left out of the head', async () => {
 		const locals = await buildLocals();
 		const head = await container.renderToString(ConsentScript, {
-			locals: { c15t: { ...locals, shouldShowBanner: false } },
+			locals: { inth: { ...locals, shouldShowBanner: false } },
 		});
 		expect(head).not.toMatch(FIRST_PAINT);
 		// The engine still boots from the config.
-		expect(head).toContain('data-c15t-config');
+		expect(head).toContain('data-inth-config');
 	});
 
 	it('are still inlined for a banner rendered with `force`', async () => {
 		const locals = {
-			c15t: { ...(await buildLocals()), shouldShowBanner: false },
+			inth: { ...(await buildLocals()), shouldShowBanner: false },
 		};
 		const head = await container.renderToString(ConsentScript, { locals });
 		const banner = await container.renderToString(ConsentBanner, {
@@ -196,7 +196,7 @@ describe('first-paint rules for a visitor the server shows no banner', () => {
 		const locals = await buildLocals();
 		const head = await container.renderToString(ConsentScript, {
 			locals: {
-				c15t: { ...locals, prerendered: true, shouldShowBanner: false },
+				inth: { ...locals, prerendered: true, shouldShowBanner: false },
 			},
 		});
 		expect(head).toMatch(FIRST_PAINT);

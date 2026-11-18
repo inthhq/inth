@@ -21,7 +21,7 @@ describe('createOfflineTransport: basic behavior', () => {
 			policyId: 'europe_opt_in',
 			status: 'matched',
 		});
-		expect(unknown?.branding).toBe('c15t');
+		expect(unknown?.branding).toBe('inth');
 		expect(unknown?.translations?.language).toBe('en');
 		const germany = await transport.init?.({
 			overrides: { country: 'DE' },

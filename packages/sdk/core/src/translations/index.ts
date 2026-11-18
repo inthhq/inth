@@ -73,7 +73,7 @@ const sameLeaf = function sameLeaf(left: unknown, right: unknown): boolean {
 
 /**
  * The part of an override that should apply over `base`: every key that
- * differs from c15t's built-in copy, and every key `base` does not supply.
+ * differs from inth's built-in copy, and every key `base` does not supply.
  * A key that repeats the built-in text yields to the base, so passing a
  * stock bundle to enable a language does not hide backend edits.
  */
@@ -121,7 +121,7 @@ const findStockTranslations = function findStockTranslations(
  *
  * The resolved bundle (from a backend, a manifest, a prefetch or the bundled
  * defaults) is the base for its language. An app key replaces the base when
- * it differs from c15t's built-in copy for that language, or when the base
+ * it differs from inth's built-in copy for that language, or when the base
  * does not supply it. A key equal to the built-in text leaves the base alone,
  * so an app passing a stock bundle to enable a language still shows backend
  * edits, while a genuine customization wins. Built-in copy is known for
@@ -187,7 +187,7 @@ export const applyTranslationOverrides = function applyTranslationOverrides(
 };
 
 /**
- * Resolve copy for a language from what the client has on hand: c15t's
+ * Resolve copy for a language from what the client has on hand: inth's
  * built-in copy for it, the app's overrides for it, or both.
  *
  * Both fall back to the primary subtag, so `de-AT` uses German copy. English

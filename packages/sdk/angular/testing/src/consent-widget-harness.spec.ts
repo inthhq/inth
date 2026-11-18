@@ -15,7 +15,7 @@ import { ConsentWidgetHarness } from './consent-widget-harness';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentWidget],
 	selector: 'test-widget-host',
-	template: '<c15t-consent-widget />',
+	template: '<inth-consent-widget />',
 })
 class WidgetHost {}
 

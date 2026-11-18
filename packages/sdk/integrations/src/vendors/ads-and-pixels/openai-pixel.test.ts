@@ -107,7 +107,7 @@ describe('openaiPixelEvent', () => {
 			'custom',
 			{ plan_id: 'pro', type: 'custom' },
 			{
-				custom_event_name: 'c15t_integration_test',
+				custom_event_name: 'inth_integration_test',
 				event_id: 'test-1',
 				opt_out: true,
 			},

@@ -41,7 +41,7 @@ describe('createClientMode', () => {
 
 	test('throws without a backend URL instead of running offline', () => {
 		expect(() => createClientMode(manifest(), {})).toThrow(
-			'@inth/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
+			'@inth/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in inth.config.ts.'
 		);
 		expect(() => createClientMode(undefined, {})).toThrow(
 			'`projectUrl` is required'
@@ -53,12 +53,12 @@ describe('createClientMode', () => {
 	test('never saves to a route prefix that was not passed as the backend', () => {
 		// Without `proxy` the consent route answers `GET` only.
 		expect(() =>
-			createClientMode(manifest(), { routePrefix: '/api/c15t' })
+			createClientMode(manifest(), { routePrefix: '/api/inth' })
 		).toThrow('`projectUrl` is required');
 		expect(
 			createClientMode(manifest(), {
-				projectUrl: '/api/c15t',
-				routePrefix: '/api/c15t',
+				projectUrl: '/api/inth',
+				routePrefix: '/api/inth',
 			}).kind
 		).toBe('manifest');
 	});

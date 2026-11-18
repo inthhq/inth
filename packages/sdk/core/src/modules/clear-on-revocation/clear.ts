@@ -18,7 +18,7 @@ import type {
  * Browser storage failures are ignored so consent changes can still complete.
  *
  * @param options - Kernel, category targets, and persistence configuration.
- * @param tools - Consent evaluation and c15t's storage keys.
+ * @param tools - Consent evaluation and inth's storage keys.
  * @returns A subscription handle. Disposing does not clear data.
  * @internal
  */
@@ -38,7 +38,7 @@ export const createClearOnRevocationWith = (
 	const protectedKeys = new Set([
 		...tools.protectedStorageKeys,
 		// Keep the optional IAB addon's receipts without importing its runtime.
-		'c15t-iab-authority-v1',
+		'inth-iab-authority-v1',
 		'euconsent-v2',
 	]);
 	for (const key of [storageKey, storageConfig?.storageKey || storageKey]) {

@@ -27,7 +27,7 @@
 				</div>{/snippet}
 			<div
 				data-testid="parity-consent-gate-content"
-				style="border-radius: 1rem; padding: 1.25rem; background: var(--c15t-surface); border: 1px solid var(--c15t-border);"
+				style="border-radius: 1rem; padding: 1.25rem; background: var(--inth-surface); border: 1px solid var(--inth-border);"
 			>
 				Embedded marketing content is now visible.
 			</div>

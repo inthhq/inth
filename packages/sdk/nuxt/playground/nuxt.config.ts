@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-	c15t: {
+	inth: {
 		consentCategories: ['necessary', 'measurement', 'marketing'],
 		projectUrl: 'https://nuxt-consent-io.inth.app',
 	},

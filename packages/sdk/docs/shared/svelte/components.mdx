@@ -6,7 +6,7 @@ Import every component from `@inth/svelte`, except the dev tools panel,
 which comes from `@inth/svelte/devtools`. Render them inside the provider:
 `ConsentProvider` in a Svelte app, or `ConsentRoot`, which renders
 `ConsentProvider`, in a SvelteKit root layout. A component outside it throws
-`c15t: no v3 consent context`.
+`inth: no v3 consent context`.
 
 | Component | Renders | Page |
 | --- | --- | --- |
@@ -22,13 +22,13 @@ which comes from `@inth/svelte/devtools`. Render them inside the provider:
 | `ConsentDevTools` | A development panel for the consent state. | [Dev tools](./components/dev-tools) |
 | `Dialog`, `Switch`, `Tabs` and others | Unstyled building blocks for your own UI. | [Primitives](./components/primitives) |
 
-`DevTools` and `C15TDevTools` are aliases for `ConsentDevTools`.
+`DevTools` and `InthDevTools` are aliases for `ConsentDevTools`.
 
 ## Styles
 
 There is no stylesheet to import. Each stock component adds the rules it
 uses to `<head>` as a `<style>` element, once per page, before its own
-elements render. On a server-rendered SvelteKit page, `c15tHandle` writes the
+elements render. On a server-rendered SvelteKit page, `inthHandle` writes the
 banner's rules into the HTML, so the banner is styled before hydration. The
 dialog's rules, including the primitives', load with the dialog's code.
 
@@ -57,7 +57,7 @@ Several props mean the same thing on every component:
 
 | Prop | Behavior |
 | --- | --- |
-| `noStyle` | Renders the same markup and behavior without c15t's classes. Set it on the provider for every component, or on one component. |
+| `noStyle` | Renders the same markup and behavior without inth's classes. Set it on the provider for every component, or on one component. |
 | `class` | Adds your class to the component's root element. |
 | `hideBranding` | Hides the "Secured by" tag on the banner, dialog and widget. |
 | `models` | The policy models a surface renders for: `opt-in`, `opt-out`, `iab` and `none`. |

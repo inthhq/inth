@@ -44,7 +44,7 @@ class ConsentScreenshotTest {
                 open("iab", ui, if (custom) "ledger.prompt" else "inth.first-layer") {
                     compose.onNodeWithTag(if (custom) "ledger.prompt.customize" else "inth.first-layer.customize").performClick()
                     if (custom) { waitFor("ledger.preferences"); compose.onNodeWithTag("ledger.tab.1").performClick(); waitFor("ledger.purpose.1") }
-                    else waitFor("inth.iab")
+                    else waitFor("c15t.iab")
                     capture("android-$ui-iab-$tone")
                 }
             }

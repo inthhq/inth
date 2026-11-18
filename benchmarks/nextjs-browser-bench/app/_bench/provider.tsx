@@ -114,7 +114,7 @@ export const NextjsManifestClientBenchmarkProvider = ({
 	const transport = useMemo(
 		() =>
 			createManifestTransport({
-				manifestUrl: '/api/c15t/manifest',
+				manifestUrl: '/api/inth/manifest',
 				projectUrl: '/api/bench-consent',
 			}),
 		[]
@@ -174,7 +174,7 @@ export const NextjsManifestBenchmarkProvider = ({
 	<ConsentRoot
 		config={{
 			// The browser resolves from the same-origin manifest route.
-			mode: manifest({ manifestUrl: '/api/c15t/manifest', resolve: 'browser' }),
+			mode: manifest({ manifestUrl: '/api/inth/manifest', resolve: 'browser' }),
 			projectUrl: '/api/bench-consent',
 		}}
 		state={state}

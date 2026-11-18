@@ -25,7 +25,7 @@ const MeasurementStatus = () => {
 };
 
 const ConsentStatus = () => {
-	// The page's consent runtime, which the c15t integration started. For a
+	// The page's consent runtime, which the inth integration started. For a
 	// visitor the banner asks to choose, it loads after the page.
 	const [runtime, setRuntime] = useState(() => getConsentClient()?.runtime);
 	useEffect(() => {

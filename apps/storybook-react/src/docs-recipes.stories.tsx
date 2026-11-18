@@ -2,7 +2,7 @@ import {
 	recipeAccepts,
 	recipeRejects,
 	recipeRenders,
-} from '@c15t/conformance/play/docs-recipes';
+} from '@inth/conformance/play/docs-recipes';
 import { ConsentDialog } from '@inth/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ComponentType } from 'react';

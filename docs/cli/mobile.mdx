@@ -21,7 +21,7 @@ The mobile SDKs work only with Inth projects, so `--backend-url` is the project 
 | Swift | An Xcode project, a workspace or `Package.swift`, with no `package.json` | Prints the package products and the code that installs the engine and attaches the consent screens, for SwiftUI and UIKit. |
 | Android | A Gradle build, with no `package.json` | Prints the repository, the dependencies and the code that installs the engine and attaches the consent screens, for Compose and for an Activity with views. |
 
-Run setup in the app's directory or any directory inside it. The nearest `package.json` wins when it depends on `expo` or `react-native`, so `ios/` and `android/` inside a React Native app resolve to the app. Otherwise the nearest Xcode project, workspace, `Package.swift` or Gradle settings file names the app, even inside a website's folder. Outside a mobile app, setup fails with `usage_error`. For a website, run `inth c15t` instead.
+Run setup in the app's directory or any directory inside it. The nearest `package.json` wins when it depends on `expo` or `react-native`, so `ios/` and `android/` inside a React Native app resolve to the app. Otherwise the nearest Xcode project, workspace, `Package.swift` or Gradle settings file names the app, even inside a website's folder. Outside a mobile app, setup fails with `usage_error`. For a website, run `inth inth` instead.
 
 Setup never edits an Xcode project, a Gradle file, an `Info.plist`, an `AndroidManifest.xml` or a dynamic `app.config` file. It prints those changes for you to make.
 

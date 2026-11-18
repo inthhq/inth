@@ -536,7 +536,7 @@ export const fullStory = function fullStory(options: FullStoryOptions): Script {
 	// A retained runtime, including a pending download, needs callbacks only.
 	// A function survives object-spread customization and is checked at mount.
 	script.callbackOnly = callbackOnlyFor(configuration);
-	// Reject a replacement created before another c15t configuration started,
+	// Reject a replacement created before another Inth configuration started,
 	// before core removes the active owner. Other installations stay a
 	// per-script error so they don't block the rest of the batch.
 	script.validate = () => {

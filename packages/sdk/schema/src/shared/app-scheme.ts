@@ -9,7 +9,7 @@
  * Schemes browsers treat as ordinary web origins.
  *
  * Trusted-origin entries using one of these (or no scheme at all) stay
- * protocol-agnostic, which is the behaviour c15t has always had. Any other
+ * protocol-agnostic, which is the behaviour Inth has always had. Any other
  * scheme is treated as an app scheme and must match exactly.
  */
 const WEB_SCHEMES = new Set(['http:', 'https:', 'ws:', 'wss:']);

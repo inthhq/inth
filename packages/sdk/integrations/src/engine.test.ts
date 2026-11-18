@@ -288,7 +288,7 @@ describe('scripts engine', () => {
 			afterLoadSteps: [],
 			bootstrapSteps: [],
 			category: 'measurement',
-			kind: 'c15t.vendor-manifest',
+			kind: 'inth.vendor-manifest',
 			loadScript: {
 				src: 'https://cdn.example.com/vendor-id.js',
 				type: 'loadScript',

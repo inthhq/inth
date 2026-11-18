@@ -24,7 +24,7 @@ const page = (title: string, aliases?: string[]) =>
 	`---\ntitle: ${title}\ndescription: Checked vendor setup.\n${aliases ? `integrationAliases: ${JSON.stringify(aliases)}\n` : ''}---\n\nSetup instructions.\n`;
 
 beforeEach(() => {
-	directory = mkdtempSync(join(tmpdir(), 'c15t-integration-lint-'));
+	directory = mkdtempSync(join(tmpdir(), 'inth-integration-lint-'));
 	docsRoot = join(directory, 'docs');
 	mkdirSync(join(docsRoot, 'integrations'), { recursive: true });
 	for (const [slug, title] of Object.entries({

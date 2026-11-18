@@ -120,12 +120,12 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
     public var gpc: Bool?
     /// Registered CMP identity and publisher settings, or `nil` to leave IAB TCF off.
     ///
-    /// Read from the `com.inth.iab.*` keys. The core writes `IABTCF_CmpSdkID` and
+    /// Read from the `com.c15t.iab.*` keys. The core writes `IABTCF_CmpSdkID` and
     /// `IABTCF_CmpSdkVersion` from it at startup. There is no default CMP ID: a
     /// declaration without one, or with any value out of range, leaves this `nil`
     /// and ``iabIssue(in:)`` explains why.
     public var iab: IABConfiguration?
-    /// GPP options, or `nil` to write no GPP signal. Read from the `com.inth.gpp*` keys.
+    /// GPP options, or `nil` to write no GPP signal. Read from the `com.c15t.gpp*` keys.
     public var gpp: GPPOptions?
 
     /// Keys read out of `Info.plist`. All optional.
@@ -152,23 +152,23 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         public static let bundledPolicyResource = "com.inth.policy.resource"
         /// Filename of the in-code policy rules.
         public static let policyRulesResource = "com.inth.policy.rules"
-        /// IAB Europe CMP ID, 2 to 4095. Required when any `com.inth.iab.*` key is present.
-        public static let iabCmpId = "com.inth.iab.cmpId"
+        /// IAB Europe CMP ID, 2 to 4095. Required when any `com.c15t.iab.*` key is present.
+        public static let iabCmpId = "com.c15t.iab.cmpId"
         /// Your CMP version, 0 to 4095. Required with ``iabCmpId``.
-        public static let iabCmpVersion = "com.inth.iab.cmpVersion"
+        public static let iabCmpVersion = "com.c15t.iab.cmpVersion"
         /// Two-letter publisher country code. Required with ``iabCmpId``.
-        public static let iabPublisherCountryCode = "com.inth.iab.publisherCountryCode"
+        public static let iabPublisherCountryCode = "com.c15t.iab.publisherCountryCode"
         /// Optional consent screen number, 0 to 63. The core's default is 1.
-        public static let iabConsentScreen = "com.inth.iab.consentScreen"
+        public static let iabConsentScreen = "com.c15t.iab.consentScreen"
         /// `true` turns on the IAB GPP string and the `IABGPP_*` keys.
-        public static let gpp = "com.inth.gpp"
+        public static let gpp = "com.c15t.gpp"
         /// `opt-out-option` or `service-provider`. Only for MSPA signatories.
-        public static let gppMspaMode = "com.inth.gpp.mspaMode"
+        public static let gppMspaMode = "com.c15t.gpp.mspaMode"
         /// Categories whose refusal reports a GPP opt-out, as an array. Absent means
         /// `["marketing"]`; an empty array, or the string `none`, means no category does.
-        public static let gppOptOutCategories = "com.inth.gpp.optOutCategories"
+        public static let gppOptOutCategories = "com.c15t.gpp.optOutCategories"
         /// `false` leaves the TCF EU section out of the GPP string.
-        public static let gppTCF = "com.inth.gpp.tcf"
+        public static let gppTCF = "com.c15t.gpp.tcf"
     }
 
     /// A key a host app may still have in `Info.plist` that this build does not model.
@@ -321,7 +321,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         )
     }
 
-    /// Read the GPP options a host declared: `nil` unless `com.inth.gpp` is `true`.
+    /// Read the GPP options a host declared: `nil` unless `com.c15t.gpp` is `true`.
     ///
     /// An MSPA mode this build does not name reads as no mode, which reports the
     /// transaction as not covered rather than claiming a coverage nobody configured.
@@ -334,7 +334,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         )
     }
 
-    /// `com.inth.gpp.optOutCategories`, keeping "not set" apart from "set to empty".
+    /// `com.c15t.gpp.optOutCategories`, keeping "not set" apart from "set to empty".
     ///
     /// An absent key keeps the default, `marketing`. A present key is the app's list: an
     /// empty array, a blank string or `none` is the empty list, meaning no category drives
@@ -368,7 +368,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         return primary.uppercased()
     }
 
-    /// Every `com.inth.iab.*` key this build reads.
+    /// Every `com.c15t.iab.*` key this build reads.
     static let iabKeys = [
         InfoPlistKey.iabCmpId, InfoPlistKey.iabCmpVersion,
         InfoPlistKey.iabPublisherCountryCode, InfoPlistKey.iabConsentScreen,
@@ -376,7 +376,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
 
     /// Read the IAB settings a host declared.
     ///
-    /// No `com.inth.iab.*` key means IAB stays off. Once any of them is present, CMP ID,
+    /// No `com.c15t.iab.*` key means IAB stays off. Once any of them is present, CMP ID,
     /// CMP version and publisher country code are all required and must be in range. A
     /// declaration that fails is refused whole, so the core never writes a CMP ID the
     /// publisher did not register.
@@ -390,7 +390,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
                 code: "INTH_CONFIGURATION_IAB_INVALID",
                 message: "Info.plist IAB settings were refused: \(reason) The consent core starts "
                     + "without IAB TCF, so no IABTCF_CmpSdkID is written and IAB saves fail until "
-                    + "the com.inth.iab.* keys are fixed."
+                    + "the com.c15t.iab.* keys are fixed."
             ))
         }
         guard let cmpId = declaredInteger(infoPlist[InfoPlistKey.iabCmpId]) else {

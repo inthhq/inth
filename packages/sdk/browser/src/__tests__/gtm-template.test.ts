@@ -18,7 +18,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+import type { TestingInthGlobal as InthGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
 const template = readFileSync(
@@ -318,16 +318,16 @@ const options: ConsentClientOptions = {
 	ui: false,
 };
 
-const testWindow = window as Window & { c15t?: unknown; dataLayer?: unknown };
+const testWindow = window as Window & { inth?: unknown; dataLayer?: unknown };
 
-/** What the c15t script tag does when it runs, configured for this test. */
-const loadC15t = function loadC15t(
+/** What the Inth script tag does when it runs, configured for this test. */
+const loadInth = function loadInth(
 	pageOptions: ConsentClientOptions = options
-): C15tGlobal {
-	if (Array.isArray(testWindow.c15t)) {
-		testWindow.c15t.push(['config', pageOptions]);
+): InthGlobal {
+	if (Array.isArray(testWindow.inth)) {
+		testWindow.inth.push(['config', pageOptions]);
 	} else {
-		testWindow.c15t = [['config', pageOptions]];
+		testWindow.inth = [['config', pageOptions]];
 	}
 	const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 	api.init();
@@ -353,8 +353,8 @@ const denied = {
 };
 
 afterEach(() => {
-	(testWindow.c15t as C15tGlobal | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	testWindow.dataLayer = undefined;
 	vi.restoreAllMocks();
 	localStorage.clear();
@@ -365,9 +365,9 @@ afterEach(() => {
 });
 
 describe('GTM template', () => {
-	it('sets a denied default and waits for c15t', () => {
+	it('sets a denied default and waits for inth', () => {
 		const page = createPage(() => {
-			loadC15t();
+			loadInth();
 		});
 		page.run(tagData);
 
@@ -398,9 +398,9 @@ describe('GTM template', () => {
 		]);
 	});
 
-	it('loads c15t and sends its permissions once the policy resolves', async () => {
+	it('loads inth and sends its permissions once the policy resolves', async () => {
 		const page = createPage(() => {
-			loadC15t();
+			loadInth();
 		});
 		const result = page.run(tagData);
 
@@ -414,9 +414,9 @@ describe('GTM template', () => {
 	});
 
 	it('sends an update when the visitor accepts or rejects', async () => {
-		let api: C15tGlobal | undefined;
+		let api: InthGlobal | undefined;
 		const page = createPage(() => {
-			api = loadC15t();
+			api = loadInth();
 		});
 		page.run(tagData);
 		await vi.waitFor(() => {
@@ -448,9 +448,9 @@ describe('GTM template', () => {
 		// How many updates GTM had when each event arrived.
 		const updatesAtEvent: number[] = [];
 		const dataLayer: unknown[] = [];
-		let api: C15tGlobal | undefined;
+		let api: InthGlobal | undefined;
 		const page = createPage(() => {
-			api = loadC15t();
+			api = loadInth();
 		});
 		dataLayer.push = (...entries: unknown[]) => {
 			for (const entry of entries) {
@@ -471,8 +471,8 @@ describe('GTM template', () => {
 		});
 	});
 
-	it('uses c15t that the page already loaded', async () => {
-		loadC15t();
+	it('uses inth that the page already loaded', async () => {
+		loadInth();
 		const warn = vi.spyOn(console, 'warn');
 		const page = createPage();
 		const result = page.run({
@@ -490,12 +490,12 @@ describe('GTM template', () => {
 		});
 	});
 
-	it('queues for a page that loads c15t after the tag', async () => {
+	it('queues for a page that loads inth after the tag', async () => {
 		const page = createPage();
 		page.run({ ...tagData, loadScript: false });
 		expect(page.recorded.logs).toEqual([]);
 
-		loadC15t();
+		loadInth();
 		await vi.waitFor(() => {
 			expect(page.recorded.updates).toEqual([
 				{ ...denied, security_storage: 'granted' },
@@ -505,7 +505,7 @@ describe('GTM template', () => {
 
 	it('subscribes once when the tag fires twice', async () => {
 		const page = createPage(() => {
-			loadC15t();
+			loadInth();
 		});
 		page.run(tagData);
 		const second = page.run(tagData);
@@ -520,7 +520,7 @@ describe('GTM template', () => {
 	it('queues the backend URL only when it loads the script', () => {
 		const queued: unknown[] = [];
 		const page = createPage(() => {
-			queued.push(...(testWindow.c15t as unknown[]));
+			queued.push(...(testWindow.inth as unknown[]));
 		});
 		page.run({
 			...tagData,
@@ -538,13 +538,13 @@ describe('GTM template', () => {
 		]);
 	});
 
-	it('asks c15t about the ticked categories only', async () => {
+	it('asks inth about the ticked categories only', async () => {
 		// The page sets no categories and registers no scripts, as on a site
-		// that loads c15t only through the tag.
+		// that loads Inth only through the tag.
 		const { consentCategories: _, ...pageOptions } = options;
-		let api: C15tGlobal | undefined;
+		let api: InthGlobal | undefined;
 		const page = createPage(() => {
-			api = loadC15t(pageOptions);
+			api = loadInth(pageOptions);
 		});
 		page.run({
 			...tagData,
@@ -576,7 +576,7 @@ describe('GTM template', () => {
 		const result = page.run(tagData);
 
 		expect(result.failure).toHaveBeenCalledOnce();
-		expect(page.recorded.logs).toEqual([`c15t: could not load ${inthUrl}`]);
+		expect(page.recorded.logs).toEqual([`inth: could not load ${inthUrl}`]);
 	});
 
 	it('tries again on a later firing after the script fails to load', async () => {
@@ -586,7 +586,7 @@ describe('GTM template', () => {
 			if (attempts === 1) {
 				throw new Error('network');
 			}
-			loadC15t();
+			loadInth();
 		});
 		const first = page.run(tagData);
 		const second = page.run(tagData);
@@ -630,7 +630,7 @@ describe('GTM template', () => {
 		],
 		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/c15t.js', false],
 		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/x/dist/c15t.js', false],
-		['https://acme.inth.app/c15t/c15t.js', false],
+		['https://acme.inth.app/inth/c15t.js', false],
 		['https://acme.inth.app/c15t.gpp.js', false],
 		['https://acme.inth.app/c15t.offline.js', false],
 		['https://acme.inth.app/c15t.local.js', false],
@@ -681,7 +681,7 @@ describe('GTM template', () => {
 		expect(result.failure).toHaveBeenCalledOnce();
 		expect(page.recorded.injected).toEqual([]);
 		expect(page.recorded.logs.join('\n')).toContain(message);
-		expect(testWindow.c15t).toEqual([]);
+		expect(testWindow.inth).toEqual([]);
 	});
 
 	it.each([

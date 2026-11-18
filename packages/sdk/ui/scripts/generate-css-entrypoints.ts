@@ -5,8 +5,8 @@
  * 2. Generates aggregated CSS entrypoints from `dist/styles/primitives` and
  *    the flat component CSS in `dist/styles/components` (produced by
  *    `generate-style-artifacts.ts`, which must run first):
- *    - the `defaultTheme` base tokens (`--c15t-surface`, `--c15t-radius-lg`,
- *      `--c15t-font-family`, ...) are emitted first and unlayered, so an app
+ *    - the `defaultTheme` base tokens (`--inth-surface`, `--inth-radius-lg`,
+ *      `--inth-font-family`, ...) are emitted first and unlayered, so an app
  *      that imports the stylesheet without passing a `theme` still renders the
  *      styled UI instead of falling back to browser defaults
  *    - :root custom properties and @keyframes stay unlayered
@@ -363,13 +363,13 @@ const collectCssParts = function collectCssParts(
  * time from the same object the runtime exports, so CSS and JS cannot drift.
  *
  * Emitted first and **unlayered** in every entrypoint, on the base `:root`
- * selectors. In the light DOM, a host's `<style id="c15t-theme">` from
+ * selectors. In the light DOM, a host's `<style id="inth-theme">` from
  * `generateThemeCSS` wins wherever it lands: its selectors carry one more
  * specificity point (`:root:root`), so it overrides these even when it comes
  * first in the document, as SvelteKit's `<svelte:head>` does. Its `:host`
  * selector does not, so inside a shadow root the theme must come after this
  * stylesheet. When a host imports the
- * stylesheet into a cascade layer (`@import ... layer(c15t)`), unlayered
+ * stylesheet into a cascade layer (`@import ... layer(inth)`), unlayered
  * theme declarations outrank it by layer precedence too.
  */
 const DEFAULT_THEME_BANNER =
@@ -377,16 +377,16 @@ const DEFAULT_THEME_BANNER =
 const DEFAULT_THEME_CSS = [
 	DEFAULT_THEME_BANNER,
 	// Only the package defaults use a primary reference, so CSS-only themes
-	// can change the switch color by setting --c15t-primary.
+	// can change the switch color by setting --inth-primary.
 	generateDefaultThemeCSS({
 		...defaultTheme,
 		colors: {
 			...defaultTheme.colors,
-			switchTrackActive: 'var(--c15t-primary)',
+			switchTrackActive: 'var(--inth-primary)',
 		},
 		dark: {
 			...defaultTheme.dark,
-			switchTrackActive: 'var(--c15t-primary)',
+			switchTrackActive: 'var(--inth-primary)',
 		},
 	}),
 ].join('\n');
@@ -402,7 +402,7 @@ const TAILWIND3_HINT =
 
 /**
  * Wrap component rules in `@layer components`. Tailwind 4 declares that layer
- * before its utilities, so bare utilities override c15t without
+ * before its utilities, so bare utilities override Inth without
  * `!important`. Tailwind 3 hosts run `@inth/sdk-ui/postcss-tailwind3`, which
  * unwraps the layer in every built stylesheet.
  */
@@ -439,8 +439,8 @@ const writeDist = function writeDist(relativePath: string, css: string) {
  * below the app's own token rules, wherever the sheet lands.
  *
  * An app overrides a token with a `:root` rule, and a dark one with
- * `:root.dark` or `:root.c15t-dark`. Against `styles.css` those win by
- * coming later, since the app imports c15t's stylesheet first. A
+ * `:root.dark` or `:root.inth-dark`. Against `styles.css` those win by
+ * coming later, since the app imports inth's stylesheet first. A
  * component's `<style>` can come after the app's stylesheets instead:
  * React hoists it into `<head>` after them, and Svelte appends it. So the
  * defaults rank by specificity here: a bare `:root` becomes `:where(:root)`
@@ -469,7 +469,7 @@ const writeSheet = function writeSheet(name: string, css: string): string {
 		.trim();
 	writeDist(
 		`styles/sheets/${name}.js`,
-		`export const id = ${JSON.stringify(`c15t-${name}`)};\nexport const css = ${JSON.stringify(text)};\n`
+		`export const id = ${JSON.stringify(`inth-${name}`)};\nexport const css = ${JSON.stringify(text)};\n`
 	);
 	const declaration = join(TYPES_DIR, 'styles', 'sheets', `${name}.d.ts`);
 	mkdirSync(dirname(declaration), { recursive: true });
@@ -645,7 +645,7 @@ const writeDeferredSheet = function writeDeferredSheet(name: string): void {
 	writeDist(
 		`styles/sheets/${name}-deferred.js`,
 		[
-			`export const id = ${JSON.stringify(`c15t-${name}`)};`,
+			`export const id = ${JSON.stringify(`inth-${name}`)};`,
 			'export const css = "";',
 			`export const load = () => import(${JSON.stringify(`./${name}.js`)}).then((sheet) => sheet.css);`,
 			'',

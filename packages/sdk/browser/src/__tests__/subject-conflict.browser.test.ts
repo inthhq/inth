@@ -7,25 +7,25 @@
  * what the next page load starts from, and that two pages replaying the same
  * queued save at the same moment agree on one id through the real lock.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, expect, it } from 'vitest';
 
 import { TAKEN_SUBJECTS_KEY } from './fixtures/subject-conflict-page';
 import type { SubjectConflictPage } from './fixtures/subject-conflict-page';
 
-const PENDING_SAVES_KEY = 'c15t-v3-pending-consent-saves:v1';
+const PENDING_SAVES_KEY = 'inth-v3-pending-consent-saves:v1';
 
 const opened: Window[] = [];
 
 const openPage = async (query = ''): Promise<SubjectConflictPage> => {
-	const tab = window.open(`/__c15t-test__/subject-conflict${query}`, '_blank');
+	const tab = window.open(`/__inth-test__/subject-conflict${query}`, '_blank');
 	if (!tab) {
 		throw new Error('The browser blocked the page');
 	}
 	opened.push(tab);
 	const read = () =>
-		(tab as Window & { c15tSubjectConflict?: SubjectConflictPage })
-			.c15tSubjectConflict;
+		(tab as Window & { inthSubjectConflict?: SubjectConflictPage })
+			.inthSubjectConflict;
 	await expect.poll(read, { timeout: 10_000 }).toBeDefined();
 	const page = read() as SubjectConflictPage;
 	await page.ready;

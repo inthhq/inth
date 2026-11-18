@@ -36,7 +36,7 @@ export const ProductForm = () => {
 			onSubmit={(event) => {
 				event.preventDefault();
 				setAdded(true);
-				// `window.posthog` only exists once c15t has loaded PostHog, which
+				// `window.posthog` only exists once Inth has loaded PostHog, which
 				// it does after the visitor allows Analytics.
 				if ('posthog' in window) {
 					window.posthog.capture('add_to_cart', {

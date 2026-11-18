@@ -22,16 +22,16 @@ describe('extractClassSelectors', () => {
 	it('reads selector classes and ignores values, strings, urls, and at-rules', () => {
 		const classes = extractClassSelectors(`
 			/* .commented { color: red } */
-			.c15t-banner, .c15t-banner > .c15t-title:hover { margin: .5em; }
-			@media (min-width: 40rem) { .c15t-wide { content: ".not-a-class"; } }
-			.c15t-icon { background: url(./a.b.svg); }
+			.inth-banner, .inth-banner > .inth-title:hover { margin: .5em; }
+			@media (min-width: 40rem) { .inth-wide { content: ".not-a-class"; } }
+			.inth-icon { background: url(./a.b.svg); }
 			.parent { color: red; &.nested-child { color: blue; } }
 		`);
 		expect([...classes].toSorted()).toEqual([
-			'c15t-banner',
-			'c15t-icon',
-			'c15t-title',
-			'c15t-wide',
+			'inth-banner',
+			'inth-icon',
+			'inth-title',
+			'inth-wide',
 			'nested-child',
 			'parent',
 		]);

@@ -4,7 +4,7 @@ import { offlineMode } from './fixtures/transport-mode';
 
 /**
  * Opt-in choice rule matching every visitor. Tests use it so a policy is
- * resolved; without one, no c15t consent surface renders.
+ * resolved; without one, no Inth consent surface renders.
  */
 export const TEST_OPT_IN_RULE: PolicyRule = {
 	id: 'test-opt-in',

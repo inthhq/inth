@@ -40,7 +40,7 @@ const DEFAULT_COPY = {
  * (`ConsentManager.getDisplayedVendors(category).length > 0`).
  *
  * The markup, class names, `data-slot`s and ARIA attributes match the other
- * c15t frameworks' vendor lists.
+ * Inth frameworks' vendor lists.
  *
  * @internal
  */
@@ -60,7 +60,7 @@ const DEFAULT_COPY = {
 		Switch,
 		SwitchThumb,
 	],
-	selector: 'section[c15t-consent-vendor-list]',
+	selector: 'section[inth-consent-vendor-list]',
 	template: `@if (!categoryOn()) {
 			<p
 				[class]="styles()?.hint ?? ''"
@@ -74,7 +74,7 @@ const DEFAULT_COPY = {
 			@let details = hasDetails(vendor);
 			@let checked = isChecked(vendor);
 			<div
-				c15tPreferenceItem
+				inthPreferenceItem
 				[class]="styles()?.item ?? ''"
 				[disabled]="!details"
 				[noStyle]="resolvedNoStyle()"
@@ -85,7 +85,7 @@ const DEFAULT_COPY = {
 			>
 				<div [class]="styles()?.header ?? ''">
 					<button
-						c15tPreferenceItemTrigger
+						inthPreferenceItemTrigger
 						[class]="styles()?.trigger ?? ''"
 						(click)="toggleOpen(vendor.id)"
 						[attr.data-testid]="
@@ -93,7 +93,7 @@ const DEFAULT_COPY = {
 						"
 					>
 						<div
-							c15tPreferenceItemLeading
+							inthPreferenceItemLeading
 							[class]="styles()?.arrow ?? ''"
 						>
 							<svg
@@ -127,7 +127,7 @@ const DEFAULT_COPY = {
 					@if (vendor.disabled !== true) {
 						<div [class]="styles()?.control ?? ''">
 							<button
-								c15tSwitch
+								inthSwitch
 								[attr.aria-label]="switchLabel(vendor)"
 								[attr.aria-describedby]="labelId(vendor)"
 								[checked]="checked"
@@ -140,11 +140,11 @@ const DEFAULT_COPY = {
 								"
 							>
 								<span
-									c15tSwitchControl
+									inthSwitchControl
 									[class]="resolvedNoStyle() ? '' : switchClasses.track"
 								>
 									<span
-										c15tSwitchThumb
+										inthSwitchThumb
 										[class]="resolvedNoStyle() ? '' : switchClasses.thumb"
 									></span>
 								</span>
@@ -154,7 +154,7 @@ const DEFAULT_COPY = {
 				</div>
 				@if (details) {
 					<div
-						c15t-preference-item-content
+						inth-preference-item-content
 						[class]="styles()?.content ?? ''"
 						[innerClassName]="styles()?.contentInner"
 						[noStyle]="resolvedNoStyle()"
@@ -184,7 +184,7 @@ const DEFAULT_COPY = {
 })
 export class ConsentVendorList {
 	readonly #consent = inject(ConsentManager);
-	readonly #uid = uniqueId('c15t-vendor-list');
+	readonly #uid = uniqueId('inth-vendor-list');
 
 	/** The category whose vendors to list. */
 	readonly category = input.required<AllConsentNames>();

@@ -1,5 +1,5 @@
 import svelte from '@astrojs/svelte';
-import c15t, { hosted } from '@inth/astro';
+import inth, { hosted } from '@inth/astro';
 import { defineConfig } from 'astro/config';
 
 import { testBackend } from './test-backend.mjs';
@@ -7,7 +7,7 @@ import { testBackend } from './test-backend.mjs';
 export default defineConfig({
 	integrations: [
 		svelte(),
-		c15t({
+		inth({
 			projectUrl: 'https://your-project.inth.app',
 			...testBackend('projectUrl'),
 			clientEntrypoint: './src/consent-client.ts',

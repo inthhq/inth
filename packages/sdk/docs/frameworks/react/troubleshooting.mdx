@@ -68,7 +68,7 @@ For a feature gate, use `useConsent('marketing')` or the category you need.
 **Check.** Search `index.html`, your entry module and any tag manager for the
 vendor's script or SDK initializer.
 
-**Fix.** Remove every loader except the one in `options.scripts`. c15t only
+**Fix.** Remove every loader except the one in `options.scripts`. Inth only
 gates scripts registered with it, and the network blocker cannot stop code that
 runs before the provider renders. [Scripts and embeds](/docs/frameworks/react/scripts)
 covers the options.
@@ -76,24 +76,24 @@ covers the options.
 ## The banner has no styles
 
 **Check.** In DevTools Elements, the banner has classes but no rules apply.
-Look for c15t's `<style>` element: `<style data-href="c15t-tokens c15t-button c15t-banner">`
-in `<head>` on React 19, or `<style data-c15t-styles>` next to the banner on
+Look for inth's `<style>` element: `<style data-href="inth-tokens inth-button inth-banner">`
+in `<head>` on React 19, or `<style data-inth-styles>` next to the banner on
 React 18 or with a `nonce`. Check the console for a Content Security Policy
 error.
 
 **Fix.**
 
-- No c15t `<style>` element: the provider sets `styles: false` or `noStyle`.
+- No Inth `<style>` element: the provider sets `styles: false` or `noStyle`.
   With `styles: false`, import `@inth/react/styles.css` once in the module
   that renders the provider.
 - The console reports a blocked inline style: set the provider's `nonce`, as
   [Content Security Policy](/docs/frameworks/react/content-security-policy)
   shows.
 - Under Tailwind 3, buttons lose their padding and cards their borders:
-  Tailwind 3's unlayered preflight beats c15t's layered rules. Set
+  Tailwind 3's unlayered preflight beats inth's layered rules. Set
   `styles: false`, import `@inth/react/styles.css` above the `@tailwind`
   directives and add `@inth/react/postcss-tailwind3` before `tailwindcss` in your
-  PostCSS config. Without the plugin, Tailwind 3 drops c15t's rules or fails
+  PostCSS config. Without the plugin, Tailwind 3 drops inth's rules or fails
   the build with
   `` `@layer components` is used but no matching `@tailwind components` directive is present ``.
   See [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3).
@@ -101,7 +101,7 @@ error.
 ## The console warns that theme tokens are no longer turned into CSS
 
 **Check.** `options.theme` holds colors, radius or other tokens, and the page
-has no `c15t-theme` style element. The provider only reads `consentActions`
+has no `inth-theme` style element. The provider only reads `consentActions`
 and slot styles from `theme`.
 
 **Fix.** Move the tokens to your CSS or render `ConsentTheme`, as shown in
@@ -110,7 +110,7 @@ and slot styles from `theme`.
 ## The banner is missing from server-rendered HTML
 
 **Check.** Your app uses React Router framework mode, Remix or another
-server-rendered setup without a c15t adapter. There this is expected: the
+server-rendered setup without a Inth adapter. There this is expected: the
 browser resolves consent after hydration.
 
 **Fix.** None is needed for consent to work.

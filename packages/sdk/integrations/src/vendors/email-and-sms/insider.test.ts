@@ -46,7 +46,7 @@ const pageTypes: InsiderPageType[] = [
 
 const pageCustomCases = ['date', 'timestamp'].flatMap((value) => {
 	const marker = {
-		kind: 'c15t.runtime-value',
+		kind: 'inth.runtime-value',
 		label:
 			'</script><script>throw new Error("customer text")</script>\u2028\u2029',
 		template: '{{currency}}',
@@ -259,7 +259,7 @@ describe('insiderTag', () => {
 				custom: {
 					detail: {
 						identifier: 'checkout-A',
-						kind: 'c15t.runtime-value',
+						kind: 'inth.runtime-value',
 						value: 'timestamp',
 					},
 				},
@@ -280,7 +280,7 @@ describe('insiderTag', () => {
 			const user = {
 				email: 'guest@example.com',
 				gdpr_optin: false,
-				kind: 'c15t.runtime-value',
+				kind: 'inth.runtime-value',
 				value: 'date',
 			};
 			runGrant(insiderTag({ ...account, user }), mode);
@@ -357,7 +357,7 @@ describe('insiderTag', () => {
 					type: 'category',
 					value: {
 						breadcrumb: [
-							'{"kind":"c15t.runtime-value","value":"date"}',
+							'{"kind":"inth.runtime-value","value":"date"}',
 							'{{currency}}',
 							'</script>\u2028\u2029',
 						],

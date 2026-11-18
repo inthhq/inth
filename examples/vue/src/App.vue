@@ -6,7 +6,7 @@ import { ConsentDialogLink, ConsentRoot } from '@inth/vue/vue-plugin';
 <template>
 	<ConsentRoot />
 	<main>
-		<h1>c15t with Vue</h1>
+		<h1>inth with Vue</h1>
 		<p>PostHog loads after you allow measurement.</p>
 	</main>
 	<footer>

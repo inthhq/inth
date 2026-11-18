@@ -1,32 +1,32 @@
 ---
-title: window.c15t API
-description: Reference for window.c15t on a plain HTML page, covering the call queue, manual start, reading permissions and recorded choices, saving choices, opening the banner and dialog, and properties.
+title: window.inth API
+description: Reference for window.inth on a plain HTML page, covering the call queue, manual start, reading permissions and recorded choices, saving choices, opening the banner and dialog, and properties.
 group: frameworks
 ---
 
-## Call c15t before and after the tag loads
+## Call Inth before and after the tag loads
 
-`window.c15t` is the only global the script tag uses. Before the tag runs, it
+`window.inth` is the only global the script tag uses. Before the tag runs, it
 is an array of calls. Push `[method, ...args]` entries onto it:
 
 {/* example: fragment */}
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', { legalLinks: { privacyPolicy: { href: '/privacy' } } }]);
-  c15t.push(['on', 'ui', (surface) => console.log('surface:', surface)]);
+  window.inth = window.inth || [];
+  inth.push(['config', { legalLinks: { privacyPolicy: { href: '/privacy' } } }]);
+  inth.push(['on', 'ui', (surface) => console.log('surface:', surface)]);
 </script>
 ```
 
 When the tag runs, it replaces the array with the API object and replays the
 calls in order. Always push onto the existing array.
-`window.c15t = [[...]]` throws away calls that other scripts queued earlier,
+`window.inth = [[...]]` throws away calls that other scripts queued earlier,
 including the DevTools tag's.
 
-`c15t.push([...])` keeps working after the tag has loaded, and runs each call
+`inth.push([...])` keeps working after the tag has loaded, and runs each call
 by the same rules as a queued one. So a snippet written as
-`window.c15t = window.c15t || []; c15t.push([...])` works whether it runs
+`window.inth = window.inth || []; inth.push([...])` works whether it runs
 before or after the tag. `push` returns the number of calls it received.
 
 ### Which calls you can queue
@@ -36,7 +36,7 @@ before or after the tag. `push` returns the number of calls it received.
 | `config`, `init`, `on`, `onInit` | In place, in queue order, as the bundle loads. |
 | `subscribe` | Once the client exists. |
 | `acceptAll`, `rejectAll`, `save`, `dismissNotice`, `saveIAB`, `showBanner`, `openDialog`, `closeDialog`, `setLanguage`, `identify`, `mountUI`, `processIframes` | In queue order, once the policy has resolved. A queued `openDialog` therefore stays open instead of being replaced by the banner. |
-| Any other method, such as `getSnapshot`, `has`, `hasConsented`, `isVendorAllowed`, `ready` or `dispose`, and names c15t does not know | Skipped, with a console warning. Call them from `onInit` or after `ready()`. |
+| Any other method, such as `getSnapshot`, `has`, `hasConsented`, `isVendorAllowed`, `ready` or `dispose`, and names Inth does not know | Skipped, with a console warning. Call them from `onInit` or after `ready()`. |
 
 A queued call that throws is reported with `console.error`, and the calls
 after it still run. A queue cannot hand back a return value, which is why
@@ -56,9 +56,9 @@ option replaces the earlier value.
 
 `config` after the client has started logs a warning and does nothing.
 
-## Start c15t yourself
+## Start Inth yourself
 
-With `data-manual` on the tag, the bundle installs `window.c15t` and waits.
+With `data-manual` on the tag, the bundle installs `window.inth` and waits.
 `c15t.js` still requires a backend URL when `init()` runs. Manifest mode
 needs the `@inth/sdk` ES module, a headless script with your own UI, or
 the IAB script for an IAB policy. Test pages load `c15t.testing.js`.
@@ -70,9 +70,9 @@ visitor's country:
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
+  window.inth = window.inth || [];
   document.addEventListener('DOMContentLoaded', () => {
-    c15t.push(['init', { overrides: { country: document.body.dataset.country } }]);
+    inth.push(['init', { overrides: { country: document.body.dataset.country } }]);
   });
 </script>
 ```
@@ -81,13 +81,13 @@ visitor's country:
 removed, layers queued `config` calls and its own options on top, starts the
 client and returns it. Called on `c15t.js` before `c15t.hosted.js` has
 loaded, it returns a stand-in with the client's methods instead, and
-`c15t.onInit()` hands you the client once it exists; see
-[how c15t.js loads c15t.hosted.js](/docs/frameworks/html/attributes-and-api#how-c15tjs-loads-c15thostedjs).
+`inth.onInit()` hands you the client once it exists; see
+[how c15t.js loads c15t.hosted.js](/docs/frameworks/html/attributes-and-api#how-inthjs-loads-inthhostedjs).
 A second call returns the same client. Until `init()`,
 queued actions and `subscribe` wait, and direct calls to methods that read or
 change consent throw `call c15t.init() first`.
 
-After `c15t.dispose()`, a new `c15t.init()` starts a fresh client with the
+After `inth.dispose()`, a new `c15t.init()` starts a fresh client with the
 same attributes and queued `config` calls.
 
 ## Read state
@@ -116,7 +116,7 @@ them to report or display the visitor's decision, never to gate a vendor.
 [How consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice)
 lists which to read for each task.
 
-Answers can change once the policy resolves, so wait for `c15t.ready()` or a
+Answers can change once the policy resolves, so wait for `inth.ready()` or a
 `ready` listener before you read them at page load.
 
 ## Record a choice
@@ -135,7 +135,7 @@ Call these only in response to a visitor's click or key press, never at load.
 `acceptAll()`, `rejectAll()`, `save()` and `saveIAB()` resolve to a result
 with an `ok` flag. The choice applies in the browser and the banner closes
 before the backend request finishes. When the request fails, `ok` is `false`,
-the choice stays in effect, and c15t retries the request later.
+the choice stays in effect, and Inth retries the request later.
 
 ## Show and hide the UI
 
@@ -148,7 +148,7 @@ the choice stays in effect, and c15t retries the request later.
 | `mountUI(options?)` | Removes the stock UI and mounts it again, with new UI options or the configured ones. Throws in `c15t.headless.js`. |
 
 In `c15t.headless.js`, `showBanner`, `openDialog` and `closeDialog` still
-change the surface c15t reports through the `ui` event, so your own banner
+change the surface Inth reports through the `ui` event, so your own banner
 can follow them.
 
 ## Lifecycle
@@ -160,7 +160,7 @@ can follow them.
 | `onInit(listener)` | Calls `listener` with the client once it exists, at once if it already does. Returns a function that cancels the call. |
 | `push(...calls)` | Runs `[method, ...args]` calls by the queue rules above. |
 | `processIframes()` | Pauses gated iframes that consent does not allow and restores the ones it allows. Needed only with `iframeBlocker: { disableAutomaticBlocking: true }`. See [embeds](/docs/frameworks/html/embeds#check-iframes-yourself). |
-| `dispose()` | Removes the UI, the DevTools panel, page listeners, blockers and the scripts c15t added. Code that already ran keeps running. |
+| `dispose()` | Removes the UI, the DevTools panel, page listeners, blockers and the scripts Inth added. Code that already ran keeps running. |
 
 ## Properties
 
@@ -172,21 +172,21 @@ can follow them.
 | `hosting` | `'inth'` or `'self-hosted'` once `/init` reports who runs the backend, else `null`. Stays `null` with `c15t.testing.js` and with backends older than the field. |
 | `client` | The started client, or `null`. It has the same methods plus `kernel`, `runtime`, `options`, `consentCategories`, `ui` and `setOverrides()`. |
 | `devtools` | The DevTools panel once `c15t.devtools.js` mounted it, else `null`. |
-| `hosted`, `manifest` | Transport factories. `c15t.js` exports only `hosted`. Headless and IAB export both, for calls such as `c15t.init({ mode: c15t.manifest({ … }) })` with `data-manual`. |
+| `hosted`, `manifest` | Transport factories. `c15t.js` exports only `hosted`. Headless and IAB export both, for calls such as `c15t.init({ mode: inth.manifest({ … }) })` with `data-manual`. |
 | `testing` | `c15t.testing.js` only: `c15t.testing({ policy })`, for `c15t.init({ mode })`. |
 
 `c15t.js` reports `pkg: '@inth/sdk'` and `mode: 'hosted'` once started.
 
-`c15t.client.setOverrides({ country, region, language, gpc })` changes the
+`inth.client.setOverrides({ country, region, language, gpc })` changes the
 location, language or GPC signal policy matching uses. The DevTools Location
 tab uses the same inputs.
 
 ## Check it works
 
 1. Open the browser console on a page with the tag and run
-   `await c15t.ready()`. It resolves with a snapshot whose `resolution.status`
+   `await inth.ready()`. It resolves with a snapshot whose `resolution.status`
    is `matched`.
-2. Run `c15t.has('measurement')` and `c15t.hasConsented()` before and after
+2. Run `inth.has('measurement')` and `inth.hasConsented()` before and after
    you click **Reject All**. Under an opt-in policy both start `false`;
    afterwards `hasConsented()` is `true` and `has` stays `false`.
-3. Run `c15t.push(['openDialog'])`. The dialog opens.
+3. Run `inth.push(['openDialog'])`. The dialog opens.

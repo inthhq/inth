@@ -11,8 +11,8 @@ import { IABConsentDialog } from '../../../iab/src/iab-consent-dialog';
 import { iabTestOptions } from '../../../testing/src/__tests__/harness-test-bed';
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentBanner } from '../banner/consent-banner';
-import type { C15tProviderOptions } from './options';
-import { provideC15t } from './provide-c15t';
+import type { InthProviderOptions } from './options';
+import { provideInth } from './provide-inth';
 
 const LEGAL_LINKS = {
 	privacyPolicy: { href: '/privacy' },
@@ -25,7 +25,7 @@ const LEGAL_LINKS = {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner],
 	selector: 'test-banner',
-	template: `<c15t-consent-banner
+	template: `<inth-consent-banner
 		[noStyle]="own()"
 		[scrollLock]="true"
 	/>`,
@@ -38,7 +38,7 @@ class BannerHost {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialog],
 	selector: 'test-dialog',
-	template: `<c15t-consent-dialog
+	template: `<inth-consent-dialog
 		[noStyle]="own()"
 		[open]="true"
 	/>`,
@@ -51,7 +51,7 @@ class DialogHost {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentWidget],
 	selector: 'test-widget',
-	template: `<c15t-consent-widget [noStyle]="own()" />`,
+	template: `<inth-consent-widget [noStyle]="own()" />`,
 })
 class WidgetHost {
 	readonly own = input<boolean | undefined>(undefined);
@@ -61,7 +61,7 @@ class WidgetHost {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialogTrigger],
 	selector: 'test-trigger',
-	template: `<c15t-consent-dialog-trigger
+	template: `<inth-consent-dialog-trigger
 		[noStyle]="own()"
 		[persistPosition]="false"
 	/>`,
@@ -74,12 +74,12 @@ class TriggerHost {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentGate],
 	selector: 'test-gate',
-	template: `<c15t-consent-gate
+	template: `<inth-consent-gate
 		category="measurement"
 		[noStyle]="own()"
 	>
 		<iframe title="video"></iframe>
-	</c15t-consent-gate>`,
+	</inth-consent-gate>`,
 })
 class GateHost {
 	readonly own = input<boolean | undefined>(undefined);
@@ -89,7 +89,7 @@ class GateHost {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [IABConsentBanner],
 	selector: 'test-iab-banner',
-	template: `<c15t-iab-consent-banner
+	template: `<inth-iab-consent-banner
 		[noStyle]="own()"
 		[scrollLock]="true"
 	/>`,
@@ -102,7 +102,7 @@ class IABBannerHost {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [IABConsentDialog],
 	selector: 'test-iab-dialog',
-	template: `<c15t-iab-consent-dialog
+	template: `<inth-iab-consent-dialog
 		[noStyle]="own()"
 		[open]="true"
 	/>`,
@@ -114,7 +114,7 @@ class IABDialogHost {
 type Host = new () => unknown;
 
 /** Name, host, the test id that shows it rendered, extra provider options. */
-type Surface = readonly [string, Host, string, Partial<C15tProviderOptions>];
+type Surface = readonly [string, Host, string, Partial<InthProviderOptions>];
 
 const SURFACES: readonly Surface[] = [
 	['banner', BannerHost, 'consent-banner-card', {}],
@@ -126,7 +126,7 @@ const SURFACES: readonly Surface[] = [
 	['IAB dialog', IABDialogHost, 'iab-consent-dialog-card', iabTestOptions()],
 ];
 
-const STOCK_CLASS = /^c15t-ui-/u;
+const STOCK_CLASS = /^inth-ui-/u;
 
 /**
  * The branding wordmark inside the tag keeps its own classes under
@@ -161,13 +161,13 @@ const render = async (
 ): Promise<string[]> => {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({
+			provideInth({
 				...testOptions(),
 				disableAnimation: true,
 				legalLinks: LEGAL_LINKS,
 				noStyle: providerNoStyle,
 				...options,
-			} as C15tProviderOptions),
+			} as InthProviderOptions),
 		],
 	});
 	const fixture = TestBed.createComponent(host);

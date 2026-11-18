@@ -71,7 +71,7 @@ describe('Vercel Speed Insights loader contract', () => {
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(appended).toHaveLength(1);
 		expect(appended[0]?.defer).toBe(true);
-		expect(appended[0]?.getAttribute('data-sdkn')).toBe('c15t');
+		expect(appended[0]?.getAttribute('data-sdkn')).toBe('inth');
 		expect(appended[0]?.getAttribute('data-sample-rate')).toBe('0.5');
 		expect(send()).toEqual(event);
 

@@ -1,5 +1,5 @@
 /**
- * Demo page for the fixture. The c15t setup lives in `consent.tsx`,
+ * Demo page for the fixture. The Inth setup lives in `consent.tsx`,
  * `main.tsx`, `scripts.ts` and `video-embed.tsx`; this file only shows the
  * consent state, a gated video and the design switch.
  */
@@ -27,7 +27,7 @@ export const App = () => {
 	const marketing = useConsent('marketing');
 	return (
 		<main>
-			<p>c15t / React</p>
+			<p>inth / React</p>
 			<h1>Consent example</h1>
 			<p>One consent setup for your analytics, advertising and video embeds.</p>
 			<nav aria-label="Banner design">

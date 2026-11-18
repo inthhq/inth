@@ -103,13 +103,13 @@ export const isPlainScript = function isPlainScript(script: Script): boolean {
 
 /**
  * A script element the loader adopts when it mounts the script, as it
- * adopts one the server's inline start inserted (`__c15tStarted`, see
+ * adopts one the server's inline start inserted (`__inthStarted`, see
  * `@inth/sdk/runtime/script-server-start`).
  */
 type StartedElement = HTMLScriptElement & {
-	__c15tScript?: string;
-	__c15tConsent?: boolean;
-	__c15tDone?: 'load' | 'error';
+	__inthScript?: string;
+	__inthConsent?: boolean;
+	__inthDone?: 'load' | 'error';
 };
 
 /**
@@ -128,10 +128,10 @@ export const startPlainScripts = function startPlainScripts(
 	nonce: string | undefined
 ): void {
 	const host = window as unknown as {
-		__c15tStarted?: Record<string, StartedElement>;
+		__inthStarted?: Record<string, StartedElement>;
 	};
-	host.__c15tStarted ??= {};
-	const started = host.__c15tStarted;
+	host.__inthStarted ??= {};
+	const started = host.__inthStarted;
 	for (const script of scripts) {
 		const key = script.resourceKey ?? script.id;
 		if (
@@ -143,8 +143,8 @@ export const startPlainScripts = function startPlainScripts(
 		}
 		const element: StartedElement = document.createElement('script');
 		element.src = script.src as string;
-		element.__c15tScript = script.id;
-		element.__c15tConsent = true;
+		element.__inthScript = script.id;
+		element.__inthConsent = true;
 		if (script.async !== undefined) {
 			element.async = script.async;
 		}
@@ -162,7 +162,7 @@ export const startPlainScripts = function startPlainScripts(
 			element.setAttribute(name, String(value));
 		}
 		const done = (event: Event) => {
-			element.__c15tDone = event.type === 'load' ? 'load' : 'error';
+			element.__inthDone = event.type === 'load' ? 'load' : 'error';
 		};
 		element.addEventListener('load', done);
 		element.addEventListener('error', done);

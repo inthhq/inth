@@ -18,7 +18,7 @@ const renderBrandButton = function renderBrandButton(
 			{...props}
 			className={['brand-button', className].filter(Boolean).join(' ')}
 			data-tone={tone}
-			// Under `asChild`, c15t passes no type. Default to `button` so an
+			// Under `asChild`, inth passes no type. Default to `button` so an
 			// action never submits a surrounding form.
 			type={type === 'submit' ? 'submit' : 'button'}
 		/>
@@ -27,7 +27,7 @@ const renderBrandButton = function renderBrandButton(
 
 /**
  * Your design system's button. To work under `asChild`, it forwards its ref
- * and passes every other prop to the `button` element, so c15t's click
+ * and passes every other prop to the `button` element, so inth's click
  * handler, `data-action` and class names reach the DOM.
  */
 export const BrandButton = forwardRef(renderBrandButton);

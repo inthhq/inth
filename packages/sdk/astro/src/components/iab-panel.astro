@@ -31,7 +31,7 @@ const { preload = false, disableAnimation } = Astro.props;
 <ComponentStyles />
 
 <div
-	data-c15t-dialog-host="iab"
+	data-inth-dialog-host="iab"
 	data-disable-animation={disableAnimation === undefined
 		? undefined
 		: String(disableAnimation)}
@@ -43,7 +43,7 @@ const { preload = false, disableAnimation } = Astro.props;
 
 	// The integration registers the island for the configured `ui`; see
 	// `<ConsentDialog />` for why the specifier does not live here.
-	const host = document.querySelector('[data-c15t-dialog-host="iab"]');
+	const host = document.querySelector('[data-inth-dialog-host="iab"]');
 
 	if (host?.getAttribute('data-preload') === 'true') {
 		const schedule = () => {

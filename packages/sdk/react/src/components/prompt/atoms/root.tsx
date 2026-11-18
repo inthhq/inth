@@ -1,6 +1,6 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type * as InthCoreTypes from '@inth/sdk/engine';
 import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
 import {
@@ -44,7 +44,7 @@ import type { ConsentBannerSurface } from '../surface-context';
 import { EarlyTapScript } from './early-tap-script';
 import { Overlay } from './overlay';
 
-const DEFAULT_MODELS: C15tCoreTypes.Model[] = ['opt-in', 'opt-out'];
+const DEFAULT_MODELS: InthCoreTypes.Model[] = ['opt-in', 'opt-out'];
 
 /** A layout effect in the browser; nothing to run on the server. */
 const useBrowserLayoutEffect =
@@ -116,7 +116,7 @@ interface ConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	 * Which consent models this banner responds to.
 	 * @default ['opt-in', 'opt-out']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.
@@ -181,7 +181,7 @@ interface ConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
  * ```tsx
  * <ConsentProvider
  *   options={{
- *     mode: hosted({ projectUrl: '/api/c15t' }),
+ *     mode: hosted({ projectUrl: '/api/inth' }),
  *     theme: {
  *       colors: {
  *         surface: '#fffdf8',
@@ -440,7 +440,7 @@ interface ConsentBannerRootChildrenProps extends HTMLAttributes<HTMLDivElement> 
 	 * Which consent models this banner responds to.
 	 * @default ['opt-in', 'opt-out']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 }
 
 ConsentBannerRootChildren.displayName = 'ConsentBannerRootChildren';

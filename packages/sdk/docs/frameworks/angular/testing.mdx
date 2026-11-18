@@ -1,12 +1,12 @@
 ---
 title: Testing
-description: Test an Angular app's c15t consent banner, dialog, preference widget, consent gate and IAB surfaces in TestBed with the Angular CDK component harnesses from @inth/angular/testing.
+description: Test an Angular app's Inth consent banner, dialog, preference widget, consent gate and IAB surfaces in TestBed with the Angular CDK component harnesses from @inth/angular/testing.
 group: frameworks
 ---
 
 `@inth/angular/testing` has one Angular CDK component harness per consent
 surface. Your TestBed tests use them to click Accept all, toggle a category or
-open the dialog without depending on c15t's markup, the same way you test
+open the dialog without depending on inth's markup, the same way you test
 Angular Material components with their harnesses.
 
 ## Install the CDK
@@ -19,7 +19,7 @@ Angular major if your app does not already use Angular Material or the CDK:
 
 ## Write a test
 
-This test renders the banner and dialog under `provideC15t()` with `testing()`,
+This test renders the banner and dialog under `provideInth()` with `testing()`,
 so no request leaves the test, and drives them with `ConsentBannerHarness` and
 `ConsentDialogHarness`:
 
@@ -48,21 +48,21 @@ The banner, dialog, floating trigger and both IAB surfaces move themselves to
 Find them with `TestbedHarnessEnvironment.documentRootLoader(fixture)`, as you
 would `MatDialogHarness`.
 
-The widget, the consent gate, `c15t-consent-button` buttons and `c15tSwitch`
+The widget, the consent gate, `inth-consent-button` buttons and `inthSwitch`
 switches render where you put them. `TestbedHarnessEnvironment.loader(fixture)`
 finds those.
 
 | Harness | Drives | Loader |
 | --- | --- | --- |
-| `ConsentBannerHarness` | `<c15t-consent-banner>` and the banner in `<c15t-consent-root>` | document root |
-| `ConsentDialogHarness` | `<c15t-consent-dialog>` | document root |
-| `ConsentDialogTriggerHarness` | `<c15t-consent-dialog-trigger>` | document root |
-| `IABConsentBannerHarness` | `<c15t-iab-consent-banner>` | document root |
-| `IABConsentDialogHarness` | `<c15t-iab-consent-dialog>` | document root |
-| `ConsentWidgetHarness` | `<c15t-consent-widget>`, and the widget inside the dialog | fixture, or `ConsentDialogHarness.getWidget()` |
-| `ConsentGateHarness` | `<c15t-consent-gate>` | fixture |
-| `ConsentButtonHarness` | `<button c15t-consent-button>` | fixture |
-| `SwitchHarness` | `[c15tSwitch]` | fixture, or a surface harness |
+| `ConsentBannerHarness` | `<inth-consent-banner>` and the banner in `<inth-consent-root>` | document root |
+| `ConsentDialogHarness` | `<inth-consent-dialog>` | document root |
+| `ConsentDialogTriggerHarness` | `<inth-consent-dialog-trigger>` | document root |
+| `IABConsentBannerHarness` | `<inth-iab-consent-banner>` | document root |
+| `IABConsentDialogHarness` | `<inth-iab-consent-dialog>` | document root |
+| `ConsentWidgetHarness` | `<inth-consent-widget>`, and the widget inside the dialog | fixture, or `ConsentDialogHarness.getWidget()` |
+| `ConsentGateHarness` | `<inth-consent-gate>` | fixture |
+| `ConsentButtonHarness` | `<button inth-consent-button>` | fixture |
+| `SwitchHarness` | `[inthSwitch]` | fixture, or a surface harness |
 
 A surface harness exists only while the surface shows. Check that a banner is
 gone with `getHarnessOrNull`, which returns `null`.
@@ -124,7 +124,7 @@ const gate = await loader.getHarness(
 `ConsentGateHarness` waits one animation frame before it reads the gate, since
 the gate fills itself one frame after its first render. `isPlaceholderShown()`
 reports the built-in placeholder. A gate with a
-`c15tConsentGatePlaceholder` template renders your markup instead, so read it
+`inthConsentGatePlaceholder` template renders your markup instead, so read it
 with `getText()` or your own harness. `openPreferences()` clicks the built-in
 placeholder's button, which opens the consent dialog.
 

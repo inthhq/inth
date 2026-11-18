@@ -6,7 +6,7 @@ import { defineComponent, h, nextTick, provide, ref } from 'vue';
 import type { PropType, VNode } from 'vue';
 
 import ConsentDevToolsDefault, {
-	C15TDevTools,
+	InthDevTools,
 	ConsentDevTools,
 	ConsentDevToolsPanel,
 	DevTools,
@@ -33,9 +33,9 @@ const provider = (kernel: ConsentKernel, child: VNode): VNode =>
 
 /** The panel roots, which live inside each host's shadow root. */
 const mountedDevTools = (): HTMLElement[] =>
-	[...document.querySelectorAll<HTMLElement>('[data-c15t-dev-tools-host]')]
+	[...document.querySelectorAll<HTMLElement>('[data-inth-dev-tools-host]')]
 		.map((host) =>
-			host.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]')
+			host.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]')
 		)
 		.filter((root): root is HTMLElement => root !== null && root !== undefined);
 
@@ -58,7 +58,7 @@ const queryDevTools = <ElementType extends Element = HTMLElement>(
 
 afterEach(() => {
 	for (const element of document.querySelectorAll(
-		'[data-c15t-dev-tools-host]'
+		'[data-inth-dev-tools-host]'
 	)) {
 		element.remove();
 	}
@@ -241,11 +241,11 @@ describe('@inth/vue/devtools', () => {
 		});
 		const wrapper = mount(Root);
 		await vi.waitFor(() =>
-			expect(queryDevTools('.c15t-dev-tools--top-left')).not.toBeNull()
+			expect(queryDevTools('.inth-dev-tools--top-left')).not.toBeNull()
 		);
 		position.value = 'bottom-left';
 		await vi.waitFor(() =>
-			expect(queryDevTools('.c15t-dev-tools--bottom-left')).not.toBeNull()
+			expect(queryDevTools('.inth-dev-tools--bottom-left')).not.toBeNull()
 		);
 		expect(mountedDevTools()).toHaveLength(1);
 		wrapper.unmount();
@@ -261,10 +261,10 @@ describe('@inth/vue/devtools', () => {
 		try {
 			await vi.waitFor(() =>
 				expect(
-					document.body.querySelector('[data-c15t-dev-tools]')
+					document.body.querySelector('[data-inth-dev-tools]')
 				).not.toBeNull()
 			);
-			expect(document.querySelector('[data-c15t-dev-tools-host]')).toBeNull();
+			expect(document.querySelector('[data-inth-dev-tools-host]')).toBeNull();
 		} finally {
 			wrapper.unmount();
 		}
@@ -272,11 +272,11 @@ describe('@inth/vue/devtools', () => {
 	test('exports compatible component names', () => {
 		expect(ConsentDevToolsDefault).toBe(ConsentDevTools);
 		expect(DevTools).toBe(ConsentDevTools);
-		expect(C15TDevTools).toBe(ConsentDevTools);
+		expect(InthDevTools).toBe(ConsentDevTools);
 	});
 
 	test('requires Vue consent provider context', () => {
-		expect(() => mount(ConsentDevTools)).toThrow('[c15t] Kernel not found');
+		expect(() => mount(ConsentDevTools)).toThrow('[inth] Kernel not found');
 	});
 
 	test('mounts and disposes an isolated engine for each provider', async () => {
@@ -298,8 +298,8 @@ describe('@inth/vue/devtools', () => {
 		await vi.waitFor(() => {
 			expect(mountedDevTools()).toHaveLength(2);
 		});
-		expect(queryDevTools('.c15t-dev-tools--top-left')).not.toBeNull();
-		expect(queryDevTools('.c15t-dev-tools--bottom-right')).not.toBeNull();
+		expect(queryDevTools('.inth-dev-tools--top-left')).not.toBeNull();
+		expect(queryDevTools('.inth-dev-tools--bottom-right')).not.toBeNull();
 
 		wrapper.unmount();
 		expect(mountedDevTools()).toHaveLength(0);
@@ -317,7 +317,7 @@ describe('@inth/vue/devtools', () => {
 		try {
 			await vi.waitFor(() => expect(mountedDevTools()).toHaveLength(1));
 			const [root] = mountedDevTools();
-			expect(root?.classList).toContain('c15t-dev-tools--embedded');
+			expect(root?.classList).toContain('inth-dev-tools--embedded');
 			const host = (root?.getRootNode() as ShadowRoot | undefined)?.host;
 			expect(wrapper.element.contains(host ?? null)).toBe(true);
 			expect(

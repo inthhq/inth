@@ -1,22 +1,22 @@
 ---
 title: Amplitude
 description: Load Amplitude Browser SDK 2 after web consent, or connect Amplitude Analytics opt-out in Swift, Kotlin, React Native and Expo, with withdrawal and reset handling.
-seoTitle: Amplitude consent for web and mobile with c15t
-seoDescription: Load Amplitude after web measurement consent, or connect its Swift, Android, React Native and Expo opt-out to c15t, with withdrawal and reset.
+seoTitle: Amplitude consent for web and mobile with Inth
+seoDescription: Load Amplitude after web measurement consent, or connect its Swift, Android, React Native and Expo opt-out to Inth, with withdrawal and reset.
 icon: amplitude
 group: integrations
 ---
 
-Use c15t to load Amplitude Browser SDK 2 with [web consent](#web), or connect
+Use Inth to load Amplitude Browser SDK 2 with [web consent](#web), or connect
 Amplitude Analytics opt-out in [Swift, Kotlin, React Native and Expo](#mobile).
 
 ## Web
 
-The c15t `amplitude` helper keeps the Amplitude Browser SDK 2 off the page until
-`measurement` has consent. Until then, c15t does not define `window.amplitude`.
+The Inth `amplitude` helper keeps the Amplitude Browser SDK 2 off the page until
+`measurement` has consent. Until then, Inth does not define `window.amplitude`.
 When `measurement` has consent, the helper queues `init` and `setOptOut(false)`
 before the SDK loads. If the visitor withdraws consent, the helper calls
-`amplitude.setOptOut(true)`. The SDK stays on the page. By default, c15t also
+`amplitude.setOptOut(true)`. The SDK stays on the page. By default, Inth also
 reloads the page.
 
 ### Configure Amplitude
@@ -47,7 +47,7 @@ export const scripts = [amplitude({ apiKey: 'YOUR_PROJECT_API_KEY' })];
 ### Loading and revocation
 
 `amplitude` uses the `measurement` category. Before measurement is allowed,
-c15t defines no `window.amplitude` and loads nothing from Amplitude. When
+Inth defines no `window.amplitude` and loads nothing from Amplitude. When
 measurement becomes allowed, the helper creates the Browser SDK 2 queue stub,
 queues `init(apiKey, initOptions)` and `setOptOut(false)`, then loads the SDK,
 which replays the queue. Amplitude saves an opt-out in its cookie, so the
@@ -69,7 +69,7 @@ allow it again on a later page and check that events reach Amplitude again.
 ## Mobile
 
 Use the bundled Amplitude helper to keep Analytics opt-out in sync with native
-c15t permission. Pending or denied permission enables opt-out. A grant disables
+Inth permission. Pending or denied permission enables opt-out. A grant disables
 opt-out. The default category is `measurement`.
 
 The helper ships in `InthApple`, `inth-android` and
@@ -100,8 +100,8 @@ product. For a strict startup, defer initialization until a native gate allows i
 A JS helper cannot stop an earlier native initializer. See
 [native startup](/docs/frameworks/react-native/native-behaviour).
 
-Expo needs an app build containing the vendor and c15t native modules. Expo Go
-does not provide c15t's native engine.
+Expo needs an app build containing the vendor and Inth native modules. Expo Go
+does not provide inth's native engine.
 
 ### Connect a Swift app
 
@@ -154,7 +154,7 @@ change. Amplitude reads `optOut` when it processes each event, on its own
 queue, and documents no ordering between the two. An event tracked at the
 moment of withdrawal can still be processed under the old value. Keep your own
 event calls behind current permission, as with every helper here. Earlier
-c15t releases deferred these helpers for this reason; they ship now for
+Inth releases deferred these helpers for this reason; they ship now for
 parity with React Native, with this limit stated.
 
 ### Connect React Native or Expo

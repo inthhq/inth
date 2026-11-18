@@ -77,7 +77,7 @@ afterEach(() => {
 		runtime.dispose();
 	}
 	vi.restoreAllMocks();
-	delete (window as { c15t?: unknown }).c15t;
+	delete (window as { inth?: unknown }).inth;
 });
 
 describe('onDemandRuntimeModules', () => {

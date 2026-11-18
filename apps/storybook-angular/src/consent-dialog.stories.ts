@@ -3,7 +3,7 @@ import {
 	dialogContract,
 	dialogEscapeCloses,
 	saveFlow,
-} from '@c15t/conformance/play/consent-dialog';
+} from '@inth/conformance/play/consent-dialog';
 import { ConsentBanner } from '@inth/angular';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
 
@@ -38,9 +38,9 @@ const meta = {
 		props: args,
 		template: `
 			@if (withBanner) {
-				<c15t-consent-banner [trapFocus]="trapFocus" />
+				<inth-consent-banner [trapFocus]="trapFocus" />
 			}
-			<c15t-consent-dialog [open]="open" />
+			<inth-consent-dialog [open]="open" />
 		`,
 	}),
 	title: 'COMPONENTS - ANGULAR/Core/Consent Dialog',

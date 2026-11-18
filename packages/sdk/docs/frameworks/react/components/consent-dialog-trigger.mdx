@@ -1,6 +1,6 @@
 ---
 title: ConsentDialogTrigger
-description: Add the c15t ConsentDialogTrigger floating button or toolbar inside a React ConsentProvider so visitors can reopen the preference center after the first prompt.
+description: Add the Inth ConsentDialogTrigger floating button or toolbar inside a React ConsentProvider so visitors can reopen the preference center after the first prompt.
 group: frameworks
 ---
 
@@ -19,7 +19,7 @@ import { ConsentDialogTrigger } from '@inth/react';
 
 `showWhen="after-prompt"` keeps the button out of the way while a choice or notice is still owed and shows it once the visitor has answered, so the banner and the trigger never compete for the same corner. The default, `always`, shows it whenever the preference center is closed.
 
-The button carries `data-c15t-rights` with the rights the active policy guarantees, so a stylesheet can label it differently under an opt-out rule.
+The button carries `data-inth-rights` with the rights the active policy guarantees, so a stylesheet can label it differently under an opt-out rule.
 
 ## Props
 
@@ -87,7 +87,7 @@ nothing only when it has no visible item.
 - Under any other rule it reads "Manage preferences" and carries
   `data-right="preferences"`.
 - Either way it opens the preference center. A `preferences.label` you pass
-  replaces the default name, and the button carries `data-c15t-rights` with
+  replaces the default name, and the button carries `data-inth-rights` with
   every right on the rule.
 
 ### Toolbar props

@@ -20,9 +20,9 @@ export interface ClientManifestChunk {
 }
 
 /**
- * c15t chunks a page may need before its first banner paints, so Nuxt keeps
+ * Inth chunks a page may need before its first banner paints, so Nuxt keeps
  * prefetching them: the experiment controller. Matched against the end of
- * the source path, inside a c15t package. The IAB banner and the browser
+ * the source path, inside a Inth package. The IAB banner and the browser
  * resolver keep their hints only when the build uses them; see
  * {@link IAB_FIRST_BANNER_SOURCES} and {@link BROWSER_RESOLVER_SOURCE}.
  */
@@ -102,10 +102,10 @@ export const createPackageCheck = function createPackageCheck(): (
 };
 
 /**
- * Stop Nuxt prefetching c15t chunks a page loads only after its first
+ * Stop Nuxt prefetching Inth chunks a page loads only after its first
  * banner, or only when it configures them: the script loader, network
  * blocker, data clearing and `consentSource` connection, live option
- * updates, the save path, the preference dialog (which c15t warms itself
+ * updates, the save path, the preference dialog (which Inth warms itself
  * once the page has loaded), and IAB unless the module options turn it on.
  *
  * Nuxt adds a `<link rel="prefetch">` for every chunk the entry imports
@@ -116,7 +116,7 @@ export const createPackageCheck = function createPackageCheck(): (
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a c15t package; reads
+ * @param isConsentFile - Whether a file belongs to a Inth package; reads
  * the nearest `package.json` by default.
  * @param options - Build facts; see {@link ConsentPrefetchOptions}.
  * @internal
@@ -146,7 +146,7 @@ export const stopPrefetchingConsentChunks =
 			}
 		}
 		// Every chunk something else loads, statically or on demand, keeps its
-		// hint: the entry, pages, components and the c15t chunks kept above.
+		// hint: the entry, pages, components and the Inth chunks kept above.
 		const reached = new Set<string>();
 		const visit = (key: string): void => {
 			if (reached.has(key)) {
@@ -186,7 +186,7 @@ export const stopPrefetchingConsentChunks =
 		}
 	};
 
-/** List a c15t dynamic chunk among every entry's imports. */
+/** List a Inth dynamic chunk among every entry's imports. */
 const preloadWithEntry = function preloadWithEntry(
 	manifest: Record<string, ClientManifestChunk>,
 	srcDir: string,
@@ -230,7 +230,7 @@ const BANNER_SOURCE = '/dist/runtime/components/prompt.vue';
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a c15t package.
+ * @param isConsentFile - Whether a file belongs to a Inth package.
  * @internal
  */
 export const preloadConsentBanner = function preloadConsentBanner(
@@ -250,7 +250,7 @@ export const preloadConsentBanner = function preloadConsentBanner(
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a c15t package.
+ * @param isConsentFile - Whether a file belongs to a Inth package.
  * @internal
  */
 export const preloadBrowserResolver = function preloadBrowserResolver(
@@ -271,7 +271,7 @@ const ENGINE_SOURCES = [
  * The client manifest key `runtime/deferred/boot.ts` names. Kept equal by a
  * test.
  */
-export const DEFERRED_ENGINE_MANIFEST_KEY = 'c15t:deferred-engine';
+export const DEFERRED_ENGINE_MANIFEST_KEY = 'inth:deferred-engine';
 
 /**
  * Name the engine chunk under a key the server render knows.
@@ -289,7 +289,7 @@ export const DEFERRED_ENGINE_MANIFEST_KEY = 'c15t:deferred-engine';
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a c15t package.
+ * @param isConsentFile - Whether a file belongs to a Inth package.
  * @param ssr - Nuxt's `ssr` option.
  * @internal
  */
@@ -330,7 +330,7 @@ export const preloadDeferredEngine = function preloadDeferredEngine(
 };
 
 /**
- * c15t components a page renders before any tap, lazily loaded but needed
+ * Inth components a page renders before any tap, lazily loaded but needed
  * to hydrate it: every component the module registers globally, built or
  * loaded from source. A chunk the banner shares with one keeps its
  * priority.
@@ -369,8 +369,8 @@ const SCRIPT_FILE = /\.m?js$/u;
  * not suspensible), and a visitor the engine serves at once, such as a
  * returning one, mostly never sees it. The engine stays at its priority,
  * since the plugin awaits it before the app mounts. A chunk the app needs
- * (one the entry, a page or a component outside c15t imports) keeps its
- * priority too, as does one a c15t chunk the page may need before its first
+ * (one the entry, a page or a component outside Inth imports) keeps its
+ * priority too, as does one a Inth chunk the page may need before its first
  * banner imports: the experiment controller, the IAB banner when the build
  * turns IAB on, and the browser resolver when the mode uses it (the chunks
  * {@link stopPrefetchingConsentChunks} keeps hinting), and the components
@@ -381,7 +381,7 @@ const SCRIPT_FILE = /\.m?js$/u;
  *
  * @param manifest - Nuxt's client manifest.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a c15t package.
+ * @param isConsentFile - Whether a file belongs to a Inth package.
  * @param options - Build facts; see {@link ConsentPrefetchOptions}.
  * @returns The files, relative to the build assets directory, as the
  * manifest names them. Empty when the build has no stock banner chunk, or
@@ -458,9 +458,9 @@ export const bannerOnlyFiles = function bannerOnlyFiles(
 /**
  * Drop the entry from the `imports` of chunks the entry itself imports
  * statically. Rolldown can list the entry there for a chunk that only loads
- * on demand from it, such as the c15t chunk group (`chunk-group.ts`), which
+ * on demand from it, such as the Inth chunk group (`chunk-group.ts`), which
  * makes a cycle. Nuxt's renderer reads a cycle's far end as having no
- * dependencies, so the page would stop preloading the c15t chunk and the
+ * dependencies, so the page would stop preloading the Inth chunk and the
  * browser would fetch it only after parsing the entry. The entry loads
  * first anyway, so the edge only ever repeated a preload.
  *

@@ -165,7 +165,7 @@ export const clearTargets = (
 		clearStorage('localStorage', targets.localStorage, protectedKeys);
 	}
 	if (targets.sessionStorage?.length) {
-		// c15t does not persist consent records in sessionStorage.
+		// Inth does not persist consent records in sessionStorage.
 		clearStorage('sessionStorage', targets.sessionStorage);
 	}
 };

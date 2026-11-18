@@ -1,8 +1,8 @@
 /**
  * Same-origin consent proxy shared by the server adapters.
  *
- * Lets an app point its consent client at its own origin (`/api/c15t`):
- * the browser talks to the app, the app forwards to the c15t backend. Only
+ * Lets an app point its consent client at its own origin (`/api/inth`):
+ * the browser talks to the app, the app forwards to the Inth backend. Only
  * the paths the client transport calls (`subjects`, `subjects/:id`, `init`,
  * `manifest`, `health`, `status`) plus explicitly allowlisted extras are
  * forwarded; everything else is a 404, so a route built on this is never an
@@ -23,7 +23,7 @@
 
 import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 
-import { c15tVersionHeaders } from '../transports/version-header';
+import { inthVersionHeaders } from '../transports/version-header';
 
 /** Paths the proxy forwards when no extra `paths` are configured. */
 export const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
@@ -95,7 +95,7 @@ const PROXY_SET_HEADERS: ReadonlySet<string> = new Set([
 	'x-forwarded-for',
 	'x-forwarded-host',
 	'x-forwarded-proto',
-	...Object.keys(c15tVersionHeaders),
+	...Object.keys(inthVersionHeaders),
 ]);
 
 /**
@@ -156,7 +156,7 @@ export interface ConsentProxyOptions {
 
 	/**
 	 * Cookie names to forward upstream. No cookies are forwarded by default:
-	 * the c15t backend does not read cookies, and the consent cookie is
+	 * the Inth backend does not read cookies, and the consent cookie is
 	 * written and read in the browser, so nothing from your origin's cookie
 	 * jar needs to leave. Set this only for a backend that expects one.
 	 * Cookies are never sent to a remote `http:` backend.
@@ -428,7 +428,7 @@ export interface BuildConsentProxyRequestHeadersInput {
 
 /**
  * Builds the upstream request headers: the browser allowlist, then the
- * forwarding trio, then the c15t version header and `x-c15t-proxy`.
+ * forwarding trio, then the Inth version header and `x-c15t-proxy`.
  *
  * @param input - Request, allowlists, forwarding values and adapter name.
  * @returns The headers for the upstream request.
@@ -467,7 +467,7 @@ export const buildConsentProxyRequestHeaders =
 		}
 		headers.set('x-forwarded-host', forwarding.host);
 		headers.set('x-forwarded-proto', forwarding.proto);
-		for (const [name, value] of Object.entries(c15tVersionHeaders)) {
+		for (const [name, value] of Object.entries(inthVersionHeaders)) {
 			headers.set(name, value);
 		}
 		headers.set('x-c15t-proxy', adapter);

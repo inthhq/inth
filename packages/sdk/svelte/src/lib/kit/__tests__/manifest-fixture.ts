@@ -3,7 +3,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 /** Shared manifest fixture for the SvelteKit layer tests. */
 export const MANIFEST_FIXTURE = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			categories: ['marketing', 'measurement'],

@@ -27,7 +27,7 @@ describe('init query parameters', () => {
 
 	it('writes every input in a fixed order and keeps a relative URL relative', () => {
 		expect(
-			appendInitParams('/api/c15t/init?site=shop#top', {
+			appendInitParams('/api/inth/init?site=shop#top', {
 				country: 'DE',
 				experiment: { arm: 'a=b', id: 'banner shape' },
 				gpc: false,
@@ -36,7 +36,7 @@ describe('init query parameters', () => {
 				version: '3.0.0',
 			})
 		).toBe(
-			'/api/c15t/init?site=shop&v=3.0.0&contract=1&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
+			'/api/inth/init?site=shop&v=3.0.0&contract=1&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
 		);
 	});
 
@@ -49,7 +49,7 @@ describe('init query parameters', () => {
 
 	it('replaces a parameter the URL already carries, so it appears once', () => {
 		// The names are generic; an app's own init route may already use one.
-		// c15t's value wins, and the app's other parameters keep their order
+		// inth's value wins, and the app's other parameters keep their order
 		// and encoding.
 		const url = appendInitParams(
 			'/api/consent/init?country=US&site=a%20b&v=1&tag=x#top',
@@ -63,7 +63,7 @@ describe('init query parameters', () => {
 		expect(params.getAll('v')).toEqual(['3.0.0']);
 	});
 
-	it('leaves a parameter c15t does not send for the backend to read', () => {
+	it('leaves a parameter inth does not send for the backend to read', () => {
 		const url = appendInitParams('/api/consent/init?region=CA', {
 			country: 'US',
 		});

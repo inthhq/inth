@@ -275,7 +275,7 @@ declare global {
  *
  * Creates Hightouch's analytics.js-style `window.htevents` queue, records the
  * write key/load options expected by the standalone loader, queues the
- * `load()` and optional `page()` calls, then lets c15t own the script element.
+ * `load()` and optional `page()` calls, then lets Inth own the script element.
  */
 export const hightouchManifest = {
 	...vendorManifestContract,
@@ -385,7 +385,7 @@ const normalizeApiHost = function normalizeApiHost(
  * a script that never loads.
  *
  * Hightouch Events collects customer behavior and sends it to the configured
- * Event Source. c15t gates the browser SDK on `measurement` consent and does
+ * Event Source. Inth gates the browser SDK on `measurement` consent and does
  * not allowlist collection endpoints in live probes beyond the CDN loader.
  *
  * @example

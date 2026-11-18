@@ -20,7 +20,7 @@ test('feature disclosure chevrons stay out of the accessibility tree', async () 
 		},
 	});
 	try {
-		const trigger = wrapper.get('[id^="c15t-preference-item-trigger-"]');
+		const trigger = wrapper.get('[id^="inth-preference-item-trigger-"]');
 		expect(trigger.get('svg').attributes('aria-hidden')).toBe('true');
 		await trigger.trigger('click');
 		const icons = wrapper.findAll('svg');

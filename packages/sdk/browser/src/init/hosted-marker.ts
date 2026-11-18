@@ -16,7 +16,7 @@ import type {
 } from '@inth/sdk-core';
 
 /** Property of a marker that holds its `hosted()` options. */
-export const HOSTED_OPTIONS = '__c15tHosted';
+export const HOSTED_OPTIONS = '__inthHosted';
 
 /** A `c15t.hosted()` result from the init script. @internal */
 export type HostedMarker = ProviderTransportFactory & {

@@ -39,17 +39,17 @@ export type NetworkBlockerOptions = RuntimeNetworkBlockerOptions;
 export type PersistenceOptions = RuntimePersistenceOptions;
 
 /** Public policy lifecycle callbacks. */
-export type C15tCallbacks = NonNullable<ConsentRuntimeOptions['callbacks']>;
+export type InthCallbacks = NonNullable<ConsentRuntimeOptions['callbacks']>;
 
 /**
- * Options for {@link provideC15t}, besides `mode` and `runtime`.
+ * Options for {@link provideInth}, besides `mode` and `runtime`.
  *
  * Everything not declared here is the framework-agnostic
  * `ConsentRuntimeOptions` contract from `@inth/sdk/runtime`, forwarded
  * untouched to the runtime. `createIAB` and `loadGPP` are supplied by this
  * package and `pkg` is fixed to `'@inth/angular'`.
  */
-export interface C15tSharedOptions
+export interface InthSharedOptions
 	extends
 		Omit<
 			ConsentRuntimeOptions,
@@ -116,27 +116,27 @@ export interface C15tSharedOptions
 	 * Slot styles and consent-action variants. Design tokens (colors, dark,
 	 * typography, spacing, radius, shadows, motion) are not applied in the
 	 * browser: put `generateThemeCSS(theme)` from `@inth/sdk/ui/theme` in a
-	 * stylesheet or a `<style id="c15t-theme">`. In development the provider
-	 * warns when `theme` has tokens and the page has no `#c15t-theme`.
+	 * stylesheet or a `<style id="inth-theme">`. In development the provider
+	 * warns when `theme` has tokens and the page has no `#inth-theme`.
 	 */
 	theme?: Theme;
 }
 
 /**
- * Options for {@link provideC15t} when it creates and owns the runtime.
+ * Options for {@link provideInth} when it creates and owns the runtime.
  *
  * @example
  * ```ts
- * import { provideC15t } from '@inth/angular';
+ * import { provideInth } from '@inth/angular';
  *
  * export const appConfig: ApplicationConfig = {
- *   providers: [provideC15t({ projectUrl: '/api/c15t' })],
+ *   providers: [provideInth({ projectUrl: '/api/inth' })],
  * };
  * ```
  */
-export interface C15tOptions extends C15tSharedOptions {
+export interface InthOptions extends InthSharedOptions {
 	/**
-	 * Backend URL, relative (`/api/c15t`) or absolute: your Inth project
+	 * Backend URL, relative (`/api/inth`) or absolute: your Inth project
 	 * URL. Required unless `mode` is `testing()` or `enabled` is `false`.
 	 * Read once.
 	 */
@@ -145,7 +145,7 @@ export interface C15tOptions extends C15tSharedOptions {
 	 * How the visitor's policy is resolved. Read once.
 	 *
 	 * - Omitted: the browser asks `${projectUrl}/init`. With
-	 *   `provideC15tServer()`, the server render resolves from the
+	 *   `provideInthServer()`, the server render resolves from the
 	 *   backend's consent manifest, falling back to `/init` with a warning
 	 *   when it is unavailable.
 	 * - `hosted()` from `@inth/angular`: ask `${projectUrl}/init`, on the
@@ -157,17 +157,17 @@ export interface C15tOptions extends C15tSharedOptions {
 	 *   out of the way in an app's own tests instead, set `enabled: false`.
 	 */
 	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
-	/** Not allowed together with these; see {@link C15tRuntimeOptions}. */
+	/** Not allowed together with these; see {@link InthRuntimeOptions}. */
 	runtime?: undefined;
 }
 
 /**
- * Options for {@link provideC15t} with a runtime created elsewhere, such as
+ * Options for {@link provideInth} with a runtime created elsewhere, such as
  * one shared between applications on the page with `createConsentRuntime()`.
  * Its owner configures, starts and disposes it; the provider only renders it.
  * `consentCategories` still applies.
  */
-export interface C15tRuntimeOptions extends C15tSharedOptions {
+export interface InthRuntimeOptions extends InthSharedOptions {
 	/** The runtime to render. Its owner starts and disposes it. */
 	runtime: ConsentRuntime;
 	/** The external runtime brings its own transport. */
@@ -176,25 +176,25 @@ export interface C15tRuntimeOptions extends C15tSharedOptions {
 }
 
 /**
- * Either way of configuring {@link provideC15t}. The first needs
+ * Either way of configuring {@link provideInth}. The first needs
  * `projectUrl` unless `mode` is `testing()` or `enabled` is `false`.
  */
-export type C15tProviderOptions =
-	| WithProjectUrl<C15tOptions>
-	| C15tRuntimeOptions;
+export type InthProviderOptions =
+	| WithProjectUrl<InthOptions>
+	| InthRuntimeOptions;
 
 /**
- * The options handed to `provideC15t()`, as given.
+ * The options handed to `provideInth()`, as given.
  *
  * Inject {@link ConsentManager} and read `options()` for the live value,
  * which `updateOptions()` changes.
  */
-export const C15T_OPTIONS = new InjectionToken<C15tProviderOptions>(
-	'C15T_OPTIONS'
+export const INTH_OPTIONS = new InjectionToken<InthProviderOptions>(
+	'INTH_OPTIONS'
 );
 
 /** Options without the runtime, as `ConsentManager.options()` holds them. */
-export type C15tResolvedOptions = Omit<C15tSharedOptions, never> & {
+export type InthResolvedOptions = Omit<InthSharedOptions, never> & {
 	projectUrl?: string;
 	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 };
@@ -208,7 +208,7 @@ export type C15tResolvedOptions = Omit<C15tSharedOptions, never> & {
  * @internal
  */
 export const runtimeOptionsFor = function runtimeOptionsFor(
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ) {
 	return {
 		...options,

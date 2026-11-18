@@ -1,8 +1,8 @@
 {
-	"name": "@c15t/consent-observers",
+	"name": "@inth/consent-observers",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Consumer fixture: observes consent through the packed public exports of c15t, the way an external integration would.",
+	"description": "Consumer fixture: observes consent through the packed public exports of inth, the way an external integration would.",
 	"type": "module",
 	"scripts": {
 		"fmt": "oxfmt -c ../../oxfmt.sdk.config.ts --write .",
@@ -17,7 +17,7 @@
 		"@inth/tanstack-start": "workspace:*"
 	},
 	"devDependencies": {
-		"@c15t/next-compat-shared": "workspace:*",
+		"@inth/next-compat-shared": "workspace:*",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
 		"@types/react-dom": "19.2.3",

@@ -94,10 +94,10 @@ describe('createElementIdResolver', () => {
 			);
 		}
 	);
-	test('uses stable c15t-script-<id> when anonymizeId is false', () => {
+	test('uses stable inth-script-<id> when anonymizeId is false', () => {
 		const resolver = createElementIdResolver();
 		expect(resolver.resolve({ ...baseScript, anonymizeId: false })).toBe(
-			'c15t-script-s1'
+			'inth-script-s1'
 		);
 	});
 

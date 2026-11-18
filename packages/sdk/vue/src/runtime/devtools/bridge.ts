@@ -28,7 +28,7 @@ const isDiscarded = (document: Document): boolean => {
 };
 
 /**
- * Expose `window.__C15T_DEVTOOLS_BRIDGE__` so a DevTools tab can mount the
+ * Expose `window.__INTH_DEVTOOLS_BRIDGE__` so a DevTools tab can mount the
  * panel. Development only: the bridge hands out control of the kernel.
  *
  * @param target - Window that owns the kernel.

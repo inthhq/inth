@@ -5,7 +5,7 @@ import type { Translations } from './types';
  * Keyed on a global symbol so every copy of this module, including one
  * duplicated into another bundle chunk, shares the same registry.
  */
-const REGISTRY_KEY = Symbol.for('c15t.stockTranslations');
+const REGISTRY_KEY = Symbol.for('inth.stockTranslations');
 
 type StockRegistry = Map<string, Translations>;
 
@@ -18,7 +18,7 @@ const getRegistry = function getRegistry(): StockRegistry {
 };
 
 /**
- * Record c15t's built-in copy for some languages.
+ * Record inth's built-in copy for some languages.
  *
  * `@inth/sdk/translations/all` registers every bundled language when it loads,
  * and English is always registered. Code that merges app messages over
@@ -38,7 +38,7 @@ export const registerStockTranslations = function registerStockTranslations(
 };
 
 /**
- * c15t's built-in copy for a language, when it has been registered.
+ * inth's built-in copy for a language, when it has been registered.
  *
  * @param language - The language code, for example `de`.
  * @returns The built-in copy, or `undefined` when it is not loaded.

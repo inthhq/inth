@@ -1,4 +1,4 @@
-import { MINIMAL_GVL } from '@c15t/conformance';
+import { MINIMAL_GVL } from '@inth/conformance';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
@@ -51,7 +51,7 @@ test.each(
 	async ({ action, outcome }) => {
 		let storedAtSave: string | null = null;
 		const save = vi.fn(() => {
-			storedAtSave = localStorage.getItem('c15t');
+			storedAtSave = localStorage.getItem('inth');
 			return settle(outcome);
 		});
 		const onError = vi.fn();

@@ -48,7 +48,7 @@ The module runs the iframe blocker in the browser by default. Give an iframe
 ```
 
 The server HTML has no `src`, so nothing loads before hydration. After
-hydration, c15t sets `src` from `data-src` when the category is allowed and
+hydration, Inth sets `src` from `data-src` when the category is allowed and
 removes it when the category is withdrawn. It watches the page, so iframes
 added by later navigation are handled too. The iframe element stays in the
 page while blocked, empty. Add `data-vendor` with a vendor ID to also block

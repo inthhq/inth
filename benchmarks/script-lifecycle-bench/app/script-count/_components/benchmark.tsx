@@ -1,6 +1,6 @@
 'use client';
 
-import { benchPolicy } from '@c15t/benchmarking/bench-policy';
+import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import { ConsentDraftProvider } from '@inth/react/draft';
 import { useSaveConsents } from '@inth/react/hooks';
 import { useScriptLoader } from '@inth/react/module-hooks/script-loader';
@@ -15,10 +15,10 @@ const publish = function publish(
 	patch: Partial<Omit<ScriptCountBenchState, 'recordScriptExecution'>>
 ) {
 	Object.assign(state, patch);
-	window.__c15tScriptCountBench = state;
+	window.__inthScriptCountBench = state;
 	(
-		window as unknown as { __c15tScriptBench?: ScriptCountBenchState }
-	).__c15tScriptBench = state;
+		window as unknown as { __inthScriptBench?: ScriptCountBenchState }
+	).__inthScriptBench = state;
 };
 
 const ScriptCountProbe = ({ count }: { count: number }) => {
@@ -29,13 +29,13 @@ const ScriptCountProbe = ({ count }: { count: number }) => {
 	void setBench;
 
 	useEffect(() => {
-		window.__c15tScriptCountBench = bench;
+		window.__inthScriptCountBench = bench;
 		publish(bench, {
 			activeUI: 'ready',
 			initialReady: true,
 		});
 
-		window.__c15tGetScriptCountBenchState = () => {
+		window.__inthGetScriptCountBenchState = () => {
 			publish(bench, {
 				domIds: listDomIds(count),
 				loadedIds: loader
@@ -46,8 +46,8 @@ const ScriptCountProbe = ({ count }: { count: number }) => {
 		};
 
 		return () => {
-			if (window.__c15tGetScriptCountBenchState) {
-				delete window.__c15tGetScriptCountBenchState;
+			if (window.__inthGetScriptCountBenchState) {
+				delete window.__inthGetScriptCountBenchState;
 			}
 		};
 	}, [bench, loader, count]);

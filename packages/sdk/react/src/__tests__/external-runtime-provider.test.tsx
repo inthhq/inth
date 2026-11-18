@@ -140,7 +140,7 @@ describe('ConsentProvider with an external runtime', () => {
 		expect(localStorage.getItem('analytics:visitor')).toBe('owner');
 		localStorage.removeItem('analytics:visitor');
 		expect(
-			(window as Window & { c15t?: { pkg: string } }).c15t
+			(window as Window & { inth?: { pkg: string } }).inth
 		).toBeUndefined();
 	});
 

@@ -104,7 +104,7 @@ const saveDeployment = (overrides: Record<string, unknown> = {}) => {
 };
 
 beforeAll(() => {
-	root = mkdtempSync(join(tmpdir(), 'c15t-maven-test-'));
+	root = mkdtempSync(join(tmpdir(), 'inth-maven-test-'));
 	keyring = join(root, 'keyring');
 	mkdirSync(keyring, { mode: 0o700 });
 	vi.stubEnv('GNUPGHOME', keyring);
@@ -152,7 +152,7 @@ beforeAll(() => {
 <artifactId>${artifact}</artifactId><version>${version}</version><packaging>${extension}</packaging>
 <name>${artifact}</name><description>Consent SDK</description><url>https://c15t.com</url>
 <licenses><license><name>Apache 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0.txt</url></license></licenses>
-<developers><developer><name>c15t</name></developer></developers>
+<developers><developer><name>inth</name></developer></developers>
 <scm><url>https://github.com/c15t/c15t</url><connection>scm:git:https://github.com/c15t/c15t.git</connection></scm>
 <dependencies><dependency><groupId>com.inth</groupId><artifactId>inth-core</artifactId><version>${version}</version></dependency></dependencies>
 </project>`,
@@ -263,7 +263,7 @@ test.each(['0', '1'])(
 				pom,
 				original.replaceAll(
 					'github.com/c15t/c15t',
-					'github.com/inthhq/c15t-private'
+					'github.com/inthhq/inth-private'
 				)
 			);
 			seal(pom);

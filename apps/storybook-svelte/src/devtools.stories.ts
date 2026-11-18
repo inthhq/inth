@@ -1,4 +1,4 @@
-import { devToolsFlow, devToolsReady } from '@c15t/conformance/play/devtools';
+import { devToolsFlow, devToolsReady } from '@inth/conformance/play/devtools';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
 import DevToolsStory from './devtools-story.svelte';

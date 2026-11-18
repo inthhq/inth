@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/manifest-cache-bench",
+	"name": "@inth/manifest-cache-bench",
 	"private": true,
 	"description": "Benchmarks fetchCachedManifest against a simulated Vercel CDN fronting an Inth /manifest origin.",
 	"type": "module",
@@ -10,7 +10,7 @@
 		"build": "echo 'manifest cache benchmarks are source-only'"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {

@@ -2,9 +2,9 @@
 	"name": "@inth/sdk-ui",
 	"version": "3.0.2-canary.0",
 	"private": true,
-	"description": "Framework-agnostic UI primitives, CSS and theme tokens behind the c15t React, Vue, Svelte and Astro components.",
+	"description": "Framework-agnostic UI primitives, CSS and theme tokens behind the inth React, Vue, Svelte and Astro components.",
 	"keywords": [
-		"c15t",
+		"inth",
 		"design-system",
 		"framework-agnostic",
 		"headless-ui",
@@ -285,8 +285,8 @@
 		"@inth/sdk-translations": "workspace:*"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",
 		"@vitest/coverage-istanbul": "4.1.10",

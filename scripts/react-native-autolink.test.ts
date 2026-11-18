@@ -370,7 +370,7 @@ describe('checkPodspecPaths', () => {
 });
 
 describe('checkPackedPackageSurface', () => {
-	const workDir = mkdtempSync(join(tmpdir(), 'c15t-surface-'));
+	const workDir = mkdtempSync(join(tmpdir(), 'inth-surface-'));
 
 	afterAll(() => {
 		rmSync(workDir, { force: true, recursive: true });

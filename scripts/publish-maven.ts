@@ -286,8 +286,8 @@ export const stageMavenRelease = function stageMavenRelease({
 			cwd,
 			env: {
 				...process.env,
-				C15T_MAVEN_CENTRAL: 'true',
-				C15T_MAVEN_PUBLISH: 'false',
+				INTH_MAVEN_CENTRAL: 'true',
+				INTH_MAVEN_PUBLISH: 'false',
 			},
 			stdio: 'inherit',
 		}
@@ -336,7 +336,7 @@ export const verifyMavenBundle = function verifyMavenBundle({
 			'The Maven bundle contains missing, duplicate or unexpected files.'
 		);
 	}
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-central-verify-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-central-verify-'));
 	try {
 		execFileSync('unzip', ['-qq', resolve(bundle), '-d', directory]);
 		verifyMavenRepository({ repository: directory, verifySignature, version });
@@ -430,12 +430,12 @@ const centralCredentials = function centralCredentials(
 	options: MavenDeploymentOptions
 ) {
 	const credentials = options.credentials ?? {
-		token: process.env.C15T_CENTRAL_TOKEN ?? '',
-		username: process.env.C15T_CENTRAL_USERNAME ?? '',
+		token: process.env.INTH_CENTRAL_TOKEN ?? '',
+		username: process.env.INTH_CENTRAL_USERNAME ?? '',
 	};
 	if (!credentials.username || !credentials.token) {
 		throw new Error(
-			'Set C15T_CENTRAL_USERNAME and C15T_CENTRAL_TOKEN securely.'
+			'Set INTH_CENTRAL_USERNAME and INTH_CENTRAL_TOKEN securely.'
 		);
 	}
 	return credentials;

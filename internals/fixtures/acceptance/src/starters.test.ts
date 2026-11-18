@@ -40,13 +40,13 @@ const hostedScript = async function hostedScript(): Promise<string> {
 		mode: 'hosted',
 		projectUrl: placeholderProjectUrl,
 	});
-	return `(function(c){window.c15t=window.c15t||[];Array.isArray(window.c15t)?window.c15t.unshift(["config",c]):window.c15t.config(c)})(${config});\n${bundle}`;
+	return `(function(c){window.inth=window.inth||[];Array.isArray(window.inth)?window.inth.unshift(["config",c]):window.inth.config(c)})(${config});\n${bundle}`;
 };
 
 // `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
 // `c15t.dialog.js`, with or without the hash query the backend adds.
 const scriptPartURL = new RegExp(
-	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/c15t\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
+	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/inth\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
 	'u'
 );
 
@@ -188,7 +188,7 @@ for (const target of selectedStarterTargets()) {
 				await expect.poll(() => acceptButton(page).isVisible()).toBe(false);
 				// Hiding the banner precedes the deferred save.
 				await expect
-					.poll(() => page.evaluate(() => localStorage.getItem('c15t')))
+					.poll(() => page.evaluate(() => localStorage.getItem('inth')))
 					.not.toBeNull();
 
 				await page.reload({ waitUntil: 'networkidle' });

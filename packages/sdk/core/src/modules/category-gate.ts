@@ -3,7 +3,7 @@
  *
  * `evaluateConsent` (`./has.ts`) runs this for every target without IAB
  * fields. It is a module of its own so code that gates only on categories
- * and vendors, such as the script tag's inert `data-c15t-category` tags
+ * and vendors, such as the script tag's inert `data-inth-category` tags
  * before the engine loads, does not carry the IAB evaluation.
  *
  * @packageDocumentation

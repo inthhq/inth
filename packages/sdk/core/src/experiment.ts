@@ -22,7 +22,7 @@ export type {
 	ValidateExperimentOptions,
 } from './libs/experiment-engine';
 /**
- * Check the kernel's arm against each policy and remember a c15t-picked arm
+ * Check the kernel's arm against each policy and remember a inth-picked arm
  * under the experiment storage key once the banner has shown it.
  *
  * @param options - Experiment, kernel, host presentation and reporting.

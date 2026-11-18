@@ -362,7 +362,7 @@ export const applyProviderUpdate = function applyProviderUpdate(
 		initialOnlyKey(current) !== initialOnlyKey(previous)
 	) {
 		console.warn(
-			'c15t: `mode`, `i18n`, `experiment`, `persistence` and `storageConfig` are read once. Create a new runtime (remount the provider) to change them.'
+			'inth: `mode`, `i18n`, `experiment`, `persistence` and `storageConfig` are read once. Create a new runtime (remount the provider) to change them.'
 		);
 	}
 	const user = normalizeKernelUser(current.user);

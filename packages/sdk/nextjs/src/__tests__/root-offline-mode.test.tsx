@@ -38,7 +38,7 @@ describe('ConsentRoot offline mode', () => {
 	test('a root with a backend URL does not load offline mode', async () => {
 		const { getByTestId } = await render(
 			<ConsentRoot
-				config={{ projectUrl: '/api/c15t' }}
+				config={{ projectUrl: '/api/inth' }}
 				persistence={false}
 				state={policyFixture()}
 			>

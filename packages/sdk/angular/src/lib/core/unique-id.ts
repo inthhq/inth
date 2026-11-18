@@ -16,7 +16,7 @@ export class UniqueIds {
 	readonly #app = inject(APP_ID);
 
 	/**
-	 * @param prefix - Names the part, such as `c15t-accordion-trigger`.
+	 * @param prefix - Names the part, such as `inth-accordion-trigger`.
 	 * @returns `prefix` with this application's next number appended.
 	 */
 	next(prefix: string): string {
@@ -31,7 +31,7 @@ export class UniqueIds {
  * An application-unique id for a primitive's ARIA relations. Call it in an
  * injection context, such as a field initializer.
  *
- * @param prefix - Names the part, such as `c15t-accordion-trigger`.
+ * @param prefix - Names the part, such as `inth-accordion-trigger`.
  * @returns `prefix` with a number appended.
  * @internal
  */

@@ -10,7 +10,7 @@ import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
  * Browser SDK 2 version used by the default Amplitude CDN loader URL.
  *
  * The Amplitude Browser SDK 2 public bundle path is versioned. A
- * `analytics-browser-latest-min.js.gz` path is not publicly available, so c15t
+ * `analytics-browser-latest-min.js.gz` path is not publicly available, so Inth
  * pins a known Browser SDK 2 version by default and lets callers override the
  * loader through `scriptUrl`.
  */
@@ -166,7 +166,7 @@ declare global {
  * Implements the essential Browser SDK 2 script-loader contract with
  * `window.amplitude.invoked`, an `_q` method-call queue, and an `_iq` registry
  * for named instances. It also defines the `Identify` queued helper used by
- * pre-load `identify()` calls. c15t gates the loader on `measurement` consent,
+ * pre-load `identify()` calls. Inth gates the loader on `measurement` consent,
  * queues `init(apiKey, initOptions)` and `setOptOut(false)` before the bundle
  * loads, and uses `setOptOut(false)` / `setOptOut(true)` for runtime consent
  * changes after the SDK has loaded.

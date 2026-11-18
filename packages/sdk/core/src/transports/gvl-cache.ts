@@ -99,7 +99,7 @@ export const fetchCachedGvl = function fetchCachedGvl(
 		return pending;
 	}
 
-	const label = options.label ?? 'c15t';
+	const label = options.label ?? 'inth';
 	const run = (async () => {
 		try {
 			const response = await options.fetch(options.url, {

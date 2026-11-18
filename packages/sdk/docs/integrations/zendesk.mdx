@@ -1,20 +1,20 @@
 ---
 title: Zendesk Messaging
 description: Load the Zendesk Messaging Web Widget after functionality consent, map measurement consent to its cookie ranges and clear widget storage on revocation.
-seoTitle: Zendesk Messaging cookie consent with c15t
+seoTitle: Zendesk Messaging cookie consent with Inth
 seoDescription: Gate Zendesk Messaging on functionality consent. Map measurement consent to analytics storage and send Zendesk's none range when consent is withdrawn.
 icon: messages-square
 group: integrations
 ---
 
-Zendesk Messaging adds the Zendesk support chat widget to your site. The c15t
+Zendesk Messaging adds the Zendesk support chat widget to your site. The Inth
 `zendeskWidget` helper waits for `functionality` consent before it creates
 Zendesk's globals or requests the widget. Before the widget loads, it tells
 Zendesk which storage to use: functional storage only, or analytics storage as
 well when `measurement` is allowed.
 
 On withdrawal, the helper tells Zendesk to hide the widget and delete its local
-and session storage, and c15t reloads the page by default.
+and session storage, and Inth reloads the page by default.
 
 This helper covers Zendesk Messaging. Web Widget Classic uses a different API.
 
@@ -34,8 +34,8 @@ Then remove the Zendesk snippet from your page or tag manager.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `key` | Required | Public Messaging widget key. Trimmed and URL-encoded. If it's missing or blank, c15t logs `zendeskWidget: missing or invalid key` and never loads the widget. |
-| `category` | `functionality` | c15t consent category or condition needed to load the widget. Measurement consent still controls analytics storage. |
+| `key` | Required | Public Messaging widget key. Trimmed and URL-encoded. If it's missing or blank, Inth logs `zendeskWidget: missing or invalid key` and never loads the widget. |
+| `category` | `functionality` | Inth consent category or condition needed to load the widget. Measurement consent still controls analytics storage. |
 
 ## Loading and revocation
 
@@ -58,10 +58,10 @@ its local and session storage. These effects come from Zendesk's
 Turning off the visitor's Zendesk vendor switch counts as denied, so it also
 sends `none`.
 
-c15t removes the loader on revocation. The `none` call doesn't unload the SDK or
+Inth removes the loader on revocation. The `none` call doesn't unload the SDK or
 stop every request in progress. Keep `reloadOnConsentRevoked` enabled to stop
 code already running on the page. If the visitor grants consent again before
-the reload, c15t inserts a new loader and the helper sends the current range.
+the reload, Inth inserts a new loader and the helper sends the current range.
 
 ### Several helpers and one widget key
 
@@ -78,7 +78,7 @@ loaders, but that doesn't separate Zendesk's global API.
 ### Removing the helper
 
 Removing the helper from your configuration, or unmounting its provider,
-releases that registration. When the last registration goes, c15t removes the
+releases that registration. When the last registration goes, Inth removes the
 loader but keeps the conversation and storage. It doesn't send `none` or unload
 code that already ran, and later consent changes no longer reach the widget.
 Revoke consent first, or reload the page, when you need the widget stopped and
@@ -108,7 +108,7 @@ Grant functionality without measurement and check that the widget's analytics
 storage stays off. Grant measurement while the widget is open, then withdraw
 it, and check that the widget stays available with analytics off.
 
-Revoke functionality and check that Zendesk hides the widget. After c15t
+Revoke functionality and check that Zendesk hides the widget. After Inth
 reloads, the loader stays absent. A successful response for `snippet.js` alone
 doesn't prove your widget key or Messaging setup works. Open a conversation in
 your widget to check that.

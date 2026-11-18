@@ -77,7 +77,7 @@
 			"import": "./lib/browser/dist/gpp.js",
 			"default": "./lib/browser/dist/gpp.js"
 		},
-		"./styles.css": "./lib/browser/dist/c15t.css",
+		"./styles.css": "./lib/browser/dist/inth.css",
 		"./c15t.js": "./lib/browser/dist/c15t.js",
 		"./c15t.hosted.js": "./lib/browser/dist/c15t.hosted.js",
 		"./c15t.commit.js": "./lib/browser/dist/c15t.commit.js",
@@ -897,7 +897,7 @@
 		"valibot": "1.4.2"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
 		"@types/node": "25.5.0",
 		"esbuild": "^0.28.1",
 		"typescript": "7.0.2",

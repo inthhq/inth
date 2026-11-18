@@ -14,7 +14,7 @@ export interface IABVendorUrls {
  * Returns a vendor link only if it is safe to put in an `href`.
  *
  * Vendor links come from the Global Vendor List and from custom vendor
- * config, so c15t does not control them. Only absolute `http:` and `https:`
+ * config, so Inth does not control them. Only absolute `http:` and `https:`
  * URLs with a host pass. Other schemes, relative paths, protocol-relative
  * URLs and strings that do not parse return `null`, and the vendor lists
  * show no link for them. A URL that passes is returned unchanged.

@@ -5,7 +5,7 @@ import { defineComponent, h, inject, nextTick } from 'vue';
 
 import PanelTrigger from '../runtime/components/panel-trigger.vue';
 import { symbolKernel, symbolActiveUI } from '../runtime/utils/symbols';
-import { c15tVue } from './test-plugin';
+import { inthVue } from './test-plugin';
 
 test('Vue plugin options own one external authority and share script lifecycle', async () => {
 	let permissions: Partial<ConsentState> | null = null;
@@ -58,7 +58,7 @@ test('Vue plugin options own one external authority and share script lifecycle',
 			global: {
 				plugins: [
 					[
-						c15tVue,
+						inthVue,
 						{ consentSource: source, iframeBlocker: false, scripts: [script] },
 					],
 				],
@@ -96,7 +96,7 @@ test('the persistent Vue trigger opens external preferences through the manager 
 		global: {
 			plugins: [
 				[
-					c15tVue,
+					inthVue,
 					{
 						consentSource: {
 							getPermissions: () => ({}),
@@ -112,7 +112,7 @@ test('the persistent Vue trigger opens external preferences through the manager 
 	try {
 		await nextTick();
 		const trigger = document.querySelector<HTMLButtonElement>(
-			'[data-c15t-trigger]'
+			'[data-inth-trigger]'
 		);
 		expect(trigger).not.toBeNull();
 		// The source connects once its module has loaded.

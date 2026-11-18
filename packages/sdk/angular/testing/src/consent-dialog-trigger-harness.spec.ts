@@ -17,11 +17,11 @@ import { ConsentDialogTriggerHarness } from './consent-dialog-trigger-harness';
 	imports: [ConsentDialog, ConsentDialogTrigger],
 	selector: 'test-trigger-host',
 	template: `
-		<c15t-consent-dialog-trigger
+		<inth-consent-dialog-trigger
 			label="Cookie settings"
 			[persistPosition]="false"
 		/>
-		<c15t-consent-dialog />
+		<inth-consent-dialog />
 	`,
 })
 class TriggerHost {}

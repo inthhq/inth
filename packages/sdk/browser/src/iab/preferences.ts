@@ -52,15 +52,15 @@ export const createIABPreferences = (
 	let collect = updates;
 	const element = h('div', { class: css(styles.body) });
 	const purposes = h('div', {
-		'aria-labelledby': 'c15t-iab-purposes-tab',
+		'aria-labelledby': 'inth-iab-purposes-tab',
 		class: css(styles.tabPanel),
-		id: 'c15t-iab-purposes',
+		id: 'inth-iab-purposes',
 		role: 'tabpanel',
 	});
 	const vendors = h('div', {
-		'aria-labelledby': 'c15t-iab-vendors-tab',
+		'aria-labelledby': 'inth-iab-vendors-tab',
 		class: css(styles.tabPanel),
-		id: 'c15t-iab-vendors',
+		id: 'inth-iab-vendors',
 		role: 'tabpanel',
 	});
 
@@ -77,7 +77,7 @@ export const createIABPreferences = (
 			{
 				'aria-label': `${subject}: ${label}`,
 				class: css(shared.switch.root),
-				'data-c15t-iab-toggle': '',
+				'data-inth-iab-toggle': '',
 				'data-testid': testId,
 				id: testId,
 				onclick: () => write(!read(client.getSnapshot())),
@@ -151,13 +151,13 @@ export const createIABPreferences = (
 			'details',
 			{
 				class: css(styles.purposeItem),
-				'data-c15t-iab-disclosure': '',
+				'data-inth-iab-disclosure': '',
 				'data-testid': row.testId,
 			},
 			h(
 				'summary',
 				{ class: css(styles.purposeHeader) },
-				h('span', { 'aria-hidden': 'true', 'data-c15t-iab-chevron': '' }, '›'),
+				h('span', { 'aria-hidden': 'true', 'data-inth-iab-chevron': '' }, '›'),
 				h('span', { class: css(styles.purposeName) }, row.name)
 			)
 		);
@@ -290,7 +290,7 @@ export const createIABPreferences = (
 						'details',
 						{
 							class: css(styles.stackItem),
-							'data-c15t-iab-disclosure': '',
+							'data-inth-iab-disclosure': '',
 							'data-testid': row.testId,
 						},
 						h(
@@ -298,7 +298,7 @@ export const createIABPreferences = (
 							{ class: css(styles.stackHeader) },
 							h(
 								'span',
-								{ 'aria-hidden': 'true', 'data-c15t-iab-chevron': '' },
+								{ 'aria-hidden': 'true', 'data-inth-iab-chevron': '' },
 								'›'
 							),
 							h('span', { class: css(styles.stackName) }, row.name)
@@ -513,7 +513,7 @@ export const createIABPreferences = (
 				'details',
 				{
 					class: css(styles.vendorListItem),
-					'data-c15t-iab-disclosure': '',
+					'data-inth-iab-disclosure': '',
 					'data-testid': `iab-vendor-${id}`,
 				},
 				h(
@@ -521,7 +521,7 @@ export const createIABPreferences = (
 					{ class: css(styles.vendorListItemHeader) },
 					h(
 						'span',
-						{ 'aria-hidden': 'true', 'data-c15t-iab-chevron': '' },
+						{ 'aria-hidden': 'true', 'data-inth-iab-chevron': '' },
 						'›'
 					),
 					h('span', { class: css(styles.vendorListName) }, vendor.name)
@@ -529,7 +529,7 @@ export const createIABPreferences = (
 			);
 			const body = h('div', {
 				class: css(styles.vendorDetails),
-				'data-c15t-iab-vendor-details': '',
+				'data-inth-iab-vendor-details': '',
 			});
 			if (custom) {
 				body.append(h('p', {}, t.common.customPartner));
@@ -593,7 +593,7 @@ export const createIABPreferences = (
 		{
 			'aria-controls': purposes.id,
 			class: css(styles.tabButton),
-			id: 'c15t-iab-purposes-tab',
+			id: 'inth-iab-purposes-tab',
 			role: 'tab',
 			type: 'button',
 		},
@@ -604,7 +604,7 @@ export const createIABPreferences = (
 		{
 			'aria-controls': vendors.id,
 			class: css(styles.tabButton),
-			id: 'c15t-iab-vendors-tab',
+			id: 'inth-iab-vendors-tab',
 			role: 'tab',
 			type: 'button',
 		},

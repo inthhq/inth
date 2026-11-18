@@ -4,10 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+import type { TestingInthGlobal as InthGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
-const testWindow = window as Window & { c15t?: unknown };
+const testWindow = window as Window & { inth?: unknown };
 const policy = {
 	...policyRulePresets.europeOptIn(),
 	categories: ['measurement'] as const,
@@ -25,16 +25,16 @@ const options: ConsentClientOptions = {
 };
 
 /** Install over whatever the page queued, then init the way the tag does. */
-const loadTag = function loadTag(queue: unknown[]): C15tGlobal {
-	testWindow.c15t = queue;
+const loadTag = function loadTag(queue: unknown[]): InthGlobal {
+	testWindow.inth = queue;
 	const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 	api.init();
 	return api;
 };
 
 afterEach(() => {
-	(testWindow.c15t as C15tGlobal | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	vi.restoreAllMocks();
 	localStorage.clear();
 	for (const entry of document.cookie.split(';')) {
@@ -118,7 +118,7 @@ describe('queued calls before the tag loads', () => {
 			expect(api.getSnapshot().activeUI).toBe('dialog');
 		});
 		expect(error).toHaveBeenCalledWith(
-			expect.stringContaining('c15t.save()'),
+			expect.stringContaining('inth.save()'),
 			expect.any(TypeError)
 		);
 	});
@@ -178,7 +178,7 @@ describe('queued calls before the tag loads', () => {
 	});
 
 	it('waits for a manual init before running queued actions', async () => {
-		testWindow.c15t = [['config', options], ['openDialog']];
+		testWindow.inth = [['config', options], ['openDialog']];
 		const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 		await Promise.resolve();
 		expect(api.client).toBeNull();
@@ -191,7 +191,7 @@ describe('queued calls before the tag loads', () => {
 	});
 });
 
-describe('c15t.push after the tag loads', () => {
+describe('inth.push after the tag loads', () => {
 	it('runs calls the same way as calls queued before the tag', async () => {
 		const api = loadTag([['config', options]]);
 		const onConsent = vi.fn();
@@ -258,7 +258,7 @@ describe('c15t.push after the tag loads', () => {
 	});
 
 	it('runs a batch before actions pushed by a ready listener during its init', async () => {
-		testWindow.c15t = [];
+		testWindow.inth = [];
 		const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 		const onConsent = vi.fn();
 
@@ -283,7 +283,7 @@ describe('c15t.push after the tag loads', () => {
 	});
 
 	it('runs actions pushed after a dispose that interrupted a wait for init', async () => {
-		testWindow.c15t = [['config', options]];
+		testWindow.inth = [['config', options]];
 		const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 		const acceptAll = vi.spyOn(api, 'acceptAll');
 
@@ -342,7 +342,7 @@ describe('c15t.push after the tag loads', () => {
 			api.push(['getSnapshot'], ['on', 'consent', vi.fn()])
 		).not.toThrow();
 		expect(warn).toHaveBeenCalledWith(
-			expect.stringContaining("c15t.push(['getSnapshot', ...])")
+			expect.stringContaining("inth.push(['getSnapshot', ...])")
 		);
 	});
 });

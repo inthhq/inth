@@ -1,6 +1,6 @@
 ---
 title: ConsentRoot
-description: Mount the c15t banner, preference dialog and floating trigger in a Vue app with one ConsentRoot component from @inth/vue/vue-plugin.
+description: Mount the Inth banner, preference dialog and floating trigger in a Vue app with one ConsentRoot component from @inth/vue/vue-plugin.
 group: frameworks
 ---
 
@@ -12,11 +12,11 @@ Import it from `@inth/vue/vue-plugin`:
 <include src="../../../shared/examples/vue/app.mdx" />
 
 `ConsentRoot` reads the consent runtime that
-[the c15tVue plugin](/docs/frameworks/vue/plugin) creates in `src/main.ts`.
+[the inthVue plugin](/docs/frameworks/vue/plugin) creates in `src/main.ts`.
 Keep it in the root component so it stays mounted when the route changes.
 It brings its own styles.
 
-`ConsentRoot` is not a provider. The c15tVue plugin already gives every
+`ConsentRoot` is not a provider. The inthVue plugin already gives every
 component the consent runtime, so nothing needs to sit inside it. Render
 `<ConsentRoot />` next to your page content as shown above. If you wrap your
 content in it instead, the content still renders after the banner, dialog
@@ -44,9 +44,9 @@ closes.
 
 ## Theme tokens
 
-`ConsentRoot` does not apply theme tokens. The c15tVue plugin adds every
+`ConsentRoot` does not apply theme tokens. The inthVue plugin adds every
 token from the `tokens` option, including the defaults you did not set, to
-`document.head` in a `<style id="c15t-css-vars">` element when you install
+`document.head` in a `<style id="inth-css-vars">` element when you install
 it, before the first render. Set token values through the `tokens` option
 rather than a `:root` rule in your stylesheet. See
 [customize](/docs/frameworks/vue/customize#set-theme-tokens).
@@ -81,13 +81,13 @@ render `ConsentRoot` next to them, or the visitor sees two banners.
 
 Load the app in a private window under a policy that asks for consent. The
 banner appears after the policy request to your backend completes. In the
-Elements panel, the `<style id="c15t-css-vars">` element in `<head>` holds
-the `--c15t-*` tokens. Click Customize and the preference dialog opens. Reject,
+Elements panel, the `<style id="inth-css-vars">` element in `<head>` holds
+the `--inth-*` tokens. Click Customize and the preference dialog opens. Reject,
 reload, and confirm the banner stays closed.
 
 ## Next steps
 
-- [c15tVue plugin](/docs/frameworks/vue/plugin) lists the options
+- [inthVue plugin](/docs/frameworks/vue/plugin) lists the options
   `ConsentRoot` reads.
 - [Customize](/docs/frameworks/vue/customize) changes tokens, layout and
   slots.

@@ -13,7 +13,7 @@ import type { ReactNode } from 'react';
 import { theme } from './theme';
 
 /**
- * The c15t docs site's shape: `ConsentProvider` from the `@inth/react`
+ * The Inth docs site's shape: `ConsentProvider` from the `@inth/react`
  * umbrella entry in hosted mode, fed the server-resolved state.
  */
 export const Consent = ({

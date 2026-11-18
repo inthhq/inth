@@ -1,6 +1,6 @@
 /**
  * The consent middleware with a per-request banner-experiment arm, for the
- * showcase build with `C15T_EXPERIMENT=1`. `astro.showcase.config.mjs`
+ * showcase build with `INTH_EXPERIMENT=1`. `astro.showcase.config.mjs`
  * registers it in place of the integration's own middleware.
  *
  * The banner is server-rendered, so the arm is resolved here, the way a flag

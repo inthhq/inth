@@ -11,7 +11,7 @@ const committed = resolve(
 );
 
 it('keeps the native in-code policy fixture in step with the backend normalizer', () => {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-local-policy-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-local-policy-'));
 	try {
 		const result = spawnSync(
 			'bun',

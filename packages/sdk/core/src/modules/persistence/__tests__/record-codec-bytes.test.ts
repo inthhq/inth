@@ -6,7 +6,7 @@
  *
  * Bytes are UTF-8 lengths of the value actually stored in
  * `document.cookie` after the real write path (`setCookie` for v2,
- * `writeStoredConsentEnvelope` for v3), without the `c15t=` name or
+ * `writeStoredConsentEnvelope` for v3), without the `inth=` name or
  * attributes. Neither path adds an outer URI encoding, so the stored
  * value equals the codec string; the tests assert that equality rather
  * than assume it. Fingerprints use 64-character SHA-256 hex, matching

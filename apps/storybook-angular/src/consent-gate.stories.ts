@@ -29,17 +29,17 @@ const meta = {
 		},
 		template: `
 			<div style="width: 32rem;">
-				<c15t-consent-gate category="marketing">
-					<ng-template c15tConsentGatePlaceholder><div data-testid="consent-gate-placeholder">
+				<inth-consent-gate category="marketing">
+					<ng-template inthConsentGatePlaceholder><div data-testid="consent-gate-placeholder">
 						Marketing content requires consent.
 					</div></ng-template>
 					<div
 						data-testid="parity-consent-gate-content"
-						style="border-radius: 1rem; padding: 1.25rem; background: var(--c15t-surface); border: 1px solid var(--c15t-border);"
+						style="border-radius: 1rem; padding: 1.25rem; background: var(--inth-surface); border: 1px solid var(--inth-border);"
 					>
 						Embedded marketing content is now visible.
 					</div>
-				</c15t-consent-gate>
+				</inth-consent-gate>
 			</div>
 		`,
 	}),

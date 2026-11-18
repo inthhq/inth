@@ -27,7 +27,7 @@ const theme: InthPluginProps['theme'] = consentTheme;
  * appear. There is no key to configure either: a project is its backend URL.
  */
 const projectUrl =
-	process.env.EXPO_PUBLIC_C15T_BACKEND_URL ?? 'https://example-inth.inth.app/';
+	process.env.EXPO_PUBLIC_INTH_PROJECT_URL ?? 'https://example-inth.inth.app/';
 
 /** Truthy spellings that mean "off"; anything else present means on. */
 const isOff = (value: string | undefined): boolean =>
@@ -36,7 +36,7 @@ const isOff = (value: string | undefined): boolean =>
 /**
  * App E2E build: the real vendor SDKs start and every request goes to the
  * loopback E2E backend over plain HTTP. `scripts/vendor-e2e.sh` sets this, the
- * backend URL and `C15T_E2E_POLICY`, the policy resource it exported from that
+ * backend URL and `INTH_E2E_POLICY`, the policy resource it exported from that
  * backend. Normal builds keep the hosted demo and the committed resource.
  *
  * The Inth plugin accepts only an Inth project URL, and a Release build cannot
@@ -45,7 +45,7 @@ const isOff = (value: string | undefined): boolean =>
  * native app install the core against the loopback backend before React Native
  * starts. The JavaScript screens still read the loopback URL.
  */
-const appE2e = process.env.EXPO_PUBLIC_C15T_APP_E2E === '1';
+const appE2e = process.env.EXPO_PUBLIC_INTH_APP_E2E === '1';
 
 const consentCategories: NonNullable<InthPluginProps['consentCategories']> = [
 	'necessary',
@@ -108,21 +108,21 @@ Vous pouvez changer cela dans Réglages à tout moment.`,
 };
 
 const inthPluginProps: InthPluginProps = {
-	androidMavenRepository: (process.env.C15T_MAVEN_URL ?? '').startsWith('file:')
-		? { url: process.env.C15T_MAVEN_URL ?? '' }
+	androidMavenRepository: (process.env.INTH_MAVEN_URL ?? '').startsWith('file:')
+		? { url: process.env.INTH_MAVEN_URL ?? '' }
 		: {
 				credentials: {
-					passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
-					usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
+					passwordEnvironmentVariable: 'INTH_MAVEN_TOKEN',
+					usernameEnvironmentVariable: 'INTH_MAVEN_USERNAME',
 				},
 				url:
-					process.env.C15T_MAVEN_URL ??
-					'https://maven.pkg.github.com/inthhq/c15t-private',
+					process.env.INTH_MAVEN_URL ??
+					'https://maven.pkg.github.com/inthhq/inth-private',
 			},
 	consentCategories,
-	// `C15T_DRY_RUN=1` drops consent records and lets a debug build use a staging
+	// `INTH_DRY_RUN=1` drops consent records and lets a debug build use a staging
 	// or loopback URL. A release build refuses to start Inth with it on.
-	dryRun: process.env.C15T_DRY_RUN === '1',
+	dryRun: process.env.INTH_DRY_RUN === '1',
 	// The App Tracking Transparency opt-in. Consent to marketing cookies is not Apple
 	// tracking authorization, so this fixture asks for both: the banner decides what
 	// Inth may store, and the Apple sheet decides what the advertising identifier is
@@ -132,10 +132,10 @@ const inthPluginProps: InthPluginProps = {
 	// An App E2E build installs the core itself, with its own policy resource.
 	...(appE2e
 		? { autoBootstrap: false }
-		: { policyResource: process.env.C15T_E2E_POLICY ?? './inth-policy.json' }),
-	// `C15T_NATIVE_UI=0` builds without the stock native consent screens; the app
+		: { policyResource: process.env.INTH_E2E_POLICY ?? './inth-policy.json' }),
+	// `INTH_NATIVE_UI=0` builds without the stock native consent screens; the app
 	// then draws its own with the headless hooks (src/screens/headless.tsx).
-	...(process.env.C15T_NATIVE_UI === '0' ? { nativeUI: false } : { theme }),
+	...(process.env.INTH_NATIVE_UI === '0' ? { nativeUI: false } : { theme }),
 	trackingMarkdownUsageDescription,
 	trackingMarkdownUsageDescriptionLocalizations,
 	trackingUsageDescription,
@@ -196,7 +196,7 @@ const plugins: PluginEntry[] = [
 					'./plugins/with-inth-e2e-install',
 					{
 						consentCategories,
-						policy: process.env.C15T_E2E_POLICY,
+						policy: process.env.INTH_E2E_POLICY,
 						projectUrl,
 					},
 				] satisfies PluginEntry,
@@ -216,7 +216,7 @@ const inthExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	slug: 'inth-expo-dev',
 	version: '1.0.0',
 	orientation: 'portrait',
-	scheme: 'c15texpodev',
+	scheme: 'inthexpodev',
 	userInterfaceStyle: 'light',
 	// Native only. Leaving `web` in the default set makes `expo export` demand
 	// react-native-web for a fixture that will never render in a browser.
@@ -238,9 +238,9 @@ const inthExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	extra: {
 		inth: {
 			projectUrl,
-			forceFakeNative: !isOff(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE),
+			forceFakeNative: !isOff(process.env.EXPO_PUBLIC_INTH_FAKE_NATIVE),
 			sampleIntervalMs:
-				Number(process.env.EXPO_PUBLIC_C15T_SAMPLE_INTERVAL_MS) || 1000,
+				Number(process.env.EXPO_PUBLIC_INTH_SAMPLE_INTERVAL_MS) || 1000,
 		},
 	},
 });

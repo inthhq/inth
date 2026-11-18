@@ -1,6 +1,6 @@
 # Next.js consent example
 
-One application demonstrates c15t with the App Router and the Pages Router, a
+One application demonstrates Inth with the App Router and the Pages Router, a
 gated YouTube video, PostHog, X Pixel, a branded design and persistent
 preferences. It uses the public `@inth/nextjs` integration and a cached Inth
 manifest. It is a test app for the acceptance suite; the starter for readers is
@@ -15,7 +15,7 @@ cd internals/fixtures/nextjs
 bun run dev
 ```
 
-In `c15t.config.ts`, replace `https://your-project.inth.app` with the backend
+In `inth.config.ts`, replace `https://your-project.inth.app` with the backend
 URL from your Inth project, including any path prefix. Configure its policy
 with measurement and marketing categories, an unknown-location rule, and
 trusted origins for `http://localhost:3011` and your production host. Local
@@ -34,12 +34,12 @@ To send events to your own PostHog and X projects, replace
 
 ## Follow the setup files
 
-- `c15t.config.ts` default-exports the backend, the consent route prefix
-  `/api/c15t`, and `manifest({ resolve: 'browser' })` for pages that resolve
+- `inth.config.ts` default-exports the backend, the consent route prefix
+  `/api/inth`, and `manifest({ resolve: 'browser' })` for pages that resolve
   consent in the browser. `next.config.ts` has no `withConsentManifest`, so
   the server reads the manifest at runtime and each file that needs the
   config imports it.
-- `app/api/c15t/manifest/route.ts` passes that config to
+- `app/api/inth/manifest/route.ts` passes that config to
   `createConsentRoute` and serves the cached public manifest for both
   routers.
 - `components/consent.tsx` is the client wrapper: `ConsentRoot`, scripts,
@@ -57,10 +57,10 @@ To send events to your own PostHog and X projects, replace
 - `app/(streamed)/branded/layout.tsx` renders `ConsentTheme` with the theme in
   `lib/theme.ts`.
 - `components/demo.tsx` is demo-only: the gallery, gated iframe, permission
-  indicators, the floating trigger toggle and c15t DevTools.
+  indicators, the floating trigger toggle and Inth DevTools.
 
 Moving between route groups or routers loads the whole page. Choices survive
-through c15t persistence. To start over, open c15t DevTools, choose
+through Inth persistence. To start over, open Inth DevTools, choose
 **Clear stored records**, and reload. Clearing does not delete records already
 submitted to Inth.
 
@@ -74,7 +74,7 @@ submitted to Inth.
    undone.
 4. Reject, reload, then switch routes. Your saved choice remains.
 5. Open the branded design. The policy's actions and your choice stay the same.
-6. Enable the floating preferences trigger and inspect c15t DevTools.
+6. Enable the floating preferences trigger and inspect Inth DevTools.
 
 ## Banner experiment
 
@@ -86,8 +86,8 @@ already shows that arm. `lib/flags.ts` stands in for a flag provider and reads
 `?arm=off` leaves the visitor out, and anything else runs `control`.
 `components/experiment-consent.tsx` adds `onSurfaceShown` and
 `onChoiceRecorded` callbacks that list each impression and choice under the
-arm and push them to `window.dataLayer` as `c15t_surface_shown` and
-`c15t_choice_recorded`. See
+arm and push them to `window.dataLayer` as `inth_surface_shown` and
+`inth_choice_recorded`. See
 https://c15t.com/docs/guides/banner-experiments.
 
 PostHog uses `loadMode: 'after-consent'`, so its SDK waits for measurement
@@ -101,7 +101,7 @@ allowed. A nocookie URL is still a third-party request once loaded.
 
 Browser acceptance tests in `internals/fixtures/acceptance` intercept vendor
 and YouTube requests with fixtures for deterministic results. They point the
-app at a mock backend by setting `NEXT_PUBLIC_C15T_BACKEND_URL` at build time;
+app at a mock backend by setting `NEXT_PUBLIC_INTH_PROJECT_URL` at build time;
 `lib/test-backend.ts` applies it. Check actual playback separately with the
 live video. Backend initialization failures must not grant optional
 permissions.

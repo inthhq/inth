@@ -3,10 +3,10 @@
 	"description": "Cookie banner, consent dialog, and preference center for Angular. Standalone components, signals, zoneless change detection, and server rendering. Use the headless state and primitives when you want your own design.",
 	"features": [
 		"Works with Angular 20, 21 and 22, zoneless or with zone.js",
-		"`provideC15t()` sets up consent once; `inject(ConsentManager)` reads it as signals anywhere",
+		"`provideInth()` sets up consent once; `inject(ConsentManager)` reads it as signals anywhere",
 		"Server rendering with `@angular/platform-server`: the banner is in the first HTML",
 		"Headless directives for switches (with Angular forms), accordions, tabs, dialogs and preference items",
-		"`*c15tIfConsent` keeps content out of the DOM until the visitor agrees",
+		"`*inthIfConsent` keeps content out of the DOM until the visitor agrees",
 		"Translations for 53 languages through @inth/sdk/translations"
 	],
 	"prerequisites": [
@@ -16,11 +16,11 @@
 	],
 	"manualInstallation": ["", "```bash\npnpm add @inth/angular\n```"],
 	"usage": [
-		"Add `provideC15t()` to your application providers with a `mode`",
+		"Add `provideInth()` to your application providers with a `mode`",
 		"Read consent anywhere with `inject(ConsentManager)`",
-		"Render `<c15t-consent-banner />` and `<c15t-consent-dialog />` once in your root component, and add `c15tConsentDialogLink` to a footer button",
-		"```ts\n// app.config.ts\nimport { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';\nimport { hosted, provideC15t } from '@inth/angular';\n\nexport const appConfig: ApplicationConfig = {\n  providers: [\n    provideZonelessChangeDetection(),\n    provideC15t({ mode: hosted({ projectUrl: 'https://your-project.inth.app' }) }),\n  ],\n};\n```",
-		"```html\n<!-- Rendered only once the visitor allows marketing -->\n<iframe *c15tIfConsent=\"'marketing'; else blocked\" src=\"https://www.youtube.com/embed/…\"></iframe>\n<ng-template #blocked>Allow marketing cookies to watch this video.</ng-template>\n```"
+		"Render `<inth-consent-banner />` and `<inth-consent-dialog />` once in your root component, and add `inthConsentDialogLink` to a footer button",
+		"```ts\n// app.config.ts\nimport { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';\nimport { hosted, provideInth } from '@inth/angular';\n\nexport const appConfig: ApplicationConfig = {\n  providers: [\n    provideZonelessChangeDetection(),\n    provideInth({ mode: hosted({ projectUrl: 'https://your-project.inth.app' }) }),\n  ],\n};\n```",
+		"```html\n<!-- Rendered only once the visitor allows marketing -->\n<iframe *inthIfConsent=\"'marketing'; else blocked\" src=\"https://www.youtube.com/embed/…\"></iframe>\n<ng-template #blocked>Allow marketing cookies to watch this video.</ng-template>\n```"
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/angular/quickstart",
 	"quickStartLink": "https://c15t.com/docs/frameworks/angular/quickstart",

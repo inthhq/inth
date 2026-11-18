@@ -10,7 +10,7 @@
 </script>
 
 <main>
-	<p>c15t / Svelte</p>
+	<p>inth / Svelte</p>
 	<h1>Consent example</h1>
 	<p>One consent setup for your analytics, advertising and video embeds.</p>
 	<nav aria-label="Banner design">

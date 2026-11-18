@@ -59,11 +59,11 @@ test('subject-only prefetch preserves browser receipts without a prepared record
 	);
 	const config = {
 		iframeBlocker: false as const,
-		projectUrl: '/api/c15t',
+		projectUrl: '/api/inth',
 		storageConfig: { storageKey },
 	};
 	const prefetch = {
-		branding: 'c15t' as const,
+		branding: 'inth' as const,
 		location: { countryCode: 'DE', regionCode: null },
 		policyResolution,
 		subjectId: 'backend+literal',

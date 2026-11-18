@@ -5,7 +5,7 @@ import {
 	withEventReplay,
 } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { hosted, provideC15t } from '@inth/angular';
+import { hosted, provideInth } from '@inth/angular';
 import { posthog } from '@inth/integrations/posthog';
 
 export const appConfig: ApplicationConfig = {
@@ -13,10 +13,10 @@ export const appConfig: ApplicationConfig = {
 		provideZonelessChangeDetection(),
 		provideRouter([]),
 		provideClientHydration(withEventReplay()),
-		provideC15t({
+		provideInth({
 			mode: hosted(),
 			// The consent route `server.ts` mounts.
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 			// A script in a consent category, so Accept saves a category
 			// choice rather than only dismissing a notice.
 			scripts: [

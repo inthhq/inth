@@ -101,7 +101,7 @@ const TabsRoot = createForwardRef<HTMLDivElement, TabsRootProps>(
 
 		const contextValue = useMemo<TabsContextValue>(
 			() => ({
-				baseId: `c15t-tabs-${reactId}`,
+				baseId: `inth-tabs-${reactId}`,
 				disabled,
 				loop,
 				noStyle: finalNoStyle,

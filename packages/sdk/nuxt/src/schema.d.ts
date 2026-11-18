@@ -5,7 +5,7 @@ import type { ModuleOptions } from './nuxt-options';
 // @inth/vue types the public runtime config its Nuxt plugins read.
 declare module 'nuxt/schema' {
 	interface NuxtConfig {
-		c15t?: ModuleOptions;
+		inth?: ModuleOptions;
 	}
 }
 

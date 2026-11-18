@@ -1,4 +1,4 @@
-import { escCloses, openAndClose } from '@c15t/conformance/play/dialog';
+import { escCloses, openAndClose } from '@inth/conformance/play/dialog';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
 import DialogControlledDemo from './DialogControlledDemo.svelte';

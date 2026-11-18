@@ -24,14 +24,14 @@ describe('the transport a ConsentProvider selects', () => {
 
 	test('an explicit projectUrl wins', () => {
 		setGenerated({ projectUrl: 'https://consent.example.com' });
-		expect({ ...selectedMode({ projectUrl: '/api/c15t' }) }).toMatchObject({
-			projectUrl: '/api/c15t',
+		expect({ ...selectedMode({ projectUrl: '/api/inth' }) }).toMatchObject({
+			projectUrl: '/api/inth',
 		});
 	});
 
 	test('testing() selects its own transport, with or without a backend URL', () => {
 		const mode = testing();
-		expect(selectedMode({ mode, projectUrl: '/api/c15t' })).toBe(
+		expect(selectedMode({ mode, projectUrl: '/api/inth' })).toBe(
 			mode.transport
 		);
 		expect(selectedMode({ mode })).toBe(mode.transport);
@@ -39,8 +39,8 @@ describe('the transport a ConsentProvider selects', () => {
 
 	test('hosted() selects the hosted backend', () => {
 		expect({
-			...selectedMode({ mode: hosted(), projectUrl: '/api/c15t' }),
-		}).toMatchObject({ projectUrl: '/api/c15t' });
+			...selectedMode({ mode: hosted(), projectUrl: '/api/inth' }),
+		}).toMatchObject({ projectUrl: '/api/inth' });
 	});
 
 	test('is none when no URL is known', () => {

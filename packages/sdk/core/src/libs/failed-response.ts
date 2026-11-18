@@ -2,7 +2,7 @@
  * Errors for a backend response that is not ok.
  *
  * A backend that refuses a request usually says why in a JSON body:
- * `{ message, code }`, or c15t's own `{ message, cause: { code, reason } }`.
+ * `{ message, code }`, or inth's own `{ message, cause: { code, reason } }`.
  * These helpers read that body so the error says what the backend said,
  * not only the status. Over HTTP/2 `statusText` is empty, so without the
  * body an error reads `responded 429 ` and nothing more.
@@ -151,7 +151,7 @@ export const readFailedResponse = async function readFailedResponse(
  * status text as before.
  *
  * @param prefix - Names the caller and route, such as
- * `c15t hosted transport: /init`.
+ * `inth hosted transport: /init`.
  * @param response - The response that is not ok.
  * @param detail - What {@link readFailedResponse} read from its body.
  * @returns The message.
@@ -174,15 +174,15 @@ export const describeFailedResponse = function describeFailedResponse(
  * backend's message and code.
  *
  * @param prefix - Names the caller and route, such as
- * `c15t hosted transport: /init`.
+ * `inth hosted transport: /init`.
  * @param response - The response that is not ok. Its body is consumed.
  * @returns An `Error` carrying `status`, and `code` when the body had one.
  * @example
  * ```ts
  * if (!response.ok) {
- *   throw await failedResponseError('c15t hosted transport: /init', response);
+ *   throw await failedResponseError('inth hosted transport: /init', response);
  * }
- * // c15t hosted transport: /init responded 402: Your plan is out of
+ * // Inth hosted transport: /init responded 402: Your plan is out of
  * // consent sessions. (CONSENT_SESSIONS_EXHAUSTED)
  * ```
  * @internal

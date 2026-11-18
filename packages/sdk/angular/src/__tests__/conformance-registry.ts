@@ -9,7 +9,7 @@
  * renders the banner and the dialog, as the Svelte fixture does.
  */
 import type { Type } from '@angular/core';
-import type { MountableComponent } from '@c15t/conformance';
+import type { MountableComponent } from '@inth/conformance';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
 import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import { ConsentWidget } from '@inth/angular/consent-widget';
@@ -45,19 +45,19 @@ export const CONFORMANCE_COMPONENTS: Partial<
 // ---------------------------------------------------------------------------
 // Policy-scenario fixture: the surfaces every policy session renders, in
 // this order, like `packages/sdk/svelte/src/__tests__/fixtures/policy-fixture.svelte`.
-// The `[c15tConsentDialogLink]` button is always rendered after them.
+// The `[inthConsentDialogLink]` button is always rendered after them.
 // ---------------------------------------------------------------------------
 export const POLICY_SURFACES: {
 	/** The banner, with `hideBranding` (attribution changes after mount). */
 	banner?: ConformanceEntry;
 	/** The consent dialog. */
 	dialog?: ConformanceEntry;
-	/** `<c15t-consent-dialog-trigger>`. */
+	/** `<inth-consent-dialog-trigger>`. */
 	trigger?: ConformanceEntry;
 	/**
 	 * Rendered only for scenarios that probe gates: a component that wraps
 	 * `<iframe data-testid="policy-iframe" title="probe" sandbox=""
-	 * src="about:blank#c15t-policy-probe">` in a marketing `ConsentGate`
+	 * src="about:blank#inth-policy-probe">` in a marketing `ConsentGate`
 	 * whose placeholder is `<div data-testid="policy-iframe-placeholder">`.
 	 */
 	gateProbe?: ConformanceEntry;

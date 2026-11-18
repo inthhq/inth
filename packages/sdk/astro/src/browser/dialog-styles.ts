@@ -16,7 +16,7 @@
  */
 
 /** Marks the `<link>` elements this module owns. */
-export const DIALOG_STYLES_ATTRIBUTE = 'data-c15t-dialog-styles';
+export const DIALOG_STYLES_ATTRIBUTE = 'data-inth-dialog-styles';
 
 interface LinkedStylesheet {
 	element: HTMLLinkElement;

@@ -7,7 +7,7 @@ import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const root = document.documentElement;
-const isDark = () => root.classList.contains('c15t-dark');
+const isDark = () => root.classList.contains('inth-dark');
 
 const renderWith = (colorScheme?: ConsentManagerOptions['colorScheme']) => {
 	const options = {
@@ -57,7 +57,7 @@ describe('ConsentProvider colorScheme', () => {
 		result.unmount();
 	});
 
-	test('null leaves c15t-dark to the site', async () => {
+	test('null leaves inth-dark to the site', async () => {
 		stubSystemDark(true);
 		root.classList.add('dark');
 		const result = renderWith(null);

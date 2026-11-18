@@ -71,7 +71,7 @@ const readModeOptions = function readModeOptions(
 /**
  * Resolves the visitor's consent state for a Nuxt server render.
  *
- * @param config - The merged c15t runtime config.
+ * @param config - The merged Inth runtime config.
  * @param request - The request facts from Nuxt's composables.
  * @returns The serializable state the client hydrates from.
  */

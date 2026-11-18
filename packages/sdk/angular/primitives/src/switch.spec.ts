@@ -38,23 +38,23 @@ afterEach(() => {
 	template: `
 		<button
 			id="model"
-			c15tSwitch
+			inthSwitch
 			[(checked)]="on"
 		>
-			<span c15tSwitchThumb></span
+			<span inthSwitchThumb></span
 			><input
-				c15tSwitchHiddenInput
+				inthSwitchHiddenInput
 				name="m"
 			/>
 		</button>
 		<button
 			id="ng-model"
-			c15tSwitch
+			inthSwitch
 			[(ngModel)]="ngOn"
 		></button>
 		<button
 			id="reactive"
-			c15tSwitch
+			inthSwitch
 			[formControl]="control"
 		></button>
 	`,
@@ -65,7 +65,7 @@ class Switches {
 	readonly control = new FormControl(false, { nonNullable: true });
 }
 
-describe('c15tSwitch', () => {
+describe('inthSwitch', () => {
 	test('renders the switch contract and toggles on click and Enter', async () => {
 		const { fixture, get } = await render(Switches);
 		const button = get('#model');

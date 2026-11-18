@@ -22,7 +22,7 @@ export interface PreferenceItemContextValue {
 }
 
 export const preferenceItemKey: InjectionKey<PreferenceItemContextValue> =
-	Symbol('c15t-vue-preference-item');
+	Symbol('inth-vue-preference-item');
 
 /**
  * Publish the root's state to its sub-components.

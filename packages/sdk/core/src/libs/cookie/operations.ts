@@ -172,7 +172,7 @@ export const setCookie = function setCookie(
 };
 
 /**
- * Parses a stored c15t cookie value using the same compact format that
+ * Parses a stored Inth cookie value using the same compact format that
  * `setCookie` writes. This is safe for server adapters that already have the
  * raw cookie value from a request header and cannot read `document.cookie`.
  *

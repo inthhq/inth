@@ -40,7 +40,7 @@ import { createVueConsentKernelContext } from './test-kernel';
 const SUBSCRIBERS = 50;
 
 const init: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({

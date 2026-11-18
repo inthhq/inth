@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
-import { provideC15t } from '../core/provide-c15t';
+import { provideInth } from '../core/provide-inth';
 import { Branding } from './branding';
 
 @Component({
@@ -13,7 +13,7 @@ import { Branding } from './branding';
 	selector: 'test-host',
 	template: `
 		<a
-			c15t-branding
+			inth-branding
 			variant="banner-tag"
 			data-testid="branding"
 		></a>
@@ -24,7 +24,7 @@ class Host {}
 const boot = async () => {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({
+			provideInth({
 				...testOptions(),
 				legalLinks: {
 					privacyPolicy: { href: '/privacy' },
@@ -55,8 +55,8 @@ describe('Branding', () => {
 	test('renders the stock attribution link', async () => {
 		const { byTestId } = await boot();
 		const branding = byTestId('branding') as HTMLAnchorElement;
-		expect(branding.getAttribute('href')).toMatch(/^https:\/\/c15t\.com/u);
-		expect(branding.dataset.branding).toBe('c15t');
-		expect(branding.querySelector('svg title')?.textContent).toBe('c15t');
+		expect(branding.getAttribute('href')).toMatch(/^https:\/\/inth\.com/u);
+		expect(branding.dataset.branding).toBe('inth');
+		expect(branding.querySelector('svg title')?.textContent).toBe('inth');
 	});
 });

@@ -1,0 +1,88 @@
+import { isPlatformBrowser } from '@angular/common';
+import {
+	inject,
+	makeEnvironmentProviders,
+	PLATFORM_ID,
+	provideAppInitializer,
+	provideEnvironmentInitializer,
+} from '@angular/core';
+import type { EnvironmentProviders } from '@angular/core';
+
+import { ConsentManager } from './consent-manager';
+import { ConsentStyles } from './consent-styles';
+import { ConsentTheme } from './consent-theme';
+import type { DeferredRuntime } from './deferred/deferred-runtime';
+import { HeadlessConsent } from './headless-consent';
+import { INTH_OPTIONS } from './options';
+import type { InthProviderOptions } from './options';
+
+/**
+ * Set up Inth consent management for an application.
+ *
+ * Provides {@link ConsentManager}, {@link HeadlessConsent},
+ * {@link ConsentTheme} and {@link ConsentStyles}, and creates the consent
+ * state with the application, so gated scripts and the network blocker
+ * follow consent even before any consent component renders. The consent
+ * engine loads in a chunk of its own and starts in the browser after the
+ * first render; after a server render it can wait for the page's largest
+ * image. The server renders from the engine's initial state.
+ *
+ * Works with zoneless change detection and with zone.js. It provides no
+ * change detection itself: the application chooses.
+ *
+ * @param options - The backend (`projectUrl`, and an optional `mode`) and
+ *   the provider options, or an external `runtime` its owner starts and
+ *   disposes. `projectUrl` is required unless `mode` is `testing()` or
+ *   `enabled` is `false`.
+ * @returns Providers for `bootstrapApplication`'s `providers`, an
+ * `ApplicationConfig`, or a route's `providers`.
+ *
+ * @example
+ * ```ts
+ * import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
+ * import { provideInth } from '@inth/angular';
+ *
+ * export const appConfig: ApplicationConfig = {
+ *   providers: [
+ *     provideZonelessChangeDetection(),
+ *     provideInth({ projectUrl: '/api/inth' }),
+ *   ],
+ * };
+ * ```
+ */
+export const provideInth = function provideInth(
+	options: InthProviderOptions
+): EnvironmentProviders {
+	return makeEnvironmentProviders([
+		{ provide: INTH_OPTIONS, useValue: options },
+		ConsentManager,
+		HeadlessConsent,
+		ConsentTheme,
+		ConsentStyles,
+		// Create the runtime and theme with the application, not on first
+		// injection: script gating and color scheme apply without any surface.
+		// Not on the server, where neither runs: there the manager is created
+		// by the render, after `provideInthServer()` resolved the request.
+		provideEnvironmentInitializer(() => {
+			if (!isPlatformBrowser(inject(PLATFORM_ID))) {
+				return;
+			}
+			inject(ConsentManager);
+			inject(ConsentTheme);
+		}),
+		// A page with no server render to hydrate whose app hands over the
+		// visitor's state (`prefetch`) renders the surfaces from it on the
+		// first render: bootstrap waits for the engine's chunk, which builds
+		// that state. Without `prefetch` the policy needs `/init` anyway.
+		provideAppInitializer(async () => {
+			if (!isPlatformBrowser(inject(PLATFORM_ID))) {
+				return;
+			}
+			const consent = inject(ConsentManager);
+			if (!consent.ɵwaitsForEngine()) {
+				return;
+			}
+			await (consent.runtime as DeferredRuntime).ready;
+		}),
+	]);
+};

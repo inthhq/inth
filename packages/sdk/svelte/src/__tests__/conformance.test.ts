@@ -3,7 +3,7 @@ import {
 	IAB_FIXTURE_CMP_VERSION,
 	MINIMAL_GVL,
 	runConformanceSuite,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 /**
  * Svelte conformance entry point.
  *
@@ -25,7 +25,7 @@ import type {
 	MountResult,
 	SuiteApi,
 	TestDriver,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import { deferInitGvl } from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
@@ -118,7 +118,7 @@ const buildProviderOptions = function buildProviderOptions(
 		opts.initMode !== 'pending' && opts.initMode !== 'failing';
 	const prefetch: KernelConfig = {
 		...(provided.prefetch ?? {}),
-		initialBranding: 'c15t',
+		initialBranding: 'inth',
 		// A server that resolved an IAB policy ships the vendor list in the
 		// state; the lazy `@inth/sdk/iab` factory only seeds it on the client.
 		initialIab:

@@ -38,7 +38,7 @@ export interface NextClientModeOptions {
 	 * The server helpers keep using the absolute URLs.
 	 */
 	proxy?: boolean;
-	/** Prefix of the app's catch-all consent route, such as `/api/c15t`. */
+	/** Prefix of the app's catch-all consent route, such as `/api/inth`. */
 	routePrefix?: string;
 }
 
@@ -74,7 +74,7 @@ export const createClientMode = function createClientMode(
 		if (process.env.NODE_ENV !== 'production' && !warnedImplementation) {
 			warnedImplementation = true;
 			console.warn(
-				`[c15t] ConsentRoot \`mode\` is the ${mode.kind}() transport itself, so its code ships in the first-load bundle. Use ${mode.kind}() from @inth/nextjs instead: it is plain data, and the root loads the code only when it runs.`
+				`[inth] ConsentRoot \`mode\` is the ${mode.kind}() transport itself, so its code ships in the first-load bundle. Use ${mode.kind}() from @inth/nextjs instead: it is plain data, and the root loads the code only when it runs.`
 			);
 		}
 		return mode;
@@ -95,7 +95,7 @@ export const createClientMode = function createClientMode(
 			`@inth/nextjs: \`projectUrl\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
-					: ' Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
+					: ' Set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in inth.config.ts.'
 			}`
 		);
 	}

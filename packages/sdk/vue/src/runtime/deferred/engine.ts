@@ -111,7 +111,7 @@ const nuxtClientMode = function nuxtClientMode(
 			`@inth/vue: \`projectUrl\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
-					: ' Set NUXT_PUBLIC_C15T_BACKEND_URL (or NUXT_PUBLIC_INTH_PROJECT_URL), or `c15t.projectUrl` in nuxt.config.ts.'
+					: ' Set NUXT_PUBLIC_INTH_PROJECT_URL (or NUXT_PUBLIC_INTH_PROJECT_URL), or `inth.projectUrl` in nuxt.config.ts.'
 			}`
 		);
 	}

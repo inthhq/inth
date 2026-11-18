@@ -126,7 +126,7 @@ const reportListenerError = function reportListenerError(error: unknown): void {
 			report(error);
 			return;
 		}
-		console.error('[c15t] A consent listener threw.', error);
+		console.error('[inth] A consent listener threw.', error);
 	} catch {
 		// A failing reporter must not break delivery.
 	}
@@ -200,7 +200,7 @@ export const createDispatcher = function createDispatcher(): Dispatcher {
 			cutOff = new Set();
 			reportListenerError(
 				new Error(
-					'[c15t] Consent listeners kept updating consent in response to each other; further notifications from them were dropped.'
+					'[inth] Consent listeners kept updating consent in response to each other; further notifications from them were dropped.'
 				)
 			);
 			return;

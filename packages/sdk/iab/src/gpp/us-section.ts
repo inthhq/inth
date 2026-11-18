@@ -17,7 +17,7 @@ import type { USSectionDefinition } from './sections';
  * How US visitors are signalled.
  *
  * - `state`: the visitor's state section (`usca`, `usva`, …). When the
- *   region is unknown or has no section c15t encodes, {@link GPPUSFallback}
+ *   region is unknown or has no section Inth encodes, {@link GPPUSFallback}
  *   decides.
  * - `national`: the MSPA US National section (`usnat`) for every US
  *   visitor. The MSPA reserves it for signatories that chose the national
@@ -27,7 +27,7 @@ export type GPPUSApproach = 'state' | 'national';
 
 /**
  * Under the state approach, what a US visitor gets when their region is
- * unknown or their state has no section c15t encodes.
+ * unknown or their state has no section Inth encodes.
  *
  * - `usnat`: the MSPA US National section carries the opt-outs, reported as
  *   a transaction the MSPA does not cover unless `mspaMode` is set.
@@ -117,7 +117,7 @@ const callsForUSSection = (rule: USSectionSnapshot['policyRule']): boolean =>
  * opt-out (a `none` rule without rights), gets no US section, wherever the
  * visitor is. Then the location picks the section. Under the state
  * approach, a US visitor whose region is unknown, or whose state has no
- * section c15t encodes, gets what `fallback` names.
+ * section Inth encodes, gets what `fallback` names.
  *
  * @param snapshot - Consent snapshot.
  * @param approach - State sections or the national section.
@@ -147,13 +147,13 @@ export const resolveUSSectionDefinition = function resolveUSSectionDefinition(
  * Field values for a US section.
  *
  * A sale, sharing or targeted advertising opt-out is reported when any of
- * `optOutCategories` is not permitted, so the signal matches what c15t
+ * `optOutCategories` is not permitted, so the signal matches what Inth
  * gates on the page: a refused category, a GPC signal the policy honours,
  * or an opt-in policy without a grant. The opt-out notices are reported as
  * given, since the section only applies under a rule that offers an
  * opt-out; the sharing or processing notice is given when the rule has the
  * `disclosure` right. Sensitive data and known-child consents are reported
- * as not applicable: c15t has no category for them.
+ * as not applicable: Inth has no category for them.
  *
  * @param definition - The section to fill.
  * @param snapshot - Consent snapshot.

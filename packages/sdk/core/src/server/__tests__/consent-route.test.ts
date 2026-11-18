@@ -33,7 +33,7 @@ const APP = 'https://app.example.com';
 const GVL_URL = 'https://gvl.example/vendor-list.json';
 
 const MANIFEST: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			categories: ['measurement', 'marketing'],
@@ -175,7 +175,7 @@ describe('dispatch', () => {
 		['manifest', 'manifest'],
 	])('path %j answers %s', async (path, expected) => {
 		const handle = route({ fetch: upstream() });
-		const response = await handle(request('/api/c15t/x'), { path });
+		const response = await handle(request('/api/inth/x'), { path });
 		expect(response.headers.get('cache-control')).toBe(
 			expected === 'init'
 				? 'private, no-store'
@@ -185,8 +185,8 @@ describe('dispatch', () => {
 
 	test('a fixed mount picks the manifest from its last segment and init otherwise', async () => {
 		const handle = route({ fetch: upstream() });
-		const manifest = await handle(request('/api/c15t/manifest'));
-		const init = await handle(request('/api/c15t'));
+		const manifest = await handle(request('/api/inth/manifest'));
+		const init = await handle(request('/api/inth'));
 		expect(manifest.headers.get('etag')).toBe('"manifest-revision"');
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
 	});
@@ -194,11 +194,11 @@ describe('dispatch', () => {
 	test('an unknown path is a 404 that never reaches upstream without the proxy', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch });
-		const unknown = await handle(request('/api/c15t/subjects'), {
+		const unknown = await handle(request('/api/inth/subjects'), {
 			path: 'subjects',
 		});
 		const write = await handle(
-			request('/api/c15t/subjects', { body: '{}', method: 'POST' }),
+			request('/api/inth/subjects', { body: '{}', method: 'POST' }),
 			{ path: 'subjects' }
 		);
 		expect(unknown.status).toBe(404);
@@ -210,7 +210,7 @@ describe('dispatch', () => {
 		const path = `unknown/${'/'.repeat(100_000)}missing///`;
 		const handle = route({ fetch: upstream() });
 		const start = performance.now();
-		const response = await handle(request(`/api/c15t/${path}`), {
+		const response = await handle(request(`/api/inth/${path}`), {
 			path: `///${path}`,
 		});
 		expect(performance.now() - start).toBeLessThan(1000);
@@ -221,12 +221,12 @@ describe('dispatch', () => {
 describe('upstream source', () => {
 	test('reads the manifest below projectUrl, or manifestUrl when set', async () => {
 		const fromBackend = upstream();
-		await route({ fetch: fromBackend })(request('/api/c15t/manifest'));
+		await route({ fetch: fromBackend })(request('/api/inth/manifest'));
 		const fromManifestUrl = upstream();
 		await route({
 			fetch: fromManifestUrl,
 			manifestUrl: 'https://cdn.example.com/m.json',
-		})(request('/api/c15t/manifest'));
+		})(request('/api/inth/manifest'));
 		expect(calledURLs(fromBackend)).toEqual([`${BACKEND}/manifest`]);
 		expect(calledURLs(fromManifestUrl)).toEqual([
 			'https://cdn.example.com/m.json',
@@ -236,7 +236,7 @@ describe('upstream source', () => {
 	test('a relative URL resolves against request.url, never a forged forwarding header', async () => {
 		const fetch = upstream();
 		await route({ fetch, projectUrl: '/consent-backend' })(
-			request('/api/c15t/manifest', {
+			request('/api/inth/manifest', {
 				headers: { 'x-forwarded-host': 'evil.example' },
 			})
 		);
@@ -250,7 +250,7 @@ describe('upstream source', () => {
 			projectUrl: '/consent-backend',
 			trustForwardedHeaders: true,
 		})(
-			request('/api/c15t/manifest', {
+			request('/api/inth/manifest', {
 				headers: {
 					'x-forwarded-host': 'public.example',
 					'x-forwarded-proto': 'https',
@@ -266,7 +266,7 @@ describe('upstream source', () => {
 		const fetch = upstream();
 		const localFetch = upstream();
 		await route({ fetch, projectUrl: '/api/self-host' })(
-			new Request('http://evil.example/api/c15t/manifest'),
+			new Request('http://evil.example/api/inth/manifest'),
 			{ localFetch, route: 'manifest' }
 		);
 		expect(calledURLs(localFetch)).toEqual(['/api/self-host/manifest']);
@@ -276,30 +276,30 @@ describe('upstream source', () => {
 	test('an absolute URL uses the configured fetch even with localFetch', async () => {
 		const fetch = upstream();
 		const localFetch = upstream();
-		await route({ fetch })(request('/api/c15t/manifest'), { localFetch });
+		await route({ fetch })(request('/api/inth/manifest'), { localFetch });
 		expect(calledURLs(fetch)).toEqual([`${BACKEND}/manifest`]);
 		expect(localFetch).not.toHaveBeenCalled();
 	});
 
 	test('throws without a configured URL, whatever the environment says', async () => {
-		vi.stubEnv('C15T_BACKEND_URL', BACKEND);
-		vi.stubEnv('C15T_MANIFEST_URL', `${BACKEND}/manifest`);
+		vi.stubEnv('INTH_PROJECT_URL', BACKEND);
+		vi.stubEnv('INTH_MANIFEST_URL', `${BACKEND}/manifest`);
 		const handle = route({ projectUrl: undefined });
-		await expect(handle(request('/api/c15t/init'))).rejects.toThrow(
+		await expect(handle(request('/api/inth/init'))).rejects.toThrow(
 			'@c15t/test: pass projectUrl or manifestUrl.'
 		);
-		await expect(handle(request('/api/c15t/manifest'))).rejects.toThrow(
+		await expect(handle(request('/api/inth/manifest'))).rejects.toThrow(
 			'@c15t/test: pass projectUrl or manifestUrl.'
 		);
 	});
 
 	test('rejects a projectUrl or manifestUrl it cannot resolve', async () => {
 		await expect(
-			route({ projectUrl: 'consent.example.com' })(request('/api/c15t/init'))
+			route({ projectUrl: 'consent.example.com' })(request('/api/inth/init'))
 		).rejects.toThrow('@c15t/test: invalid projectUrl.');
 		await expect(
 			route({ manifestUrl: '//evil.example/manifest' })(
-				request('/api/c15t/manifest')
+				request('/api/inth/manifest')
 			)
 		).rejects.toThrow('@c15t/test: invalid manifestUrl.');
 	});
@@ -307,7 +307,7 @@ describe('upstream source', () => {
 	test('an invalid manifestUrl is an error, not a reason to fall back to /init', async () => {
 		const fetch = upstream();
 		await expect(
-			route({ fetch, manifestUrl: 'not a url' })(request('/api/c15t/init'))
+			route({ fetch, manifestUrl: 'not a url' })(request('/api/inth/init'))
 		).rejects.toThrow('@c15t/test: invalid manifestUrl.');
 		expect(fetch).not.toHaveBeenCalled();
 	});
@@ -315,7 +315,7 @@ describe('upstream source', () => {
 	test('passes the framework fetch hint to the manifest request', async () => {
 		const fetch = upstream();
 		await route({ fetch, manifestFetchInit: { cache: 'force-cache' } })(
-			request('/api/c15t/init')
+			request('/api/inth/init')
 		);
 		expect(fetch.mock.calls[0]?.[1]).toMatchObject({ cache: 'force-cache' });
 	});
@@ -324,7 +324,7 @@ describe('upstream source', () => {
 describe('manifest route', () => {
 	test('passes the backend cache headers through and invents none', async () => {
 		const handle = route({ fetch: upstream() });
-		const response = await handle(request('/api/c15t/manifest'));
+		const response = await handle(request('/api/inth/manifest'));
 		expect(response.status).toBe(200);
 		expect(response.headers.get('content-type')).toBe('application/json');
 		expect(response.headers.get('cache-control')).toBe(
@@ -341,7 +341,7 @@ describe('manifest route', () => {
 
 		clearManifestCache();
 		const bare = await route({ fetch: upstream(MANIFEST, {}) })(
-			request('/api/c15t/manifest')
+			request('/api/inth/manifest')
 		);
 		expect(bare.headers.get('cache-control')).toBeNull();
 		expect(bare.headers.get('x-c15t-next-revalidate')).toBeNull();
@@ -357,11 +357,11 @@ describe('manifest route', () => {
 				etag: '"v1"',
 			});
 			const handle = route({ fetch });
-			const first = await handle(request('/api/c15t/manifest'));
+			const first = await handle(request('/api/inth/manifest'));
 			expect(first.headers.get('age')).toBe('55');
 			clock.mockReturnValue(2000);
 			const second = await handle(
-				request('/api/c15t/manifest', {
+				request('/api/inth/manifest', {
 					headers: conditional ? { 'if-none-match': '"v1"' } : {},
 				})
 			);
@@ -377,7 +377,7 @@ describe('manifest route', () => {
 
 	test('serves the body when the ETag does not match', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/c15t/manifest', { headers: { 'if-none-match': '"old"' } })
+			request('/api/inth/manifest', { headers: { 'if-none-match': '"old"' } })
 		);
 		expect(response.status).toBe(200);
 	});
@@ -392,10 +392,10 @@ describe('manifest route', () => {
 		const waitUntil = (task: Promise<void>) => {
 			registered.push(task);
 		};
-		await handle(request('/api/c15t/manifest'), { waitUntil });
+		await handle(request('/api/inth/manifest'), { waitUntil });
 		expect(registered).toHaveLength(0);
 		vi.advanceTimersByTime(1500);
-		const stale = await handle(request('/api/c15t/manifest'), { waitUntil });
+		const stale = await handle(request('/api/inth/manifest'), { waitUntil });
 		expect(stale.status).toBe(200);
 		expect(registered).toHaveLength(1);
 		await expect(registered[0]).resolves.toBeUndefined();
@@ -413,7 +413,7 @@ describe('manifest route', () => {
 			const fetch = upstream();
 			await route({ fetch })(
 				request(
-					`/api/c15t/manifest?utm_source=mail&language=${encodeURIComponent(language)}&visitor=42`
+					`/api/inth/manifest?utm_source=mail&language=${encodeURIComponent(language)}&visitor=42`
 				)
 			);
 			expect(calledURLs(fetch)).toEqual([`${BACKEND}/manifest${search}`]);
@@ -423,8 +423,8 @@ describe('manifest route', () => {
 	test('the visitor query never splits the cache', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch });
-		await handle(request('/api/c15t/manifest?a=1'));
-		await handle(request('/api/c15t/manifest?b=2'));
+		await handle(request('/api/inth/manifest?a=1'));
+		await handle(request('/api/inth/manifest?b=2'));
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
@@ -439,7 +439,7 @@ describe('manifest route', () => {
 			fetch: upstream(),
 			manifest: { ...MANIFEST, scriptRegistry: { sources: scriptSources } },
 		});
-		const init = await handle(request('/api/c15t/init'), {
+		const init = await handle(request('/api/inth/init'), {
 			inputs: { country: 'DE' },
 		});
 		expect((await init.json()).scriptRegistry?.sources).toEqual(scriptSources);
@@ -448,9 +448,9 @@ describe('manifest route', () => {
 	test('serves an inline manifest without fetching', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch, manifest: MANIFEST });
-		const response = await handle(request('/api/c15t/manifest'));
+		const response = await handle(request('/api/inth/manifest'));
 		expect(await response.json()).toEqual(MANIFEST);
-		const init = await handle(request('/api/c15t/init'), {
+		const init = await handle(request('/api/inth/init'), {
 			inputs: { country: 'DE' },
 		});
 		expect(await init.json()).toMatchObject({
@@ -467,24 +467,24 @@ describe('manifest request credentials', () => {
 		const fetch = upstream();
 		await route({
 			fetch,
-			proxy: { cookieNames: ['c15t'], forwardHeaders: ['authorization'] },
+			proxy: { cookieNames: ['inth'], forwardHeaders: ['authorization'] },
 		})(
-			request('/api/c15t/manifest', {
+			request('/api/inth/manifest', {
 				headers: {
 					authorization: 'Bearer tenant',
-					cookie: 'session=secret; c15t=abc',
+					cookie: 'session=secret; inth=abc',
 				},
 			})
 		);
 		const headers = callHeaders(fetch);
-		expect(headers.get('cookie')).toBe('c15t=abc');
+		expect(headers.get('cookie')).toBe('inth=abc');
 		expect(headers.get('authorization')).toBe('Bearer tenant');
 	});
 
 	test('without the proxy, sends no credentials', async () => {
 		const fetch = upstream();
 		await route({ fetch })(
-			request('/api/c15t/manifest', { headers: { cookie: 'c15t=abc' } })
+			request('/api/inth/manifest', { headers: { cookie: 'inth=abc' } })
 		);
 		expect(callHeaders(fetch).get('cookie')).toBeNull();
 	});
@@ -494,16 +494,16 @@ describe('manifest request credentials', () => {
 			'cache-control': 'public, s-maxage=120',
 			etag: '"rev"',
 		});
-		const handle = route({ fetch, proxy: { cookieNames: ['c15t'] } });
+		const handle = route({ fetch, proxy: { cookieNames: ['inth'] } });
 		const credentialed = await handle(
-			request('/api/c15t/manifest', {
-				headers: { cookie: 'c15t=abc', 'if-none-match': '"rev"' },
+			request('/api/inth/manifest', {
+				headers: { cookie: 'inth=abc', 'if-none-match': '"rev"' },
 			})
 		);
 		expect(credentialed.status).toBe(200);
 		expect(credentialed.headers.get('cache-control')).toBe('private, no-store');
 		expect(credentialed.headers.get('etag')).toBeNull();
-		const anonymous = await handle(request('/api/c15t/manifest'));
+		const anonymous = await handle(request('/api/inth/manifest'));
 		expect(anonymous.headers.get('cache-control')).toBe('public, s-maxage=120');
 	});
 
@@ -519,7 +519,7 @@ describe('manifest request credentials', () => {
 				],
 			},
 		})(
-			request('/api/c15t/manifest', {
+			request('/api/inth/manifest', {
 				headers: {
 					'x-forwarded-for': '203.0.113.7',
 					'x-forwarded-host': 'evil.example',
@@ -540,7 +540,7 @@ describe('manifest request credentials', () => {
 			projectUrl: 'http://backend.example',
 			proxy: { forwardHeaders: ['x-api-key', 'accept-language'] },
 		})(
-			request('/api/c15t/manifest', {
+			request('/api/inth/manifest', {
 				headers: { 'accept-language': 'de', 'x-api-key': 'tenant-a' },
 			})
 		);
@@ -555,7 +555,7 @@ describe('init route', () => {
 	test('resolves geo, language and GPC locally and is never shared-cached', async () => {
 		const fetch = upstream();
 		const response = await route({ fetch })(
-			request('/api/c15t/init', {
+			request('/api/inth/init', {
 				headers: {
 					'accept-language': 'de-DE,de;q=0.9',
 					'x-c15t-gpc': '1',
@@ -583,7 +583,7 @@ describe('init route', () => {
 
 	test('echoes the resolved inputs so a server-rendered page keeps GPC', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/c15t/init', {
+			request('/api/inth/init', {
 				headers: { 'x-c15t-country': 'DE', 'x-c15t-gpc': '1' },
 			})
 		);
@@ -595,7 +595,7 @@ describe('init route', () => {
 
 	test('adapter-supplied inputs win over the request headers', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/c15t/init', {
+			request('/api/inth/init', {
 				headers: { 'accept-language': 'en', 'x-c15t-country': 'US' },
 			}),
 			{ inputs: { country: 'DE', language: 'de' } }
@@ -609,7 +609,7 @@ describe('init route', () => {
 
 	test('reads the inputs a browser sends as query parameters', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/c15t/init?v=3.1.0&contract=1&country=DE&gpc=1', {
+			request('/api/inth/init?v=3.1.0&contract=1&country=DE&gpc=1', {
 				headers: { 'x-c15t-country': 'US' },
 			})
 		);
@@ -624,7 +624,7 @@ describe('init route', () => {
 		// Next.js wraps the request in a Proxy that reads every property from
 		// the real request. Node 24's Request constructor rejects the Proxy
 		// itself as an input.
-		const real = request('/api/c15t/init?country=DE&gpc=1', {
+		const real = request('/api/inth/init?country=DE&gpc=1', {
 			headers: { 'x-c15t-country': 'US' },
 		});
 		const proxied = new Proxy(real, {
@@ -640,7 +640,7 @@ describe('init route', () => {
 
 	test('fails a client that declares an unknown contract in the query', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/c15t/init?contract=99&country=DE')
+			request('/api/inth/init?contract=99&country=DE')
 		);
 		expect((await response.json()).policyResolution).toMatchObject({
 			reason: 'unsupported-contract',
@@ -650,7 +650,7 @@ describe('init route', () => {
 
 	test('query overrides win over adapter-supplied inputs, as override headers did', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/c15t/init?country=DE'),
+			request('/api/inth/init?country=DE'),
 			{ inputs: { country: 'US', language: 'de' } }
 		);
 		expect(await response.json()).toMatchObject({
@@ -667,7 +667,7 @@ describe('init route', () => {
 				headers['x-c15t-policy-contract'] = contract;
 			}
 			const response = await route({ fetch: upstream() })(
-				request('/api/c15t/init', { headers })
+				request('/api/inth/init', { headers })
 			);
 			expect(await response.json()).toMatchObject({
 				policyResolution: { status: 'matched' },
@@ -680,7 +680,7 @@ describe('init route', () => {
 		async (contract) => {
 			const gvlFetch = upstream(IAB_MANIFEST);
 			const response = await route({ fetch: gvlFetch })(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					headers: {
 						'x-c15t-country': 'DE',
 						'x-c15t-policy-contract': contract,
@@ -745,7 +745,7 @@ describe('Google Additional Consent providers', () => {
 	test('are served with the IAB init the manifest resolves', async () => {
 		const response = await route({
 			fetch: withProviders(providerManifest),
-		})(request('/api/c15t/init'));
+		})(request('/api/inth/init'));
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders).toEqual([
 			{ id: 89, name: 'Meta', policyUrl: 'https://meta.example/privacy' },
@@ -758,14 +758,14 @@ describe('Google Additional Consent providers', () => {
 			iab: providerManifest.iab,
 		} as ConsentManifest);
 		const notIab = await route({ fetch: optIn })(
-			request('/api/c15t/init', { headers: { 'x-c15t-country': 'DE' } })
+			request('/api/inth/init', { headers: { 'x-c15t-country': 'DE' } })
 		);
 		expect(await notIab.json()).not.toHaveProperty('adTechProviders');
 
 		const failed = await route({
 			fetch: withProviders(providerManifest),
 		})(
-			request('/api/c15t/init', {
+			request('/api/inth/init', {
 				headers: { 'x-c15t-policy-contract': '99' },
 			})
 		);
@@ -803,7 +803,7 @@ describe('Google Additional Consent providers', () => {
 		const fetch = vi.fn<ManifestFetch>((input, init) =>
 			String(input).includes('/api/ac-relative') ? answer() : base(input, init)
 		);
-		const response = await route({ fetch })(request('/api/c15t/init'));
+		const response = await route({ fetch })(request('/api/inth/init'));
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders?.map(({ id }) => id)).toEqual([89]);
 		expect(calledURLs(fetch)).toContain(
@@ -815,7 +815,7 @@ describe('Google Additional Consent providers', () => {
 		const { answer, manifest } = relativeEndpoint('/api/ac-local');
 		const fetch = upstream(manifest);
 		const localFetch = vi.fn<ManifestFetch>(() => answer());
-		const response = await route({ fetch })(request('/api/c15t/init'), {
+		const response = await route({ fetch })(request('/api/inth/init'), {
 			localFetch,
 		});
 		const body = (await response.json()) as InitOutput;
@@ -831,9 +831,9 @@ describe('Google Additional Consent providers', () => {
 		const firstLocal = vi.fn<ManifestFetch>(() => answer());
 		const secondLocal = vi.fn<ManifestFetch>(() => answer());
 		const nextRequest = vi.fn<ManifestFetch>(() => answer());
-		await first(request('/api/c15t/init'), { localFetch: firstLocal });
-		await second(request('/api/c15t/init'), { localFetch: secondLocal });
-		await first(request('/api/c15t/init'), { localFetch: nextRequest });
+		await first(request('/api/inth/init'), { localFetch: firstLocal });
+		await second(request('/api/inth/init'), { localFetch: secondLocal });
+		await first(request('/api/inth/init'), { localFetch: nextRequest });
 		expect(firstLocal).toHaveBeenCalledOnce();
 		expect(secondLocal).toHaveBeenCalledOnce();
 		// Adapters pass a new localFetch per request; the handler's cache
@@ -844,7 +844,7 @@ describe('Google Additional Consent providers', () => {
 	test('are withdrawn with an empty list once the manifest stops listing them', async () => {
 		const response = await route({
 			fetch: withProviders(IAB_MANIFEST as unknown as ConsentManifest),
-		})(request('/api/c15t/init'));
+		})(request('/api/inth/init'));
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders).toEqual([]);
 	});
@@ -854,7 +854,7 @@ describe('vendor list', () => {
 	test('is not loaded for a policy that is not IAB', async () => {
 		const fetchGvl = vi.fn(() => Promise.resolve(GVL));
 		await route({ fetch: upstream(), fetchGvl })(
-			request('/api/c15t/init', { headers: { 'x-c15t-country': 'DE' } })
+			request('/api/inth/init', { headers: { 'x-c15t-country': 'DE' } })
 		);
 		expect(fetchGvl).not.toHaveBeenCalled();
 	});
@@ -896,9 +896,9 @@ describe('vendor list', () => {
 	test('the default loader reads through the process cache with the protocol headers', async () => {
 		const fetch = upstream(IAB_MANIFEST);
 		const handle = route({ fetch });
-		await handle(request('/api/c15t/init'));
-		await handle(request('/api/c15t/init'));
-		await handle(request('/api/c15t/init?c15t-gvl=42&language=en'));
+		await handle(request('/api/inth/init'));
+		await handle(request('/api/inth/init'));
+		await handle(request('/api/inth/init?c15t-gvl=42&language=en'));
 		const gvlCalls = fetch.mock.calls.filter(([url]) =>
 			String(url).startsWith(GVL_URL)
 		);
@@ -914,7 +914,7 @@ describe('vendor list', () => {
 			fetch,
 			fetchGvl: () => Promise.reject(new Error('gvl is down')),
 		});
-		await expect(handle(request('/api/c15t/init'))).rejects.toThrow(
+		await expect(handle(request('/api/inth/init'))).rejects.toThrow(
 			'gvl is down'
 		);
 		await flush();
@@ -941,7 +941,7 @@ describe('vendor list', () => {
 			}
 			return Promise.resolve(json(IAB_MANIFEST));
 		});
-		const pending = route({ fetch })(request('/api/c15t/init'));
+		const pending = route({ fetch })(request('/api/inth/init'));
 		await flush();
 		expect(timeout).toHaveBeenCalledWith(GVL_FETCH_TIMEOUT_MS);
 		deadlines.at(-1)?.abort();
@@ -957,9 +957,9 @@ describe('session reports', () => {
 		const fetch = upstream();
 		const registered: Promise<void>[] = [];
 		const response = await route({ fetch })(
-			request('/api/c15t/init', {
+			request('/api/inth/init', {
 				headers: {
-					cookie: 'c15t=secret',
+					cookie: 'inth=secret',
 					'user-agent': 'Mozilla/5.0',
 					'x-c15t-gpc': '1',
 					'x-forwarded-for': '203.0.113.42',
@@ -992,7 +992,7 @@ describe('session reports', () => {
 		const registered: Promise<void>[] = [];
 		const id = '3b241101-e2bb-4255-8caf-4136c566a962';
 		await route({ fetch })(
-			request(`/api/c15t/init?journey=${id}&journeyScope=page&stored=0`, {
+			request(`/api/inth/init?journey=${id}&journeyScope=page&stored=0`, {
 				headers: { 'x-vercel-ip-country': 'DE' },
 			}),
 			{ waitUntil: (task) => registered.push(task) }
@@ -1011,7 +1011,7 @@ describe('session reports', () => {
 		const fetch = upstream();
 		const registered: Promise<void>[] = [];
 		await route({ fetch })(
-			request('/api/c15t/init?journey=visitor-42&journeyScope=page&stored=0'),
+			request('/api/inth/init?journey=visitor-42&journeyScope=page&stored=0'),
 			{ waitUntil: (task) => registered.push(task) }
 		);
 		await registered[0];
@@ -1031,7 +1031,7 @@ describe('session reports', () => {
 	] as const)('sends none for %s', async (_, options, init) => {
 		const fetch = upstream();
 		const response = await route({ fetch, ...options })(
-			request('/api/c15t/init', init)
+			request('/api/inth/init', init)
 		);
 		expect(response.status).toBe(200);
 		await flush();
@@ -1045,7 +1045,7 @@ describe('session reports', () => {
 		const controller = new AbortController();
 		controller.abort();
 		await route({ fetch })(
-			request('/api/c15t/init', { signal: controller.signal })
+			request('/api/inth/init', { signal: controller.signal })
 		);
 		await flush();
 		expect(reportCall(fetch)).toBeUndefined();
@@ -1064,7 +1064,7 @@ describe('client abort', () => {
 		const controller = new AbortController();
 		const registered: Promise<void>[] = [];
 		const pending = route({ fetch })(
-			request('/api/c15t/init', { signal: controller.signal }),
+			request('/api/inth/init', { signal: controller.signal }),
 			{ waitUntil: (task) => registered.push(task) }
 		);
 		await flush();
@@ -1091,7 +1091,7 @@ describe('request budget', () => {
 		// once a millisecond ticks before the read starts.
 		await expect(
 			route({ fetch })(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: '20' },
 				})
 			)
@@ -1112,7 +1112,7 @@ describe('request budget', () => {
 		const registered: Promise<void>[] = [];
 		await expect(
 			route({ fetch })(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: '50' },
 				}),
 				{ waitUntil: (task) => registered.push(task) }
@@ -1135,7 +1135,7 @@ describe('request budget', () => {
 		const startedAt = Date.now();
 		await expect(
 			route({ projectUrl: '/api/self-host' })(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: '50' },
 				}),
 				{ localFetch }
@@ -1152,7 +1152,7 @@ describe('request budget', () => {
 		'ignores a budget header of %j',
 		async (value) => {
 			const response = await route({ fetch: upstream() })(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: value },
 				})
 			);
@@ -1196,9 +1196,9 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const response = await route({ projectUrl: '/api/self-host' })(
-			request('/api/c15t/init', {
+			request('/api/inth/init', {
 				headers: {
-					cookie: 'c15t=secret',
+					cookie: 'inth=secret',
 					'user-agent': 'Mozilla/5.0',
 					'x-c15t-country': 'DE',
 					'x-forwarded-for': '203.0.113.42',
@@ -1231,7 +1231,7 @@ describe('/init fallback for a backend without /manifest', () => {
 		const id = '3b241101-e2bb-4255-8caf-4136c566a962';
 		await route({ projectUrl: '/api/self-host' })(
 			request(
-				`/api/c15t/init?utm_source=mail&journey=${id}&journeyScope=tab&stored=1`
+				`/api/inth/init?utm_source=mail&journey=${id}&journeyScope=tab&stored=1`
 			),
 			{ localFetch }
 		);
@@ -1249,7 +1249,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		await route({ projectUrl: '/api/self-host' })(
-			request('/api/c15t/init?country=DE&gpc=0&contract=1'),
+			request('/api/inth/init?country=DE&gpc=0&contract=1'),
 			{ localFetch }
 		);
 		expect(localFetch).toHaveBeenLastCalledWith(
@@ -1275,17 +1275,17 @@ describe('/init fallback for a backend without /manifest', () => {
 					?.headers
 			).get('origin');
 		// A same-origin GET carries no Origin: the request URL is the page's.
-		await handle(request(`/api/c15t/init${query}`));
+		await handle(request(`/api/inth/init${query}`));
 		expect(lastInitOrigin()).toBe(APP);
 		// One the browser sent wins.
 		await handle(
-			request(`/api/c15t/init${query}`, {
+			request(`/api/inth/init${query}`, {
 				headers: { origin: 'https://www.example.org' },
 			})
 		);
 		expect(lastInitOrigin()).toBe('https://www.example.org');
 		// Without a journey nothing is added.
-		await handle(request('/api/c15t/init'));
+		await handle(request('/api/inth/init'));
 		expect(lastInitOrigin()).toBeNull();
 	});
 
@@ -1306,7 +1306,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			vendors: [acmeVendor],
 		});
 		const response = await route({ fetch })(
-			request('/api/c15t/init', { headers: { 'x-c15t-country': 'DE' } })
+			request('/api/inth/init', { headers: { 'x-c15t-country': 'DE' } })
 		);
 		const body = await response.json();
 		expect(body).toMatchObject({
@@ -1330,7 +1330,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const response = await route({ fetch })(
-			request('/api/c15t/init', { headers: { 'x-c15t-country': 'DE' } })
+			request('/api/inth/init', { headers: { 'x-c15t-country': 'DE' } })
 		);
 		expect((await response.json()).scriptRegistry?.sources).toEqual(
 			scriptSources
@@ -1352,7 +1352,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const response = await route({ fetch })(
-			request('/api/c15t/init', {
+			request('/api/inth/init', {
 				headers: { 'x-c15t-policy-contract': '1' },
 			})
 		);
@@ -1367,7 +1367,7 @@ describe('/init fallback for a backend without /manifest', () => {
 		'drops stale policy evidence after a $status answer',
 		async (resolution) => {
 			const fetch = backendInit({
-				branding: 'c15t',
+				branding: 'inth',
 				cmpId: 7,
 				customVendors: [{ id: 'stale' }],
 				gvl: { vendorListVersion: 1 },
@@ -1380,7 +1380,7 @@ describe('/init fallback for a backend without /manifest', () => {
 				translations: { language: 'en', translations: {} },
 			});
 			const response = await route({ fetch })(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					headers: { 'x-c15t-policy-contract': '1' },
 				})
 			);
@@ -1396,7 +1396,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			]) {
 				expect(body).not.toHaveProperty(key);
 			}
-			expect(body.branding).toBe('c15t');
+			expect(body.branding).toBe('inth');
 			expect(body.subjectId).toBe('backend+literal');
 		}
 	);
@@ -1420,7 +1420,7 @@ describe('/init fallback for a backend without /manifest', () => {
 					: { 'x-c15t-policy-contract': declaration }
 			);
 			const response = await route({ fetch })(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					headers: { 'x-c15t-policy-contract': '1' },
 				})
 			);
@@ -1435,8 +1435,8 @@ describe('/init fallback for a backend without /manifest', () => {
 			Promise.resolve(new Response('unavailable', { status: 503 }))
 		);
 		const handle = route({ fetch });
-		await expect(handle(request('/api/c15t/init'))).rejects.toThrow(/503/u);
-		await expect(handle(request('/api/c15t/init'))).rejects.toThrow();
+		await expect(handle(request('/api/inth/init'))).rejects.toThrow(/503/u);
+		await expect(handle(request('/api/inth/init'))).rejects.toThrow();
 		expect(calledURLs(fetch)).toEqual([
 			`${BACKEND}/manifest`,
 			`${BACKEND}/init`,
@@ -1457,7 +1457,7 @@ describe('/init fallback for a backend without /manifest', () => {
 				: answer(url, init)
 		);
 		const handle = route({ fetch, projectUrl: `${BACKEND}/warn` });
-		expect((await handle(request('/api/c15t/init'))).ok).toBe(true);
+		expect((await handle(request('/api/inth/init'))).ok).toBe(true);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
 				`could not read the consent manifest from ${BACKEND}/warn/manifest`
@@ -1473,8 +1473,8 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const handle = route({ fetch });
-		expect((await handle(request('/api/c15t/init'))).ok).toBe(true);
-		expect((await handle(request('/api/c15t/init'))).ok).toBe(true);
+		expect((await handle(request('/api/inth/init'))).ok).toBe(true);
+		expect((await handle(request('/api/inth/init'))).ok).toBe(true);
 		expect(calledURLs(fetch).filter((url) => url.endsWith('/init'))).toEqual([
 			`${BACKEND}/init`,
 			`${BACKEND}/init`,
@@ -1490,7 +1490,7 @@ describe('/init fallback for a backend without /manifest', () => {
 				fetch,
 				manifestUrl: `${BACKEND}/manifest`,
 				projectUrl: undefined,
-			})(request('/api/c15t/manifest'))
+			})(request('/api/inth/manifest'))
 		).rejects.toThrow(/503/u);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
@@ -1500,8 +1500,8 @@ describe('proxy', () => {
 	test('keeps manifest and init in-process and forwards other paths and writes', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch, proxy: true });
-		await handle(request('/api/c15t/manifest'), { path: 'manifest' });
-		await handle(request('/api/c15t/init'), { path: 'init' });
+		await handle(request('/api/inth/manifest'), { path: 'manifest' });
+		await handle(request('/api/inth/init'), { path: 'init' });
 		// Init resolves in-process: the backend sees the manifest request and
 		// the session report, never `/init`.
 		expect(calledURLs(fetch).sort()).toEqual([
@@ -1513,7 +1513,7 @@ describe('proxy', () => {
 			Promise.resolve(json({ ok: true }, {}, 201))
 		);
 		const saved = await handle(
-			request('/api/c15t/subjects?x=1', {
+			request('/api/inth/subjects?x=1', {
 				body: '{"choice":"all"}',
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
@@ -1524,7 +1524,7 @@ describe('proxy', () => {
 		const [url, init] = fetch.mock.calls.at(-1) ?? [];
 		expect(url).toBe(`${BACKEND}/subjects?x=1`);
 		expect(init?.method).toBe('POST');
-		const health = await handle(request('/api/c15t/reports/manifest'), {
+		const health = await handle(request('/api/inth/reports/manifest'), {
 			path: 'reports/manifest',
 		});
 		expect(health.status).toBe(404);
@@ -1532,7 +1532,7 @@ describe('proxy', () => {
 
 	test('a dedicated proxy mount forwards its last segment', async () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
-		await route({ fetch, proxy: true })(request('/api/c15t/status'), {
+		await route({ fetch, proxy: true })(request('/api/inth/status'), {
 			route: 'proxy',
 		});
 		expect(calledURLs(fetch)).toEqual([`${BACKEND}/status`]);
@@ -1541,7 +1541,7 @@ describe('proxy', () => {
 	test('without trusted forwarding, believes only the request URL', async () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ fetch, proxy: true })(
-			request('/api/c15t/subjects', {
+			request('/api/inth/subjects', {
 				headers: {
 					'x-forwarded-for': '198.51.100.1',
 					'x-forwarded-host': 'evil.example',
@@ -1560,7 +1560,7 @@ describe('proxy', () => {
 	test('with trusted forwarding, keeps the chain and appends the client address', async () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ fetch, proxy: true, trustForwardedHeaders: true })(
-			request('/api/c15t/subjects', {
+			request('/api/inth/subjects', {
 				headers: {
 					'cf-connecting-ip': '203.0.113.9',
 					'x-forwarded-host': 'public.example',
@@ -1578,7 +1578,7 @@ describe('proxy', () => {
 	test('uses the hop chain the adapter vouches for', async () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ fetch, proxy: true })(
-			request('/api/c15t/subjects', { method: 'POST' }),
+			request('/api/inth/subjects', { method: 'POST' }),
 			{
 				forwarding: () => ({
 					for: '192.0.2.5',
@@ -1596,7 +1596,7 @@ describe('proxy', () => {
 	test('forwards to a relative backend through localFetch', async () => {
 		const localFetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ projectUrl: '/api/self-host', proxy: true })(
-			new Request('http://evil.example/api/c15t/subjects', { method: 'POST' }),
+			new Request('http://evil.example/api/inth/subjects', { method: 'POST' }),
 			{ localFetch, path: 'subjects' }
 		);
 		expect(calledURLs(localFetch)).toEqual(['/api/self-host/subjects']);
@@ -1608,7 +1608,7 @@ describe('proxy', () => {
 				manifestUrl: `${BACKEND}/manifest`,
 				projectUrl: undefined,
 				proxy: true,
-			})(request('/api/c15t/subjects', { method: 'POST' }), {
+			})(request('/api/inth/subjects', { method: 'POST' }), {
 				path: 'subjects',
 			})
 		).rejects.toThrow('@c15t/test: pass projectUrl to use proxy.');
@@ -1634,7 +1634,7 @@ describe('readWaitUntil', () => {
 describe('readRequestForwarding', () => {
 	const forwardingFor = (headers: Record<string, string>) =>
 		readRequestForwarding(
-			new Request('https://shop.example/api/c15t/init', { headers }),
+			new Request('https://shop.example/api/inth/init', { headers }),
 			true
 		).for;
 

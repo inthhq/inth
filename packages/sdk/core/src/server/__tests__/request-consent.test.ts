@@ -34,11 +34,11 @@ const GVL_URL = 'https://gvl.example/vendor-list.json';
 const NOW = 1_780_000_000_000;
 /** The URL a render fetched, without the consent journey it adds as a query. */
 const target = (input: unknown): string => String(input).split('?')[0] ?? '';
-const CONSENTED = `c15t=c.necessary:1,c.marketing:1,i.t:${NOW - 1000}`;
-const DISMISSED = `c15t-notice=v=1&t=${NOW - 1000}&f=${'a'.repeat(64)}`;
+const CONSENTED = `inth=c.necessary:1,c.marketing:1,i.t:${NOW - 1000}`;
+const DISMISSED = `inth-notice=v=1&t=${NOW - 1000}&f=${'a'.repeat(64)}`;
 
 const MANIFEST = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			categories: ['measurement', 'marketing'],
@@ -84,7 +84,7 @@ const GVL = {
 } as unknown as GlobalVendorList;
 
 const INIT: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -181,7 +181,7 @@ describe('request read', () => {
 			now: NOW,
 			request: {
 				headers: new Headers({
-					cookie: `other=1; ${CONSENTED.replace('c15t=', 'custom=')}`,
+					cookie: `other=1; ${CONSENTED.replace('inth=', 'custom=')}`,
 				}),
 			},
 			storage: { storageKey: 'custom' },
@@ -205,7 +205,7 @@ describe('request read', () => {
 		'a Node header record with a %s header reads the stored records',
 		(name) => {
 			const headers = {
-				[name]: `c15t-sid=sub_other; ${CONSENTED},i.sid:sub_recorded`,
+				[name]: `inth-sid=sub_other; ${CONSENTED},i.sid:sub_recorded`,
 			};
 			const { state } = readRequestConsent({
 				adapter: '@c15t/test',
@@ -316,9 +316,9 @@ describe('target resolution', () => {
 
 	describe('self-route guard', () => {
 		test.each([
-			['hosted', { projectUrl: '/api/c15t' }],
-			['manifest', { manifestUrl: '/api/c15t/manifest' }],
-			['an absolute same-origin URL', { projectUrl: `${APP}/api/c15t` }],
+			['hosted', { projectUrl: '/api/inth' }],
+			['manifest', { manifestUrl: '/api/inth/manifest' }],
+			['an absolute same-origin URL', { projectUrl: `${APP}/api/inth` }],
 		])('never fetches the app’s own consent route (%s)', async (_, source) => {
 			const fetch = upstream();
 			const onError = vi.fn();
@@ -350,14 +350,14 @@ describe('target resolution', () => {
 			expect(fetch).toHaveBeenCalledTimes(1);
 		});
 
-		test('an adapter with no own routes fetches a same-origin /api/c15t backend', async () => {
+		test('an adapter with no own routes fetches a same-origin /api/inth backend', async () => {
 			const fetch = upstream();
 			const state = await render({
 				fetch,
 				ownRoutes: [],
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			});
-			expect(target(fetch.mock.calls[0]?.[0])).toBe(`${APP}/api/c15t/init`);
+			expect(target(fetch.mock.calls[0]?.[0])).toBe(`${APP}/api/inth/init`);
 			expect(state.initialPolicyResolution?.status).toBe('matched');
 		});
 
@@ -400,11 +400,11 @@ describe('target resolution', () => {
 			const state = await render({
 				fetch,
 				headers: { cookie: CONSENTED },
-				initUrl: '/api/c15t/init',
+				initUrl: '/api/inth/init',
 				localFetch,
 			});
 			expect(fetch).not.toHaveBeenCalled();
-			expect(target(localFetch.mock.calls[0]?.[0])).toBe('/api/c15t/init');
+			expect(target(localFetch.mock.calls[0]?.[0])).toBe('/api/inth/init');
 			const headers = new Headers(localFetch.mock.calls[0]?.[1]?.headers);
 			expect(headers.get(CONSENT_ROUTE_TIMEOUT_HEADER)).toMatch(/^\d+$/u);
 			// The app's own route reads no cookie, so none is sent.
@@ -692,12 +692,12 @@ describe('vendor list deferral', () => {
 		expect(toList.initialIab?.gvlReference?.url).toBe(GVL_URL);
 
 		const toRoute = await render({
-			gvlRoute: '/api/c15t/init',
+			gvlRoute: '/api/inth/init',
 			mode: 'manifest',
 			projectUrl: BACKEND,
 		});
 		expect(toRoute.initialIab?.gvlReference?.url).toMatch(
-			/^\/api\/c15t\/init\?c15t-gvl=42/u
+			/^\/api\/inth\/init\?c15t-gvl=42/u
 		);
 	});
 
@@ -1087,7 +1087,7 @@ describe('consent journey', () => {
 	test('an in-process init route gets no Origin added', async () => {
 		const localFetch = upstream();
 		await render({
-			initUrl: '/api/c15t/init',
+			initUrl: '/api/inth/init',
 			localFetch: localFetch as unknown as ManifestFetch,
 			mode: 'hosted',
 		});

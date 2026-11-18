@@ -1,12 +1,12 @@
 ---
-title: c15t vs Didomi
-description: Choose c15t for native framework components, open-source consent logic and backend ownership. Compare Didomi's web and mobile SDKs, notice console and experiments.
+title: Inth vs Didomi
+description: Choose Inth for native framework components, open-source consent logic and backend ownership. Compare Didomi's web and mobile SDKs, notice console and experiments.
 group: reference
 ---
 
-## Choose c15t for consent that follows your product workflow
+## Choose Inth for consent that follows your product workflow
 
-c15t is the stronger fit when your developers want to own the consent interface, vendor rules and backend implementation. Changes can follow the same code review and release process as the application.
+Inth is the stronger fit when your developers want to own the consent interface, vendor rules and backend implementation. Changes can follow the same code review and release process as the application.
 
 Didomi combines a shared notice console with SDKs, APIs and consent analytics. It also supports React and custom interfaces, so developer access is common to both products.
 
@@ -14,7 +14,7 @@ Didomi combines a shared notice console with SDKs, APIs and consent analytics. I
 
 ## Compare the work your team controls
 
-| What you need | c15t | Didomi |
+| What you need | Inth | Didomi |
 | --- | --- | --- |
 | Integrate with application code | Native adapters across web frameworks | Hosted Web SDK and a React component |
 | Build a custom interface | Themes, component parts and headless APIs | Notice customisation and APIs for your own UI |
@@ -29,25 +29,25 @@ Sources: [Didomi platform](https://www.didomi.io/consent-management-platform), [
 
 ## Use one consent state across the product
 
-c15t lets your privacy controls, gated content and registered vendors use the same state. A designer can change the interface while a developer checks its behaviour in application tests.
+Inth lets your privacy controls, gated content and registered vendors use the same state. A designer can change the interface while a developer checks its behaviour in application tests.
 
 Start with the supplied components or build a [headless interface](/docs/frameworks/react/headless). Use [vendor controls](/docs/frameworks/react/vendor-consent) to connect an individual service to the visitor's choices.
 
-Didomi's React component loads its SDK and receives notice configuration from the Console. c15t gives you native components plus source code for the consent engine.
+Didomi's React component loads its SDK and receives notice configuration from the Console. Inth gives you native components plus source code for the consent engine.
 
 ## Keep experiments in your current release process
 
-Use your feature-flag tool to assign c15t [banner variants](/docs/guides/banner-experiments). The variant travels with impressions and choices, so you can compare outcomes.
+Use your feature-flag tool to assign Inth [banner variants](/docs/guides/banner-experiments). The variant travels with impressions and choices, so you can compare outcomes.
 
 The experiment changes presentation and theme. The policy, categories and policy text stay fixed.
 
-Didomi also has A/B tests. c15t's advantage for application teams is the ability to define the experiment in product code and choose the record backend.
+Didomi also has A/B tests. inth's advantage for application teams is the ability to define the experiment in product code and choose the record backend.
 
 ## Mobile apps
 
-<include src="../shared/comparisons/mobile-c15t.mdx" />
+<include src="../shared/comparisons/mobile-inth.mdx" />
 
-| What you need | c15t (private prerelease) | Didomi |
+| What you need | Inth (private prerelease) | Didomi |
 | --- | --- | --- |
 | Platforms | Swift, Kotlin, React Native and Expo | Android and Android TV, iOS and tvOS SDKs. React Native and Flutter plugins for Android and iOS. A Unity SDK for mobile and TV |
 | Stock consent screens | SwiftUI and Compose screens. React Native opens the same native screens | Notice and preferences shown by `setupUI`, configured in the Didomi Console |
@@ -57,7 +57,7 @@ Didomi also has A/B tests. c15t's advantage for application teams is the ability
 
 Sources: [Mobile and TV SDKs](https://developers.didomi.io/cmp/mobile-sdk), [Android setup](https://developers.didomi.io/cmp/mobile-sdk/android/setup), [iOS API](https://developers.didomi.io/cmp/mobile-sdk/ios/reference/api), [React Native](https://developers.didomi.io/cmp/mobile-sdk/react-native), [Flutter](https://developers.didomi.io/cmp/mobile-sdk/flutter), [Unity](https://developers.didomi.io/cmp/mobile-sdk/unity-sdk) and [sharing consent with WebViews](https://developers.didomi.io/cmp/mobile-sdk/share-consent-with-webviews), checked on 10 November 2026.
 
-## What c15t does not include
+## What Inth does not include
 
 - **Didomi's complete business console.** The open-source packages do not bundle the same notice publication and team administration workflow.
 - **A ready-made cross-device rollout.** Backend identity links need an application flow. Do not assume full parity with Didomi's service.
@@ -68,7 +68,7 @@ In the Next.js App Router, the default streamed [rendering path](/docs/framework
 
 ## Test the workflow you will use each week
 
-Choose c15t when native UI and source ownership are central to the product. Didomi is a strong option when a shared operational console is the main requirement.
+Choose Inth when native UI and source ownership are central to the product. Didomi is a strong option when a shared operational console is the main requirement.
 
 Build a trial with [Inth and the framework guide](/docs/frameworks). Change one notice translation and one vendor rule, then check when a visitor with saved choices sees the result.
 

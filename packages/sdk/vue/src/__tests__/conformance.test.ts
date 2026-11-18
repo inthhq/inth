@@ -3,14 +3,14 @@ import {
 	IAB_FIXTURE_CMP_ID,
 	MINIMAL_GVL,
 	runConformanceSuite,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import type {
 	MountableComponent,
 	MountOptions,
 	MountResult,
 	SuiteApi,
 	TestDriver,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import { deferInitGvl, initOutputToKernelConfig } from '@inth/sdk/engine';
 import type {
 	InitResponse,
@@ -229,7 +229,7 @@ const buildInitOutput = function buildInitOutput(
 		status: 'matched',
 	});
 	const init: InitOutput = {
-		branding: 'c15t',
+		branding: 'inth',
 		location: {
 			countryCode: 'DE',
 			regionCode: null,
@@ -276,7 +276,7 @@ const buildKernelConfig = function buildKernelConfig(
 	if (initMode === 'authoritative') {
 		return {
 			...base,
-			initialBranding: 'c15t',
+			initialBranding: 'inth',
 			initialLocation: {
 				countryCode: 'DE',
 				regionCode: null,

@@ -10,12 +10,12 @@ Callbacks stay under `callbacks` in your options, with new names:
 | `onError`, `onBeforeConsentRevocationReload` | Unchanged |
 
 The `callbacks-to-v3` codemod renames `onConsentChanged` to
-`onChoiceRecorded`. It leaves a `TODO(c15t v3)` comment there about the new
+`onChoiceRecorded`. It leaves a `TODO(inth v3)` comment there about the new
 payload, and on `onConsentSet` and `onBannerFetched`, which it can't choose a
 replacement for:
 
 ```bash
-inth c15t codemods callbacks-to-v3 --dry-run --json
+inth inth codemods callbacks-to-v3 --dry-run --json
 ```
 
 v2's `onConsentChanged` fired only when a save changed at least one category's

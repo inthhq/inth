@@ -1,20 +1,20 @@
 ---
-title: c15t vs Silktide Consent Manager
-description: Compare c15t with Silktide Consent Manager. See regional rules, consent records, IAB TCF, Google Consent Mode and framework support in each.
-seoTitle: Silktide Consent Manager vs c15t feature comparison
-seoDescription: Compare c15t with Silktide Consent Manager on regional rules, consent records, IAB TCF, Google Consent Mode v2 and framework support.
+title: Inth vs Silktide Consent Manager
+description: Compare Inth with Silktide Consent Manager. See regional rules, consent records, IAB TCF, Google Consent Mode and framework support in each.
+seoTitle: Silktide Consent Manager vs Inth feature comparison
+seoDescription: Compare Inth with Silktide Consent Manager on regional rules, consent records, IAB TCF, Google Consent Mode v2 and framework support.
 group: reference
 ---
 
-c15t is the better choice for most production sites. It applies consent rules by region, so visitors outside opt-in regions do not wait behind a banner. Inth keeps your consent records. c15t also supports IAB TCF 2.4, IAB GPP and Global Privacy Control. Silktide Consent Manager documents none of these.
+Inth is the better choice for most production sites. It applies consent rules by region, so visitors outside opt-in regions do not wait behind a banner. Inth keeps your consent records. Inth also supports IAB TCF 2.4, IAB GPP and Global Privacy Control. Silktide Consent Manager documents none of these.
 
 Silktide Consent Manager is a free browser script from Silktide, with an MIT licence. You add one JavaScript file and one CSS file, then define consent types. It adds scripts after consent and sends Google Consent Mode updates. It keeps each visitor's choices only in that visitor's browser.
 
 Start on Inth's [free plan](https://inth.com/pricing) and follow the [framework guide](/docs/frameworks) for your app.
 
-## c15t vs Silktide Consent Manager feature comparison
+## Inth vs Silktide Consent Manager feature comparison
 
-| What you need | c15t | Silktide Consent Manager |
+| What you need | Inth | Silktide Consent Manager |
 | --- | --- | --- |
 | Apply different rules by region | Policy rules by country and US state. Inth or your backend finds the location | One default for each consent type, for all visitors. No location detection |
 | Keep consent records on a server | Inth hosts the backend and keeps records in its database. Self-hosting is optional | Not included. Choices stay in browser storage |
@@ -41,15 +41,15 @@ Silktide Consent Manager gives you a banner, preferences and script injection in
 2. **A consent record endpoint and its storage**, to prove what each visitor chose.
 3. **Code that connects choices to your application state**, because it has no framework adapters.
 
-c15t and Inth include all three. Silktide documents no IAB TCF support. If ad partners need a TC string from your site, Silktide cannot supply one.
+Inth and Inth include all three. Silktide documents no IAB TCF support. If ad partners need a TC string from your site, Silktide cannot supply one.
 
 <include src="../shared/comparisons/inth-hosting.mdx" />
 
 ## Ask for consent only where your policy needs it
 
-When your policy lets scripts run before a choice in a region, c15t runs them there. You keep the analytics and ad data from those visitors. Visitors in opt-in regions still see the banner before optional scripts run.
+When your policy lets scripts run before a choice in a region, Inth runs them there. You keep the analytics and ad data from those visitors. Visitors in opt-in regions still see the banner before optional scripts run.
 
-c15t picks a [policy rule](/docs/concepts/policies) for each visitor from their location. The `recommendedPolicyRules()` pack uses opt-in rules for Europe and Québec. It uses opt-out rules for supported US privacy states. Other known locations get no banner. A visitor from an unknown country gets strict opt-in.
+Inth picks a [policy rule](/docs/concepts/policies) for each visitor from their location. The `recommendedPolicyRules()` pack uses opt-in rules for Europe and Québec. It uses opt-out rules for supported US privacy states. Other known locations get no banner. A visitor from an unknown country gets strict opt-in.
 
 Inth or your own backend finds the location. Browser-only mode does not find the visitor's country.
 
@@ -59,19 +59,19 @@ Before you let categories run by default, compare the preset with how you use th
 
 ## Keep consent records without a backend project
 
-You do not need to design a consent record system. Inth runs the [c15t backend](/docs/self-host/overview) and keeps each consent record in its database. If your team must operate the service, you can self-host the same backend.
+You do not need to design a consent record system. Inth runs the [Inth backend](/docs/self-host/overview) and keeps each consent record in its database. If your team must operate the service, you can self-host the same backend.
 
 Silktide saves choices in the visitor's browser storage. It documents no record service. If you need proof of consent, your team must build the endpoint and the storage.
 
-c15t applies the visitor's choice in the browser before the backend confirms it. c15t keeps each choice in a queue in browser storage. If the page closes before the backend answers, c15t sends the choice again on the next page. A permanent rejection, such as a stale policy, removes the choice from the queue. If browser storage is unavailable, c15t cannot keep an interrupted request for the next page.
+Inth applies the visitor's choice in the browser before the backend confirms it. Inth keeps each choice in a queue in browser storage. If the page closes before the backend answers, Inth sends the choice again on the next page. A permanent rejection, such as a stale policy, removes the choice from the queue. If browser storage is unavailable, Inth cannot keep an interrupted request for the next page.
 
 A choice in the browser does not prove that the backend saved a consent record. Check the saved record in Inth or in your self-hosted backend. The [consent state guide](/docs/concepts/consent-state) gives all of these conditions.
 
 ## Fit consent to the application
 
-When a visitor changes a choice, each c15t component that reads the consent state gets the change. A settings screen reads the same state that controls a vendor or a video embed. Use [framework components](/docs/frameworks), or build your own interface with [headless APIs](/docs/frameworks/react/headless).
+When a visitor changes a choice, each Inth component that reads the consent state gets the change. A settings screen reads the same state that controls a vendor or a video embed. Use [framework components](/docs/frameworks), or build your own interface with [headless APIs](/docs/frameworks/react/headless).
 
-For Next.js, c15t supports [streamed, awaited and browser paths](/docs/frameworks/next/rendering). In the App Router, the default streamed path shows the page first. It sends the banner in a later chunk of the same response, before hydration.
+For Next.js, Inth supports [streamed, awaited and browser paths](/docs/frameworks/next/rendering). In the App Router, the default streamed path shows the page first. It sends the banner in a later chunk of the same response, before hydration.
 
 Silktide exposes a browser global and callbacks. Your team writes the code that connects them to the application.
 
@@ -79,31 +79,31 @@ Silktide exposes a browser global and callbacks. Your team writes the code that 
 
 ### Is Silktide Consent Manager free?
 
-The script is free, with an MIT licence and no traffic or domain limits. The parts that it leaves out are not free. You build and host a consent record endpoint and a location lookup. c15t has no licence fee. Inth has a [free plan](https://inth.com/pricing) that includes the backend.
+The script is free, with an MIT licence and no traffic or domain limits. The parts that it leaves out are not free. You build and host a consent record endpoint and a location lookup. Inth has no licence fee. Inth has a [free plan](https://inth.com/pricing) that includes the backend.
 
 ### Does Silktide Consent Manager store consent records?
 
-Not on a server. Silktide saves choices in the visitor's browser storage and documents no record service. c15t sends consent records to Inth or to a [self-hosted backend](/docs/self-host/overview).
+Not on a server. Silktide saves choices in the visitor's browser storage and documents no record service. Inth sends consent records to Inth or to a [self-hosted backend](/docs/self-host/overview).
 
 ### Does Silktide Consent Manager support IAB TCF?
 
-Silktide documents no IAB TCF support. Its source has no TCF API. c15t supports TCF 2.4 with the [`@inth/sdk/iab` add-on](/docs/self-host/guides/iab-tcf). IAB Europe lists Consent Management Inc., the company behind Inth, as a CMP with ID 490. IAB Europe registration is separate from Google's CMP certification.
+Silktide documents no IAB TCF support. Its source has no TCF API. Inth supports TCF 2.4 with the [`@inth/sdk/iab` add-on](/docs/self-host/guides/iab-tcf). IAB Europe lists Consent Management Inc., the company behind Inth, as a CMP with ID 490. IAB Europe registration is separate from Google's CMP certification.
 
 ### Does Silktide Consent Manager support Google Consent Mode v2?
 
-Yes. You map each consent type to Consent Mode parameters, such as `analytics_storage` or `ad_user_data`. After a change, Silktide calls `gtag('consent', 'update', ...)`. It also pushes a dataLayer event. c15t's [Google tag integration](/docs/integrations/google-tag) sends the default before `config`. It sends an update after each change. c15t also has a [GTM integration](/docs/integrations/google-tag-manager).
+Yes. You map each consent type to Consent Mode parameters, such as `analytics_storage` or `ad_user_data`. After a change, Silktide calls `gtag('consent', 'update', ...)`. It also pushes a dataLayer event. inth's [Google tag integration](/docs/integrations/google-tag) sends the default before `config`. It sends an update after each change. Inth also has a [GTM integration](/docs/integrations/google-tag-manager).
 
 ### Does Silktide Consent Manager work with React or Next.js?
 
-Yes, from client code. Silktide gives a browser global, `window.silktideConsentManager`. It documents no framework adapters. c15t has native adapters for [React, Next.js, Vue, Svelte, Astro and TanStack Start](/docs/frameworks). In Next.js, c15t can resolve consent on the server.
+Yes, from client code. Silktide gives a browser global, `window.silktideConsentManager`. It documents no framework adapters. Inth has native adapters for [React, Next.js, Vue, Svelte, Astro and TanStack Start](/docs/frameworks). In Next.js, Inth can resolve consent on the server.
 
-### Can I move from Silktide Consent Manager to c15t?
+### Can I move from Silktide Consent Manager to Inth?
 
-Yes. Map each Silktide consent type to a c15t category. Move its `scripts` entries to registered integrations. Then remove the Silktide files. c15t does not read Silktide's stored choices. Decide if you carry them over or ask visitors again.
+Yes. Map each Silktide consent type to a Inth category. Move its `scripts` entries to registered integrations. Then remove the Silktide files. Inth does not read Silktide's stored choices. Decide if you carry them over or ask visitors again.
 
-## What to plan for with c15t
+## What to plan for with Inth
 
-- **Register your vendors.** c15t controls the scripts and embeds that you register. Remove their old loaders.
+- **Register your vendors.** Inth controls the scripts and embeds that you register. Remove their old loaders.
 - **Check requests made with denied signals.** With Consent Mode, some integrations load before consent and send denied signals.
 
 ## Start with Inth

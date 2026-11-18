@@ -29,11 +29,11 @@ export default defineNitroPlugin((nitroApp) => {
 			return;
 		}
 		const runtimeConfig = useRuntimeConfig(event) as {
-			c15t?: { ssr?: boolean };
-			public: { c15t?: Partial<RuntimeConsentConfig> };
+			inth?: { ssr?: boolean };
+			public: { inth?: Partial<RuntimeConsentConfig> };
 		};
 		const appConfig = useServerAppConfig(event) as
-			| { c15t?: Partial<RuntimeConsentConfig> }
+			| { inth?: Partial<RuntimeConsentConfig> }
 			| undefined;
 		// A `consentSource` or `experiment` in `app.config.ts` rules the
 		// script out, so without that file the browser starts `/init`.
@@ -41,7 +41,7 @@ export default defineNitroPlugin((nitroApp) => {
 			return;
 		}
 		const rules = getRouteRules(event) as {
-			c15t?: InitPrefetchRouteRule;
+			inth?: InitPrefetchRouteRule;
 			ssr?: boolean;
 		};
 		const context = event.context as {
@@ -51,14 +51,14 @@ export default defineNitroPlugin((nitroApp) => {
 		const tag = buildInitPrefetchTag({
 			// The same merge the Nuxt plugin makes in the browser.
 			config: defu(
-				appConfig.c15t,
-				fromRuntimeConfig(runtimeConfig.public.c15t)
+				appConfig.inth,
+				fromRuntimeConfig(runtimeConfig.public.inth)
 			),
 			nonce: context.security?.nonce,
-			routeRule: rules.c15t,
+			routeRule: rules.inth,
 			// What Nuxt's renderer checks to send a shell.
 			shell:
-				runtimeConfig.c15t?.ssr === false ||
+				runtimeConfig.inth?.ssr === false ||
 				rules.ssr === false ||
 				context.nuxt?.noSSR === true,
 		});

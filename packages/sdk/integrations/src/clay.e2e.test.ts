@@ -21,7 +21,7 @@ describe('Clay core loader consent contract', () => {
 		}
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
-		const scripts = [clay({ siteId: 'c15tfake' })];
+		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, deniedConsents);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
@@ -32,14 +32,14 @@ describe('Clay core loader consent contract', () => {
 		updateScripts(scripts, grantedMarketingConsents);
 		const element = document.querySelector('script');
 		expect(element?.src).toBe(
-			'https://static.claydar.com/init.v1.js?id=c15tfake'
+			'https://static.claydar.com/init.v1.js?id=inthfake'
 		);
 		element?.dispatchEvent(new Event('load'));
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 	});
 	it('retains one loader across in-flight revoke and regrant', () => {
-		const scripts = [clay({ siteId: 'c15tfake' })];
+		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
 		updateScripts(scripts, deniedConsents);
@@ -61,7 +61,7 @@ describe('Clay consent forwarding', () => {
 		Reflect.deleteProperty(window, 'Claydar');
 	});
 	it('queues the initial grant and invokes the live consent methods on transitions', () => {
-		const base = clay({ siteId: 'c15tfake' });
+		const base = clay({ siteId: 'inthfake' });
 		const infos: unknown[] = [];
 		const scripts = [
 			{
@@ -97,7 +97,7 @@ describe('Clay consent forwarding', () => {
 		expect(grants).toBe(1);
 	});
 	it('does not grant a loader that finishes after revocation', () => {
-		const scripts = [clay({ siteId: 'c15tfake' })];
+		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		updateScripts(scripts, deniedConsents);
 		const queue: unknown[] = [];
@@ -111,7 +111,7 @@ describe('Clay pending tracker consent', () => {
 	registerVendorContractCleanup();
 	afterEach(() => Reflect.deleteProperty(window, 'Claydar'));
 	it('queues withdrawal after the first stage while the tracker is pending', () => {
-		const scripts = [clay({ siteId: 'c15tfake' })];
+		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const queue: unknown[] = [];
 		Reflect.set(window, 'Claydar', queue);

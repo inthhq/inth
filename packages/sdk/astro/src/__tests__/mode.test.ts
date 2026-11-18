@@ -31,7 +31,7 @@ describe('modes', () => {
 });
 
 describe('the page transports', () => {
-	it('reports the transport kind for window.c15t', () => {
+	it('reports the transport kind for window.inth', () => {
 		expect(lazyTransport({ mode: hostedMode(), projectUrl: '/x' }).kind).toBe(
 			'hosted'
 		);
@@ -59,7 +59,7 @@ describe('the page transports', () => {
 	});
 
 	it.each([
-		['the injected route', '/api/c15t', '/api/c15t/init'],
+		['the injected route', '/api/inth', '/api/inth/init'],
 		['the backend without a route', undefined, `${BACKEND}/init`],
 	])(
 		're-inits manifest mode through %s',

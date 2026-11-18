@@ -1,6 +1,6 @@
 'use client';
 
-import type { PolicyBenchFixtureName } from '@c15t/benchmarking/policy-fixtures';
+import type { PolicyBenchFixtureName } from '@inth/benchmarking/policy-fixtures';
 
 export type PolicyBenchScenario =
 	| 'policy-fresh'
@@ -53,7 +53,7 @@ export interface PolicyBenchState {
 
 declare global {
 	interface Window {
-		__c15tPolicyBench?: PolicyBenchState;
+		__inthPolicyBench?: PolicyBenchState;
 	}
 }
 
@@ -65,11 +65,11 @@ export const getPolicyBenchState = function getPolicyBenchState(
 		return undefined;
 	}
 	if (
-		!window.__c15tPolicyBench ||
-		window.__c15tPolicyBench.scenario !== scenario ||
-		window.__c15tPolicyBench.fixture !== fixture
+		!window.__inthPolicyBench ||
+		window.__inthPolicyBench.scenario !== scenario ||
+		window.__inthPolicyBench.fixture !== fixture
 	) {
-		window.__c15tPolicyBench = {
+		window.__inthPolicyBench = {
 			activeUI: 'none',
 			activeUiHistory: [],
 			fixture,
@@ -85,7 +85,7 @@ export const getPolicyBenchState = function getPolicyBenchState(
 			startedAtMs: performance.now(),
 		};
 	}
-	return window.__c15tPolicyBench;
+	return window.__inthPolicyBench;
 };
 
 /**

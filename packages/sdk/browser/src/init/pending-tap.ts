@@ -19,7 +19,7 @@ import type { ConsentSnapshot } from '@inth/sdk-core';
 import type { ConsentClient } from '../types';
 
 /** localStorage key of the marker. */
-export const PENDING_TAP_KEY = 'c15t-pending-tap';
+export const PENDING_TAP_KEY = 'inth-pending-tap';
 
 /** The marker. */
 export interface PendingTap {

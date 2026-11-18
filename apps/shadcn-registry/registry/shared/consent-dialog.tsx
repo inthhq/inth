@@ -10,11 +10,11 @@ import {
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { ConsentBranding } from "@/components/c15t/consent-branding"
+import { ConsentBranding } from "@/components/inth/consent-branding"
 import {
   ConsentPreferences,
   ConsentPreferencesActions,
-} from "@/components/c15t/consent-preferences"
+} from "@/components/inth/consent-preferences"
 import { buttonVariants } from "@/components/ui/button"
 import {
   Dialog,

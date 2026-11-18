@@ -131,7 +131,7 @@ const lookup = function lookup(
 		SearchIcon,
 		ShareIcon,
 	],
-	selector: 'c15t-iab-vendor-list',
+	selector: 'inth-iab-vendor-list',
 	template: `
 		@let t = iabT().preferenceCenter;
 		<div>
@@ -146,7 +146,7 @@ const lookup = function lookup(
 						[class]="cls(styles.clearSelectionButton)"
 					>
 						<svg
-							c15t-close-icon
+							inth-close-icon
 							[class]="cls(styles.clearIcon)"
 							width="16"
 							height="16"
@@ -158,7 +158,7 @@ const lookup = function lookup(
 				<div [class]="cls(styles.vendorListHeader)">
 					<div [class]="cls(styles.searchContainer)">
 						<svg
-							c15t-search-icon
+							inth-search-icon
 							[class]="cls(styles.searchIcon)"
 						></svg>
 						<input
@@ -184,7 +184,7 @@ const lookup = function lookup(
 					<div [class]="cls(styles.iabVendorSectionHeader)">
 						<h3 [class]="cls(styles.vendorSectionHeading)">
 							<svg
-								c15t-layers-icon
+								inth-layers-icon
 								[class]="cls(styles.vendorSectionIcon)"
 							></svg>
 							{{ t.vendorList.iabVendorsHeading }}
@@ -197,7 +197,7 @@ const lookup = function lookup(
 					<div>
 						@for (row of filteredIABRows(); track row.key) {
 							<div
-								c15tPreferenceItem
+								inthPreferenceItem
 								[open]="expandedVendors().has(row.key)"
 								(openChange)="setExpanded(row.key, $event)"
 								[noStyle]="true"
@@ -211,7 +211,7 @@ const lookup = function lookup(
 							>
 								<div [class]="cls(styles.vendorListItemHeader)">
 									<button
-										c15tPreferenceItemTrigger
+										inthPreferenceItemTrigger
 										[class]="cls(styles.vendorListTrigger)"
 									>
 										<div [class]="cls(styles.vendorListInfo)">
@@ -225,7 +225,7 @@ const lookup = function lookup(
 												@if (row.legIntCount > 0) {
 													<span [class]="cls(styles.vendorListLiBadge)">
 														<svg
-															c15t-legitimate-interest-icon
+															inth-legitimate-interest-icon
 															style="height: 0.625rem; width: 0.625rem"
 														></svg>
 														{{ row.legIntCount }}
@@ -235,7 +235,7 @@ const lookup = function lookup(
 											</div>
 										</div>
 										<svg
-											c15t-chevron-down-icon
+											inth-chevron-down-icon
 											[class]="cls(styles.purposeArrow)"
 											[expanded]="expandedVendors().has(row.key)"
 										></svg>
@@ -249,11 +249,11 @@ const lookup = function lookup(
 								</div>
 
 								<div
-									c15t-preference-item-content
+									inth-preference-item-content
 									[innerClassName]="cls(styles.vendorListContent)"
 									[noStyle]="resolvedNoStyle()"
 								>
-									<ng-template c15tPreferenceItemBody>
+									<ng-template inthPreferenceItemBody>
 										<div [class]="cls(styles.vendorLinks)">
 											@if (row.vendor.policyUrl) {
 												<ng-container
@@ -356,7 +356,7 @@ const lookup = function lookup(
 															@if (purpose.usesLegitimateInterest) {
 																<span [class]="cls(styles.vendorListLiBadge)">
 																	<svg
-																		c15t-legitimate-interest-icon
+																		inth-legitimate-interest-icon
 																		width="10"
 																		height="10"
 																	></svg>
@@ -403,7 +403,7 @@ const lookup = function lookup(
 											<div [class]="cls(styles.vendorPurposesList)">
 												<h4 [class]="cls(styles.vendorPurposesTitle)">
 													<svg
-														c15t-lock-icon
+														inth-lock-icon
 														role="img"
 														[attr.aria-label]="t.vendorList.specialPurposes"
 														[class]="cls(styles.legitimateInterestIcon)"
@@ -459,7 +459,7 @@ const lookup = function lookup(
 					<div [class]="cls(styles.customVendorSectionHeader)">
 						<h3 [class]="cls(styles.vendorSectionHeading)">
 							<svg
-								c15t-globe-icon
+								inth-globe-icon
 								[class]="cls(styles.vendorSectionIcon)"
 							></svg>
 							{{ t.vendorList.customVendorsHeading }}
@@ -472,7 +472,7 @@ const lookup = function lookup(
 					<div>
 						@for (row of filteredCustomRows(); track row.key) {
 							<div
-								c15tPreferenceItem
+								inthPreferenceItem
 								[open]="expandedVendors().has(row.key)"
 								(openChange)="setExpanded(row.key, $event)"
 								[noStyle]="true"
@@ -481,21 +481,21 @@ const lookup = function lookup(
 							>
 								<div [class]="cls(styles.vendorListItemHeader)">
 									<button
-										c15tPreferenceItemTrigger
+										inthPreferenceItemTrigger
 										[class]="cls(styles.vendorListTrigger)"
 									>
 										<div [class]="cls(styles.vendorListInfo)">
 											<h3 [class]="cls(styles.vendorListName)">
 												{{ row.vendor.name }}
 												<svg
-													c15t-globe-icon
+													inth-globe-icon
 													[class]="cls(styles.customVendorIcon)"
 													[attr.aria-label]="iabT().common.customPartner"
 												></svg>
 											</h3>
 										</div>
 										<svg
-											c15t-chevron-down-icon
+											inth-chevron-down-icon
 											[class]="cls(styles.purposeArrow)"
 											[expanded]="expandedVendors().has(row.key)"
 										></svg>
@@ -509,11 +509,11 @@ const lookup = function lookup(
 								</div>
 
 								<div
-									c15t-preference-item-content
+									inth-preference-item-content
 									[innerClassName]="cls(styles.vendorListContent)"
 									[noStyle]="resolvedNoStyle()"
 								>
-									<ng-template c15tPreferenceItemBody>
+									<ng-template inthPreferenceItemBody>
 										<div [class]="cls(styles.vendorLinks)">
 											@if (row.vendor.policyUrl) {
 												<ng-container
@@ -584,7 +584,7 @@ const lookup = function lookup(
 					<div [class]="cls(styles.customVendorSectionHeader)">
 						<h3 [class]="cls(styles.vendorSectionHeading)">
 							<svg
-								c15t-share-icon
+								inth-share-icon
 								aria-hidden="true"
 								[class]="cls(styles.vendorSectionIcon)"
 							></svg>
@@ -622,7 +622,7 @@ const lookup = function lookup(
 									</div>
 									<div [class]="cls(styles.vendorConsentControl)">
 										<button
-											c15tSwitch
+											inthSwitch
 											[attr.aria-label]="'Consent for ' + provider.name"
 											[checked]="consented"
 											(checkedChange)="
@@ -637,11 +637,11 @@ const lookup = function lookup(
 											data-size="medium"
 										>
 											<span
-												c15tSwitchControl
+												inthSwitchControl
 												[class]="cls(trackClass)"
 											>
 												<span
-													c15tSwitchThumb
+													inthSwitchThumb
 													[class]="cls(thumbClass)"
 												></span>
 											</span>
@@ -671,7 +671,7 @@ const lookup = function lookup(
 		>
 			<div [class]="cls(styles.vendorConsentControl)">
 				<button
-					c15tSwitch
+					inthSwitch
 					[attr.aria-label]="'Consent for ' + vendor.name"
 					[checked]="vendorConsents()['' + vendor.id] ?? false"
 					(checkedChange)="
@@ -681,11 +681,11 @@ const lookup = function lookup(
 					data-size="medium"
 				>
 					<span
-						c15tSwitchControl
+						inthSwitchControl
 						[class]="cls(trackClass)"
 					>
 						<span
-							c15tSwitchThumb
+							inthSwitchThumb
 							[class]="cls(thumbClass)"
 						></span>
 					</span>
@@ -705,7 +705,7 @@ const lookup = function lookup(
 				[class]="cls(styles.vendorLink)"
 			>
 				<svg
-					c15t-external-link-icon
+					inth-external-link-icon
 					[class]="cls(styles.vendorLinkIcon)"
 				></svg>
 				{{ label }}
@@ -722,7 +722,7 @@ const lookup = function lookup(
 					<div [class]="cls(styles.vendorLiSectionHeader)">
 						<h4 [class]="cls(styles.vendorPurposesTitle)">
 							<svg
-								c15t-legitimate-interest-icon
+								inth-legitimate-interest-icon
 								[class]="cls(styles.legitimateInterestIcon)"
 							></svg>
 							{{ iabT().preferenceCenter.purposeItem.legitimateInterest }}
@@ -805,7 +805,7 @@ const lookup = function lookup(
 })
 export class IABVendorList {
 	/** Prefix for this list's row ids, unique on the page. */
-	protected readonly idPrefix = uniqueId('c15t-iab-partners');
+	protected readonly idPrefix = uniqueId('inth-iab-partners');
 	readonly #document = inject(DOCUMENT);
 	readonly #browser = isPlatformBrowser(inject(PLATFORM_ID));
 

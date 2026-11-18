@@ -40,7 +40,7 @@ type RelevantHeaders = Partial<Record<ForwardedHeader, string>>;
  * @remarks
  * This function extracts geo-location headers (country, region) from various
  * CDN providers (Cloudflare, Vercel, AWS CloudFront) and normalizes them
- * into a consistent format for the c15t backend.
+ * into a consistent format for the Inth backend.
  *
  * The extracted headers include:
  * - Country headers (cf-ipcountry, x-vercel-ip-country, etc.)

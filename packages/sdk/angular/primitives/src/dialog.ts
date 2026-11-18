@@ -30,15 +30,15 @@ export type DialogCloseReason = 'backdrop' | 'close-trigger' | 'escape';
  *
  * @example
  * ```html
- * <ng-container c15tDialog #dialog="c15tDialog" [(open)]="open" [preventScroll]="true">
+ * <ng-container inthDialog #dialog="inthDialog" [(open)]="open" [preventScroll]="true">
  *   @if (dialog.shouldRender()) {
- *     <div c15tPortal>
- *       <div c15tDialogBackdrop></div>
- *       <div c15tDialogPositioner>
- *         <div c15tDialogContent>
- *           <h2 c15tDialogTitle>Privacy settings</h2>
- *           <p c15tDialogDescription>Choose what we may use.</p>
- *           <button c15tDialogClose>Close</button>
+ *     <div inthPortal>
+ *       <div inthDialogBackdrop></div>
+ *       <div inthDialogPositioner>
+ *         <div inthDialogContent>
+ *           <h2 inthDialogTitle>Privacy settings</h2>
+ *           <p inthDialogDescription>Choose what we may use.</p>
+ *           <button inthDialogClose>Close</button>
  *         </div>
  *       </div>
  *     </div>
@@ -46,7 +46,7 @@ export type DialogCloseReason = 'backdrop' | 'close-trigger' | 'escape';
  * </ng-container>
  * ```
  */
-@Directive({ exportAs: 'c15tDialog', selector: '[c15tDialog]' })
+@Directive({ exportAs: 'inthDialog', selector: '[inthDialog]' })
 export class Dialog {
 	/** Whether the dialog is open. */
 	readonly open = model(false);
@@ -64,11 +64,11 @@ export class Dialog {
 	readonly unmountOnExit = input(false);
 
 	/** @internal */
-	readonly contentId = uniqueId('c15t-dialog-content');
+	readonly contentId = uniqueId('inth-dialog-content');
 	/** @internal */
-	readonly titleId = uniqueId('c15t-dialog-title');
+	readonly titleId = uniqueId('inth-dialog-title');
 	/** @internal */
-	readonly descriptionId = uniqueId('c15t-dialog-description');
+	readonly descriptionId = uniqueId('inth-dialog-description');
 
 	#hasOpened = false;
 
@@ -138,7 +138,7 @@ export class Dialog {
 		'data-slot': 'dialog-backdrop',
 		role: 'presentation',
 	},
-	selector: '[c15tDialogBackdrop]',
+	selector: '[inthDialogBackdrop]',
 })
 export class DialogBackdrop {
 	/** @internal */
@@ -151,7 +151,7 @@ export class DialogBackdrop {
 		'[attr.data-state]': 'dialog.dataState()',
 		'data-slot': 'dialog-positioner',
 	},
-	selector: '[c15tDialogPositioner]',
+	selector: '[inthDialogPositioner]',
 })
 export class DialogPositioner {
 	/** @internal */
@@ -161,7 +161,7 @@ export class DialogPositioner {
 /**
  * The dialog itself: `role="dialog"`, labelled by its title and described
  * by its description. Escape closes it. While open it takes focus (an
- * element marked `data-c15t-dialog-focus="true"`, else the first tabbable
+ * element marked `data-inth-dialog-focus="true"`, else the first tabbable
  * one), traps it with `trapFocus`, and locks scrolling with `preventScroll`.
  * A closed dialog that stays mounted is `inert` and `aria-hidden`.
  */
@@ -179,7 +179,7 @@ export class DialogPositioner {
 		role: 'dialog',
 		tabindex: '-1',
 	},
-	selector: '[c15tDialogContent]',
+	selector: '[inthDialogContent]',
 })
 export class DialogContent {
 	/** @internal */
@@ -232,7 +232,7 @@ export class DialogContent {
 /** The dialog's title. Put it on an `<h2>`. */
 @Directive({
 	host: { '[id]': 'dialog.titleId', 'data-slot': 'dialog-title' },
-	selector: '[c15tDialogTitle]',
+	selector: '[inthDialogTitle]',
 })
 export class DialogTitle {
 	/** @internal */
@@ -242,7 +242,7 @@ export class DialogTitle {
 /** The dialog's description. Put it on a `<p>`. */
 @Directive({
 	host: { '[id]': 'dialog.descriptionId', 'data-slot': 'dialog-description' },
-	selector: '[c15tDialogDescription]',
+	selector: '[inthDialogDescription]',
 })
 export class DialogDescription {
 	/** @internal */
@@ -259,7 +259,7 @@ export class DialogDescription {
 		'[attr.type]': 'type()',
 		'data-slot': 'dialog-close',
 	},
-	selector: '[c15tDialogClose]',
+	selector: '[inthDialogClose]',
 })
 export class DialogClose {
 	/** @internal */

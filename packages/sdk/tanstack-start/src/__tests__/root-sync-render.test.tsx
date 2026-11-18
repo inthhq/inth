@@ -69,13 +69,13 @@ test('renderToString of ConsentRoot right after its import does not suspend', ()
 	// The first render in the process: the boot data may not share a
 	// boundary with anything that suspends on a module still loading, or
 	// React leaves it to the browser and a deferred root reads none.
-	expect(html).toContain('data-c15t-boot');
+	expect(html).toContain('data-inth-boot');
 	// Only the server start, in its own boundary, is left to the browser.
 	expect(html.split('<!--$!-->')).toHaveLength(2);
 	// Without the module there is no start script, so the boot data names a
 	// render the page has no marks for: the root cannot count the script as
 	// started, and loads the engine for it.
-	const boot = /<script[^>]*data-c15t-boot[^>]*>(?<data>[^<]*)<\/script>/u.exec(
+	const boot = /<script[^>]*data-inth-boot[^>]*>(?<data>[^<]*)<\/script>/u.exec(
 		html
 	);
 	expect(JSON.parse(boot?.groups?.data ?? '{}').i).toEqual(expect.any(String));

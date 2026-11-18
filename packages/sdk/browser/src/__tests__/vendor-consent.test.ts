@@ -91,9 +91,9 @@ const inertScript = function inertScript(
 ): HTMLScriptElement {
 	const script = document.createElement('script');
 	script.type = 'text/plain';
-	script.setAttribute('data-c15t-category', category);
+	script.setAttribute('data-inth-category', category);
 	if (vendor) {
-		script.setAttribute('data-c15t-vendor', vendor);
+		script.setAttribute('data-inth-vendor', vendor);
 	}
 	script.textContent = body;
 	document.body.append(script);
@@ -107,7 +107,7 @@ afterEach(() => {
 	localStorage.clear();
 	clearCookies();
 	document.body.replaceChildren();
-	document.head.querySelector('#c15t-styles')?.remove();
+	document.head.querySelector('#inth-styles')?.remove();
 	vi.restoreAllMocks();
 });
 
@@ -349,7 +349,7 @@ describe('reading vendor consent', () => {
 		expect(listener).toHaveBeenCalledOnce();
 	});
 
-	it('takes vendors from a queued config call and reads them through window.c15t', async () => {
+	it('takes vendors from a queued config call and reads them through window.inth', async () => {
 		const api = createGlobal({ pkg: '@inth/sdk/test' });
 		api.config({ ...baseOptions, ui: false });
 		const client = api.init();
@@ -365,7 +365,7 @@ describe('reading vendor consent', () => {
 	});
 });
 
-describe('gated inline scripts with data-c15t-vendor', () => {
+describe('gated inline scripts with data-inth-vendor', () => {
 	it('keeps a tag inert while its vendor is off, and runs the rest of the category', async () => {
 		const posthog = inertScript('measurement', 'posthog', 'window.__ph = 1;');
 		const youtube = inertScript('measurement', 'youtube', 'window.__yt = 1;');
@@ -377,13 +377,13 @@ describe('gated inline scripts with data-c15t-vendor', () => {
 
 		expect(youtube.isConnected).toBe(false);
 		expect(posthog.isConnected).toBe(true);
-		expect(posthog.hasAttribute('data-c15t-activated')).toBe(false);
+		expect(posthog.hasAttribute('data-inth-activated')).toBe(false);
 
 		// Lifting the denial on its own, with no category change, runs it.
 		await client.save({ measurement: true, vendors: { posthog: true } });
 		expect(posthog.isConnected).toBe(false);
 		const activated = document.querySelector(
-			'script[data-c15t-vendor="posthog"][data-c15t-activated="true"]'
+			'script[data-inth-vendor="posthog"][data-inth-activated="true"]'
 		);
 		expect(activated).not.toBeNull();
 	});
@@ -398,8 +398,8 @@ describe('gated inline scripts with data-c15t-vendor', () => {
 		document.body.append(root);
 		const script = document.createElement('script');
 		script.type = 'text/plain';
-		script.setAttribute('data-c15t-category', 'measurement');
-		script.setAttribute('data-c15t-vendor', 'posthog');
+		script.setAttribute('data-inth-category', 'measurement');
+		script.setAttribute('data-inth-vendor', 'posthog');
 		root.append(script);
 		expect(activateGatedScripts(client.getSnapshot(), root)).toBe(0);
 		expect(script.isConnected).toBe(true);

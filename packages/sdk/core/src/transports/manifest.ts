@@ -59,7 +59,7 @@ import {
 	reviveSubjectRecord,
 } from './subject-record';
 import type { TransportHydrationRecords } from './subject-record';
-import { c15tProtocolHeaders } from './version-header';
+import { inthProtocolHeaders } from './version-header';
 
 const getDefined = <Value>(
 	value: Value,
@@ -317,8 +317,8 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
 }): Promise<GlobalVendorList | null> {
 	return fetchCachedGvl({
 		fetch: input.fetch,
-		headers: c15tProtocolHeaders,
-		label: 'c15t manifest transport',
+		headers: inthProtocolHeaders,
+		label: 'inth manifest transport',
 		language: input.language,
 		url: input.reference.url,
 	});
@@ -347,7 +347,7 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
  * import { createManifestTransport } from '@inth/sdk-core/transports/manifest';
  *
  * const transport = createManifestTransport({
- *   manifestUrl: 'https://api.example.com/c15t/manifest',
+ *   manifestUrl: 'https://api.example.com/inth/manifest',
  *   inputs: { country: 'DE', language: 'de', region: null },
  * });
  * ```
@@ -374,7 +374,7 @@ export const createManifestTransport = function createManifestTransport(
 	const jsonHeaders = {
 		accept: 'application/json',
 		'content-type': 'application/json',
-		...c15tProtocolHeaders,
+		...inthProtocolHeaders,
 	};
 	const requireProjectUrl = function requireProjectUrl(what: string): string {
 		if (!projectUrl) {
@@ -424,7 +424,7 @@ export const createManifestTransport = function createManifestTransport(
 						credentials,
 						headers: {
 							accept: 'application/json',
-							...c15tProtocolHeaders,
+							...inthProtocolHeaders,
 							...options.headers,
 						},
 						method: 'GET',
@@ -432,7 +432,7 @@ export const createManifestTransport = function createManifestTransport(
 
 					if (!response.ok) {
 						throw await failedResponseError(
-							'c15t manifest transport: /manifest',
+							'inth manifest transport: /manifest',
 							response
 						);
 					}
@@ -473,7 +473,7 @@ export const createManifestTransport = function createManifestTransport(
 			}
 			if (!response.ok) {
 				throw await failedResponseError(
-					'c15t manifest transport: /subjects/:id',
+					'inth manifest transport: /subjects/:id',
 					response
 				);
 			}
@@ -495,7 +495,7 @@ export const createManifestTransport = function createManifestTransport(
 				(reference) =>
 					fetchCachedAdTechProviders({
 						fetch: fetchImpl,
-						headers: c15tProtocolHeaders,
+						headers: inthProtocolHeaders,
 						reference: {
 							...reference,
 							url: resolveEndpoint(
@@ -563,7 +563,7 @@ export const createManifestTransport = function createManifestTransport(
 		): Promise<TransportHydrationRecords | null> {
 			const response = await fetchImpl(subjectURL(subjectId), {
 				credentials,
-				headers: { accept: 'application/json', ...c15tProtocolHeaders },
+				headers: { accept: 'application/json', ...inthProtocolHeaders },
 				method: 'GET',
 			});
 			if (response.status === 404) {
@@ -571,14 +571,14 @@ export const createManifestTransport = function createManifestTransport(
 			}
 			if (!response.ok) {
 				throw await failedResponseError(
-					'c15t manifest transport: /subjects/:id',
+					'inth manifest transport: /subjects/:id',
 					response
 				);
 			}
 			const record = reviveSubjectRecord(await response.json());
 			if (!record) {
 				throw new Error(
-					'c15t manifest transport: /subjects/:id returned an unreadable record'
+					'inth manifest transport: /subjects/:id returned an unreadable record'
 				);
 			}
 			return mapSubjectRecordToHydrationRecords(record, { now: now() });
@@ -600,7 +600,7 @@ export const createManifestTransport = function createManifestTransport(
 			);
 
 			if (!response.ok) {
-				throw await saveFailure(response, 'c15t manifest transport');
+				throw await saveFailure(response, 'inth manifest transport');
 			}
 
 			return toSaveResult(await response.json());

@@ -19,7 +19,7 @@ const angularApp = new AngularNodeAppEngine();
 // Bench only: the backend the consent route reads its manifest from.
 app.use('/api/bench-consent', benchBackend);
 
-// Before the Angular engine: answers /api/c15t and calls next() otherwise.
+// Before the Angular engine: answers /api/inth and calls next() otherwise.
 app.use(consentRoute.node);
 
 app.use(

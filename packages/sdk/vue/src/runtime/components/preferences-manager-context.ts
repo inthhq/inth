@@ -9,4 +9,4 @@ import type { ConsentDraft } from '../composables/draft';
 export const consentWidgetManagerKey: InjectionKey<{
 	draft: ConsentDraft;
 	onAction: (action: PresentationAction) => Promise<void>;
-}> = Symbol('c15t-consent-widget-manager');
+}> = Symbol('inth-consent-widget-manager');

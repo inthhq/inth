@@ -11,10 +11,10 @@ import {
 describe('benchmark package selection', () => {
 	it('builds the Nuxt benchmark and checks the Vue results it produces', () => {
 		expect(
-			createBenchmarkPlan('full', '@c15t/nuxt-browser-bench')
+			createBenchmarkPlan('full', '@inth/nuxt-browser-bench')
 		).toMatchObject({
 			expectedPackages: ['@inth/vue'],
-			packages: ['@c15t/nuxt-browser-bench'],
+			packages: ['@inth/nuxt-browser-bench'],
 		});
 	});
 	it.each(['', 'unknown', 'toString'])(
@@ -24,7 +24,7 @@ describe('benchmark package selection', () => {
 		}
 	);
 
-	it.each(['', '@c15t/unknown', '@c15t/react-browser-bench'])(
+	it.each(['', '@c15t/unknown', '@inth/react-browser-bench'])(
 		'rejects package %j outside the quick profile',
 		(name) => {
 			expect(() => createBenchmarkPlan('quick', name)).toThrow(
@@ -35,9 +35,9 @@ describe('benchmark package selection', () => {
 
 	it('measures the examples payload as its own profile', () => {
 		expect(createBenchmarkPlan('examples')).toEqual({
-			expectedPackages: ['@c15t/examples-payload-bench'],
+			expectedPackages: ['@inth/examples-payload-bench'],
 			only: [],
-			packages: ['@c15t/examples-payload-bench'],
+			packages: ['@inth/examples-payload-bench'],
 			skip: [],
 			suites: ['examples-payload'],
 		});
@@ -45,9 +45,9 @@ describe('benchmark package selection', () => {
 
 	it('selects one core-benchmarks shard by its matrix id', () => {
 		expect(createBenchmarkPlan('quick', 'core-benchmarks-california')).toEqual({
-			expectedPackages: ['@c15t/core-benchmarks'],
+			expectedPackages: ['@inth/core-benchmarks'],
 			only: ['policy-runtime:optout-california'],
-			packages: ['@c15t/core-benchmarks'],
+			packages: ['@inth/core-benchmarks'],
 			skip: [],
 			suites: ['core-runtime', 'policy-runtime', 'script-lifecycle'],
 		});
@@ -85,7 +85,7 @@ describe('benchmark package selection', () => {
 			createBenchmarkPlan('gate', 'gate-nuxt-browser-bench')
 		).toMatchObject({
 			expectedPackages: ['@inth/vue'],
-			packages: ['@c15t/nuxt-browser-bench'],
+			packages: ['@inth/nuxt-browser-bench'],
 			suites: ['consent-gate'],
 		});
 	});
@@ -95,9 +95,9 @@ describe('benchmark package selection', () => {
 			createBenchmarkMatrix(['quick', 'gate'], 'script-tag')
 				.filter((entry) => entry.mode === 'gate')
 				.map((entry) => entry.package)
-		).toEqual(['@c15t/script-lifecycle-bench']);
+		).toEqual(['@inth/script-lifecycle-bench']);
 		expect(selectGatePackages('angular')).toEqual([
-			'@c15t/angular-browser-bench',
+			'@inth/angular-browser-bench',
 		]);
 		expect(selectGatePackages('none')).toEqual([]);
 		expect(selectGatePackages('all')).toHaveLength(8);

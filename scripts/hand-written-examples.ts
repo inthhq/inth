@@ -6,7 +6,7 @@ import fg from 'fast-glob';
 import { generatedExamplesDir } from './example-doc-sources';
 
 /**
- * Per-file counts of hand-written docs fences that import c15t. The counts
+ * Per-file counts of hand-written docs fences that import Inth. The counts
  * may only fall: new setup code must come from a tested example region.
  */
 export const handWrittenBaselinePath =
@@ -30,10 +30,10 @@ const codeLanguages = new Set([
 	'vue',
 ]);
 
-const c15tImport =
-	/(?:from\s+|import\s*\(?\s*|require\(\s*)["'](?:c15t|@c15t\/[^"'/]+|@inth\/[^"'/]+)(?:\/[^"']*)?["']|<script[^>]*src="[^"]*@inth\/sdk/u;
+const inthImport =
+	/(?:from\s+|import\s*\(?\s*|require\(\s*)["'](?:inth|@inth\/[^"'/]+|@inth\/[^"'/]+)(?:\/[^"']*)?["']|<script[^>]*src="[^"]*@inth\/sdk/u;
 
-/** Counts hand-written fences that import c15t in one MDX document. */
+/** Counts hand-written fences that import Inth in one MDX document. */
 export const countInDocument = (content: string): number => {
 	const lines = content.split('\n');
 	let count = 0;
@@ -55,7 +55,7 @@ export const countInDocument = (content: string): number => {
 		if (
 			codeLanguages.has(language) &&
 			previous?.trim() !== fragmentMarker &&
-			c15tImport.test(body.join('\n'))
+			inthImport.test(body.join('\n'))
 		) {
 			count += 1;
 		}
@@ -64,7 +64,7 @@ export const countInDocument = (content: string): number => {
 	return count;
 };
 
-/** Counts hand-written c15t fences in every docs page, keyed by path. */
+/** Counts hand-written Inth fences in every docs page, keyed by path. */
 export const countHandWrittenExamples = (
 	root: string
 ): Record<string, number> => {

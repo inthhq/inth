@@ -46,7 +46,7 @@ These routes cover the SvelteKit docs recipes. The acceptance suite in
 | `/consent-example` | `loadConsent` with a `hosted()` handle in `src/hooks.server.ts`; banner in the server HTML |
 | `/consent-example/static` | A prerendered page under the same layout; the browser resolves consent |
 | `/consent-example/branded` | Theme tokens from `generateThemeCSS()` in a server load |
-| `/manifest-example` | `loadConsent` with a `manifest()` handle; the browser re-inits through the route in `src/routes/api/c15t` |
+| `/manifest-example` | `loadConsent` with a `manifest()` handle; the browser re-inits through the route in `src/routes/api/inth` |
 | `/headless-example` | A custom banner from `getHeadlessConsent()` with the stock dialog |
 | `/experiment-example` | The `/consent-example` setup with the banner experiment (not published) |
 
@@ -56,7 +56,7 @@ this app. The shared page content is in `src/lib/consent-example`.
 Create an [Inth](https://inth.com) project, configure an opt-in policy covering
 `measurement` and `marketing`, and allow this app's origin. Replace each
 `https://your-project.inth.app` under `src/routes` with your project's backend
-URL. The acceptance suite overrides it with `PUBLIC_C15T_BACKEND_URL` through
+URL. The acceptance suite overrides it with `PUBLIC_INTH_PROJECT_URL` through
 `src/lib/test-backend.ts`. Then run from the repository root:
 
 ```sh
@@ -81,13 +81,13 @@ EXAMPLE_TARGET=sveltekit bun run --cwd internals/fixtures/acceptance test
 ## Banner experiment
 
 Open `/experiment-example?experiment=1` to run the banner-shape experiment:
-c15t picks the `control` arm (the default banner) or the `wall` arm, and the
-page shows `banner-shape · <arm> · c15t`.
+Inth picks the `control` arm (the default banner) or the `wall` arm, and the
+page shows `banner-shape · <arm> · inth`.
 `/experiment-example?experiment=1&arm=wall` sets the arm the way a flag
 provider would; any other `arm` value runs `control`. The route has its own
 layout, whose provider's `onSurfaceShown` and `onChoiceRecorded` callbacks
 list each impression and choice under the arm and push them to
-`window.dataLayer` as `c15t_surface_shown` and `c15t_choice_recorded`.
+`window.dataLayer` as `inth_surface_shown` and `inth_choice_recorded`.
 See https://c15t.com/docs/guides/banner-experiments.
 
 The showcase at `/` and its routes live in `src/routes/(showcase)` with their

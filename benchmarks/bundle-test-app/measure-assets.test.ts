@@ -26,11 +26,11 @@ const chunk = (imports: ChunkImports = []) => ({
 
 it('rejects missing and empty assets instead of reporting zero bytes', async () => {
 	expect(() => compressedSize(new Uint8Array())).toThrow('empty asset');
-	await expect(measureAsset('/nonexistent/c15t-bundle.js')).rejects.toThrow();
+	await expect(measureAsset('/nonexistent/inth-bundle.js')).rejects.toThrow();
 });
 
 it('separates a real dynamic import from initial JavaScript', async () => {
-	const directory = await mkdtemp(join(tmpdir(), 'c15t-entry-'));
+	const directory = await mkdtemp(join(tmpdir(), 'inth-entry-'));
 	try {
 		const entry = join(directory, 'entry.ts');
 		await writeFile(entry, 'export const load = () => import("./lazy");');
@@ -92,7 +92,7 @@ it('counts only deferred chunks the entry can load', () => {
 });
 
 it('measures a shared lazy chunk once and skips chunks no import() reaches', async () => {
-	const directory = await mkdtemp(join(tmpdir(), 'c15t-entry-'));
+	const directory = await mkdtemp(join(tmpdir(), 'inth-entry-'));
 	try {
 		const entry = join(directory, 'entry.ts');
 		const files: Record<string, string> = {

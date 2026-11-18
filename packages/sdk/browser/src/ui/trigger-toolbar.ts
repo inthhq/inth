@@ -81,8 +81,8 @@ export const createTriggerToolbar = function createTriggerToolbar(
 			{
 				'aria-label': label,
 				class: noStyle ? '' : `${styles.toolbarItem} ${styles[params.size]}`,
-				'data-c15t-trigger-action': action,
-				'data-c15t-trigger-item': action,
+				'data-inth-trigger-action': action,
+				'data-inth-trigger-item': action,
 				onclick: (event: Event) => {
 					if (params.shouldActivate(event as MouseEvent)) {
 						onSelect();
@@ -106,7 +106,7 @@ export const createTriggerToolbar = function createTriggerToolbar(
 	);
 	const devtools = item(
 		'devtools',
-		'c15t DevTools',
+		'inth DevTools',
 		createDevToolsIcon(),
 		params.onDevTools
 	);
@@ -115,8 +115,8 @@ export const createTriggerToolbar = function createTriggerToolbar(
 	const element = h('div', {
 		'aria-label': 'Privacy controls',
 		'aria-orientation': 'horizontal',
-		'data-c15t-trigger': 'true',
-		'data-c15t-trigger-toolbar': 'true',
+		'data-inth-trigger': 'true',
+		'data-inth-trigger-toolbar': 'true',
 		dir: 'ltr',
 		role: 'toolbar',
 		tabindex: -1,

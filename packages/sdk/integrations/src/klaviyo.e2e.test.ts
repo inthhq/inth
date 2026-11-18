@@ -70,7 +70,7 @@ describe('Klaviyo loader contract', () => {
 		const result = updateScripts(scripts, grantedMarketingConsents);
 
 		// Only the loader element goes. Code Klaviyo.js already ran stays until
-		// c15t reloads the page, so the helper leaves the onsite object alone.
+		// Inth reloads the page, so the helper leaves the onsite object alone.
 		expect(result.unloaded).toEqual(['klaviyo']);
 		expect(getLoaders()).toHaveLength(0);
 		expect(window.klaviyo).toBe(stub);

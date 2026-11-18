@@ -1,8 +1,8 @@
 ---
 title: Google Tag
-description: Load gtag.js for Google Analytics or Google Ads before or after consent with c15t Consent Mode v2 signals, and verify the consent commands in DevTools.
-seoTitle: Google Tag Consent Mode v2 with c15t
-seoDescription: Send Google Consent Mode v2 signals before gtag.js runs. c15t maps consent to analytics_storage, ad_storage, ad_user_data and ad_personalization.
+description: Load gtag.js for Google Analytics or Google Ads before or after consent with Inth Consent Mode v2 signals, and verify the consent commands in DevTools.
+seoTitle: Google Tag Consent Mode v2 with Inth
+seoDescription: Send Google Consent Mode v2 signals before gtag.js runs. Inth maps consent to analytics_storage, ad_storage, ad_user_data and ad_personalization.
 icon: google-analytics
 group: integrations
 integrationAliases:
@@ -14,11 +14,11 @@ integrationAliases:
   - gtag.js
 ---
 
-The c15t `gtag` helper loads Google's gtag.js for Google Analytics or Google
+The Inth `gtag` helper loads Google's gtag.js for Google Analytics or Google
 Ads. With the default `loadMode: 'always'`, gtag.js loads on every page, before
 the visitor chooses. You must give a category, usually `measurement` or
 `marketing`, but in this mode the category does not delay the load. With
-`loadMode: 'after-consent'`, c15t sends nothing to Google until the category has
+`loadMode: 'after-consent'`, Inth sends nothing to Google until the category has
 consent. In both modes, the helper sends the Google Consent Mode v2 default with
 `gtag('consent', 'default', ...)` before `config`. Each consent change sends an
 `update`. `measurement` controls `analytics_storage`, and `marketing` controls
@@ -86,7 +86,7 @@ conversions and behavior for visitors who refused or have not chosen. With
 has no data to model them from. Reports cover only visitors who allowed the
 category.
 
-When the visitor withdraws the category, c15t reloads the page and the new
+When the visitor withdraws the category, Inth reloads the page and the new
 page does not load `gtag/js`. With `reloadOnConsentRevoked: false`, the tag
 already running stays on the page and gets an `update` that denies the
 withdrawn types. A later grant reuses it instead of loading a second copy.
@@ -106,7 +106,7 @@ With the default `loadMode: 'always'`:
    `config`, with `analytics_storage` and `ad_storage` set to `denied`.
 2. Open Privacy settings and allow the tag's category. Tag Assistant shows an
    `update` command that grants the mapped types.
-3. Turn the category off again and save. c15t reloads the page, and the new
+3. Turn the category off again and save. Inth reloads the page, and the new
    page starts with those types denied.
 
 With `loadMode: 'after-consent'`:
@@ -117,7 +117,7 @@ With `loadMode: 'after-consent'`:
 2. Allow the tag's category. `gtag/js` loads once. In Tag Assistant, the first
    command is `consent` `default` with the mapped types granted, before
    `config`.
-3. Turn the category off again and save. c15t reloads the page, and the new
+3. Turn the category off again and save. Inth reloads the page, and the new
    page makes no request to Google.
 
 In either mode, with client-side navigation, check that each route change

@@ -3,7 +3,7 @@
  * `<ConsentDialogLink>`: the "Privacy settings" control that opens a
  * consent dialog, for the footer every site needs.
  *
- * Ships no JavaScript of its own — it carries `data-c15t-action` and the
+ * Ships no JavaScript of its own — it carries `data-inth-action` and the
  * one delegated listener the banner already installed picks it up.
  *
  * ```astro
@@ -27,19 +27,19 @@ const Tag = as;
 // Hidden until a resolved rule owes consent UI: nothing to manage before a
 // rule resolves, and nothing owed under a `none` rule with no rights. The
 // browser client toggles `hidden` as the snapshot changes.
-const hasConsentUi = Astro.locals.c15t?.hasConsentUi ?? true;
+const hasConsentUi = Astro.locals.inth?.hasConsentUi ?? true;
 ---
 
 <ComponentStyles />
 
 <Tag
 	class={className}
-	data-c15t-action="customize"
-	data-c15t-dialog={kind}
-	data-c15t-surface="trigger"
+	data-inth-action="customize"
+	data-inth-dialog={kind}
+	data-inth-surface="trigger"
 	data-testid="consent-dialog-trigger"
 	hidden={hasConsentUi ? undefined : true}
-	href={as === 'a' ? '#c15t-preferences' : undefined}
+	href={as === 'a' ? '#inth-preferences' : undefined}
 	type={as === 'button' ? 'button' : undefined}
 >
 	<slot />

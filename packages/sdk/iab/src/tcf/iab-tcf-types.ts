@@ -8,12 +8,12 @@
  * @packageDocumentation
  */
 
-// GVL types come through c15t core (which re-exports from @inth/sdk/schema)
+// GVL types come through Inth core (which re-exports from @inth/sdk/schema)
 import type { GlobalVendorList } from '@inth/sdk-core';
 
 export type { GlobalVendorList } from '@inth/sdk-core';
 // GVL sub-types imported from @inth/sdk/schema for IAB-specific usage
-// These are not re-exported by c15t core, so we re-export from schema directly
+// These are not re-exported by Inth core, so we re-export from schema directly
 export type {
 	GVLDataCategory,
 	GVLFeature,

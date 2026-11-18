@@ -52,7 +52,7 @@ export interface ClientModeOptions {
 	 */
 	projectUrl?: string;
 	/**
-	 * Prefix of the app's own consent route, such as `/api/c15t`. Manifest
+	 * Prefix of the app's own consent route, such as `/api/inth`. Manifest
 	 * mode re-inits through `${routePrefix}/init`, and browser resolution
 	 * fetches `${routePrefix}/manifest`.
 	 */
@@ -156,7 +156,7 @@ export const createLazyInitTransport = function createLazyInitTransport(
 		async save(payload) {
 			const transport = await recordTransport();
 			if (!transport.save) {
-				throw new Error('c15t: the init transport cannot save.');
+				throw new Error('inth: the init transport cannot save.');
 			}
 			return await transport.save(payload);
 		},
@@ -227,13 +227,13 @@ const withEarlyRequest = function withEarlyRequest(
 export interface LazyHostedOptions {
 	/** Backend URL for saves, and for `GET /init` without `initUrl`. */
 	projectUrl: string;
-	/** Same-origin route that resolves init, such as `/api/c15t/init`. */
+	/** Same-origin route that resolves init, such as `/api/inth/init`. */
 	initUrl?: string;
 	/** Defaults to whether `initUrl` is set. */
 	assertDecisionInputs?: boolean;
 	/** Headers forwarded to `GET /init`. */
 	headers?: Record<string, string>;
-	/** Kind reported through `window.c15t.mode`. Defaults to `'hosted'`. */
+	/** Kind reported through `window.inth.mode`. Defaults to `'hosted'`. */
 	kind?: ProviderTransportKind;
 	/**
 	 * An init response already requested. The first init reads it and sends
@@ -528,7 +528,7 @@ let warnedImplementation = false;
  *
  * const mode = clientMode(manifest(), {
  *   projectUrl: 'https://your-project.inth.app',
- *   routePrefix: '/api/c15t',
+ *   routePrefix: '/api/inth',
  * });
  * ```
  */
@@ -542,7 +542,7 @@ export const clientMode = function clientMode(
 		if (!warnedImplementation && !isProductionBuild()) {
 			warnedImplementation = true;
 			console.warn(
-				`c15t: \`mode\` is the ${mode.kind}() transport itself, so its code ships in the client bundle. Pass the ${mode.kind}() your framework package exports instead: it is plain data, and the root loads the code only when it runs.`
+				`inth: \`mode\` is the ${mode.kind}() transport itself, so its code ships in the client bundle. Pass the ${mode.kind}() your framework package exports instead: it is plain data, and the root loads the code only when it runs.`
 			);
 		}
 		return mode;
@@ -559,7 +559,7 @@ export const clientMode = function clientMode(
 	const { projectUrl } = options;
 	if (projectUrl === undefined) {
 		throw new Error(
-			'c15t: `projectUrl` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.'
+			'inth: `projectUrl` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.'
 		);
 	}
 	if (mode.type === 'hosted') {

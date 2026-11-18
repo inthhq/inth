@@ -30,7 +30,7 @@ const props = withDefaults(
 		groupAttrs?: object;
 		/**
 		 * Test id for the action root. A surface whose footer *is* the
-		 * action root — every c15t consent surface — names it after the
+		 * action root — every Inth consent surface — names it after the
 		 * footer, so the slot means the same element it does in React.
 		 * `null` renders none, which is what the IAB dialog footer needs:
 		 * React's and Svelte's carry no test id.

@@ -26,13 +26,13 @@ import { SwitchControl, Switch, SwitchThumb } from '@inth/angular/primitives';
 						title(category.name)
 					}}</span>
 					<button
-						c15tSwitch
+						inthSwitch
 						[attr.aria-labelledby]="'label-' + category.name"
 						[disabled]="category.name === 'necessary'"
 						[ngModel]="consent.draft.values()[category.name] ?? false"
 						(ngModelChange)="consent.setConsent(category.name, $event)"
 					>
-						<span c15tSwitchControl><span c15tSwitchThumb></span></span>
+						<span inthSwitchControl><span inthSwitchThumb></span></span>
 					</button>
 				</div>
 			}

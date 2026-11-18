@@ -53,7 +53,7 @@ export interface CreateGPPOptions extends ConsentRuntimeGPPFactoryOptions {
 	usApproach?: GPPUSApproach;
 	/**
 	 * Under the state approach, the section for a US visitor whose region is
-	 * unknown or whose state has no section c15t encodes. `'usnat'` reports
+	 * unknown or whose state has no section Inth encodes. `'usnat'` reports
 	 * the opt-outs in the MSPA US National section, as a transaction not
 	 * covered by the MSPA unless `mspaMode` is set. `'none'` reports no
 	 * section (`applicableSections: [-1]`), for publishers that reserve
@@ -316,7 +316,7 @@ export const createGPPRuntime = function createGPPRuntime(
 
 /**
  * Mounts the GPP CMP API (`__gpp`) against a consent kernel and keeps the
- * GPP string in step with the visitor's choices. The policy rule c15t
+ * GPP string in step with the visitor's choices. The policy rule Inth
  * matched decides whether a section applies:
  *
  * - Under an `iab` rule the TCF EU section (`tcfeuv2`) carries the TC

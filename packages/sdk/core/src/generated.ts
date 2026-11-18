@@ -3,7 +3,7 @@
  *
  * The `consentManifest()` Vite plugins replace this module with a virtual
  * one, and `withConsentManifest()` aliases it to a file under
- * `node_modules/.cache/c15t/` in Next.js. Without either, this module
+ * `node_modules/.cache/inth/` in Next.js. Without either, this module
  * stands in: both exports are `undefined`, so imports still compile and the
  * app reads the policy at runtime.
  *

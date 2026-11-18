@@ -1,5 +1,5 @@
 /**
- * The consent engine `provideC15t()` creates when it is not handed one:
+ * The consent engine `provideInth()` creates when it is not handed one:
  * the kernel and every module it mounts.
  *
  * @packageDocumentation

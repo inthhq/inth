@@ -1,8 +1,8 @@
 ---
 title: Branch
-description: Set Branch's consumer protection attribution level and Google DMA parameters from c15t consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
-seoTitle: Branch consent for mobile apps with c15t
-seoDescription: Drive Branch attribution levels and DMA parameters from c15t consent in Swift, Android, React Native and Expo, with deep links kept working.
+description: Set Branch's consumer protection attribution level and Google DMA parameters from Inth consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
+seoTitle: Branch consent for mobile apps with Inth
+seoDescription: Drive Branch attribution levels and DMA parameters from Inth consent in Swift, Android, React Native and Expo, with deep links kept working.
 group: integrations
 ---
 
@@ -13,7 +13,7 @@ from marketing and measurement, and sends Google's DMA parameters with
 so the app keeps working without consent.
 
 The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. c15t adds no Branch dependency. The web
+`@inth/react-native/integrations`. Inth adds no Branch dependency. The web
 has no Branch helper.
 
 ## What the helper changes
@@ -34,7 +34,7 @@ goes down, it lowers the level first. The DMA values come from the shared
 | `adPersonalizationConsent` | `adPersonalization` |
 | `adUserDataUsageConsent` | `adUserData` |
 
-c15t's policy model says how the app asks for consent, not where the user is,
+inth's policy model says how the app asks for consent, not where the user is,
 so `eeaRegion` comes from your own region logic. Branch needs all three
 arguments.
 
@@ -85,7 +85,7 @@ final class BranchConsentOwner {
 }
 ```
 
-c15t names its type `BranchAttribution` so it does not collide with Branch's
+Inth names its type `BranchAttribution` so it does not collide with Branch's
 `BranchAttributionLevel` in a file that imports both. In Branch's iOS SDK,
 `setDMAParamsForEEA` is a class method on `Branch`, while
 `setConsumerProtectionAttributionLevel` is called on `Branch.getInstance()`.

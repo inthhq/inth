@@ -102,7 +102,7 @@ export const createTrigger = function createTrigger(
 		'button',
 		{
 			'aria-label': options.ariaLabel ?? 'Open privacy settings',
-			'data-c15t-trigger': 'true',
+			'data-inth-trigger': 'true',
 			// Stops the hover and snap transitions, as on the other surfaces.
 			'data-disable-animation': ctx.disableAnimation,
 			'data-size': size,

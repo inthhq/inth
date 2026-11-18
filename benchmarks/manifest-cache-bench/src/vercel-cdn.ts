@@ -10,7 +10,7 @@
  * are answered `304` whenever the CDN's own copy still matches, regardless
  * of whether that copy is fresh or being served stale.
  */
-import { buildBrowserBenchManifest } from '@c15t/benchmarking/policy-fixtures';
+import { buildBrowserBenchManifest } from '@inth/benchmarking/policy-fixtures';
 
 /** Reads the current simulated time in epoch milliseconds. */
 export type SimClock = () => number;
@@ -52,7 +52,7 @@ export interface VercelCdnOptions {
 	 * Whether the origin also sends `CDN-Cache-Control`. Vercel consumes
 	 * `s-maxage` and `stale-while-revalidate` from a bare `Cache-Control` and
 	 * strips them before forwarding; with `CDN-Cache-Control` present it
-	 * forwards `Cache-Control` untouched. The c15t backend sends both.
+	 * forwards `Cache-Control` untouched. The Inth backend sends both.
 	 * @default true
 	 */
 	originSendsCdnCacheControl?: boolean;

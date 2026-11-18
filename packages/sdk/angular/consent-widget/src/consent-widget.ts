@@ -115,7 +115,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 				@let restricted = isRestricted(name);
 				@let title = titleOf(consentType);
 				<div
-					c15tPreferenceItem
+					inthPreferenceItem
 					[class]="resolvedNoStyle() ? '' : accordion.item || ''"
 					[open]="isOpen"
 					[noStyle]="true"
@@ -123,13 +123,13 @@ const formatConsentName = function formatConsentName(name: string): string {
 				>
 					<div [class]="resolvedNoStyle() ? '' : accordion.triggerRow || ''">
 						<button
-							c15tPreferenceItemTrigger
+							inthPreferenceItemTrigger
 							[class]="resolvedNoStyle() ? '' : accordion.trigger || ''"
 							(click)="toggleOpenItem(name)"
 							[attr.data-testid]="'consent-widget-accordion-trigger-' + name"
 						>
 							<div
-								c15tPreferenceItemLeading
+								inthPreferenceItemLeading
 								[class]="resolvedNoStyle() ? '' : accordion.arrow || ''"
 								[attr.data-testid]="'consent-widget-accordion-arrow-' + name"
 							>
@@ -152,9 +152,9 @@ const formatConsentName = function formatConsentName(name: string): string {
 									}
 								</svg>
 							</div>
-							<div c15tPreferenceItemHeader>
+							<div inthPreferenceItemHeader>
 								<h3
-									c15tPreferenceItemTitle
+									inthPreferenceItemTitle
 									[class]="resolvedNoStyle() ? '' : accordion.title || ''"
 								>
 									{{ title }}
@@ -163,11 +163,11 @@ const formatConsentName = function formatConsentName(name: string): string {
 						</button>
 
 						<div
-							c15tPreferenceItemControl
+							inthPreferenceItemControl
 							[class]="resolvedNoStyle() ? '' : accordion.control || ''"
 						>
 							<button
-								c15tSwitch
+								inthSwitch
 								[attr.aria-label]="title"
 								[checked]="checked"
 								(checkedChange)="toggleConsent(name, $event)"
@@ -181,11 +181,11 @@ const formatConsentName = function formatConsentName(name: string): string {
 								[attr.data-testid]="'consent-widget-switch-' + name"
 							>
 								<span
-									c15tSwitchControl
+									inthSwitchControl
 									[class]="resolvedNoStyle() ? '' : switches.track"
 								>
 									<span
-										c15tSwitchThumb
+										inthSwitchThumb
 										[class]="resolvedNoStyle() ? '' : switches.thumb"
 									></span>
 								</span>
@@ -203,7 +203,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 						</p>
 					}
 					<div
-						c15t-preference-item-content
+						inth-preference-item-content
 						[viewportClassName]="
 							resolvedNoStyle() ? undefined : accordion.contentViewport
 						"
@@ -216,7 +216,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 						{{ descriptionOf(consentType) }}
 						@if (hasVendors(name)) {
 							<section
-								c15t-consent-vendor-list
+								inth-consent-vendor-list
 								[category]="name"
 								[noStyle]="resolvedNoStyle()"
 							></section>
@@ -227,7 +227,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 		</div>
 
 		<div
-			c15t-policy-actions
+			inth-policy-actions
 			[actionGroups]="presentation().actionGroups"
 			[primaryActions]="presentation().primaryActions"
 			[shouldFillActions]="presentation().shouldFillActions"
@@ -249,7 +249,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 			@switch (action) {
 				@case ('reject') {
 					<button
-						c15t-consent-button
+						inth-consent-button
 						[action]="'reject'"
 						[variant]="
 							themedActions().reject.variant ??
@@ -264,7 +264,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 				}
 				@case ('accept') {
 					<button
-						c15t-consent-button
+						inth-consent-button
 						[action]="'accept'"
 						[variant]="
 							themedActions().accept.variant ??
@@ -279,7 +279,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 				}
 				@case ('save') {
 					<button
-						c15t-consent-button
+						inth-consent-button
 						[action]="'save'"
 						[disabled]="consent.draft.isStale()"
 						[variant]="
@@ -297,7 +297,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 
 		@if (showBranding()) {
 			<a
-				c15t-branding
+				inth-branding
 				[noStyle]="resolvedNoStyle()"
 				[variant]="'dialog-tag'"
 				[themeKey]="'consentWidgetTag'"
@@ -310,7 +310,7 @@ export class ConsentWidgetRoot {
 	protected readonly consent = inject(ConsentManager);
 	readonly #theme = inject(ConsentTheme);
 	readonly #styles = inject(ConsentStyles);
-	readonly #id = uniqueId('c15t-consent-widget');
+	readonly #id = uniqueId('inth-consent-widget');
 
 	/** Hide the "Secured by c15t" attribution. */
 	readonly hideBranding = input(true);
@@ -519,7 +519,7 @@ export class ConsentWidgetRoot {
  *
  * @example
  * ```html
- * <c15t-consent-widget [hideBranding]="false" />
+ * <inth-consent-widget [hideBranding]="false" />
  * ```
  */
 @Component({
@@ -528,7 +528,7 @@ export class ConsentWidgetRoot {
 	// host's place in the page.
 	host: { style: 'display: contents' },
 	imports: [ConsentWidgetRoot],
-	selector: 'c15t-consent-widget',
+	selector: 'inth-consent-widget',
 	template: `@if (consent.hasConsentUi()) {
 		<div
 			data-testid="consent-widget-root"

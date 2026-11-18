@@ -268,7 +268,7 @@ const NativeApp = () => {
 	);
 };
 /**
- * A binary built with `C15T_NATIVE_UI=0` links no stock native screens, so it
+ * A binary built with `INTH_NATIVE_UI=0` links no stock native screens, so it
  * draws its own consent UI instead of asking native to present one.
  */
 const NativeOrHeadlessApp = () =>

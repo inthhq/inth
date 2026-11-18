@@ -18,10 +18,10 @@ import {
 	initializeGPPStub,
 } from '@inth/sdk-iab/gpp';
 
-import type { C15tGlobal, QueuedCall } from '../global';
+import type { InthGlobal, QueuedCall } from '../global';
 import type { ConsentClient } from '../types';
 
-type GlobalWindow = Window & { c15t?: C15tGlobal | QueuedCall[] };
+type GlobalWindow = Window & { inth?: InthGlobal | QueuedCall[] };
 
 initializeGPPStub();
 
@@ -34,7 +34,7 @@ const removeStubWhenOff = function removeStubWhenOff(
 	}
 };
 
-const existing = (window as GlobalWindow).c15t;
+const existing = (window as GlobalWindow).inth;
 if (existing && !Array.isArray(existing)) {
 	if (typeof existing.provideGPP === 'function') {
 		existing.provideGPP(provided);
@@ -47,7 +47,7 @@ if (existing && !Array.isArray(existing)) {
 	}
 } else {
 	// The main tag has not run yet; it replays these once it installs.
-	(window as GlobalWindow).c15t = [
+	(window as GlobalWindow).inth = [
 		...(existing ?? []),
 		['provideGPP', provided],
 		['onInit', removeStubWhenOff],

@@ -470,7 +470,7 @@ export const createQueueWorker = function createQueueWorker({
 	const reportDropped = function reportDropped(error: unknown): void {
 		emit({ command: 'save', error, type: 'command:error' });
 		warnInDevelopment(
-			'[c15t] A queued consent save was dropped and will not be resent. The choice is kept in this browser only.',
+			'[inth] A queued consent save was dropped and will not be resent. The choice is kept in this browser only.',
 			error
 		);
 	};
@@ -484,7 +484,7 @@ export const createQueueWorker = function createQueueWorker({
 		const saves =
 			count === 1 ? 'a queued consent save' : `${count} queued consent saves`;
 		const error = new Error(
-			`c15t save outbox: dropped ${saves} that waited more than 7 days without reaching the backend`
+			`inth save outbox: dropped ${saves} that waited more than 7 days without reaching the backend`
 		);
 		queueMicrotask(() => {
 			reportDropped(error);
@@ -794,7 +794,7 @@ export const createQueueWorker = function createQueueWorker({
 		} else if (removed) {
 			reportDropped(
 				new Error(
-					`c15t save outbox: dropped a queued consent save after ${MAX_REPLAY_ATTEMPTS} failed attempts`,
+					`inth save outbox: dropped a queued consent save after ${MAX_REPLAY_ATTEMPTS} failed attempts`,
 					{ cause: failure }
 				)
 			);
@@ -846,8 +846,8 @@ export const createQueueWorker = function createQueueWorker({
 		if (kept > 0) {
 			warnInDevelopment(
 				kept === 1
-					? '[c15t] Resending a queued consent save failed. It stays queued and is resent on the next init or when the browser comes back online.'
-					: `[c15t] Resending ${kept} queued consent saves failed. They stay queued and are resent on the next init or when the browser comes back online.`,
+					? '[inth] Resending a queued consent save failed. It stays queued and is resent on the next init or when the browser comes back online.'
+					: `[inth] Resending ${kept} queued consent saves failed. They stay queued and are resent on the next init or when the browser comes back online.`,
 				lastError
 			);
 		}

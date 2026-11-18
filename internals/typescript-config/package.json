@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/typescript-config",
+	"name": "@inth/typescript-config",
 	"version": "0.0.1",
 	"private": true,
 	"type": "module",
@@ -7,7 +7,7 @@
 		"access": "public"
 	},
 	"scripts": {
-		"dev": "echo '@c15t/typescript-config has no watch task'",
+		"dev": "echo '@inth/typescript-config has no watch task'",
 		"fmt": "oxfmt -c ../../oxfmt.sdk.config.ts ."
 	},
 	"devDependencies": {

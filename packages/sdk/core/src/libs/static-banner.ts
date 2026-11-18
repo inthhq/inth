@@ -19,7 +19,7 @@ import { POLICY_CONTRACT_VERSION } from '@inth/sdk-schema/types';
 import { PREFETCH_WINDOW_KEY } from './prefetch/window-key';
 
 /** Attribute on the element that wraps the static banner. @internal */
-export const STATIC_BANNER_ATTR = 'data-c15t-static-banner';
+export const STATIC_BANNER_ATTR = 'data-inth-static-banner';
 
 /** What the reveal script compares the `/init` answer with. @internal */
 export interface StaticBannerKey {

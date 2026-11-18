@@ -1,5 +1,5 @@
 /**
- * The transports a plain Vue app's `app.use(c15tVue, …)` selects:
+ * The transports a plain Vue app's `app.use(inthVue, …)` selects:
  * `manifest()` for `mode`, and the hosted backend for `projectUrl`.
  *
  * Each is the transport itself, imported statically: a single-page app has
@@ -45,15 +45,15 @@ const missingProjectUrl = function missingProjectUrl(
 	try {
 		if (process.env.NODE_ENV !== 'production') {
 			hint =
-				' Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.';
+				' Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_INTH_PROJECT_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.';
 		}
 	} catch {
 		// No bundler and no `process`: the short message has to do.
 	}
 	return new Error(
 		mode === 'hosted'
-			? `c15t: \`projectUrl\` is required.${hint}`
-			: `c15t: ${mode}() has no backend URL.${hint}`
+			? `inth: \`projectUrl\` is required.${hint}`
+			: `inth: ${mode}() has no backend URL.${hint}`
 	);
 };
 
@@ -81,9 +81,9 @@ const missingProjectUrl = function missingProjectUrl(
  * @throws {Error} When no backend URL is set or derivable.
  * @example
  * ```ts
- * import { c15tVue, manifest } from '@inth/vue/vue-plugin';
+ * import { inthVue, manifest } from '@inth/vue/vue-plugin';
  *
- * app.use(c15tVue, { mode: manifest() });
+ * app.use(inthVue, { mode: manifest() });
  * ```
  */
 export const manifest = function manifest(
@@ -115,7 +115,7 @@ export const manifest = function manifest(
  * The transport the plugin's options select: `mode` when it is a factory
  * or a `testing()` value, else the hosted backend at `projectUrl`, which
  * defaults to the URL `consentManifest()` read from
- * `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`.
+ * `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`.
  *
  * @param options - The plugin's `projectUrl` and `mode`.
  * @returns A transport factory for the runtime's `mode`.

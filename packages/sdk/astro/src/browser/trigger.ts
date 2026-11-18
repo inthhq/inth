@@ -17,11 +17,11 @@
  *
  * @internal
  */
-export const EARLY_TAPS_KEY = '__c15tEarlyTaps';
+export const EARLY_TAPS_KEY = '__inthEarlyTaps';
 /** @internal */
 export const BANNER_ROOT = '[data-testid="consent-banner-root"]';
 /** @internal */
-export const EARLY_TAP_STYLE_ID = 'c15t-early-tap';
+export const EARLY_TAP_STYLE_ID = 'inth-early-tap';
 
 /** One tap the early-tap script recorded. @internal */
 export interface EarlyTap {
@@ -133,7 +133,7 @@ export const whenPriorityImagesLoad = function whenPriorityImagesLoad(
  *
  * Input inside the banner is the shell's to route: it does not load the
  * engine, and a pointer going down on one of the banner's action buttons
- * calls `onPress` with the button's `data-c15t-action`, ahead of its click.
+ * calls `onPress` with the button's `data-inth-action`, ahead of its click.
  *
  * @param start - Loads the engine.
  * @param onPress - Sees presses on the banner's buttons.
@@ -181,8 +181,8 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 		}
 		if (event.type === 'pointerdown') {
 			const action = target
-				.closest('[data-c15t-action]')
-				?.getAttribute('data-c15t-action');
+				.closest('[data-inth-action]')
+				?.getAttribute('data-inth-action');
 			if (action) {
 				onPress(action);
 			}

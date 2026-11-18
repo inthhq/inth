@@ -78,7 +78,7 @@ test('skills fit the package they ship in', () => {
 		{ install: 'a script tag', topic: 'the site is plain HTML' },
 		new Set(['frameworks/html/quickstart.md', 'frameworks/html/customize.md'])
 	);
-	expect(browser).toContain('data-c15t-category');
+	expect(browser).toContain('data-inth-category');
 	expect(browser).toContain(
 		'[HTML script tag customization](./docs/frameworks/html/customize.md)'
 	);
@@ -104,7 +104,7 @@ test('mobile skills describe native authority and link only bundled mobile guide
 	expect(skill).toContain('CommitResult.ok');
 	expect(skill).toContain('ATT is separate');
 	expect(skill).not.toContain('choices in the browser');
-	expect(skill).not.toContain('data-c15t-category');
+	expect(skill).not.toContain('data-inth-category');
 });
 
 test.each(PACKAGE_DOCS_CONFIGS.filter((config) => config.skillDirectory))(
@@ -120,7 +120,7 @@ test.each(PACKAGE_DOCS_CONFIGS.filter((config) => config.skillDirectory))(
 		};
 		expect(manifest.files).toContain('skills');
 		// Expo links the `skills/` directory of transitive dependencies too, so
-		// a c15t dependency that also ships one would link a second c15t skill
+		// a Inth dependency that also ships one would link a second Inth skill
 		// into every app that installs this package. A dependency without a
 		// `skills/` directory (such as the web engine, an optional peer) links
 		// nothing.

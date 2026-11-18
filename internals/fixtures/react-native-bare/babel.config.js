@@ -9,7 +9,7 @@ const path = require('node:path');
  * `process.env` from being frozen into the bundle by accident, and keeps the
  * rest of the machine's environment out of the artifact.
  */
-const PREFIX = 'C15T_';
+const PREFIX = 'INTH_';
 
 /**
  * Read the `KEY=value` lines a `.env` file holds.
@@ -62,7 +62,7 @@ const parseDotEnv = (filePath) => {
 	return values;
 };
 
-// A real environment always wins, so CI and an inline `C15T_X=… bun run start`
+// A real environment always wins, so CI and an inline `INTH_X=… bun run start`
 // both beat whatever is sitting in a developer's `.env`.
 const loaded = parseDotEnv(path.join(__dirname, '.env'));
 
@@ -73,7 +73,7 @@ for (const [key, value] of Object.entries(loaded)) {
 }
 
 /**
- * Replace `process.env.C15T_*` reads with their build-time value.
+ * Replace `process.env.INTH_*` reads with their build-time value.
  *
  * @returns {object} A Babel plugin.
  */

@@ -1,6 +1,6 @@
 ---
 title: Rendering and deployment
-description: How c15t resolves consent in client-rendered React apps, React Router framework mode, Remix and other server-rendered React apps without a c15t adapter.
+description: How Inth resolves consent in client-rendered React apps, React Router framework mode, Remix and other server-rendered React apps without a Inth adapter.
 group: frameworks
 ---
 
@@ -24,9 +24,9 @@ explains the difference in general terms.
 ## Client-rendered apps
 
 The [quickstart](/docs/frameworks/react/quickstart) and `examples/react` in
-the c15t repository use `hosted()` from `@inth/react`. It reads the backend URL
+the Inth repository use `hosted()` from `@inth/react`. It reads the backend URL
 from the provider's `projectUrl` option, which the quickstart reads from
-`VITE_C15T_BACKEND_URL`.
+`VITE_INTH_PROJECT_URL`.
 Policy edits apply on the next page load, without a rebuild. The page loads
 like this:
 
@@ -67,7 +67,7 @@ it only when all of these match the `/init` answer:
 It also stays hidden when the visitor has a stored choice. Otherwise the page
 removes it, and the app shows its banner as before.
 
-While the static banner shows, the app loads less c15t code up front. The
+While the static banner shows, the app loads less Inth code up front. The
 code that reads the `/init` answer, and `<ConsentBanner />`'s own code, load
 after the page's `fetchpriority="high"` images, or at once when the visitor
 taps, presses a key or scrolls. On a slow connection they don't share
@@ -95,7 +95,7 @@ Vite's `html.cspNonce`, or allow the hashes of the inline scripts and styles.
 
 ## React Router, Remix and other server-rendered apps
 
-React Router framework mode, Remix and similar frameworks have no c15t adapter.
+React Router framework mode, Remix and similar frameworks have no Inth adapter.
 Use the quickstart's `Consent` component and render it in your root component,
 around the outlet. In React Router framework mode that is `app/root.tsx`.
 
@@ -149,7 +149,7 @@ Know its limits before you add it:
 
 ### Render the banner in the server HTML
 
-c15t has no framework-neutral helper for this. `ConsentProvider` accepts a
+Inth has no framework-neutral helper for this. `ConsentProvider` accepts a
 server-resolved `prefetch` state, but the Next.js and TanStack Start adapters
 build that state from the request's cookie, headers and a cached policy
 manifest. Building it by hand ties your app to internal shapes. If the banner

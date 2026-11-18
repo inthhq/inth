@@ -1,7 +1,7 @@
 import {
 	multipleModeToggle,
 	singleModeToggle,
-} from '@c15t/conformance/play/accordion';
+} from '@inth/conformance/play/accordion';
 import { Accordion } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
@@ -126,7 +126,7 @@ export const WithIntroduction: Story = {
 				<h3 style={{ fontSize: '1.25rem', margin: 0 }}>
 					{consentManagerDialog.title}
 				</h3>
-				<p style={{ color: 'var(--c15t-text-muted)', margin: 0 }}>
+				<p style={{ color: 'var(--inth-text-muted)', margin: 0 }}>
 					{consentManagerDialog.description}
 				</p>
 			</div>

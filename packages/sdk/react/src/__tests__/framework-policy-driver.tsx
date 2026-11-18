@@ -1,4 +1,4 @@
-import { MINIMAL_GVL } from '@c15t/conformance';
+import { MINIMAL_GVL } from '@inth/conformance';
 import type {
 	CreatePolicySession,
 	PolicyDomEvidence,
@@ -7,8 +7,8 @@ import type {
 	PolicyStorageBytes,
 	PolicySsrEvidence,
 	ProbePolicyContract,
-} from '@c15t/conformance/contract/policy-driver';
-import type { ScenarioPolicy } from '@c15t/conformance/contract/policy-scenarios';
+} from '@inth/conformance/contract/policy-driver';
+import type { ScenarioPolicy } from '@inth/conformance/contract/policy-scenarios';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -66,7 +66,7 @@ import type { FrameworkRoot } from './framework-root';
 // Theme styles load after mount; compare the consent markup and track hydration warnings separately.
 const consentMarkup = (container: HTMLElement) => {
 	const copy = container.cloneNode(true) as HTMLElement;
-	copy.querySelectorAll('style#c15t-theme').forEach((style) => style.remove());
+	copy.querySelectorAll('style#inth-theme').forEach((style) => style.remove());
 	// Branding appends the browser hostname after mount, without affecting consent.
 	copy.querySelectorAll('a[data-branding]').forEach((link) => {
 		const href = link.getAttribute('href');
@@ -99,7 +99,7 @@ const POLICY_GVL = {
 	...MINIMAL_GVL,
 	vendors: { 755: { ...MINIMAL_GVL.vendors[755], id: 755 } },
 };
-const config = { storageKey: 'c15t-policy-conformance' };
+const config = { storageKey: 'inth-policy-conformance' };
 const keys = resolveStorageKeys(config);
 const legacyKey = keys.legacyConsent;
 if (!legacyKey) {
@@ -207,7 +207,7 @@ const getDom = (kernel: ConsentKernel): PolicyDomEvidence => {
 		preferencesOpen: !!document.querySelector(
 			'[data-testid="consent-widget-root"]'
 		),
-		rights: (preferences?.getAttribute('data-c15t-rights')?.split(' ') ??
+		rights: (preferences?.getAttribute('data-inth-rights')?.split(' ') ??
 			[]) as PolicyDomEvidence['rights'],
 	};
 };
@@ -335,7 +335,7 @@ export const createFrameworkPolicyDriver = ({
 				seedBytes(setup.storage.legacyLocalStorage)
 			);
 		}
-		localStorage.removeItem('c15t-iab-authority-v1');
+		localStorage.removeItem('inth-iab-authority-v1');
 		const baseline = { logs: logs(), storage: storageBytes() };
 		const consentMode: Record<string, string> = {};
 		const previousGtag = window.gtag;
@@ -350,7 +350,7 @@ export const createFrameworkPolicyDriver = ({
 		};
 		const originalFetch = window.fetch;
 		window.fetch = (input, init) => {
-			if (String(input).includes('c15t-policy-probe.invalid')) {
+			if (String(input).includes('inth-policy-probe.invalid')) {
 				networkCompletions += 1;
 				return Promise.resolve(new Response('probe'));
 			}
@@ -385,9 +385,9 @@ export const createFrameworkPolicyDriver = ({
 								{
 									attributes: { 'data-policy-script': 'true' },
 									category: 'marketing',
-									id: 'c15t-policy-script',
+									id: 'inth-policy-script',
 									textContent:
-										'window.dispatchEvent(new Event("c15t-policy-script-loaded"))',
+										'window.dispatchEvent(new Event("inth-policy-script-loaded"))',
 								},
 								gtag({
 									category: 'marketing',
@@ -402,7 +402,7 @@ export const createFrameworkPolicyDriver = ({
 							kernel: current,
 							logBlockedRequests: false,
 							rules: [
-								{ category: 'marketing', domain: 'c15t-policy-probe.invalid' },
+								{ category: 'marketing', domain: 'inth-policy-probe.invalid' },
 							],
 						})
 					: undefined;
@@ -431,7 +431,7 @@ export const createFrameworkPolicyDriver = ({
 		const countScript = () => {
 			scriptLoads += 1;
 		};
-		window.addEventListener('c15t-policy-script-loaded', countScript);
+		window.addEventListener('inth-policy-script-loaded', countScript);
 		const tree = (server = false) => {
 			const initialRecords = server
 				? serverConfig?.initialRecords
@@ -505,7 +505,7 @@ export const createFrameworkPolicyDriver = ({
 							<iframe
 								sandbox=""
 								title="probe"
-								src="about:blank#c15t-policy-probe"
+								src="about:blank#inth-policy-probe"
 								data-testid="policy-iframe"
 							/>
 						</ConsentGate>
@@ -622,7 +622,7 @@ export const createFrameworkPolicyDriver = ({
 				warn.mockRestore();
 				window.fetch = originalFetch;
 				window.gtag = previousGtag;
-				window.removeEventListener('c15t-policy-script-loaded', countScript);
+				window.removeEventListener('inth-policy-script-loaded', countScript);
 				if (previousGpc) {
 					Object.defineProperty(navigator, 'globalPrivacyControl', previousGpc);
 				} else {
@@ -810,7 +810,7 @@ export const createFrameworkPolicyDriver = ({
 				await settle();
 				if (setup.probeGates) {
 					networkAttempts += 1;
-					await window.fetch('https://c15t-policy-probe.invalid/collect');
+					await window.fetch('https://inth-policy-probe.invalid/collect');
 				}
 			},
 			observe(): PolicyEvidence {

@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Set the app identity, light and dark colors, radii, spacing, type, per-part slots, first-layer copy and provider attribution on c15t's native SwiftUI consent screens.
+description: Set the app identity, light and dark colors, radii, spacing, type, per-part slots, first-layer copy and provider attribution on inth's native SwiftUI consent screens.
 group: frameworks
 ---
 
@@ -48,10 +48,10 @@ all keep the same `decision` fill and `textOnDecision` label treatment.
 | `typography.fontFamily` | A bundled font for every role except the headline |
 | `typography.headlineFont` | System sans, serif, rounded or a bundled custom headline font |
 | `slots` | One part: `.consentBannerTitle`, `.consentBannerDescription`, `.buttonPrimary` or `.buttonSecondary` |
-| `branding` | `.inth`, `.c15t` or `.custom(name:markImageName:)` provider attribution. `.inth` is the default |
+| `branding` | `.inth`, `.inth` or `.custom(name:markImageName:)` provider attribution. `.inth` is the default |
 | `showsBranding` | Visibility of the provider attribution |
 | `firstLayer` | `.page`, `.sheet` or `.prompt`: how the first choice is presented |
-| `appearance` | `.system` (default) or `.c15t`: where the stock colours come from |
+| `appearance` | `.system` (default) or `.inth`: where the stock colours come from |
 | `savePlacement` | `.top` (default) or `.bottom`: where Save sits in Privacy Settings |
 
 ## Place Save Settings
@@ -87,7 +87,7 @@ scroll.
 
 `appearance` chooses the stock colours. `system`, the default, uses the
 platform's backgrounds and text colours with your app's accent colour, and
-centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
+centres the page. `inth` is warm paper and ink. The sheet and the prompt always use the system colours,
 because they sit over your app. Colours you set yourself win in every case.
 
 In an IAB TCF policy, a sheet or prompt is shown as the page in a wide window,
@@ -103,8 +103,8 @@ white text on it reaches the 5:1 contrast IAB TCF asks for.
 The accent colour is the `AccentColor` asset in your app's bundle, or the system
 blue when there is none.
 
-Names that have a web token match it: `primary` is `--c15t-primary`, and
-`radius.md` is `--c15t-radius-md`. A font size groups text styles: `sm` sizes
+Names that have a web token match it: `primary` is `--inth-primary`, and
+`radius.md` is `--inth-radius-md`. A font size groups text styles: `sm` sizes
 subheadline, footnote and captions, `base` sizes body and headline, and `lg`
 sizes the large title. Each style keeps its ratio to its group, and Dynamic
 Type still scales it. Spacing does not change a control's own padding, so tap
@@ -138,9 +138,9 @@ priority over both.
 | `com.inth.consent.headline` | First-layer headline |
 | `com.inth.consent.introduction` | First-layer introduction |
 | `com.inth.consent.firstLayer` | `page`, `sheet` or `prompt` |
-| `com.inth.consent.appearance` | `system` or `c15t` |
+| `com.inth.consent.appearance` | `system` or `inth` |
 | `com.inth.consent.savePlacement` | `top` or `bottom` |
-| `com.inth.consent.brandingProvider` | `inth` or `c15t` |
+| `com.inth.consent.brandingProvider` | `inth` or `inth` |
 | `com.inth.consent.branding` | Boolean controlling provider attribution |
 
 Use a native Boolean for `branding`, rather than the string `"false"`.

@@ -4,14 +4,14 @@ import type {
 	VendorDetails,
 } from '@inth/sdk/engine';
 
-export const VENDOR_MANIFEST_KIND = 'c15t.vendor-manifest';
+export const VENDOR_MANIFEST_KIND = 'inth.vendor-manifest';
 export const VENDOR_MANIFEST_SCHEMA_VERSION = 1;
 export const vendorManifestContract = {
 	kind: VENDOR_MANIFEST_KIND,
 	schemaVersion: VENDOR_MANIFEST_SCHEMA_VERSION,
 } as const;
 
-export const RUNTIME_VALUE_KIND = 'c15t.runtime-value';
+export const RUNTIME_VALUE_KIND = 'inth.runtime-value';
 
 export interface RuntimeValue {
 	kind: typeof RUNTIME_VALUE_KIND;
@@ -321,7 +321,7 @@ export type ManifestStep =
  * - `'rudderstack'` — RudderStack consent-management pattern: calls
  *   `rudderanalytics.consent({ consentManagement: { enabled, provider: 'custom',
  *   allowedConsentIds, deniedConsentIds } })` with the mapping's consent IDs
- *   partitioned by the current c15t consent state
+ *   partitioned by the current Inth consent state
  * - `'clarity'` — Microsoft Clarity Consent V2: calls
  *   `clarity('consentv2', state)` with the mapping's storage names
  */
@@ -414,9 +414,9 @@ export interface VendorManifest extends ManifestContract {
 	onConsentDenied?: ManifestStep[];
 
 	/**
-	 * Maps c15t consent categories to vendor-specific consent type names.
+	 * Maps Inth consent categories to vendor-specific consent type names.
 	 *
-	 * Used with `consentSignal` to translate c15t consent state into
+	 * Used with `consentSignal` to translate Inth consent state into
 	 * the vendor's consent API format.
 	 *
 	 * @example
@@ -441,7 +441,7 @@ export interface VendorManifest extends ManifestContract {
 
 	/**
 	 * Vendor consent types the `'default'` signal of a `'gtag'` or
-	 * `'clarity'` manifest sets whatever the c15t consent state says.
+	 * `'clarity'` manifest sets whatever the Inth consent state says.
 	 * Updates and a vendor the subject turned off ignore them.
 	 */
 	consentSignalDefaults?:

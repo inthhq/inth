@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Change c15t's colors, shape, button styles, copy and markup in an Angular app with a token stylesheet, theme slots, component inputs and ng-template slots.
+description: Change inth's colors, shape, button styles, copy and markup in an Angular app with a token stylesheet, theme slots, component inputs and ng-template slots.
 group: frameworks
 ---
 
@@ -8,12 +8,12 @@ group: frameworks
 
 | Change | Use |
 | --- | --- |
-| Brand colors, radius, type, spacing | `--c15t-*` variables in a global stylesheet |
-| One part of one component | `theme.slots` in `provideC15t()` |
+| Brand colors, radius, type, spacing | `--inth-*` variables in a global stylesheet |
+| One part of one component | `theme.slots` in `provideInth()` |
 | Button styles by action | `theme.consentActions` |
-| Shape, position, blocking, button order | `<c15t-consent-banner>` inputs or `presentation` |
+| Shape, position, blocking, button order | `<inth-consent-banner>` inputs or `presentation` |
 | Wording and languages | Banner text inputs, or [translations](/docs/frameworks/angular/translations) |
-| Markup inside the banner's title, description or buttons | `ng-template` slots on `<c15t-consent-banner>` |
+| Markup inside the banner's title, description or buttons | `ng-template` slots on `<inth-consent-banner>` |
 | Different markup altogether | [Headless](/docs/frameworks/angular/headless) |
 
 [Customization](/docs/customization/overview) explains how the pieces fit
@@ -21,7 +21,7 @@ together across frameworks.
 
 ## Set brand colors and radius
 
-Write the `--c15t-*` variables on `:root` in a global stylesheet. c15t's
+Write the `--inth-*` variables on `:root` in a global stylesheet. inth's
 default tokens carry no specificity, so your rule replaces them wherever each
 loads:
 
@@ -39,10 +39,10 @@ every variable.
 Do not put colors, radius or other tokens in the `theme` option. In the
 browser, `theme` applies slots and `consentActions` only; the token values
 are ignored. In development, `ConsentTheme` logs a warning when `theme` has
-tokens and the page has no `<style id="c15t-theme">`.
+tokens and the page has no `<style id="inth-theme">`.
 
 If your tokens come from data at runtime, `generateThemeCSS(theme)` from
-`@inth/angular` turns a theme object into the same CSS. Put the result in a `<style id="c15t-theme">` element, and expect
+`@inth/angular` turns a theme object into the same CSS. Put the result in a `<style id="inth-theme">` element, and expect
 the generator to add to your bundle. Its selectors outrank the stock
 defaults, so the element works wherever it sits. They also outrank a plain
 `:root` rule of your own, so if you mix both, write your overrides on
@@ -52,11 +52,11 @@ defaults, so the element works wherever it sits. They also outrank a plain
 
 The `colorScheme` option switches on the dark token set: `'dark'` always,
 `'system'` when the operating system prefers dark, `'light'` never. It
-toggles a `c15t-dark` class on `<html>`. Left unset, `ConsentTheme` copies a
-`dark` class on `<html>` into `c15t-dark`, so an app with its own dark mode
+toggles a `inth-dark` class on `<html>`. Left unset, `ConsentTheme` copies a
+`dark` class on `<html>` into `inth-dark`, so an app with its own dark mode
 toggle gets the dark tokens without the option. Pass `null` if your app sets
-`c15t-dark` itself. Override dark values under `:root.dark` and
-`:root.c15t-dark` in your stylesheet. [Dark mode](/docs/customization/dark-mode)
+`inth-dark` itself. Override dark values under `:root.dark` and
+`:root.inth-dark` in your stylesheet. [Dark mode](/docs/customization/dark-mode)
 covers a dark first paint.
 
 ## Style one part with theme slots
@@ -66,26 +66,26 @@ name, or `{ className, style, noStyle }`:
 
 <include src="../../shared/examples/angular/theme.mdx" />
 
-Pass it as `theme` to `provideC15t()`. Define the class in a global
+Pass it as `theme` to `provideInth()`. Define the class in a global
 stylesheet: the components render outside your component's view
 encapsulation, so a class in a component's `styles` does not reach them
 unless you use `::ng-deep`. The Angular components read these slots:
 
 | Component | Slots |
 | --- | --- |
-| `<c15t-consent-banner>` | `consentBanner`, `consentBannerCard`, `consentBannerHeader`, `consentBannerTitle`, `consentBannerDescription`, `consentBannerFooter`, `consentBannerFooterSubGroup`, `consentBannerRights`, `consentBannerRightLink`, `consentBannerTag`, `consentBannerOverlay` |
-| `<c15t-consent-dialog>` | `consentDialog`, `consentDialogCard`, `consentDialogHeader`, `consentDialogTitle`, `consentDialogDescription`, `consentDialogContent`, `consentDialogTag`, `consentDialogOverlay` |
-| `<c15t-consent-widget>` | `consentWidget`, `consentWidgetAccordion`, `consentWidgetFooter`, `consentWidgetFooterSubGroup`, `consentWidgetTag` |
-| `<c15t-consent-dialog-trigger>` | `consentDialogTrigger`, `consentDialogTriggerIcon`, and with dev tools `consentDialogTriggerToolbar`, `consentDialogTriggerToolbarItem`, `consentDialogTriggerToolbarIcon` |
-| `<c15t-iab-consent-banner>` | `iabConsentBanner`, `iabConsentBannerCard`, `iabConsentBannerHeader`, `iabConsentBannerFooter`, `iabConsentBannerTag`, `iabConsentBannerOverlay` |
-| `<c15t-iab-consent-dialog>` | `iabConsentDialog`, `iabConsentDialogCard`, `iabConsentDialogHeader`, `iabConsentDialogFooter`, `iabConsentDialogTag`, `iabConsentDialogOverlay` |
-| `<c15t-consent-gate>` | `consentGate`, `consentGateTitle`, `consentGateButton` |
+| `<inth-consent-banner>` | `consentBanner`, `consentBannerCard`, `consentBannerHeader`, `consentBannerTitle`, `consentBannerDescription`, `consentBannerFooter`, `consentBannerFooterSubGroup`, `consentBannerRights`, `consentBannerRightLink`, `consentBannerTag`, `consentBannerOverlay` |
+| `<inth-consent-dialog>` | `consentDialog`, `consentDialogCard`, `consentDialogHeader`, `consentDialogTitle`, `consentDialogDescription`, `consentDialogContent`, `consentDialogTag`, `consentDialogOverlay` |
+| `<inth-consent-widget>` | `consentWidget`, `consentWidgetAccordion`, `consentWidgetFooter`, `consentWidgetFooterSubGroup`, `consentWidgetTag` |
+| `<inth-consent-dialog-trigger>` | `consentDialogTrigger`, `consentDialogTriggerIcon`, and with dev tools `consentDialogTriggerToolbar`, `consentDialogTriggerToolbarItem`, `consentDialogTriggerToolbarIcon` |
+| `<inth-iab-consent-banner>` | `iabConsentBanner`, `iabConsentBannerCard`, `iabConsentBannerHeader`, `iabConsentBannerFooter`, `iabConsentBannerTag`, `iabConsentBannerOverlay` |
+| `<inth-iab-consent-dialog>` | `iabConsentDialog`, `iabConsentDialogCard`, `iabConsentDialogHeader`, `iabConsentDialogFooter`, `iabConsentDialogTag`, `iabConsentDialogOverlay` |
+| `<inth-consent-gate>` | `consentGate`, `consentGateTitle`, `consentGateButton` |
 | Buttons in every component | `buttonPrimary`, `buttonSecondary` |
 
 Slot names are not React's `components.banner.card` keys; do not copy a React
 configuration. Use slots when one part should change and tokens when a value
 should change everywhere. The `rootClass` input on a component, such as
-`<c15t-consent-banner rootClass="...">`, goes on its root.
+`<inth-consent-banner rootClass="...">`, goes on its root.
 [Component parts](/docs/customization/slots) explains the attributes each
 element carries, and [Tailwind CSS](/docs/customization/tailwind) covers
 Tailwind 4 and 3.
@@ -124,35 +124,35 @@ this banner in every language. For site-wide copy, pass `i18n`;
 
 ## Replace parts of the banner's markup
 
-`<c15t-consent-banner>` takes three `ng-template` slots. The policy still
+`<inth-consent-banner>` takes three `ng-template` slots. The policy still
 decides which actions show and in what order:
 
 <include src="../../shared/examples/angular/banner-templates.mdx" />
 
 | Template | Replaces | Context |
 | --- | --- | --- |
-| `c15tConsentBannerTitle` | The text inside the `<h2>` | `let-title`, the resolved title; `let-notice="notice"` |
-| `c15tConsentBannerDescription` | The description text. Legal links still follow it. | `let-description`; `let-notice="notice"` |
-| `c15tConsentBannerAction` | Each action button | `let-action`, `label`, `primary`, `variant`, `mode` and `testId` |
+| `inthConsentBannerTitle` | The text inside the `<h2>` | `let-title`, the resolved title; `let-notice="notice"` |
+| `inthConsentBannerDescription` | The description text. Legal links still follow it. | `let-description`; `let-notice="notice"` |
+| `inthConsentBannerAction` | Each action button | `let-action`, `label`, `primary`, `variant`, `mode` and `testId` |
 
-`ConsentButton` (`button[c15t-consent-button]`) records the action and takes
+`ConsentButton` (`button[inth-consent-button]`) records the action and takes
 the stock button styles, so a custom action template stays styled and
 working. Import each template directive and the banner into your component's
 `imports`.
 
 ## Turn off animations
 
-`disableAnimation` in `provideC15t()` turns off the banner and dialog
-animations, and the same input on `<c15t-consent-banner>`,
-`<c15t-consent-dialog>`, `<c15t-iab-consent-banner>` or
-`<c15t-iab-consent-dialog>` overrides it for one surface. Left unset, it
+`disableAnimation` in `provideInth()` turns off the banner and dialog
+animations, and the same input on `<inth-consent-banner>`,
+`<inth-consent-dialog>`, `<inth-iab-consent-banner>` or
+`<inth-iab-consent-dialog>` overrides it for one surface. Left unset, it
 follows the visitor's reduced motion setting.
 [Motion and animation](/docs/customization/motion) covers the duration and
 easing tokens.
 
-## Remove c15t's styles
+## Remove inth's styles
 
-Set `noStyle` on one component or in `provideC15t()` to render the same
-markup and behavior without c15t's classes. Style the `data-*` attributes and
+Set `noStyle` on one component or in `provideInth()` to render the same
+markup and behavior without inth's classes. Style the `data-*` attributes and
 your slot classes instead. For different markup, see
 [headless](./headless).

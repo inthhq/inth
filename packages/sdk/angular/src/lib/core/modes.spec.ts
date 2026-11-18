@@ -9,30 +9,30 @@ import {
 	selectedMode,
 } from './modes';
 
-describe('the transports provideC15t() selects', () => {
+describe('the transports provideInth() selects', () => {
 	test('a backend URL alone is the hosted backend, with its options as data', () => {
-		const mode = selectedMode({ projectUrl: '/api/c15t' }) as unknown as {
+		const mode = selectedMode({ projectUrl: '/api/inth' }) as unknown as {
 			projectUrl?: string;
 			kind?: string;
 			type?: string;
 		};
 		expect(mode.type).toBe('hosted');
 		expect(mode.kind).toBe('hosted');
-		expect(mode.projectUrl).toBe('/api/c15t');
-		expect(selectedMode({ projectUrl: '/api/c15t' })).toBe(mode);
+		expect(mode.projectUrl).toBe('/api/inth');
+		expect(selectedMode({ projectUrl: '/api/inth' })).toBe(mode);
 	});
 
 	test('testing() selects its own transport, with or without a backend URL', () => {
 		const mode = testing();
-		expect(selectedMode({ mode, projectUrl: '/api/c15t' })).toBe(
+		expect(selectedMode({ mode, projectUrl: '/api/inth' })).toBe(
 			mode.transport
 		);
 		expect(selectedMode({ mode })).toBe(mode.transport);
 	});
 
 	test('hosted() selects the hosted backend, as no mode does', () => {
-		expect(selectedMode({ mode: hosted(), projectUrl: '/api/c15t' })).toBe(
-			selectedMode({ projectUrl: '/api/c15t' })
+		expect(selectedMode({ mode: hosted(), projectUrl: '/api/inth' })).toBe(
+			selectedMode({ projectUrl: '/api/inth' })
 		);
 	});
 
@@ -54,10 +54,10 @@ describe('the transports provideC15t() selects', () => {
 
 	test('manifest() carries the kind and options core reads', () => {
 		const fromManifest = manifest({
-			manifestUrl: '/api/c15t/manifest',
+			manifestUrl: '/api/inth/manifest',
 		}) as unknown as { kind: string; manifestUrl: string };
 		expect(fromManifest.kind).toBe('manifest');
-		expect(fromManifest.manifestUrl).toBe('/api/c15t/manifest');
+		expect(fromManifest.manifestUrl).toBe('/api/inth/manifest');
 	});
 
 	// Every transport loads its code on first use. A failed chunk request

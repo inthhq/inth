@@ -203,7 +203,7 @@ describe('useScrollLock', () => {
 						style={{
 							height: 10,
 							position: 'fixed',
-							right: 'var(--c15t-scroll-lock-gap, 0px)',
+							right: 'var(--inth-scroll-lock-gap, 0px)',
 							top: 20,
 							width: 10,
 						}}

@@ -1,6 +1,6 @@
 ---
 title: Rendering and deployment
-description: Choose the c15t Nuxt module's mode and routePrefix for server rendering, prerendered and cached routes, nuxt generate on static hosting, and ssr false.
+description: Choose the Inth Nuxt module's mode and routePrefix for server rendering, prerendered and cached routes, nuxt generate on static hosting, and ssr false.
 group: frameworks
 ---
 
@@ -10,9 +10,9 @@ Two module options in `nuxt.config.ts` decide where each visitor's policy
 comes from. `mode` is `manifest()`, `hosted()` or `testing()`, imported from
 `@inth/nuxt`. `routePrefix` is where the module adds its consent route.
 
-| Your deployment | `c15t` options | Banner in the first HTML |
+| Your deployment | `inth` options | Banner in the first HTML |
 | --- | --- | --- |
-| A Nuxt server renders each request (`nuxt build`) | None: `mode` defaults to `manifest()` and `routePrefix` to `'/api/c15t'`. See the [quickstart](/docs/frameworks/nuxt/quickstart). | Yes |
+| A Nuxt server renders each request (`nuxt build`) | None: `mode` defaults to `manifest()` and `routePrefix` to `'/api/inth'`. See the [quickstart](/docs/frameworks/nuxt/quickstart). | Yes |
 | A Nuxt server with some prerendered or cached routes (`routeRules` with `prerender`, `swr`, `isr` or `cache`) | The same. See [prerendered and cached routes](#prerendered-and-cached-routes). | No on those routes, yes elsewhere |
 | Policy edits must apply without a rebuild | `mode: manifest({ source: 'runtime' })`. See [fetch the manifest at runtime](#fetch-the-manifest-at-runtime). | Yes |
 | Static hosting with `nuxt generate` | `mode: manifest({ resolve: 'browser' })` and `routePrefix: false`, or `mode: hosted()`. See [deploy to static hosting](#deploy-to-static-hosting). | No |
@@ -34,7 +34,7 @@ location headers, resolves their policy from the bundled snapshot, and sends
 the result with the page. The browser reuses it during hydration, so the
 banner needs no extra request. The browser bundle holds no resolver, snapshot or policy
 rules. The [quickstart](/docs/frameworks/nuxt/quickstart) sets this up, and
-`examples/nuxt` in the c15t repository runs it.
+`examples/nuxt` in the Inth repository runs it.
 
 The server render sets no cookie. The visitor's subject ID (`sub_…`) lives
 in the consent records their first save writes, and the render reads it from
@@ -54,12 +54,12 @@ Zaraz and Sentry. Those two helpers, and `scripts` entries you write yourself,
 start after hydration.
 
 To start every `scripts` entry after hydration instead, set
-`scriptLoader: { serverStart: false }` under `c15t` in `nuxt.config.ts` or
+`scriptLoader: { serverStart: false }` under `inth` in `nuxt.config.ts` or
 `app.config.ts`.
 
-The module adds one catch-all route at `${routePrefix}/**`, `/api/c15t/**` by
-default. It answers `GET /api/c15t/init`, the visitor's resolved policy, and
-`GET /api/c15t/manifest`, the deployment's manifest. The server render
+The module adds one catch-all route at `${routePrefix}/**`, `/api/inth/**` by
+default. It answers `GET /api/inth/init`, the visitor's resolved policy, and
+`GET /api/inth/manifest`, the deployment's manifest. The server render
 resolves through the init route in-process, through Nitro's local fetch, so
 it never leaves the server. The browser uses the init route when it resolves
 the policy itself, for example on a prerendered route or after a server
@@ -76,7 +76,7 @@ A banner in the server HTML shows before the app hydrates, which on a slow
 phone can take seconds. The stock banner puts a small inline script in front of
 its buttons that holds an Accept all, Reject all, notice dismiss or Customize
 tap made in that gap. Accept, reject and dismiss hide the banner at once. When
-the banner hydrates and the runtime has started, c15t records the choice with
+the banner hydrates and the runtime has started, Inth records the choice with
 the time of the tap, saves it and loads the scripts it allows; Customize opens
 the dialog. A tap on a banner for one model or prompt is dropped when the
 browser resolves another, and the banner shows again.
@@ -99,7 +99,7 @@ banner's code, loads at the first of these:
 The banner stays server HTML until then. An Accept all or Reject all tapped
 before the engine loads takes effect in the tap's own task: the consent state
 the composables return changes, and script loaders on the provided kernel
-start the scripts the choice allows. A moment later c15t stores the consent
+start the scripts the choice allows. A moment later Inth stores the consent
 record, queues the save and calls `onChoiceRecorded` and
 `onPermissionsChanged`. The engine then loads, starts from that record and
 sends the save. It records nothing a second time. Customize opens the dialog
@@ -115,7 +115,7 @@ prompt or a privacy signal, IAB, an experiment, a `consentSource`, `gpp`, a
 from the HTML. Routes the server does not render per visitor (prerendered,
 cached or `ssr: false`) load it as the app starts too.
 
-The c15t code the first load does run goes into one chunk, so the page makes
+The Inth code the first load does run goes into one chunk, so the page makes
 one request for it rather than one per module it shares with the engine.
 The module adds this chunk group to the client build when Vite builds with
 Rolldown 1.2 or later and the app sets no `codeSplitting`, `advancedChunks`
@@ -126,7 +126,7 @@ or `manualChunks` of its own.
 `routePrefix: false` adds no route. The server render still resolves each
 visitor from the bundled snapshot, and the browser asks the backend's `/init`
 whenever it resolves the policy itself, such as on a prerendered page. Keep
-the route unless something else owns `/api/c15t`.
+the route unless something else owns `/api/inth`.
 
 ### Ask the backend on every render
 
@@ -140,7 +140,7 @@ no snapshot:
 import { hosted } from '@inth/nuxt';
 
 export default defineNuxtConfig({
-	c15t: { mode: hosted() },
+	inth: { mode: hosted() },
 	modules: ['@inth/nuxt'],
 });
 ```
@@ -168,7 +168,7 @@ refreshes it in the background, so policy edits apply without a rebuild:
 import { manifest } from '@inth/nuxt';
 
 export default defineNuxtConfig({
-	c15t: { mode: manifest({ source: 'runtime' }) },
+	inth: { mode: manifest({ source: 'runtime' }) },
 	modules: ['@inth/nuxt'],
 });
 ```
@@ -184,7 +184,7 @@ A prerendered route, or one with a `prerender`, `swr`, `isr` or `cache` route
 rule, sends the same HTML to every visitor. The module renders that HTML
 without any visitor's consent record, location or request headers, so it has
 no banner. After hydration the browser requests the visitor's policy from
-`/api/c15t/init` and reads their stored choice, then shows the banner if the
+`/api/inth/init` and reads their stored choice, then shows the banner if the
 policy asks for one. With `hosted()`, or `routePrefix: false`, the browser
 asks the backend's `/init` instead.
 
@@ -239,7 +239,7 @@ single-page app does. It doesn't apply the rule for an unknown location,
 which could be another region's. To resolve by location in the browser, pass
 `manifest({ resolve: 'browser', geoUrl: '/geo' })` with a route on your own
 origin, such as an edge function your host runs, that returns the visitor's
-`country` and `region` as JSON, for example `{ "country": "DE", "region": "BE" }`. c15t resolves the
+`country` and `region` as JSON, for example `{ "country": "DE", "region": "BE" }`. Inth resolves the
 policy again when the response arrives. Or use `hosted()`.
 
 Consent saves go to the backend from the browser, so the backend must allow
@@ -255,9 +255,9 @@ see no content. That is the tradeoff. Prerendering works without it, so use
 On a static host, use the [static hosting](#deploy-to-static-hosting) config
 above. The module reads the visitor's stored choice from their own cookie,
 and the browser resolves the policy from the bundled manifest. The banner
-appears once the resolver chunk loads. `examples/nuxt-static` in the c15t
+appears once the resolver chunk loads. `examples/nuxt-static` in the Inth
 repository builds this setup. With a Nuxt server, the default `manifest()`
-also works: the browser asks the server's `/api/c15t/init`.
+also works: the browser asks the server's `/api/inth/init`.
 
 With `hosted()`, the module adds a small inline script to the head of every
 `ssr: false` page, prerendered ones included, that starts the backend's
@@ -265,8 +265,8 @@ With `hosted()`, the module adds a small inline script to the head of every
 once its JavaScript loads, so the policy request no longer waits for the
 app's bundle. The script contains your backend URL and nothing about the
 visitor. Turn it off with the module option `initPrefetch: false`, or for one
-route with `routeRules: { '/path': { c15t: { initPrefetch: false } } }`. Use
-the route rule when a client plugin changes c15t's configuration for that
+route with `routeRules: { '/path': { inth: { initPrefetch: false } } }`. Use
+the route rule when a client plugin changes inth's configuration for that
 route, because the server cannot see that change and the early request would
 go unused.
 
@@ -288,12 +288,12 @@ confirm the banner stays closed.
 
 For a prerendered or cached route, view the page source and confirm it has no
 `consent-banner-root`. Open the Network tab and reload. The browser requests
-`/api/c15t/init` after the page loads, and the banner appears. Reject, reload,
+`/api/inth/init` after the page loads, and the banner appears. Reject, reload,
 and confirm the banner stays closed.
 
 For static output with browser resolution, serve `.output/public` and open
 the Network tab. The browser makes no request to the backend's `/manifest` or
-`/init`, and none to `/api/c15t`. With `hosted()`, it requests the backend's
+`/init`, and none to `/api/inth`. With `hosted()`, it requests the backend's
 `/init` once per page load. Reject, reload, and confirm the banner stays
 closed. Then follow [verify consent](/docs/guides/verify-consent) for the
 vendor checks.

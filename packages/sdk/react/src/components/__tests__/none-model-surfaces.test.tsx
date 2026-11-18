@@ -39,7 +39,7 @@ const queryTestId = function queryTestId(testId: string) {
 
 const queryToolbarAction = function queryToolbarAction(kind: string) {
 	return document.querySelector<HTMLButtonElement>(
-		`[role="toolbar"] [data-c15t-trigger-action="${kind}"]`
+		`[role="toolbar"] [data-inth-trigger-action="${kind}"]`
 	);
 };
 
@@ -131,7 +131,7 @@ describe('consent surfaces under a none rule', () => {
 		// Other test files in this browser context may have left consent keys
 		// behind; start clean so the storage assertion below is about this save.
 		localStorage.clear();
-		document.cookie = 'c15t=; Max-Age=0; Path=/';
+		document.cookie = 'inth=; Max-Age=0; Path=/';
 		render(
 			<ComponentFixtureProvider
 				options={{
@@ -179,9 +179,9 @@ describe('consent surfaces under a none rule', () => {
 		// Persistence is off for the fixture, and the kernel wrote no record
 		// either way: no consent key reaches storage.
 		const consentKeys = Object.keys(localStorage).filter((key) =>
-			key.startsWith('c15t')
+			key.startsWith('inth')
 		);
 		expect(consentKeys).toEqual([]);
-		expect(document.cookie).not.toMatch(/(?<boundary>^|;\s*)c15t=/u);
+		expect(document.cookie).not.toMatch(/(?<boundary>^|;\s*)inth=/u);
 	});
 });

@@ -3,7 +3,7 @@
  * helpers fall back to.
  *
  * `withConsentManifest` writes the snapshot to
- * `node_modules/.cache/c15t/manifest.js` and aliases this specifier to it,
+ * `node_modules/.cache/inth/manifest.js` and aliases this specifier to it,
  * in both Turbopack and webpack, so `resolveConsent` and the route handlers
  * read the deployment's snapshot without the app passing it. Without the
  * wrapper, or where the bundler does not apply the alias (a server package

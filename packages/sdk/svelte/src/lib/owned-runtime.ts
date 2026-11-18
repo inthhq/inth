@@ -45,7 +45,7 @@ export const createOwnedRuntime = function createOwnedRuntime(
 	// The surfaces' English fallback (`translation-defaults.ts`), under its
 	// global key: this module imports nothing of the package.
 	(globalThis as Record<symbol, unknown>)[
-		Symbol.for('c15t.svelte.defaultTranslations')
+		Symbol.for('inth.svelte.defaultTranslations')
 	] = defaultTranslationConfig;
 	return createConsentProviderRuntime(options, {
 		// The script loader, network blocker, data clearing and a

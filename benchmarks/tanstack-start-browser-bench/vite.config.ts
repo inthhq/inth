@@ -7,7 +7,7 @@ import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 /**
- * `C15T_BENCH_ROOT_PROVIDER=1` selects the root-mounted provider variant at
+ * `INTH_BENCH_ROOT_PROVIDER=1` selects the root-mounted provider variant at
  * build time (`bun run build:root`, output `dist-root/`). Two things switch
  * on it:
  *
@@ -17,17 +17,17 @@ import { defineConfig } from 'vite';
  *   folded branch because even a tree-shaken static import from the root
  *   changes Rolldown's chunk assignment (the provider chunk stops sharing a
  *   chunk with `page-shell`), which would alter the default build.
- * - `import.meta.env.C15T_BENCH_ROOT_PROVIDER`, inlined through
+ * - `import.meta.env.INTH_BENCH_ROOT_PROVIDER`, inlined through
  *   `envPrefix`, folds the per-route provider out of `/manifest-ssr`.
  */
-const rootProvider = process.env.C15T_BENCH_ROOT_PROVIDER === '1';
+const rootProvider = process.env.INTH_BENCH_ROOT_PROVIDER === '1';
 // Resolve the adapter-owned dependency explicitly, including under isolated installs.
 const adapterRequire = createRequire(
 	createRequire(import.meta.url).resolve('@inth/tanstack-start')
 );
 
 export default defineConfig({
-	envPrefix: ['VITE_', 'C15T_'],
+	envPrefix: ['VITE_', 'INTH_'],
 	// `consentManifest()` as CookieBench's TanStack Start fixture and the
 	// quickstart add it, so browser bundles get what the documented setup
 	// gives them. The backend URL is relative, so the build fetches nothing.

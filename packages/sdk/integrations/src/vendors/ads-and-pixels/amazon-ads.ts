@@ -50,7 +50,7 @@ export interface AmazonAdsTagOptions {
 	countryCode?: string;
 	/** Visitor IP address forwarded to ACS only when countryCode is supplied. */
 	ipAddress?: string;
-	/** Existing IAB GPP string forwarded to ACS. c15t does not create it. */
+	/** Existing IAB GPP string forwarded to ACS. Inth does not create it. */
 	gpp?: string;
 	/** Override the main amzn.js URL. */
 	scriptUrl?: string;
@@ -80,7 +80,7 @@ export const amazonAdsTagManifest = {
 	},
 } satisfies VendorManifest;
 
-// Different configurations can borrow the same c15t-created ACS element.
+// Different configurations can borrow the same inth-created ACS element.
 const helperOwners = new WeakMap<HTMLScriptElement, number>();
 
 interface ConsentOwner {

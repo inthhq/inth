@@ -1,5 +1,5 @@
 /**
- * The consent engine chunk: the runtime `provideC15t()` owns, with its
+ * The consent engine chunk: the runtime `provideInth()` owns, with its
  * kernel and modules. The deferred runtime (`deferred-runtime.ts`) loads it
  * after the page for a visitor who still has to choose, at once for every
  * other visitor, and before the render on the server.

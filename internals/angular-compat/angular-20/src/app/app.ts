@@ -8,19 +8,19 @@ import { ConsentDialog } from '@inth/angular/consent-dialog';
 	selector: 'app-root',
 	template: `
 		<main>
-			<h1>c15t on Angular 20</h1>
-			<p>The oldest Angular version &#64;c15t/angular supports.</p>
+			<h1>inth on Angular 20</h1>
+			<p>The oldest Angular version &#64;inth/angular supports.</p>
 		</main>
 		<footer>
 			<button
 				type="button"
-				c15tConsentDialogLink
+				inthConsentDialogLink
 			>
 				Privacy settings
 			</button>
 		</footer>
-		<c15t-consent-banner />
-		<c15t-consent-dialog />
+		<inth-consent-banner />
+		<inth-consent-dialog />
 	`,
 })
 // oxlint-disable-next-line typescript/no-extraneous-class -- An Angular component is a decorated class.

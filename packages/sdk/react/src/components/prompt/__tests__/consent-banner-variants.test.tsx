@@ -200,7 +200,7 @@ describe('ConsentBanner variants', () => {
 		expect(root.dataset.position).toBe('bottom');
 		await vi.waitFor(() => {
 			expect(warn).toHaveBeenCalledWith(
-				expect.stringContaining('c15t presentation'),
+				expect.stringContaining('inth presentation'),
 				expect.anything()
 			);
 		});

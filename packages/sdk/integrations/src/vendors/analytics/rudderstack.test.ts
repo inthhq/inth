@@ -22,7 +22,7 @@ describe('rudderstack', () => {
 
 	it('matches registry metadata with default page tracking', () => {
 		const script = rudderstack({
-			dataPlaneUrl: 'https://c15t-live-probe.invalid',
+			dataPlaneUrl: 'https://inth-live-probe.invalid',
 			writeKey: 'WRITE_KEY',
 		});
 
@@ -36,7 +36,7 @@ describe('rudderstack', () => {
 	it('queues load and page by default with load options', () => {
 		const globalRef = getTestGlobal();
 		const script = rudderstack({
-			dataPlaneUrl: ' https://c15t-live-probe.invalid ',
+			dataPlaneUrl: ' https://inth-live-probe.invalid ',
 			loadOptions: {
 				plugins: ['BeaconQueue'],
 				useBeacon: true,
@@ -57,7 +57,7 @@ describe('rudderstack', () => {
 			toArgumentsArray([
 				'load',
 				'WRITE_KEY',
-				'https://c15t-live-probe.invalid',
+				'https://inth-live-probe.invalid',
 				{
 					plugins: ['BeaconQueue'],
 					useBeacon: true,
@@ -70,7 +70,7 @@ describe('rudderstack', () => {
 	it('defines the official v3 snippet queue methods before load', () => {
 		const globalRef = getTestGlobal();
 		const script = rudderstack({
-			dataPlaneUrl: 'https://c15t-live-probe.invalid',
+			dataPlaneUrl: 'https://inth-live-probe.invalid',
 			writeKey: 'WRITE_KEY',
 		});
 
@@ -95,7 +95,7 @@ describe('rudderstack', () => {
 	it('can disable default page queue and use a custom script URL', () => {
 		const globalRef = getTestGlobal();
 		const script = rudderstack({
-			dataPlaneUrl: 'https://c15t-live-probe.invalid',
+			dataPlaneUrl: 'https://inth-live-probe.invalid',
 			scriptUrl: 'https://cdn.example.com/rsa.min.js',
 			trackPageView: false,
 			writeKey: 'WRITE_KEY',
@@ -113,7 +113,7 @@ describe('rudderstack', () => {
 			toArgumentsArray([
 				'load',
 				'WRITE_KEY',
-				'https://c15t-live-probe.invalid',
+				'https://inth-live-probe.invalid',
 				{},
 			])
 		);
@@ -122,7 +122,7 @@ describe('rudderstack', () => {
 
 	it('falls back to the default URL when scriptUrl is blank', () => {
 		const script = rudderstack({
-			dataPlaneUrl: 'https://c15t-live-probe.invalid',
+			dataPlaneUrl: 'https://inth-live-probe.invalid',
 			scriptUrl: '   ',
 			writeKey: 'WRITE_KEY',
 		});
@@ -134,7 +134,7 @@ describe('rudderstack', () => {
 		expectSkippedScript(
 			() =>
 				rudderstack({
-					dataPlaneUrl: 'https://c15t-live-probe.invalid',
+					dataPlaneUrl: 'https://inth-live-probe.invalid',
 					writeKey: '   ',
 				}),
 			{ category: 'measurement', id: 'rudderstack' },
@@ -153,7 +153,7 @@ describe('rudderstack', () => {
 	it('throws for a non-HTTPS scriptUrl override', () => {
 		expect(() =>
 			rudderstack({
-				dataPlaneUrl: 'https://c15t-live-probe.invalid',
+				dataPlaneUrl: 'https://inth-live-probe.invalid',
 				scriptUrl: 'http://cdn.example.com/rsa.min.js',
 				writeKey: 'WRITE_KEY',
 			})
@@ -164,7 +164,7 @@ describe('rudderstack', () => {
 		expectSkippedScript(
 			() =>
 				rudderstack({
-					dataPlaneUrl: 'http://c15t-live-probe.invalid',
+					dataPlaneUrl: 'http://inth-live-probe.invalid',
 					writeKey: 'WRITE_KEY',
 				}),
 			{ category: 'measurement', id: 'rudderstack' },
@@ -182,7 +182,7 @@ describe('rudderstack', () => {
 					marketing: [' ad-destinations '],
 				},
 			},
-			dataPlaneUrl: 'https://c15t-live-probe.invalid',
+			dataPlaneUrl: 'https://inth-live-probe.invalid',
 			writeKey: 'WRITE_KEY',
 		});
 
@@ -215,7 +215,7 @@ describe('rudderstack', () => {
 			toArgumentsArray([
 				'load',
 				'WRITE_KEY',
-				'https://c15t-live-probe.invalid',
+				'https://inth-live-probe.invalid',
 				{
 					consentManagement: {
 						enabled: true,
@@ -247,7 +247,7 @@ describe('rudderstack', () => {
 					measurement: ['product-analytics'],
 				},
 			},
-			dataPlaneUrl: 'https://c15t-live-probe.invalid',
+			dataPlaneUrl: 'https://inth-live-probe.invalid',
 			writeKey: 'WRITE_KEY',
 		});
 
@@ -279,7 +279,7 @@ describe('rudderstack', () => {
 			consentManagement: {
 				mapping: { measurement: ['product-analytics'] },
 			},
-			dataPlaneUrl: 'https://c15t-live-probe.invalid',
+			dataPlaneUrl: 'https://inth-live-probe.invalid',
 			loadOptions: {
 				consentManagement: { provider: 'oneTrust' },
 				preConsent: {
@@ -303,7 +303,7 @@ describe('rudderstack', () => {
 			toArgumentsArray([
 				'load',
 				'WRITE_KEY',
-				'https://c15t-live-probe.invalid',
+				'https://inth-live-probe.invalid',
 				{
 					consentManagement: {
 						enabled: true,
@@ -323,7 +323,7 @@ describe('rudderstack', () => {
 		expect(() =>
 			rudderstack({
 				consentManagement: { mapping: { measurement: ['   '] } },
-				dataPlaneUrl: 'https://c15t-live-probe.invalid',
+				dataPlaneUrl: 'https://inth-live-probe.invalid',
 				writeKey: 'WRITE_KEY',
 			})
 		).toThrowError(
@@ -335,11 +335,11 @@ describe('rudderstack', () => {
 		expect(() =>
 			rudderstack({
 				consentManagement: { mapping: {} },
-				dataPlaneUrl: 'https://c15t-live-probe.invalid',
+				dataPlaneUrl: 'https://inth-live-probe.invalid',
 				writeKey: 'WRITE_KEY',
 			})
 		).toThrowError(
-			'rudderstack: consentManagement.mapping must map at least one c15t category to a non-empty list of RudderStack consent IDs'
+			'rudderstack: consentManagement.mapping must map at least one inth category to a non-empty list of RudderStack consent IDs'
 		);
 	});
 });

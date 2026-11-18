@@ -94,7 +94,7 @@ export interface ConsentWidgetCompoundComponent extends FC<ConsentWidgetProps> {
  * ```tsx
  * <ConsentProvider
  *   options={{
- *     mode: hosted({ projectUrl: '/api/c15t' }),
+ *     mode: hosted({ projectUrl: '/api/inth' }),
  *     components: {
  *       accordion: {
  *         root: { className: 'rounded-3xl border border-black/10' },

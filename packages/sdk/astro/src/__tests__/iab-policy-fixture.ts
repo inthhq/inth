@@ -1,8 +1,8 @@
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { deferInitGvl } from '@inth/sdk/engine';
 
 import { hosted as hostedMode } from '../mode';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { testWire } from './policy-fixture';
 
 /**
@@ -10,7 +10,7 @@ import { testWire } from './policy-fixture';
  * policy plus its vendor list and CMP ID.
  *
  * @param gvl - `'inline'` sends the list itself; `'reference'` sends the
- * reference c15t's own init routes send in its place; `'null'` turns IAB
+ * reference inth's own init routes send in its place; `'null'` turns IAB
  * off for the request.
  * @returns A fresh `/init` response.
  */
@@ -18,7 +18,7 @@ export const iabInitResponse = function iabInitResponse(
 	gvl: 'inline' | 'reference' | 'null' = 'inline'
 ): Response {
 	const body = {
-		branding: 'c15t',
+		branding: 'inth',
 		cmpId: 28,
 		gvl: gvl === 'null' ? null : MINIMAL_GVL,
 		location: { countryCode: null, regionCode: null },
@@ -33,7 +33,7 @@ export const iabInitResponse = function iabInitResponse(
 };
 
 /** A hosted site that never set `iab`, with one marketing script. */
-export const SITE_WITHOUT_IAB: C15tAstroOptions = {
+export const SITE_WITHOUT_IAB: InthAstroOptions = {
 	consentCategories: ['necessary', 'marketing'],
 	mode: hostedMode(),
 	projectUrl: 'https://consent.example.com',

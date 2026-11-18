@@ -1,18 +1,18 @@
 ---
 title: Troubleshooting
-description: Fix common c15t Vue plugin problems, from unresolved imports and a missing banner to tokens that do not apply and scripts that load twice.
+description: Fix common Inth Vue plugin problems, from unresolved imports and a missing banner to tokens that do not apply and scripts that load twice.
 group: frameworks
 ---
 
-## Vite fails to pre-bundle c15t's .vue files
+## Vite fails to pre-bundle inth's .vue files
 
 **Check.** `vite dev` reports an error from dependency optimization for a
-`.vue` file under `@inth/vue`, or the mode throws `c15t: hosted() has no
+`.vue` file under `@inth/vue`, or the mode throws `inth: hosted() has no
 backend URL`. `consentManifest()` is missing from the `plugins` array of
 `vite.config.ts`.
 
 **Fix.** Add `consentManifest()` from `@inth/vue/vite` to the `plugins` array,
-next to `@vitejs/plugin-vue`, and set `VITE_C15T_BACKEND_URL` (or
+next to `@vitejs/plugin-vue`, and set `VITE_INTH_PROJECT_URL` (or
 `VITE_INTH_PROJECT_URL`). See the
 [quickstart](/docs/frameworks/vue/quickstart#add-the-vite-plugin).
 
@@ -29,7 +29,7 @@ next to `@vitejs/plugin-vue`, and set `VITE_C15T_BACKEND_URL` (or
 
 ## A composable throws "Kernel not found"
 
-**Check.** The component is outside the app that installed `c15tVue`, for
+**Check.** The component is outside the app that installed `inthVue`, for
 example in a separate `createApp()` instance, or the composable ran outside
 `setup`.
 
@@ -55,32 +55,32 @@ with `manifest({ source: 'runtime' })`, the `/manifest` request.
    component.
 4. **The backend did not answer.** With `hosted()`, `/init` must return
    200; with a runtime manifest, `/manifest` must. A CORS error means your site's origin is missing from the
-   Inth project's trusted origins. While resolution fails, c15t shows no UI and
+   Inth project's trusted origins. While resolution fails, Inth shows no UI and
    keeps every optional category denied.
-5. **A stored choice exists.** Clear the `c15t` cookie and localStorage entry,
+5. **A stored choice exists.** Clear the `inth` cookie and localStorage entry,
    or use a private window.
 
 ## The app throws IABUnavailableError
 
-**Check.** The error has the code `C15T_IAB_UNAVAILABLE` and reads
-"c15t: this visitor's policy uses IAB TCF, but `iab` is not set." The
+**Check.** The error has the code `INTH_IAB_UNAVAILABLE` and reads
+"inth: this visitor's policy uses IAB TCF, but `iab` is not set." The
 visitor's policy uses the `iab` model and the backend sent its vendor list,
 but the plugin has no `iab` option, or has `iab: false` or
 `iab: { enabled: false }`. The standard banner does not handle the IAB model,
-so c15t throws rather than leave the visitor with no consent UI.
+so Inth throws rather than leave the visitor with no consent UI.
 `app.use()` throws when the policy arrives with `prefetch`; otherwise the
 error is uncaught once the policy resolves, and `ConsentRoot` renders
 nothing.
 
 **Fix.** If the site uses IAB TCF, pass `iab` to the plugin, such as
-`app.use(c15tVue, { iab: {} })`. See [IAB TCF](/docs/frameworks/vue/iab).
+`app.use(inthVue, { iab: {} })`. See [IAB TCF](/docs/frameworks/vue/iab).
 If it does not, remove the `iab` model from the policy for that region in
 your Inth project or policy pack. A backend that answers `gvl: null` turns
 IAB off for that request, and nothing throws.
 
 ## Tokens in my CSS do not apply
 
-**Check.** The c15tVue plugin appends a `<style id="c15t-css-vars">` element to
+**Check.** The inthVue plugin appends a `<style id="inth-css-vars">` element to
 `<head>` when you install it. The element sets every token, including the
 defaults. A `:root` rule in your stylesheet for the same variable competes
 with it on source order, so it may lose.
@@ -98,13 +98,13 @@ with it on source order, so it may lose.
 **Check.** Look for the vendor's own snippet in `index.html`, or SDK
 initialization in your code.
 
-**Fix.** Remove it so c15t is the only loader.
+**Fix.** Remove it so Inth is the only loader.
 
 ## The page flashes without the banner on a server-rendered Vue app
 
-**Check.** c15t does not support server rendering for plain Vue.
+**Check.** Inth does not support server rendering for plain Vue.
 
-**Fix.** Use the c15t Nuxt module. See
+**Fix.** Use the Inth Nuxt module. See
 [server rendering without Nuxt](/docs/frameworks/vue/rendering#server-rendering-without-nuxt).
 
 ## Names from an earlier alpha are missing
@@ -119,11 +119,11 @@ a stable release, with no alias.
 | Removed | Use instead |
 | --- | --- |
 | Vue plugin options `projectUrl`, `manifest`, `manifestSnapshot`, `manifestUrl`, `customFetch`, `domain` | `mode`, a factory from `@inth/vue/vue-plugin` that takes them |
-| The default `c15tVue` export of `@inth/vue/vite` | `consentManifest` from `@inth/vue/vite`. The Vue app plugin keeps the name `c15tVue`. |
+| The default `inthVue` export of `@inth/vue/vite` | `consentManifest` from `@inth/vue/vite`. The Vue app plugin keeps the name `inthVue`. |
 | `@inth/vue/consent-root`, `@inth/vue/consent-widget` | Named exports from `@inth/vue/vue-plugin` |
 | `ConsentPreferencesLink`, `runtime/components/consent-preferences-link.vue` | `ConsentDialogLink`, `consent-dialog-link.vue` |
 | `ConsentFrame` | `ConsentGate` |
-| `hosted({ url })` | `hosted({ projectUrl })`, or `VITE_C15T_BACKEND_URL` |
+| `hosted({ url })` | `hosted({ projectUrl })`, or `VITE_INTH_PROJECT_URL` |
 
 ## More help
 

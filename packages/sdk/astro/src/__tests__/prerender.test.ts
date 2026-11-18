@@ -11,7 +11,7 @@ import { createConsentMiddleware } from '../middleware-handler';
 import { hosted as hostedMode } from '../mode';
 import { buildBannerRevealScript, resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../types';
 import { describeTree } from './dom-tree';
 import { testRule } from './policy-fixture';
 
@@ -21,7 +21,7 @@ beforeAll(async () => {
 	container = await AstroContainer.create();
 });
 
-const OFFLINE: C15tAstroOptions = {
+const OFFLINE: InthAstroOptions = {
 	mode: testingMode({ policy: [testRule] }),
 };
 
@@ -31,13 +31,13 @@ const OFFLINE: C15tAstroOptions = {
  * during a prerender, and they describe the build machine, not a visitor.
  */
 const runPrerendered = async function runPrerendered(
-	options: C15tAstroOptions,
+	options: InthAstroOptions,
 	fetchImpl?: typeof globalThis.fetch
-): Promise<C15tLocals> {
+): Promise<InthLocals> {
 	const middleware = createConsentMiddleware(resolveOptions(options), {
 		fetch: fetchImpl,
 	});
-	const locals = {} as { c15t: C15tLocals };
+	const locals = {} as { inth: InthLocals };
 	const request = {
 		get headers(): Headers {
 			throw new Error('read a prerendered request’s headers');
@@ -48,56 +48,56 @@ const runPrerendered = async function runPrerendered(
 		{ isPrerendered: true, locals, request } as never,
 		vi.fn(() => new Response('ok')) as never
 	);
-	return locals.c15t;
+	return locals.inth;
 };
 
 describe('prerendered routes', () => {
 	it('never reads the request headers', async () => {
-		const c15t = await runPrerendered(OFFLINE);
-		expect(c15t.prerendered).toBe(true);
+		const inth = await runPrerendered(OFFLINE);
+		expect(inth.prerendered).toBe(true);
 	});
 
 	it('leaves visitor state out of the inlined config', async () => {
 		// A consent cookie on the build request must not become everyone's.
-		const c15t = await resolveConsentContext({
+		const inth = await resolveConsentContext({
 			headers: new Headers({
-				cookie: 'c15t=v=3&sid=sub_build',
+				cookie: 'inth=v=3&sid=sub_build',
 				'sec-gpc': '1',
 			}),
 			options: resolveOptions(OFFLINE),
 			prerendered: true,
 		});
 		// Any `initialRecords` at all stop the browser reading its own cookie.
-		expect(c15t.config).not.toHaveProperty('initialRecords');
-		expect(c15t.config).not.toHaveProperty('now');
-		expect(c15t.config).not.toHaveProperty('initialPrivacySignals');
+		expect(inth.config).not.toHaveProperty('initialRecords');
+		expect(inth.config).not.toHaveProperty('now');
+		expect(inth.config).not.toHaveProperty('initialPrivacySignals');
 	});
 
 	it('resolves an offline policy at build time', async () => {
-		const c15t = await runPrerendered(OFFLINE);
-		expect(c15t.hasConsentUi).toBe(true);
-		expect(c15t.shouldShowBanner).toBe(true);
-		expect(c15t.config.initialPolicyResolution).toBeDefined();
+		const inth = await runPrerendered(OFFLINE);
+		expect(inth.hasConsentUi).toBe(true);
+		expect(inth.shouldShowBanner).toBe(true);
+		expect(inth.config.initialPolicyResolution).toBeDefined();
 	});
 
 	it('leaves a hosted policy for the browser to resolve', async () => {
 		const fetchImpl = vi.fn();
-		const c15t = await runPrerendered(
+		const inth = await runPrerendered(
 			{ mode: hostedMode(), projectUrl: 'https://consent.example.com' },
 			fetchImpl as never
 		);
 		expect(fetchImpl).not.toHaveBeenCalled();
-		expect(c15t.hasPolicy).toBe(false);
+		expect(inth.hasPolicy).toBe(false);
 	});
 });
 
 describe('<ConsentBanner /> on a prerendered page', () => {
 	it('renders hidden for the browser to reveal', async () => {
 		const html = await container.renderToString(ConsentBanner, {
-			locals: { c15t: await runPrerendered(OFFLINE) },
+			locals: { inth: await runPrerendered(OFFLINE) },
 		});
 		expect(html).toMatch(/data-testid="consent-banner-root"[^>]*\shidden/u);
-		expect(html).toContain('data-c15t-visible="false"');
+		expect(html).toContain('data-inth-visible="false"');
 		// Revealed at first paint for a visitor with nothing stored.
 		expect(html).toContain(
 			buildBannerRevealScript(undefined, 'consent-banner')
@@ -107,7 +107,7 @@ describe('<ConsentBanner /> on a prerendered page', () => {
 	it('adds no reveal script to a server-rendered banner', async () => {
 		const html = await container.renderToString(ConsentBanner, {
 			locals: {
-				c15t: await resolveConsentContext({
+				inth: await resolveConsentContext({
 					headers: new Headers(),
 					options: resolveOptions(OFFLINE),
 				}),
@@ -119,7 +119,7 @@ describe('<ConsentBanner /> on a prerendered page', () => {
 	it('leaves a spot with its props when the policy is unknown', async () => {
 		const html = await container.renderToString(ConsentBanner, {
 			locals: {
-				c15t: await runPrerendered({
+				inth: await runPrerendered({
 					mode: hostedMode(),
 					projectUrl: 'https://consent.example.com',
 				}),
@@ -138,7 +138,7 @@ describe('<ConsentBanner /> on a prerendered page', () => {
 
 interface ParityCase {
 	rule?: Record<string, unknown>;
-	options?: Partial<C15tAstroOptions>;
+	options?: Partial<InthAstroOptions>;
 	props?: Record<string, unknown>;
 	branding?: 'inth';
 }
@@ -171,7 +171,7 @@ describe('browser-rendered banner', () => {
 		['no branding tag', { props: { hideBranding: true } }],
 		['INTH branding', { branding: 'inth' }],
 	])('matches the server markup for %s', async (_name, parityCase) => {
-		const options: C15tAstroOptions = {
+		const options: InthAstroOptions = {
 			legalLinks: {
 				cookiePolicy: { href: '/cookies', label: 'Cookies' },
 				privacyPolicy: { href: '/privacy', label: 'Privacy' },
@@ -190,7 +190,7 @@ describe('browser-rendered banner', () => {
 			headers: new Headers(),
 			options: resolveOptions(options),
 		});
-		const c15t = parityCase.branding
+		const inth = parityCase.branding
 			? {
 					...resolved,
 					snapshot: { ...resolved.snapshot, branding: parityCase.branding },
@@ -198,7 +198,7 @@ describe('browser-rendered banner', () => {
 			: resolved;
 		const server = new JSDOM(
 			await container.renderToString(ConsentBanner, {
-				locals: { c15t },
+				locals: { inth },
 				props,
 				request: new Request('https://example.com/'),
 			}),
@@ -210,9 +210,9 @@ describe('browser-rendered banner', () => {
 		vi.stubGlobal('window', dom.window);
 		try {
 			const built = buildPrompt(
-				c15t.snapshot,
+				inth.snapshot,
 				{ classNames: promptClassNames, props },
-				c15t.options
+				inth.options
 			);
 			const expected = [
 				server.querySelector('[data-testid="consent-banner-overlay"]'),

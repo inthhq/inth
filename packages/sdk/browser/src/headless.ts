@@ -3,14 +3,14 @@
  *
  * For sites that render their own banner: subscribe to the client, call
  * `acceptAll()` / `rejectAll()` / `save()`, or mark page elements with
- * `data-c15t-action` and let the client wire them.
+ * `data-inth-action` and let the client wire them.
  *
  * @example
  * ```ts
  * import { init } from '@inth/sdk-browser/headless';
  *
- * const c15t = init({ projectUrl: 'https://your-project.inth.app' });
- * c15t.on('ui', (surface) => banner.hidden = surface !== 'banner');
+ * const Inth = init({ projectUrl: 'https://your-project.inth.app' });
+ * inth.on('ui', (surface) => banner.hidden = surface !== 'banner');
  * ```
  */
 

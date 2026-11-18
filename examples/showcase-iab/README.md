@@ -1,6 +1,6 @@
 # IAB TCF for an ad-supported publisher
 
-A Northwind Journal article with two ad slots and a sponsored story. c15t
+A Northwind Journal article with two ad slots and a sponsored story. Inth
 shows the IAB TCF banner, writes the visitor's choice as a TC string and
 serves it through `window.__tcfapi`. Each slot reads that string the way an
 ad tag does and fills only when its vendor and the purposes it needs have
@@ -32,7 +32,7 @@ are drawn with CSS and nothing contacts an ad network.
   `IABConsentDialog`, and `ConsentGPP`.
 - [`lib/use-tcf-data.ts`](lib/use-tcf-data.ts) listens to `__tcfapi` and
   decides whether a vendor may serve. It calls the same API Google Publisher
-  Tag and Prebid.js call, and has no c15t code in it.
+  Tag and Prebid.js call, and has no Inth code in it.
   [`components/ad-slot.tsx`](components/ad-slot.tsx) reserves the space and
   renders the creative once it may.
 - [`public/vendor-list.json`](public/vendor-list.json) is a three-vendor
@@ -52,13 +52,13 @@ Then open http://localhost:3114.
 
 ## Before you ship
 
-This demo talks to your Inth project: set `NEXT_PUBLIC_C15T_BACKEND_URL` in
+This demo talks to your Inth project: set `NEXT_PUBLIC_INTH_PROJECT_URL` in
 `.env.local`. Your backend resolves the visitor's region, so only visitors
 under an IAB policy see the TCF banner. The demo uses a local vendor list and
 a demonstration CMP ID. A real site changes two things in
 `components/consent.tsx`:
 
-- **Vendor list.** Remove `gvlUrl`. c15t loads the official Global Vendor
+- **Vendor list.** Remove `gvlUrl`. Inth loads the official Global Vendor
   List from your backend, or from its GVL endpoint without one. Use the
   `vendors` prop to list only the vendors you work with.
 - **CMP ID.** Replace `160` with the ID IAB Europe assigned when your CMP

@@ -16,7 +16,7 @@ import { createContext } from 'react';
  * render site, so each hook isolates re-renders to exactly its slice.
  */
 export const KernelContext = createContext<ConsentKernel | null>(null);
-KernelContext.displayName = 'C15tKernelContext';
+KernelContext.displayName = 'InthKernelContext';
 
 /** Provider-owned services used by optional integrations. */
 export interface ProviderServices {

@@ -16,7 +16,7 @@
  * ```
  *
  * Under a nonce-based Content Security Policy, the island's inline code
- * carries the page's nonce from `Astro.locals.c15t.nonce`, since the page's
+ * carries the page's nonce from `Astro.locals.inth.nonce`, since the page's
  * policy is the one that applies to it. Astro's own island loader is an
  * inline script without a nonce, so the policy has to allow it too.
  *
@@ -45,7 +45,7 @@ interface Props extends PromptProps {
 	server:defer
 	{...Astro.props}
 	inlineStyles={false}
-	nonce={Astro.locals.c15t?.nonce}
+	nonce={Astro.locals.inth?.nonce}
 >
 	<slot name="fallback" slot="fallback" />
 </ConsentBanner>

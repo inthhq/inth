@@ -68,19 +68,19 @@ describe('setupColorScheme without matchMedia', () => {
 		{ expected: false, scheme: 'light' },
 		{ expected: false, scheme: 'system' },
 	] as const)('sets $scheme without throwing', ({ expected, scheme }) => {
-		root.classList.add('c15t-dark');
+		root.classList.add('inth-dark');
 		const release = setupColorScheme(scheme);
-		expect(root.classList.contains('c15t-dark')).toBe(expected);
+		expect(root.classList.contains('inth-dark')).toBe(expected);
 		release();
 	});
 
 	test('mirrors .dark when unset', async () => {
 		root.classList.add('dark');
 		const release = setupColorScheme(undefined);
-		expect(root.classList.contains('c15t-dark')).toBe(true);
+		expect(root.classList.contains('inth-dark')).toBe(true);
 		root.classList.remove('dark');
 		await Promise.resolve();
-		expect(root.classList.contains('c15t-dark')).toBe(false);
+		expect(root.classList.contains('inth-dark')).toBe(false);
 		release();
 	});
 });
@@ -180,29 +180,29 @@ describe('getTextDirection', () => {
 
 describe('setupTextDirection', () => {
 	beforeEach(() => {
-		document.body.classList.remove('c15t-rtl');
+		document.body.classList.remove('inth-rtl');
 	});
 
 	afterEach(() => {
-		document.body.classList.remove('c15t-rtl');
+		document.body.classList.remove('inth-rtl');
 	});
 
-	test('adds c15t-rtl class for RTL language', () => {
+	test('adds inth-rtl class for RTL language', () => {
 		setupTextDirection('ar');
-		expect(document.body.classList.contains('c15t-rtl')).toBe(true);
+		expect(document.body.classList.contains('inth-rtl')).toBe(true);
 	});
 
-	test('removes c15t-rtl class for LTR language', () => {
-		document.body.classList.add('c15t-rtl');
+	test('removes inth-rtl class for LTR language', () => {
+		document.body.classList.add('inth-rtl');
 		setupTextDirection('en');
-		expect(document.body.classList.contains('c15t-rtl')).toBe(false);
+		expect(document.body.classList.contains('inth-rtl')).toBe(false);
 	});
 
-	test('cleanup function removes c15t-rtl class', () => {
+	test('cleanup function removes inth-rtl class', () => {
 		const cleanup = setupTextDirection('ar');
-		expect(document.body.classList.contains('c15t-rtl')).toBe(true);
+		expect(document.body.classList.contains('inth-rtl')).toBe(true);
 		cleanup();
-		expect(document.body.classList.contains('c15t-rtl')).toBe(false);
+		expect(document.body.classList.contains('inth-rtl')).toBe(false);
 	});
 });
 
@@ -294,7 +294,7 @@ describe('setupScrollLock', () => {
 		expect(root.style.scrollbarGutter).toBe('stable');
 		expect(body.style.paddingRight).toBe('10px');
 		// Fixed elements stay still, so there is no gap to report.
-		expect(root.style.getPropertyValue('--c15t-scroll-lock-gap')).toBe('');
+		expect(root.style.getPropertyValue('--inth-scroll-lock-gap')).toBe('');
 		cleanup();
 		expect(root.style.scrollbarGutter).toBe('');
 	});
@@ -339,10 +339,10 @@ describe('setupScrollLock', () => {
 			.mockReturnValue(rootWidth(1015));
 		const cleanup = setupScrollLock();
 		expect(body.style.paddingRight).toBe('15px');
-		expect(root.style.getPropertyValue('--c15t-scroll-lock-gap')).toBe('15px');
+		expect(root.style.getPropertyValue('--inth-scroll-lock-gap')).toBe('15px');
 		cleanup();
 		expect(body.style.paddingRight).toBe('');
-		expect(root.style.getPropertyValue('--c15t-scroll-lock-gap')).toBe('');
+		expect(root.style.getPropertyValue('--inth-scroll-lock-gap')).toBe('');
 	});
 
 	test('pads body by the scrollbar width without scrollbar-gutter support', () => {
@@ -355,16 +355,16 @@ describe('setupScrollLock', () => {
 		expect(body.style.paddingRight).toBe('10px');
 	});
 
-	test('reports the padded width as --c15t-scroll-lock-gap until release', () => {
+	test('reports the padded width as --inth-scroll-lock-gap until release', () => {
 		showRootScrollbar(15);
-		root.style.setProperty('--c15t-scroll-lock-gap', '4px');
+		root.style.setProperty('--inth-scroll-lock-gap', '4px');
 		const first = setupScrollLock();
 		const second = setupScrollLock();
-		expect(root.style.getPropertyValue('--c15t-scroll-lock-gap')).toBe('15px');
+		expect(root.style.getPropertyValue('--inth-scroll-lock-gap')).toBe('15px');
 		first();
-		expect(root.style.getPropertyValue('--c15t-scroll-lock-gap')).toBe('15px');
+		expect(root.style.getPropertyValue('--inth-scroll-lock-gap')).toBe('15px');
 		second();
-		expect(root.style.getPropertyValue('--c15t-scroll-lock-gap')).toBe('4px');
+		expect(root.style.getPropertyValue('--inth-scroll-lock-gap')).toBe('4px');
 	});
 });
 

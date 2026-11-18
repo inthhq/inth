@@ -1,6 +1,6 @@
 ---
 title: Callbacks
-description: Run code in a JavaScript app when a visitor records a consent choice, when permissions change, when a request fails or before the withdrawal reload, with c15t callbacks, client events and kernel events.
+description: Run code in a JavaScript app when a visitor records a consent choice, when permissions change, when a request fails or before the withdrawal reload, with Inth callbacks, client events and kernel events.
 group: frameworks
 ---
 
@@ -10,7 +10,7 @@ group: frameworks
 | --- | --- |
 | Start or stop your own code as permissions change | `callbacks.onPermissionsChanged`, or the client's `consent` event |
 | Know that a visitor clicked accept, reject or save | `callbacks.onChoiceRecorded` |
-| Wait until c15t knows the visitor's permissions | `consent.ready()`, or the `ready` event |
+| Wait until Inth knows the visitor's permissions | `consent.ready()`, or the `ready` event |
 | Show, hide or switch your own UI | The client's `ui` event, or `kernel.subscribe` |
 | Report failed backend calls | `callbacks.onError`, or the `error` event |
 | Flush data before the reload after a withdrawal | `callbacks.onBeforeConsentRevocationReload` |
@@ -59,8 +59,8 @@ returns an unsubscribe function:
 
 <import src="../../shared/browser/client-options.mdx#events" />
 
-Each event is also dispatched on `document` as `c15t:ready`, `c15t:consent`,
-`c15t:ui` and `c15t:error`, with the payload in `event.detail`, for code that
+Each event is also dispatched on `document` as `inth:ready`, `inth:consent`,
+`inth:ui` and `inth:error`, with the payload in `event.detail`, for code that
 cannot import the client.
 
 ## Kernel events
@@ -84,11 +84,11 @@ call `wireRuntimeCallbacks({ kernel, callbacks })` from `@inth/sdk/runtime`.
 ## Errors thrown by your code
 
 A callback or kernel listener that throws does not stop other listeners or
-fail the action. c15t reports it with `reportError` in the browser.
+fail the action. Inth reports it with `reportError` in the browser.
 
 A listener added with `on()` on the `@inth/sdk` client that throws is
 logged with `console.error`. The later `on` listeners for the same event and
-the matching `c15t:*` event on `document` still run. This covers the `ready`
+the matching `inth:*` event on `document` still run. This covers the `ready`
 and `ui` listeners that `on()` calls at once after the policy resolved, so
 `on()` still returns its unsubscribe function.
 

@@ -19,8 +19,8 @@ describe('theme keys for banner rights and dismiss', () => {
 	});
 
 	test('built banner class map ships the rights classes', () => {
-		expect(bannerStyles.rights).toMatch(/^c15t-ui-rights-/u);
-		expect(bannerStyles.rightLink).toMatch(/^c15t-ui-rightLink-/u);
+		expect(bannerStyles.rights).toMatch(/^inth-ui-rights-/u);
+		expect(bannerStyles.rightLink).toMatch(/^inth-ui-rightLink-/u);
 	});
 });
 

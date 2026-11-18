@@ -70,7 +70,7 @@ export const selectLegalLinks = function selectLegalLinks(
  */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	selector: 'span[c15t-inline-legal-links]',
+	selector: 'span[inth-inline-legal-links]',
 	// A space before the links and after each comma, as in React's
 	// `InlineLegalLinks`.
 	template: `<ng-container>{{ ' ' }}</ng-container>

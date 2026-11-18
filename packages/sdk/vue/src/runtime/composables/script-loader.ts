@@ -30,7 +30,7 @@ export interface ScriptLoaderHandle {
  * @param scripts - The scripts, or a ref or getter; a change reconciles.
  * @returns A handle to replace or remove them early. They are removed when
  * the component unmounts.
- * @throws {Error} When the c15t plugin is not installed.
+ * @throws {Error} When the Inth plugin is not installed.
  * @example
  * ```ts
  * const tenant = useTenant();

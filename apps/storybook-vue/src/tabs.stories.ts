@@ -1,4 +1,4 @@
-import { keyboardNavigation, tabSwitching } from '@c15t/conformance/play/tabs';
+import { keyboardNavigation, tabSwitching } from '@inth/conformance/play/tabs';
 import { getNextTabValue } from '@inth/sdk/ui/primitives';
 import { tabsVariants } from '@inth/sdk/ui/styles/primitives';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
@@ -87,7 +87,7 @@ export const Default: Story = {
 					v-if="activeTab === 'overview'"
 					:class="contentClass"
 					role="tabpanel"
-					style="border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
+					style="border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
 				>
 					<strong>Overview</strong>
 					<p style="margin:0">Use tabs for grouped content that shares a single disclosure region.</p>
@@ -96,7 +96,7 @@ export const Default: Story = {
 					v-if="activeTab === 'vendors'"
 					:class="contentClass"
 					role="tabpanel"
-					style="border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
+					style="border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
 				>
 					<strong>Vendors</strong>
 					<p style="margin:0">The IAB dialog uses this pattern for purposes and vendor disclosures.</p>
@@ -105,7 +105,7 @@ export const Default: Story = {
 					v-if="activeTab === 'storage'"
 					:class="contentClass"
 					role="tabpanel"
-					style="border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
+					style="border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
 				>
 					<strong>Storage</strong>
 					<p style="margin:0">Keyboard navigation supports arrow keys, Home, and End.</p>
@@ -184,7 +184,7 @@ export const KeyboardNavigation: Story = {
 					v-if="activeTab === 'overview'"
 					:class="contentClass"
 					role="tabpanel"
-					style="border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
+					style="border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
 				>
 					<strong>Overview</strong>
 				</div>
@@ -192,7 +192,7 @@ export const KeyboardNavigation: Story = {
 					v-if="activeTab === 'vendors'"
 					:class="contentClass"
 					role="tabpanel"
-					style="border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
+					style="border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
 				>
 					<strong>Vendors</strong>
 				</div>
@@ -200,7 +200,7 @@ export const KeyboardNavigation: Story = {
 					v-if="activeTab === 'storage'"
 					:class="contentClass"
 					role="tabpanel"
-					style="border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
+					style="border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem"
 				>
 					<strong>Storage</strong>
 				</div>

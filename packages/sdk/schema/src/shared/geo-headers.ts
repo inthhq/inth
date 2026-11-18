@@ -35,7 +35,7 @@ export const REGION_HEADERS = [
 
 /**
  * Every header name that carries a consent request input. This is the
- * canonical allowlist for forwarding to a c15t backend and for cache-key
+ * canonical allowlist for forwarding to a Inth backend and for cache-key
  * derivation. Framework adapters may append transport-specific extras
  * (e.g. `user-agent`, prefetch hints) but must include all of these.
  */

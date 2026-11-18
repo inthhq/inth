@@ -1,7 +1,7 @@
 {
 	"name": "@inth/react",
 	"version": "3.2.0-canary.0",
-	"description": "React cookie consent banner and React consent dialog for c15t, plus a React cookie banner, preference center and headless hooks.",
+	"description": "React cookie consent banner and React consent dialog for inth, plus a React cookie banner, preference center and headless hooks.",
 	"keywords": [
 		"cmp",
 		"consent",
@@ -308,9 +308,9 @@
 		"@types/google.maps": "3.65.3"
 	},
 	"devDependencies": {
-		"@c15t/conformance": "workspace:*",
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/conformance": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@iabtechlabtcf/core": "^1.5.22",
 		"@rsbuild/plugin-react": "1.4.6",
 		"@rslib/core": "0.23.2",

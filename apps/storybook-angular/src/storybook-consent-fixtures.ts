@@ -1,6 +1,6 @@
 import type { ApplicationConfig } from '@angular/core';
-import { provideC15t } from '@inth/angular';
-import type { C15tOptions, C15tProviderOptions } from '@inth/angular';
+import { provideInth } from '@inth/angular';
+import type { InthOptions, InthProviderOptions } from '@inth/angular';
 
 import {
 	seedStorybookChoice,
@@ -42,7 +42,7 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 	window.localStorage.setItem('euconsent-v2', tcString);
 };
 
-export const defaultConsentOptions: C15tOptions = {
+export const defaultConsentOptions: InthOptions = {
 	mode: storybookMode([storybookPolicy]),
 	presentation: storybookPresentation,
 };
@@ -53,11 +53,11 @@ export const defaultConsentOptions: C15tOptions = {
  * `mode` (a notice rule) must not receive it: it would override their rule
  * with the default choice policy.
  */
-const defaultPrefetch: C15tOptions['prefetch'] = {
+const defaultPrefetch: InthOptions['prefetch'] = {
 	initialPolicyResolution: storybookPolicyResolution,
 };
 
-export const editableConsentOptions: Partial<C15tOptions> = {
+export const editableConsentOptions: Partial<InthOptions> = {
 	consentCategories: [
 		'necessary',
 		'functionality',
@@ -77,13 +77,13 @@ export const editableStoredConsent: ConsentRecord = {
 
 /** What a story's application is created with. */
 export interface StorybookConsentSetup {
-	options?: Partial<C15tOptions>;
+	options?: Partial<InthOptions>;
 	storedConsent?: ConsentRecord;
 	tcString?: string | null;
 }
 
 /**
- * The application config a story renders under: `provideC15t()` with the
+ * The application config a story renders under: `provideInth()` with the
  * shared Storybook options, created after the stored state is reset and
  * seeded. Angular's provider is application-wide, so this is the
  * counterpart of the other Storybooks' `StorybookConsentProvider`.
@@ -102,13 +102,13 @@ export const consentApplication = function consentApplication({
 	}
 	seedTCString(tcString);
 
-	const merged = { ...defaultConsentOptions, ...options } as C15tOptions;
+	const merged = { ...defaultConsentOptions, ...options } as InthOptions;
 	const prefetch =
 		merged.prefetch ??
 		(merged.mode === defaultConsentOptions.mode ? defaultPrefetch : undefined);
 
 	return {
-		providers: [provideC15t({ ...merged, prefetch } as C15tProviderOptions)],
+		providers: [provideInth({ ...merged, prefetch } as InthProviderOptions)],
 	};
 };
 

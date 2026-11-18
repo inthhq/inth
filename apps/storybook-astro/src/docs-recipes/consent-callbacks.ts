@@ -1,7 +1,7 @@
 // #region docs:callbacks title="src/consent-callbacks.ts"
-import type { C15tClientOptionsExtension } from '@inth/astro';
+import type { InthClientOptionsExtension } from '@inth/astro';
 
-export const callbacks: C15tClientOptionsExtension['callbacks'] = {
+export const callbacks: InthClientOptionsExtension['callbacks'] = {
 	// Runs when the visitor selects accept, reject or save.
 	onChoiceRecorded: ({ snapshot }) => {
 		document.dispatchEvent(

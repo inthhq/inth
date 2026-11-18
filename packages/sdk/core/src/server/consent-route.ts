@@ -79,7 +79,7 @@ import {
 	resolveManifestInit,
 } from '../transports/manifest-cache';
 import {
-	c15tProtocolHeaders,
+	inthProtocolHeaders,
 	readProducerPolicyContract,
 } from '../transports/version-header';
 import {
@@ -846,7 +846,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 				? options.fetchGvl({ fetch: configuredFetch(), language, reference })
 				: fetchCachedGvl({
 						fetch: options.fetch,
-						headers: c15tProtocolHeaders,
+						headers: inthProtocolHeaders,
 						label: adapter,
 						language,
 						url: reference.url,
@@ -885,7 +885,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			const fill = fetchCachedAdTechProviders({
 				...(target.inProcess && { cache: inProcessProviderCache }),
 				fetch: (target.fetch ?? configuredFetch()) as typeof globalThis.fetch,
-				headers: c15tProtocolHeaders,
+				headers: inthProtocolHeaders,
 				reference: { ...reference, url: target.url },
 			});
 			if (budget.budgetMs === undefined) {
@@ -929,13 +929,13 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		if (budget.expired()) {
 			throw new ManifestUnavailableError(
 				'timeout',
-				`c15t: consent resolution did not finish within ${budget.budgetMs} ms.`,
+				`inth: consent resolution did not finish within ${budget.budgetMs} ms.`,
 				{ cause }
 			);
 		}
 		warnManifestFallback(manifestUrl, cause);
 		const backend = resolveBackend(request, context, options.projectUrl);
-		const forward: Record<string, string> = { ...c15tProtocolHeaders };
+		const forward: Record<string, string> = { ...inthProtocolHeaders };
 		for (const name of CONSENT_REQUEST_HEADER_NAMES) {
 			const value = request.headers.get(name);
 			if (value) {

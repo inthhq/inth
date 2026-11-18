@@ -128,7 +128,7 @@ try {
 		await check(
 			'SSR consent journeys',
 			['pnpm', '--dir', 'internals/fixtures/acceptance', 'run', 'test:ssr'],
-			{ ...process.env, C15T_E2E_APPS: targets.join(',') }
+			{ ...process.env, INTH_E2E_APPS: targets.join(',') }
 		);
 	} else if (kind === 'styles') {
 		await runCommand(['pnpm', 'sdk:compat:styles:build', '--concurrency=2']);

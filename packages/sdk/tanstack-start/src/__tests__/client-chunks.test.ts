@@ -38,10 +38,10 @@ const fixture: Record<string, string> = {
 		"globalThis.routes = [() => import('fixture:root-route'), () => import('fixture:provider-route')];",
 	'provider-route': `import { createElement as h } from 'react';
 import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/tanstack-start';
-export default () => h(ConsentProvider, { options: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
+export default () => h(ConsentProvider, { options: { projectUrl: '/api/inth' } }, h(ConsentBanner), h(ConsentDialog));`,
 	'root-route': `import { createElement as h } from 'react';
 import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/tanstack-start';
-export default () => h(ConsentRoot, { state: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
+export default () => h(ConsentRoot, { state: { projectUrl: '/api/inth' } }, h(ConsentBanner), h(ConsentDialog));`,
 };
 
 interface FirstLoad {
@@ -229,7 +229,7 @@ describe('TanStack Start client chunks', () => {
 		const grouped = await routeFirstLoad('root-route', true);
 		expect(grouped.modules.toSorted()).toEqual(plain.modules.toSorted());
 		expect(grouped.files.length).toBeLessThanOrEqual(plain.files.length);
-		// This fixture's two routes set up c15t differently, so the dialog
+		// This fixture's two routes set up Inth differently, so the dialog
 		// shares code with each in its own way; an app with one setup gets
 		// fewer files still.
 		expect(

@@ -48,7 +48,7 @@ iframe `data-src` instead of `src`, and a `data-category`:
 ```
 
 The server HTML has no `src`, so nothing loads before hydration. After
-hydration, c15t sets `src` from `data-src` when the category is allowed and
+hydration, Inth sets `src` from `data-src` when the category is allowed and
 removes `src` when the category is withdrawn. It watches the page, so iframes
 added by client-side navigation are handled too. Add `data-vendor` with a
 vendor ID to also block the iframe while the visitor has turned that vendor

@@ -2,7 +2,7 @@ import {
 	gateConsentCategories,
 	gateScripts,
 	updateGateBridge,
-} from '@c15t/benchmarking/consent-gate-page';
+} from '@inth/benchmarking/consent-gate-page';
 import {
 	ConsentBanner,
 	ConsentDialog,

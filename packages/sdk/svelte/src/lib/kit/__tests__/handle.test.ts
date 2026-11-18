@@ -3,26 +3,26 @@ import { manifest as browserManifest } from '@inth/sdk/transports/manifest-brows
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../../__tests__/fixtures/transport-mode';
-import { c15tHandle } from '../handle';
+import { inthHandle } from '../handle';
 import { createConsentRoute } from '../routes';
-import type { C15tLocals } from '../types';
+import type { InthLocals } from '../types';
 import { CONSENTED_COOKIE, createEvent } from './event';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 const runHandle = async function runHandle(
 	event: ReturnType<typeof createEvent>,
-	options?: Parameters<typeof c15tHandle>[0]
+	options?: Parameters<typeof inthHandle>[0]
 ) {
 	const resolve = vi.fn(() => Promise.resolve(new Response('ok')));
-	const response = await c15tHandle(options)({ event, resolve });
+	const response = await inthHandle(options)({ event, resolve });
 	return {
-		locals: (event.locals as { c15t: C15tLocals }).c15t,
+		locals: (event.locals as { inth: InthLocals }).inth,
 		resolve,
 		response,
 	};
 };
 
-describe('c15tHandle', () => {
+describe('inthHandle', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
 	});
@@ -150,7 +150,7 @@ describe('c15tHandle', () => {
 		// Outside a `consentManifest()` build no chunk is named, so no link
 		// is added.
 		const page =
-			'<head><meta name="c15t-modulepreload" content="loader-and-blocker"></head>';
+			'<head><meta name="inth-modulepreload" content="loader-and-blocker"></head>';
 		expect(resolveOptions.transformPageChunk({ done: true, html: page })).toBe(
 			page
 		);
@@ -160,16 +160,16 @@ describe('c15tHandle', () => {
 	});
 });
 
-describe('c15tHandle mode', () => {
+describe('inthHandle mode', () => {
 	test('stores manifest() by default, with the route prefix and backend', async () => {
 		const { locals } = await runHandle(createEvent(), {
 			projectUrl: 'https://consent.example.com',
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
 		expect(locals).toMatchObject({
 			mode: { type: 'manifest' },
 			projectUrl: 'https://consent.example.com',
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
 	});
 
@@ -193,20 +193,20 @@ describe('c15tHandle mode', () => {
 
 	test('trims a trailing slash off the route prefix', async () => {
 		const { locals } = await runHandle(createEvent(), {
-			routePrefix: '/api/c15t/',
+			routePrefix: '/api/inth/',
 		});
-		expect(locals.routePrefix).toBe('/api/c15t');
+		expect(locals.routePrefix).toBe('/api/inth');
 	});
 
 	test('rejects a route prefix of / when the hook is created', () => {
-		expect(() => c15tHandle({ routePrefix: '/' })).toThrow(
-			"@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+		expect(() => inthHandle({ routePrefix: '/' })).toThrow(
+			"@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'."
 		);
 	});
 
 	test('rejects transportMode(), which cannot reach the browser as data', () => {
 		const mode = transportMode({ init: () => Promise.resolve({}) });
-		expect(() => c15tHandle({ mode: mode as never })).toThrow(
+		expect(() => inthHandle({ mode: mode as never })).toThrow(
 			/Pass a transport to <ConsentRoot mode>/u
 		);
 	});
@@ -214,7 +214,7 @@ describe('c15tHandle mode', () => {
 
 // The consent route never renders a page, and its manifest is public data a
 // shared cache keeps.
-describe('c15tHandle on the consent route', () => {
+describe('inthHandle on the consent route', () => {
 	beforeEach(() => {
 		clearManifestCache();
 	});
@@ -225,7 +225,7 @@ describe('c15tHandle on the consent route', () => {
 			'/api/self-host',
 			{ routePrefix: '/api/self-host' },
 		],
-		['the default route', '/api/c15t', {}],
+		['the default route', '/api/inth', {}],
 	] as const)(
 		'the public manifest under %s gets no subject cookie',
 		async (_, prefix, options) => {
@@ -243,7 +243,7 @@ describe('c15tHandle on the consent route', () => {
 				),
 				projectUrl: 'https://consent.example.com',
 			});
-			const response = await c15tHandle(options)({
+			const response = await inthHandle(options)({
 				event,
 				resolve: () => GET(event),
 			});

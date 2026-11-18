@@ -13,10 +13,10 @@ export type {
 
 /**
  * Packages that ship `.vue` files. Vite's dependency pre-bundling cannot
- * load them, so they stay out of it, along with the `c15t` umbrella that
+ * load them, so they stay out of it, along with the `inth` umbrella that
  * re-exports them.
  */
-const VUE_SOURCE_PACKAGES = ['@inth/vue', 'c15t'];
+const VUE_SOURCE_PACKAGES = ['@inth/vue', 'inth'];
 
 /** What {@link consentManifest} returns: one Vite plugin. */
 export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
@@ -24,17 +24,17 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
 };
 
 /**
- * The c15t Vite plugin for a plain Vue app. It serves the deployment's
+ * The Inth Vite plugin for a plain Vue app. It serves the deployment's
  * consent manifest and backend URL as the virtual module
  * `@inth/sdk/generated` (also `@inth/sdk/generated`), which `manifest()` and
  * `hosted()` from `@inth/vue/vue-plugin` read. No file is written into the
  * app. It also keeps `@inth/vue`, whose components are `.vue` files, out of
  * dependency pre-bundling.
  *
- * `projectUrl` defaults to `VITE_C15T_BACKEND_URL`, then
+ * `projectUrl` defaults to `VITE_INTH_PROJECT_URL`, then
  * `VITE_INTH_PROJECT_URL`, including `.env` files. When
- * `VITE_C15T_BACKEND_URL` is unset, the plugin sets
- * `import.meta.env.VITE_C15T_BACKEND_URL` to the URL it used, so app code
+ * `VITE_INTH_PROJECT_URL` is unset, the plugin sets
+ * `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used, so app code
  * reads the same value.
  *
  * `vite build` fetches the manifest only when the bundle uses `manifest()`,
@@ -42,7 +42,7 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
  * `manifest()`, a missing URL or a failed fetch stops `vite build`. `vite
  * dev` fetches when the app first loads the module and only warns, and
  * `manifest()` then fetches the manifest when the app starts. Set
- * `onBuildError` or `C15T_ON_BUILD_ERROR` to change that. When the policy
+ * `onBuildError` or `INTH_ON_BUILD_ERROR` to change that. When the policy
  * depends on the visitor's location, the build warns and suggests
  * `hosted()`. With `manifest({ manifestUrl })` or
  * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so
@@ -69,7 +69,7 @@ export const consentManifest = (
 ): VueConsentManifestPlugin => {
 	const plugin = createConsentManifestPlugin(options, {
 		adviseHostedForLocation: true,
-		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
+		envNames: ['VITE_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
 		label: '@inth/vue/vite',
 	});
 	return {

@@ -11,12 +11,12 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, inject } from 'vue';
 
-import { c15tVue, manifest } from '../index';
+import { inthVue, manifest } from '../index';
 import { symbolKernel } from '../runtime/utils/symbols';
 import { setGenerated } from './generated';
 
 const manifestWithPolicy = (id: string): ConsentManifest => ({
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			...policyRulePresets.europeOptIn(),
@@ -62,7 +62,7 @@ const mountWith = function mountWith(
 			},
 		})
 	);
-	app.use(c15tVue, { mode });
+	app.use(inthVue, { mode });
 	app.mount(container);
 	cleanups.push(() => {
 		app.unmount();

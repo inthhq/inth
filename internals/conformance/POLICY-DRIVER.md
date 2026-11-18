@@ -6,8 +6,8 @@ producer/codec vectors. Solid registers one explicitly named primitives-only
 exclusion. Missing capabilities on a supported adapter fail the test.
 
 Implement `TestDriver.createPolicySession` and `TestDriver.probePolicyContract`.
-Their framework-neutral types are exported from `@c15t/conformance/driver` and
-`@c15t/conformance/contract/policy-driver`. The shared suite imports no framework
+Their framework-neutral types are exported from `@inth/conformance/driver` and
+`@inth/conformance/contract/policy-driver`. The shared suite imports no framework
 runtime. Its meta-tests import the public core package to test assertions against
 real kernel observations.
 

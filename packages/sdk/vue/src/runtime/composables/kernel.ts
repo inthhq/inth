@@ -11,7 +11,7 @@ import {
 export const useConsentKernel = function useConsentKernel() {
 	const kernel = inject(symbolKernel);
 	if (!kernel) {
-		throw new Error('[c15t] Kernel not found');
+		throw new Error('[inth] Kernel not found');
 	}
 	return kernel;
 };
@@ -19,7 +19,7 @@ export const useConsentKernel = function useConsentKernel() {
 export const useConsentSnapshot = function useConsentSnapshot() {
 	const snapshot = inject(symbolSnapshot);
 	if (!snapshot) {
-		throw new Error('[c15t] Kernel snapshot not found');
+		throw new Error('[inth] Kernel snapshot not found');
 	}
 	return snapshot;
 };
@@ -27,7 +27,7 @@ export const useConsentSnapshot = function useConsentSnapshot() {
 export const useConsentKernelContext = function useConsentKernelContext() {
 	const context = inject(symbolKernelContext);
 	if (!context) {
-		throw new Error('[c15t] Kernel context not found');
+		throw new Error('[inth] Kernel context not found');
 	}
 	return context;
 };
@@ -53,7 +53,7 @@ export const usePolicyRule = () => useSnapshotField('policyRule');
 /** Read the authoritative policy resolution and its status. */
 export const usePolicyResolution = () => useSnapshotField('resolution');
 /**
- * Whether a policy rule is resolved for this visitor. Every c15t consent
+ * Whether a policy rule is resolved for this visitor. Every Inth consent
  * surface renders nothing until one is: an unconfigured, failed, or
  * unmatched resolution leaves nothing to consent to, and the surfaces
  * appear on their own once a later init supplies a rule.
@@ -72,7 +72,7 @@ export const useHasConsentUi = () => {
 	const snapshot = useConsentSnapshot();
 	return computed(() => hasConsentUI(snapshot.value));
 };
-/** Whether c15t or an external CMP offers a preferences control. */
+/** Whether Inth or an external CMP offers a preferences control. */
 export const useHasConsentPreferences = () => {
 	const snapshot = useConsentSnapshot();
 	return computed(() => hasConsentPreferences(snapshot.value));

@@ -9,7 +9,7 @@ import type {
  * component tree that renders it. This module is the first half. It builds
  * a kernel from the prepared server snapshot, then mounts persistence,
  * the script loader, network and iframe blockers, IAB, the callback bridge,
- * `window.c15t` and the initial `init()` (or adopts a resolved prefetch) on
+ * `window.inth` and the initial `init()` (or adopts a resolved prefetch) on
  * `start()`, and undoes all of it on `dispose()`.
  *
  * Two constructors share that lifecycle. `createConsentRuntime` is for a
@@ -28,7 +28,7 @@ import type {
  * import { createConsentRuntime } from '@inth/sdk-core/runtime';
  *
  * const runtime = createConsentRuntime({
- *   projectUrl: '/api/c15t',
+ *   projectUrl: '/api/inth',
  *   pkg: '@inth/astro',
  * });
  * runtime.start();
@@ -167,7 +167,7 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
  * ```ts
  * const runtime = createConsentRuntime({
  *   createIAB,
- *   projectUrl: '/api/c15t',
+ *   projectUrl: '/api/inth',
  *   iab: { cmpId: 123 },
  *   scripts: [{ category: 'measurement', id: 'ga', src: '...' }],
  * });

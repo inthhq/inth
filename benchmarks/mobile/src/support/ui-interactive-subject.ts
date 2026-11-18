@@ -10,7 +10,7 @@
  * Spawned by `measure/ui-interactive.ts`.
  */
 
-import { median } from '@c15t/benchmarking/utils';
+import { median } from '@inth/benchmarking/utils';
 import {
 	ConsentProvider,
 	ConsentBanner,

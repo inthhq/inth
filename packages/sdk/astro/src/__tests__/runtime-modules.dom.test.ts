@@ -12,10 +12,10 @@ import { boot, registerRuntimeModules } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { testResolution, testRule } from './policy-fixture';
 
-const OPTIONS: C15tAstroOptions = {
+const OPTIONS: InthAstroOptions = {
 	consentCategories: ['necessary', 'measurement'],
 	mode: testingMode({ policy: [testRule] }),
 	scripts: [
@@ -30,7 +30,7 @@ const OPTIONS: C15tAstroOptions = {
 let client: AstroConsentClient | null = null;
 
 const start = function start(): AstroConsentClient {
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig = {
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = {
 		initialPolicyResolution: testResolution(),
 		initialTranslations: { language: 'en', translations: {} },
 	};
@@ -45,7 +45,7 @@ beforeEach(() => {
 	localStorage.clear();
 	document.head.innerHTML = '';
 	document.body.innerHTML = '';
-	(window as unknown as Record<string, unknown>).__c15tAstro = undefined;
+	(window as unknown as Record<string, unknown>).__inthAstro = undefined;
 });
 
 afterEach(() => {

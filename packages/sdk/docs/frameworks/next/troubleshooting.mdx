@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Diagnose failed c15t consent prefetch and build-time manifest downloads in Next.js, verify manifest requests, and fix a missing c15t.config.ts, config errors, unknown server location and prerendering errors.
+description: Diagnose failed Inth consent prefetch and build-time manifest downloads in Next.js, verify manifest requests, and fix a missing inth.config.ts, config errors, unknown server location and prerendering errors.
 group: frameworks
 ---
 
@@ -18,10 +18,10 @@ Without it, the helper logs a warning only outside production.
 **Check.** If the consent route repeatedly calls itself, check its upstream
 URL.
 
-**Fix.** Set the config's `projectUrl`, or `NEXT_PUBLIC_C15T_BACKEND_URL` (or
+**Fix.** Set the config's `projectUrl`, or `NEXT_PUBLIC_INTH_PROJECT_URL` (or
 `NEXT_PUBLIC_INTH_PROJECT_URL`), to
 the absolute Inth or self-hosted backend endpoint. To send the browser through
-`/api/c15t`, set `proxy: true` and `routePrefix` instead of a relative
+`/api/inth`, set `proxy: true` and `routePrefix` instead of a relative
 `projectUrl`; the route keeps the absolute URL. See
 [Next.js optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
@@ -43,31 +43,31 @@ parentheses names the cause:
   project's backend. Check for the `https://your-project.inth.app`
   placeholder and a missing path prefix.
 - `/manifest returned an invalid consent manifest.` The URL answered, but not
-  with a c15t manifest. It may be a different service, or a backend that does
-  not support this c15t version.
+  with a Inth manifest. It may be a different service, or a backend that does
+  not support this Inth version.
 
 `no backend URL is set` means the build found no `projectUrl` option, no
-`projectUrl` in `c15t.config.ts` and no `NEXT_PUBLIC_C15T_BACKEND_URL` or
+`projectUrl` in `inth.config.ts` and no `NEXT_PUBLIC_INTH_PROJECT_URL` or
 `NEXT_PUBLIC_INTH_PROJECT_URL`, or empty ones. `next build` stops on it and
 `next dev` warns. A notice that the build `skipped the consent manifest fetch`
-means the backend URL is a path such as `/api/c15t`. With
+means the backend URL is a path such as `/api/inth`. With
 `onBuildError: 'fail'`, that stops the build with `build-time manifests
 require an absolute upstream URL.` The same notice ending in
-`because c15t.config.ts uses hosted()`, `uses testing()`,
+`because inth.config.ts uses hosted()`, `uses testing()`,
 `passes manifest({ snapshot })` or `sets manifest({ source: 'runtime' })` is
 expected: those modes read no build-time manifest.
 
-`@inth/nextjs/build: could not read c15t.config.ts (...)` is a warning: the
+`@inth/nextjs/build: could not read inth.config.ts (...)` is a warning: the
 build could not evaluate the file, so it fetched the manifest as for
 `manifest()`, whatever the file's `mode`. The part in parentheses is the
 error. The usual cause is an import Node can't load at build time, such as a
-stylesheet. Keep `c15t.config.ts` to the config and the packages it needs.
+stylesheet. Keep `inth.config.ts` to the config and the packages it needs.
 
-**Fix.** Set `NEXT_PUBLIC_C15T_BACKEND_URL` (or
+**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` (or
 `NEXT_PUBLIC_INTH_PROJECT_URL`) to the absolute backend URL from your Inth
 project, or your self-hosted origin with its path prefix, wherever
 `next build` runs, including CI. To deploy while the backend is down, run the
-build with `C15T_ON_BUILD_ERROR=runtime`, or set `onBuildError: 'runtime'`.
+build with `INTH_ON_BUILD_ERROR=runtime`, or set `onBuildError: 'runtime'`.
 The deployment then works without a snapshot, and each server fetches the
 policy on its first request. To drop the build-time fetch, use
 [runtime manifest caching](/docs/frameworks/next/optimization#reuse-cached-policy-data)
@@ -93,7 +93,7 @@ handlers, `getServerSideProps` and API routes. Most apps never import it.
 - `withConsentManifest` doesn't wrap the config in `next.config.ts`. Without
   it, `@inth/nextjs/generated` still resolves, but exports `undefined`.
 - The fetch failed in `next dev`, or in a build with
-  `C15T_ON_BUILD_ERROR=runtime`. The server then fetches the policy at
+  `INTH_ON_BUILD_ERROR=runtime`. The server then fetches the policy at
   runtime.
 - The backend URL is relative, or the config sets `output: 'export'`, so the
   build skipped the fetch.
@@ -111,7 +111,7 @@ Check the Next.js server and browser requests after following the
 
 1. Load the page twice. A warm manifest setup resolves policy without calling
    the upstream backend `/init`. A browser request to your local
-   `/api/c15t/init` is expected when client initialization is needed.
+   `/api/inth/init` is expected when client initialization is needed.
 2. Make a consent choice. Confirm the submission reaches the backend
    `/subjects` endpoint and reload to check that the choice persists.
 3. Test two locations with different configured policies. Confirm the resolved
@@ -120,7 +120,7 @@ Check the Next.js server and browser requests after following the
 4. Change a policy, rebuild, then check it. With runtime fetching, check it
    after the manifest caches refresh instead. Cache the public manifest, never
    the visitor-specific init response.
-5. If you set `proxy: true`, confirm browser consent requests use `/api/c15t`,
+5. If you set `proxy: true`, confirm browser consent requests use `/api/inth`,
    including submissions. Direct requests to the backend are expected without
    it.
 
@@ -129,10 +129,10 @@ Check the Next.js server and browser requests after following the
 **Check.** The browser console shows this warning outside production:
 
 ```txt
-[c15t] ConsentRoot found no config. Export `defineConsentConfig()` as the default export of c15t.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.
+[inth] ConsentRoot found no config. Export `defineConsentConfig()` as the default export of inth.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.
 ```
 
-**Fix.** `withConsentManifest` finds `c15t.config.ts`, `.mts`, `.js` or
+**Fix.** `withConsentManifest` finds `inth.config.ts`, `.mts`, `.js` or
 `.mjs` in the directory `next build` and `next dev` run from, and nowhere
 else. A config in `src/` is not found. Check that:
 
@@ -142,7 +142,7 @@ else. A config in `src/` is not found. Check that:
   only a named one.
 - You restarted `next dev` after adding the file.
 
-Without a config, `ConsentRoot` reads `NEXT_PUBLIC_C15T_BACKEND_URL`, which
+Without a config, `ConsentRoot` reads `NEXT_PUBLIC_INTH_PROJECT_URL`, which
 `withConsentManifest` sets from `NEXT_PUBLIC_INTH_PROJECT_URL` when only that
 is set, uses
 `manifest()` and runs no `scripts`. With no backend URL either, it throws; see
@@ -153,46 +153,46 @@ the next section.
 **Check.** The page, or `next build` while it prerenders the page, throws one
 of these errors from `ConsentRoot`:
 
-- ``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
-- ``@inth/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
+- ``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in inth.config.ts.``
+- ``@inth/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in inth.config.ts.``
 
 A production build prints only the first sentence, such as
 `@inth/nextjs: manifest() needs a backend URL.`
 
-`ConsentRoot` found no `c15t.config.ts`, or got a `config` prop without a
-backend URL, and neither `NEXT_PUBLIC_C15T_BACKEND_URL` nor
+`ConsentRoot` found no `inth.config.ts`, or got a `config` prop without a
+backend URL, and neither `NEXT_PUBLIC_INTH_PROJECT_URL` nor
 `NEXT_PUBLIC_INTH_PROJECT_URL` was set when Next.js compiled the page.
 
-**Fix.** Set `NEXT_PUBLIC_C15T_BACKEND_URL` (or
+**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` (or
 `NEXT_PUBLIC_INTH_PROJECT_URL`) wherever `next build` and
-`next dev` run, and check that `withConsentManifest` finds `c15t.config.ts`
+`next dev` run, and check that `withConsentManifest` finds `inth.config.ts`
 (see the previous section). Earlier alphas fell back to local mode here;
 now the root throws. To run without a backend, set `mode: testing()` in
-`c15t.config.ts`, or pass `options={{ mode: testing() }}` to `ConsentRoot`.
+`inth.config.ts`, or pass `options={{ mode: testing() }}` to `ConsentRoot`.
 
 ## Why does ConsentRoot warn that a transport ships in the first-load bundle?
 
 **Check.** The browser console shows a warning such as:
 
 ```txt
-[c15t] ConsentRoot `mode` is the hosted() transport itself, so its code ships in the first-load bundle. Use hosted() from @inth/nextjs instead: it is plain data, and the root loads the code only when it runs.
+[inth] ConsentRoot `mode` is the hosted() transport itself, so its code ships in the first-load bundle. Use hosted() from @inth/nextjs instead: it is plain data, and the root loads the code only when it runs.
 ```
 
 **Fix.** `options.mode` received `hosted()`, `testing()` or `manifest()` from
 `@inth/react`, which are transports. Import the mode from `@inth/nextjs` and set
-it as `mode` in `c15t.config.ts`.
+it as `mode` in `inth.config.ts`.
 
 ## Why does defineConsentConfig throw?
 
 **Check.** `next build`, `next dev` or the first server render fails with a
 `TypeError` that starts with `@inth/nextjs: defineConsentConfig`.
-`withConsentManifest` reads `c15t.config.ts` when Next.js loads
+`withConsentManifest` reads `inth.config.ts` when Next.js loads
 `next.config.ts`, so most config errors stop the build before it compiles.
 The checks run on the server only; the browser copy of the file skips them.
 
 **Fix.** The [config reference](/docs/frameworks/next/data-fetching-reference#config-reference)
 lists each message. The most common is
-``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.``
+``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.``
 Set the variable in `.env.local` and in your host's build settings, or pass
 `projectUrl`.
 
@@ -200,17 +200,17 @@ Set the variable in `.env.local` and in your host's build settings, or pass
 
 **Check.** `resolveConsent` and the consent route read the visitor's
 country and region from hosting platform headers such as `cf-ipcountry` and
-`x-vercel-ip-country`; c15t never derives location from an IP address itself.
+`x-vercel-ip-country`; Inth never derives location from an IP address itself.
 Some platforms expose those headers to Next.js middleware or proxy but strip
 them before Server Components and Route Handlers run, so every visitor falls
 back to your unknown-location rule. Log
 `(await headers()).get('x-vercel-ip-country')`, or your host's equivalent, in
 a Server Component.
 
-**Fix.** If the header is missing there, add `c15tProxy` as described in
+**Fix.** If the header is missing there, add `inthProxy` as described in
 [Forward geography headers](/docs/frameworks/next/geography-headers). It
 forwards the resolved values as `x-c15t-country` and `x-c15t-region`, which
-take precedence everywhere c15t reads location.
+take precedence everywhere Inth reads location.
 
 ## Why does Next.js report an unstable `Date.now()` during prerendering?
 
@@ -223,7 +223,7 @@ pointing at the `await resolveConsent(...)` line, comes from
 `next dev`; `next build` passes because build-time prerenders never resolve
 `headers()`.
 
-**Fix.** Use the current c15t release. `resolveConsent` handles this itself:
+**Fix.** Use the current Inth release. `resolveConsent` handles this itself:
 the default App Router request reader calls `await connection()` from
 `next/server` before reading the clock, so the component is already
 request-time when the clock is read. You do not need to add `connection()` to

@@ -7,7 +7,7 @@
  * `import()`:
  *
  * - The server leaves the snapshot it rendered from in a
- *   `<script type="application/json" data-c15t-boot>` block beside the
+ *   `<script type="application/json" data-inth-boot>` block beside the
  *   config. The shell puts a client on `window` that reads that snapshot,
  *   so `getConsentClient()`, `getConsent()` and `subscribe()` work as soon
  *   as the page script has run, as they did when it booted the engine.
@@ -32,7 +32,7 @@
  *   opt-out prompt, IAB, an experiment, GPP, a network blocker, declared
  *   vendors, a `consentSource`, a blocking banner, or a script that may run
  *   now) loads the engine as the page script runs. A page with no boot
- *   block at all, which rendered no c15t component, gets the engine's
+ *   block at all, which rendered no Inth component, gets the engine's
  *   client once it has loaded.
  *
  * @internal
@@ -51,7 +51,7 @@ import type {
 	AstroEngineClient,
 	AstroConsentSaveInput,
 } from '../client-types';
-import type { C15tClientOptionsExtension, C15tResolvedOptions } from '../types';
+import type { InthClientOptionsExtension, InthResolvedOptions } from '../types';
 import type { ConsentDialogHandle } from '../ui/adapter';
 import {
 	attachBannerActions,
@@ -87,7 +87,7 @@ import {
 } from './trigger';
 
 /** Attribute on the boot data block. @internal */
-export const CONSENT_BOOT_ATTRIBUTE = 'data-c15t-boot';
+export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
 
 /** What the server leaves in the boot data block. @internal */
 export interface ConsentBoot {
@@ -118,8 +118,8 @@ export interface EngineHandoff {
 /** What the engine chunk exports. @internal */
 export interface EngineModule {
 	boot: (
-		options: C15tResolvedOptions,
-		extension: C15tClientOptionsExtension,
+		options: InthResolvedOptions,
+		extension: InthClientOptionsExtension,
 		handoff: EngineHandoff
 	) => AstroEngineClient;
 }
@@ -155,8 +155,8 @@ export const readConsentBoot = function readConsentBoot(
  */
 const canWait = function canWait(
 	boot: ConsentBoot,
-	extension: C15tClientOptionsExtension,
-	scripts: NonNullable<C15tClientOptionsExtension['scripts']>
+	extension: InthClientOptionsExtension,
+	scripts: NonNullable<InthClientOptionsExtension['scripts']>
 ): boolean {
 	const snapshot = boot.s;
 	const blocker = extension.networkBlocker;
@@ -172,9 +172,9 @@ const canWait = function canWait(
 		!(blocker && blocker.enabled !== false) &&
 		!scripts.some((script) => isRunnableNow(script, snapshot)) &&
 		// An inline tag gated on `necessary` runs at once under the engine.
-		!document.querySelector('script[data-c15t-category="necessary"]') &&
+		!document.querySelector('script[data-inth-category="necessary"]') &&
 		document.querySelectorAll(BANNER_ROOT).length === 1 &&
-		window.location.hash !== '#c15t-preferences'
+		window.location.hash !== '#inth-preferences'
 	);
 };
 
@@ -185,13 +185,13 @@ const hideBanner = function hideBanner(): void {
 	)) {
 		element.hidden = true;
 		if (element.matches(BANNER_ROOT_SELECTOR)) {
-			element.setAttribute('data-c15t-visible', 'false');
+			element.setAttribute('data-inth-visible', 'false');
 		}
 	}
 };
 
 /** Marks the first-paint `<style>` the components inline. */
-const FIRST_PAINT_SELECTOR = 'style[data-c15t-styles="c15t-first-paint"]';
+const FIRST_PAINT_SELECTOR = 'style[data-inth-styles="inth-first-paint"]';
 
 /** The preference dialog's root, once its island has rendered it. */
 const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
@@ -208,7 +208,7 @@ const showBannerFor = function showBannerFor(
 	)) {
 		element.hidden = activeUI !== 'banner';
 		element.setAttribute(
-			'data-c15t-visible',
+			'data-inth-visible',
 			activeUI === 'banner' ? 'true' : 'false'
 		);
 	}
@@ -248,9 +248,9 @@ type Choice = CompleteCommitInput['choice'];
  * @internal
  */
 export const startDeferredClient = function startDeferredClient(
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	loadEngine: () => Promise<EngineModule>,
-	extension: C15tClientOptionsExtension = {}
+	extension: InthClientOptionsExtension = {}
 ): AstroConsentClient | null {
 	const browserWindow = getWindow();
 	if (!browserWindow) {

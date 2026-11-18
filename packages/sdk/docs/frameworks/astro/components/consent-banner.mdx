@@ -1,6 +1,6 @@
 ---
 title: ConsentBanner
-description: Render the c15t consent banner as server HTML on an Astro site, with props for copy, legal links and branding, the policy-driven actions, accessibility behavior and the attributes to style it.
+description: Render the Inth consent banner as server HTML on an Astro site, with props for copy, legal links and branding, the policy-driven actions, accessibility behavior and the attributes to style it.
 group: frameworks
 ---
 
@@ -11,7 +11,7 @@ content:
 
 <include src="../../../shared/examples/astro/layout.mdx" />
 
-`ConsentBanner` renders on the server from `Astro.locals.c15t`. It ships no
+`ConsentBanner` renders on the server from `Astro.locals.inth`. It ships no
 framework JavaScript. A small shared script adds one click listener to the
 document, and that listener turns the banner's buttons into consent actions.
 
@@ -50,10 +50,10 @@ match the visitor's state.
 | `dismissButtonText` | `string` | `common.acknowledge` | Label of the button that acknowledges a notice |
 | `legalLinks` | `('privacyPolicy' \| 'cookiePolicy' \| 'termsOfService')[] \| null` | None | Which links from the integration's `legalLinks` render after the description |
 | `hideBranding` | `boolean` | `false` | Removes the "Secured by" tag |
-| `noStyle` | `boolean` | `false` | Renders the markup without c15t's class names or button styles |
+| `noStyle` | `boolean` | `false` | Renders the markup without inth's class names or button styles |
 | `class` | `string` | None | Extra class on the banner root, kept with `noStyle` |
 | `force` | `boolean` | `false` | Renders the banner even when the server decided to hide it, for visual tests |
-| `nonce` | `string` | `Astro.locals.c15t.nonce` | Content Security Policy nonce for this banner's inline scripts and style. See [Content Security Policy](/docs/frameworks/astro/content-security-policy#allow-c15t-with-a-nonce) |
+| `nonce` | `string` | `Astro.locals.inth.nonce` | Content Security Policy nonce for this banner's inline scripts and style. See [Content Security Policy](/docs/frameworks/astro/content-security-policy#allow-inth-with-a-nonce) |
 
 A prop wins over the translation for the visitor's language, which wins over
 the English default. For wording on every page, set `i18n.messages` in the
@@ -147,7 +147,7 @@ To write your own CSS, target the attributes. They stay with `noStyle`:
 
 | Element | Attributes |
 | --- | --- |
-| Root | `data-testid="consent-banner-root"`, `data-prompt` (`choice` or `notice`), `data-model`, `data-variant`, `data-position`, `data-blocking`, `data-c15t-visible` |
+| Root | `data-testid="consent-banner-root"`, `data-prompt` (`choice` or `notice`), `data-model`, `data-variant`, `data-position`, `data-blocking`, `data-inth-visible` |
 | Backdrop | `data-testid="consent-banner-overlay"`, rendered only for a blocking banner |
 | Card | `data-testid="consent-banner-card"` |
 | Title and description | `data-testid="consent-banner-title"`, `data-testid="consent-banner-description"` |
@@ -156,8 +156,8 @@ To write your own CSS, target the attributes. They stay with `noStyle`:
 | Each rights button | `data-action="right"`, `data-right` (`opt-out` or `preferences`) |
 | Each legal link | `data-testid="consent-banner-legal-link-<key>"` |
 
-Keep c15t's rules loaded when you restyle the banner. The browser hides the
-banner with the `hidden` attribute, and c15t's rules make `hidden` win over
+Keep inth's rules loaded when you restyle the banner. The browser hides the
+banner with the `hidden` attribute, and inth's rules make `hidden` win over
 the banner's `display` rule.
 
 ## Next steps

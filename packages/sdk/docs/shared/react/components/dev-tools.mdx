@@ -7,7 +7,7 @@ group: reference
 {/* This file is NOT rendered directly. Sections are imported by framework pages. */}
 
 <section id="intro">
-  `DevTools` is a floating panel for the c15t v3 kernel. Use it during development to inspect consent values, scripts, location, the resolved policy, IAB state, events, and consent actions. The framework adapter reads the kernel from the nearest v3 provider. It never discovers a store through a window global.
+  `DevTools` is a floating panel for the Inth v3 kernel. Use it during development to inspect consent values, scripts, location, the resolved policy, IAB state, events, and consent actions. The framework adapter reads the kernel from the nearest v3 provider. It never discovers a store through a window global.
 
   <Callout type="warn">
     Load DevTools only in development. A conditional JSX expression stops it from mounting in production, but a static import can still add DevTools to the production bundle. Use a development-only dynamic import as shown below. The component renders nothing into the React tree and mounts its panel in `document.body`.
@@ -163,7 +163,7 @@ group: reference
 
   Each embedded panel owns its event history and subscriptions. Unmounting it
   destroys the instance; remounting starts a new history. If you need to capture
-  events while switching plugins, keep the c15t panel mounted. This differs from
+  events while switching plugins, keep the Inth panel mounted. This differs from
   the old globally shared DevTools store.
 
   The React v3 DevTools adapter exports a panel component and plugin factory that match TanStack Devtools' plugin API:
@@ -174,7 +174,7 @@ group: reference
   import { TanStackDevtools } from '@tanstack/react-devtools';
   import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
   import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
-  import { c15tDevtools } from '@inth/react/devtools';
+  import { inthDevtools } from '@inth/react/devtools';
 
   export function AppDevtools() {
     const router = useRouter();
@@ -190,26 +190,26 @@ group: reference
             name: 'TanStack Router',
             render: <TanStackRouterDevtoolsPanel router={router} />,
           },
-          c15tDevtools(),
+          inthDevtools(),
         ]}
       />
     );
   }
   ```
 
-  In a Next.js app, import `c15tDevtools` from `@inth/nextjs/devtools` instead. Scoped installs use `@inth/react/devtools` and `@inth/nextjs/devtools`.
+  In a Next.js app, import `inthDevtools` from `@inth/nextjs/devtools` instead. Scoped installs use `@inth/react/devtools` and `@inth/nextjs/devtools`.
 
-  The c15t panel follows the TanStack Devtools light or dark theme, not your app's consent theme. If you write the plugin entry yourself, use a render function and pass the theme to `C15tTanStackDevtoolsPanel`:
+  The Inth panel follows the TanStack Devtools light or dark theme, not your app's consent theme. If you write the plugin entry yourself, use a render function and pass the theme to `InthTanStackDevtoolsPanel`:
 
   {/* example: fragment */}
 
   ```tsx
-  import { C15tTanStackDevtoolsPanel } from '@inth/react/devtools';
+  import { InthTanStackDevtoolsPanel } from '@inth/react/devtools';
 
-  const c15tPlugin = {
+  const inthPlugin = {
     name: 'Consent',
     render: (_element: HTMLElement, { theme }: { theme: 'light' | 'dark' }) => (
-      <C15tTanStackDevtoolsPanel theme={theme} />
+      <InthTanStackDevtoolsPanel theme={theme} />
     ),
   };
   ```

@@ -1,7 +1,7 @@
 /**
  * Runtime overrides of what the build fixed: `mode.type`, `mode.resolve`
- * and `routePrefix`, through `NUXT_PUBLIC_C15T_MODE_TYPE`,
- * `NUXT_PUBLIC_C15T_MODE_RESOLVE` and `NUXT_PUBLIC_C15T_ROUTE_PREFIX`.
+ * and `routePrefix`, through `NUXT_PUBLIC_INTH_MODE_TYPE`,
+ * `NUXT_PUBLIC_INTH_MODE_RESOLVE` and `NUXT_PUBLIC_INTH_ROUTE_PREFIX`.
  * Nitro applies them to each request's runtime config, which the server
  * render reads and sends to the browser. Other mode fields, such as
  * `manifestUrl`, the server reads at runtime, so their overrides stay.
@@ -25,18 +25,18 @@ const BUILT: BuiltOptions = {
 		resolve: 'browser',
 		type: 'manifest',
 	},
-	routePrefix: '/api/c15t',
+	routePrefix: '/api/inth',
 };
 
 /** A request's runtime config after Nitro applied the variables. */
 const overridden = (
-	c15t: { mode?: Record<string, unknown>; routePrefix?: unknown } = {}
+	inth: { mode?: Record<string, unknown>; routePrefix?: unknown } = {}
 ) => ({
 	public: {
-		c15t: {
-			mode: { ...BUILT.mode, ...c15t.mode },
+		inth: {
+			mode: { ...BUILT.mode, ...inth.mode },
 			projectUrl: 'https://consent.example.com',
-			routePrefix: 'routePrefix' in c15t ? c15t.routePrefix : BUILT.routePrefix,
+			routePrefix: 'routePrefix' in inth ? inth.routePrefix : BUILT.routePrefix,
 		},
 	},
 });
@@ -51,7 +51,7 @@ describe('pinBuildOptions', () => {
 	])('gives the browser the built %s', (_name, override) => {
 		const runtimeConfig = overridden(override);
 		pinBuildOptions(runtimeConfig, BUILT);
-		expect(runtimeConfig.public.c15t).toEqual({
+		expect(runtimeConfig.public.inth).toEqual({
 			projectUrl: 'https://consent.example.com',
 			...BUILT,
 		});
@@ -66,7 +66,7 @@ describe('pinBuildOptions', () => {
 			},
 		});
 		pinBuildOptions(runtimeConfig, BUILT);
-		expect(runtimeConfig.public.c15t.mode).toEqual({
+		expect(runtimeConfig.public.inth.mode).toEqual({
 			manifestUrl: 'http://localhost:4100/manifest?cold=1',
 			projectUrl: 'https://runtime.example.com',
 			resolve: 'browser',
@@ -78,12 +78,12 @@ describe('pinBuildOptions', () => {
 		const runtimeConfig = overridden({ mode: { resolve: 'browser' } });
 		pinBuildOptions(runtimeConfig, {
 			mode: { type: 'manifest' },
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
-		expect(runtimeConfig.public.c15t.mode).not.toHaveProperty('resolve');
+		expect(runtimeConfig.public.inth.mode).not.toHaveProperty('resolve');
 	});
 
-	test('leaves a config without the c15t key alone', () => {
+	test('leaves a config without the inth key alone', () => {
 		const runtimeConfig = { public: {} };
 		pinBuildOptions(runtimeConfig, BUILT);
 		expect(runtimeConfig).toEqual({ public: {} });
@@ -93,18 +93,18 @@ describe('pinBuildOptions', () => {
 describe('findOverriddenOptions', () => {
 	test('names each fixed option that differs from the build', () => {
 		expect(
-			findOverriddenOptions(overridden({ routePrefix: '/' }).public.c15t, BUILT)
+			findOverriddenOptions(overridden({ routePrefix: '/' }).public.inth, BUILT)
 		).toEqual(['routePrefix']);
 		expect(
 			findOverriddenOptions(
-				overridden({ mode: { type: 'hosted' } }).public.c15t,
+				overridden({ mode: { type: 'hosted' } }).public.inth,
 				BUILT
 			)
 		).toEqual(['type']);
 		expect(
 			findOverriddenOptions(
 				overridden({ mode: { resolve: 'server' }, routePrefix: '/' }).public
-					.c15t,
+					.inth,
 				BUILT
 			)
 		).toEqual(['resolve', 'routePrefix']);
@@ -119,7 +119,7 @@ describe('findOverriddenOptions', () => {
 						projectUrl: 'https://runtime.example.com',
 						source: 'runtime',
 					},
-				}).public.c15t,
+				}).public.inth,
 				BUILT
 			)
 		).toEqual([]);
@@ -128,8 +128,8 @@ describe('findOverriddenOptions', () => {
 	test('treats a resolve both leave out as equal', () => {
 		expect(
 			findOverriddenOptions(
-				{ mode: { type: 'manifest' }, routePrefix: '/api/c15t' },
-				{ mode: { type: 'manifest' }, routePrefix: '/api/c15t' }
+				{ mode: { type: 'manifest' }, routePrefix: '/api/inth' },
+				{ mode: { type: 'manifest' }, routePrefix: '/api/inth' }
 			)
 		).toEqual([]);
 		expect(findOverriddenOptions(undefined, BUILT)).toEqual([]);
@@ -144,7 +144,7 @@ describe('createBuildOptionsGuard', () => {
 			mode: { manifestUrl: 'http://localhost:4100/manifest?cold=1' },
 		});
 		guard(runtimeConfig);
-		expect(runtimeConfig.public.c15t.mode).toHaveProperty(
+		expect(runtimeConfig.public.inth.mode).toHaveProperty(
 			'manifestUrl',
 			'http://localhost:4100/manifest?cold=1'
 		);
@@ -158,28 +158,28 @@ describe('createBuildOptionsGuard', () => {
 		const guard = createBuildOptionsGuard(BUILT, (name) => warned.push(name));
 		const first = overridden();
 		guard(first);
-		expect(first.public.c15t.routePrefix).toBe('/api/c15t');
+		expect(first.public.inth.routePrefix).toBe('/api/inth');
 		expect(warned).toEqual([]);
 		for (let request = 0; request < 2; request += 1) {
 			const later = overridden({ mode: { type: 'hosted' }, routePrefix: '/' });
 			guard(later);
-			expect(later.public.c15t).toMatchObject(BUILT);
+			expect(later.public.inth).toMatchObject(BUILT);
 		}
 		expect(warned.map(buildOptionVariable)).toEqual([
-			'NUXT_PUBLIC_C15T_MODE_TYPE',
-			'NUXT_PUBLIC_C15T_ROUTE_PREFIX',
+			'NUXT_PUBLIC_INTH_MODE_TYPE',
+			'NUXT_PUBLIC_INTH_ROUTE_PREFIX',
 		]);
 	});
 });
 
 describe('buildOptionVariable', () => {
 	test('names the leaf variable a deployment sets', () => {
-		expect(buildOptionVariable('type')).toBe('NUXT_PUBLIC_C15T_MODE_TYPE');
+		expect(buildOptionVariable('type')).toBe('NUXT_PUBLIC_INTH_MODE_TYPE');
 		expect(buildOptionVariable('resolve')).toBe(
-			'NUXT_PUBLIC_C15T_MODE_RESOLVE'
+			'NUXT_PUBLIC_INTH_MODE_RESOLVE'
 		);
 		expect(buildOptionVariable('routePrefix')).toBe(
-			'NUXT_PUBLIC_C15T_ROUTE_PREFIX'
+			'NUXT_PUBLIC_INTH_ROUTE_PREFIX'
 		);
 	});
 });

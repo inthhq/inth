@@ -28,7 +28,7 @@ describe('script inspection', () => {
 				}),
 			});
 			const foreign = document.createElement('div');
-			foreign.id = 'c15t-script-retained-identity';
+			foreign.id = 'inth-script-retained-identity';
 			if (scenario === 'initially blocked') {
 				document.body.append(foreign);
 			}
@@ -67,7 +67,7 @@ describe('script inspection', () => {
 			};
 			if (existingDOM) {
 				const element = document.createElement('script');
-				element.id = 'c15t-script-reuse-event';
+				element.id = 'inth-script-reuse-event';
 				document.body.append(element);
 			}
 			const devTools = createDevTools({ kernel });
@@ -426,7 +426,7 @@ describe('script inspection', () => {
 		(reused) => {
 			if (reused) {
 				const existing = document.createElement('script');
-				existing.id = 'c15t-script-quiet-inline';
+				existing.id = 'inth-script-quiet-inline';
 				document.body.append(existing);
 			}
 			const kernel = createConsentKernel();

@@ -5,17 +5,17 @@ import type { RuntimePrefetch } from '@inth/sdk/runtime';
  * The `TransferState` key the visitor's server-resolved consent travels
  * under, from the server render to the browser.
  *
- * `provideC15tServer()` from `@inth/angular/ssr` sets it before the server
+ * `provideInthServer()` from `@inth/angular/ssr` sets it before the server
  * renders. {@link ConsentManager} reads it on both sides and hands it to
  * the runtime as `prefetch`, unless the app passed its own, so the browser
  * starts from the state the server rendered with and hydration matches.
  *
  * @internal
  */
-export const C15T_SERVER_STATE = makeStateKey<RuntimePrefetch>('c15t');
+export const INTH_SERVER_STATE = makeStateKey<RuntimePrefetch>('inth');
 
 /**
- * Opens once `provideC15tServer()` has set {@link C15T_SERVER_STATE} for
+ * Opens once `provideInthServer()` has set {@link INTH_SERVER_STATE} for
  * the request, or found it has nothing to set.
  *
  * Angular runs every app initializer before it awaits any, so another
@@ -41,10 +41,10 @@ export class ServerStateGate {
 }
 
 /**
- * The request's {@link ServerStateGate}, provided by `provideC15tServer()`.
+ * The request's {@link ServerStateGate}, provided by `provideInthServer()`.
  *
  * @internal
  */
-export const C15T_SERVER_STATE_GATE = new InjectionToken<ServerStateGate>(
-	'C15T_SERVER_STATE_GATE'
+export const INTH_SERVER_STATE_GATE = new InjectionToken<ServerStateGate>(
+	'INTH_SERVER_STATE_GATE'
 );

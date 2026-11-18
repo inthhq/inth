@@ -39,7 +39,7 @@ vi.mock('@inth/sdk/modules/iframe-blocker', async (importOriginal) => {
 	return await importOriginal();
 });
 
-const FRAME_URL = 'https://frames.c15t.test/embed';
+const FRAME_URL = 'https://frames.inth.test/embed';
 
 const sleep = (ms: number) =>
 	new Promise<void>((resolve) => {

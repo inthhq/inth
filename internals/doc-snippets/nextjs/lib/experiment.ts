@@ -19,7 +19,7 @@ export const experimentCallbacks = {
 			pushToDataLayer({
 				arm: experiment.arm,
 				consent_action: consentAction,
-				event: 'c15t_choice_recorded',
+				event: 'inth_choice_recorded',
 				experiment_id: experiment.id,
 			});
 		}
@@ -28,7 +28,7 @@ export const experimentCallbacks = {
 		if (experiment) {
 			pushToDataLayer({
 				arm: experiment.arm,
-				event: 'c15t_surface_shown',
+				event: 'inth_surface_shown',
 				experiment_id: experiment.id,
 				surface,
 			});

@@ -1,5 +1,5 @@
 /**
- * `ConsentRoot` reads `c15t.config.ts` through the `@inth/nextjs/user-config`
+ * `ConsentRoot` reads `inth.config.ts` through the `@inth/nextjs/user-config`
  * alias `withConsentManifest` sets, so a Server Component layout renders it
  * with nothing but `state`.
  */
@@ -11,7 +11,7 @@ import { render } from 'vitest-browser-react';
 import { ConsentRoot } from '../root';
 import { policyFixture } from './policy-fixture';
 
-// oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's c15t.config.ts. The mock is that alias; ConsentRoot is real.
+// oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's inth.config.ts. The mock is that alias; ConsentRoot is real.
 vi.mock('@inth/nextjs/user-config', () => ({
 	default: {
 		// Manifest mode, so the browser inits through the route prefix.
@@ -38,7 +38,7 @@ afterEach(() => {
 	}
 });
 
-describe('ConsentRoot with c15t.config.ts', () => {
+describe('ConsentRoot with inth.config.ts', () => {
 	test("loads the config's scripts", async () => {
 		const screen = await render(
 			<ConsentRoot
@@ -87,7 +87,7 @@ describe('ConsentRoot with c15t.config.ts', () => {
 					String(input).includes('/subjects')
 						? { ok: true, subjectId: 'sub_saved' }
 						: {
-								branding: 'c15t',
+								branding: 'inth',
 								location: { countryCode: 'DE', regionCode: null },
 								policyResolution: writePolicyResolutionWire(
 									prepared.initialPolicyResolution

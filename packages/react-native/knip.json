@@ -18,8 +18,8 @@
 	"ignoreDependencies": [
 		"@babel/core",
 		"@inth/sdk",
-		"@c15t/typescript-config",
-		"@c15t/vitest-config",
+		"@inth/typescript-config",
+		"@inth/vitest-config",
 		"@react-native/codegen",
 		"metro-transform-plugins"
 	],

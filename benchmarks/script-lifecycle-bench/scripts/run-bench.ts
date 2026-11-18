@@ -5,9 +5,9 @@ import { dirname, join, resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
-import { scriptLifecycleBudgetsForMetric } from '@c15t/benchmarking/budgets';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
+import { scriptLifecycleBudgetsForMetric } from '@inth/benchmarking/budgets';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
 import {
 	getEnvironment,
 	safeBaseSha,
@@ -15,7 +15,7 @@ import {
 	safeGitDirty,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import { chromium } from 'playwright';
 import type * as PlaywrightTypes from 'playwright';
 
@@ -211,7 +211,7 @@ const describeWaitFailure = async function describeWaitFailure(
 	error: unknown
 ): Promise<Error> {
 	const state = await page
-		.evaluate(() => JSON.stringify(window.__c15tScriptBench ?? null))
+		.evaluate(() => JSON.stringify(window.__inthScriptBench ?? null))
 		.catch(() => 'unavailable');
 	return new Error(
 		`${config.name}: gave up waiting for ${marker}. Page state: ${state}`,
@@ -227,7 +227,7 @@ const collectScenarioSample = async function collectScenarioSample(
 	await page
 		.waitForFunction(
 			(targetScenario) => {
-				const state = window.__c15tScriptBench;
+				const state = window.__inthScriptBench;
 				return (
 					!!state &&
 					state.scenario === targetScenario &&
@@ -245,7 +245,7 @@ const collectScenarioSample = async function collectScenarioSample(
 	await page
 		.waitForFunction(
 			(marker) => {
-				const state = window.__c15tScriptBench;
+				const state = window.__inthScriptBench;
 				return !!state && state.completionMarkers[marker] === true;
 			},
 			config.completionMarker,
@@ -261,7 +261,7 @@ const collectScenarioSample = async function collectScenarioSample(
 		});
 
 	const state = await page.evaluate(() => {
-		const current = window.__c15tScriptBench;
+		const current = window.__inthScriptBench;
 		if (!current) {
 			return null;
 		}
@@ -412,7 +412,7 @@ const run = async function run() {
 						'Script lifecycle benchmark uses local fixture scripts and predicate-based completion checks.',
 						'IAB-gated script lifecycle scenarios are intentionally excluded from v1.',
 					],
-					package: '@c15t/script-lifecycle-bench',
+					package: '@inth/script-lifecycle-bench',
 					runtime: 'playwright',
 					scenario: config.name,
 					schemaVersion: BENCHMARK_SCHEMA_VERSION,

@@ -25,8 +25,8 @@ import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 import { policyFixture } from './policy-fixture';
 
-type WindowWithC15t = Window & {
-	c15t?: {
+type WindowWithInth = Window & {
+	inth?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -52,7 +52,7 @@ const POLICY_RESOLUTION = writePolicyResolutionWire(
 );
 
 describe('ConsentRoot: projectUrl triggers auto-init', () => {
-	test('root reports Next.js adapter identity on window.c15t', async () => {
+	test('root reports Next.js adapter identity on window.inth', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ policyResolution: POLICY_RESOLUTION }), {
 				headers: { 'content-type': 'application/json' },
@@ -61,13 +61,13 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 		);
 		const originalFetch = globalThis.fetch;
 		globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
-		delete (window as WindowWithC15t).c15t;
+		delete (window as WindowWithInth).inth;
 
 		try {
 			const { unmount } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ projectUrl: '/api/c15t' }}
+					config={{ projectUrl: '/api/inth' }}
 					persistence={false}
 				>
 					<div data-testid="probe">ready</div>
@@ -76,16 +76,16 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 			await vi.waitFor(() => {
 				// The default mode is manifest().
-				expect((window as WindowWithC15t).c15t).toMatchObject({
+				expect((window as WindowWithInth).inth).toMatchObject({
 					mode: 'manifest',
 					pkg: '@inth/nextjs',
 				});
 			});
-			expect(typeof (window as WindowWithC15t).c15t?.version).toBe('string');
+			expect(typeof (window as WindowWithInth).inth?.version).toBe('string');
 			unmount();
 		} finally {
 			globalThis.fetch = originalFetch;
-			delete (window as WindowWithC15t).c15t;
+			delete (window as WindowWithInth).inth;
 		}
 	});
 
@@ -93,7 +93,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(
 				JSON.stringify({
-					branding: 'c15t',
+					branding: 'inth',
 					location: { countryCode: 'DE', regionCode: null },
 					policyResolution: POLICY_RESOLUTION,
 					translations: { language: 'en', translations: { common: {} } },
@@ -118,7 +118,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					persistence={false}
 				>
 					<Probe />
@@ -181,7 +181,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					options={{ enabled: false }}
 				>
 					<Probe />
@@ -232,7 +232,7 @@ describe('ConsentRoot: resolved state reaches first paint', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={state}
-					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					persistence={false}
 				>
 					<Probe />
@@ -307,7 +307,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					url.endsWith('/subjects')
 						? jsonResponse({ ok: true, subjectId: 'sub_saved' })
 						: jsonResponse({
-								branding: 'c15t',
+								branding: 'inth',
 								location: { countryCode: 'DE', regionCode: null },
 								policyDecision: {
 									country: 'DE',
@@ -431,7 +431,7 @@ describe('ConsentRoot: config picks the transport', () => {
 			Promise.resolve(
 				pathOf(url).endsWith('/init')
 					? jsonResponse({
-							branding: 'c15t',
+							branding: 'inth',
 							location: { countryCode: 'US', regionCode: 'CA' },
 							policyResolution: writePolicyResolutionWire(
 								policyFixture({}, { id: 'us-ca-opt-out' })
@@ -475,7 +475,7 @@ describe('ConsentRoot: config picks the transport', () => {
 	test('projectUrl only: manifest() re-inits against the backend /init', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			jsonResponse({
-				branding: 'c15t',
+				branding: 'inth',
 				location: { countryCode: 'DE', regionCode: null },
 				policyResolution: writePolicyResolutionWire(
 					policyFixture({}, { id: 'gdpr' }).initialPolicyResolution
@@ -516,7 +516,7 @@ describe('ConsentRoot: config picks the transport', () => {
 				pathOf(url).endsWith('/subjects')
 					? jsonResponse({ ok: true, subjectId: 'sub_saved' })
 					: jsonResponse({
-							branding: 'c15t',
+							branding: 'inth',
 							location: { countryCode: 'DE', regionCode: null },
 							policyResolution: writePolicyResolutionWire(
 								policyFixture({}, { id: 'gdpr' }).initialPolicyResolution

@@ -33,28 +33,28 @@ const variants = preferenceItemVariants();
  *
  * @example
  * ```html
- * <div c15tPreferenceItem [(open)]="open">
- *   <div c15tPreferenceItemHeader>
- *     <button c15tPreferenceItemTrigger>
- *       <h3 c15tPreferenceItemTitle>Analytics</h3>
+ * <div inthPreferenceItem [(open)]="open">
+ *   <div inthPreferenceItemHeader>
+ *     <button inthPreferenceItemTrigger>
+ *       <h3 inthPreferenceItemTitle>Analytics</h3>
  *     </button>
- *     <div c15tPreferenceItemControl>
- *       <button c15tSwitch [(checked)]="analytics" aria-label="Analytics"></button>
+ *     <div inthPreferenceItemControl>
+ *       <button inthSwitch [(checked)]="analytics" aria-label="Analytics"></button>
  *     </div>
  *   </div>
- *   <div c15t-preference-item-content>Helps us understand how the site is used.</div>
+ *   <div inth-preference-item-content>Helps us understand how the site is used.</div>
  * </div>
  * ```
  */
 @Directive({
-	exportAs: 'c15tPreferenceItem',
+	exportAs: 'inthPreferenceItem',
 	host: {
 		'[attr.data-disabled]': 'dataDisabled()',
 		'[attr.data-slot]': 'slot',
 		'[attr.data-state]': 'dataState()',
 		'[class]': 'className()',
 	},
-	selector: '[c15tPreferenceItem]',
+	selector: '[inthPreferenceItem]',
 })
 export class PreferenceItem {
 	/** Whether the content is shown. */
@@ -65,9 +65,9 @@ export class PreferenceItem {
 	readonly noStyle = input<boolean | undefined>(undefined);
 
 	/** @internal */
-	readonly triggerId = uniqueId('c15t-preference-item-trigger');
+	readonly triggerId = uniqueId('inth-preference-item-trigger');
 	/** @internal */
-	readonly contentId = uniqueId('c15t-preference-item-content');
+	readonly contentId = uniqueId('inth-preference-item-content');
 	/** @internal */
 	protected readonly slot = PREFERENCE_ITEM_SLOTS.root;
 	/** Whether the parts drop their stock classes. */
@@ -112,7 +112,7 @@ const PART_HOST = {
 };
 
 /** The row's header. */
-@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemHeader]' })
+@Directive({ host: PART_HOST, selector: '[inthPreferenceItemHeader]' })
 export class PreferenceItemHeader extends PreferenceItemPart {
 	/** @internal */
 	protected readonly slot = PREFERENCE_ITEM_SLOTS.header;
@@ -123,7 +123,7 @@ export class PreferenceItemHeader extends PreferenceItemPart {
 }
 
 /** Content before the title, such as an icon. */
-@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemLeading]' })
+@Directive({ host: PART_HOST, selector: '[inthPreferenceItemLeading]' })
 export class PreferenceItemLeading extends PreferenceItemPart {
 	/** @internal */
 	protected readonly slot = PREFERENCE_ITEM_SLOTS.leading;
@@ -134,7 +134,7 @@ export class PreferenceItemLeading extends PreferenceItemPart {
 }
 
 /** The row's title. Put it on an `<h3>`. */
-@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemTitle]' })
+@Directive({ host: PART_HOST, selector: '[inthPreferenceItemTitle]' })
 export class PreferenceItemTitle extends PreferenceItemPart {
 	/** @internal */
 	protected readonly slot = PREFERENCE_ITEM_SLOTS.title;
@@ -145,7 +145,7 @@ export class PreferenceItemTitle extends PreferenceItemPart {
 }
 
 /** Secondary text under the title. */
-@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemMeta]' })
+@Directive({ host: PART_HOST, selector: '[inthPreferenceItemMeta]' })
 export class PreferenceItemMeta extends PreferenceItemPart {
 	/** @internal */
 	protected readonly slot = PREFERENCE_ITEM_SLOTS.meta;
@@ -156,7 +156,7 @@ export class PreferenceItemMeta extends PreferenceItemPart {
 }
 
 /** Extra content next to the control. */
-@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemAuxiliary]' })
+@Directive({ host: PART_HOST, selector: '[inthPreferenceItemAuxiliary]' })
 export class PreferenceItemAuxiliary extends PreferenceItemPart {
 	/** @internal */
 	protected readonly slot = PREFERENCE_ITEM_SLOTS.auxiliary;
@@ -167,7 +167,7 @@ export class PreferenceItemAuxiliary extends PreferenceItemPart {
 }
 
 /** Holds the row's control, such as a switch. */
-@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemControl]' })
+@Directive({ host: PART_HOST, selector: '[inthPreferenceItemControl]' })
 export class PreferenceItemControl extends PreferenceItemPart {
 	/** @internal */
 	protected readonly slot = PREFERENCE_ITEM_SLOTS.control;
@@ -192,7 +192,7 @@ export class PreferenceItemControl extends PreferenceItemPart {
 		'[class]': 'className()',
 		'[id]': 'item.triggerId',
 	},
-	selector: '[c15tPreferenceItemTrigger]',
+	selector: '[inthPreferenceItemTrigger]',
 })
 export class PreferenceItemTrigger extends PreferenceItemPart {
 	/** The button's `type`. */
@@ -210,7 +210,7 @@ export class PreferenceItemTrigger extends PreferenceItemPart {
 }
 
 /**
- * Marks the `<ng-template>` a `c15t-preference-item-content` creates only from
+ * Marks the `<ng-template>` a `inth-preference-item-content` creates only from
  * the item's first open, for content too heavy to build up front.
  *
  * A marker, not any `TemplateRef` child: control flow such as `@if` is a
@@ -219,12 +219,12 @@ export class PreferenceItemTrigger extends PreferenceItemPart {
  *
  * @example
  * ```html
- * <div c15t-preference-item-content>
- *   <ng-template c15tPreferenceItemBody><app-vendor-list /></ng-template>
+ * <div inth-preference-item-content>
+ *   <ng-template inthPreferenceItemBody><app-vendor-list /></ng-template>
  * </div>
  * ```
  */
-@Directive({ selector: 'ng-template[c15tPreferenceItemBody]' })
+@Directive({ selector: 'ng-template[inthPreferenceItemBody]' })
 export class PreferenceItemBody {
 	/** @internal */
 	readonly template = inject(TemplateRef);
@@ -236,12 +236,12 @@ export class PreferenceItemBody {
  * The projected content renders from the first open and then stays, so the
  * close transition keeps it. For content that should not even be created
  * before then, such as a long vendor list, pass it as an
- * `<ng-template c15tPreferenceItemBody>` child instead.
+ * `<ng-template inthPreferenceItemBody>` child instead.
  *
  * @example
  * ```html
- * <div c15t-preference-item-content>
- *   <ng-template c15tPreferenceItemBody><app-vendor-list /></ng-template>
+ * <div inth-preference-item-content>
+ *   <ng-template inthPreferenceItemBody><app-vendor-list /></ng-template>
  * </div>
  * ```
  */
@@ -257,7 +257,7 @@ export class PreferenceItemBody {
 		'[id]': 'item.contentId',
 	},
 	imports: [NgTemplateOutlet],
-	selector: '[c15t-preference-item-content]',
+	selector: '[inth-preference-item-content]',
 	template: `<div
 		[class]="viewportClass()"
 		[attr.data-slot]="viewportSlot"

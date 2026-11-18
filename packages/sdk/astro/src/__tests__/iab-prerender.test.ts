@@ -2,7 +2,7 @@
  * The IAB banner on prerendered pages, and the browser rendering of it.
  */
 
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -15,7 +15,7 @@ import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { describeTree } from './dom-tree';
 
 let container: AstroContainer;
@@ -33,7 +33,7 @@ const IAB_POLICY = {
 	scopeMode: 'permissive',
 } as const;
 
-const OPTIONS: C15tAstroOptions = {
+const OPTIONS: InthAstroOptions = {
 	consentCategories: ['necessary', 'marketing'],
 	iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
 	mode: testingMode({ policy: [IAB_POLICY as never] }),
@@ -41,21 +41,21 @@ const OPTIONS: C15tAstroOptions = {
 
 describe('<IABConsentBanner /> on a prerendered page', () => {
 	it('renders hidden for the browser to reveal', async () => {
-		const c15t = await resolveConsentContext({
+		const inth = await resolveConsentContext({
 			headers: new Headers(),
 			options: resolveOptions(OPTIONS),
 			prerendered: true,
 		});
 		const html = await container.renderToString(IABConsentBanner, {
-			locals: { c15t },
+			locals: { inth },
 		});
 		expect(html).toMatch(/data-testid="iab-consent-banner-root"[^>]*\shidden/u);
-		expect(html).toContain('data-c15t-visible="false"');
+		expect(html).toContain('data-inth-visible="false"');
 		expect(html).not.toContain(IAB_PROMPT_SLOT_ATTRIBUTE);
 	});
 
 	it('leaves a spot with its props when the policy is unknown', async () => {
-		const c15t = await resolveConsentContext({
+		const inth = await resolveConsentContext({
 			headers: new Headers(),
 			options: resolveOptions({
 				...OPTIONS,
@@ -65,7 +65,7 @@ describe('<IABConsentBanner /> on a prerendered page', () => {
 			prerendered: true,
 		});
 		const html = await container.renderToString(IABConsentBanner, {
-			locals: { c15t },
+			locals: { inth },
 			props: { primaryButton: 'accept' },
 		});
 		expect(html).not.toContain('data-testid="iab-consent-banner-root"');
@@ -89,13 +89,13 @@ describe('browser-rendered IAB banner', () => {
 		['a blocking banner', { scrollLock: true }],
 		['no stylesheet', { noStyle: true }],
 	] as const)('matches the server markup with %s', async (_name, props) => {
-		const c15t = await resolveConsentContext({
+		const inth = await resolveConsentContext({
 			headers: new Headers(),
 			options: resolveOptions(OPTIONS),
 		});
 		const server = new JSDOM(
 			await container.renderToString(IABConsentBanner, {
-				locals: { c15t },
+				locals: { inth },
 				props,
 				request: new Request('https://example.com/'),
 			}),
@@ -107,9 +107,9 @@ describe('browser-rendered IAB banner', () => {
 		vi.stubGlobal('window', dom.window);
 		try {
 			const built = buildIABPrompt(
-				c15t.snapshot,
+				inth.snapshot,
 				{ classNames: iabPromptClassNames, props: { ...props } },
-				c15t.options
+				inth.options
 			);
 			const expected = [
 				server.querySelector('[data-testid="iab-consent-banner-overlay"]'),

@@ -1,9 +1,9 @@
-# c15t GTM community template
+# Inth GTM community template
 
-`template.tpl` is the c15t Consent Management tag template for the Google Tag
+`template.tpl` is the Inth Consent Management tag template for the Google Tag
 Manager Community Template Gallery. It loads the `@inth/sdk-browser` script-tag
-build and forwards c15t's permissions to Google Consent Mode through the
-existing `window.c15t` queue.
+build and forwards inth's permissions to Google Consent Mode through the
+existing `window.inth` queue.
 
 The `googleTagManager` helper stays the recommended setup. The template exists
 for the gallery listing and for sites that manage scripts only through GTM. See
@@ -18,7 +18,7 @@ bun run --cwd packages/sdk/browser test src/__tests__/gtm-template.test.ts \
 	--coverage.enabled=false
 ```
 
-The test runs the template's sandboxed code against the real `window.c15t`
+The test runs the template's sandboxed code against the real `window.inth`
 global, with GTM's APIs emulated and its permissions enforced. It also replays
 the scenarios in the template's `___TESTS___` section. In GTM, open the
 template in the editor and use the Tests tab to run those scenarios against
@@ -28,7 +28,7 @@ the real sandbox.
 
 The gallery reads templates from a public GitHub repository with
 `template.tpl`, `metadata.yaml` and a `LICENSE` at its root.
-[`inthhq/c15t-gtm-template`](https://github.com/inthhq/c15t-gtm-template) is
+[`inthhq/inth-gtm-template`](https://github.com/inthhq/inth-gtm-template) is
 that repository. Keep it as a copy of this directory:
 
 1. Copy `template.tpl` and the root `LICENSE` into the mirror repository and

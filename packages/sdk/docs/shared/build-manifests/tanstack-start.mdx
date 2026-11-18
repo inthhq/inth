@@ -5,9 +5,9 @@ Add the plugin before `tanstackStart()`:
 <include src="../examples/tanstack-start/vite-config.mdx" />
 
 The plugin reads the backend URL from `projectUrl`, or from
-`VITE_C15T_BACKEND_URL`, then `VITE_INTH_PROJECT_URL`, when you leave
-`projectUrl` out. If `VITE_C15T_BACKEND_URL` is unset, the plugin sets it to the URL it used, so app code can read
-`import.meta.env.VITE_C15T_BACKEND_URL` instead of repeating the URL.
+`VITE_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL`, when you leave
+`projectUrl` out. If `VITE_INTH_PROJECT_URL` is unset, the plugin sets it to the URL it used, so app code can read
+`import.meta.env.VITE_INTH_PROJECT_URL` instead of repeating the URL.
 
 The plugin fetches the policy during `vite build`, or in `vite dev` when the
 server first loads it, and serves it to server code as `snapshot` from `@inth/tanstack-start/generated`. In the browser
@@ -28,7 +28,7 @@ shows:
 If the fetch fails, `vite build` stops. `vite dev` logs a warning instead,
 and `snapshot` is `undefined`, so the server fetches and caches the policy at
 runtime. To let a build continue the same way, set `onBuildError: 'runtime'`,
-or run it with `C15T_ON_BUILD_ERROR=runtime`:
+or run it with `INTH_ON_BUILD_ERROR=runtime`:
 
 {/* example: fragment */}
 

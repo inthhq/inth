@@ -6,7 +6,7 @@ import { useTranslations } from "@inth/react/headless"
 
 import { cn } from "@/lib/utils"
 
-/** INTH projects report `inth` or `consent`. Everything else is c15t. */
+/** INTH projects report `inth` or `consent`. Everything else is Inth. */
 function useBrandingMark() {
   const branding = useBranding()
   return branding === "inth" || branding === "consent" ? "inth" : "c15t"

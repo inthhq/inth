@@ -209,7 +209,7 @@ export interface InsiderTagOptions {
 	/**
 	 * Complete page definition pushed after `user` and optional currency,
 	 * before `init`. Values must be JSON-serializable. Custom data is passed
-	 * as literal JSON without interpreting c15t runtime-value markers.
+	 * as literal JSON without interpreting Inth runtime-value markers.
 	 * Only use `purchase` after a durable per-order guard permits the attempt.
 	 * Use `other` on confirmation-page revisits and keep reload on revocation.
 	 * @default { type: 'other' }

@@ -35,15 +35,15 @@ import {
 import type { ConsentRuntimeOptions, RuntimePrefetch } from '../types';
 
 type StartedWindow = Window & {
-	__c15tRender?: {
+	__inthRender?: {
 		current?: () => boolean;
 		failed?: number;
 		id: string;
 		starts: Record<string, number>;
 	};
-	__c15tLoaderRan?: boolean;
-	__c15tSetup?: number;
-	__c15tStarted?: Record<string, HTMLScriptElement>;
+	__inthLoaderRan?: boolean;
+	__inthSetup?: number;
+	__inthStarted?: Record<string, HTMLScriptElement>;
 };
 
 const CONFIRMED_AT = NOW - 1000;
@@ -52,7 +52,7 @@ const pixel: Script = {
 	category: 'marketing',
 	id: 'pixel',
 	serverStart: () => ({
-		code: 'window.__c15tSetup=(window.__c15tSetup||0)+1',
+		code: 'window.__inthSetup=(window.__inthSetup||0)+1',
 	}),
 	src: 'https://cdn.example.com/pixel.js',
 };
@@ -103,10 +103,10 @@ const clearCookies = function clearCookies(): void {
 afterEach(() => {
 	vi.restoreAllMocks();
 	const started = window as StartedWindow;
-	delete started.__c15tLoaderRan;
-	delete started.__c15tSetup;
-	delete started.__c15tStarted;
-	delete started.__c15tRender;
+	delete started.__inthLoaderRan;
+	delete started.__inthSetup;
+	delete started.__inthStarted;
+	delete started.__inthRender;
 	localStorage.clear();
 	clearCookies();
 	document.head.innerHTML = '';
@@ -125,7 +125,7 @@ describe('serverScriptStart', () => {
 					scripts: [{ ...pixel, callbackOnly }],
 				})
 			);
-			expect((window as StartedWindow).__c15tSetup).toBe(1);
+			expect((window as StartedWindow).__inthSetup).toBe(1);
 			expect(document.head.querySelector('script')?.src).toBe(pixel.src);
 		}
 	);
@@ -140,7 +140,7 @@ describe('serverScriptStart', () => {
 					scripts: [{ ...pixel, callbackOnly }],
 				})
 			).toBeUndefined();
-			expect((window as StartedWindow).__c15tSetup).toBeUndefined();
+			expect((window as StartedWindow).__inthSetup).toBeUndefined();
 		}
 	);
 
@@ -161,7 +161,7 @@ describe('serverScriptStart', () => {
 			})
 		);
 		const element = document.head.querySelector('script');
-		expect((window as StartedWindow).__c15tSetup).toBe(1);
+		expect((window as StartedWindow).__inthSetup).toBe(1);
 		expect(element?.getAttribute('src')).toBe(
 			'https://acme.example/scripts/pixel.js'
 		);
@@ -204,7 +204,7 @@ describe('serverScriptStart', () => {
 			integrity: 'sha384-registry',
 			src: 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js',
 		});
-		expect((window as StartedWindow).__c15tSetup).toBe(1);
+		expect((window as StartedWindow).__inthSetup).toBe(1);
 		document.head.innerHTML = '';
 
 		// An entry it cannot check starts nothing, here or from its own URL.
@@ -302,7 +302,7 @@ describe('serverScriptStart', () => {
 				})
 			);
 			expect(serverStart).not.toHaveBeenCalled();
-			expect((window as StartedWindow).__c15tSetup).toBe(1);
+			expect((window as StartedWindow).__inthSetup).toBe(1);
 			expect(document.head.querySelectorAll('script')).toHaveLength(1);
 			expect(document.head.querySelector('script')?.src).toBe(pixel.src);
 		}
@@ -345,8 +345,8 @@ describe('serverScriptStart', () => {
 		);
 
 		const started = window as StartedWindow;
-		const element = started.__c15tStarted?.pixel;
-		expect(started.__c15tSetup).toBe(1);
+		const element = started.__inthStarted?.pixel;
+		expect(started.__inthSetup).toBe(1);
 		expect(document.head.querySelectorAll('script')).toHaveLength(1);
 		expect(element?.getAttribute('src')).toBe(pixel.src);
 		expect(element?.getAttribute('data-x')).toBe('1');
@@ -360,14 +360,14 @@ describe('serverScriptStart', () => {
 			scripts: [pixel],
 		};
 		run(serverScriptStart(options, 'render-a'));
-		const element = (window as StartedWindow).__c15tStarted?.pixel as
-			| (HTMLScriptElement & { __c15tStartRender?: string })
+		const element = (window as StartedWindow).__inthStarted?.pixel as
+			| (HTMLScriptElement & { __inthStartRender?: string })
 			| undefined;
-		expect(element?.__c15tStartRender).toBe('render-a');
+		expect(element?.__inthStartRender).toBe('render-a');
 
 		run(serverScriptStart(options, 'render-b'));
-		expect((window as StartedWindow).__c15tStarted?.pixel).toBe(element);
-		expect(element?.__c15tStartRender).toBe('render-b');
+		expect((window as StartedWindow).__inthStarted?.pixel).toBe(element);
+		expect(element?.__inthStartRender).toBe('render-b');
 		expect(document.head.querySelectorAll('script')).toHaveLength(1);
 
 		// Render A's root goes: the element is render B's now.
@@ -391,7 +391,7 @@ describe('serverScriptStart', () => {
 				'render-a'
 			)
 		);
-		const earlier = (window as StartedWindow).__c15tStarted?.pixel;
+		const earlier = (window as StartedWindow).__inthStarted?.pixel;
 		expect(earlier).toBeDefined();
 		run(
 			serverScriptStart(
@@ -403,8 +403,8 @@ describe('serverScriptStart', () => {
 				'render-b'
 			)
 		);
-		expect((window as StartedWindow).__c15tStarted?.pixel).toBe(earlier);
-		expect((window as StartedWindow).__c15tSetup).toBe(1);
+		expect((window as StartedWindow).__inthStarted?.pixel).toBe(earlier);
+		expect((window as StartedWindow).__inthSetup).toBe(1);
 	});
 
 	test('a render whose start finds an element a root started early reports a failure, and leaves the element to its owners', () => {
@@ -412,10 +412,10 @@ describe('serverScriptStart', () => {
 		// start, which has a setup that element never ran.
 		const early = document.createElement('script');
 		early.src = pixel.src as string;
-		Object.assign(early, { __c15tEarly: true, __c15tOwners: 1 });
+		Object.assign(early, { __inthEarly: true, __inthOwners: 1 });
 		document.head.append(early);
 		const started = window as StartedWindow;
-		started.__c15tStarted = { pixel: early };
+		started.__inthStarted = { pixel: early };
 		const failed = vi.fn();
 		window.addEventListener(SERVER_START_FAILED_EVENT, failed);
 		try {
@@ -429,11 +429,11 @@ describe('serverScriptStart', () => {
 					'render-b'
 				)
 			);
-			expect(started.__c15tSetup).toBeUndefined();
-			expect(started.__c15tRender?.starts).not.toHaveProperty('pixel');
-			expect(started.__c15tRender?.failed).toBe(1);
+			expect(started.__inthSetup).toBeUndefined();
+			expect(started.__inthRender?.starts).not.toHaveProperty('pixel');
+			expect(started.__inthRender?.failed).toBe(1);
 			expect(failed).toHaveBeenCalled();
-			expect(started.__c15tStarted?.pixel).toBe(early);
+			expect(started.__inthStarted?.pixel).toBe(early);
 			expect(early.isConnected).toBe(true);
 		} finally {
 			window.removeEventListener(SERVER_START_FAILED_EVENT, failed);
@@ -447,9 +447,9 @@ describe('serverScriptStart', () => {
 			scripts: [pixel],
 		};
 		run(serverScriptStart(options, 'render-a'));
-		const earlier = (window as StartedWindow).__c15tStarted?.pixel;
+		const earlier = (window as StartedWindow).__inthStarted?.pixel;
 		expect(earlier?.isConnected).toBe(true);
-		expect((window as StartedWindow).__c15tSetup).toBe(1);
+		expect((window as StartedWindow).__inthSetup).toBe(1);
 
 		const moved = 'https://cdn.example.com/moved-pixel.js';
 		run(
@@ -458,12 +458,12 @@ describe('serverScriptStart', () => {
 				'render-b'
 			)
 		);
-		const later = (window as StartedWindow).__c15tStarted?.pixel;
+		const later = (window as StartedWindow).__inthStarted?.pixel;
 		expect(later).not.toBe(earlier);
 		expect(later?.getAttribute('src')).toBe(moved);
 		expect(later?.isConnected).toBe(true);
 		expect(earlier?.isConnected).toBe(false);
-		expect((window as StartedWindow).__c15tSetup).toBe(2);
+		expect((window as StartedWindow).__inthSetup).toBe(2);
 		expect(document.head.querySelectorAll('script')).toHaveLength(1);
 	});
 
@@ -472,10 +472,10 @@ describe('serverScriptStart', () => {
 			...pixel,
 			alwaysLoad: true,
 			serverStart: ({ hasConsent }) => ({
-				code: `window.__c15tGranted=${hasConsent}`,
+				code: `window.__inthGranted=${hasConsent}`,
 			}),
 		};
-		const granted = window as StartedWindow & { __c15tGranted?: boolean };
+		const granted = window as StartedWindow & { __inthGranted?: boolean };
 		run(
 			serverScriptStart(
 				{
@@ -486,8 +486,8 @@ describe('serverScriptStart', () => {
 				'render-a'
 			)
 		);
-		const earlier = granted.__c15tStarted?.pixel;
-		expect(granted.__c15tGranted).toBe(true);
+		const earlier = granted.__inthStarted?.pixel;
+		expect(granted.__inthGranted).toBe(true);
 
 		run(
 			serverScriptStart(
@@ -499,15 +499,15 @@ describe('serverScriptStart', () => {
 				'render-b'
 			)
 		);
-		const later = granted.__c15tStarted?.pixel as
-			| (HTMLScriptElement & { __c15tConsent?: boolean })
+		const later = granted.__inthStarted?.pixel as
+			| (HTMLScriptElement & { __inthConsent?: boolean })
 			| undefined;
-		expect(granted.__c15tGranted).toBe(false);
+		expect(granted.__inthGranted).toBe(false);
 		expect(later).not.toBe(earlier);
-		expect(later?.__c15tConsent).toBe(false);
+		expect(later?.__inthConsent).toBe(false);
 		expect(earlier?.isConnected).toBe(false);
 		expect(document.head.querySelectorAll('script')).toHaveLength(1);
-		delete granted.__c15tGranted;
+		delete granted.__inthGranted;
 	});
 
 	describe('with a priority image still loading', () => {
@@ -526,13 +526,13 @@ describe('serverScriptStart', () => {
 					scripts: [pixel],
 				})
 			);
-			return { element: (window as StartedWindow).__c15tStarted?.pixel, hero };
+			return { element: (window as StartedWindow).__inthStarted?.pixel, hero };
 		};
 
 		test('runs setup and registers the element, but inserts it after the image loads', () => {
 			const { element, hero } = startWithHero();
 
-			expect((window as StartedWindow).__c15tSetup).toBe(1);
+			expect((window as StartedWindow).__inthSetup).toBe(1);
 			expect(element?.isConnected).toBe(false);
 
 			hero.dispatchEvent(new Event('load'));
@@ -557,7 +557,7 @@ describe('serverScriptStart', () => {
 				{ confirmedAt: CONFIRMED_AT + 1 }
 			);
 			localStorage.setItem(
-				'c15t',
+				'inth',
 				encodeStoredConsentEnvelopeJson({
 					categories: choice?.categories ?? {},
 					version: 3,
@@ -567,7 +567,7 @@ describe('serverScriptStart', () => {
 			hero.dispatchEvent(new Event('load'));
 
 			expect(element?.isConnected).toBe(false);
-			expect(element).toHaveProperty('__c15tHeld', true);
+			expect(element).toHaveProperty('__inthHeld', true);
 		});
 
 		test('inserts the element under a later render that takes it over before the image loads', () => {
@@ -582,22 +582,22 @@ describe('serverScriptStart', () => {
 					'render-b'
 				)
 			);
-			expect((window as StartedWindow).__c15tStarted?.pixel).toBe(element);
+			expect((window as StartedWindow).__inthStarted?.pixel).toBe(element);
 
 			hero.dispatchEvent(new Event('load'));
 
 			expect(element?.isConnected).toBe(true);
-			expect(element).not.toHaveProperty('__c15tHeld');
-			expect((window as StartedWindow).__c15tSetup).toBe(1);
+			expect(element).not.toHaveProperty('__inthHeld');
+			expect((window as StartedWindow).__inthSetup).toBe(1);
 		});
 
 		test('inserts the element a later render takes over after it was held for that render', () => {
 			const { element, hero } = startWithHero();
 			// Render B's page object replaces render A's before the image loads,
 			// so render A's insert holds the element.
-			Object.assign(window, { __c15tRender: { id: 'render-b', starts: {} } });
+			Object.assign(window, { __inthRender: { id: 'render-b', starts: {} } });
 			hero.dispatchEvent(new Event('load'));
-			expect(element).toHaveProperty('__c15tHeld', true);
+			expect(element).toHaveProperty('__inthHeld', true);
 			// The image is done, as `complete` would say in a browser.
 			hero.remove();
 
@@ -613,19 +613,19 @@ describe('serverScriptStart', () => {
 			);
 
 			expect(element?.isConnected).toBe(true);
-			expect(element).not.toHaveProperty('__c15tHeld');
-			expect((window as StartedWindow).__c15tSetup).toBe(1);
+			expect(element).not.toHaveProperty('__inthHeld');
+			expect((window as StartedWindow).__inthSetup).toBe(1);
 		});
 
 		test('inserts the element a loader adopted, which owns the consent check', () => {
 			const { element, hero } = startWithHero();
-			Object.assign(element ?? {}, { __c15tAdopted: true });
+			Object.assign(element ?? {}, { __inthAdopted: true });
 			const { choice } = choiceRecords(
 				{ marketing: false },
 				{ confirmedAt: CONFIRMED_AT + 1 }
 			);
 			localStorage.setItem(
-				'c15t',
+				'inth',
 				encodeStoredConsentEnvelopeJson({
 					categories: choice?.categories ?? {},
 					version: 3,
@@ -648,9 +648,9 @@ describe('serverScriptStart', () => {
 		);
 
 		const started = window as StartedWindow;
-		expect(started.__c15tSetup).toBe(1);
+		expect(started.__inthSetup).toBe(1);
 		expect(document.head.querySelectorAll('script')).toHaveLength(1);
-		expect(Object.keys(started.__c15tStarted ?? {})).toEqual(['pixel']);
+		expect(Object.keys(started.__inthStarted ?? {})).toEqual(['pixel']);
 	});
 
 	// The loader runs only the first script's `onBeforeLoad` on an element
@@ -702,7 +702,7 @@ describe('serverScriptStart', () => {
 			Reflect.deleteProperty(navigator, 'globalPrivacyControl');
 		}
 
-		expect((window as StartedWindow).__c15tSetup).toBeUndefined();
+		expect((window as StartedWindow).__inthSetup).toBeUndefined();
 		expect(document.head.querySelector('script')).toBeNull();
 	});
 
@@ -720,12 +720,12 @@ describe('serverScriptStart', () => {
 
 		run(code);
 
-		expect((window as StartedWindow).__c15tSetup).toBeUndefined();
+		expect((window as StartedWindow).__inthSetup).toBeUndefined();
 		expect(document.head.querySelector('script')).toBeNull();
 	});
 
 	test('runs the shared prelude once', () => {
-		const prelude = 'window.__c15tSetup=(window.__c15tSetup||0)+10';
+		const prelude = 'window.__inthSetup=(window.__inthSetup||0)+10';
 		const withPrelude = (id: string): Script => ({
 			...pixel,
 			id,
@@ -741,7 +741,7 @@ describe('serverScriptStart', () => {
 			})
 		);
 
-		expect((window as StartedWindow).__c15tSetup).toBe(10);
+		expect((window as StartedWindow).__inthSetup).toBe(10);
 		expect(document.head.querySelectorAll('script')).toHaveLength(2);
 	});
 
@@ -759,7 +759,7 @@ describe('serverScriptStart', () => {
 		const storeLocally = function storeLocally(
 			values: Parameters<typeof choiceRecords>[0],
 			confirmedAt: number,
-			key = 'c15t'
+			key = 'inth'
 		): void {
 			const { choice } = choiceRecords(values, { confirmedAt });
 			localStorage.setItem(
@@ -799,7 +799,7 @@ describe('serverScriptStart', () => {
 
 			startPixel();
 
-			expect((window as StartedWindow).__c15tSetup).toBeUndefined();
+			expect((window as StartedWindow).__inthSetup).toBeUndefined();
 			expect(document.head.querySelector('script')).toBeNull();
 		});
 
@@ -827,7 +827,7 @@ describe('serverScriptStart', () => {
 
 		test('does nothing for a record in a format it does not read', () => {
 			localStorage.setItem(
-				'c15t',
+				'inth',
 				JSON.stringify({ consents: { marketing: false } })
 			);
 
@@ -846,7 +846,7 @@ describe('serverScriptStart', () => {
 				// The client then reads the legacy record, and its denial.
 				const rejected = { categories: {}, unknown: true, version: 3 };
 				expect(validateStoredConsentEnvelope(rejected, NOW).ok).toBe(false);
-				localStorage.setItem('c15t', JSON.stringify(rejected));
+				localStorage.setItem('inth', JSON.stringify(rejected));
 				localStorage.setItem(STORAGE_KEY, legacyDenial);
 
 				startPixel();
@@ -860,7 +860,7 @@ describe('serverScriptStart', () => {
 					{ confirmedAt: CONFIRMED_AT }
 				);
 				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
-				document.cookie = `c15t=${encodeStoredConsentEnvelopeCompact({
+				document.cookie = `inth=${encodeStoredConsentEnvelopeCompact({
 					categories: choice?.categories ?? {},
 					version: 3,
 				})}; path=/`;
@@ -927,7 +927,7 @@ describe('serverScriptStart', () => {
 				version: 3,
 			});
 			// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
-			document.cookie = `c15t=${consent}; path=/`;
+			document.cookie = `inth=${consent}; path=/`;
 
 			startPixel();
 
@@ -936,10 +936,10 @@ describe('serverScriptStart', () => {
 		});
 
 		test.each([
-			['a newer clear epoch', `c15t-epoch=${CONFIRMED_AT + 1}`],
+			['a newer clear epoch', `inth-epoch=${CONFIRMED_AT + 1}`],
 			[
 				'a newer, URI-encoded vendor choice',
-				`c15t-vendors=${encodeURIComponent(`v=1&t=${CONFIRMED_AT + 1}&d=pixel`)}`,
+				`inth-vendors=${encodeURIComponent(`v=1&t=${CONFIRMED_AT + 1}&d=pixel`)}`,
 			],
 		])('does nothing for %s', (_, cookie) => {
 			// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
@@ -953,14 +953,14 @@ describe('serverScriptStart', () => {
 		// The client's decoder rejects the whole record, then falls back to
 		// another copy, which may hold a denial.
 		test.each([
-			['an unknown field', `c15t=v=3&mk=1.${CONFIRMED_AT}.0&x=1`],
-			['a field without a value', `c15t=v=3&mk`],
+			['an unknown field', `inth=v=3&mk=1.${CONFIRMED_AT}.0&x=1`],
+			['a field without a value', `inth=v=3&mk`],
 			[
 				'a repeated field',
-				`c15t=v=3&mk=1.${CONFIRMED_AT}.0&mk=1.${CONFIRMED_AT}.0`,
+				`inth=v=3&mk=1.${CONFIRMED_AT}.0&mk=1.${CONFIRMED_AT}.0`,
 			],
-			['a malformed decision', `c15t=v=3&mk=1.${CONFIRMED_AT}`],
-			['an unknown vendor field', 'c15t-vendors=v=1&d=&x=1'],
+			['a malformed decision', `inth=v=3&mk=1.${CONFIRMED_AT}`],
+			['an unknown vendor field', 'inth-vendors=v=1&d=&x=1'],
 		])('does nothing for a compact record with %s', (_, cookie) => {
 			// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
 			document.cookie = `${cookie}; path=/`;
@@ -995,7 +995,7 @@ describe('serverScriptStart', () => {
 
 			test('starts for the vendor cookie the server read', () => {
 				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
-				document.cookie = `c15t-vendors=v=1&t=${CONFIRMED_AT}&d=pixel-co; path=/`;
+				document.cookie = `inth-vendors=v=1&t=${CONFIRMED_AT}&d=pixel-co; path=/`;
 
 				startWithVendors();
 
@@ -1016,7 +1016,7 @@ describe('serverScriptStart', () => {
 				['an empty subject id', `v=1&t=${CONFIRMED_AT}&d=pixel-co&sid=`],
 			])('does nothing for a vendor cookie with %s', (_, value) => {
 				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
-				document.cookie = `c15t-vendors=${value}; path=/`;
+				document.cookie = `inth-vendors=${value}; path=/`;
 
 				startWithVendors();
 
@@ -1027,9 +1027,9 @@ describe('serverScriptStart', () => {
 			// local copy is at least as new (`readStoredVendorChoice`).
 			const localAtSameTime = (denied: string[]): void => {
 				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
-				document.cookie = `c15t-vendors=v=1&t=${CONFIRMED_AT}&d=pixel-co; path=/`;
+				document.cookie = `inth-vendors=v=1&t=${CONFIRMED_AT}&d=pixel-co; path=/`;
 				localStorage.setItem(
-					'c15t-vendors',
+					'inth-vendors',
 					JSON.stringify({ confirmedAt: CONFIRMED_AT, denied, version: 1 })
 				);
 			};
@@ -1062,7 +1062,7 @@ describe('serverScriptStart', () => {
 		const granted = `mk=1.${CONFIRMED_AT}.0`;
 		test('starts for a compact record that holds the grant the server read', () => {
 			// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
-			document.cookie = `c15t=v=3&b=cX&${granted}&sid=subject; path=/`;
+			document.cookie = `inth=v=3&b=cX&${granted}&sid=subject; path=/`;
 
 			startPixel();
 
@@ -1070,15 +1070,15 @@ describe('serverScriptStart', () => {
 		});
 
 		test.each([
-			['a basis index it lacks', `c15t=v=3&b=cX&mk=1.${CONFIRMED_AT}.9`],
-			['no basis list', `c15t=v=3&${granted}`],
-			['an empty basis list', `c15t=v=3&b=&${granted}`],
-			['an unknown basis kind', `c15t=v=3&b=xX&${granted}`],
-			['a choice basis without a fingerprint', `c15t=v=3&b=c&${granted}`],
-			['a malformed basis encoding', `c15t=v=3&b=c%E0&${granted}`],
-			['an empty subject id', `c15t=v=3&b=cX&${granted}&sid=`],
-			['a malformed subject id', `c15t=v=3&b=cX&${granted}&sid=%E0`],
-			['a grant from the future', 'c15t=v=3&b=cX&mk=1.9999999999999.0'],
+			['a basis index it lacks', `inth=v=3&b=cX&mk=1.${CONFIRMED_AT}.9`],
+			['no basis list', `inth=v=3&${granted}`],
+			['an empty basis list', `inth=v=3&b=&${granted}`],
+			['an unknown basis kind', `inth=v=3&b=xX&${granted}`],
+			['a choice basis without a fingerprint', `inth=v=3&b=c&${granted}`],
+			['a malformed basis encoding', `inth=v=3&b=c%E0&${granted}`],
+			['an empty subject id', `inth=v=3&b=cX&${granted}&sid=`],
+			['a malformed subject id', `inth=v=3&b=cX&${granted}&sid=%E0`],
+			['a grant from the future', 'inth=v=3&b=cX&mk=1.9999999999999.0'],
 		])('does nothing for a compact record with %s', (_, cookie) => {
 			// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
 			document.cookie = `${cookie}; path=/`;
@@ -1090,7 +1090,7 @@ describe('serverScriptStart', () => {
 
 		test('starts when the cookies hold only older decisions', () => {
 			// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
-			document.cookie = `c15t-epoch=${CONFIRMED_AT - 1}; path=/`;
+			document.cookie = `inth-epoch=${CONFIRMED_AT - 1}; path=/`;
 			// oxlint-disable-next-line unicorn/no-document-cookie -- An unrelated cookie with a newer time.
 			document.cookie = `other=${CONFIRMED_AT + 1}; path=/`;
 
@@ -1115,14 +1115,14 @@ describe('serverScriptStart', () => {
 
 		test('waits for the task after the next frame', () => {
 			startVisible();
-			expect((window as StartedWindow).__c15tSetup).toBeUndefined();
+			expect((window as StartedWindow).__inthSetup).toBeUndefined();
 
 			vi.advanceTimersToNextFrame();
-			expect((window as StartedWindow).__c15tSetup).toBeUndefined();
+			expect((window as StartedWindow).__inthSetup).toBeUndefined();
 
 			vi.runOnlyPendingTimers();
-			expect((window as StartedWindow).__c15tSetup).toBe(1);
-			expect((window as StartedWindow).__c15tStarted?.pixel?.isConnected).toBe(
+			expect((window as StartedWindow).__inthSetup).toBe(1);
+			expect((window as StartedWindow).__inthStarted?.pixel?.isConnected).toBe(
 				true
 			);
 		});
@@ -1131,12 +1131,12 @@ describe('serverScriptStart', () => {
 			// A client navigation's render took the page over: its consent
 			// state, not this render's, decides what runs.
 			startVisible();
-			(window as StartedWindow).__c15tRender = { id: 'later', starts: {} };
+			(window as StartedWindow).__inthRender = { id: 'later', starts: {} };
 
 			vi.advanceTimersToNextFrame();
 			vi.runOnlyPendingTimers();
 
-			expect((window as StartedWindow).__c15tSetup).toBeUndefined();
+			expect((window as StartedWindow).__inthSetup).toBeUndefined();
 			expect(document.head.querySelector('script')).toBeNull();
 		});
 
@@ -1149,9 +1149,9 @@ describe('serverScriptStart', () => {
 			startVisible();
 			vi.advanceTimersToNextFrame();
 			vi.runOnlyPendingTimers();
-			expect((window as StartedWindow).__c15tSetup).toBe(1);
+			expect((window as StartedWindow).__inthSetup).toBe(1);
 
-			(window as StartedWindow).__c15tRender = { id: 'later', starts: {} };
+			(window as StartedWindow).__inthRender = { id: 'later', starts: {} };
 			hero.dispatchEvent(new Event('load'));
 
 			expect(document.head.querySelector('script')).toBeNull();
@@ -1159,13 +1159,13 @@ describe('serverScriptStart', () => {
 
 		test('leaves the scripts to a loader that mounted first', () => {
 			startVisible();
-			(window as StartedWindow).__c15tLoaderRan = true;
+			(window as StartedWindow).__inthLoaderRan = true;
 
 			vi.advanceTimersToNextFrame();
 			vi.runOnlyPendingTimers();
 
-			expect((window as StartedWindow).__c15tSetup).toBeUndefined();
-			expect((window as StartedWindow).__c15tStarted).toBeUndefined();
+			expect((window as StartedWindow).__inthSetup).toBeUndefined();
+			expect((window as StartedWindow).__inthStarted).toBeUndefined();
 		});
 
 		test("keeps the inline script's nonce after it ran", () => {
@@ -1182,7 +1182,7 @@ describe('serverScriptStart', () => {
 			vi.advanceTimersToNextFrame();
 			vi.runOnlyPendingTimers();
 
-			expect((window as StartedWindow).__c15tStarted?.pixel?.nonce).toBe(
+			expect((window as StartedWindow).__inthStarted?.pixel?.nonce).toBe(
 				'page-nonce'
 			);
 		});
@@ -1204,7 +1204,7 @@ describe('serverScriptStart', () => {
 			})
 		);
 
-		expect((window as StartedWindow).__c15tStarted?.pixel?.nonce).toBe(
+		expect((window as StartedWindow).__inthStarted?.pixel?.nonce).toBe(
 			expected
 		);
 	});
@@ -1226,10 +1226,10 @@ describe('serverScriptStart', () => {
 		);
 		expect(
 			(
-				(window as StartedWindow).__c15tStarted?.pixel as
-					| (HTMLScriptElement & { __c15tConsent?: boolean })
+				(window as StartedWindow).__inthStarted?.pixel as
+					| (HTMLScriptElement & { __inthConsent?: boolean })
 					| undefined
-			)?.__c15tConsent
+			)?.__inthConsent
 		).toBe(false);
 	});
 
@@ -1245,7 +1245,7 @@ describe('serverScriptStart', () => {
 			})
 		);
 
-		expect(Object.keys((window as StartedWindow).__c15tStarted ?? {})).toEqual([
+		expect(Object.keys((window as StartedWindow).__inthStarted ?? {})).toEqual([
 			'pixel',
 		]);
 	});
@@ -1401,7 +1401,7 @@ describe('the scripts a root can count as started', () => {
 		vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
 		// oxlint-disable-next-line no-new-func -- Runs the generated inline script, as the page would.
 		new Function(code ?? '')();
-		return Object.keys((window as StartedWindow).__c15tRender?.starts ?? {});
+		return Object.keys((window as StartedWindow).__inthRender?.starts ?? {});
 	};
 	const other: Script = {
 		...pixel,
@@ -1467,7 +1467,7 @@ describe('the scripts a root can count as started', () => {
 			})
 		);
 		expect(
-			Object.keys((window as StartedWindow).__c15tRender?.starts ?? {})
+			Object.keys((window as StartedWindow).__inthRender?.starts ?? {})
 		).toEqual(['pixel']);
 		const { choice } = choiceRecords(
 			{ marketing: false },
@@ -1515,9 +1515,9 @@ describe('the scripts a root can count as started', () => {
 
 	test('names the failure as the deferred root reads it', () => {
 		// `SERVER_START_FAILED` in react's `deferred/trigger.ts`, copied.
-		expect(SERVER_START_FAILED_EVENT).toBe('__c15tServerStartFailed');
+		expect(SERVER_START_FAILED_EVENT).toBe('__inthServerStartFailed');
 		// `PAGE_RENDER_KEY` in react's `deferred/boot.ts`, copied.
-		expect(PAGE_RENDER_KEY).toBe('__c15tRender');
+		expect(PAGE_RENDER_KEY).toBe('__inthRender');
 	});
 
 	test.each([
@@ -1539,7 +1539,7 @@ describe('the scripts a root can count as started', () => {
 		'drops the mark and tells the page when %s in the browser',
 		(_case, script) => {
 			const failed = vi.fn();
-			window.addEventListener('__c15tServerStartFailed', failed);
+			window.addEventListener('__inthServerStartFailed', failed);
 			try {
 				// Marked as the page parses, then the setup runs and fails.
 				run(
@@ -1551,19 +1551,19 @@ describe('the scripts a root can count as started', () => {
 				);
 				expect(document.head.querySelector('script')).toBeNull();
 				expect(
-					Object.keys((window as StartedWindow).__c15tRender?.starts ?? {})
+					Object.keys((window as StartedWindow).__inthRender?.starts ?? {})
 				).toEqual([]);
 				expect(failed).toHaveBeenCalled();
-				expect((window as StartedWindow).__c15tRender?.failed).toBe(1);
+				expect((window as StartedWindow).__inthRender?.failed).toBe(1);
 			} finally {
-				window.removeEventListener('__c15tServerStartFailed', failed);
+				window.removeEventListener('__inthServerStartFailed', failed);
 			}
 		}
 	);
 
 	test('marks nothing when the loader already ran in this document', () => {
 		// Its code bails on the same guard, so nothing would start these.
-		(window as StartedWindow).__c15tLoaderRan = true;
+		(window as StartedWindow).__inthLoaderRan = true;
 		expect(
 			marked(
 				serverScriptStart({
@@ -1603,7 +1603,7 @@ describe('two renders in one document', () => {
 			// oxlint-disable-next-line no-new-func -- Runs the generated inline script, as the page would.
 			new Function(code ?? '')();
 		};
-		const page = () => (window as StartedWindow).__c15tRender;
+		const page = () => (window as StartedWindow).__inthRender;
 
 		// The first render: its check holds, the pixel is marked, and the
 		// shared prelude throws, so it is marked failed.
@@ -1632,7 +1632,7 @@ describe('two renders in one document', () => {
 			{ confirmedAt: CONFIRMED_AT + 1 }
 		);
 		localStorage.setItem(
-			'c15t',
+			'inth',
 			encodeStoredConsentEnvelopeJson({
 				categories: choice?.categories ?? {},
 				version: 3,

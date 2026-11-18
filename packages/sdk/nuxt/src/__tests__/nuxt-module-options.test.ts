@@ -30,7 +30,7 @@ beforeAll(async () => {
 
 /** The parts of a Nuxt instance the module's setup touches. */
 const createNuxt = function createNuxt(
-	c15t: Record<string, unknown>,
+	inth: Record<string, unknown>,
 	ssr = true,
 	lifecycle: { _generate?: boolean; _prepare?: boolean; dev?: boolean } = {}
 ): Nuxt {
@@ -44,7 +44,7 @@ const createNuxt = function createNuxt(
 			app: { baseURL: '/' },
 			build: { templates: [], transpile: [] },
 			buildDir: '/virtual/.nuxt',
-			c15t,
+			inth,
 			experimental: {},
 			imports: {},
 			nitro: {},
@@ -60,18 +60,18 @@ const createNuxt = function createNuxt(
 };
 
 const publicConfig = async function publicConfig(
-	c15t: Record<string, unknown>
+	inth: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-	const nuxt = createNuxt(c15t);
+	const nuxt = createNuxt(inth);
 	await runWithNuxtContext(nuxt, () => module({}, nuxt));
-	return nuxt.options.runtimeConfig.public.c15t as Record<string, unknown>;
+	return nuxt.options.runtimeConfig.public.inth as Record<string, unknown>;
 };
 
-describe('colorScheme from the c15t config key', () => {
-	test('keeps null, which leaves c15t-dark to the site', async () => {
+describe('colorScheme from the inth config key', () => {
+	test('keeps null, which leaves inth-dark to the site', async () => {
 		const config = await publicConfig({
 			colorScheme: null,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		expect(config).toHaveProperty('colorScheme', null);
 	});
@@ -79,13 +79,13 @@ describe('colorScheme from the c15t config key', () => {
 	test('passes a scheme through', async () => {
 		const config = await publicConfig({
 			colorScheme: 'system',
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		expect(config).toHaveProperty('colorScheme', 'system');
 	});
 
 	test('leaves it unset when the config does not set it', async () => {
-		const config = await publicConfig({ projectUrl: '/api/c15t' });
+		const config = await publicConfig({ projectUrl: '/api/inth' });
 		expect(config.colorScheme).toBeUndefined();
 	});
 });
@@ -93,16 +93,16 @@ describe('colorScheme from the c15t config key', () => {
 test('experimentalScriptRegistry reaches the public runtime config the plugin reads', async () => {
 	const config = await publicConfig({
 		experimentalScriptRegistry: true,
-		projectUrl: '/api/c15t',
+		projectUrl: '/api/inth',
 	});
 	expect(config).toHaveProperty('experimentalScriptRegistry', true);
 });
 
 describe('projectUrl in the public runtime config', () => {
-	test('is stored under backendURL, the key NUXT_PUBLIC_C15T_BACKEND_URL replaces', async () => {
+	test('is stored under backendURL, the key NUXT_PUBLIC_INTH_PROJECT_URL replaces', async () => {
 		// Nuxt maps a NUXT_PUBLIC_* variable onto the key its name spells.
-		const config = await publicConfig({ projectUrl: '/api/c15t' });
-		expect(config).toHaveProperty('backendURL', '/api/c15t');
+		const config = await publicConfig({ projectUrl: '/api/inth' });
+		expect(config).toHaveProperty('backendURL', '/api/inth');
 		expect(config).not.toHaveProperty('projectUrl');
 	});
 });
@@ -110,7 +110,7 @@ describe('projectUrl in the public runtime config', () => {
 /** A manifest whose policy pack carries `copyRevision: null`. */
 const createSnapshot = function createSnapshot() {
 	return {
-		branding: 'c15t',
+		branding: 'inth',
 		policyPacks: [
 			createConsentManifestPolicyPack({
 				categories: [],
@@ -143,7 +143,7 @@ const importManifestSnapshot = function importManifestSnapshot(
 	const { virtual } = nuxt.options.nitro as {
 		virtual: Record<string, () => string>;
 	};
-	return evaluateModule(virtual['#c15t/manifest-snapshot']?.());
+	return evaluateModule(virtual['#inth/manifest-snapshot']?.());
 };
 
 /** A snapshot template the module registered, evaluated. */
@@ -170,11 +170,11 @@ const importServerManifestSnapshot = function importServerManifestSnapshot(
 const importClientManifestSnapshot = function importClientManifestSnapshot(
 	nuxt: Nuxt
 ): Promise<unknown> {
-	return importTemplate(nuxt, '#c15t/client-manifest-snapshot');
+	return importTemplate(nuxt, '#inth/client-manifest-snapshot');
 };
 
 const setUpModule = async function setUpModule(
-	c15t: Record<string, unknown>,
+	inth: Record<string, unknown>,
 	fetch: typeof globalThis.fetch = vi.fn<typeof globalThis.fetch>(),
 	ssr = true,
 	lifecycle: { _generate?: boolean; _prepare?: boolean; dev?: boolean } = {}
@@ -185,9 +185,9 @@ const setUpModule = async function setUpModule(
 		// Most of these tests describe manifest(); a config with no mode uses
 		// the hosted backend, which `no mode uses the hosted backend` covers.
 		const options =
-			'mode' in c15t || 'testing' in c15t
-				? c15t
-				: { ...c15t, mode: { type: 'manifest' } };
+			'mode' in inth || 'testing' in inth
+				? inth
+				: { ...inth, mode: { type: 'manifest' } };
 		const nuxt = createNuxt(options, ssr, lifecycle);
 		await runWithNuxtContext(nuxt, () => module({}, nuxt));
 		return nuxt;
@@ -226,9 +226,9 @@ describe('the build snapshot in manifest() mode', () => {
 			expect(await importClientManifestSnapshot(nuxt)).toBeUndefined();
 			// Nitro replaces every `null` in runtime config with `''` during the
 			// build, so the snapshot must not travel through it.
-			expect(nuxt.options.runtimeConfig.public.c15t).toMatchObject({
+			expect(nuxt.options.runtimeConfig.public.inth).toMatchObject({
 				mode: { type: 'manifest' },
-				routePrefix: '/api/c15t',
+				routePrefix: '/api/inth',
 			});
 			expect(JSON.stringify(nuxt.options.runtimeConfig)).not.toContain(
 				'build-snapshot'
@@ -304,13 +304,13 @@ describe('the build snapshot in manifest() mode', () => {
 				unreachable()
 			)
 		).rejects.toThrow(
-			"@inth/nuxt: could not fetch the consent manifest from https://consent.example.com/manifest during the build (getaddrinfo ENOTFOUND). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/nuxt: could not fetch the consent manifest from https://consent.example.com/manifest during the build (getaddrinfo ENOTFOUND). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
 	test('nuxt build stops without a backend URL', async () => {
 		await expect(setUpModule({})).rejects.toThrow(
-			'NUXT_PUBLIC_C15T_BACKEND_URL'
+			'NUXT_PUBLIC_INTH_PROJECT_URL'
 		);
 	});
 
@@ -330,15 +330,15 @@ describe('the build snapshot in manifest() mode', () => {
 		],
 	] as const)(
 		'stops nuxt dev without a backend URL to save consent to, with %s',
-		async (_name, c15t) => {
+		async (_name, inth) => {
 			// The consent route answers `GET` only, so a save posted to it
 			// would 404 after the visitor chose.
 			await expect(
-				setUpModule(c15t, vi.fn<typeof globalThis.fetch>(), true, {
+				setUpModule(inth, vi.fn<typeof globalThis.fetch>(), true, {
 					dev: true,
 				})
 			).rejects.toThrow(
-				/needs a backend URL.*Set NUXT_PUBLIC_C15T_BACKEND_URL \(or NUXT_PUBLIC_INTH_PROJECT_URL\)/u
+				/needs a backend URL.*Set NUXT_PUBLIC_INTH_PROJECT_URL \(or NUXT_PUBLIC_INTH_PROJECT_URL\)/u
 			);
 		}
 	);
@@ -356,12 +356,12 @@ describe('the build snapshot in manifest() mode', () => {
 
 	test.each([
 		['onBuildError', { onBuildError: 'runtime' }, undefined],
-		['C15T_ON_BUILD_ERROR', {}, 'runtime'],
+		['INTH_ON_BUILD_ERROR', {}, 'runtime'],
 	])(
 		'%s runtime lets nuxt build continue',
 		async (_name, settings, fromEnv) => {
 			if (fromEnv) {
-				vi.stubEnv('C15T_ON_BUILD_ERROR', fromEnv);
+				vi.stubEnv('INTH_ON_BUILD_ERROR', fromEnv);
 			}
 			try {
 				const nuxt = await setUpModule(
@@ -387,8 +387,8 @@ describe('the build snapshot in manifest() mode', () => {
 		).rejects.toThrow('during dev (getaddrinfo ENOTFOUND)');
 	});
 
-	test('reads NUXT_PUBLIC_C15T_BACKEND_URL when projectUrl is left out', async () => {
-		vi.stubEnv('NUXT_PUBLIC_C15T_BACKEND_URL', 'https://env.example.com');
+	test('reads NUXT_PUBLIC_INTH_PROJECT_URL when projectUrl is left out', async () => {
+		vi.stubEnv('NUXT_PUBLIC_INTH_PROJECT_URL', 'https://env.example.com');
 		try {
 			const snapshot = createSnapshot();
 			const fetch = snapshotResponse(snapshot);
@@ -398,7 +398,7 @@ describe('the build snapshot in manifest() mode', () => {
 				expect.anything()
 			);
 			expect(await importManifestSnapshot(nuxt)).toEqual(snapshot);
-			expect(nuxt.options.runtimeConfig.public.c15t).toHaveProperty(
+			expect(nuxt.options.runtimeConfig.public.inth).toHaveProperty(
 				'backendURL',
 				'https://env.example.com'
 			);
@@ -409,28 +409,28 @@ describe('the build snapshot in manifest() mode', () => {
 
 	describe('NUXT_PUBLIC_INTH_PROJECT_URL', () => {
 		const INTH = 'https://inth.example.com';
-		const C15T = 'https://c15t.example.com';
+		const INTH = 'https://inth.example.com';
 		const inthPlugins = (nuxt: Nuxt) =>
 			((nuxt.options.nitro as { plugins?: string[] }).plugins ?? []).filter(
 				(plugin) => plugin.includes('inth-project-url')
 			);
 		const setUp = async (
-			c15t: Record<string, unknown>,
+			inth: Record<string, unknown>,
 			env: Record<string, string | undefined>
 		) => {
-			vi.stubEnv('NUXT_PUBLIC_C15T_BACKEND_URL', undefined);
+			vi.stubEnv('NUXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			vi.stubEnv('NUXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			for (const [key, value] of Object.entries(env)) {
 				vi.stubEnv(key, value);
 			}
 			const fetch = snapshotResponse(createSnapshot());
 			try {
-				const nuxt = await setUpModule(c15t, fetch);
+				const nuxt = await setUpModule(inth, fetch);
 				return {
 					fetch,
 					nuxt,
 					projectUrl: (
-						nuxt.options.runtimeConfig.public.c15t as Record<string, unknown>
+						nuxt.options.runtimeConfig.public.inth as Record<string, unknown>
 					).backendURL,
 				};
 			} finally {
@@ -448,16 +448,16 @@ describe('the build snapshot in manifest() mode', () => {
 			expect(inthPlugins(nuxt)).toHaveLength(1);
 		});
 
-		test('loses to NUXT_PUBLIC_C15T_BACKEND_URL when both are set', async () => {
+		test('loses to NUXT_PUBLIC_INTH_PROJECT_URL when both are set', async () => {
 			const { projectUrl, fetch, nuxt } = await setUp(
 				{},
 				{
-					NUXT_PUBLIC_C15T_BACKEND_URL: C15T,
+					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
 					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
 				}
 			);
-			expect(fetch).toHaveBeenCalledWith(`${C15T}/manifest`, expect.anything());
-			expect(projectUrl).toBe(C15T);
+			expect(fetch).toHaveBeenCalledWith(`${INTH}/manifest`, expect.anything());
+			expect(projectUrl).toBe(INTH);
 			expect(inthPlugins(nuxt)).toHaveLength(0);
 		});
 
@@ -465,7 +465,7 @@ describe('the build snapshot in manifest() mode', () => {
 			const { projectUrl, fetch, nuxt } = await setUp(
 				{ projectUrl: 'https://option.example.com' },
 				{
-					NUXT_PUBLIC_C15T_BACKEND_URL: C15T,
+					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
 					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
 				}
 			);
@@ -479,7 +479,7 @@ describe('the build snapshot in manifest() mode', () => {
 	});
 
 	test.each([
-		['a relative projectUrl', { projectUrl: '/api/c15t' }],
+		['a relative projectUrl', { projectUrl: '/api/inth' }],
 		[
 			'hosted()',
 			{ mode: { type: 'hosted' }, projectUrl: 'https://consent.example.com' },
@@ -498,9 +498,9 @@ describe('the build snapshot in manifest() mode', () => {
 				projectUrl: 'https://consent.example.com',
 			},
 		],
-	] as const)('fetches nothing with %s', async (_name, c15t) => {
+	] as const)('fetches nothing with %s', async (_name, inth) => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
-		const nuxt = await setUpModule(c15t, fetch);
+		const nuxt = await setUpModule(inth, fetch);
 		expect(fetch).not.toHaveBeenCalled();
 		expect(await importManifestSnapshot(nuxt)).toBeUndefined();
 		expect(warn).not.toHaveBeenCalled();
@@ -519,7 +519,7 @@ describe('where the snapshot goes', () => {
 			fetch
 		);
 		expect(fetch).not.toHaveBeenCalled();
-		expect(nuxt.options.runtimeConfig.public.c15t).toMatchObject({
+		expect(nuxt.options.runtimeConfig.public.inth).toMatchObject({
 			mode: { type: 'manifest' },
 		});
 		expect(JSON.stringify(nuxt.options.runtimeConfig)).not.toContain(
@@ -542,7 +542,7 @@ describe('where the snapshot goes', () => {
 			{ _generate: true }
 		);
 		expect(await importClientManifestSnapshot(nuxt)).toEqual(snapshot);
-		expect(nuxt.options.runtimeConfig.public.c15t).toMatchObject({
+		expect(nuxt.options.runtimeConfig.public.inth).toMatchObject({
 			mode: { resolve: 'browser', type: 'manifest' },
 			routePrefix: false,
 		});
@@ -566,21 +566,21 @@ describe('mode and routePrefix', () => {
 		});
 		expect(handlerRoutes(nuxt)).toEqual([]);
 		expect(
-			(nuxt.options.runtimeConfig.public.c15t as { mode: unknown }).mode
+			(nuxt.options.runtimeConfig.public.inth as { mode: unknown }).mode
 		).toEqual({ type: 'hosted' });
 	});
 
 	test('no mode means manifest(), with the consent route', async () => {
 		const nuxt = await setUpModule({ projectUrl: '/api/self-host' });
-		expect(handlerRoutes(nuxt)).toEqual(['/api/c15t/**']);
+		expect(handlerRoutes(nuxt)).toEqual(['/api/inth/**']);
 		expect(
-			(nuxt.options.runtimeConfig.public.c15t as { mode: unknown }).mode
+			(nuxt.options.runtimeConfig.public.inth as { mode: unknown }).mode
 		).toEqual({ type: 'manifest' });
 	});
 
 	test('manifest() adds one catch-all consent route', async () => {
 		const nuxt = await setUpModule({ projectUrl: '/api/self-host' });
-		expect(handlerRoutes(nuxt)).toEqual(['/api/c15t/**']);
+		expect(handlerRoutes(nuxt)).toEqual(['/api/inth/**']);
 	});
 
 	test('routePrefix moves the route, and false removes it', async () => {
@@ -600,7 +600,7 @@ describe('mode and routePrefix', () => {
 		await expect(
 			setUpModule({ projectUrl: '/api/self-host', routePrefix: '/' })
 		).rejects.toThrow(
-			"@inth/nuxt: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/nuxt: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'."
 		);
 	});
 
@@ -610,15 +610,15 @@ describe('mode and routePrefix', () => {
 			mode: { type: 'manifest' },
 			projectUrl: '/api/self-host',
 		});
-		nuxt.options.runtimeConfig.public.c15t = { routePrefix: '/' };
+		nuxt.options.runtimeConfig.public.inth = { routePrefix: '/' };
 		await runWithNuxtContext(nuxt, () => module({}, nuxt));
 		// The route and the browser read the same prefix.
-		expect(handlerRoutes(nuxt)).toEqual(['/api/c15t/**']);
-		expect(nuxt.options.runtimeConfig.public.c15t).toMatchObject({
-			routePrefix: '/api/c15t',
+		expect(handlerRoutes(nuxt)).toEqual(['/api/inth/**']);
+		expect(nuxt.options.runtimeConfig.public.inth).toMatchObject({
+			routePrefix: '/api/inth',
 		});
 		expect(warn).toHaveBeenCalledWith(
-			expect.stringContaining('runtimeConfig.public.c15t.routePrefix')
+			expect.stringContaining('runtimeConfig.public.inth.routePrefix')
 		);
 	});
 
@@ -628,19 +628,19 @@ describe('mode and routePrefix', () => {
 			mode: { resolve: 'browser', type: 'manifest' },
 			projectUrl: '/api/self-host',
 		});
-		nuxt.options.runtimeConfig.public.c15t = { mode: { type: 'hosted' } };
+		nuxt.options.runtimeConfig.public.inth = { mode: { type: 'hosted' } };
 		await runWithNuxtContext(nuxt, () => module({}, nuxt));
 		// The server and the browser run the same mode.
 		expect(
-			(nuxt.options.runtimeConfig.public.c15t as { mode: unknown }).mode
+			(nuxt.options.runtimeConfig.public.inth as { mode: unknown }).mode
 		).toEqual({ resolve: 'browser', type: 'manifest' });
 		expect(warn).toHaveBeenCalledWith(
-			expect.stringContaining('runtimeConfig.public.c15t.mode')
+			expect.stringContaining('runtimeConfig.public.inth.mode')
 		);
 	});
 
 	test.each([
-		[{ projectUrl: '/api/self-host' }, { type: 'manifest' }, '/api/c15t'],
+		[{ projectUrl: '/api/self-host' }, { type: 'manifest' }, '/api/inth'],
 		[
 			{ projectUrl: '/api/self-host', routePrefix: '/consent/' },
 			{ type: 'manifest' },
@@ -657,8 +657,8 @@ describe('mode and routePrefix', () => {
 		],
 	])(
 		'pins the built mode and routePrefix against runtime overrides, with %j',
-		async (c15t, mode, routePrefix) => {
-			const nuxt = await setUpModule(c15t);
+		async (inth, mode, routePrefix) => {
+			const nuxt = await setUpModule(inth);
 			const { plugins = [], virtual = {} } = nuxt.options.nitro as {
 				plugins?: string[];
 				virtual?: Record<string, string | (() => string)>;
@@ -703,23 +703,23 @@ describe('mode and routePrefix', () => {
 
 describe('the early /init script for ssr: false pages', () => {
 	const setUp = async function setUp(
-		c15t: Record<string, unknown>,
+		inth: Record<string, unknown>,
 		ssr?: boolean
 	) {
-		const nuxt = createNuxt(c15t, ssr);
+		const nuxt = createNuxt(inth, ssr);
 		await runWithNuxtContext(nuxt, () => module({}, nuxt));
 		const { nitro, runtimeConfig } = nuxt.options as unknown as {
 			nitro: { plugins?: string[] };
-			runtimeConfig: { c15t: { ssr: boolean } };
+			runtimeConfig: { inth: { ssr: boolean } };
 		};
 		return {
 			plugins: nitro.plugins ?? [],
-			ssr: runtimeConfig.c15t.ssr,
+			ssr: runtimeConfig.inth.ssr,
 		};
 	};
 
 	test('is on by default', async () => {
-		const { plugins } = await setUp({ projectUrl: '/api/c15t' });
+		const { plugins } = await setUp({ projectUrl: '/api/inth' });
 		expect(plugins.some((path) => path.includes('init-prefetch.nuxt'))).toBe(
 			true
 		);
@@ -728,20 +728,20 @@ describe('the early /init script for ssr: false pages', () => {
 	test('initPrefetch: false registers nothing on the server', async () => {
 		const { plugins } = await setUp({
 			initPrefetch: false,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		expect(plugins.some((path) => path.includes('init-prefetch'))).toBe(false);
 	});
 
 	test("tells the server plugin about the app's ssr option", async () => {
-		expect((await setUp({ projectUrl: '/api/c15t' }, false)).ssr).toBe(false);
-		expect((await setUp({ projectUrl: '/api/c15t' })).ssr).toBe(true);
+		expect((await setUp({ projectUrl: '/api/inth' }, false)).ssr).toBe(false);
+		expect((await setUp({ projectUrl: '/api/inth' })).ssr).toBe(true);
 	});
 
 	test('stays out of the runtime config the browser receives', async () => {
 		const config = await publicConfig({
 			initPrefetch: false,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		expect(config).not.toHaveProperty('initPrefetch');
 	});
@@ -752,7 +752,7 @@ describe('the early /init script for ssr: false pages', () => {
 			virtual: Record<string, unknown>,
 			imports: false | Record<string, unknown> = {}
 		) {
-			const nuxt = createNuxt({ projectUrl: '/api/c15t' });
+			const nuxt = createNuxt({ projectUrl: '/api/inth' });
 			const nitroConfigHooks: ((config: unknown) => void)[] = [];
 			Object.assign(nuxt, {
 				hook: (name: string, extendConfig: (config: unknown) => void) => {
@@ -792,16 +792,16 @@ describe('the early /init script for ssr: false pages', () => {
 	});
 });
 
-describe('gpp from the c15t config key', () => {
+describe('gpp from the inth config key', () => {
 	test('reaches the client as JSON', async () => {
 		const gpp = { optOutCategories: ['marketing'], usApproach: 'national' };
-		const config = await publicConfig({ gpp, projectUrl: '/api/c15t' });
+		const config = await publicConfig({ gpp, projectUrl: '/api/inth' });
 		expect(config.gpp).toEqual(gpp);
 		expect(JSON.parse(JSON.stringify(config)).gpp).toEqual(gpp);
 	});
 
 	test('passes true through', async () => {
-		const config = await publicConfig({ gpp: true, projectUrl: '/api/c15t' });
+		const config = await publicConfig({ gpp: true, projectUrl: '/api/inth' });
 		expect(config).toHaveProperty('gpp', true);
 	});
 });

@@ -1,13 +1,13 @@
 ---
 title: Data fetching reference
-description: Reference for the Next.js c15t.config.ts options, modes, resolveConsent, withConsentProps, the consent route, manifest resolution, request geography and local configuration.
+description: Reference for the Next.js inth.config.ts options, modes, resolveConsent, withConsentProps, the consent route, manifest resolution, request geography and local configuration.
 group: frameworks
 ---
 
 ## Config reference
 
 `defineConsentConfig` from `@inth/nextjs` declares the app's consent setup in
-`c15t.config.ts` at the project root. `withConsentManifest` in
+`inth.config.ts` at the project root. `withConsentManifest` in
 `next.config.ts` finds the file and hands it to `ConsentRoot`,
 `resolveConsent`, `withConsentProps`, `createConsentRoute` and
 `createPagesConsentRoute`, so the app never imports it. For help choosing a
@@ -16,9 +16,9 @@ Requires Next.js 15 or 16 (`next ^15.0.0 || ^16.0.0`).
 
 | Property | Default | Behavior |
 | --- | --- | --- |
-| `projectUrl` | `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Consent submissions go to `/subjects` under it, and the server reads `/manifest` or `/init` from it. |
+| `projectUrl` | `NEXT_PUBLIC_INTH_PROJECT_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Consent submissions go to `/subjects` under it, and the server reads `/manifest` or `/init` from it. |
 | `mode` | `manifest()` | `manifest()` or `hosted()` from `@inth/nextjs`, or `testing()` from `@inth/nextjs/testing`. `manifest()` falls back to the backend's `/init` with a warning when the manifest is unavailable. See [consent modes](/docs/concepts/modes). |
-| `routePrefix` | none | Where the catch-all consent route is mounted, such as `/api/c15t`. A browser that resolves consent itself asks `${routePrefix}/init` instead of the backend's `/init`. Leave it unset when every page resolves consent on the server. |
+| `routePrefix` | none | Where the catch-all consent route is mounted, such as `/api/inth`. A browser that resolves consent itself asks `${routePrefix}/init` instead of the backend's `/init`. Leave it unset when every page resolves consent on the server. |
 | `proxy` | `false` | The route at `routePrefix` forwards saves (`createConsentRoute({ proxy: true })`), so the browser saves there instead of `${projectUrl}/subjects`. The server helpers keep `projectUrl`. Needs `routePrefix`. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
 | `journey` | `'page'` | The consent journey scope, read by both `resolveConsent` and `ConsentRoot` so they agree. |
 | `scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`, `persistence`, `scriptLoader`, `options` | none | Browser options. `ConsentRoot` props of the same name win over them. |
@@ -42,9 +42,9 @@ checks, so they add no bytes there:
 | Message | Cause |
 | --- | --- |
 | `@inth/nextjs: defineConsentConfig expects an object.` | The argument is not an object. |
-| ``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`` | No backend URL, and the mode is not `testing()`. |
-| ``@inth/nextjs: defineConsentConfig `projectUrl` must be an absolute http(s) URL or a `/`-relative path, received "...".`` | A URL is protocol-relative, such as `//your-project.inth.app`, or bare, such as `api/c15t`. The same check covers `routePrefix`, `mode.manifestUrl` and `mode.geoUrl`. |
-| ``@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would catch every page. |
+| ``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`` | No backend URL, and the mode is not `testing()`. |
+| ``@inth/nextjs: defineConsentConfig `projectUrl` must be an absolute http(s) URL or a `/`-relative path, received "...".`` | A URL is protocol-relative, such as `//your-project.inth.app`, or bare, such as `api/inth`. The same check covers `routePrefix`, `mode.manifestUrl` and `mode.geoUrl`. |
+| ``@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would catch every page. |
 | ``@inth/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from @inth/nextjs, or testing() from @inth/nextjs/testing. Pass a transport through ConsentRoot `options.mode`.`` | `mode` is not one of the data factories. |
 | ``@inth/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false.`` | `journey` has another value. |
 | ``@inth/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.`` | `proxy: true` without `routePrefix`. |
@@ -59,7 +59,7 @@ Not when every page resolves consent on the server. The root layout or
 
 Add the route when some pages render without server state: static, ISR or
 `'use cache'` pages in the App Router, or Pages Router pages without
-`withConsentProps`. Set `routePrefix: '/api/c15t'` in `c15t.config.ts` and
+`withConsentProps`. Set `routePrefix: '/api/inth'` in `inth.config.ts` and
 mount the route:
 
 <include src="../../shared/examples/nextjs/consent-route.mdx" />
@@ -100,7 +100,7 @@ out of the browser bundle; see
 
 ### Switch to regular backend init
 
-Set `mode: hosted()` in `c15t.config.ts`. The
+Set `mode: hosted()` in `inth.config.ts`. The
 [client-side guide](/docs/frameworks/next/client-side#configure-the-backend-and-the-mode)
 has the complete config. For server rendering, keep the layout from your
 router guide. `resolveConsent` will call backend `/init` per request.
@@ -119,7 +119,7 @@ Node `req` instead, and `withConsentProps` wraps it as a `getServerSideProps`.
 All of them accept the options in this section; the Pages Router entry
 replaces only the `request` adapter.
 
-`resolveConsent()` needs no options: it reads `c15t.config.ts` and the
+`resolveConsent()` needs no options: it reads `inth.config.ts` and the
 snapshot `withConsentManifest` downloaded. What it does depends on the mode.
 `manifest()` resolves policy from the snapshot, or from
 `${projectUrl}/manifest` through the in-process cache without one. `hosted()`
@@ -131,8 +131,8 @@ network request and returns cookie- and header-only state; see
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `config` | `c15t.config.ts` | The config to use instead of the file. Explicit options on this bag win over its fields. In manifest mode, its `routePrefix` names the same-origin route the browser loads a deferred IAB Global Vendor List from. |
-| `projectUrl` | the mode's, then the config's, then `NEXT_PUBLIC_C15T_BACKEND_URL` or `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. With `hosted()`, `resolveConsent` calls `${projectUrl}/init`. |
+| `config` | `inth.config.ts` | The config to use instead of the file. Explicit options on this bag win over its fields. In manifest mode, its `routePrefix` names the same-origin route the browser loads a deferred IAB Global Vendor List from. |
+| `projectUrl` | the mode's, then the config's, then `NEXT_PUBLIC_INTH_PROJECT_URL` or `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. With `hosted()`, `resolveConsent` calls `${projectUrl}/init`. |
 | `manifestUrl` | the mode's absolute `manifestUrl`, then `${projectUrl}/manifest` | Absolute `GET /manifest` URL. Setting it resolves from the manifest whatever the mode, through the in-process manifest cache. A `/`-relative `manifestUrl` on the mode is the browser's, so the server ignores it. |
 | `snapshot` | the snapshot `withConsentManifest` downloaded | A manifest to resolve from instead. Setting it resolves from the manifest whatever the mode. |
 | `fetch` | `globalThis.fetch` | Fetch implementation for the backend `/init` or manifest request. Manifest requests already pass `next: { revalidate: 300 }` for the App Router Data Cache. The `/init` call can carry the consent cookie and returns per-visitor state, so it uses `cache: 'no-store'`. A custom fetch must preserve these options. It also keeps the IAB Global Vendor List inline, since the browser cannot replay it. |
@@ -144,7 +144,7 @@ network request and returns cookie- and header-only state; see
 | `experiment` | none | The banner experiment with the arm this request runs. See [banner experiments](/docs/guides/banner-experiments). |
 | `waitUntil` | none | Receives work that outlives the render so it survives the response: the session report, a manifest refresh, and a manifest request that `timeoutMs` stopped waiting for. In the App Router pass `(task) => after(() => task)` with `after` from `next/server`. The promise never rejects. |
 | `now` | `Date.now()` | Clock used to validate stored records and stamped into the result. |
-| `cookieName` | `c15t` | Cookie holding persisted consent. Must match the client `storageConfig.storageKey`. |
+| `cookieName` | `inth` | Cookie holding persisted consent. Must match the client `storageConfig.storageKey`. |
 | `country` | header detection | Overrides the country read from request headers. |
 | `language` | header detection | Overrides the language read from `accept-language`. |
 | `request` | `next/headers` | Request context adapter with `cookies()` and `headers()`. The default only works in the App Router. |
@@ -219,7 +219,7 @@ the baseline state instead. Keep the config's `projectUrl` absolute, and use
 to keep the browser on your origin.
 
 Any other same-origin `projectUrl` is a backend reached through your app, such
-as `/api/c15t` with a rewrite or a mounted `@c15t/backend`. `resolveConsent`
+as `/api/inth` with a rewrite or a mounted `@c15t/backend`. `resolveConsent`
 calls its `/init` like any backend. That request goes back through your own
 server, which costs a second function invocation on serverless hosts and fails
 behind deployment protection; the render then returns the baseline state and
@@ -279,7 +279,7 @@ these options apply:
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `now` | `Date.now()` | Clock used to validate stored records and stamped into the result. |
-| `cookieName` | `c15t` | Cookie holding persisted consent. Must match the client `storageConfig.storageKey`. |
+| `cookieName` | `inth` | Cookie holding persisted consent. Must match the client `storageConfig.storageKey`. |
 | `country` | header detection | Overrides the country read from request headers. |
 | `language` | header detection | Overrides the language read from `accept-language`. |
 | `request` | `next/headers` | Request context adapter with `cookies()` and `headers()`. The default only works in the App Router. |
@@ -342,19 +342,19 @@ export function resolveRequestConsent(req: IncomingMessage) {
 ### createConsentRoute options
 
 `createConsentRoute(options?)` from `@inth/nextjs/api` returns `GET` for one
-catch-all route, such as `app/api/c15t/[...c15t]/route.ts`. `GET` answers
+catch-all route, such as `app/api/inth/[...inth]/route.ts`. `GET` answers
 `/init` and `/manifest` under the route; every other path answers 404. With
 `proxy`, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and `OPTIONS`, and
 forwards the other consent paths to the backend. Everything defaults to
-`c15t.config.ts` and the snapshot `withConsentManifest` downloaded.
+`inth.config.ts` and the snapshot `withConsentManifest` downloaded.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `config` | `c15t.config.ts` | The config to use instead of the file. |
-| `projectUrl` | the config's, then `NEXT_PUBLIC_C15T_BACKEND_URL` or `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Without a snapshot, the route fetches `${projectUrl}/manifest`. |
+| `config` | `inth.config.ts` | The config to use instead of the file. |
+| `projectUrl` | the config's, then `NEXT_PUBLIC_INTH_PROJECT_URL` or `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Without a snapshot, the route fetches `${projectUrl}/manifest`. |
 | `manifestUrl` | the mode's absolute `manifestUrl` | Full upstream manifest URL. Takes precedence over `projectUrl` plus `/manifest`. |
 | `snapshot` | the snapshot `withConsentManifest` downloaded | Takes precedence over upstream URLs, serves the manifest and resolves each visitor without fetching policy. Stays fixed until rebuilding. |
-| `proxy` | `false` | Forward `subjects`, `subjects/:id`, `health` and `status` to the backend, so browser saves stay on your origin. Pair it with `proxy: true` in `c15t.config.ts`. `createPagesConsentRoute` takes it too. |
+| `proxy` | `false` | Forward `subjects`, `subjects/:id`, `health` and `status` to the backend, so browser saves stay on your origin. Pair it with `proxy: true` in `inth.config.ts`. `createPagesConsentRoute` takes it too. |
 | `manifestRevalidateSeconds` | `300` | Next.js Data Cache revalidation for the manifest fetch. `false` disables it. |
 | `fetch` | `globalThis.fetch` | Fetch implementation for the manifest and Global Vendor List requests. |
 | `trustForwardedHeaders` | `false` | Resolve a `/`-relative `projectUrl` or `manifestUrl` against the request's `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers instead of `request.url`. Set it only behind a proxy that sets those headers and drops the ones a client sends. |
@@ -432,9 +432,9 @@ when the banner must render immediately.
 
 `createPagesConsentRoute(options?, param?)` from `@inth/nextjs/pages` accepts the
 same options except `proxy` and returns the default export of a catch-all
-`pages/api` route, `pages/api/c15t/[...c15t].ts`. `param` names the catch-all
-parameter and defaults to `c15t`; a file with another name throws
-``@inth/nextjs: createPagesConsentRoute found no `c15t` catch-all parameter. Name the file [...c15t].ts or pass its parameter name.``
+`pages/api` route, `pages/api/inth/[...inth].ts`. `param` names the catch-all
+parameter and defaults to `inth`; a file with another name throws
+``@inth/nextjs: createPagesConsentRoute found no `inth` catch-all parameter. Name the file [...inth].ts or pass its parameter name.``
 Because a `pages/api` default export receives every method, requests other
 than `GET` and `HEAD` are answered with `405` and an `allow: GET` header before
 the wrapped handler runs. The bridge
@@ -453,7 +453,7 @@ The [App Router](/docs/frameworks/next/app-router) and
 2. `resolveConsent()` resolves policy from that snapshot or cache with the
    current request's inputs and restores valid consent cookies.
 3. `ConsentRoot` receives that result as `state` and reads the rest from
-   `c15t.config.ts`. Hydration preserves the resolved state.
+   `inth.config.ts`. Hydration preserves the resolved state.
 4. If browser initialization is needed, it asks `${routePrefix}/init`, whose
    route resolves the same snapshot on the server, or `${projectUrl}/init`
    without `routePrefix`. `manifest({ resolve: 'browser' })` resolves in the
@@ -502,7 +502,7 @@ cookies into a shared static page.
 
 A static export can also resolve a manifest in the browser without these
 helpers. Set `mode: manifest({ resolve: 'browser', manifestUrl })` in
-`c15t.config.ts`, with an absolute `manifestUrl` the browser can fetch from
+`inth.config.ts`, with an absolute `manifestUrl` the browser can fetch from
 your site's origin. Browser manifest resolution has no
 location input, so every visitor gets your unknown-location rule.
 
@@ -528,11 +528,11 @@ initialization.
 ## Testing configuration
 
 For tests only. Set `mode: testing()` from `@inth/nextjs/testing` in the
-`c15t.config.ts` a test build uses. It needs no backend URL:
+`inth.config.ts` a test build uses. It needs no backend URL:
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { defineConsentConfig } from '@inth/nextjs';
 import { testing } from '@inth/nextjs/testing';
 
@@ -546,8 +546,8 @@ production builds. Pass `testing({ policy })` to resolve your own rules
 instead of the recommended pack.
 
 `ConsentRoot` throws when `manifest()` or `hosted()` finds no backend URL: not
-in the config or `NEXT_PUBLIC_C15T_BACKEND_URL`. That happens only without a
-`c15t.config.ts`, because `defineConsentConfig` throws without a backend URL.
+in the config or `NEXT_PUBLIC_INTH_PROJECT_URL`. That happens only without a
+`inth.config.ts`, because `defineConsentConfig` throws without a backend URL.
 See [troubleshooting](/docs/frameworks/next/troubleshooting#why-does-consentroot-throw-that-it-needs-a-backend-url).
 
 ### Authenticated hosted vendor lists

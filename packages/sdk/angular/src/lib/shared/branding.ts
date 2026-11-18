@@ -70,7 +70,7 @@ export const shouldShowBranding = function shouldShowBranding(
  * @example
  * ```html
  * @if (showBranding()) {
- *   <a c15t-branding variant="banner-tag" themeKey="consentBannerTag"></a>
+ *   <a inth-branding variant="banner-tag" themeKey="consentBannerTag"></a>
  * }
  * ```
  * @internal
@@ -85,7 +85,7 @@ export const shouldShowBranding = function shouldShowBranding(
 		'[style]': 'style()',
 	},
 	imports: [BrandMarkIcon, InthLogo],
-	selector: 'a[c15t-branding]',
+	selector: 'a[inth-branding]',
 	// No `dir` on the host: the copy follows the page direction and only
 	// the wordmark is pinned to LTR.
 	// Under `noStyle` the content drops its class; the wordmark inside keeps
@@ -107,7 +107,7 @@ export const shouldShowBranding = function shouldShowBranding(
 				"
 			>
 				<svg
-					c15t-inth-logo
+					inth-logo
 					aria-hidden="true"
 				></svg>
 			</span>
@@ -120,7 +120,7 @@ export const shouldShowBranding = function shouldShowBranding(
 			>
 				<span [class]="classes.brandingC15TMark || ''">
 					<svg
-						c15t-brand-mark-icon
+						inth-brand-mark-icon
 						aria-hidden="true"
 					></svg>
 				</span>

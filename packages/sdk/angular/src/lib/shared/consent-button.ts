@@ -60,8 +60,8 @@ export type ConsentButtonSize = 'medium' | 'small' | 'xsmall' | 'xxsmall';
  *
  * @example
  * ```html
- * <button c15t-consent-button action="accept" variant="primary">Accept all</button>
- * <button c15t-consent-button action="customize">Customize</button>
+ * <button inth-consent-button action="accept" variant="primary">Accept all</button>
+ * <button inth-consent-button action="customize">Customize</button>
  * ```
  */
 @Component({
@@ -77,7 +77,7 @@ export type ConsentButtonSize = 'medium' | 'small' | 'xsmall' | 'xxsmall';
 		'[style]': 'style()',
 		type: 'button',
 	},
-	selector: 'button[c15t-consent-button]',
+	selector: 'button[inth-consent-button]',
 	template: '<ng-content />',
 })
 export class ConsentButton {

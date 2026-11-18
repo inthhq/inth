@@ -1,6 +1,6 @@
 /**
  * @packageDocumentation
- * Pure TypeScript types for c15t consent management.
+ * Pure TypeScript types for Inth consent management.
  *
  * This module exports only TypeScript types without any Valibot runtime code,
  * making it safe to use in frontend applications without adding bundle size.

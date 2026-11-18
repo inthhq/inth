@@ -3,12 +3,12 @@ import { setupColorScheme } from '@inth/sdk/ui/utils';
 import type { ConsentConfig } from './config';
 
 /** `key` of the Nuxt head script that sets the class before first paint. */
-export const COLOR_SCHEME_SCRIPT_KEY = 'c15t-color-scheme';
+export const COLOR_SCHEME_SCRIPT_KEY = 'inth-color-scheme';
 
 const noop = (): void => undefined;
 
 /**
- * Keep the `c15t-dark` class on `<html>` in line with `colorScheme`, the
+ * Keep the `inth-dark` class on `<html>` in line with `colorScheme`, the
  * way the React and Svelte providers do.
  *
  * `'light'` and `'dark'` set the class once. `'system'` follows
@@ -32,7 +32,7 @@ export const applyColorScheme = function applyColorScheme(
 };
 
 /**
- * Inline script that sets `c15t-dark` before the first paint.
+ * Inline script that sets `inth-dark` before the first paint.
  *
  * Nuxt renders it in the server HTML's `<head>`. `'light'` needs none,
  * because light is the absence of the class, and unset or `null` leave the
@@ -46,12 +46,12 @@ export const buildColorSchemeScript = function buildColorSchemeScript(
 	colorScheme: ConsentConfig['colorScheme']
 ): string {
 	if (colorScheme === 'dark') {
-		return "document.documentElement.classList.add('c15t-dark');";
+		return "document.documentElement.classList.add('inth-dark');";
 	}
 	if (colorScheme === 'system') {
 		// `matchMedia` is missing in some embedded webviews, and a throw here
 		// would stop the rest of the document from parsing.
-		return "try{document.documentElement.classList.toggle('c15t-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
+		return "try{document.documentElement.classList.toggle('inth-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
 	}
 	return '';
 };

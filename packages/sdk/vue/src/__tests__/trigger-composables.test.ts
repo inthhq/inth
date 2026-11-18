@@ -126,28 +126,28 @@ describe('useDraggable', () => {
 
 describe('useLocalStorageRef', () => {
 	it('reads the stored value, persists updates, and removes on null', async () => {
-		window.localStorage.setItem('c15t:test', JSON.stringify({ x: 1, y: 2 }));
+		window.localStorage.setItem('inth:test', JSON.stringify({ x: 1, y: 2 }));
 
 		const stored = useLocalStorageRef<{ x: number; y: number } | null>(
-			'c15t:test',
+			'inth:test',
 			null
 		);
 		expect(stored.value).toEqual({ x: 1, y: 2 });
 
 		stored.value = { x: 3, y: 4 };
 		await nextTick();
-		expect(window.localStorage.getItem('c15t:test')).toBe('{"x":3,"y":4}');
+		expect(window.localStorage.getItem('inth:test')).toBe('{"x":3,"y":4}');
 
 		stored.value = null;
 		await nextTick();
-		expect(window.localStorage.getItem('c15t:test')).toBeNull();
+		expect(window.localStorage.getItem('inth:test')).toBeNull();
 	});
 
 	it('keeps the default when the stored value is unparseable', () => {
-		window.localStorage.setItem('c15t:test', 'not-json');
+		window.localStorage.setItem('inth:test', 'not-json');
 
 		const stored = useLocalStorageRef<{ x: number; y: number } | null>(
-			'c15t:test',
+			'inth:test',
 			null
 		);
 		expect(stored.value).toBeNull();

@@ -1,5 +1,5 @@
 /**
- * `c15tHandle`'s page transform adds the start its request's render kept
+ * `inthHandle`'s page transform adds the start its request's render kept
  * to a `<script>` at the end of `<body>`.
  */
 import { afterEach, beforeAll, expect, test } from 'vitest';
@@ -175,7 +175,7 @@ test('starts nothing from markup in the page', () => {
 	// What an earlier version read its code from, rendered here from content
 	// a visitor wrote.
 	const page =
-		'<html><head><meta name="c15t-server-start" content="alert(1)" data-nonce="n"></head><body><script nonce="kit">boot()</script></body></html>';
+		'<html><head><meta name="inth-server-start" content="alert(1)" data-nonce="n"></head><body><script nonce="kit">boot()</script></body></html>';
 	const event = createEvent();
 	const inject = createServerStartInjector(event.locals);
 	renderProvider(event, '');

@@ -109,7 +109,7 @@ export interface DevToolsInstance {
 }
 
 /**
- * Creates DevTools for one explicit c15t v3 kernel.
+ * Creates DevTools for one explicit Inth v3 kernel.
  *
  * The instance owns no global state. Multiple calls can inspect separate
  * kernels on the same page without sharing events, view state, or cleanup.

@@ -165,7 +165,7 @@ describe('IAB purpose row consent switch', () => {
 			// which is created when the row first opens.
 			expect(root.querySelector('button[aria-pressed]')).toBeNull();
 			root
-				.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+				.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 				?.click();
 			await fixture.whenStable();
 			expect(root.querySelector('button[aria-pressed]')).not.toBeNull();
@@ -220,7 +220,7 @@ describe('IAB controls under a legitimate-interest restriction', () => {
 			vendorObjection: true,
 		});
 		root
-			.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+			.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 			?.click();
 		await fixture.whenStable();
 		root.querySelector<HTMLElement>('button[aria-pressed]')?.click();
@@ -260,7 +260,7 @@ describe('IAB controls under a legitimate-interest restriction', () => {
 		});
 		root
 			.querySelector<HTMLElement>(
-				'[id$="-vendor-755"] [id^="c15t-preference-item-trigger-"]'
+				'[id$="-vendor-755"] [id^="inth-preference-item-trigger-"]'
 			)
 			?.click();
 		await fixture.whenStable();
@@ -316,7 +316,7 @@ describe('IAB vendor list', () => {
 		// A closed row is its header only: no links, badges or lists yet.
 		expect(root.querySelectorAll('a[target="_blank"]')).toHaveLength(0);
 		rows[0]
-			?.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+			?.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 			?.click();
 		await fixture.whenStable();
 		expect(
@@ -347,7 +347,7 @@ describe('IAB vendor list', () => {
 		expect(registered?.id).not.toBe(custom?.id);
 
 		custom
-			?.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+			?.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 			?.click();
 		await fixture.whenStable();
 		expect(

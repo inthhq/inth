@@ -14,8 +14,8 @@ import { bootClient } from '../../src/__tests__/conformance-app';
 import { transportMode } from '../../src/__tests__/fixtures/transport-mode';
 import { settle } from '../../src/__tests__/test-local';
 import type {
-	C15tOptions,
-	C15tProviderOptions,
+	InthOptions,
+	InthProviderOptions,
 } from '../../src/lib/core/options';
 import { IABConsentBanner } from './iab-consent-banner';
 import { IABConsentDialog } from './iab-consent-dialog';
@@ -38,7 +38,7 @@ afterEach(() => {
 });
 
 /** Boot the surface, as the conformance fixture does. */
-const boot = async (surface: Surface, options: Partial<C15tOptions>) => {
+const boot = async (surface: Surface, options: Partial<InthOptions>) => {
 	const container = document.createElement('div');
 	document.body.append(container);
 	const app = await bootClient(
@@ -47,7 +47,7 @@ const boot = async (surface: Surface, options: Partial<C15tOptions>) => {
 			disableAnimation: true,
 			persistence: false,
 			...options,
-		} as C15tProviderOptions,
+		} as InthProviderOptions,
 		{
 			entries: [
 				surface === 'iab-consent-banner'
@@ -412,7 +412,7 @@ describe('banner to dialog', () => {
 				mode: transportMode({}),
 				persistence: false,
 				prefetch: { initialPolicyResolution: iabPolicy() },
-			} as C15tProviderOptions,
+			} as InthProviderOptions,
 			{
 				entries: [
 					{ component: IABConsentBanner },

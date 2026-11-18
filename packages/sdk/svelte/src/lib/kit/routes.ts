@@ -29,7 +29,7 @@ import type {
 } from '@inth/sdk/server';
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 
-import type { C15tLocals } from './types';
+import type { InthLocals } from './types';
 
 export type { ConsentProxyOptions } from '@inth/sdk/server';
 
@@ -67,7 +67,7 @@ const REST_PARAM = /\[\.\.\.(?<name>[^\]=]+)(?:=[^\]]+)?\]/u;
 
 /**
  * The path below the route's rest parameter (`[...path]` in
- * `src/routes/api/c15t/[...path]/+server.ts`), or `undefined` when the route
+ * `src/routes/api/inth/[...path]/+server.ts`), or `undefined` when the route
  * has none.
  */
 const readRestPath = function readRestPath(
@@ -104,9 +104,9 @@ const readForwarding = function readForwarding(
 /** Options for {@link createConsentRoute}. */
 export interface ConsentRouteOptions {
 	/**
-	 * The c15t backend. Defaults to what `c15tHandle()` was given: a
+	 * The Inth backend. Defaults to what `inthHandle()` was given: a
 	 * `hosted()` mode's `projectUrl`, then the handle's `projectUrl`, then
-	 * the URL `consentManifest()` read from `PUBLIC_C15T_BACKEND_URL` or
+	 * the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL` or
 	 * `PUBLIC_INTH_PROJECT_URL`. A
 	 * handle `projectUrl` that points at this route, as in the proxy setup,
 	 * is skipped. The manifest is read from `${projectUrl}/manifest` when
@@ -120,7 +120,7 @@ export interface ConsentRouteOptions {
 	manifestUrl?: string;
 	/**
 	 * A manifest to resolve with. Defaults to the handle's: the mode's
-	 * `snapshot`, then `c15tHandle({ snapshot })`, then the one
+	 * `snapshot`, then `inthHandle({ snapshot })`, then the one
 	 * `consentManifest()` downloaded.
 	 */
 	snapshot?: ConsentManifest;
@@ -177,7 +177,7 @@ export interface ConsentRouteOptions {
 	 * `accept-language`, `origin`, `referer`, `sec-gpc`, the geo headers),
 	 * cookies only when {@link ConsentProxyOptions.cookieNames} names them,
 	 * and sets `x-forwarded-for` from `event.getClientAddress()`,
-	 * `x-forwarded-host` and `x-forwarded-proto` from `event.url`, the c15t
+	 * `x-forwarded-host` and `x-forwarded-proto` from `event.url`, the Inth
 	 * version header, and `x-c15t-proxy: @inth/svelte`. The hosted backend
 	 * sits behind a firewall that scores a bare server-to-server request as a
 	 * bot; these give it the signals a direct browser request carries, and a
@@ -235,14 +235,14 @@ const trimTrailingSlashes = function trimTrailingSlashes(
 
 /**
  * Whether a handle's relative `projectUrl` names this route, as
- * `c15tHandle({ projectUrl: '/api/c15t', routePrefix: '/api/c15t' })` does
+ * `inthHandle({ projectUrl: '/api/inth', routePrefix: '/api/inth' })` does
  * when saves go through the proxy. Forwarding there would call the route
  * itself.
  */
 const pointsAtRoute = function pointsAtRoute(
 	projectUrl: string,
 	event: RequestEvent,
-	locals: C15tLocals | undefined
+	locals: InthLocals | undefined
 ): boolean {
 	if (!projectUrl.startsWith('/')) {
 		return false;
@@ -266,7 +266,7 @@ const pointsAtRoute = function pointsAtRoute(
 /** The handle's backend URL, unless it points at this route. */
 const readHandleProjectUrl = function readHandleProjectUrl(
 	event: RequestEvent,
-	locals: C15tLocals | undefined
+	locals: InthLocals | undefined
 ): string | undefined {
 	const fromHandle = locals?.projectUrl;
 	if (fromHandle === undefined || pointsAtRoute(fromHandle, event, locals)) {
@@ -277,7 +277,7 @@ const readHandleProjectUrl = function readHandleProjectUrl(
 
 /** The handle's snapshot, as `loadConsent` reads it. */
 const readHandleSnapshot = function readHandleSnapshot(
-	locals: C15tLocals | undefined
+	locals: InthLocals | undefined
 ): ConsentManifest | undefined {
 	const mode = locals?.mode;
 	if (mode?.type !== 'manifest') {
@@ -292,15 +292,15 @@ const readHandleSnapshot = function readHandleSnapshot(
 };
 
 /**
- * The route's sources: explicit options first, then what `c15tHandle()`
- * stored on `event.locals.c15t`, then what the build downloaded. The same
+ * The route's sources: explicit options first, then what `inthHandle()`
+ * stored on `event.locals.inth`, then what the build downloaded. The same
  * order `loadConsent` uses, so the two agree.
  */
 const readRouteSource = function readRouteSource(
 	options: ConsentRouteOptions,
 	event: RequestEvent
 ): RouteSource {
-	const { c15t: locals } = (event.locals ?? {}) as { c15t?: C15tLocals };
+	const { inth: locals } = (event.locals ?? {}) as { inth?: InthLocals };
 	const mode = locals?.mode;
 	// With browser resolution, `manifestUrl` is what the browser fetches
 	// instead of this route.
@@ -322,12 +322,12 @@ const readRouteSource = function readRouteSource(
  * Creates the catch-all consent route. Only prerendered pages need it: the
  * server resolves every other page in `loadConsent`.
  *
- * The route reads the snapshot, backend URL and mode `c15tHandle()` was
- * given from `event.locals.c15t`, so they are set once, on the handle.
+ * The route reads the snapshot, backend URL and mode `inthHandle()` was
+ * given from `event.locals.inth`, so they are set once, on the handle.
  * Options passed here win.
  *
  * ```ts
- * // src/routes/api/c15t/[...path]/+server.ts
+ * // src/routes/api/inth/[...path]/+server.ts
  * import { createConsentRoute } from '@inth/svelte/kit';
  *
  * export const { GET } = createConsentRoute();
@@ -337,7 +337,7 @@ const readRouteSource = function readRouteSource(
  *
  * ```ts
  * // src/hooks.server.ts
- * export const handle = c15tHandle({ routePrefix: '/api/c15t' });
+ * export const handle = inthHandle({ routePrefix: '/api/inth' });
  * ```
  *
  * With `proxy: true` the route also forwards consent writes to the

@@ -6,7 +6,7 @@ import {
  * Wiring tests for `loadConsent` on top of `resolveRequestConsent` from
  * `@inth/sdk/server`. The core suite pins the rules (forwarding, budget,
  * self-route guard, deferral, experiment); these check what SvelteKit
- * supplies: the config and inputs `c15tHandle` stored, `event.url`,
+ * supplies: the config and inputs `inthHandle` stored, `event.url`,
  * `event.fetch` as the in-process fetch, the platform's `waitUntil`, and
  * SvelteKit's `building` flag.
  */
@@ -14,7 +14,7 @@ import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { testing } from '../../testing';
-import { c15tHandle } from '../handle';
+import { inthHandle } from '../handle';
 import { hosted, manifest } from '../index';
 import { loadConsent } from '../load-consent';
 import { setBuilding } from './app-env';
@@ -24,7 +24,7 @@ import { MANIFEST_FIXTURE } from './manifest-fixture';
 const BACKEND = 'https://consent.example.com';
 
 const INIT_PAYLOAD = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -54,19 +54,19 @@ const answer = () =>
 		)
 	);
 
-/** Runs `c15tHandle` so `event.locals.c15t` is populated, as in a real app. */
+/** Runs `inthHandle` so `event.locals.inth` is populated, as in a real app. */
 const withHandle = async function withHandle(
 	event: ReturnType<typeof createEvent>,
-	options: Parameters<typeof c15tHandle>[0] = {}
+	options: Parameters<typeof inthHandle>[0] = {}
 ) {
-	await c15tHandle(options)({
+	await inthHandle(options)({
 		event,
 		resolve: () => Promise.resolve(new Response()),
 	});
 	return event;
 };
 
-const CUSTOM_COOKIE = CONSENTED_COOKIE.replace('c15t=', 'my-consent=');
+const CUSTOM_COOKIE = CONSENTED_COOKIE.replace('inth=', 'my-consent=');
 
 beforeEach(() => {
 	clearManifestCache();
@@ -135,7 +135,7 @@ describe('loadConsent', () => {
 			{
 				mode: manifest({ snapshot: MANIFEST_FIXTURE }),
 				projectUrl: BACKEND,
-				routePrefix: '/api/c15t',
+				routePrefix: '/api/inth',
 			}
 		);
 		const { consent } = await loadConsent(event, {
@@ -149,7 +149,7 @@ describe('loadConsent', () => {
 		expect(consent).toMatchObject({
 			mode: { type: 'manifest' },
 			projectUrl: BACKEND,
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
 		expect(consent.mode).not.toHaveProperty('snapshot');
 		// No policy request; only the session report.
@@ -313,9 +313,9 @@ describe('loadConsent', () => {
 				fetch,
 				headers: { cookie: CONSENTED_COOKIE, 'x-c15t-country': 'DE' },
 			}),
-			{ projectUrl: BACKEND, routePrefix: '/api/c15t' }
+			{ projectUrl: BACKEND, routePrefix: '/api/inth' }
 		);
-		expect((event.locals as { c15t: { config: unknown } }).c15t.config).toEqual(
+		expect((event.locals as { inth: { config: unknown } }).inth.config).toEqual(
 			{}
 		);
 		const { consent } = await loadConsent(event, { fetch });
@@ -324,7 +324,7 @@ describe('loadConsent', () => {
 			mode: { type: 'manifest' },
 			prefetch: {},
 			projectUrl: BACKEND,
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
 
 		const direct = await loadConsent(

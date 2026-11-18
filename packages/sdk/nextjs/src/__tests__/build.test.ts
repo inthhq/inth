@@ -17,12 +17,12 @@ import { withConsentManifest } from '../build';
 import { defineConsentConfig } from '../config';
 
 const MANIFEST_FIXTURE = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'build-test',
 	schemaVersion: 2,
 };
 
-const CACHE = 'node_modules/.cache/c15t';
+const CACHE = 'node_modules/.cache/inth';
 
 const directories: string[] = [];
 
@@ -38,10 +38,10 @@ const typescriptDir = dirname(
 
 /**
  * A temporary app root, which `withConsentManifest` reads from the cwd,
- * with TypeScript installed so a `c15t.config.ts` can be read.
+ * with TypeScript installed so a `inth.config.ts` can be read.
  */
 const createRoot = async () => {
-	const root = await mkdtemp(join(tmpdir(), 'c15t-manifest-'));
+	const root = await mkdtemp(join(tmpdir(), 'inth-manifest-'));
 	directories.push(root);
 	await mkdir(join(root, 'node_modules'), { recursive: true });
 	await symlink(typescriptDir, join(root, 'node_modules/typescript'), 'dir');
@@ -93,7 +93,7 @@ describe('Next.js build-time manifest', () => {
 			expect(browser).toContain("import 'server-only';");
 			expect(browser).not.toContain(MANIFEST_FIXTURE.revision);
 			// Nothing lands in the app's source tree.
-			await expect(stat(join(root, 'c15t-manifest.ts'))).rejects.toThrow();
+			await expect(stat(join(root, 'inth-manifest.ts'))).rejects.toThrow();
 			expect(options.fetch).toHaveBeenCalledTimes(1);
 			expect(options.fetch).toHaveBeenCalledWith(
 				'https://consent.example.com/manifest',
@@ -194,7 +194,7 @@ describe('Next.js build-time manifest', () => {
 		expect(userWebpack).toHaveBeenCalledTimes(2);
 	});
 
-	test.each(['c15t.config.ts', 'c15t.config.mjs'])(
+	test.each(['inth.config.ts', 'inth.config.mjs'])(
 		'aliases %s into server and browser bundles',
 		async (file) => {
 			const root = await createRoot();
@@ -219,7 +219,7 @@ describe('Next.js build-time manifest', () => {
 		}
 	);
 
-	test('leaves the config stub in place without a c15t.config file', async () => {
+	test('leaves the config stub in place without a inth.config file', async () => {
 		await createRoot();
 		const config = await withConsentManifest({}, optionsFor())(
 			'phase-production-build',
@@ -231,12 +231,12 @@ describe('Next.js build-time manifest', () => {
 		);
 	});
 
-	test('transpiles the c15t packages so Pages Router bundles see the alias', async () => {
+	test('transpiles the inth packages so Pages Router bundles see the alias', async () => {
 		await createRoot();
 		const config = await withConsentManifest(
 			{
 				serverExternalPackages: ['@inth/sdk'],
-				transpilePackages: ['ui-kit', 'c15t'],
+				transpilePackages: ['ui-kit', 'inth'],
 			},
 			optionsFor()
 		)('phase-production-build', { defaultConfig: {} });
@@ -244,7 +244,7 @@ describe('Next.js build-time manifest', () => {
 		// Next.js rejects.
 		expect(config.transpilePackages).toEqual([
 			'ui-kit',
-			'c15t',
+			'inth',
 			'@inth/nextjs',
 		]);
 	});
@@ -259,7 +259,7 @@ describe('Next.js build-time manifest', () => {
 		await expect(
 			wrapped('phase-production-build', { defaultConfig: {} })
 		).rejects.toThrow(
-			"@inth/nextjs/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (backend unavailable). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/nextjs/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (backend unavailable). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 		expect(await readServerModule(root)).toBe(before);
 	});
@@ -286,7 +286,7 @@ describe('Next.js build-time manifest', () => {
 
 	test.each([
 		['onBuildError', { onBuildError: 'runtime' as const }, {}],
-		['C15T_ON_BUILD_ERROR', {}, { C15T_ON_BUILD_ERROR: 'runtime' }],
+		['INTH_ON_BUILD_ERROR', {}, { INTH_ON_BUILD_ERROR: 'runtime' }],
 	])('%s runtime lets next build continue', async (_name, setting, env) => {
 		for (const [key, value] of Object.entries(env)) {
 			vi.stubEnv(key, value);
@@ -304,8 +304,8 @@ describe('Next.js build-time manifest', () => {
 		);
 	});
 
-	test('reads NEXT_PUBLIC_C15T_BACKEND_URL when projectUrl is left out', async () => {
-		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://env.example.com/api');
+	test('reads NEXT_PUBLIC_INTH_PROJECT_URL when projectUrl is left out', async () => {
+		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', 'https://env.example.com/api');
 		const root = await createRoot();
 		const { fetch } = optionsFor();
 		await withConsentManifest({}, { fetch })('phase-production-build', {
@@ -322,16 +322,16 @@ describe('Next.js build-time manifest', () => {
 
 	describe('NEXT_PUBLIC_INTH_PROJECT_URL', () => {
 		const INTH = 'https://inth.example.com';
-		const C15T = 'https://c15t.example.com';
+		const INTH = 'https://inth.example.com';
 		const build = (options: Parameters<typeof withConsentManifest>[1]) =>
 			withConsentManifest({ env: { OTHER: '1' } }, options)(
 				'phase-production-build',
 				{ defaultConfig: {} }
 			);
 
-		test('alone becomes NEXT_PUBLIC_C15T_BACKEND_URL for the build, the config and the bundles', async () => {
+		test('alone becomes NEXT_PUBLIC_INTH_PROJECT_URL for the build, the config and the bundles', async () => {
 			// Unset first, so the copy the wrapper writes is undone afterwards.
-			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', undefined);
+			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
 			const root = await createRoot();
 			const { fetch } = optionsFor();
@@ -343,9 +343,9 @@ describe('Next.js build-time manifest', () => {
 			expect(await readServerModule(root)).toContain(
 				`export const projectUrl = "${INTH}";`
 			);
-			// Bundles inline the c15t name only, so the browser reads one value.
+			// Bundles inline the Inth name only, so the browser reads one value.
 			expect(config.env).toEqual({
-				NEXT_PUBLIC_C15T_BACKEND_URL: INTH,
+				NEXT_PUBLIC_INTH_PROJECT_URL: INTH,
 				OTHER: '1',
 			});
 			// `defineConsentConfig`, on the server and in the browser.
@@ -353,7 +353,7 @@ describe('Next.js build-time manifest', () => {
 		});
 
 		test('reads it from a .env file', async () => {
-			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', undefined);
+			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			const root = await createRoot();
 			await writeFile(
@@ -366,29 +366,29 @@ describe('Next.js build-time manifest', () => {
 				`${INTH}/manifest`,
 				expect.any(Object)
 			);
-			expect(config.env?.NEXT_PUBLIC_C15T_BACKEND_URL).toBe(INTH);
+			expect(config.env?.NEXT_PUBLIC_INTH_PROJECT_URL).toBe(INTH);
 		});
 
-		test('loses to NEXT_PUBLIC_C15T_BACKEND_URL when both are set', async () => {
-			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', C15T);
+		test('loses to NEXT_PUBLIC_INTH_PROJECT_URL when both are set', async () => {
+			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
 			await createRoot();
 			const { fetch } = optionsFor();
 			const config = await build({ fetch });
 			expect(fetch).toHaveBeenCalledWith(
-				`${C15T}/manifest`,
+				`${INTH}/manifest`,
 				expect.any(Object)
 			);
 			expect(config.env).toEqual({ OTHER: '1' });
-			expect(defineConsentConfig().projectUrl).toBe(C15T);
+			expect(defineConsentConfig().projectUrl).toBe(INTH);
 		});
 
 		test('an explicit projectUrl beats both variables', async () => {
-			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', undefined);
+			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
 			const root = await createRoot();
 			await writeFile(
-				join(root, 'c15t.config.ts'),
+				join(root, 'inth.config.ts'),
 				"export default { projectUrl: 'https://config.example.com', mode: { type: 'manifest' } };\n"
 			);
 			const { fetch } = optionsFor();
@@ -411,12 +411,12 @@ describe('Next.js build-time manifest', () => {
 		});
 
 		test('names both variables when neither is set', async () => {
-			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', undefined);
+			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			await createRoot();
 			const { fetch } = optionsFor();
 			await expect(build({ fetch, onBuildError: 'fail' })).rejects.toThrow(
-				'Pass projectUrl or set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL).'
+				'Pass projectUrl or set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL).'
 			);
 		});
 	});
@@ -440,11 +440,11 @@ describe('Next.js build-time manifest', () => {
 			'absolute manifest({ manifestUrl })',
 		],
 	])(
-		'next build skips the fetch when c15t.config.ts uses %s',
+		'next build skips the fetch when inth.config.ts uses %s',
 		async (_mode, exported, reason) => {
 			const root = await createRoot();
 			await writeFile(
-				join(root, 'c15t.config.ts'),
+				join(root, 'inth.config.ts'),
 				`const config: Record<string, unknown> = ${exported};\nexport default config;\n`
 			);
 			const options = optionsFor();
@@ -464,15 +464,15 @@ describe('Next.js build-time manifest', () => {
 			expect(info).toHaveBeenCalledWith(expect.stringContaining(reason));
 			// The config is still aliased into the bundles.
 			expect(config.turbopack?.resolveAlias?.['@inth/nextjs/user-config']).toBe(
-				'./c15t.config.ts'
+				'./inth.config.ts'
 			);
 		}
 	);
 
-	test('next build still fetches for manifest() in c15t.config.mjs', async () => {
+	test('next build still fetches for manifest() in inth.config.mjs', async () => {
 		const root = await createRoot();
 		await writeFile(
-			join(root, 'c15t.config.mjs'),
+			join(root, 'inth.config.mjs'),
 			"export default { mode: { type: 'manifest' } };\n"
 		);
 		const options = optionsFor();
@@ -488,7 +488,7 @@ describe('Next.js build-time manifest', () => {
 	test("fetches from the config's projectUrl when the env leaves it out", async () => {
 		const root = await createRoot();
 		await writeFile(
-			join(root, 'c15t.config.ts'),
+			join(root, 'inth.config.ts'),
 			"export default { projectUrl: 'https://config.example.com', mode: { type: 'manifest' } };\n"
 		);
 		const { fetch } = optionsFor();
@@ -504,12 +504,12 @@ describe('Next.js build-time manifest', () => {
 		);
 	});
 
-	test('stops the build when defineConsentConfig rejects c15t.config.ts', async () => {
+	test('stops the build when defineConsentConfig rejects inth.config.ts', async () => {
 		const root = await createRoot();
 		const message =
 			"@inth/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false.";
 		await writeFile(
-			join(root, 'c15t.config.ts'),
+			join(root, 'inth.config.ts'),
 			`throw new TypeError(${JSON.stringify(message)});\n`
 		);
 		const options = optionsFor();
@@ -521,10 +521,10 @@ describe('Next.js build-time manifest', () => {
 		expect(options.fetch).not.toHaveBeenCalled();
 	});
 
-	test('warns and fetches as for manifest() when c15t.config.ts cannot be read', async () => {
+	test('warns and fetches as for manifest() when inth.config.ts cannot be read', async () => {
 		const root = await createRoot();
 		await writeFile(
-			join(root, 'c15t.config.ts'),
+			join(root, 'inth.config.ts'),
 			"throw new Error('config exploded');\n"
 		);
 		const options = optionsFor();
@@ -534,7 +534,7 @@ describe('Next.js build-time manifest', () => {
 		});
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'@inth/nextjs/build: could not read c15t.config.ts'
+				'@inth/nextjs/build: could not read inth.config.ts'
 			)
 		);
 		expect(String(warn.mock.calls[0]?.[0])).toContain('config exploded');

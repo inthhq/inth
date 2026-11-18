@@ -8,8 +8,8 @@ import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentBanner } from '../../src/lib/banner/consent-banner';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
 import { warmDialog } from '../../src/lib/core/dialog-warming';
-import type { C15tProviderOptions } from '../../src/lib/core/options';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import type { InthProviderOptions } from '../../src/lib/core/options';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
 import { IABConsentBanner } from './iab-consent-banner';
 import {
@@ -22,7 +22,7 @@ import { IABConsentDialogBody } from './iab-consent-dialog-body';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [IABConsentBanner, IABConsentDialog],
 	selector: 'test-iab-banner-and-dialog',
-	template: `<c15t-iab-consent-banner /><c15t-iab-consent-dialog />`,
+	template: `<inth-iab-consent-banner /><inth-iab-consent-dialog />`,
 })
 class Host {}
 
@@ -30,7 +30,7 @@ class Host {}
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, IABConsentBanner, IABConsentDialog],
 	selector: 'test-side-by-side',
-	template: `<c15t-consent-banner /><c15t-iab-consent-banner /><c15t-iab-consent-dialog />`,
+	template: `<inth-consent-banner /><inth-iab-consent-banner /><inth-iab-consent-dialog />`,
 })
 class SideBySide {}
 
@@ -38,7 +38,7 @@ class SideBySide {}
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [IABConsentDialog],
 	selector: 'test-controlled-iab-load',
-	template: `<c15t-iab-consent-dialog [(open)]="open" />`,
+	template: `<inth-iab-consent-dialog [(open)]="open" />`,
 })
 class ControlledHost {
 	readonly open = signal(false);
@@ -75,7 +75,7 @@ describe('the IAB dialog body loading', () => {
 		});
 
 	/** IAB configured, as a side-by-side app does, under an opt-in policy. */
-	const optInWithIAB = (): C15tProviderOptions =>
+	const optInWithIAB = (): InthProviderOptions =>
 		({
 			...testOptions(),
 			disableAnimation: true,
@@ -88,12 +88,12 @@ describe('the IAB dialog body loading', () => {
 					prompt: 'choice',
 				},
 			]),
-		}) as C15tProviderOptions;
+		}) as InthProviderOptions;
 
 	test('loads nothing under a policy that is not IAB', async () => {
 		const { loader, provider } = countingLoader();
 		TestBed.configureTestingModule({
-			providers: [provideC15t(optInWithIAB()), provider],
+			providers: [provideInth(optInWithIAB()), provider],
 		});
 		const fixture = TestBed.createComponent(SideBySide);
 		const consent = TestBed.inject(ConsentManager);
@@ -117,11 +117,11 @@ describe('the IAB dialog body loading', () => {
 		const { loader, provider } = countingLoader();
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					...iabTestOptions(),
-				} as C15tProviderOptions),
+				} as InthProviderOptions),
 				provider,
 			],
 		});
@@ -139,11 +139,11 @@ describe('the IAB dialog body loading', () => {
 		const loader = { loads: 0 };
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					...iabTestOptions(),
-				} as C15tProviderOptions),
+				} as InthProviderOptions),
 				{
 					provide: IAB_CONSENT_DIALOG_BODY,
 					useValue: (): Promise<Type<IABConsentDialogBody>> => {
@@ -161,7 +161,7 @@ describe('the IAB dialog body loading', () => {
 		}, WAIT);
 		const before = loader.loads;
 
-		// A preferences link warms it, as hovering `c15tConsentDialogLink` does.
+		// A preferences link warms it, as hovering `inthConsentDialogLink` does.
 		warmDialog();
 		await vi.waitFor(() => {
 			expect(loader.loads).toBe(before + 1);
@@ -180,11 +180,11 @@ describe('the IAB dialog body loading', () => {
 		};
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					...iabTestOptions(),
-				} as C15tProviderOptions),
+				} as InthProviderOptions),
 				{ provide: IAB_CONSENT_DIALOG_BODY, useValue: load },
 			],
 		});
@@ -223,11 +223,11 @@ describe('the IAB dialog body loading', () => {
 		const loader = { loads: 0, works: false };
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					...iabTestOptions(),
-				} as C15tProviderOptions),
+				} as InthProviderOptions),
 				{
 					provide: IAB_CONSENT_DIALOG_BODY,
 					useValue: (): Promise<Type<IABConsentDialogBody>> => {

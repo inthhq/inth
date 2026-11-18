@@ -24,7 +24,7 @@
 		...testBackend('projectUrl'),
 	};
 	// `&arm=wall` sets the arm the way a flag provider would; without it
-	// c15t picks one.
+	// Inth picks one.
 	const experiment = experimentFromSearch(location.search);
 </script>
 

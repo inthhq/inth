@@ -37,7 +37,7 @@ describe('Attentive consent loader', () => {
 		vi.unstubAllGlobals();
 	});
 	it('creates no vendor requests, globals or storage before mapped consent', () => {
-		const scripts = [attentiveTag({ siteSlug: 'c15tfake' })];
+		const scripts = [attentiveTag({ siteSlug: 'inthfake' })];
 		const cookies = document.cookie;
 		const local = { ...localStorage };
 		const session = { ...sessionStorage };
@@ -54,7 +54,7 @@ describe('Attentive consent loader', () => {
 		expect({ ...sessionStorage }).toEqual(session);
 		updateScripts(scripts, granted);
 		const first = getLoader();
-		expect(first.src).toBe('https://cdn.attn.tv/c15tfake/dtag.js');
+		expect(first.src).toBe('https://cdn.attn.tv/inthfake/dtag.js');
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
 		updateScripts(scripts, deniedConsents);
@@ -65,7 +65,7 @@ describe('Attentive consent loader', () => {
 	});
 	it('honors an overridden category', () => {
 		const scripts = [
-			attentiveTag({ category: 'experience', siteSlug: 'c15tfake' }),
+			attentiveTag({ category: 'experience', siteSlug: 'inthfake' }),
 		];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
@@ -77,24 +77,24 @@ describe('Attentive consent loader', () => {
 describe('Attentive body tag lifecycle', () => {
 	registerVendorContractCleanup();
 	it('retains the validated configuration across caller mutation and remount', () => {
-		const options = { siteSlug: ' c15t-test_site-123 ' };
+		const options = { siteSlug: ' inth-test_site-123 ' };
 		const script = attentiveTag(options);
 		options.siteSlug = 'invalid/path';
 		loadScripts([script], deniedConsents);
 		expect(document.querySelector('script[src]')).toBeNull();
 		updateScripts([script], granted);
 		expect(getLoader().src).toBe(
-			'https://cdn.attn.tv/c15t-test_site-123/dtag.js'
+			'https://cdn.attn.tv/inth-test_site-123/dtag.js'
 		);
 		clearAllScripts();
 		loadScripts([script], granted);
 		expect(getLoader().src).toBe(
-			'https://cdn.attn.tv/c15t-test_site-123/dtag.js'
+			'https://cdn.attn.tv/inth-test_site-123/dtag.js'
 		);
 		expect(document.querySelectorAll('script[src]')).toHaveLength(1);
 	});
 	it('uses one body tag across pending withdrawal and helper recreation', () => {
-		const create = () => attentiveTag({ siteSlug: 'c15tfake' });
+		const create = () => attentiveTag({ siteSlug: 'inthfake' });
 		loadScripts([create()], granted);
 		const loader = getLoader();
 		expect(loader.parentElement).toBe(document.body);
@@ -105,6 +105,6 @@ describe('Attentive body tag lifecycle', () => {
 		expect(document.querySelectorAll('script[src]')).toHaveLength(1);
 		expect(
 			document.querySelector('script[src*="dtag.js"]')?.getAttribute('src')
-		).toBe('https://cdn.attn.tv/c15tfake/dtag.js');
+		).toBe('https://cdn.attn.tv/inthfake/dtag.js');
 	});
 });

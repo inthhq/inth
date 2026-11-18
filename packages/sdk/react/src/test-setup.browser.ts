@@ -43,7 +43,7 @@ if (typeof document !== 'undefined') {
 // Set mock GVL on window immediately (before any other code runs)
 // This is picked up by the bundled core code's fetchGVL function
 if (typeof window !== 'undefined') {
-	(window as unknown as { __c15t_mock_gvl?: typeof mockGVL }).__c15t_mock_gvl =
+	(window as unknown as { __inth_mock_gvl?: typeof mockGVL }).__inth_mock_gvl =
 		mockGVL;
 
 	console.log('[test-setup.browser] Mock GVL set on window');

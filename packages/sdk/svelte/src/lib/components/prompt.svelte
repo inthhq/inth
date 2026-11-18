@@ -112,9 +112,9 @@
 
 	// The script that holds a tap on the server-rendered banner made before
 	// hydration. The browser renders the same markup, so hydration adopts
-	// it; a script the browser inserts never runs. `c15tHandle` gives it the
+	// it; a script the browser inserts never runs. `inthHandle` gives it the
 	// page's nonce when the provider has none.
-	const earlyTapMarkup = `<script data-c15t-early-tap${
+	const earlyTapMarkup = `<script data-inth-early-tap${
 		theme.nonce ? ` nonce="${theme.nonce.replaceAll('"', '&quot;')}"` : ''
 	}>${EARLY_CONSENT_TAP_SCRIPT}</${'script'}>`;
 
@@ -478,7 +478,7 @@
 											style={toStyleAttribute(rightLinkStyle.style)}
 											data-action="right"
 											data-right={right}
-											data-c15t-rights={consent.snapshot.policyRule.rights.join(
+											data-inth-rights={consent.snapshot.policyRule.rights.join(
 												' '
 											)}
 											data-testid={`consent-banner-right-link-${right}`}

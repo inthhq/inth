@@ -277,7 +277,7 @@ export const subjectCookieBannerInputSchema = v.object({
  *
  * For legal documents, callers should prefer `documentSnapshotToken` when
  * available. `policyHash` is intended as a lighter-weight fallback when the
- * client knows the rendered release hash but not the internal c15t policy ID.
+ * client knows the rendered release hash but not the internal Inth policy ID.
  */
 export const subjectPolicyBasedInputSchema = v.object({
 	...baseSubjectConsentSchema.entries,
@@ -292,7 +292,7 @@ export const subjectPolicyBasedInputSchema = v.object({
 		v.pipe(
 			v.string(),
 			v.description(
-				'Internal c15t policy ID. Prefer documentSnapshotToken or policyHash for legal documents when available.'
+				'Internal inth policy ID. Prefer documentSnapshotToken or policyHash for legal documents when available.'
 			),
 			v.examples(['pol_123'])
 		)

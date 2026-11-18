@@ -1,8 +1,8 @@
 <include src="../build-time-manifest.mdx" />
 
 The default mode, `manifest()`, bundles the manifest. The module reads
-`NUXT_PUBLIC_C15T_BACKEND_URL`, then `NUXT_PUBLIC_INTH_PROJECT_URL`, when the
-`c15t` key sets no `projectUrl`, so
+`NUXT_PUBLIC_INTH_PROJECT_URL`, then `NUXT_PUBLIC_INTH_PROJECT_URL`, when the
+`inth` key sets no `projectUrl`, so
 `nuxt.config.ts` needs only the module:
 
 <include src="../examples/nuxt/nuxt-config.mdx" />
@@ -23,7 +23,7 @@ modes. A relative backend URL is also skipped, unless `onBuildError` is
 
 <include src="../build-time-manifest-notes.mdx" />
 
-Set `onBuildError` under the `c15t` key in `nuxt.config.ts`. In dev, and in a
+Set `onBuildError` under the `inth` key in `nuxt.config.ts`. In dev, and in a
 build with `onBuildError: 'runtime'`, a failed fetch leaves the server without
 a snapshot, and the server fetches and caches the policy at runtime.
 

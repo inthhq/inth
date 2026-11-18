@@ -2,10 +2,10 @@
 	"name": "@inth/sdk-browser",
 	"version": "3.2.0-canary.0",
 	"private": true,
-	"description": "Script-tag build of c15t for Webflow, WordPress, Framer, Squarespace and plain HTML. One script tag, script blocking and an optional IAB TCF build.",
+	"description": "Script-tag build of inth for Webflow, WordPress, Framer, Squarespace and plain HTML. One script tag, script blocking and an optional IAB TCF build.",
 	"keywords": [
 		"banner",
-		"c15t",
+		"inth",
 		"cmp",
 		"consent",
 		"consent-banner",
@@ -99,7 +99,7 @@
 			"import": "./dist/gpp.js",
 			"default": "./dist/gpp.js"
 		},
-		"./styles.css": "./dist/c15t.css",
+		"./styles.css": "./dist/inth.css",
 		"./c15t.js": "./dist/c15t.js",
 		"./c15t.hosted.js": "./dist/c15t.hosted.js",
 		"./c15t.commit.js": "./dist/c15t.commit.js",
@@ -146,9 +146,9 @@
 		"@inth/sdk-ui": "workspace:*"
 	},
 	"devDependencies": {
-		"@c15t/conformance": "workspace:*",
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/conformance": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@emotion/css": "11.13.5",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",

@@ -451,7 +451,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		const result = kernel.hydrate(records);
 		if (result.ok === false) {
 			console.warn(
-				'[c15t] Stored consent records were rejected.',
+				'[inth] Stored consent records were rejected.',
 				result.issues
 			);
 			return false;

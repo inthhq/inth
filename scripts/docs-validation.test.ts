@@ -66,7 +66,7 @@ test('documented @inth imports exist in their package export maps', async () => 
 	for (const file of files) {
 		const content = readFileSync(resolve(docsRoot, file), 'utf8');
 		const imports = content.matchAll(
-			/(?:from\s+|import\s*\(?)["'](?<specifier>(?:@inth\/[a-z-]+|c15t)(?:\/[^"']*)?)["']/gu
+			/(?:from\s+|import\s*\(?)["'](?<specifier>(?:@inth\/[a-z-]+|inth)(?:\/[^"']*)?)["']/gu
 		);
 		for (const match of imports) {
 			const name = match.groups?.specifier?.split('?')[0] ?? '';
@@ -186,7 +186,7 @@ test('framework sidebars follow the shared group template', async () => {
 
 /**
  * v3 is npm `latest`, so SDK install commands use bare package names. A
- * major-version pin such as `c15t@3` is allowed where a page shows what the
+ * major-version pin such as `inth@3` is allowed where a page shows what the
  * CLI installs; dist-tags such as `@alpha` are not.
  */
 test('SDK install commands select the documented release', async () => {
@@ -199,7 +199,7 @@ test('SDK install commands select the documented release', async () => {
 		)) {
 			for (const name of (match.groups?.command ?? '').split(' ')) {
 				const bare = name.replace(/(?<=.)@[^/]*$/u, '');
-				if (!/^(?:c15t|@c15t\/.+|@inth\/.+)$/u.test(bare)) {
+				if (!/^(?:inth|@inth\/.+|@inth\/.+)$/u.test(bare)) {
 					continue;
 				}
 				if (name !== bare && !/^\d+$/u.test(name.slice(bare.length + 1))) {
@@ -348,7 +348,7 @@ test('documentation links, includes and metadata are valid', async () => {
 		if (violation.severity !== 'error') {
 			return false;
 		}
-		// The self-host section and most CLI pages left with the c15t backend
+		// The self-host section and most CLI pages left with the Inth backend
 		// and CLI (commit ba2162401), and about 60 pages still link to them.
 		// The SDK docs rewrite removes or repoints those links; delete this
 		// exception with it. Links to any other missing route still fail,

@@ -19,7 +19,7 @@ import type { KernelOverrides } from '@inth/sdk-core';
 import type { PrefetchedInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 
 /** localStorage key of the cache. */
-export const POLICY_CACHE_KEY = 'c15t-init-policy';
+export const POLICY_CACHE_KEY = 'inth-init-policy';
 
 /** Entries older than this are ignored. */
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;

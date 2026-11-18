@@ -9,8 +9,8 @@ import {
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentBanner } from '../../src/lib/banner/consent-banner';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
-import type { C15tProviderOptions } from '../../src/lib/core/options';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import type { InthProviderOptions } from '../../src/lib/core/options';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
 import { IABConsentBanner } from './iab-consent-banner';
 import { IABConsentDialog } from './iab-consent-dialog';
@@ -21,10 +21,10 @@ import { IABConsentDialog } from './iab-consent-dialog';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, ConsentDialog, IABConsentBanner, IABConsentDialog],
 	selector: 'test-side-by-side',
-	template: `<c15t-consent-banner />
-		<c15t-consent-dialog />
-		<c15t-iab-consent-banner />
-		<c15t-iab-consent-dialog />`,
+	template: `<inth-consent-banner />
+		<inth-consent-dialog />
+		<inth-iab-consent-banner />
+		<inth-iab-consent-dialog />`,
 })
 class SideBySide {}
 
@@ -41,11 +41,11 @@ describe('standard and IAB surfaces side by side', () => {
 	test('under an IAB policy only the IAB banner and dialog show', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					...iabTestOptions(),
-				} as C15tProviderOptions),
+				} as InthProviderOptions),
 			],
 		});
 		const fixture = TestBed.createComponent(SideBySide);
@@ -69,12 +69,12 @@ describe('standard and IAB surfaces side by side', () => {
 		expect(byTestId('consent-dialog-card')).toBeNull();
 	});
 
-	const iabPolicy = (): C15tProviderOptions =>
+	const iabPolicy = (): InthProviderOptions =>
 		({
 			...testOptions(),
 			disableAnimation: true,
 			...iabTestOptions(),
-		}) as C15tProviderOptions;
+		}) as InthProviderOptions;
 
 	/** The IAB dialog opened from the consent state, as preferences do. */
 	const openPreferences = async (
@@ -106,7 +106,7 @@ describe('standard and IAB surfaces side by side', () => {
 		const loads = { panel: 0 };
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t(iabPolicy()),
+				provideInth(iabPolicy()),
 				{
 					provide: CONSENT_DIALOG_PANEL,
 					useValue: async () => {
@@ -126,7 +126,7 @@ describe('standard and IAB surfaces side by side', () => {
 	test('a standard dialog that fails to load leaves the IAB dialog open', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t(iabPolicy()),
+				provideInth(iabPolicy()),
 				{
 					provide: CONSENT_DIALOG_PANEL,
 					useValue: () => Promise.reject(new Error('chunk failed')),

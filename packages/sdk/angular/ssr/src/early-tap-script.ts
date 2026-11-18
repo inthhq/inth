@@ -4,7 +4,7 @@
  * A server-rendered banner paints long before Angular attaches its
  * handlers; on a slow phone a tap in that gap lands on a plain `<button>`.
  * The script from `@inth/sdk/surface-actions` records the tap and hides
- * the banner, and `<c15t-consent-banner>` records the choice once it
+ * the banner, and `<inth-consent-banner>` records the choice once it
  * hydrates.
  *
  * Angular drops `<script>` from templates and hydration would trip over an
@@ -19,7 +19,7 @@ import {
 const NONCE = /^[\w+/=-]+$/u;
 
 /** Marks the script, so a page gets it once. @internal */
-export const EARLY_TAP_SCRIPT_ATTRIBUTE = 'data-c15t-early-tap';
+export const EARLY_TAP_SCRIPT_ATTRIBUTE = 'data-inth-early-tap';
 
 /**
  * Adds the early-tap script to `<head>` when the render has a stock banner.

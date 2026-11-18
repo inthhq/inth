@@ -4,7 +4,7 @@ import { isProductionBuild } from '../../libs/is-production';
  * Log a save outbox warning in development builds. A save that did not reach
  * the backend otherwise only shows up in `onError`, if the app set one.
  *
- * @param message - The warning, starting with `[c15t]`.
+ * @param message - The warning, starting with `[inth]`.
  * @param error - What failed, logged after the message when given.
  * @internal
  */

@@ -2,7 +2,7 @@
  * The init script's stand-in for `@inth/sdk/engine`'s translations module inside
  * `buildInitialSnapshot`.
  *
- * Core's `applyTranslationOverrides` compares app overrides with c15t's
+ * Core's `applyTranslationOverrides` compares app overrides with inth's
  * built-in copy, so it carries bundled English. The init script passes no
  * overrides (a page with `i18n` options leaves the banner to the engine),
  * and without them core only renames legacy keys, which this does the same

@@ -7,7 +7,7 @@ import {
 import {
 	gatePageCSS,
 	gatePageHTML,
-} from '@c15t/benchmarking/consent-gate-page';
+} from '@inth/benchmarking/consent-gate-page';
 
 const STYLE_ID = 'gate-page-css';
 

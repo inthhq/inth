@@ -46,7 +46,7 @@ describe('@inth/nextjs/api', () => {
 			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
-		const served = await call(GET, 'https://app.example.com/api/c15t/manifest');
+		const served = await call(GET, 'https://app.example.com/api/inth/manifest');
 		expect(await served.json()).toEqual(MANIFEST_FIXTURE);
 		await Promise.all(
 			[
@@ -55,7 +55,7 @@ describe('@inth/nextjs/api', () => {
 			].map(async ({ country, policyId, region }) => {
 				const response = await call(
 					GET,
-					'https://app.example.com/api/c15t/init',
+					'https://app.example.com/api/inth/init',
 					{
 						headers: {
 							'x-vercel-ip-country': country,
@@ -79,12 +79,12 @@ describe('@inth/nextjs/api', () => {
 			projectUrl: 'https://consent.example.com',
 		});
 
-		const init = await call(GET, 'https://app.example.com/api/c15t/init', {
+		const init = await call(GET, 'https://app.example.com/api/inth/init', {
 			headers: { 'x-vercel-ip-country': 'DE' },
 		});
 		const served = await call(
 			GET,
-			'https://app.example.com/api/c15t/manifest',
+			'https://app.example.com/api/inth/manifest',
 			{ headers: { 'if-none-match': '"manifest-revision"' } }
 		);
 
@@ -110,7 +110,7 @@ describe('@inth/nextjs/api', () => {
 			},
 			projectUrl: 'https://consent.example.com',
 		});
-		await call(GET, 'https://app.example.com/api/c15t/init');
+		await call(GET, 'https://app.example.com/api/inth/init');
 		expect(registered).toHaveLength(1);
 		await registered[0];
 		expect(fetch).toHaveBeenLastCalledWith(
@@ -123,13 +123,13 @@ describe('@inth/nextjs/api', () => {
 		const fetch = manifestFetch();
 		const config = defineConsentConfig({
 			mode: manifest({ resolve: 'browser', source: 'runtime' }),
-			projectUrl: 'https://consent.example.com/api/c15t',
+			projectUrl: 'https://consent.example.com/api/inth',
 			routePrefix: '/api/consent',
 		});
 		const { GET } = createConsentRoute({ config, fetch });
 		await call(GET, 'https://app.example.com/api/consent/manifest');
 		expect(fetch.mock.calls[0]?.[0]).toBe(
-			'https://consent.example.com/api/c15t/manifest'
+			'https://consent.example.com/api/inth/manifest'
 		);
 	});
 
@@ -140,7 +140,7 @@ describe('@inth/nextjs/api', () => {
 			projectUrl: 'https://consent.example.com',
 		});
 		const { GET } = createConsentRoute({ config, fetch });
-		await call(GET, 'https://app.example.com/api/c15t/manifest');
+		await call(GET, 'https://app.example.com/api/inth/manifest');
 		expect(fetch.mock.calls[0]?.[0]).toBe(
 			'https://cdn.example.com/policy.json'
 		);
@@ -149,7 +149,7 @@ describe('@inth/nextjs/api', () => {
 	test('names the package when no backend is configured', async () => {
 		const { GET } = createConsentRoute({});
 		await expect(
-			call(GET, 'https://app.example.com/api/c15t/init')
+			call(GET, 'https://app.example.com/api/inth/init')
 		).rejects.toThrow('@inth/nextjs: pass projectUrl or manifestUrl.');
 	});
 

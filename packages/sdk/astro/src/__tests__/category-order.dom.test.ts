@@ -56,7 +56,7 @@ describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
 		{ timeout: 20_000 },
 		async () => {
 			const host = document.createElement('div');
-			host.setAttribute('data-c15t-dialog-host', 'preferences');
+			host.setAttribute('data-inth-dialog-host', 'preferences');
 			document.body.append(host);
 			cleanup.push(() => host.remove());
 			if (ui === 'react') {
@@ -102,7 +102,7 @@ describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
 			);
 			cleanup.push(() => {
 				client.dispose();
-				document.getElementById('c15t-dialog-host')?.remove();
+				document.getElementById('inth-dialog-host')?.remove();
 			});
 			await client.openDialog();
 

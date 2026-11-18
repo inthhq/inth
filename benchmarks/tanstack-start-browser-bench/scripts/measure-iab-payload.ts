@@ -39,7 +39,7 @@ const transport = createManifestTransport({
 	fetchGvl: () => Promise.resolve(gvl),
 	inputs: { country: 'DE', language: 'en' },
 	snapshot: {
-		branding: 'c15t',
+		branding: 'inth',
 		cmpId: 28,
 		iab: { enabled: true, gvl: { url: 'https://gvl.test/list' } },
 		policyPacks: [
@@ -59,7 +59,7 @@ const { gvlReference: _reference, ...common } = response;
 const before = { ...common, gvl };
 const after = deferInitGvl(
 	before,
-	`/api/c15t/init?c15t-gvl=${gvl.vendorListVersion}&language=en`
+	`/api/inth/init?c15t-gvl=${gvl.vendorListVersion}&language=en`
 );
 if (
 	JSON.stringify(resolveIABBannerSummary({ gvl })) !==
@@ -91,7 +91,7 @@ try {
 			const start = performance.now();
 			const prepared =
 				label === 'after'
-					? deferInitGvl(before, after.gvlReference?.url ?? '/api/c15t/init')
+					? deferInitGvl(before, after.gvlReference?.url ?? '/api/inth/init')
 					: before;
 			const preparedAt = performance.now();
 			JSON.stringify(prepared);

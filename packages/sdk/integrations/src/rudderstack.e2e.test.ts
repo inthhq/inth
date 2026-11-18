@@ -57,7 +57,7 @@ describe('rudderstack contract', () => {
 			[
 				{
 					...rudderstack({
-						dataPlaneUrl: 'https://c15t-live-probe.invalid',
+						dataPlaneUrl: 'https://inth-live-probe.invalid',
 						loadOptions: {
 							useBeacon: true,
 						},
@@ -80,7 +80,7 @@ describe('rudderstack contract', () => {
 			[
 				'load',
 				'RUDDERSTACK-CONTRACT',
-				'https://c15t-live-probe.invalid',
+				'https://inth-live-probe.invalid',
 				{ useBeacon: true },
 			],
 			['page'],
@@ -106,7 +106,7 @@ describe('rudderstack contract', () => {
 			[
 				{
 					...rudderstack({
-						dataPlaneUrl: 'https://c15t-live-probe.invalid',
+						dataPlaneUrl: 'https://inth-live-probe.invalid',
 						trackPageView: false,
 						writeKey: 'RUDDERSTACK-CONTRACT',
 					}),
@@ -117,7 +117,7 @@ describe('rudderstack contract', () => {
 		);
 
 		expect(queueSnapshot).toEqual([
-			['load', 'RUDDERSTACK-CONTRACT', 'https://c15t-live-probe.invalid', {}],
+			['load', 'RUDDERSTACK-CONTRACT', 'https://inth-live-probe.invalid', {}],
 		]);
 	});
 
@@ -134,7 +134,7 @@ describe('rudderstack contract', () => {
 			[
 				{
 					...rudderstack({
-						dataPlaneUrl: 'https://c15t-live-probe.invalid',
+						dataPlaneUrl: 'https://inth-live-probe.invalid',
 						writeKey: 'RUDDERSTACK-CONTRACT',
 					}),
 					id: 'rudderstack-contract',

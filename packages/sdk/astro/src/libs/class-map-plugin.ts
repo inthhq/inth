@@ -30,7 +30,7 @@ const CLIENT_LINKED_CSS =
 const IAB_CLASS_MAP = /^@inth\/sdk\/ui\/styles\/components\/iab-/u;
 
 /** The module an island's client-linked stylesheet import resolves to. */
-export const EMPTY_STYLESHEET_ID = '\0c15t:client-linked-stylesheet';
+export const EMPTY_STYLESHEET_ID = '\0inth:client-linked-stylesheet';
 
 /** Options for {@link createClassMapPlugin}. */
 export interface ClassMapPluginOptions {
@@ -69,7 +69,7 @@ export interface ClassMapPlugin {
 }
 
 /**
- * Create the plugin. Only add it when the integration delivers c15t's
+ * Create the plugin. Only add it when the integration delivers inth's
  * styles: with `styles: false` the islands' own CSS is all a site has.
  *
  * @param options - Which stylesheets the integration injects.
@@ -83,7 +83,7 @@ export const createClassMapPlugin = function createClassMapPlugin(
 		load(id) {
 			return id === EMPTY_STYLESHEET_ID ? 'export {};' : null;
 		},
-		name: 'c15t:class-maps-without-css',
+		name: 'inth:class-maps-without-css',
 		async resolveId(id, importer, resolveOptions = {}) {
 			// The server build already resolves the `node` condition.
 			if (

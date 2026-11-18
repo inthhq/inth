@@ -15,13 +15,13 @@ describe('adobeAnalytics', () => {
 	it('matches registry metadata with the Adobe Tags embed URL', () => {
 		const script = adobeAnalytics({
 			scriptUrl:
-				'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+				'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 		});
 
 		expectScriptMatchesIntegration('adobeAnalytics', script, {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: undefined,
-			src: 'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+			src: 'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 		});
 		expect(script.async).toBe(true);
 	});
@@ -29,11 +29,11 @@ describe('adobeAnalytics', () => {
 	it('trims the script URL before loading', () => {
 		const script = adobeAnalytics({
 			scriptUrl:
-				' https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js ',
+				' https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js ',
 		});
 
 		expect(script.src).toBe(
-			'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js'
+			'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js'
 		);
 	});
 
@@ -41,7 +41,7 @@ describe('adobeAnalytics', () => {
 		const script = adobeAnalytics({
 			async: false,
 			scriptUrl:
-				'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+				'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 		});
 
 		expect(script.async).toBe(false);
@@ -50,7 +50,7 @@ describe('adobeAnalytics', () => {
 	it('seeds adobeDataLayer before loading by default', () => {
 		const script = adobeAnalytics({
 			scriptUrl:
-				'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+				'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 		});
 		const globalRef = getTestGlobal();
 
@@ -62,7 +62,7 @@ describe('adobeAnalytics', () => {
 	it('does not replace an existing adobeDataLayer', () => {
 		const script = adobeAnalytics({
 			scriptUrl:
-				'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+				'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 		});
 		const globalRef = getTestGlobal();
 		const existingQueue = [{ event: 'pageView' }];
@@ -76,7 +76,7 @@ describe('adobeAnalytics', () => {
 	it('allows data layer seeding to be disabled', () => {
 		const script = adobeAnalytics({
 			scriptUrl:
-				'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+				'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 			seedAdobeDataLayer: false,
 		});
 		const globalRef = getTestGlobal();
@@ -98,7 +98,7 @@ describe('adobeAnalytics', () => {
 		expectSkippedScript(
 			() =>
 				adobeAnalytics({
-					scriptUrl: 'http://assets.adobedtm.com/c15tfake/launch.min.js',
+					scriptUrl: 'http://assets.adobedtm.com/inthfake/launch.min.js',
 				}),
 			{ category: 'measurement', id: 'adobe-analytics' },
 			'adobeAnalytics: invalid scriptUrl - must use https: from your Adobe Data Collection embed code'

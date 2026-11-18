@@ -1,6 +1,6 @@
 /**
  * `@inth/nextjs` under the `react-server` condition: what a Server
- * Component, route handler or `c15t.config.ts` gets from `@inth/nextjs`.
+ * Component, route handler or `inth.config.ts` gets from `@inth/nextjs`.
  *
  * The full entry re-exports all of `@inth/react`, whose hooks import
  * client-only React APIs that webpack rejects in the server graph. Here

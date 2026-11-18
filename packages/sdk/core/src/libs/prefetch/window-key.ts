@@ -5,7 +5,7 @@
  *
  * @internal
  */
-export const PREFETCH_WINDOW_KEY = '__c15tInitialDataPromises';
+export const PREFETCH_WINDOW_KEY = '__inthInitialDataPromises';
 
 /**
  * Whether an inline prefetch script stored any init request on `window`.

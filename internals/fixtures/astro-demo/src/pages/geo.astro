@@ -10,7 +10,7 @@
  */
 import BaseLayout from '../layouts/demo.astro';
 
-const { c15t } = Astro.locals;
+const { inth } = Astro.locals;
 ---
 
 <BaseLayout title="Geo overrides">
@@ -23,17 +23,17 @@ const { c15t } = Astro.locals;
 
 	<section class="panel">
 		<h2>Resolved request inputs</h2>
-		<pre data-testid="geo-inputs">{JSON.stringify(c15t.inputs, null, 2)}</pre>
+		<pre data-testid="geo-inputs">{JSON.stringify(inth.inputs, null, 2)}</pre>
 	</section>
 
 	<section class="panel">
 		<h2>Resolved decision</h2>
 		<pre data-testid="geo-decision">{JSON.stringify(
 			{
-				decision: c15t.decision,
-				language: c15t.snapshot.translations?.language ?? null,
-				policy: c15t.snapshot.policyRule.id ?? null,
-				shouldShowBanner: c15t.shouldShowBanner,
+				decision: inth.decision,
+				language: inth.snapshot.translations?.language ?? null,
+				policy: inth.snapshot.policyRule.id ?? null,
+				shouldShowBanner: inth.shouldShowBanner,
 			},
 			null,
 			2

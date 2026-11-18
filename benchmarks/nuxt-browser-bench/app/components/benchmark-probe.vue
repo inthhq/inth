@@ -6,7 +6,7 @@ import {
 	useConsentActiveUI,
 	useConsentInit,
 	useConsentSnapshot,
-} from '#c15t/composables';
+} from '#inth/composables';
 
 const props = defineProps<{
 	scenario: NuxtBenchScenario;
@@ -55,11 +55,11 @@ interface BenchmarkElementTimingEntry extends PerformanceEntry {
 
 declare global {
 	interface Window {
-		__c15tNuxtBench?: NuxtBenchState;
+		__inthNuxtBench?: NuxtBenchState;
 	}
 }
 
-const BANNER_ELEMENT_TIMING_NAME = 'c15t-consent-banner';
+const BANNER_ELEMENT_TIMING_NAME = 'inth-consent-banner';
 
 const activeUI = useConsentActiveUI();
 const init = useConsentInit();
@@ -71,10 +71,10 @@ const getBenchState = function getBenchState(): NuxtBenchState | undefined {
 	}
 
 	if (
-		!window.__c15tNuxtBench ||
-		window.__c15tNuxtBench.scenario !== props.scenario
+		!window.__inthNuxtBench ||
+		window.__inthNuxtBench.scenario !== props.scenario
 	) {
-		window.__c15tNuxtBench = {
+		window.__inthNuxtBench = {
 			activeUI: 'none',
 			mountCount: 0,
 			onBannerFetchedCount: 0,
@@ -86,7 +86,7 @@ const getBenchState = function getBenchState(): NuxtBenchState | undefined {
 		};
 	}
 
-	return window.__c15tNuxtBench;
+	return window.__inthNuxtBench;
 };
 
 const normalizeActiveUI = function normalizeActiveUI(value: unknown): string {

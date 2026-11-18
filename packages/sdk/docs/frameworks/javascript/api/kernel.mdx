@@ -1,6 +1,6 @@
 ---
 title: Kernel API
-description: Reference for the c15t consent kernel in JavaScript, covering how to get or create one, its snapshot and subscriptions, commands, setters, hydration, events and listener ordering.
+description: Reference for the Inth consent kernel in JavaScript, covering how to get or create one, its snapshot and subscriptions, commands, setters, hydration, events and listener ordering.
 group: frameworks
 ---
 
@@ -76,7 +76,7 @@ records a choice.
 | `set.draft(values)` | Staged category values that a no-argument `save()` confirms. Never a grant. |
 | `set.overrides({ country, region, language, gpc })` | Decision inputs, merged into the current ones; `undefined` clears a key. Call `commands.init()` after it to resolve the policy again. |
 | `set.language(code)` | The language override. |
-| `set.privacySignals({ gpc })` | The detected GPC signal. c15t reads the browser's signal itself; use this to pass one detected elsewhere, such as a `Sec-GPC` request header. |
+| `set.privacySignals({ gpc })` | The detected GPC signal. Inth reads the browser's signal itself; use this to pass one detected elsewhere, such as a `Sec-GPC` request header. |
 | `set.consentCategories(categories)` | The configured categories. Discovered categories stay. |
 | `set.registerConsentCategories(categories)` | Add categories your integrations use. They stay for the kernel's lifetime. |
 | `set.vendors(patch, options?)` | Merge declared vendors. |
@@ -126,7 +126,7 @@ a change commits, in registration order. Each receives the frozen snapshot that
 change produced.
 
 - A listener that throws does not stop the listeners after it or fail the
-  command that caused the change. In a browser page c15t passes the error to
+  command that caused the change. In a browser page Inth passes the error to
   `reportError`. Everywhere else, including Bun and Deno servers where
   `reportError` would end the process, it logs the error with `console.error`.
 - A listener can call commands and setters. Before the nested call returns,

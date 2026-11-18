@@ -7,21 +7,21 @@
  * fixed set of class maps, so a rule that needs a class outside them only
  * costs bytes in `c15t.js` and selector matching in the shadow root.
  *
- * Only `@inth/sdk-ui`'s hashed CSS-module classes (`c15t-ui-<name>-<hash>`) decide
+ * Only `@inth/sdk-ui`'s hashed CSS-module classes (`inth-ui-<name>-<hash>`) decide
  * anything. A selector keeps its rule unless it requires one of those classes
  * and no class map this package renders contains it. Classes inside `:not()`
- * never make a selector unmatchable, and plain classes such as `c15t-dark` or
- * `c15t-theme-root` are assumed present. `:root`/`:host` token blocks and
+ * never make a selector unmatchable, and plain classes such as `inth-dark` or
+ * `inth-theme-root` are assumed present. `:root`/`:host` token blocks and
  * `@keyframes` are kept. A component custom property goes only when every
  * rule that read it went, such as the tabs and ConsentGate variables; the
- * `--c15t-*` theme tokens always stay.
+ * `--inth-*` theme tokens always stay.
  */
 
 import { parse } from 'postcss';
 import type { AtRule, Root } from 'postcss';
 
 /** Class names `@inth/sdk-ui` generates for its CSS modules. */
-const HASHED_CLASS = /^c15t-ui-[\w-]+-[\w-]{5}$/u;
+const HASHED_CLASS = /^inth-ui-[\w-]+-[\w-]{5}$/u;
 
 const NEGATION = /:not\((?:[^()]|\([^()]*\))*\)/gu;
 
@@ -30,7 +30,7 @@ const CLASS_NAME = /\.(?<name>-?[_a-zA-Z][\w-]*)/gu;
 const VAR_REFERENCE = /var\(\s*(?<name>--[\w-]+)/gu;
 
 /** Theme tokens: public, so never dropped. */
-const THEME_TOKEN = /^--c15t-/u;
+const THEME_TOKEN = /^--inth-/u;
 
 /**
  * Every class name a set of class maps can put on an element.

@@ -8,7 +8,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { setGenerated } from '../../__tests__/generated';
-import { c15tHandle } from '../handle';
+import { inthHandle } from '../handle';
 import { manifest as manifestMode } from '../index';
 import { loadConsent } from '../load-consent';
 import { createConsentRoute } from '../routes';
@@ -16,7 +16,7 @@ import { createEvent } from './event';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 const BACKEND = 'https://consent.example.com';
-const ROUTE_ID = '/api/c15t/[...path]';
+const ROUTE_ID = '/api/inth/[...path]';
 
 const upstream = () =>
 	vi.fn<typeof globalThis.fetch>().mockImplementation((input) =>
@@ -38,7 +38,7 @@ const restEvent = (
 	createEvent({
 		...init,
 		route: { id: ROUTE_ID, params: { path } },
-		url: `https://shop.example/api/c15t/${path}`,
+		url: `https://shop.example/api/inth/${path}`,
 	});
 
 beforeEach(() => {
@@ -86,7 +86,7 @@ describe('createConsentRoute', () => {
 		const manifest = await GET(restEvent('manifest'));
 		const root = await GET(restEvent(''));
 		const fixed = await GET(
-			createEvent({ url: 'https://shop.example/api/c15t/manifest' })
+			createEvent({ url: 'https://shop.example/api/inth/manifest' })
 		);
 		expect(manifest.headers.get('cache-control')).toContain('s-maxage=1');
 		expect(root.headers.get('cache-control')).toBe('private, no-store');
@@ -103,7 +103,7 @@ describe('createConsentRoute', () => {
 				fetch: eventFetch,
 				headers: { host: 'evil.example' },
 				route: { id: ROUTE_ID, params: { path: 'init' } },
-				url: 'https://shop.example/api/c15t/init',
+				url: 'https://shop.example/api/inth/init',
 			})
 		);
 		expect(eventFetch).toHaveBeenCalledWith(
@@ -156,14 +156,14 @@ describe('createConsentRoute', () => {
 	});
 });
 
-describe('createConsentRoute with c15tHandle', () => {
+describe('createConsentRoute with inthHandle', () => {
 	afterEach(() => {
 		setGenerated({});
 	});
 
 	/** Runs the handle, then the route, on one request, as SvelteKit does. */
 	const throughHandle = (
-		handle: ReturnType<typeof c15tHandle>,
+		handle: ReturnType<typeof inthHandle>,
 		route: (event: RequestEvent) => Response | Promise<Response>,
 		event: RequestEvent
 	): Promise<Response> =>
@@ -174,7 +174,7 @@ describe('createConsentRoute with c15tHandle', () => {
 		const own = { ...MANIFEST_FIXTURE, revision: 'from-the-handle' };
 		const { GET } = createConsentRoute({ fetch });
 		const response = await throughHandle(
-			c15tHandle({ projectUrl: BACKEND, snapshot: own }),
+			inthHandle({ projectUrl: BACKEND, snapshot: own }),
 			GET,
 			restEvent('manifest')
 		);
@@ -188,12 +188,12 @@ describe('createConsentRoute with c15tHandle', () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({ fetch });
 		await throughHandle(
-			c15tHandle({ projectUrl: 'https://handle.example' }),
+			inthHandle({ projectUrl: 'https://handle.example' }),
 			GET,
 			restEvent('manifest')
 		);
 		await throughHandle(
-			c15tHandle({ projectUrl: 'https://hosted.example' }),
+			inthHandle({ projectUrl: 'https://hosted.example' }),
 			GET,
 			restEvent('manifest')
 		);
@@ -207,7 +207,7 @@ describe('createConsentRoute with c15tHandle', () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({ fetch });
 		await throughHandle(
-			c15tHandle({
+			inthHandle({
 				mode: manifestMode({ manifestUrl: 'https://cdn.example/manifest' }),
 				projectUrl: BACKEND,
 			}),
@@ -226,7 +226,7 @@ describe('createConsentRoute with c15tHandle', () => {
 			projectUrl: 'https://route.example',
 		});
 		await throughHandle(
-			c15tHandle({ projectUrl: 'https://handle.example' }),
+			inthHandle({ projectUrl: 'https://handle.example' }),
 			GET,
 			restEvent('manifest')
 		);
@@ -236,14 +236,14 @@ describe('createConsentRoute with c15tHandle', () => {
 	});
 
 	test('the proxy setup forwards saves to the build backend, not to itself', async () => {
-		// c15tHandle({ projectUrl: '/api/c15t', routePrefix: '/api/c15t' })
+		// inthHandle({ projectUrl: '/api/inth', routePrefix: '/api/inth' })
 		// points the browser at the route; the route must forward upstream.
 		setGenerated({ projectUrl: BACKEND });
 		const fetch = upstream();
 		const eventFetch = vi.fn<typeof globalThis.fetch>();
-		const handle = c15tHandle({
-			projectUrl: '/api/c15t',
-			routePrefix: '/api/c15t',
+		const handle = inthHandle({
+			projectUrl: '/api/inth',
+			routePrefix: '/api/inth',
 		});
 		const { GET, POST } = createConsentRoute({ fetch, proxy: true });
 
@@ -254,8 +254,8 @@ describe('createConsentRoute with c15tHandle', () => {
 				Response.json(await loadConsent(event, { fetch })),
 		}).then((response) => response.json());
 		expect(consent).toMatchObject({
-			projectUrl: '/api/c15t',
-			routePrefix: '/api/c15t',
+			projectUrl: '/api/inth',
+			routePrefix: '/api/inth',
 		});
 
 		const save = await throughHandle(

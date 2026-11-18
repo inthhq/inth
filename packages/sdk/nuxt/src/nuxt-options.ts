@@ -5,8 +5,8 @@ import type {
 } from '@inth/vue/runtime/kernel.js';
 import type { NuxtConsentModeConfig } from '@inth/vue/runtime/nuxt-mode.js';
 
-/** The Nuxt module's configuration under the `c15t` key. */
-export interface C15tNuxtConfig
+/** The Nuxt module's configuration under the `inth` key. */
+export interface InthNuxtConfig
 	extends
 		ConsentConfig,
 		NuxtConsentModeConfig,
@@ -20,7 +20,7 @@ export interface C15tNuxtConfig
 	 *
 	 * Module options reach the browser through `runtimeConfig.public` as
 	 * JSON, so the `onRequestBlocked` callback is not accepted here. Set it
-	 * under `c15t.networkBlocker` in `app.config.ts` instead.
+	 * under `inth.networkBlocker` in `app.config.ts` instead.
 	 */
 	networkBlocker?: Omit<UseNetworkBlockerOptions, 'onRequestBlocked'> | false;
 }
@@ -33,13 +33,13 @@ export interface ConsentModuleOptions {
 	 * runtime instead, from the backend's `/init` while the manifest is
 	 * unavailable. `'fail'` stops `nuxt build` and `nuxt dev`. A missing
 	 * backend URL counts as a failed
-	 * download. The `C15T_ON_BUILD_ERROR` environment variable overrides this
+	 * download. The `INTH_ON_BUILD_ERROR` environment variable overrides this
 	 * option. The download waits at most 10 seconds; `nuxt prepare` never
 	 * downloads.
 	 */
 	onBuildError?: 'fail' | 'runtime';
 	/**
-	 * Add a c15t tab to Nuxt DevTools in development. The tab embeds c15t
+	 * Add a Inth tab to Nuxt DevTools in development. The tab embeds Inth
 	 * DevTools for the app's consent kernel. @default true
 	 */
 	devtools?: boolean;
@@ -54,8 +54,8 @@ export interface ConsentModuleOptions {
 	 * The script carries `nuxt-security`'s per-request nonce, or the
 	 * `nonce` option. Set `false` when your Content Security Policy cannot
 	 * allow it. To turn it off for some routes only, set
-	 * `routeRules: { '/path': { c15t: { initPrefetch: false } } }`, for
-	 * example where a client plugin changes c15t's config for that route.
+	 * `routeRules: { '/path': { inth: { initPrefetch: false } } }`, for
+	 * example where a client plugin changes inth's config for that route.
 	 *
 	 * @default true
 	 */
@@ -63,10 +63,10 @@ export interface ConsentModuleOptions {
 }
 
 /** Options accepted by the Nuxt module. */
-export type ModuleOptions = Partial<C15tNuxtConfig> & ConsentModuleOptions;
+export type ModuleOptions = Partial<InthNuxtConfig> & ConsentModuleOptions;
 
 /**
- * The `c15t` key of `app.config.ts`, merged over the module options when
+ * The `inth` key of `app.config.ts`, merged over the module options when
  * the app starts. App config is bundled with the app instead of passing
  * through JSON, so it also accepts functions such as
  * `networkBlocker.onRequestBlocked`. `mode` and `routePrefix` decide what
@@ -77,7 +77,7 @@ export type ModuleOptions = Partial<C15tNuxtConfig> & ConsentModuleOptions;
  * ```ts
  * // app/app.config.ts
  * export default defineAppConfig({
- * 	c15t: {
+ * 	Inth: {
  * 		networkBlocker: {
  * 			rules: [{ category: 'measurement', domain: 'tracker.example' }],
  * 			onRequestBlocked: (info) => console.info('Blocked', info.url),
@@ -86,8 +86,8 @@ export type ModuleOptions = Partial<C15tNuxtConfig> & ConsentModuleOptions;
  * });
  * ```
  */
-export interface C15tNuxtAppConfig extends Omit<
-	C15tNuxtConfig,
+export interface InthNuxtAppConfig extends Omit<
+	InthNuxtConfig,
 	'mode' | 'networkBlocker' | 'routePrefix'
 > {
 	/**

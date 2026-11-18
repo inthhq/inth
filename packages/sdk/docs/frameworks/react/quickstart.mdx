@@ -29,11 +29,11 @@ covers self-hosting and testing without a backend.
 The guide uses `hosted()` mode. Policy, translation and vendor edits in your
 project reach visitors on their next page load, without a rebuild.
 
-## Install c15t
+## Install Inth
 
 <CommandTabs command="@inth/react @inth/integrations" mode="install" />
 
-`c15t` contains the React adapter at `@inth/react` and the Vite plugin at
+`inth` contains the React adapter at `@inth/react` and the Vite plugin at
 `@inth/react/build`. `@inth/integrations` holds the vendor loaders used below.
 
 ## Add the Vite plugin
@@ -42,19 +42,19 @@ Add `consentManifest` to `vite.config.ts`:
 
 <include src="../../shared/examples/react/vite-config.mdx" />
 
-The plugin reads `VITE_C15T_BACKEND_URL`. Set it to your project's backend URL,
+The plugin reads `VITE_INTH_PROJECT_URL`. Set it to your project's backend URL,
 exactly as Inth shows it, including any path prefix, in `.env` or wherever you
 build:
 
 ```sh title=".env"
-VITE_C15T_BACKEND_URL=https://your-project.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
 If your app already sets `VITE_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `VITE_C15T_BACKEND_URL` wins.
+too. When both are set, `VITE_INTH_PROJECT_URL` wins.
 
 `ConsentProvider` needs the URL as its `projectUrl` option, read from
-`import.meta.env.VITE_C15T_BACKEND_URL` in the next step.
+`import.meta.env.VITE_INTH_PROJECT_URL` in the next step.
 
 The plugin also adds a small script to `index.html` that sends `/init` while
 your JavaScript downloads, so the banner shows sooner.
@@ -73,7 +73,7 @@ banner closes.
 `hosted()` makes one `/init` request to your backend, started early by the
 script in `index.html`. The backend picks the policy from the visitor's
 location and language and returns its current version. Consent choices go to
-the same backend. Vite reads `VITE_C15T_BACKEND_URL` at build time, so set it
+the same backend. Vite reads `VITE_INTH_PROJECT_URL` at build time, so set it
 before you build, not when you serve the files.
 
 PostHog waits for measurement permission, so your policy must include that
@@ -145,4 +145,4 @@ full release checklist.
 - [Components](/docs/frameworks/react/components/consent-provider) for
   every provider option and component prop.
 - The runnable app in `examples/react` of the
-  [c15t repository](https://github.com/c15t/c15t) contains this setup.
+  [Inth repository](https://github.com/c15t/c15t) contains this setup.

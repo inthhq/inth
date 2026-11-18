@@ -7,7 +7,7 @@ import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentBanner } from '../../src/lib/banner/consent-banner';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
 import { warmDialog } from '../../src/lib/core/dialog-warming';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { CONSENT_DIALOG_PANEL, ConsentDialog } from './consent-dialog';
 import { ConsentDialogPanel } from './consent-dialog-panel';
 
@@ -15,7 +15,7 @@ import { ConsentDialogPanel } from './consent-dialog-panel';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, ConsentDialog],
 	selector: 'test-banner-and-dialog',
-	template: `<c15t-consent-banner /><c15t-consent-dialog />`,
+	template: `<inth-consent-banner /><inth-consent-dialog />`,
 })
 class Host {}
 
@@ -23,7 +23,7 @@ class Host {}
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialog],
 	selector: 'test-controlled-load',
-	template: `<c15t-consent-dialog [(open)]="open" />`,
+	template: `<inth-consent-dialog [(open)]="open" />`,
 })
 class ControlledHost {
 	readonly open = signal(false);
@@ -53,7 +53,7 @@ const boot = async (): Promise<{
 	};
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({ ...testOptions(), disableAnimation: true }),
+			provideInth({ ...testOptions(), disableAnimation: true }),
 			{ provide: CONSENT_DIALOG_PANEL, useValue: load },
 		],
 	});
@@ -145,7 +145,7 @@ describe('the dialog body loading', () => {
 		const loader = { loads: 0, works: false };
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({ ...testOptions(), disableAnimation: true }),
+				provideInth({ ...testOptions(), disableAnimation: true }),
 				{
 					provide: CONSENT_DIALOG_PANEL,
 					useValue: (): Promise<Type<ConsentDialogPanel>> => {

@@ -8,7 +8,7 @@ import type { ZarazConsentApi } from '../../../packages/sdk/integrations/src/ven
 
 declare global {
 	interface Window {
-		c15tLab: {
+		inthLab: {
 			apiReadyAtMount: boolean;
 			dispose: () => void;
 			events: string[];
@@ -22,7 +22,7 @@ declare global {
 	}
 }
 
-const url = process.env.ZARAZ_TEST_URL ?? 'https://zaraz-lab.c15t.cloud';
+const url = process.env.ZARAZ_TEST_URL ?? 'https://zaraz-lab.inth.cloud';
 const browser = await chromium.launch({ headless: true });
 const checks: string[] = [];
 const errors: string[] = [];
@@ -36,9 +36,9 @@ try {
 		await route.continue();
 	});
 	await page.goto(url);
-	await page.waitForFunction(() => window.c15tLab?.events.includes('ready'));
+	await page.waitForFunction(() => window.inthLab?.events.includes('ready'));
 	assert.equal(
-		await page.evaluate(() => window.c15tLab.apiReadyAtMount),
+		await page.evaluate(() => window.inthLab.apiReadyAtMount),
 		false
 	);
 	await page.unroute('**/cdn-cgi/zaraz/i.js');
@@ -55,13 +55,13 @@ try {
 	await page.waitForTimeout(500);
 	assert.equal((await state()).runs, 0);
 	checks.push('Pageview queued while measurement is denied');
-	await page.evaluate(() => window.c15tLab.save(true, false));
+	await page.evaluate(() => window.inthLab.save(true, false));
 	await page.waitForFunction(() => window.__zarazMeasurementRuns === 1);
 	assert.equal((await state()).permissions.feGw, true);
 	checks.push(
 		'Grant replays the queued pageview and executes the actual Zaraz tool once'
 	);
-	await page.evaluate(() => window.c15tLab.save(false, true));
+	await page.evaluate(() => window.inthLab.save(false, true));
 	await page.evaluate(() => window.zaraz.track('Pageview'));
 	await page.waitForTimeout(500);
 	assert.deepEqual(await state(), { permissions: { feGw: false }, runs: 1 });
@@ -70,7 +70,7 @@ try {
 	);
 	await page.evaluate(() => window.zaraz.consent.set({ feGw: true }));
 	await page.reload();
-	await page.waitForFunction(() => window.c15tLab?.events.includes('ready'));
+	await page.waitForFunction(() => window.inthLab?.events.includes('ready'));
 	await page.waitForTimeout(500);
 	assert.deepEqual(await state(), { permissions: { feGw: false }, runs: 0 });
 	checks.push(
@@ -95,10 +95,10 @@ try {
 	assert.equal((await state()).runs, 0);
 	await page.unroute('**/bridge.js');
 	await page.addScriptTag({ type: 'module', url: `${url}/bridge.js?late=1` });
-	await page.waitForFunction(() => window.c15tLab?.events.includes('ready'));
+	await page.waitForFunction(() => window.inthLab?.events.includes('ready'));
 	assert.deepEqual(await state(), { permissions: { feGw: false }, runs: 0 });
-	assert.equal(await page.evaluate(() => window.c15tLab.apiReadyAtMount), true);
-	checks.push('Already-ready Zaraz API synchronizes when c15t loads later');
+	assert.equal(await page.evaluate(() => window.inthLab.apiReadyAtMount), true);
+	checks.push('Already-ready Zaraz API synchronizes when inth loads later');
 	await page.locator('#banner').click();
 	await page.getByTestId('consent-banner-card').waitFor({ state: 'visible' });
 	await page.waitForFunction(
@@ -117,13 +117,13 @@ try {
 	await page.getByTestId('consent-banner-accept-button').click();
 	await page.waitForFunction(() => (window.__zarazMeasurementRuns ?? 0) > 0);
 	await page.waitForFunction(
-		() => document.getElementById('c15t-state')?.textContent === 'Allowed'
+		() => document.getElementById('inth-state')?.textContent === 'Allowed'
 	);
 	await page.reload();
-	await page.waitForFunction(() => window.c15tLab?.events.includes('ready'));
+	await page.waitForFunction(() => window.inthLab?.events.includes('ready'));
 	assert.equal((await state()).permissions.feGw, true);
 	await page.waitForFunction(
-		() => document.getElementById('c15t-state')?.textContent === 'Allowed'
+		() => document.getElementById('inth-state')?.textContent === 'Allowed'
 	);
 	await page.getByTestId('consent-banner-card').waitFor({ state: 'hidden' });
 	checks.push(
@@ -139,10 +139,10 @@ try {
 	assert.equal((await state()).runs, acceptedRuns);
 	assert.equal((await state()).permissions.feGw, false);
 	checks.push(
-		'Real c15t banner acceptance releases the queued tool; rejection blocks subsequent execution'
+		'Real inth banner acceptance releases the queued tool; rejection blocks subsequent execution'
 	);
 	await page.reload();
-	await page.waitForFunction(() => window.c15tLab?.events.includes('ready'));
+	await page.waitForFunction(() => window.inthLab?.events.includes('ready'));
 	assert.equal((await state()).permissions.feGw, false);
 	await page.getByTestId('consent-banner-card').waitFor({ state: 'hidden' });
 	await page.locator('#send').click();
@@ -163,10 +163,10 @@ try {
 	checks.push('Visible guided demo completes all three live consent checks');
 	await page.locator('#preferences').click();
 	await page.getByTestId('consent-dialog-card').waitFor({ state: 'visible' });
-	checks.push('Cookie preferences opens the real c15t preference dialog');
+	checks.push('Cookie preferences opens the real inth preference dialog');
 	await page.setViewportSize({ height: 844, width: 390 });
 	await page.reload();
-	await page.waitForFunction(() => window.c15tLab?.events.includes('ready'));
+	await page.waitForFunction(() => window.inthLab?.events.includes('ready'));
 	await page.locator('#banner').click();
 	await page.getByTestId('consent-banner-card').waitFor({ state: 'visible' });
 	assert.equal(
@@ -193,8 +193,8 @@ try {
 			?.textContent?.includes('Pageview sent to Zaraz with measurement denied')
 	);
 	await page.evaluate(() => {
-		window.c15tLab.dispose();
-		window.c15tLab.dispose();
+		window.inthLab.dispose();
+		window.inthLab.dispose();
 	});
 	const disposedContent = await page.locator('main').innerHTML();
 	await page.evaluate(() => {

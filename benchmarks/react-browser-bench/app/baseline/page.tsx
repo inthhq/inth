@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Zero-consent baseline page: the identical bench app shell with NO c15t at
+ * Zero-consent baseline page: the identical bench app shell with NO Inth at
  * all. Measures the page's own floor (framework boot, hydration) so absolute
  * banner timings become legible and `consentTaxMs = bannerVisible − pageFloor`
  * can be derived across runs.

@@ -25,7 +25,7 @@
 		value?: string | null;
 	} = $props();
 
-	const baseId = `c15t-tabs-${componentId}`;
+	const baseId = `inth-tabs-${componentId}`;
 	const dataDisabled = $derived(getDataDisabled(disabled));
 
 	const setValue = function setValue(nextValue: string) {

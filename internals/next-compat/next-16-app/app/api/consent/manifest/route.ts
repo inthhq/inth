@@ -1,4 +1,4 @@
-import { COMPAT_CONSENT_CONFIG } from '@c15t/next-compat-shared/config';
+import { COMPAT_CONSENT_CONFIG } from '@inth/next-compat-shared/config';
 import { createConsentRoute } from '@inth/nextjs/api';
 
 /**

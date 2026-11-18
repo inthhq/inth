@@ -47,7 +47,7 @@ const buildInit = function buildInit(
 	language = 'en'
 ): InitOutput {
 	return {
-		branding: 'c15t',
+		branding: 'inth',
 		location: { countryCode: 'US', regionCode: 'CA' },
 		policyResolution: writePolicyResolutionWire(
 			resolvePolicyRules({ countryCode: null, regionCode: null, rules: [rule] })

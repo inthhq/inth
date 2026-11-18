@@ -202,7 +202,7 @@ export interface SnapchatPixelOptions {
  * @param options.trackPageView - Whether to queue the default
  *   `snaptr('track', 'PAGE_VIEW')` call during setup. Defaults to `true`; set to
  *   `false` when you want to control page-view tracking manually.
- * @returns A resolved c15t `Script` configuration that defines the Snapchat
+ * @returns A resolved Inth `Script` configuration that defines the Snapchat
  *   queue stub, runs `init` (and optionally `PAGE_VIEW`), and then loads the
  *   Snapchat SDK script URL.
  * @remarks When `pixelId` is missing or blank, the

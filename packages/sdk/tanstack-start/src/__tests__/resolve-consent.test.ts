@@ -137,7 +137,7 @@ describe('resolveConsent wiring', () => {
 			cache: createManifestCache(),
 			fetch,
 			projectUrl: '/consent',
-			request: requestOf({ cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1' }),
+			request: requestOf({ cookie: 'inth=c.necessary:1,c.marketing:1,i.t:1' }),
 			routePrefix: '/consent',
 		});
 		const state = await handler();
@@ -158,7 +158,7 @@ describe('resolveConsent wiring', () => {
 			mode: { type: 'manifest' },
 			projectUrl: '/api/backend',
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 			snapshot: undefined,
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
@@ -170,13 +170,13 @@ describe('resolveConsent wiring', () => {
 		});
 	});
 
-	test('never fetches the default /api/c15t route, with no routePrefix set', async () => {
+	test('never fetches the default /api/inth route, with no routePrefix set', async () => {
 		const fetch = manifestFetch();
 		const state = await createConsentStateHandler({
 			cache: createManifestCache(),
 			fetch,
-			projectUrl: '/api/c15t',
-			request: requestOf({ cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1' }),
+			projectUrl: '/api/inth',
+			request: requestOf({ cookie: 'inth=c.necessary:1,c.marketing:1,i.t:1' }),
 		})();
 		expect(fetch).not.toHaveBeenCalled();
 		expect(state.initialRecords?.choice).toBeTruthy();
@@ -190,7 +190,7 @@ describe('resolveConsent wiring', () => {
 			fetch,
 			projectUrl: 'https://consent.example.com',
 			request: requestOf({
-				cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1',
+				cookie: 'inth=c.necessary:1,c.marketing:1,i.t:1',
 				'x-vercel-ip-country': 'DE',
 			}),
 		});
@@ -250,7 +250,7 @@ describe('resolveConsent wiring', () => {
 
 	test('rejects a route prefix of / when the handler is created', async () => {
 		const message =
-			"@inth/tanstack-start: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.";
+			"@inth/tanstack-start: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.";
 		expect(() => createConsentStateHandler({ routePrefix: '/' })).toThrow(
 			message
 		);

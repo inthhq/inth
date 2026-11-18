@@ -1,24 +1,24 @@
 ---
 title: Marketo Munchkin
-description: Load Adobe Marketo Munchkin after marketing consent, configure its account and cookie options, and verify tracking and revocation with c15t.
-seoTitle: Marketo Munchkin cookie consent with c15t
-seoDescription: Wait for marketing consent before loading Marketo Munchkin. Set your account ID, configure cookies and check revocation with c15t.
+description: Load Adobe Marketo Munchkin after marketing consent, configure its account and cookie options, and verify tracking and revocation with Inth.
+seoTitle: Marketo Munchkin cookie consent with Inth
+seoDescription: Wait for marketing consent before loading Marketo Munchkin. Set your account ID, configure cookies and check revocation with Inth.
 icon: chart-line
 group: integrations
 ---
 
 Munchkin is Adobe Marketo's script for tracking known and anonymous leads on
-your site. The c15t `marketoMunchkin` helper waits for `marketing` consent
+your site. The Inth `marketoMunchkin` helper waits for `marketing` consent
 before it requests Munchkin or initializes tracking. Until then, it creates no
 Munchkin global, cookie or browser storage.
 
-Munchkin has no API to stop tracking. When the visitor withdraws, c15t removes
+Munchkin has no API to stop tracking. When the visitor withdraws, Inth removes
 the loader and reloads the page, and the reload ends tracking.
 
 ## Configure Marketo Munchkin
 
 Copy your Munchkin account ID from Marketo's installation snippet. Then remove
-the Munchkin tag from your site, so that c15t controls when it loads.
+the Munchkin tag from your site, so that Inth controls when it loads.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -30,7 +30,7 @@ the Munchkin tag from your site, so that c15t controls when it loads.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `munchkinId` | Required | Public account ID. Whitespace is trimmed. If it's missing or blank, c15t logs an error and never loads Munchkin. |
+| `munchkinId` | Required | Public account ID. Whitespace is trimmed. If it's missing or blank, Inth logs an error and never loads Munchkin. |
 | `initOptions` | `{}` | Passed to `Munchkin.init`, for example `cookieAnon`, `anonymizeIP`, `apiOnly` and `cookieLifeDays`. |
 | `category` | `marketing` | Consent condition that gates the whole loader. |
 | `scriptUrl` | `https://munchkin.marketo.net/munchkin.js` | Custom or proxied loader URL. Blank values use the default. Other Munchkin requests need their own proxy configuration. |
@@ -41,7 +41,7 @@ have a tracking cookie are still tracked.
 
 ## Loading and revocation
 
-After consent, c15t downloads the SDK and calls `Munchkin.init` once with the
+After consent, Inth downloads the SDK and calls `Munchkin.init` once with the
 account ID and `initOptions`. If the visitor withdraws while the SDK
 downloads, the helper skips initialization. Changes to other categories don't
 initialize Munchkin again.

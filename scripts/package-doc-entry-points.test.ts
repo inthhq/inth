@@ -62,7 +62,7 @@ test('preserves setup links already selected by the shared docs index', () => {
 });
 
 const frameworksIndex = [
-	'# c15t',
+	'# inth',
 	'',
 	'## Frameworks',
 	'',

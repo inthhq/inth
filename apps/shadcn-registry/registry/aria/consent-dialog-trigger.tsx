@@ -6,7 +6,7 @@ import {
   useConsentLabels,
 } from "@inth/react/headless"
 
-import { ConsentBrandingMark } from "@/components/c15t/consent-branding"
+import { ConsentBrandingMark } from "@/components/inth/consent-branding"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 

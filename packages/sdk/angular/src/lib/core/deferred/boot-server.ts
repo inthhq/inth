@@ -20,13 +20,13 @@ import { deepMergeTranslations } from '@inth/sdk/translations';
 import type { Translations } from '@inth/sdk/translations';
 
 import { isIABConfigured } from '../iab-loader';
-import type { C15tResolvedOptions } from '../options';
+import type { InthResolvedOptions } from '../options';
 import type { ConsentBoot } from './boot';
 
 /** Options that need the engine as the page loads. */
 const needsEngineNow = function needsEngineNow(
 	snapshot: ConsentSnapshot,
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): boolean {
 	return Boolean(
 		snapshot.model === 'iab' ||
@@ -58,7 +58,7 @@ const DEADLINE_MARGIN_MS = 60_000;
  */
 const canDeferAnswered = function canDeferAnswered(
 	snapshot: ConsentSnapshot,
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	now: number
 ): boolean {
 	if (
@@ -98,7 +98,7 @@ const canDeferAnswered = function canDeferAnswered(
  */
 export const canDeferEngine = function canDeferEngine(
 	snapshot: ConsentSnapshot,
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	now: number = Date.now()
 ): boolean {
 	if (needsEngineNow(snapshot, options)) {
@@ -187,7 +187,7 @@ export const withCompleteTranslations = function withCompleteTranslations(
  */
 export const planServerBoot = function planServerBoot(
 	runtime: ConsentProviderRuntime,
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): ConsentBoot {
 	const snapshot = runtime.kernel.getServerSnapshot();
 	const boot: ConsentBoot = {

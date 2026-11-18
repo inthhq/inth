@@ -77,13 +77,13 @@ use fixture CMP ID 28 as a production identity.
 ## Configure a real consumer repository
 
 The private pilot publication target is
-`https://maven.pkg.github.com/inthhq/c15t-private`. Its availability and package
+`https://maven.pkg.github.com/inthhq/inth-private`. Its availability and package
 access must be checked through the secure account/CI flow before use. A GitHub
 repository token without `read:packages` cannot establish whether the Maven
 packages exist. Repository access alone is insufficient.
 
-The standalone bridge reads `C15T_MAVEN_URL`, `C15T_MAVEN_USERNAME` and
-`C15T_MAVEN_TOKEN`. An app must declare the same Maven repository in its own
+The standalone bridge reads `INTH_MAVEN_URL`, `INTH_MAVEN_USERNAME` and
+`INTH_MAVEN_TOKEN`. An app must declare the same Maven repository in its own
 repository configuration; the library's standalone settings do not configure
 its host. For a host using settings-owned repositories, use the
 `exclusiveContent` declaration in
@@ -100,8 +100,8 @@ allprojects {
         maven {
           url = uri('https://maven.example.com/inth')
           credentials {
-            username = System.getenv('C15T_MAVEN_USERNAME')
-            password = System.getenv('C15T_MAVEN_TOKEN')
+            username = System.getenv('INTH_MAVEN_USERNAME')
+            password = System.getenv('INTH_MAVEN_TOKEN')
             if (!username || !password) {
               throw new GradleException('Set Maven credentials in the build environment.')
             }
@@ -129,16 +129,16 @@ native prerelease. Credentials belong in environment variables supplied by the
 secure account/CI flow, never in app configuration or committed Gradle files.
 
 Remote publication is disabled by default. A release operator can opt into the
-fixed private target with `C15T_MAVEN_PUBLISH=true`. Configuration then requires
-all four secure values: `C15T_MAVEN_USERNAME`, `C15T_MAVEN_TOKEN`,
-`C15T_MAVEN_SIGNING_KEY` (ASCII-armored in-memory key) and
-`C15T_MAVEN_SIGNING_PASSWORD`. The `privateGitHub` publication tasks sign the
+fixed private target with `INTH_MAVEN_PUBLISH=true`. Configuration then requires
+all four secure values: `INTH_MAVEN_USERNAME`, `INTH_MAVEN_TOKEN`,
+`INTH_MAVEN_SIGNING_KEY` (ASCII-armored in-memory key) and
+`INTH_MAVEN_SIGNING_PASSWORD`. The `privateGitHub` publication tasks sign the
 publications. No signing material is read from the checkout. This preparation
 does not authorize running those tasks or establish that credentials,
 permissions, package visibility or signatures have been validated.
 
 For public Maven Central releases, use the separate
-[native Tegami flow](mobile-releases.md). `C15T_MAVEN_CENTRAL=true` signs the
+[native Tegami flow](mobile-releases.md). `INTH_MAVEN_CENTRAL=true` signs the
 local staging publications and selects public SCM metadata; it does not upload
 them. The release verifier checks the signed bundle before Central upload and
 retains the deployment ID for retries. The private GitHub pilot remains a
@@ -168,7 +168,7 @@ checks packed bridge compilation against the Expo toolchain; it is not a full
 Expo or RN app launch.
 
 For external resolution proof, replace `--staging-repository` with
-`--repository https://maven.pkg.github.com/inthhq/c15t-private` after the
+`--repository https://maven.pkg.github.com/inthhq/inth-private` after the
 version exists there and read credentials are available. This mode rejects
 file URLs and embedded credentials. The runner records `remote-resolution`
 only after the build succeeds using that repository. Local mode copies the

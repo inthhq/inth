@@ -85,7 +85,7 @@ export interface ConsentBannerCompoundComponent extends FC<ConsentBannerProps> {
  * ```tsx
  * <ConsentProvider
  *   options={{
- *     mode: hosted({ projectUrl: '/api/c15t' }),
+ *     mode: hosted({ projectUrl: '/api/inth' }),
  *     i18n: {
  *       locale: 'en',
  *       messages: {

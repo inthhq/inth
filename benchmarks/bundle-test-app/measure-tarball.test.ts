@@ -38,7 +38,7 @@ const packageFiles = {
 };
 
 const createPackage = () => {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-pack-source-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-pack-source-'));
 	roots.push(root);
 	writeFiles(root, packageFiles);
 	return root;
@@ -138,10 +138,10 @@ describe('runTarballSize', () => {
 	});
 
 	it.each([
-		['.c15t-ui-dialogVisible-dkX4M:not(.headless){opacity:1}', true],
-		['.c15t-ui-overlay-DoHh4:not(.headless){position:fixed}', false],
+		['.inth-ui-dialogVisible-dkX4M:not(.headless){opacity:1}', true],
+		['.inth-ui-overlay-DoHh4:not(.headless){position:fixed}', false],
 		[':root{--consent-dialog-overlay-z-index:999998}', false],
-		['/* .c15t-ui-dialogVisible-dkX4M{opacity:1} */', false],
+		['/* .inth-ui-dialogVisible-dkX4M{opacity:1} */', false],
 	])(
 		'records dialog rules from the packed flat stylesheet: %s',
 		(css, expected) => {
@@ -163,7 +163,7 @@ describe('runTarballSize', () => {
 	it('does not inspect a stylesheet excluded from the package', () => {
 		const root = createPackage();
 		writeFiles(root, {
-			'dist/styles.tw3.css': '.c15t-ui-dialogVisible-dkX4M{opacity:1}',
+			'dist/styles.tw3.css': '.inth-ui-dialogVisible-dkX4M{opacity:1}',
 		});
 		const artifact = runTarballSize(
 			root,
@@ -175,12 +175,12 @@ describe('runTarballSize', () => {
 	it('measures the same size as the package published without docs', () => {
 		const manifest = JSON.stringify({
 			files: ['dist', 'docs', 'AGENTS.md', 'SKILL.md'],
-			name: 'c15t-pack-fixture',
+			name: 'inth-pack-fixture',
 			version: '1.0.0',
 		});
 		const code = { 'dist/index.js': 'export const answer = 42;\n' };
-		const withDocs = mkdtempSync(join(tmpdir(), 'c15t-pack-docs-'));
-		const withoutDocs = mkdtempSync(join(tmpdir(), 'c15t-pack-code-'));
+		const withDocs = mkdtempSync(join(tmpdir(), 'inth-pack-docs-'));
+		const withoutDocs = mkdtempSync(join(tmpdir(), 'inth-pack-code-'));
 		roots.push(withDocs, withoutDocs);
 		writeFiles(withDocs, {
 			...code,

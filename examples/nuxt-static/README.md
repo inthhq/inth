@@ -1,6 +1,6 @@
-# c15t with Nuxt on static hosting
+# Inth with Nuxt on static hosting
 
-c15t in a single-page Nuxt app (`ssr: false`) built with `nuxt generate`, for
+Inth in a single-page Nuxt app (`ssr: false`) built with `nuxt generate`, for
 a host that serves files only. The build bundles your project's policy, and
 the browser resolves it without asking the backend. PostHog loads once the
 visitor allows measurement.
@@ -26,7 +26,7 @@ bun run --cwd examples/nuxt-static dev
 
 The app's `.env` points it at the `https://example-inth.inth.app` demo Inth
 project, and the build downloads its policy. To use your own project, set
-`NUXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to its backend URL and add the
+`NUXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to its backend URL and add the
 app's origin to its trusted origins. Rebuild after you change the policy,
 translations or vendors in your project. Replace `phc_your_project_key` with
 your PostHog project key.

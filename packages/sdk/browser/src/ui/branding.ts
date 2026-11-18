@@ -38,7 +38,7 @@ const resolveBranding = function resolveBranding(
 };
 
 /**
- * The brand's compact mark, as on the React and Vue triggers: the c15t
+ * The brand's compact mark, as on the React and Vue triggers: the Inth
  * node graph, or the inth monogram for `inth` and `consent` branding.
  *
  * @param value - The brand the transport resolved.

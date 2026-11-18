@@ -1,12 +1,12 @@
 ---
-title: c15tVue plugin
-description: Install c15t in a Vue app with app.use(c15tVue), what the plugin starts when the app mounts, and every option it accepts.
+title: inthVue plugin
+description: Install Inth in a Vue app with app.use(inthVue), what the plugin starts when the app mounts, and every option it accepts.
 group: frameworks
 ---
 
 ## Install the plugin
 
-Import `c15tVue` from `@inth/vue/vue-plugin` and pass it to `app.use()` in
+Import `inthVue` from `@inth/vue/vue-plugin` and pass it to `app.use()` in
 `src/main.ts`:
 
 <include src="../../shared/examples/vue/main.mdx" />
@@ -17,13 +17,13 @@ Vite plugin that supplies the backend URL to `hosted()`.
 
 ## What the plugin does
 
-`app.use(c15tVue, options)` creates one consent runtime for the app and
+`app.use(inthVue, options)` creates one consent runtime for the app and
 provides it to every component. It also adds your `tokens` to
-`document.head` in a `<style id="c15t-css-vars">` element, before the first
+`document.head` in a `<style id="inth-css-vars">` element, before the first
 render. Nothing else runs in the browser until the root component mounts.
 Then the plugin, in order:
 
-1. Reads the visitor's stored choice from the `c15t` cookie and
+1. Reads the visitor's stored choice from the `inth` cookie and
    localStorage.
 2. Applies Global Privacy Control when the browser sends it.
 3. Starts the script loader for `scripts`, clear-on-revocation, the network
@@ -37,7 +37,7 @@ Then the plugin, in order:
 Until the policy arrives, every optional category is denied, so gated scripts
 and iframes wait. On Vue 3.5 and later, `app.unmount()` stops every module
 and removes the token style element.
-Composables called outside this app throw `[c15t] Kernel not found`.
+Composables called outside this app throw `[inth] Kernel not found`.
 
 ## Options
 
@@ -53,19 +53,19 @@ runs in the browser.
 | `mode` | `hosted()` | Where the visitor's policy comes from: `hosted()` or `manifest()` from `@inth/vue/vue-plugin`, or `testing()` from `@inth/vue/testing`. See [rendering](/docs/frameworks/vue/rendering). |
 | `consentCategories` | The policy's categories | Limits the categories the dialog and widget show, within the policy's scope. |
 | `vendors` | Unset | Vendors listed under their category with their own switch. See [vendor consent](/docs/frameworks/vue/vendor-consent). |
-| `storageConfig` | `{ storageKey: 'c15t' }` | Cookie and localStorage name, `crossSubdomain`, `defaultDomain` and `defaultExpiryDays`, 365 by default. |
+| `storageConfig` | `{ storageKey: 'inth' }` | Cookie and localStorage name, `crossSubdomain`, `defaultDomain` and `defaultExpiryDays`, 365 by default. |
 
 The backend URL, a custom `fetch` and the save `domain` are options of the
 mode, not the plugin:
 
 | Mode | Options |
 | --- | --- |
-| `hosted()` | `projectUrl`, by default the one `consentManifest()` read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. `headers`, `fetch`, `domain`. |
+| `hosted()` | `projectUrl`, by default the one `consentManifest()` read from `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`. `headers`, `fetch`, `domain`. |
 | `manifest()` | `projectUrl` and the build snapshot default to what `consentManifest()` downloaded. `source: 'runtime'` fetches the manifest when the app starts; `manifestUrl` fetches it from that URL instead of using the snapshot; `snapshot` takes one you supply. `geoUrl`, `inputs`, `initFallback`, `headers`, `credentials`, `fetch`, `domain`. |
-| `testing()` | From `@inth/vue/testing`, for tests. `policy`: the rules to resolve; omitted, c15t's recommended rules. Throws in production builds. |
+| `testing()` | From `@inth/vue/testing`, for tests. `policy`: the rules to resolve; omitted, inth's recommended rules. Throws in production builds. |
 
 `hosted()` and `manifest()` throw when they have no backend URL: add
-`consentManifest()` to `vite.config.ts` and set `VITE_C15T_BACKEND_URL` (or
+`consentManifest()` to `vite.config.ts` and set `VITE_INTH_PROJECT_URL` (or
 `VITE_INTH_PROJECT_URL`), or pass `projectUrl`.
 
 ### Scripts and blocking
@@ -91,7 +91,7 @@ mode, not the plugin:
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `tokens` | The default theme | CSS variables the plugin adds to `document.head` in a `<style id="c15t-css-vars">` element. See [customize](/docs/frameworks/vue/customize#set-theme-tokens). |
+| `tokens` | The default theme | CSS variables the plugin adds to `document.head` in a `<style id="inth-css-vars">` element. See [customize](/docs/frameworks/vue/customize#set-theme-tokens). |
 | `presentation` | Policy defaults | Banner and dialog variant, position, action layout and blocking. |
 | `components` | Unset | Attributes, such as `class`, for named parts of each component. |
 | `legalLinks`, `bannerLegalLinks`, `dialogLegalLinks` | None shown | Links to your privacy policy and similar pages, and which surfaces show them. |
@@ -113,4 +113,4 @@ Open the app with the Network tab open. `hosted()` requests the backend's
 `/init`. `manifest()` with a bundled snapshot makes no policy request unless
 the policy needs a location the browser doesn't have, and
 `manifest({ source: 'runtime' })` requests `${projectUrl}/manifest`. In
-the Application panel, a `c15t` cookie appears after you accept or reject.
+the Application panel, a `inth` cookie appears after you accept or reject.

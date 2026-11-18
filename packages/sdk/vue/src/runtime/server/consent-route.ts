@@ -1,6 +1,6 @@
 import { useRuntimeConfig } from 'nitropack/runtime';
 
-import manifest from '#c15t/manifest-snapshot';
+import manifest from '#inth/manifest-snapshot';
 
 import { serverFetch } from './local-fetch';
 import { createConsentRoute } from './route-factories';

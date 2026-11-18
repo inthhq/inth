@@ -8,7 +8,7 @@ import { decodeTCString } from './tcf/tc-string';
 import type { DecodedTCString } from './tcf/tc-string';
 
 /** localStorage key of the authority receipt. */
-export const AUTHORITY_KEY = 'c15t-iab-authority-v1';
+export const AUTHORITY_KEY = 'inth-iab-authority-v1';
 const RETENTION_MS = 395 * 86_400_000;
 const DISCLOSURE_REQUIRED_AT = Date.UTC(2026, 1, 28);
 

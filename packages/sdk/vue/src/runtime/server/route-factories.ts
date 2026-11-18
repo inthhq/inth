@@ -6,7 +6,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  * every adapter (including the fallback to the backend's own `/init` and
  * the render budget the SSR plugin sends in `x-c15t-timeout-ms`). This
  * module only converts between h3 and the Web `Request`/`Response`, reads
- * the c15t runtime config, sends relative backend URLs through Nitro's
+ * the Inth runtime config, sends relative backend URLs through Nitro's
  * in-process fetch, and hands detached work to the preset's `waitUntil`.
  */
 import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
@@ -19,10 +19,10 @@ import { readNuxtMode, readNuxtRoutePrefix } from '../nuxt-mode';
 import type { NuxtConsentModeConfig } from '../nuxt-mode';
 import { fromRuntimeConfig } from '../runtime-config';
 
-interface C15TNitroRuntimeConfig {
-	c15t?: Record<string, unknown>;
+interface InthNitroRuntimeConfig {
+	inth?: Record<string, unknown>;
 	public?: {
-		c15t?: Record<string, unknown>;
+		inth?: Record<string, unknown>;
 	};
 }
 
@@ -71,25 +71,25 @@ export const waitUntilFromEvent = function waitUntilFromEvent(
 };
 
 /**
- * The public `c15t` config with the private one over it. A private value
+ * The public `inth` config with the private one over it. A private value
  * that is empty or unset leaves the public one: the module writes an empty
- * private `backendURL`, so `NUXT_PUBLIC_C15T_BACKEND_URL` alone moves this
- * route, and `NUXT_C15T_BACKEND_URL` gives it a server-only address.
+ * private `backendURL`, so `NUXT_PUBLIC_INTH_PROJECT_URL` alone moves this
+ * route, and `NUXT_INTH_PROJECT_URL` gives it a server-only address.
  */
 const readConsentConfig = function readConsentConfig(
 	runtimeConfig: unknown
 ): RouteConfig {
 	const config =
 		typeof runtimeConfig === 'object' && runtimeConfig !== null
-			? (runtimeConfig as C15TNitroRuntimeConfig)
+			? (runtimeConfig as InthNitroRuntimeConfig)
 			: {};
 	const serverOnly = Object.fromEntries(
-		Object.entries(fromRuntimeConfig(config.c15t) ?? {}).filter(
+		Object.entries(fromRuntimeConfig(config.inth) ?? {}).filter(
 			([, value]) => value !== '' && value !== undefined && value !== null
 		)
 	);
 	return {
-		...(fromRuntimeConfig(config.public?.c15t) ?? {}),
+		...(fromRuntimeConfig(config.public?.inth) ?? {}),
 		...serverOnly,
 	} as RouteConfig;
 };

@@ -15,7 +15,7 @@ describe('logRocket', () => {
 
 	it('matches registry metadata with default loader URL', () => {
 		const script = logRocket({
-			appId: 'c15tfake/c15tfake',
+			appId: 'inthfake/inthfake',
 		});
 
 		expectScriptMatchesIntegration('logRocket', script, {
@@ -41,7 +41,7 @@ describe('logRocket', () => {
 			shouldDebugLog: true,
 		};
 		const script = logRocket({
-			appId: ' c15tfake/c15tfake ',
+			appId: ' inthfake/inthfake ',
 			initOptions,
 		});
 
@@ -53,12 +53,12 @@ describe('logRocket', () => {
 			})
 		);
 
-		expect(init).toHaveBeenCalledWith('c15tfake/c15tfake', initOptions);
+		expect(init).toHaveBeenCalledWith('inthfake/inthfake', initOptions);
 	});
 
 	it('honors a custom loader URL', () => {
 		const script = logRocket({
-			appId: 'c15tfake/c15tfake',
+			appId: 'inthfake/inthfake',
 			scriptUrl: 'https://cdn.example.com/logrocket.js',
 		});
 
@@ -67,7 +67,7 @@ describe('logRocket', () => {
 
 	it('falls back to the default URL when scriptUrl is blank', () => {
 		const script = logRocket({
-			appId: 'c15tfake/c15tfake',
+			appId: 'inthfake/inthfake',
 			scriptUrl: '   ',
 		});
 
@@ -84,8 +84,8 @@ describe('logRocket', () => {
 
 	it('logs and skips the script for app ids with missing or extra path segments', () => {
 		for (const appId of [
-			'c15tfake',
-			'c15tfake/',
+			'inthfake',
+			'inthfake/',
 			'org/app/extra',
 			'org//app',
 			'/app',

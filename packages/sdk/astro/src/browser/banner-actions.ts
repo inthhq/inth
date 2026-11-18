@@ -16,10 +16,10 @@ import { preloadDialogChunks } from './dialog-loading';
 import { ACTIONS_KEY, getWindow, readPageNonce } from './page-state';
 
 /** Attribute the server-rendered banner puts on its action buttons. */
-export const ACTION_ATTRIBUTE = 'data-c15t-action';
+export const ACTION_ATTRIBUTE = 'data-inth-action';
 
 /** Attribute selecting which dialog a `customize` action opens. */
-export const DIALOG_ATTRIBUTE = 'data-c15t-dialog';
+export const DIALOG_ATTRIBUTE = 'data-inth-dialog';
 
 /**
  * Attribute selecting which tab the IAB preference centre opens on.
@@ -28,7 +28,7 @@ export const DIALOG_ATTRIBUTE = 'data-c15t-dialog';
  * land on the vendors tab rather than purposes, the way the React, Svelte
  * and Vue banners do.
  */
-export const DIALOG_TAB_ATTRIBUTE = 'data-c15t-tab';
+export const DIALOG_TAB_ATTRIBUTE = 'data-inth-tab';
 
 /** A banner action and what it opens. @internal */
 export interface ResolvedAction {
@@ -146,7 +146,7 @@ export const warmDialog = function warmDialog(
  */
 const warmDialogOnIntent = function warmDialogOnIntent(event: Event): void {
 	const resolved = resolveAction(event.target);
-	const client = getWindow()?.__c15tAstro;
+	const client = getWindow()?.__inthAstro;
 	if (
 		!client ||
 		resolved?.action !== 'customize' ||
@@ -161,7 +161,7 @@ const warmDialogOnIntent = function warmDialogOnIntent(event: Event): void {
  * Wire the delegated handler for the server-rendered banner's buttons.
  *
  * The banner ships zero framework JavaScript: the buttons carry
- * `data-c15t-action` and one document-level listener turns them into
+ * `data-inth-action` and one document-level listener turns them into
  * client calls. Hovering or focusing a control that opens the preference
  * dialog starts downloading it. Calling this more than once is a no-op.
  */
@@ -182,7 +182,7 @@ export const attachBannerActions = function attachBannerActions(): void {
 		if (!resolved) {
 			return;
 		}
-		const client = browserWindow.__c15tAstro;
+		const client = browserWindow.__inthAstro;
 		if (!client) {
 			return;
 		}

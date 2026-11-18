@@ -81,12 +81,12 @@ const joinStyles = function joinStyles(
  *
  * It shows once a policy rule that keeps a route to preferences is
  * resolved, and hides while the dialog is open. With
- * `<c15t-consent-dev-tools>` mounted it becomes a two-button toolbar that
+ * `<inth-consent-dev-tools>` mounted it becomes a two-button toolbar that
  * also opens DevTools.
  *
  * @example
  * ```html
- * <c15t-consent-dialog-trigger defaultPosition="bottom-left" size="sm" />
+ * <inth-consent-dialog-trigger defaultPosition="bottom-left" size="sm" />
  * ```
  */
 @Component({
@@ -94,16 +94,16 @@ const joinStyles = function joinStyles(
 	imports: [BrandMarkIcon, ConsentIcon, DevToolsIcon, NgTemplateOutlet, Portal],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-consent-dialog-trigger',
+	selector: 'inth-consent-dialog-trigger',
 	template: `<ng-template #brandingIcon>
 			@if (consent.branding() === 'consent') {
-				<svg c15t-consent-icon></svg>
+				<svg inth-consent-icon></svg>
 			} @else {
-				<svg c15t-brand-mark-icon></svg>
+				<svg inth-brand-mark-icon></svg>
 			}
 		</ng-template>
 		@if (visible()) {
-			<div c15tPortal>
+			<div inthPortal>
 				@if (showToolbar()) {
 					<div
 						#toolbar
@@ -115,8 +115,8 @@ const joinStyles = function joinStyles(
 						aria-label="Privacy controls"
 						aria-orientation="horizontal"
 						[attr.data-corner]="corner()"
-						data-c15t-trigger-toolbar="true"
-						data-c15t-trigger="true"
+						data-inth-trigger-toolbar="true"
+						data-inth-trigger="true"
 						[attr.data-disable-animation]="theme.disableAnimation() ? '' : null"
 						[attr.data-dragging]="isDragging() || null"
 						[attr.data-snapping]="isSnapping() || null"
@@ -133,10 +133,10 @@ const joinStyles = function joinStyles(
 									[class]="devToolsItemStyle().className || ''"
 									[attr.style]="styleOf(devToolsItemStyle())"
 									[attr.tabindex]="tabStopItem() === item ? 0 : -1"
-									aria-label="c15t DevTools"
+									aria-label="inth DevTools"
 									[attr.aria-expanded]="launcher().isOpen"
-									data-c15t-trigger-action="devtools"
-									data-c15t-trigger-item="devtools"
+									data-inth-trigger-action="devtools"
+									data-inth-trigger-item="devtools"
 									(click)="toggleDevTools()"
 									(focus)="focusedItem.set(item)"
 								>
@@ -149,7 +149,7 @@ const joinStyles = function joinStyles(
 											[class]="iconStyle().className || ''"
 											[attr.style]="styleOf(iconStyle())"
 										>
-											<svg c15t-dev-tools-icon></svg>
+											<svg inth-dev-tools-icon></svg>
 										</span>
 									</span>
 								</button>
@@ -160,9 +160,9 @@ const joinStyles = function joinStyles(
 									[attr.style]="styleOf(preferencesItemStyle())"
 									[attr.tabindex]="tabStopItem() === item ? 0 : -1"
 									[attr.aria-label]="label()"
-									[attr.data-c15t-rights]="rights()"
-									data-c15t-trigger-action="preferences"
-									data-c15t-trigger-item="preferences"
+									[attr.data-inth-rights]="rights()"
+									data-inth-trigger-action="preferences"
+									data-inth-trigger-item="preferences"
 									(click)="openDialog($event)"
 									(pointerenter)="warm()"
 									(focus)="focusedItem.set(item); warm()"
@@ -189,8 +189,8 @@ const joinStyles = function joinStyles(
 						type="button"
 						[class]="triggerStyle().className || ''"
 						[attr.style]="buttonStyle()"
-						data-c15t-trigger="true"
-						[attr.data-c15t-rights]="rights()"
+						data-inth-trigger="true"
+						[attr.data-inth-rights]="rights()"
 						[attr.data-disable-animation]="theme.disableAnimation() ? '' : null"
 						[attr.aria-label]="label()"
 						(click)="openDialog($event)"
@@ -591,7 +591,7 @@ export class ConsentDialogTrigger {
 			this.focusedItem.set(next);
 			this.toolbar()
 				?.nativeElement.querySelector<HTMLElement>(
-					`[data-c15t-trigger-item="${next}"]`
+					`[data-inth-trigger-item="${next}"]`
 				)
 				?.focus();
 		}

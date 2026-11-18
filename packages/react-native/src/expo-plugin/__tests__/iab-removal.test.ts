@@ -33,7 +33,7 @@ it('removing iab on incremental prebuild clears the earlier CMP identity', async
 		expect(firstPlist).toHaveProperty(key);
 	}
 	const partialPlist = applyInfoPlist(withoutConsentScreen, firstPlist);
-	expect(partialPlist).not.toHaveProperty('com.inth.iab.consentScreen');
+	expect(partialPlist).not.toHaveProperty('com.c15t.iab.consentScreen');
 	const nextPlist = applyInfoPlist(withoutIab, firstPlist);
 	for (const key of IOS_IAB_PLIST_KEYS) {
 		expect(nextPlist).not.toHaveProperty(key);

@@ -116,7 +116,7 @@ const verifyIosDeploymentTargets = function verifyIosDeploymentTargets(
 		!properties['ios.deploymentTarget']
 	) {
 		throw new Error(
-			`${id}: generated iOS target is below c15t's 16.4 minimum.`
+			`${id}: generated iOS target is below inth's 16.4 minimum.`
 		);
 	}
 	const appTargets: unknown = JSON.parse(
@@ -165,7 +165,7 @@ const main = function main(): void {
 	}
 	const cell = compatibilityCell(values.cell ?? '');
 	const output = prepareCompatibilityOutput(
-		values.output ?? mkdtempSync(join(tmpdir(), 'c15t-mobile-compat-'))
+		values.output ?? mkdtempSync(join(tmpdir(), 'inth-mobile-compat-'))
 	);
 	const consumer = join(output, 'consumer');
 	mkdirSync(consumer);
@@ -217,7 +217,7 @@ const main = function main(): void {
 					'@types/node': '25.5.0',
 					'@types/react': cell.react.startsWith('19.3.') ? '19.3.0' : '19.2.17',
 				},
-				name: 'c15t-mobile-compatibility',
+				name: 'inth-mobile-compatibility',
 				private: true,
 				type: 'module',
 			},
@@ -325,7 +325,7 @@ const main = function main(): void {
 								},
 							],
 						],
-						slug: 'c15t-compatibility',
+						slug: 'inth-compatibility',
 					},
 				},
 				null,

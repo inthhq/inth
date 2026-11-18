@@ -12,7 +12,7 @@ Each app is a starter smoke target in `internals/fixtures/acceptance/src/starter
 STARTER_TARGET=angular-20 bun run --cwd internals/fixtures/acceptance test:starters
 ```
 
-The app renders on the server with `provideC15tServer()` from `@inth/angular/ssr` and serves the consent route from `server.ts`, so the banner is in the first HTML response. It reads the backend URL from `C15T_BACKEND_URL` at runtime.
+The app renders on the server with `provideInthServer()` from `@inth/angular/ssr` and serves the consent route from `server.ts`, so the banner is in the first HTML response. It reads the backend URL from `INTH_PROJECT_URL` at runtime.
 
 `prebuild` runs `install-package.mjs`, which copies the built `package.json` and `dist/` of `@inth/angular` over the workspace link, as an install from npm would. Through the link, the package's imports would resolve the Angular 22 in `packages/sdk/angular/node_modules` instead of this app's Angular 20.
 

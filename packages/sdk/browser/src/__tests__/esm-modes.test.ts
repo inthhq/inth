@@ -18,7 +18,7 @@ import { testing } from '../testing';
 import { withBuildDefaults } from '../transports/manifest';
 
 const builtManifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'built',
 	schemaVersion: 2,
 };
@@ -82,9 +82,9 @@ describe('manifest() from @inth/sdk', () => {
 			withBuildDefaults({ source: 'runtime' }, buildOutput).snapshot
 		).toBeUndefined();
 		expect(
-			withBuildDefaults({ manifestUrl: '/api/c15t/manifest' }, buildOutput)
+			withBuildDefaults({ manifestUrl: '/api/inth/manifest' }, buildOutput)
 		).toEqual({
-			manifestUrl: '/api/c15t/manifest',
+			manifestUrl: '/api/inth/manifest',
 			projectUrl: 'https://built.example',
 		});
 		expect(

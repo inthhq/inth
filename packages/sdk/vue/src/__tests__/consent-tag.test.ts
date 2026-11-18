@@ -22,7 +22,7 @@ const provides = function provides(branding: InitOutput['branding']) {
 	};
 };
 
-const mountTag = function mountTag(branding: InitOutput['branding'] = 'c15t') {
+const mountTag = function mountTag(branding: InitOutput['branding'] = 'inth') {
 	return mount(ConsentTag, {
 		global: { provide: provides(branding) },
 		props: { context: 'banner' as const },
@@ -30,7 +30,7 @@ const mountTag = function mountTag(branding: InitOutput['branding'] = 'c15t') {
 };
 
 const renderTagOnServer = function renderTagOnServer(
-	branding: InitOutput['branding'] = 'c15t'
+	branding: InitOutput['branding'] = 'inth'
 ) {
 	const app = createSSRApp(ConsentTag, { context: 'banner' });
 	const injected = provides(branding);
@@ -49,7 +49,7 @@ describe('consent tag branding link', () => {
 		const configured = mount(ConsentTag, {
 			global: {
 				provide: {
-					...provides('c15t'),
+					...provides('inth'),
 					[consentConfigKey as symbol]: {
 						components: {
 							tag: { banner: { rel: 'noopener', target: '_blank' } },

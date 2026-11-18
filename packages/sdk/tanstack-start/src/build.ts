@@ -66,16 +66,16 @@ interface SheetResolveContext {
  * is `undefined`. `projectUrl` is public and reaches both.
  *
  * The backend URL comes from `projectUrl` or, when that is omitted, from
- * `VITE_C15T_BACKEND_URL`, then `VITE_INTH_PROJECT_URL`, including `.env`
- * files. When `VITE_C15T_BACKEND_URL` is unset, the plugin sets
- * `import.meta.env.VITE_C15T_BACKEND_URL` to the URL it used, so server and
+ * `VITE_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL`, including `.env`
+ * files. When `VITE_INTH_PROJECT_URL` is unset, the plugin sets
+ * `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used, so server and
  * browser code read the same value.
  *
  * The fetch waits at most 10 seconds. When it fails, `vite build` and
  * `vite dev` log a warning and serve `snapshot: undefined`, so the server
  * fetches the policy at runtime and asks the backend's `/init` while the
  * manifest is unavailable. Set `onBuildError: 'fail'`, or
- * `C15T_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
+ * `INTH_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
  * for a `projectUrl` that is not absolute http(s), and with
  * `source: 'runtime'`, for an app whose `manifest({ source: 'runtime' })`
  * reads the policy at runtime.
@@ -93,13 +93,13 @@ interface SheetResolveContext {
  * ```ts
  * import { consentManifest } from '@inth/tanstack-start/build';
  *
- * // Reads VITE_C15T_BACKEND_URL, for example from `.env`.
+ * // Reads VITE_INTH_PROJECT_URL, for example from `.env`.
  * const plugins = [consentManifest()];
  * ```
  */
 export const consentManifest = (options: ConsentManifestPluginOptions = {}) => {
 	const plugin = createConsentManifestPlugin(options, {
-		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
+		envNames: ['VITE_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
 		label: '@inth/tanstack-start/build',
 		serverRendered: true,
 	});

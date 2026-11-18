@@ -85,7 +85,7 @@ export interface SubjectPostBody {
 	addtlConsent?: string;
 	/** Granted flag per declared vendor after this act, when vendors exist. */
 	vendorChoice?: VendorChoiceWire;
-	/** Free-form audit metadata. `userProperties`, `timeToDecisionMs` and `experiment` are the keys c15t sets. */
+	/** Free-form audit metadata. `userProperties`, `timeToDecisionMs` and `experiment` are the keys Inth sets. */
 	metadata?: Record<string, unknown> & {
 		userProperties?: NonNullable<SavePayload['user']>['properties'];
 		/** Milliseconds from the surface's first impression to the action. */

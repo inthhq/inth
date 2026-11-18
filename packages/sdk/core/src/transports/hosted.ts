@@ -1,5 +1,5 @@
 /**
- * Hosted transport — talks to a c15t backend's `/init` and `/subjects`
+ * Hosted transport — talks to a Inth backend's `/init` and `/subjects`
  * endpoints.
  *
  * Isomorphic: works in Node, RSC, edge, and browser. No top-level
@@ -67,7 +67,7 @@ import { readProducerPolicyContract } from './version-header';
 
 export interface HostedTransportOptions {
 	/**
-	 * Backend URL. Can be relative (`/api/c15t`) or absolute.
+	 * Backend URL. Can be relative (`/api/inth`) or absolute.
 	 * Trailing slashes are stripped.
 	 */
 	projectUrl: string;
@@ -344,7 +344,7 @@ export const createHostedTransport = function createHostedTransport(
 		const response = await fetchImpl(request.url, request.init);
 
 		if (!response.ok) {
-			throw await failedResponseError('c15t hosted transport: /init', response);
+			throw await failedResponseError('inth hosted transport: /init', response);
 		}
 
 		const payload = (await response.json()) as InitOutput;

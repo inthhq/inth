@@ -5,7 +5,7 @@
 	/**
 	 * In-page probe for the SvelteKit browser bench.
 	 *
-	 * Publishes one object on `window.__c15tSvelteBench` that the Playwright
+	 * Publishes one object on `window.__inthSvelteBench` that the Playwright
 	 * runner polls. `bannerReadyMs` / `bannerVisibleMs` use the same
 	 * rAF-settled definition as the Nuxt probe — banner root *and* accept
 	 * button laid out, painted and not animating — so the two suites'
@@ -62,11 +62,11 @@
 
 	declare global {
 		interface Window {
-			__c15tSvelteBench?: SvelteBenchState;
+			__inthSvelteBench?: SvelteBenchState;
 		}
 	}
 
-	const BANNER_ELEMENT_TIMING_NAME = 'c15t-consent-banner';
+	const BANNER_ELEMENT_TIMING_NAME = 'inth-consent-banner';
 
 	const isElementVisible = function isElementVisible(
 		element: Element
@@ -131,10 +131,10 @@
 
 	const getState = function getState(): SvelteBenchState {
 		if (
-			!window.__c15tSvelteBench ||
-			window.__c15tSvelteBench.scenario !== scenario
+			!window.__inthSvelteBench ||
+			window.__inthSvelteBench.scenario !== scenario
 		) {
-			window.__c15tSvelteBench = {
+			window.__inthSvelteBench = {
 				activeUI: 'none',
 				hasConsented: false,
 				location: null,
@@ -148,7 +148,7 @@
 				startedAtMs: performance.now(),
 			};
 		}
-		return window.__c15tSvelteBench;
+		return window.__inthSvelteBench;
 	};
 
 	/**

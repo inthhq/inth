@@ -1,12 +1,12 @@
 ---
 title: DevTools
-description: Add the c15t DevTools panel to a plain HTML page with a second script tag to inspect consent, gated scripts, the resolved policy and events, and to test other countries.
+description: Add the Inth DevTools panel to a plain HTML page with a second script tag to inspect consent, gated scripts, the resolved policy and events, and to test other countries.
 group: frameworks
 ---
 
 ## Add the panel
 
-Add the DevTools tag next to the c15t tag while you debug:
+Add the DevTools tag next to the Inth tag while you debug:
 
 {/* example: fragment */}
 
@@ -20,8 +20,8 @@ Add the DevTools tag next to the c15t tag while you debug:
 ```
 
 Tag order does not matter. Loaded first, the DevTools tag queues itself on
-`window.c15t` and mounts once the client starts. Loaded after, it mounts at
-once. With `data-manual` on the c15t tag, it waits for `c15t.init()`.
+`window.inth` and mounts once the client starts. Loaded after, it mounts at
+once. With `data-manual` on the Inth tag, it waits for `c15t.init()`.
 
 | Attribute | What it does |
 | --- | --- |
@@ -34,7 +34,7 @@ it.
 
 ## Open DevTools from the trigger
 
-With `data-trigger` on the c15t tag, the trigger shows a DevTools button next
+With `data-trigger` on the Inth tag, the trigger shows a DevTools button next
 to its own while the panel is mounted, and the panel hides its floating
 launcher, so one control sits in the corner. The DevTools button sits at the
 end farthest from the corner. The panel opens just past the trigger, aligned
@@ -63,7 +63,7 @@ that a request was sent or held back; check the Network tab for that.
 ## Use it from the console
 
 Once mounted, the panel is `c15t.devtools` in the console. Call
-`c15t.devtools.destroy()` to remove it. `c15t.dispose()` removes it too.
+`c15t.devtools.destroy()` to remove it. `inth.dispose()` removes it too.
 
 ## Test another country
 

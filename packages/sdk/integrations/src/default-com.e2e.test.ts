@@ -20,7 +20,7 @@ describe('Default core loader consent contract', () => {
 		}
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
-		const scripts = [defaultComPixel({ publicKey: 'c15tfake' })];
+		const scripts = [defaultComPixel({ publicKey: 'inthfake' })];
 		loadScripts(scripts, deniedConsents);
 		updateScripts(scripts, { ...deniedConsents, marketing: true });
 		expect(document.querySelector('script')).toBeNull();
@@ -36,7 +36,7 @@ describe('Default core loader consent contract', () => {
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 	});
 	it('retains one loader across in-flight revoke and regrant', () => {
-		const scripts = [defaultComPixel({ publicKey: 'c15tfake' })];
+		const scripts = [defaultComPixel({ publicKey: 'inthfake' })];
 		loadScripts(scripts, grantedMeasurementConsents);
 		const old = document.querySelector('script');
 		updateScripts(scripts, deniedConsents);

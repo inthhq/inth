@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/example-astro-static",
+	"name": "@inth/example-astro-static",
 	"private": true,
 	"type": "module",
 	"scripts": {

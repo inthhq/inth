@@ -43,7 +43,7 @@ const worldDefault = createConsentManifestPolicyPack({
 const manifestWith = (
 	policyPacks: NonNullable<ConsentManifest['policyPacks']>
 ): ConsentManifest => ({
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks,
 	revision: 'static-test',
 	schemaVersion: 2,

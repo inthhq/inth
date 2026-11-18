@@ -1,7 +1,7 @@
 /**
  * The package's lazy IAB factory.
  *
- * `provideC15t()` runs in every app, IAB or not, so it cannot import
+ * `provideInth()` runs in every app, IAB or not, so it cannot import
  * `@inth/sdk/iab` statically: that would put the CMP API and the `__tcfapi`
  * bridge in the main bundle of apps that never turn IAB on. The runtime
  * calls `createIAB` synchronously, so the deferral happens here:

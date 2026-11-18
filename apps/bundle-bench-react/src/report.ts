@@ -24,8 +24,8 @@ interface BundleResult {
 const BASELINE_REF = 'origin/2.0.0';
 const BASELINE_ENTRY = '2.0.0-consent-surfaces';
 const CURRENT_ENTRY = 'current-consent-surfaces';
-const WORKTREE_DIR = resolve(tmpdir(), 'c15t-bundle-bench-2.0.0');
-const OUTPUT_ROOT = resolve(tmpdir(), 'c15t-bundle-bench-output');
+const WORKTREE_DIR = resolve(tmpdir(), 'inth-bundle-bench-2.0.0');
+const OUTPUT_ROOT = resolve(tmpdir(), 'inth-bundle-bench-output');
 const APP_DIR = process.cwd();
 const REPO_ROOT = resolve(APP_DIR, '..', '..');
 
@@ -143,8 +143,8 @@ const ensureBaselineWorktree = function ensureBaselineWorktree() {
 
 const ensureBaselineInstall = function ensureBaselineInstall() {
 	const nodeModulesDir = resolve(WORKTREE_DIR, 'node_modules');
-	const hasCoreWorkspace = existsSync(resolve(nodeModulesDir, 'c15t'));
-	const hasUiWorkspace = existsSync(resolve(nodeModulesDir, '@c15t', 'ui'));
+	const hasCoreWorkspace = existsSync(resolve(nodeModulesDir, 'inth'));
+	const hasUiWorkspace = existsSync(resolve(nodeModulesDir, '@inth', 'ui'));
 
 	if (existsSync(nodeModulesDir) && hasCoreWorkspace && hasUiWorkspace) {
 		return;
@@ -202,7 +202,7 @@ const ensureBaselineWorkspaceBuild = function ensureBaselineWorkspaceBuild() {
 	);
 
 	linkWorkspacePackage({
-		packageName: 'c15t',
+		packageName: 'inth',
 		root: WORKTREE_DIR,
 		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/core'),
 	});

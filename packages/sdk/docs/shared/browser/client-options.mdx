@@ -36,15 +36,15 @@ group: reference
   | `scripts` | `Script[]` | `[]` | Vendor scripts to load once their category is allowed. Each entry needs `id`, `category`, and `src` or `textContent`. |
   | `consentCategories` | category names | categories your scripts, iframes and rules use | The categories the preference dialog offers, within the policy's scope. `necessary` is always included. |
   | `networkBlocker` | `{ rules, enabled?, logBlockedRequests?, onRequestBlocked? }` or `false` | off | Hold `fetch` and `XMLHttpRequest` calls that match a rule until the rule's category is allowed. |
-  | `iframeBlocker` | `{ disableAutomaticBlocking? }` or `false` | on | Gate iframes that carry `data-category` or `data-vendor`. `false` turns it off. With `disableAutomaticBlocking: true`, c15t checks iframes only when you call `processIframes()`. |
-  | `nonce` | `string` | none | Content Security Policy nonce for the stock UI's `<style>` element and every `<script>` the `scripts` option loads. A script's own `nonce` wins. With a nonce set, c15t runs only the `<script type="text/plain" data-c15t-category>` tags that carry the same `nonce`. |
-  | `scriptLoader` | `{ onDebug?, sources? }` | none | `onDebug` receives every script loader lifecycle event. `sources` loads a script from another URL, keyed by script `id`: `{ posthog: { src, integrity, attributes? } }`. The script's setup and other attributes stay; `integrity` also sets `crossorigin="anonymous"`; an `integrity` with no hash a browser can parse keeps the script from loading, because the browser would run it unchecked. `attributes` sets `data-*` attributes the script does not set itself, and removes those set to `null`. A script with its own `integrity` keeps it, and keeps its own URL when the entry lists a different hash. Fields c15t does not know are ignored. |
-  | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. The preference dialog lists a switch for each. They merge with vendors from the backend, `vendor` fields on scripts and rules, and `data-c15t-vendor` on gated tags. |
+  | `iframeBlocker` | `{ disableAutomaticBlocking? }` or `false` | on | Gate iframes that carry `data-category` or `data-vendor`. `false` turns it off. With `disableAutomaticBlocking: true`, Inth checks iframes only when you call `processIframes()`. |
+  | `nonce` | `string` | none | Content Security Policy nonce for the stock UI's `<style>` element and every `<script>` the `scripts` option loads. A script's own `nonce` wins. With a nonce set, Inth runs only the `<script type="text/plain" data-inth-category>` tags that carry the same `nonce`. |
+  | `scriptLoader` | `{ onDebug?, sources? }` | none | `onDebug` receives every script loader lifecycle event. `sources` loads a script from another URL, keyed by script `id`: `{ posthog: { src, integrity, attributes? } }`. The script's setup and other attributes stay; `integrity` also sets `crossorigin="anonymous"`; an `integrity` with no hash a browser can parse keeps the script from loading, because the browser would run it unchecked. `attributes` sets `data-*` attributes the script does not set itself, and removes those set to `null`. A script with its own `integrity` keeps it, and keeps its own URL when the entry lists a different hash. Fields Inth does not know are ignored. |
+  | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. The preference dialog lists a switch for each. They merge with vendors from the backend, `vendor` fields on scripts and rules, and `data-inth-vendor` on gated tags. |
   | `clearOnRevocation` | cookies and storage keys per category | off | Delete named cookies and storage keys when their category is denied. Read once, at start. |
   | `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once, at start. |
   | `reloadOnConsentRevoked` | `boolean` | `true` | Reload the page after an accept, reject or save turns off a category that was allowed, once the save request finishes. |
-  | `callbacks` | `{ onChoiceRecorded?, onPermissionsChanged?, onError?, onBeforeConsentRevocationReload? }` | none | Functions c15t calls on consent events. |
-  | `storageConfig` | `{ storageKey?, crossSubdomain?, defaultDomain?, defaultExpiryDays? }` | key `c15t`, current host, 365 days | The name, domain and lifetime of the consent cookie and localStorage key. |
+  | `callbacks` | `{ onChoiceRecorded?, onPermissionsChanged?, onError?, onBeforeConsentRevocationReload? }` | none | Functions Inth calls on consent events. |
+  | `storageConfig` | `{ storageKey?, crossSubdomain?, defaultDomain?, defaultExpiryDays? }` | key `inth`, current host, 365 days | The name, domain and lifetime of the consent cookie and localStorage key. |
   | `persistence` | `boolean` or `{ storageConfig?, skipHydration?, sync? }` | `true` | Read and write choices in the cookie and localStorage, and follow other tabs. `false` keeps choices in memory only. `{ sync: false }` stops following other tabs. |
   | `user` | `{ externalId, identityProvider?, identityToken?, externalIdType?, properties? }` | none | An identified visitor, sent with consent records. [`identityToken`](/docs/self-host/api/node-sdk#verify-a-link-made-in-the-browser) verifies the link. Links only a subject the next save creates; use `identify()` for an existing one. |
   | `iab` | IAB options or `false` | none | CMP settings such as `cmpId` and `vendors`. Only the IAB build accepts it; the other builds throw when it is set. |
@@ -68,12 +68,12 @@ group: reference
 
   | Option | Type | Default | What it does |
   | --- | --- | --- | --- |
-  | `theme` | theme tokens | none | Colors, radius, typography, spacing and motion. The same token object every c15t package takes. |
+  | `theme` | theme tokens | none | Colors, radius, typography, spacing and motion. The same token object every Inth package takes. |
   | `css` | `string` | none | CSS added after the bundled stylesheet, in the same root as the UI. |
   | `colorScheme` | `'light'`, `'dark'` or `'system'` | `'system'` | Which token set to use. `system` follows the visitor's setting and updates when it changes. |
   | `shadow` | `boolean` | `true` | Render inside a shadow root. `false` renders into the page, where your stylesheet applies. |
   | `styles` | `boolean` | `true` | Include the bundled stylesheet. Set `false` with `shadow: false` when the page loads the stylesheet itself. |
-  | `noStyle` | `boolean` | `false` | Render markup with no c15t classes and no bundled stylesheet, for fully custom CSS. `theme` and `css` still apply. |
+  | `noStyle` | `boolean` | `false` | Render markup with no Inth classes and no bundled stylesheet, for fully custom CSS. `theme` and `css` still apply. |
   | `disableAnimation` | `boolean` | the visitor's reduced motion setting | Show and hide surfaces without transitions. |
   | `container` | element or CSS selector | `document.body` | Where the UI host element is appended. A selector that matches nothing throws. |
   | `banner` | `boolean` or banner options | `true` | `false` renders no banner. An object sets copy and behavior; see the banner options. |
@@ -147,7 +147,7 @@ group: reference
   | --- | --- | --- |
   | `ready` | the snapshot | The policy has resolved and the UI can render. For a returning visitor, `hasConsented()` is reliable from here. |
   | `consent` | the snapshot | Permissions, the recorded choice or the vendor switches changed. This includes a stored choice restored at start, a save, an expiry and a GPC change. |
-  | `ui` | `'banner'`, `'dialog'` or `'none'` | The surface c15t wants shown changed. |
+  | `ui` | `'banner'`, `'dialog'` or `'none'` | The surface Inth wants shown changed. |
   | `error` | the error | A backend call failed, or an IAB step failed. |
 
   A `ready` listener added after the policy resolved runs at once with the

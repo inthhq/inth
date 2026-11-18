@@ -1,4 +1,4 @@
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { describe, expect, it } from 'vitest';
 
 import { iabPromptClassNames, promptClassNames } from '../banner/class-names';

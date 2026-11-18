@@ -1,6 +1,6 @@
 ---
 title: Consent snapshot
-description: Reference for every field of the c15t consent snapshot a JavaScript app reads from the kernel, @inth/sdk or createConsentRuntime, grouped by the question each field answers.
+description: Reference for every field of the Inth consent snapshot a JavaScript app reads from the kernel, @inth/sdk or createConsentRuntime, grouped by the question each field answers.
 group: frameworks
 ---
 
@@ -34,7 +34,7 @@ kernel.subscribe((next) => {
 | --- | --- | --- |
 | `effectivePermissions` | `Record<category, boolean>` | Whether each category is allowed now. Scripts, iframes and network rules follow this. Under an opt-out policy an optional category can be `true` before any choice. |
 | `restrictions` | per category, a list of `'explicit-denial'`, `'strict-scope'` or `'gpc'` | Why a category is denied. |
-| `privacySignals.gpc` | `{ detected, override, active }` | The browser's Global Privacy Control signal, a test override, and the one c15t honors. |
+| `privacySignals.gpc` | `{ detected, override, active }` | The browser's Global Privacy Control signal, a test override, and the one Inth honors. |
 | `nextDeadline` | `number \| null` | The next time, in epoch milliseconds, when a choice or notice expires and permissions or the prompt can change. |
 
 ## What did the visitor decide?
@@ -57,10 +57,10 @@ explains why.
 | `promptRequirement` | `{ kind: 'choice' \| 'notice', reason } \| { kind: 'none' }` | The interaction still owed. `reason` is `missing`, `expired` or `policy-changed`. |
 | `resolution` | `{ status, policy }` | How the policy resolved: `matched`, `no-match`, `failed` or `unconfigured`. `policy` is set only when `matched`. |
 | `policyPending` | `boolean` | `true` until the transport's first answer. The UI stays hidden while it is `true`. |
-| `policyRule` | resolved rule | The rule c15t evaluates with: the matched rule, or a strict opt-in fallback. Has `id`, `model`, `prompt`, `scope`, `preselectedCategories`, `actions`, `rights` and `validity`. |
+| `policyRule` | resolved rule | The rule Inth evaluates with: the matched rule, or a strict opt-in fallback. Has `id`, `model`, `prompt`, `scope`, `preselectedCategories`, `actions`, `rights` and `validity`. |
 | `model` | `'opt-in' \| 'opt-out' \| 'iab' \| 'none'` | The permission model in force. |
 | `consentCategories` | category list or `null` | Categories configured or discovered on the page. `null` means the policy's full scope. |
-| `evaluationPolicy` | object | The validated projection c15t evaluated. For DevTools and debugging. |
+| `evaluationPolicy` | object | The validated projection Inth evaluated. For DevTools and debugging. |
 
 Check `resolution.status === 'matched'` before you trust `policyRule` as the
 visitor's real policy. While the policy loads or after it fails, `policyRule`

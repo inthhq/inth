@@ -1,7 +1,7 @@
 html[data-consent-example-theme='branded'] * {
-	--c15t-primary: #146b56 !important;
-	--c15t-primary-hover: #105442 !important;
-	--c15t-radius-lg: 1.25rem !important;
+	--inth-primary: #146b56 !important;
+	--inth-primary-hover: #105442 !important;
+	--inth-radius-lg: 1.25rem !important;
 }
 .consent-example {
 	max-width: 48rem;

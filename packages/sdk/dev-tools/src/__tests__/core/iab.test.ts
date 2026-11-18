@@ -363,7 +363,7 @@ describe('IAB DevTools', () => {
 		attachIAB(kernel, { ...minimalGVL, vendors });
 		const tools = mount(kernel);
 		expect(
-			tools.element?.querySelectorAll('.c15t-dev-tools__iab-choice')
+			tools.element?.querySelectorAll('.inth-dev-tools__iab-choice')
 		).toHaveLength(20);
 		button(tools, 'Next IAB page').click();
 		expect(tools.element?.textContent).toContain('Page 2 of 3');
@@ -381,7 +381,7 @@ describe('IAB DevTools', () => {
 				?.value
 		).toBe('Vendor 45');
 		expect(
-			tools.element?.querySelectorAll('.c15t-dev-tools__iab-choice')
+			tools.element?.querySelectorAll('.inth-dev-tools__iab-choice')
 		).toHaveLength(1);
 	});
 });

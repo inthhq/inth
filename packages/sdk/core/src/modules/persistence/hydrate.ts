@@ -371,7 +371,7 @@ export const hydrateFromStorage = function hydrateFromStorage(
 	if (result.ok === false) {
 		// The storage layer already validated; a rejection here means the
 		// records changed shape between read and apply. Nothing is applied.
-		console.warn('[c15t] Stored consent records were rejected.', result.issues);
+		console.warn('[inth] Stored consent records were rejected.', result.issues);
 	}
 	return stored;
 };

@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/vite-react-repro",
+	"name": "@inth/vite-react-repro",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -16,7 +16,7 @@
 		"react-dom": "19.2.0"
 	},
 	"devDependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
 		"@types/react-dom": "19.2.3",

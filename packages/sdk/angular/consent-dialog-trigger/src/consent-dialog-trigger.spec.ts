@@ -5,14 +5,14 @@ import { afterEach, describe, expect, test } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { ConsentDialogTrigger } from './consent-dialog-trigger';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialogTrigger],
 	selector: 'test-trigger-corner',
-	template: `<c15t-consent-dialog-trigger
+	template: `<inth-consent-dialog-trigger
 		defaultPosition="bottom-left"
 		[persistPosition]="false"
 	/>`,
@@ -28,7 +28,7 @@ afterEach(() => {
 describe('ConsentDialogTrigger', () => {
 	test('starts in the corner defaultPosition names', async () => {
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ ...testOptions(), disableAnimation: true })],
+			providers: [provideInth({ ...testOptions(), disableAnimation: true })],
 		});
 		const fixture = TestBed.createComponent(TriggerCorner);
 		await fixture.whenStable();
@@ -41,7 +41,7 @@ describe('ConsentDialogTrigger', () => {
 
 	test('opens from the keyboard after a drag', async () => {
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ ...testOptions(), disableAnimation: true })],
+			providers: [provideInth({ ...testOptions(), disableAnimation: true })],
 		});
 		const fixture = TestBed.createComponent(TriggerCorner);
 		await fixture.whenStable();
@@ -70,7 +70,7 @@ describe('ConsentDialogTrigger', () => {
 
 	test('opens on the next click after a cancelled drag', async () => {
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ ...testOptions(), disableAnimation: true })],
+			providers: [provideInth({ ...testOptions(), disableAnimation: true })],
 		});
 		const fixture = TestBed.createComponent(TriggerCorner);
 		await fixture.whenStable();

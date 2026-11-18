@@ -4,7 +4,7 @@
 #   - runFlow: ../node_modules/@inth/react-native/maestro/open-preferences.yaml
 #
 # To reopen preferences after a decision, tap your app's own Privacy settings
-# entry, which calls presentPreferences(), then wait for inth.prefs or inth.iab.
+# entry, which calls presentPreferences(), then wait for inth.prefs or c15t.iab.
 # Maestro needs an appId in every flow file; the calling flow's appId is used.
 appId: ${APP_ID}
 ---

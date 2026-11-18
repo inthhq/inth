@@ -2,11 +2,11 @@
  * The "Secured by" tag reads its colours, border, shadow and the edge it
  * shares with the card from `--consent-branding-tag-*` variables. Without
  * them a host that wants the tag to match its card has to out-rank four
- * descendant rules that each hardcode `--c15t-text-on-primary`.
+ * descendant rules that each hardcode `--inth-text-on-primary`.
  *
  * The variables are read with a fallback rather than declared on `:root`, so
- * the defaults still resolve on the tag itself and follow a `--c15t-primary`
- * or dark palette scoped to a banner or to `.c15t-theme-root`.
+ * the defaults still resolve on the tag itself and follow a `--inth-primary`
+ * or dark palette scoped to a banner or to `.inth-theme-root`.
  *
  * jsdom cannot compute these properties (it rejects `@layer` and does not
  * substitute `var()`), so this substitutes the tag variables in the shipped
@@ -37,7 +37,7 @@ const readDist = function readDist(relativePath: string): string {
 const classes = Object.fromEntries(
 	[
 		...readDist(join('styles', 'components', 'branding.js')).matchAll(
-			/(?<key>\w+):"(?<name>c15t-ui-[\w-]+)"/gu
+			/(?<key>\w+):"(?<name>inth-ui-[\w-]+)"/gu
 		),
 	].map((match) => [match.groups?.key, match.groups?.name])
 ) as Record<string, string>;
@@ -132,8 +132,8 @@ const tag = () => `.${cls('brandingTag')}:not(.headless)`;
 const TARGETS = {
 	bannerTag: (selector: string) =>
 		selector.includes(`.${cls('brandingTag')}[data-context=banner]`),
-	c15tMark: (_: string, selectors: string[]) =>
-		selectors.includes(`${tag()} .${cls('brandingC15TMark')}`),
+	inthMark: (_: string, selectors: string[]) =>
+		selectors.includes(`${tag()} .${cls('brandingInthMark')}`),
 	copy: (_: string, selectors: string[]) =>
 		selectors.includes(`${tag()} .${cls('brandingCopy')}`),
 	dialogTag: (selector: string) =>
@@ -156,7 +156,7 @@ const CHECKS = [
 	['tag', 'box-shadow'],
 	['copy', 'color'],
 	['wordmark', 'color'],
-	['c15tMark', 'color'],
+	['inthMark', 'color'],
 	['inthMark', 'color'],
 	['bannerTag', 'border-bottom-width'],
 	['legacyBannerTag', 'border-bottom-width'],
@@ -182,16 +182,16 @@ const resolve = function resolve(
 
 describe('the "Secured by" tag', () => {
 	test('found its class names', () => {
-		expect(cls('brandingTag')).toMatch(/^c15t-ui-brandingTag-/u);
+		expect(cls('brandingTag')).toMatch(/^inth-ui-brandingTag-/u);
 	});
 
 	test('keeps its look when no variable is set', () => {
-		const onPrimary = 'var(--c15t-text-on-primary,#fff)';
+		const onPrimary = 'var(--inth-text-on-primary,#fff)';
 		const dialogOffset = 'translateY(calc(100% + 1px - 0px))';
 
 		expect(resolve({})).toEqual({
 			'bannerTag border-bottom-width': '0px',
-			'c15tMark color': onPrimary,
+			'inthMark color': onPrimary,
 			'copy color': onPrimary,
 			'dialogTag border-top-width': '0px',
 			'dialogTag transform': dialogOffset,
@@ -199,9 +199,9 @@ describe('the "Secured by" tag', () => {
 			'legacyBannerTag border-bottom-width': '0px',
 			'legacyDialogTag border-top-width': '0px',
 			'legacyDialogTag transform': dialogOffset,
-			'tag background-color': 'var(--c15t-primary)',
+			'tag background-color': 'var(--inth-primary)',
 			'tag border':
-				'1px solid color-mix(in srgb, var(--c15t-primary), black 14%)',
+				'1px solid color-mix(in srgb, var(--inth-primary), black 14%)',
 			'tag box-shadow': 'inset 0 1px 0 #ffffff29, 0 1px 2px #0f172a1f',
 			'tag color': onPrimary,
 			'wordmark color': onPrimary,
@@ -214,27 +214,27 @@ describe('the "Secured by" tag', () => {
 		expect(
 			resolve({
 				'--consent-branding-tag-attached-edge-width': '1px',
-				'--consent-branding-tag-background-color': 'var(--c15t-surface)',
-				'--consent-branding-tag-border-color': 'var(--c15t-border)',
-				'--consent-branding-tag-mark-color': 'var(--c15t-primary)',
+				'--consent-branding-tag-background-color': 'var(--inth-surface)',
+				'--consent-branding-tag-border-color': 'var(--inth-border)',
+				'--consent-branding-tag-mark-color': 'var(--inth-primary)',
 				'--consent-branding-tag-shadow': 'none',
-				'--consent-branding-tag-text-color': 'var(--c15t-text-muted)',
+				'--consent-branding-tag-text-color': 'var(--inth-text-muted)',
 			})
 		).toEqual({
 			'bannerTag border-bottom-width': '1px',
-			'c15tMark color': 'var(--c15t-primary)',
-			'copy color': 'var(--c15t-text-muted)',
+			'inthMark color': 'var(--inth-primary)',
+			'copy color': 'var(--inth-text-muted)',
 			'dialogTag border-top-width': '1px',
 			'dialogTag transform': dialogOffset,
-			'inthMark color': 'var(--c15t-primary)',
+			'inthMark color': 'var(--inth-primary)',
 			'legacyBannerTag border-bottom-width': '1px',
 			'legacyDialogTag border-top-width': '1px',
 			'legacyDialogTag transform': dialogOffset,
-			'tag background-color': 'var(--c15t-surface)',
-			'tag border': '1px solid var(--c15t-border)',
+			'tag background-color': 'var(--inth-surface)',
+			'tag border': '1px solid var(--inth-border)',
 			'tag box-shadow': 'none',
-			'tag color': 'var(--c15t-text-muted)',
-			'wordmark color': 'var(--c15t-text-muted)',
+			'tag color': 'var(--inth-text-muted)',
+			'wordmark color': 'var(--inth-text-muted)',
 		});
 	});
 
@@ -243,7 +243,7 @@ describe('the "Secured by" tag', () => {
 			'--consent-branding-tag-text-color': 'CanvasText',
 		});
 
-		expect(resolved['c15tMark color']).toBe('CanvasText');
+		expect(resolved['inthMark color']).toBe('CanvasText');
 		expect(resolved['inthMark color']).toBe('CanvasText');
 	});
 });

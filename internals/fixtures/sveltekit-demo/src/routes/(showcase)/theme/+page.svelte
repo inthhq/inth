@@ -529,7 +529,7 @@
 	<header class="p-8 text-center">
 		<h1 class="text-foreground mb-2 text-4xl font-bold">Theme Showcase</h1>
 		<p class="text-muted-foreground">
-			Demonstrating c15t's customizable theme engine
+			Demonstrating inth's customizable theme engine
 		</p>
 	</header>
 

@@ -1,7 +1,7 @@
 // #region docs:network-blocker
 import type { NetworkBlockerOptions } from '@inth/angular';
 
-// Pass as `networkBlocker` to provideC15t() in app.config.ts.
+// Pass as `networkBlocker` to provideInth() in app.config.ts.
 export const networkBlocker: NetworkBlockerOptions = {
 	onRequestBlocked: ({ method, url }) => {
 		console.info('Blocked until consent', method, url);

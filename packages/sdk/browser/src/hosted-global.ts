@@ -2,11 +2,11 @@ import { hosted } from '@inth/sdk-core/transports';
 
 import type { CreateConsentClientContext } from './client-base';
 import { createGlobalWith } from './global-base';
-import type { C15tGlobalBase } from './global-base';
+import type { InthGlobalBase } from './global-base';
 import { createHostedConsentClient } from './hosted-client';
 
 /** The global API installed by the hosted browser bundle. */
-export interface HostedC15tGlobal extends C15tGlobalBase {
+export interface HostedInthGlobal extends InthGlobalBase {
 	/** Hosted transport factory for `init({ mode: c15t.hosted({ projectUrl }) })`. */
 	hosted: typeof hosted;
 }
@@ -21,7 +21,7 @@ export interface HostedC15tGlobal extends C15tGlobalBase {
  */
 export const createHostedGlobal = function createHostedGlobal(
 	context: CreateConsentClientContext = {}
-): HostedC15tGlobal {
+): HostedInthGlobal {
 	return Object.assign(
 		createGlobalWith(
 			{ ...context, pkg: context.pkg ?? '@inth/sdk/hosted' },

@@ -63,7 +63,7 @@ describe('a throwing subscriber', () => {
 		expect(recorded).toHaveBeenCalledOnce();
 		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(false);
 		expect(reported).toHaveBeenCalledWith(
-			expect.stringContaining('[c15t]'),
+			expect.stringContaining('[inth]'),
 			failure
 		);
 	});
@@ -111,7 +111,7 @@ describe('a throwing subscriber', () => {
 		expect(result.ok).toBe(true);
 		expect(reportError).not.toHaveBeenCalled();
 		expect(reported).toHaveBeenCalledWith(
-			expect.stringContaining('[c15t]'),
+			expect.stringContaining('[inth]'),
 			failure
 		);
 	});
@@ -269,7 +269,7 @@ describe('a subscriber that updates consent while notified', () => {
 		// The feedback listener is called once more in the final pass.
 		expect(calls).toBeLessThanOrEqual(MAX_DELIVERY_DEPTH + 1);
 		expect(reported).toHaveBeenCalledWith(
-			expect.stringContaining('[c15t]'),
+			expect.stringContaining('[inth]'),
 			expect.objectContaining({
 				message: expect.stringContaining('further notifications'),
 			})

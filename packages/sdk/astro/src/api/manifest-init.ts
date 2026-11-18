@@ -5,7 +5,7 @@
 import { resolveRequestProjectUrl } from '@inth/sdk/server';
 import type { ConsentRouteFetchGvl } from '@inth/sdk/server';
 
-import type { C15tResolvedOptions } from '../types';
+import type { InthResolvedOptions } from '../types';
 
 const MANIFEST_ROUTE_SUFFIX = '/manifest';
 
@@ -41,7 +41,7 @@ const trimSlash = function trimSlash(value: string): string {
  */
 export const resolveManifestSourceFrom = function resolveManifestSourceFrom(
 	source: RequestSource,
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): string {
 	const { mode } = options;
 	const manifestUrl = mode.type === 'manifest' ? mode.manifestUrl : undefined;

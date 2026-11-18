@@ -22,7 +22,7 @@ screens can be reopened from app settings.
 | One part, such as the decision buttons | `slots` |
 | Provider name in the attribution | `branding` |
 | A page, a sheet or a prompt for the first choice | `firstLayer` |
-| c15t colours or the system's, with your accent | `appearance` |
+| Inth colours or the system's, with your accent | `appearance` |
 | Save Settings at the bottom or in the top bar | `savePlacement` |
 | Entirely app-owned controls | [Headless integration](/docs/frameworks/android/headless) |
 
@@ -69,8 +69,8 @@ theme value is not a contrast guarantee.
 
 ## Set type, spacing and radii
 
-Names that have a web token match it: `colors.primary` is `--c15t-primary`,
-`radius.md` is `--c15t-radius-md` and `spacing.lg` is `--c15t-space-lg`.
+Names that have a web token match it: `colors.primary` is `--inth-primary`,
+`radius.md` is `--inth-radius-md` and `spacing.lg` is `--inth-space-lg`.
 
 `typography.fontSize` sets three groups of the Material type scale the screens
 use. `sm` sizes bodyMedium, bodySmall and the small labels (14sp by default);
@@ -123,7 +123,7 @@ scroll.
 
 `appearance` chooses the stock colours. `system`, the default, uses the
 platform's backgrounds and text colours with your app's accent colour, and
-centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
+centres the page. `inth` is warm paper and ink. The sheet and the prompt always use the system colours,
 because they sit over your app. Colours you set yourself win in every case.
 
 In an IAB TCF policy, a sheet or prompt is shown as the page in a wide window,
@@ -142,7 +142,7 @@ The accent colour is your application theme's `colorPrimary`.
 
 `brand` identifies the app. `branding` identifies the consent provider in the
 attribution beneath the actions. The built-in providers are
-`ConsentTheme.Branding.Inth`, the default, and `.C15t`. A custom provider uses
+`ConsentTheme.Branding.Inth`, the default, and `.Inth`. A custom provider uses
 `Branding.Custom(name, markResId)`; its mark is optional. `showsBranding = false`
 hides that attribution.
 
@@ -171,9 +171,9 @@ same native presenter is opened through a wrapper.
 | `com.inth.consent.BRAND` | `false` hides app identity. |
 | `com.inth.consent.HEADLINE`, `INTRODUCTION` | First-layer copy. |
 | `com.inth.consent.FIRST_LAYER` | `page`, `sheet` or `prompt`. |
-| `com.inth.consent.APPEARANCE` | `system` or `c15t`. |
+| `com.inth.consent.APPEARANCE` | `system` or `inth`. |
 | `com.inth.consent.SAVE_PLACEMENT` | `top` or `bottom`. |
-| `com.inth.consent.BRANDING_PROVIDER` | `inth` or `c15t`. |
+| `com.inth.consent.BRANDING_PROVIDER` | `inth` or `inth`. |
 | `com.inth.consent.BRANDING_NAME`, `BRANDING_MARK` | Custom provider name and drawable. |
 | `com.inth.consent.BRANDING` | `false` hides provider attribution. |
 

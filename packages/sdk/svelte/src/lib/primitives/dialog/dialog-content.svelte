@@ -54,7 +54,7 @@
 				// Same target as the trap's `first-tabbable`, chosen here so the
 				// trap never has to move focus a second time.
 				const preferredFocusTarget = node.querySelector<HTMLElement>(
-					'[data-c15t-dialog-focus="true"]'
+					'[data-inth-dialog-focus="true"]'
 				);
 				(preferredFocusTarget ?? firstTabbable(node) ?? node).focus();
 			}

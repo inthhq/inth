@@ -3,7 +3,7 @@
  * throws the same error the browser does, so a SvelteKit page fails
  * instead of shipping no consent UI.
  */
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import type { GlobalVendorList } from '@inth/sdk/engine';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
@@ -32,7 +32,7 @@ describe('the server render of an `iab` policy', () => {
 		expect(
 			() => render(BannerFixture, { props: { options: options() } }).body
 		).toThrow(
-			"c15t: this visitor's policy uses IAB TCF, but `iab` is not set."
+			"inth: this visitor's policy uses IAB TCF, but `iab` is not set."
 		);
 	});
 

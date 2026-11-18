@@ -240,9 +240,9 @@ export const createVendorList = function createVendorList(
 		const hasDetails = Boolean(vendor.description || vendor.privacyPolicyUrl);
 		const key = `${category}:${vendor.id}`;
 		const ids = {
-			content: `c15t-vendor-${category}-${index}-content`,
-			label: `c15t-vendor-${category}-${vendor.id}`,
-			trigger: `c15t-vendor-${category}-${index}-trigger`,
+			content: `inth-vendor-${category}-${index}-content`,
+			label: `inth-vendor-${category}-${vendor.id}`,
+			trigger: `inth-vendor-${category}-${index}-trigger`,
 		};
 		const { icon, path } = buildIcon();
 		const trigger = h(

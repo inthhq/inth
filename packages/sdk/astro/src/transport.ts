@@ -19,11 +19,11 @@ import { createHostedTransport } from '@inth/sdk/engine';
 import { testingOptionsOf } from '@inth/sdk/modes';
 import { clientMode } from '@inth/sdk/runtime/client-mode';
 
-import type { C15tResolvedOptions } from './types';
+import type { InthResolvedOptions } from './types';
 
 /** The options a transport is built from. */
 type TransportOptions = Pick<
-	C15tResolvedOptions,
+	InthResolvedOptions,
 	'projectUrl' | 'mode' | 'routePrefix'
 >;
 

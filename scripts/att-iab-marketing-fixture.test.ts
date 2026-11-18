@@ -1,7 +1,7 @@
 /**
  * The ATT sequence reads IAB TCF consent through the web's category derivation,
  * not a second one. `packages/native-protocol/att/iab-marketing.json` holds the shared
- * cases; this runs their purpose half against `iabPurposesToC15tConsents`, and
+ * cases; this runs their purpose half against `iabPurposesToInthConsents`, and
  * `IABMarketingFixtureTests` in `packages/swift/Tests/InthAppleTests` runs all
  * of them against Swift.
  */
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { iabPurposesToC15tConsents } from '../packages/sdk/iab/src/tcf/purpose-mapping';
+import { iabPurposesToInthConsents } from '../packages/sdk/iab/src/tcf/purpose-mapping';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -56,7 +56,7 @@ describe('ATT IAB marketing fixture: the purpose half is the web derivation', ()
 			fixtureCase.purposeConsents.map((id) => [id, true])
 		);
 		expect(
-			iabPurposesToC15tConsents(purposeConsents, basisOf(fixtureCase)).marketing
+			iabPurposesToInthConsents(purposeConsents, basisOf(fixtureCase)).marketing
 		).toBe(fixtureCase.expected.purposes);
 	});
 

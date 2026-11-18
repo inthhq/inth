@@ -4,7 +4,7 @@
  * hydrates. Nothing starts while the policy asks the visitor to choose, or
  * from HTML shared by every visitor.
  */
-import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/engine';
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
@@ -30,7 +30,7 @@ const pixel: Script = {
 const nuxt = vi.hoisted(() => ({
 	appConfig: {} as Record<string, unknown>,
 	heads: [] as unknown[],
-	// What the module puts in `runtimeConfig.public.c15t` besides `mode`.
+	// What the module puts in `runtimeConfig.public.inth` besides `mode`.
 	publicConfig: {} as Record<string, unknown>,
 	response: undefined as unknown,
 	state: new Map<string, ShallowRef<unknown>>(),
@@ -41,7 +41,7 @@ vi.mock('#imports', async () => {
 	return {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
 		useAppConfig: () => ({
-			c15t: {
+			inth: {
 				consentCategories: ['necessary', 'marketing'],
 				iframeBlocker: false,
 				nonce: 'request-nonce',
@@ -59,7 +59,7 @@ vi.mock('#imports', async () => {
 		useRequestHeaders: () => ({ 'x-vercel-ip-country': 'US' }),
 		useRequestURL: () => new URL('https://app.example/'),
 		useRuntimeConfig: () => ({
-			public: { c15t: { mode: { type: 'hosted' }, ...nuxt.publicConfig } },
+			public: { inth: { mode: { type: 'hosted' }, ...nuxt.publicConfig } },
 		}),
 		useState: (key: string, init: () => unknown) => {
 			if (!nuxt.state.has(key)) {
@@ -81,7 +81,7 @@ const initFor = (
 	rule: PolicyRule,
 	extra: Partial<InitOutput> = {}
 ): InitOutput => ({
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'US', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({ countryCode: 'US', regionCode: null, rules: [rule] })
@@ -124,7 +124,7 @@ const renderStartScripts = async function renderStartScripts(
 		vi.fn(() =>
 			Promise.resolve(
 				new Response(JSON.stringify(nuxt.response), {
-					headers: { [C15T_POLICY_CONTRACT_HEADER]: '1' },
+					headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
 				})
 			)
 		)
@@ -166,7 +166,7 @@ test('starts an allowed vendor tag from the end of the body, with the nonce', as
 
 	expect(rest).toEqual([]);
 	expect(start?.innerHTML).toContain(JSON.stringify(pixel.src));
-	expect(start?.key).toBe('c15t-server-start');
+	expect(start?.key).toBe('inth-server-start');
 	expect(start?.nonce).toBe('request-nonce');
 });
 

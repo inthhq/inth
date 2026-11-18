@@ -1,11 +1,11 @@
 /**
- * The transports `provideC15t()` selects: the hosted backend for
+ * The transports `provideInth()` selects: the hosted backend for
  * `projectUrl`, and `manifest()` for `mode`.
  *
  * Core's factories carry their transport's code: the hosted transport,
  * the manifest resolver. That code would ship with every page's first load
  * through `app.config.ts`. These build the same factories (same `kind`,
- * same options as data, which core and `provideC15tServer()` read) but
+ * same options as data, which core and `provideInthServer()` read) but
  * build their transport with code the consent engine's chunk hands over
  * (`provideModeTransports`) when it loads, before it builds a runtime. A
  * runtime built before then gets a transport that loads the code on first
@@ -115,7 +115,7 @@ export const hostedFor = function hostedFor(
 };
 
 /**
- * The transport factory `provideC15t()`'s options select: `mode` when it
+ * The transport factory `provideInth()`'s options select: `mode` when it
  * is a factory or a `testing()` value, else the hosted backend at
  * `projectUrl`.
  *
@@ -146,7 +146,7 @@ export const selectedMode = function selectedMode(options: {
  * browser. The resolver loads with the first `/init` it answers.
  *
  * @param options - The manifest's URL or snapshot, and where to resolve.
- * @returns A transport factory for `provideC15t()`'s `mode`, carrying its
+ * @returns A transport factory for `provideInth()`'s `mode`, carrying its
  * options.
  */
 export const manifest = function manifest(

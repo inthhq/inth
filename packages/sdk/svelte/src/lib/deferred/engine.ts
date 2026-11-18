@@ -104,7 +104,7 @@ export const createRootEngine = function createRootEngine(
 	input: RootEngineInput
 ): RootEngine {
 	const stateMode = input.state.mode;
-	// No mode at all is `manifest()`, as in `c15tHandle()`.
+	// No mode at all is `manifest()`, as in `inthHandle()`.
 	const transport = clientMode(
 		input.mode ?? stateMode,
 		input.state,

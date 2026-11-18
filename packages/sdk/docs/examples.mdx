@@ -1,17 +1,17 @@
 ---
 title: Examples
-description: Runnable c15t apps from the c15t repository. Starters show the smallest setup for Next.js, TanStack Start, React, Nuxt, Vue, Astro, Svelte, SvelteKit, HTML and JavaScript. Showcases show custom banners, preference centers, gated embeds, analytics, IAB TCF, experiments and multilingual sites.
+description: Runnable Inth apps from the Inth repository. Starters show the smallest setup for Next.js, TanStack Start, React, Nuxt, Vue, Astro, Svelte, SvelteKit, HTML and JavaScript. Showcases show custom banners, preference centers, gated embeds, analytics, IAB TCF, experiments and multilingual sites.
 ---
 
-## Run an example from the c15t repository
+## Run an example from the Inth repository
 
 The examples live in the [`examples` directory](https://github.com/c15t/c15t/tree/v3/examples)
-of the c15t repository. They build against the packages in the repository, not
+of the Inth repository. They build against the packages in the repository, not
 against npm, so you clone the repository and build the packages first:
 
 ```sh
 git clone --branch v3 https://github.com/c15t/c15t.git
-cd c15t
+cd inth
 bun install
 bun run build:libs
 ```
@@ -23,7 +23,7 @@ bun run --cwd examples/nextjs dev
 ```
 
 Each example has a README that names the two or three files worth reading and
-how to point it at your backend. To add c15t to your own app, follow your
+how to point it at your backend. To add Inth to your own app, follow your
 [framework quickstart](/docs/frameworks) instead; its setup code comes from the
 starters below.
 
@@ -60,19 +60,19 @@ clone. Set your own URL in `.env.local`, which overrides it. Replace the
 placeholder PostHog key with your own, or remove the script.
 
 `examples/self-host` is a Next.js App Router app with `@c15t/backend` mounted
-at `/api/c15t` in the same app. It runs on an embedded PGlite database in
+at `/api/inth` in the same app. It runs on an embedded PGlite database in
 development and Postgres from `DATABASE_URL` when deployed. The
 [backend quickstart](/docs/self-host/quickstart) publishes its route handler.
 
 ## Showcases
 
 Showcases are apps for Northwind Coffee, a made-up coffee roaster. Each one
-shows one thing c15t can do inside a believable product. All but one are
+shows one thing Inth can do inside a believable product. All but one are
 Next.js apps.
 
 | Showcase | Directory | What it shows |
 | --- | --- | --- |
-| Custom banner | `examples/showcase-custom-banner` | A banner and preferences sheet built on the headless hooks, with no c15t stylesheet |
+| Custom banner | `examples/showcase-custom-banner` | A banner and preferences sheet built on the headless hooks, with no Inth stylesheet |
 | Preference center | `examples/showcase-preference-center` | Consent settings as a page in account settings, with categories, vendors and the last saved time |
 | Gated embeds | `examples/showcase-gated-embeds` | YouTube, Google Maps and a support chat behind designed placeholders that load in place |
 | Analytics | `examples/showcase-analytics` | Google Tag Manager with Consent Mode v2, GA4, PostHog and the Meta Pixel, with vendor switches in the dialog and DevTools showing each script's state |
@@ -81,8 +81,8 @@ Next.js apps.
 | Multilingual | `examples/showcase-multilingual` | Banner language from the route and policy from the visitor's region |
 | Nuxt theme | `examples/showcase-nuxt-theme` | The stock Nuxt banner and dialog in a brand's colors, layout and dark mode, styled through module options |
 
-The showcases talk to an Inth project. Set `NEXT_PUBLIC_C15T_BACKEND_URL`
-(or `NUXT_PUBLIC_C15T_BACKEND_URL` for the Nuxt showcase) to your project URL
+The showcases talk to an Inth project. Set `NEXT_PUBLIC_INTH_PROJECT_URL`
+(or `NUXT_PUBLIC_INTH_PROJECT_URL` for the Nuxt showcase) to your project URL
 in `.env.local`.
 
 Vendor switches are optional. The analytics showcase turns them on in the
@@ -105,7 +105,7 @@ fixtures and installation snippets have different coverage from the web starters
 
 | Integration | Directory | What it shows |
 | --- | --- | --- |
-| Shopify | `examples/shopify-nextjs` | A Next.js store on mock.shop with a cart and Hydrogen analytics that wait for the c15t banner |
+| Shopify | `examples/shopify-nextjs` | A Next.js store on mock.shop with a cart and Hydrogen analytics that wait for the Inth banner |
 
 The Shopify example runs against mock.shop, Shopify's public demo store. See
 the [Shopify guide](/docs/integrations/shopify) for a real shop.
@@ -122,7 +122,7 @@ showcase in a private window with DevTools Network open:
 3. Open **Privacy settings** and allow **Analytics** (the `measurement`
    category). PostHog loads.
 4. Withdraw it again. The page reloads without PostHog. Reloading cannot undo
-   code that already ran, which is why c15t reloads by default.
+   code that already ran, which is why Inth reloads by default.
 
 ## Tests
 

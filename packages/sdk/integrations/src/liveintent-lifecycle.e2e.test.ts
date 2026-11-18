@@ -41,7 +41,7 @@ describe('LiveIntent production core loader contract', () => {
 		const getItem = vi.spyOn(Storage.prototype, 'getItem');
 		const cookieWrite = vi.spyOn(document, 'cookie', 'set');
 		const scripts = [
-			liveIntentTag({ events: [conversion], tagId: 'c15t-tag' }),
+			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
 		expect(loadScripts(scripts, deniedConsents)).toEqual([]);
 		expect(updateScripts(scripts, grantedMeasurementConsents).loaded).toEqual(
@@ -65,12 +65,12 @@ describe('LiveIntent production core loader contract', () => {
 		let atAppend: unknown;
 		installHeadProbe((node) => {
 			atAppend = window.liQ;
-			expect(node.src).toBe('https://b-code.liadm.com/c15t-tag.min.js');
+			expect(node.src).toBe('https://b-code.liadm.com/inth-tag.min.js');
 			expect(node.async).toBe(true);
 			expect(node.getAttribute('charset')).toBe('utf-8');
 		});
 		loadScripts(
-			[liveIntentTag({ events: [conversion, second], tagId: 'c15t-tag' })],
+			[liveIntentTag({ events: [conversion, second], tagId: 'inth-tag' })],
 			grantedMarketingConsents
 		);
 		expect(Array.isArray(atAppend)).toBe(true);
@@ -80,7 +80,7 @@ describe('LiveIntent production core loader contract', () => {
 
 	it('creates an empty event array when no initial events are configured', () => {
 		loadScripts(
-			[liveIntentTag({ tagId: 'c15t-tag' })],
+			[liveIntentTag({ tagId: 'inth-tag' })],
 			grantedMarketingConsents
 		);
 		expect(window.liQ).toEqual([]);
@@ -92,7 +92,7 @@ describe('LiveIntent production core loader contract', () => {
 		const queue: LiveIntentEvent[] = [prior];
 		window.liQ = queue;
 		const scripts = [
-			liveIntentTag({ events: [conversion], tagId: 'c15t-tag' }),
+			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
 		loadScripts(scripts, deniedConsents);
 		expect(queue).toEqual([prior]);
@@ -110,7 +110,7 @@ describe('LiveIntent production core loader contract', () => {
 		const runtime = { push };
 		window.liQ = runtime;
 		const scripts = [
-			liveIntentTag({ events: [conversion], tagId: 'c15t-tag' }),
+			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
 		loadScripts(scripts, deniedConsents);
 		expect(push).not.toHaveBeenCalled();
@@ -128,7 +128,7 @@ describe('LiveIntent production core loader contract', () => {
 		(completion) => {
 			const append = vi.fn();
 			installHeadProbe(append);
-			const options = { events: [conversion], tagId: 'c15t-tag' };
+			const options = { events: [conversion], tagId: 'inth-tag' };
 			const scripts = [liveIntentTag(options)];
 			loadScripts(scripts, grantedMarketingConsents);
 			const element = document.querySelector('script');
@@ -155,12 +155,12 @@ describe('LiveIntent production core loader contract', () => {
 	);
 
 	it('keeps vendor replacement globals and sends no invented withdrawal event', () => {
-		const options = { events: [conversion], tagId: 'c15t-tag' };
+		const options = { events: [conversion], tagId: 'inth-tag' };
 		const scripts = [liveIntentTag(options)];
 		loadScripts(scripts, grantedMarketingConsents);
 		const element = document.querySelector('script');
 		const runtime = { push: vi.fn() };
-		const config = { appId: 'c15t-tag' };
+		const config = { appId: 'inth-tag' };
 		window.liQ = runtime;
 		window.LI = config;
 		const hub: unknown[] = [];

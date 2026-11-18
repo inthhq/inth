@@ -68,7 +68,7 @@ const primaryButtonClass = buttonVariants({
 }).root();
 
 /**
- * The IAB preference centre itself, which `<c15t-iab-consent-dialog>`
+ * The IAB preference centre itself, which `<inth-iab-consent-dialog>`
  * imports on demand so its code stays out of the first load.
  *
  * Plain elements, not the dialog primitive: React's IAB preference centre is
@@ -104,16 +104,16 @@ const primaryButtonClass = buttonVariants({
 	],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-iab-consent-dialog-body',
+	selector: 'inth-iab-consent-dialog-body',
 	template: `
 		@if (open()) {
 			@let iabT = translations();
 			@let pc = iabT.preferenceCenter;
 			@let state = iab();
-			<div c15tPortal>
+			<div inthPortal>
 				@if (preferences().blocking) {
 					<div
-						c15t-overlay
+						inth-overlay
 						[styles]="styles"
 						[variant]="'iab-dialog'"
 						[entering]="!disableAnimation()"
@@ -137,12 +137,12 @@ const primaryButtonClass = buttonVariants({
 						[attr.aria-label]="pc.title"
 						[attr.aria-describedby]="descriptionId"
 						tabindex="-1"
-						c15tInitialFocus
-						[c15tFocusTrap]="{
+						inthInitialFocus
+						[inthFocusTrap]="{
 							enabled: preferences().blocking,
 							initialFocus: 'first-tabbable',
 						}"
-						[c15tScrollLock]="preferences().blocking"
+						[inthScrollLock]="preferences().blocking"
 						(keydown)="dismissOnEscape($event)"
 					>
 						<div
@@ -166,7 +166,7 @@ const primaryButtonClass = buttonVariants({
 								(click)="close()"
 							>
 								<svg
-									c15t-close-icon
+									inth-close-icon
 									style="height: 1rem; width: 1rem"
 									aria-hidden="true"
 								></svg>
@@ -174,18 +174,18 @@ const primaryButtonClass = buttonVariants({
 						</div>
 
 						<div
-							c15tTabs
+							inthTabs
 							[value]="activeTab()"
 							(valueChange)="selectTab($event)"
 							[class]="cls(styles.body)"
 						>
 							<div [class]="cls(styles.tabsContainer)">
 								<div
-									c15tTabsList
+									inthTabsList
 									[class]="cls(styles.tabsList)"
 								>
 									<button
-										c15tTabsTrigger
+										inthTabsTrigger
 										value="purposes"
 										[class]="cls(styles.tabButton)"
 									>
@@ -195,7 +195,7 @@ const primaryButtonClass = buttonVariants({
 										}
 									</button>
 									<button
-										c15tTabsTrigger
+										inthTabsTrigger
 										value="vendors"
 										[class]="cls(styles.tabButton)"
 									>
@@ -214,7 +214,7 @@ const primaryButtonClass = buttonVariants({
 
 							<div [class]="cls(styles.content)">
 								<div
-									c15tTabsContent
+									inthTabsContent
 									value="purposes"
 									[class]="cls(styles.tabPanel)"
 								>
@@ -228,7 +228,7 @@ const primaryButtonClass = buttonVariants({
 									} @else if (display().isReady && state) {
 										@for (row of display().consentRows; track row.testId) {
 											@if (row.kind === 'stack') {
-												<c15t-iab-stack-item
+												<inth-iab-stack-item
 													[stack]="row"
 													[consents]="state.purposeConsents"
 													[vendorConsents]="state.vendorConsents"
@@ -253,7 +253,7 @@ const primaryButtonClass = buttonVariants({
 													"
 												/>
 											} @else if (row.toggle === 'special-feature') {
-												<c15t-iab-purpose-item
+												<inth-iab-purpose-item
 													[purpose]="row"
 													[testId]="row.testId"
 													[isEnabled]="
@@ -276,7 +276,7 @@ const primaryButtonClass = buttonVariants({
 													"
 												/>
 											} @else {
-												<c15t-iab-purpose-item
+												<inth-iab-purpose-item
 													[purpose]="row"
 													[testId]="row.testId"
 													[isEnabled]="state.purposeConsents[row.id] ?? false"
@@ -319,7 +319,7 @@ const primaryButtonClass = buttonVariants({
 														(click)="toggleSpecialPurposes()"
 													>
 														<svg
-															c15t-chevron-right-icon
+															inth-chevron-right-icon
 															[class]="cls(styles.purposeArrow)"
 															aria-hidden="true"
 															[expanded]="specialPurposesExpanded()"
@@ -328,7 +328,7 @@ const primaryButtonClass = buttonVariants({
 															<h3 [class]="cls(styles.specialPurposesTitle)">
 																{{ pc.specialPurposes.title }}
 																<svg
-																	c15t-lock-icon
+																	inth-lock-icon
 																	[class]="cls(styles.lockIcon)"
 																	aria-hidden="true"
 																></svg>
@@ -345,7 +345,7 @@ const primaryButtonClass = buttonVariants({
 													</button>
 													<div style="position: relative">
 														<svg
-															c15t-info-icon
+															inth-info-icon
 															[class]="cls(styles.infoIcon)"
 															[attr.aria-label]="pc.specialPurposes.tooltip"
 														></svg>
@@ -358,7 +358,7 @@ const primaryButtonClass = buttonVariants({
 															row of display().essentialRows;
 															track row.testId
 														) {
-															<c15t-iab-purpose-item
+															<inth-iab-purpose-item
 																[purpose]="row"
 																[testId]="row.testId"
 																[isEnabled]="true"
@@ -398,7 +398,7 @@ const primaryButtonClass = buttonVariants({
 														row of display().featureRows;
 														track row.testId
 													) {
-														<c15t-iab-feature-item
+														<inth-iab-feature-item
 															[feature]="row"
 															[testId]="row.testId"
 															[noStyle]="resolvedNoStyle()"
@@ -418,12 +418,12 @@ const primaryButtonClass = buttonVariants({
 								</div>
 
 								<div
-									c15tTabsContent
+									inthTabsContent
 									value="vendors"
 									[class]="cls(styles.tabPanel)"
 								>
 									@if (state && vendorsVisited()) {
-										<c15t-iab-vendor-list
+										<inth-iab-vendor-list
 											[vendorData]="vendorData()"
 											[purposes]="display().data.purposes"
 											[vendorConsents]="state.vendorConsents"
@@ -498,7 +498,7 @@ const primaryButtonClass = buttonVariants({
 						</div>
 						@if (showBranding()) {
 							<a
-								c15t-branding
+								inth-branding
 								[noStyle]="resolvedNoStyle()"
 								[variant]="'dialog-tag'"
 								[themeKey]="'iabConsentDialogTag'"

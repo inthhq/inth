@@ -78,7 +78,7 @@ const mountStaticBanner = function mountStaticBanner(): HTMLElement {
 	for (const { css, id } of STATIC_BANNER_SHEETS) {
 		const style = document.createElement('style');
 		style.dataset.href = id;
-		style.dataset.precedence = 'c15t';
+		style.dataset.precedence = 'inth';
 		style.textContent = css;
 		document.head.append(style);
 		added.push(style);
@@ -120,13 +120,13 @@ afterEach(() => {
 	for (const element of added.splice(0)) {
 		element.remove();
 	}
-	for (const id of ['c15t-early-tap', 'c15t-early-commit']) {
+	for (const id of ['inth-early-tap', 'inth-early-commit']) {
 		document.getElementById(id)?.remove();
 	}
-	for (const key of [PREFETCH_WINDOW_KEY, '__c15tEarlyTaps']) {
+	for (const key of [PREFETCH_WINDOW_KEY, '__inthEarlyTaps']) {
 		Reflect.deleteProperty(window, key);
 	}
-	document.cookie = 'c15t=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+	document.cookie = 'inth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 	localStorage.clear();
 });
 
@@ -213,7 +213,7 @@ test('an Accept tapped on the static banner before the client banner is recorded
 	await expect
 		.element(screen.getByTestId('probe'))
 		.toHaveAttribute('data-marketing', 'true');
-	await vi.waitFor(() => expect(localStorage.getItem('c15t')).not.toBeNull(), {
+	await vi.waitFor(() => expect(localStorage.getItem('inth')).not.toBeNull(), {
 		timeout: 5000,
 	});
 	await vi.waitFor(() => expect(subjectSaves()).toHaveLength(1), {

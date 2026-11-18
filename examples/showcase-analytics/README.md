@@ -1,7 +1,7 @@
 # Analytics and marketing stack
 
 Northwind's shop with Google Tag Manager, GA4, PostHog and the Meta Pixel
-wired through `@inth/integrations`. Open the c15t DevTools panel to inspect
+wired through `@inth/integrations`. Open the Inth DevTools panel to inspect
 each script's state. Google Tag Manager and GA4 load before a choice with
 Consent Mode set to `denied`. PostHog and Meta wait until they are allowed.
 Adding a coffee to the cart attempts to send an `add_to_cart` event to the
@@ -37,7 +37,7 @@ so their dialogs show categories only.
 | Meta Pixel | marketing | Nothing, not even `fbq` | `fbevents.js` loads and sends `PageView` |
 
 The two Google helpers load before a choice on purpose. That is how Consent
-Mode v2 works: Google's tags start in a denied state and adjust when c15t
+Mode v2 works: Google's tags start in a denied state and adjust when Inth
 sends an update. If your policy allows no Google request before consent,
 don't use these helpers unchanged. Most sites configure GA4 inside their GTM
 container. This shop loads it separately so you can watch both helpers.
@@ -55,7 +55,7 @@ marketing in Privacy settings and you'll see:
 1. Before the reload, the helper calls `fbq('consent', 'revoke')`, and
    `useVendorAllowed('meta-pixel')` turns false, so the next add to cart sends
    no `AddToCart`, although `window.fbq` still exists.
-2. c15t calls `onBeforeConsentRevocationReload`. This shop uses it to leave a
+2. Inth calls `onBeforeConsentRevocationReload`. This shop uses it to leave a
    note for the next page.
 3. The page reloads. `fbevents.js` doesn't load, `fbq` is undefined and
    `clearOnRevocation` deletes the `_fbp` and `_fbc` cookies. A short notice
@@ -82,8 +82,8 @@ bun run --cwd examples/showcase-analytics dev
 Open `http://localhost:3113`. The DevTools button sits in the bottom right
 corner and opens on the Scripts tab.
 
-Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
-such as `https://your-project.inth.app`. c15t reads the project's consent
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. Inth reads the project's consent
 manifest and sends each choice there.
 
 The placeholder IDs belong to no real account. GTM answers `gtm.js` with a

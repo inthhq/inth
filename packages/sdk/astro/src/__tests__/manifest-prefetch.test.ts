@@ -10,10 +10,10 @@ import { resolveOptions } from '../integration';
 import { createConsentMiddleware } from '../middleware-handler';
 import { manifest as manifestMode } from '../mode';
 import { clearManifestCache } from '../server';
-import type { C15tAstroOptions, C15tLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../types';
 
 const MANIFEST = await buildConsentManifestFromConfig({
-	branding: 'c15t',
+	branding: 'inth',
 	policyRules: [
 		policyRulePresets.europeOptIn(),
 		policyRulePresets.worldOptOutNoPrompt(),
@@ -32,7 +32,7 @@ const manifestResponse = function manifestResponse(): Response {
 };
 
 const options = function options(
-	astroOptions: C15tAstroOptions = {
+	astroOptions: InthAstroOptions = {
 		mode: manifestMode(),
 		projectUrl: 'https://consent.example.com',
 	}
@@ -45,16 +45,16 @@ interface RenderInput {
 	method?: string;
 	headers?: Record<string, string>;
 	fetch?: typeof globalThis.fetch;
-	astroOptions?: C15tAstroOptions;
+	astroOptions?: InthAstroOptions;
 }
 
 const render = async function render(
 	input: RenderInput
-): Promise<{ c15t?: C15tLocals; nextCalled: boolean }> {
+): Promise<{ inth?: InthLocals; nextCalled: boolean }> {
 	const middleware = createConsentMiddleware(options(input.astroOptions), {
 		fetch: input.fetch,
 	});
-	const locals = {} as { c15t?: C15tLocals };
+	const locals = {} as { inth?: InthLocals };
 	const next = vi.fn(() => new Response('ok'));
 	await middleware(
 		{
@@ -68,7 +68,7 @@ const render = async function render(
 		} as never,
 		next as never
 	);
-	return { c15t: locals.c15t, nextCalled: next.mock.calls.length > 0 };
+	return { inth: locals.inth, nextCalled: next.mock.calls.length > 0 };
 };
 
 afterEach(() => {
@@ -130,13 +130,13 @@ describe('manifest-mode server prefetch', () => {
 		expect(
 			fetchImpl.mock.calls.filter(([url]) => String(url).endsWith('/manifest'))
 		).toHaveLength(1);
-		expect(german.c15t?.shouldShowBanner).toBe(true);
-		expect(american.c15t?.shouldShowBanner).toBe(false);
+		expect(german.inth?.shouldShowBanner).toBe(true);
+		expect(american.inth?.shouldShowBanner).toBe(false);
 	});
 
 	it('serves an inline manifest without any fetch', async () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
-		const { c15t } = await render({
+		const { inth } = await render({
 			astroOptions: {
 				mode: manifestMode({ snapshot: MANIFEST }),
 				// Relative: no session report, so no request at all.
@@ -146,7 +146,7 @@ describe('manifest-mode server prefetch', () => {
 			headers: { 'x-c15t-country': 'DE' },
 		});
 		expect(fetchImpl).not.toHaveBeenCalled();
-		expect(c15t?.shouldShowBanner).toBe(true);
+		expect(inth?.shouldShowBanner).toBe(true);
 	});
 });
 
@@ -155,7 +155,7 @@ describe('middleware skip list', () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
 
 		const results = await Promise.all(
-			['/api/c15t/init', '/api/c15t/manifest'].map((path) =>
+			['/api/inth/init', '/api/inth/manifest'].map((path) =>
 				render({ fetch: fetchImpl as never, path })
 			)
 		);
@@ -163,7 +163,7 @@ describe('middleware skip list', () => {
 		// process, which would resolve consent again: the request never
 		// returns.
 		for (const result of results) {
-			expect(result.c15t).toBeUndefined();
+			expect(result.inth).toBeUndefined();
 			expect(result.nextCalled).toBe(true);
 		}
 		expect(fetchImpl).not.toHaveBeenCalled();
@@ -171,7 +171,7 @@ describe('middleware skip list', () => {
 
 	it('honours a custom routePrefix', async () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
-		const astroOptions: C15tAstroOptions = {
+		const astroOptions: InthAstroOptions = {
 			mode: manifestMode(),
 			projectUrl: 'https://consent.example.com',
 			routePrefix: '/consent',
@@ -183,22 +183,22 @@ describe('middleware skip list', () => {
 					fetch: fetchImpl as never,
 					path: '/consent/init',
 				})
-			).c15t
+			).inth
 		).toBeUndefined();
 		expect(
 			(
 				await render({
 					astroOptions,
 					fetch: fetchImpl as never,
-					path: '/api/c15t/init',
+					path: '/api/inth/init',
 				})
-			).c15t
+			).inth
 		).toBeDefined();
 	});
 
 	it('skips the paths the site listed', async () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
-		const astroOptions: C15tAstroOptions = {
+		const astroOptions: InthAstroOptions = {
 			middleware: { skip: ['/healthz', '/api/webhooks/'] },
 			mode: manifestMode(),
 			projectUrl: 'https://consent.example.com',
@@ -209,7 +209,7 @@ describe('middleware skip list', () => {
 			)
 		);
 		for (const result of skipped) {
-			expect(result.c15t).toBeUndefined();
+			expect(result.inth).toBeUndefined();
 		}
 		// A prefix must not claim a sibling that merely starts with it.
 		expect(
@@ -219,7 +219,7 @@ describe('middleware skip list', () => {
 					fetch: fetchImpl as never,
 					path: '/healthz-report',
 				})
-			).c15t
+			).inth
 		).toBeDefined();
 	});
 });
@@ -228,7 +228,7 @@ it.each(['public', 'custom'] as const)(
 	'preserves %s Astro SSR vendor loading through the caching loader',
 	async (loader) => {
 		const manifest = await buildConsentManifestFromConfig({
-			branding: 'c15t',
+			branding: 'inth',
 			iab: {
 				cmpId: 28,
 				enabled: true,
@@ -253,10 +253,10 @@ it.each(['public', 'custom'] as const)(
 			expect(
 				fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
 			).toHaveLength(1);
-			expect(result.c15t?.config.initialIab?.gvl).toEqual(
+			expect(result.inth?.config.initialIab?.gvl).toEqual(
 				loader === 'public' ? null : completeGVL
 			);
-			expect(Boolean(result.c15t?.config.initialIab?.gvlReference)).toBe(
+			expect(Boolean(result.inth?.config.initialIab?.gvlReference)).toBe(
 				loader === 'public'
 			);
 		} finally {

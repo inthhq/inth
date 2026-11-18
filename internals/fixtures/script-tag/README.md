@@ -11,10 +11,10 @@ bun run --cwd internals/fixtures/script-tag dev
 
 http://localhost:4173/consent-example is the setup from the [HTML quickstart](https://c15t.com/docs/frameworks/html/quickstart): one tag connected to Inth, PostHog and X Pixel as inert scripts, a YouTube iframe gated on measurement, and a Privacy settings link. `/consent-example/branded` adds the published theme block, and `/consent-example/headless` swaps the tag for `c15t.headless.js` and adds the published bottom bar from the [design gallery](https://c15t.com/docs/customization/recipes). `serve.ts` reads both from the `#region docs:` markers in `internals/doc-snippets/html`, so these routes test the snippets readers copy.
 
-The page's tag loads `c15t.js` from a `https://your-project.inth.app` placeholder, exactly as readers copy it. `serve.ts` swaps it for the local build with `C15T_BACKEND_URL` as the backend, so start it with your Inth URL and add `http://localhost:4173` to the project's trusted origins:
+The page's tag loads `c15t.js` from a `https://your-project.inth.app` placeholder, exactly as readers copy it. `serve.ts` swaps it for the local build with `INTH_PROJECT_URL` as the backend, so start it with your Inth URL and add `http://localhost:4173` to the project's trusted origins:
 
 ```sh
-C15T_BACKEND_URL=https://your-project.inth.app bun run --cwd internals/fixtures/script-tag dev
+INTH_PROJECT_URL=https://your-project.inth.app bun run --cwd internals/fixtures/script-tag dev
 ```
 
 The shared acceptance suite runs this page against a fixture backend with vendor requests intercepted:
@@ -29,17 +29,17 @@ Open http://localhost:4173 for a playground that needs no backend: the page runs
 
 The page exercises everything a real site gates on consent, all served locally so it works offline and every request shows in the page's log:
 
-- two vendor scripts listed under `scripts` (an analytics SDK on `measurement`, a chat widget on `functionality`) and an inline `<script type="text/plain" data-c15t-category="marketing">` pixel
+- two vendor scripts listed under `scripts` (an analytics SDK on `measurement`, a chat widget on `functionality`) and an inline `<script type="text/plain" data-inth-category="marketing">` pixel
 - two iframes with `data-src` and `data-category` that only get a `src` once granted
 - a `networkBlocker` rule that stops `fetch('/api/track')` until `measurement` is granted
-- `data-c15t-action` buttons and a `#c15t-preferences` link, with no page JavaScript
+- `data-inth-action` buttons and a `#inth-preferences` link, with no page JavaScript
 - a deliberately hostile theme (`button { background: hotpink !important }`) that the banner, preference centre and DevTools panel all ignore because each renders in a shadow root
 
-A second page, http://localhost:4173/custom, loads `c15t.headless.js` instead and renders its own consent card with the site's HTML and CSS, the way zed.dev/docs ships its banner on c15t: `data-c15t-action` buttons for accept and reject, one `ui` listener to show, hide and switch the card into configure mode, and `c15t.save()` behind the Save button.
+A second page, http://localhost:4173/custom, loads `c15t.headless.js` instead and renders its own consent card with the site's HTML and CSS, the way zed.dev/docs ships its banner on Inth: `data-inth-action` buttons for accept and reject, one `ui` listener to show, hide and switch the card into configure mode, and `inth.save()` behind the Save button.
 
-Open http://localhost:4173/?experiment=1 to run a banner-shape experiment from a queued `config` call: c15t picks the `control` arm (the default banner) or the `wall` arm, the page shows it, and the `onSurfaceShown` and `onChoiceRecorded` callbacks log every impression and choice under the arm. Add `&arm=wall` to set the arm the way a flag provider would; any other `arm` value runs `control`. See https://c15t.com/docs/guides/banner-experiments.
+Open http://localhost:4173/?experiment=1 to run a banner-shape experiment from a queued `config` call: Inth picks the `control` arm (the default banner) or the `wall` arm, the page shows it, and the `onSurfaceShown` and `onChoiceRecorded` callbacks log every impression and choice under the arm. Add `&arm=wall` to set the arm the way a flag provider would; any other `arm` value runs `control`. See https://c15t.com/docs/guides/banner-experiments.
 
-`index.html` shows the three ways to configure the tag: `data-*` attributes, and `config` and `on` calls queued on `window.c15t` before the script loads.
+`index.html` shows the three ways to configure the tag: `data-*` attributes, and `config` and `on` calls queued on `window.inth` before the script loads.
 
 Open http://localhost:4173/styled for theme tokens and CSS inside a shadow root, or http://localhost:4173/styled?shadow=false for the same border applied by the page stylesheet. Both run offline. Banner styling and geometry need no backend.
 

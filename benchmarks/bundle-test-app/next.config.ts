@@ -43,7 +43,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const transpilePackages = [
-	'@c15t/benchmarking',
+	'@inth/benchmarking',
 	'@inth/react',
 	'@inth/nextjs',
 	'@inth/sdk',

@@ -144,7 +144,7 @@ export interface VueConsentKernelContext {
 	experimentDefinition?: ConsentExperiment;
 	/**
 	 * Mount the browser side of a runtime this app owns: persistence, the
-	 * blockers, IAB, `window.c15t`, and the first `/init` (or the adoption
+	 * blockers, IAB, `window.inth`, and the first `/init` (or the adoption
 	 * of a server-resolved prefetch). A no-op on the server, when already
 	 * started, and for a borrowed runtime, whose host starts it.
 	 */
@@ -259,7 +259,7 @@ const resolveTransportFactory = function resolveTransportFactory(
 	}
 	if (!mode) {
 		throw new Error(
-			"c15t: pass `projectUrl`, such as `app.use(c15tVue, { projectUrl: '/api/c15t' })`, or `mode: manifest()` with `manifest` from `@inth/vue/vue-plugin`."
+			"inth: pass `projectUrl`, such as `app.use(inthVue, { projectUrl: '/api/inth' })`, or `mode: manifest()` with `manifest` from `@inth/vue/vue-plugin`."
 		);
 	}
 	return mode;
@@ -324,7 +324,7 @@ const mountIABUnderIABPolicy: NonNullable<ConsentRuntimeModules['mountIAB']> = (
 
 /**
  * The runtime's modules for a Vue app. Persistence, the iframe blocker and
- * `window.c15t` are static: stored choices apply on mount and gated frames
+ * `window.inth` are static: stored choices apply on mount and gated frames
  * pause as soon as the app starts. The script loader, the network blocker
  * (the runtime holds matching requests until it lands), data clearing and
  * a `consentSource` connection load only for apps that configure them,
@@ -385,8 +385,8 @@ const toRuntimeOptions = function toRuntimeOptions(
 export type VueIABHost = 'nuxt' | 'vue';
 
 const IAB_UNAVAILABLE_FIX: Record<VueIABHost, string> = {
-	nuxt: 'Set `c15t: { iab: {} }` in nuxt.config.ts, or `iab: { cmpId }` when your backend sends no CMP ID',
-	vue: 'Pass `iab` to the c15t plugin, such as `app.use(c15tVue, { iab: {} })`',
+	nuxt: 'Set `inth: { iab: {} }` in nuxt.config.ts, or `iab: { cmpId }` when your backend sends no CMP ID',
+	vue: 'Pass `iab` to the inth plugin, such as `app.use(inthVue, { iab: {} })`',
 };
 
 /**

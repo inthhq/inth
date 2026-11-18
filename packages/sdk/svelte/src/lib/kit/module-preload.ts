@@ -27,15 +27,15 @@ export type PreloadChunkName = 'engine' | 'loader-and-blocker';
 export const MODULE_PRELOAD_PLACEHOLDERS: Readonly<
 	Record<PreloadChunkName, string>
 > = {
-	engine: '__C15T_MODULEPRELOAD_ENGINE__',
-	'loader-and-blocker': '__C15T_MODULEPRELOAD_LOADER_AND_BLOCKER__',
+	engine: '__INTH_MODULEPRELOAD_ENGINE__',
+	'loader-and-blocker': '__INTH_MODULEPRELOAD_LOADER_AND_BLOCKER__',
 };
 
 /** Read through a function so no bundler folds the placeholder checks. */
 const chunkHrefs = (): Readonly<Record<PreloadChunkName, string>> =>
 	MODULE_PRELOAD_PLACEHOLDERS;
 
-const MARKER = /<meta name="c15t-modulepreload" content="(?<body>[^"]*)"/gu;
+const MARKER = /<meta name="inth-modulepreload" content="(?<body>[^"]*)"/gu;
 const NONCE = /^[\w+/=-]+$/u;
 const SCRIPT_NONCE = /<script\b[^>]*\snonce="(?<nonce>[\w+/=-]+)"/u;
 const HEAD_END = '</head>';
@@ -61,7 +61,7 @@ const isChunkURL = (href: string | undefined): href is string =>
  * starts, after hydration. The browser requests some of SvelteKit's own
  * chunks only after earlier ones have loaded. Over HTTP/1.1 it hands out
  * its six connections by priority, then in request order, so at the
- * default (high) priority the c15t chunks, requested with the page, went
+ * default (high) priority the Inth chunks, requested with the page, went
  * ahead of those app chunks and delayed hydration by about one round trip
  * on a slow network. One chunk rather than two also means one low-priority
  * request: with two, the second one waited for a free connection and the
@@ -81,7 +81,7 @@ export const injectModulePreloads = function injectModulePreloads(
 	hrefs: Readonly<Record<string, string>> = chunkHrefs()
 ): string {
 	const headEnd = html.indexOf(HEAD_END);
-	if (headEnd === -1 || !html.includes('<meta name="c15t-modulepreload"')) {
+	if (headEnd === -1 || !html.includes('<meta name="inth-modulepreload"')) {
 		return html;
 	}
 	const pageNonce = SCRIPT_NONCE.exec(html)?.groups?.nonce;

@@ -1,13 +1,13 @@
 ---
 title: Firebase Analytics
-description: Connect Firebase Analytics to native c15t permissions in Swift, Kotlin, React Native and Expo, with withdrawal, reset and startup handling.
-seoTitle: Firebase Analytics consent for mobile with c15t
-seoDescription: Connect Firebase Analytics to c15t in Swift, Android, React Native and Expo, with all four Consent Mode v2 signals driven by consent.
+description: Connect Firebase Analytics to native Inth permissions in Swift, Kotlin, React Native and Expo, with withdrawal, reset and startup handling.
+seoTitle: Firebase Analytics consent for mobile with Inth
+seoDescription: Connect Firebase Analytics to Inth in Swift, Android, React Native and Expo, with all four Consent Mode v2 signals driven by consent.
 group: integrations
 ---
 
 Use the bundled Firebase Analytics helper to send Firebase's four Consent
-Mode v2 signals from c15t consent and to enable collection while measurement
+Mode v2 signals from Inth consent and to enable collection while measurement
 is granted. Measurement drives `analytics_storage`. Marketing drives
 `ad_storage`, `ad_user_data` and `ad_personalization`. This is the same
 [category mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types)
@@ -16,7 +16,7 @@ keeps collection disabled.
 
 The helper is included in `InthApple`, `inth-android` and
 `@inth/react-native/integrations`. Firebase remains a dependency your app
-installs. Adding c15t does not add Firebase to the app.
+installs. Adding Inth does not add Firebase to the app.
 
 For browser analytics, follow the [Google Tag integration](/docs/integrations/google-tag).
 This page covers Firebase Analytics in native mobile apps.
@@ -35,7 +35,7 @@ Add Firebase through its official [Apple](https://firebase.google.com/docs/ios/s
 [Android](https://firebase.google.com/docs/android/setup) or
 [React Native Firebase](https://rnfirebase.io/analytics/usage) instructions.
 Configure the Firebase app and Analytics module before connecting its APIs.
-c15t's mobile packages are currently a private prerelease; see
+inth's mobile packages are currently a private prerelease; see
 [mobile availability](/docs/guides/mobile-status) for installation access.
 
 The helper sends Consent Mode signals to Firebase only. It does not grant IAB
@@ -66,7 +66,7 @@ On Android, add this metadata inside your manifest's existing `application`:
 
 These are startup defaults. Firebase persists runtime collection settings, and
 a previous runtime grant overrides the default on a later launch. Install
-c15t and reconcile the vendor's collection permission in native startup before
+Inth and reconcile the vendor's collection permission in native startup before
 optional collection can begin. Where your Firebase setup permits it, defer
 vendor initialization until native permission allows it. Inspect any
 automatically registered Android providers or app-delegate setup in that path.
@@ -77,7 +77,7 @@ explains the persisted setting.
 
 Firebase reads its Consent Mode defaults at launch, before the helper sends
 the first `setConsent`. Without defaults, Firebase sets no consent values.
-Set all four to denied, so nothing is granted before c15t's consent is read.
+Set all four to denied, so nothing is granted before inth's consent is read.
 For iOS, add these Booleans to the app target's `Info.plist`:
 
 {/* example: fragment */}
@@ -131,7 +131,7 @@ collection default:
 }
 ```
 
-In an Expo app, c15t's config plugin writes the four denied defaults into
+In an Expo app, inth's config plugin writes the four denied defaults into
 `Info.plist` and `AndroidManifest.xml` on every prebuild. On Android it marks
 them `tools:replace="android:value"`, so they win over React Native
 Firebase's library values.
@@ -140,7 +140,7 @@ For React Native and Expo, a JavaScript connection runs after native startup.
 It cannot prevent earlier Firebase collection. Apply the native settings
 through the vendor's supported build configuration and keep the
 [native startup gate](/docs/frameworks/react-native/native-behaviour). Expo
-needs a custom native build containing both packages. c15t's config plugin
+needs a custom native build containing both packages. inth's config plugin
 writes only the Consent Mode defaults above. It does not install or configure
 Firebase, and Expo Go cannot load this integration.
 
@@ -151,7 +151,7 @@ the bundled helper and exposes teardown and reset synchronization:
 
 <include src="../shared/examples/native/core-swift/AppleInstallation/swift-firebase-analytics-binding.mdx" />
 
-After the native c15t engine and your Firebase app are installed, construct
+After the native Inth engine and your Firebase app are installed, construct
 the owner with Firebase's actual APIs. This fragment belongs in the app's
 service setup; retain `firebaseOwner` as an app-lifetime property:
 
@@ -191,7 +191,7 @@ package name:
 
 <include src="../shared/examples/native/examples/consent-demo/android-firebase-integration.mdx" />
 
-Call it from your `Application` service setup after installing c15t and
+Call it from your `Application` service setup after installing Inth and
 configuring Firebase. Map the helper's four signals to the Firebase instance
 you actually use:
 
@@ -292,7 +292,7 @@ marketing. Collection is enabled only while `analytics_storage` is `true`.
 
 ## Handle reset and teardown
 
-If app code resets Firebase's settings, reapply current c15t permission after
+If app code resets Firebase's settings, reapply current Inth permission after
 the reset completes. Call `syncAfterReset()` on the Swift owner, `sync()` on
 the Kotlin helper or `await firebaseConsent.sync()` in React Native. This
 updates Firebase without recording a new consent choice.
@@ -322,7 +322,7 @@ app. Test a policy that asks for a choice:
    is reapplied without creating a consent record.
 7. Exercise your vendor-failure handler and final teardown.
 
-The c15t helper tests exercise native authority, lifecycle changes, reset and
+The Inth helper tests exercise native authority, lifecycle changes, reset and
 callback ordering. The RN mapping was type-checked against React Native
 Firebase 27.1.0; native mappings follow Firebase's published API references.
 These checks do not establish real Firebase startup or network behavior on

@@ -1,19 +1,19 @@
 ---
 title: Lucky Orange
-description: Load Lucky Orange after measurement consent, configure its tracking settings, and verify loading and withdrawal with c15t.
-seoTitle: Lucky Orange cookie consent with c15t
-seoDescription: Load Lucky Orange only after measurement consent. The c15t luckyOrange helper sets its privacy consent status and turns it off on withdrawal.
+description: Load Lucky Orange after measurement consent, configure its tracking settings, and verify loading and withdrawal with Inth.
+seoTitle: Lucky Orange cookie consent with Inth
+seoDescription: Load Lucky Orange only after measurement consent. The Inth luckyOrange helper sets its privacy consent status and turns it off on withdrawal.
 icon: chart-line
 group: integrations
 ---
 
-Lucky Orange records sessions and builds heatmaps. The c15t `luckyOrange`
+Lucky Orange records sessions and builds heatmaps. The Inth `luckyOrange`
 helper waits until the `measurement` category is allowed before it creates the
 `LOQ` queue and loads Lucky Orange. Once Lucky Orange's privacy module is
 ready, the helper grants consent through `LO.privacy.setConsentStatus(true)`.
 
 When the visitor withdraws, the helper calls `setConsentStatus(false)`.
-Recording code already on the page can't be unloaded, so keep c15t's default
+Recording code already on the page can't be unloaded, so keep inth's default
 page reload.
 
 ## Configure Lucky Orange
@@ -21,7 +21,7 @@ page reload.
 In the Lucky Orange dashboard, turn on **Require Consent**. With it on, Lucky
 Orange waits for the consent the helper grants through its privacy API. Copy
 your site ID, then delete the original Lucky Orange snippet and any tag manager
-copy, so Lucky Orange can't load outside c15t.
+copy, so Lucky Orange can't load outside Inth.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -33,7 +33,7 @@ copy, so Lucky Orange can't load outside c15t.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `siteId` | Required | Lucky Orange site ID. Trimmed and URL-encoded into the default loader URL. If it's missing or blank, c15t logs an error and never loads Lucky Orange. |
+| `siteId` | Required | Lucky Orange site ID. Trimmed and URL-encoded into the default loader URL. If it's missing or blank, Inth logs an error and never loads Lucky Orange. |
 | `category` | `measurement` | Consent category or condition that must be allowed before the loader runs. |
 | `scriptUrl` | `https://tools.luckyorange.com/core/lo.js?site-id=<siteId>` | Custom or proxied loader URL. A blank value uses the default. |
 
@@ -52,7 +52,7 @@ so a late callback can't grant consent.
 
 If the privacy module fails to start, the helper logs
 `luckyOrange: privacy initialization failed.` with the error and never calls
-`setConsentStatus`. This holds even if c15t disposed the helper while it was
+`setConsentStatus`. This holds even if Inth disposed the helper while it was
 waiting.
 
 On withdrawal, the helper keeps the loader on the page and calls
@@ -62,7 +62,7 @@ time. Calling `luckyOrange()` again with equal options, such as on a rerender,
 returns the same script.
 
 The helper doesn't call `optOut()`. That writes an opt-out cookie that lasts
-two years and gets in the way if the visitor grants consent again. c15t hasn't
+two years and gets in the way if the visitor grants consent again. Inth hasn't
 confirmed that `setConsentStatus(false)` stops every active recording, and
 removing a script can't unload recording code. Keep `reloadOnConsentRevoked`
 enabled. The next page, with consent denied, doesn't load Lucky Orange.
@@ -72,7 +72,7 @@ enabled. The next page, with consent denied, doesn't load Lucky Orange.
 Lucky Orange can set the `lo-domain-check`, `lo-opt-out`, `lo-uid` and
 `lo-visits` cookies, and `lo-session`, `lo-messenger` and `lo-visitor` in local
 storage. Some cookies last two years. Lucky Orange documents Do Not Track
-support. c15t hasn't tested how Do Not Track or an existing Lucky Orange
+support. Inth hasn't tested how Do Not Track or an existing Lucky Orange
 opt-out interacts with the helper, so check both with your own account.
 
 ## Verify Lucky Orange

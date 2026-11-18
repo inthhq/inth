@@ -1,5 +1,5 @@
 /**
- * Kernel-first developer tools for c15t v3.
+ * Kernel-first developer tools for Inth v3.
  *
  * @packageDocumentation
  */

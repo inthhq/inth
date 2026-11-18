@@ -42,7 +42,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.unstubAllGlobals();
-	delete target.c15t;
+	delete target.inth;
 	delete target.__c15tRecordsSrc;
 	localStorage.clear();
 	for (const script of document.head.querySelectorAll('script')) {
@@ -57,7 +57,7 @@ describe('c15t.records.js', () => {
 	});
 
 	it('loads at once for a stored choice, next to c15t.js at its version', () => {
-		localStorage.setItem('c15t', 'stored');
+		localStorage.setItem('inth', 'stored');
 		runInitScript(tagWith());
 		expect(loaded('c15t.records.js')).toEqual([
 			`https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.records.js?v=${version}`,
@@ -65,14 +65,14 @@ describe('c15t.records.js', () => {
 	});
 
 	it('takes the backend’s URL, then the tag’s data-records-src', () => {
-		localStorage.setItem('c15t', 'stored');
+		localStorage.setItem('inth', 'stored');
 		target.__c15tRecordsSrc = 'https://consent.example/c15t.records.js?v=abc';
 		runInitScript(tagWith({ 'data-records-src': '/own/records.js' }));
 		expect(loaded('records.js')).toEqual([
 			'https://consent.example/c15t.records.js?v=abc',
 		]);
 
-		delete target.c15t;
+		delete target.inth;
 		delete target.__c15tRecordsSrc;
 		document.head.replaceChildren();
 		runInitScript(tagWith({ 'data-records-src': '/own/records.js' }));
@@ -82,14 +82,14 @@ describe('c15t.records.js', () => {
 	});
 
 	it('ignores a records file from another release', async () => {
-		localStorage.setItem('c15t', 'stored');
+		localStorage.setItem('inth', 'stored');
 		const standIn = runInitScript(tagWith()) as unknown as {
-			__c15tBoot: {
+			__inthBoot: {
 				provide: (part: unknown) => void;
 			};
 		};
 		const read = vi.fn(() => ({ found: false }));
-		standIn.__c15tBoot.provide({
+		standIn.__inthBoot.provide({
 			name: 'records',
 			readStoredRecords: read,
 			version: '0.0.0-other',

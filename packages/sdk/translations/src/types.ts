@@ -231,7 +231,7 @@ export interface IABCommonTranslations {
 
 /**
  * IAB copy for native mobile apps, where the web copy's "website" and
- * cookie wording does not apply. The c15t iOS and Android SDKs read it
+ * cookie wording does not apply. The Inth iOS and Android SDKs read it
  * through generated files (`scripts/generate-native-iab-copy.ts`).
  */
 export interface IABAppTranslations {
@@ -311,7 +311,7 @@ export interface TranslationConfig {
 }
 
 /**
- * Preferred i18n configuration shape for c15t v2.
+ * Preferred i18n configuration shape for Inth v2.
  *
  * @remarks
  * This maps to the legacy {@link TranslationConfig} as follows:

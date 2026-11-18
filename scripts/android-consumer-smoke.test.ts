@@ -55,7 +55,7 @@ const runConsumer = function runConsumer(options?: {
 	installedRN?: string;
 	versions?: string[];
 }) {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-consumer-flags-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-consumer-flags-'));
 	const bin = join(directory, 'bin');
 	mkdirSync(bin);
 	writeFileSync(join(bin, 'bun'), install, { mode: 0o755 });

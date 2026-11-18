@@ -8,11 +8,11 @@ import { registerDevToolsBridge } from './bridge';
 import { readDisplayedCategories } from './services';
 
 /**
- * Development-only client plugin: exposes the app's kernel to the c15t tab
+ * Development-only client plugin: exposes the app's kernel to the Inth tab
  * in Nuxt DevTools. The module registers it after the consent plugin.
  */
 export default defineNuxtPlugin({
-	name: 'c15t:devtools',
+	name: 'inth:devtools',
 	setup(nuxtApp) {
 		const { config, context } = nuxtApp.vueApp.runWithContext(() => ({
 			config: inject(consentConfigKey, undefined),

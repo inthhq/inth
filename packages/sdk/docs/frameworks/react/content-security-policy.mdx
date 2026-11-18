@@ -1,25 +1,25 @@
 ---
 title: Content Security Policy
-description: Run c15t in a React app under a Content Security Policy, allow the consent backend and vendor hosts, and pass a nonce to ConsentProvider and ConsentTheme.
+description: Run Inth in a React app under a Content Security Policy, allow the consent backend and vendor hosts, and pass a nonce to ConsentProvider and ConsentTheme.
 group: frameworks
 ---
 
-## What c15t adds to the page
+## What Inth adds to the page
 
-A React app with c15t adds these to the page, and your policy must allow them:
+A React app with Inth adds these to the page, and your policy must allow them:
 
 | What | Directive |
 | --- | --- |
-| The `<style>` elements the banner, dialog and other stock components render with c15t's rules | `style-src` with a nonce |
+| The `<style>` elements the banner, dialog and other stock components render with inth's rules | `style-src` with a nonce |
 | `@inth/react/styles.css`, only if you import it with `styles: false` | `style-src 'self'` |
-| The `<style id="c15t-theme">` element, if you render `ConsentTheme` | `style-src` with a nonce or its hash |
+| The `<style id="inth-theme">` element, if you render `ConsentTheme` | `style-src` with a nonce or its hash |
 | `<script>` elements the script loader creates for `scripts` entries, both `src` and inline | `script-src` with each vendor's host, or a nonce |
 | The inline `<script>` that `consentManifest()` adds to `index.html` to send `/init` early | `script-src` with a nonce or its hash |
 | With server rendering, the inline `<script>` before the banner's buttons that holds a tap made before hydration | `script-src` with a nonce or its hash |
 | Browser requests to your backend's `/init` and `/subjects` | `connect-src` with the backend origin |
 | Iframes inside `ConsentGate`, and the frames, images and requests your vendors load | `frame-src`, `img-src`, `connect-src` for each vendor |
 
-In a client-rendered app, c15t components set their inline styles through
+In a client-rendered app, Inth components set their inline styles through
 React. A policy does not restrict styles set that way, so they need no
 directive.
 
@@ -36,7 +36,7 @@ connect-src 'self' https://<your-backend-host>;
 ```
 
 Use the origin of the backend URL from your Inth project or self-hosted
-backend. When the URL is a same-origin path such as `/api/c15t` behind your
+backend. When the URL is a same-origin path such as `/api/inth` behind your
 own proxy, `'self'` covers it.
 
 Under an IAB TCF policy the browser also loads the Global Vendor List from the
@@ -64,7 +64,7 @@ when a server renders or rewrites your `index.html` per request.
 Pass the nonce as `options.nonce` on `ConsentProvider`. The script loader
 stamps it on every `<script>` it creates. A `nonce` on a single `scripts`
 entry takes precedence for that element. The stock components put it on the
-`<style>` elements that carry c15t's rules.
+`<style>` elements that carry inth's rules.
 
 With Vite, set `html.cspNonce` to a placeholder in `vite.config.ts`, and have
 your server replace it with a new nonce on every response. Vite then adds
@@ -94,9 +94,9 @@ On a static host, allow the early `/init` script by the hash in the browser's
 `Refused to execute inline script` error. If the policy blocks it, the app
 sends `/init` itself.
 
-## Allow c15t's style elements
+## Allow inth's style elements
 
-The banner, dialog and other stock components render c15t's rules as
+The banner, dialog and other stock components render inth's rules as
 `<style>` elements. A `style-src` without `'unsafe-inline'` must admit them.
 Either:
 
@@ -108,7 +108,7 @@ Either:
 
 ## Allow the theme style element
 
-`ConsentTheme` renders your theme tokens into a `<style id="c15t-theme">`
+`ConsentTheme` renders your theme tokens into a `<style id="inth-theme">`
 element. Without a nonce, a `style-src` that lacks `'unsafe-inline'` blocks it,
 and the banner falls back to the default theme. The element's content depends
 only on the theme, so a hash works:
@@ -138,10 +138,10 @@ open DevTools. Test under a policy that asks for a choice, such as an EU
 opt-in policy.
 
 1. The banner renders with its theme colors, and the console shows no
-   `Refused to` error that mentions a c15t element, your backend or a vendor.
+   `Refused to` error that mentions a Inth element, your backend or a vendor.
 2. Before a choice, the Network tab shows no vendor requests.
 3. Click **Accept All**. The vendor scripts load, and their `<script>` elements have ids
-   starting `c15t-`. With a nonce, read each element's `nonce` property in the
+   starting `inth-`. With a nonce, read each element's `nonce` property in the
    console. Browsers hide the attribute from `getAttribute`.
 4. The save to `/subjects` succeeds. A `connect-src` violation here means the
    backend origin is missing.

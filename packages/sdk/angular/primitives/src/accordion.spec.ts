@@ -40,23 +40,23 @@ afterEach(() => {
 	selector: 'test-accordion',
 	template: `
 		<div
-			c15tAccordion
+			inthAccordion
 			type="single"
 			[collapsible]="true"
 			[(value)]="value"
 		>
 			@for (item of ['a', 'b']; track item) {
 				<div
-					c15tAccordionItem
+					inthAccordionItem
 					[value]="item"
 				>
 					<button
-						c15tAccordionTrigger
+						inthAccordionTrigger
 						[id]="'t-' + item"
 					>
 						{{ item }}
 					</button>
-					<section c15tAccordionContent>{{ item }} body</section>
+					<section inthAccordionContent>{{ item }} body</section>
 				</div>
 			}
 		</div>
@@ -72,17 +72,17 @@ class AccordionHost {
 	selector: 'test-disabled-accordion',
 	template: `
 		<div
-			c15tAccordion
+			inthAccordion
 			type="multiple"
 			[(value)]="value"
 		>
 			<div
-				c15tAccordionItem
+				inthAccordionItem
 				value="a"
 				[disabled]="true"
 			>
-				<button c15tAccordionTrigger>A</button>
-				<section c15tAccordionContent>a body</section>
+				<button inthAccordionTrigger>A</button>
+				<section inthAccordionContent>a body</section>
 			</div>
 		</div>
 	`,
@@ -93,7 +93,7 @@ class DisabledAccordionHost {
 	readonly accordion = viewChild.required(Accordion);
 }
 
-describe('c15tAccordion', () => {
+describe('inthAccordion', () => {
 	test('opens one item at a time and links trigger and content', async () => {
 		const { fixture, root } = await render(AccordionHost);
 		const [first, second] = Array.from(

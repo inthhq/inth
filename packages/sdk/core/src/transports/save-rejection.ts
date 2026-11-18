@@ -64,7 +64,7 @@ const PERMANENT_REJECTION_CODES: ReadonlySet<string> = new Set([
  */
 export class ConsentSaveRejectedError extends Error {
 	/** Brand checked by {@link isConsentSaveRejection} across bundle copies. */
-	readonly c15tSaveRejected = true;
+	readonly inthSaveRejected = true;
 	/** The backend's code, for example `POLICY_SNAPSHOT_EXPIRED`. */
 	readonly code: string;
 	/**
@@ -102,7 +102,7 @@ export const isConsentSaveRejection = function isConsentSaveRejection(
 	return (
 		typeof error === 'object' &&
 		error !== null &&
-		(error as { c15tSaveRejected?: unknown }).c15tSaveRejected === true
+		(error as { inthSaveRejected?: unknown }).inthSaveRejected === true
 	);
 };
 

@@ -5,15 +5,15 @@ import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
 import {
 	getEnvironment,
 	safeBaseSha,
 	safeCommitSha,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 
 interface ClientAssetSize {
 	fileName: string;
@@ -132,7 +132,7 @@ const main = async function main() {
 			'Totals include every emitted .js and .css file in .output/public/_nuxt.',
 			'Route entry graphs are omitted because this build has no .nuxt/dist/client/manifest.json and its published build metadata contains no chunk graph.',
 		],
-		package: '@c15t/nuxt-browser-bench',
+		package: '@inth/nuxt-browser-bench',
 		runtime: 'nuxt',
 		scenario: 'nuxt-client-bundle',
 		schemaVersion: BENCHMARK_SCHEMA_VERSION,

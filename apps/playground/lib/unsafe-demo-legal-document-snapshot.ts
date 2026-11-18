@@ -29,7 +29,7 @@ export interface UnsafeDemoLegalDocumentSnapshotResult {
 	};
 }
 
-const DEFAULT_ISSUER = 'c15t';
+const DEFAULT_ISSUER = 'inth';
 const DEFAULT_TTL_SECONDS = 1800;
 
 const resolveAudience = function resolveAudience(

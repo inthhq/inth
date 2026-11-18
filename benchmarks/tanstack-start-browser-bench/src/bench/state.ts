@@ -9,7 +9,7 @@ export type TanstackBenchScenario =
 	| 'ssr-stream';
 
 /**
- * Same fields as the Next arm's `__c15tNextBench` so the runners and the
+ * Same fields as the Next arm's `__inthNextBench` so the runners and the
  * cross-framework report can read both without translation.
  */
 export interface TanstackBenchState {
@@ -45,7 +45,7 @@ export interface TanstackBenchState {
 
 declare global {
 	interface Window {
-		__c15tTanstackBench?: TanstackBenchState;
+		__inthTanstackBench?: TanstackBenchState;
 	}
 }
 
@@ -57,10 +57,10 @@ export const getState = function getState(
 	}
 
 	if (
-		!window.__c15tTanstackBench ||
-		window.__c15tTanstackBench.scenario !== scenario
+		!window.__inthTanstackBench ||
+		window.__inthTanstackBench.scenario !== scenario
 	) {
-		window.__c15tTanstackBench = {
+		window.__inthTanstackBench = {
 			activeUI: 'none',
 			mountCount: 0,
 			onBannerFetchedCount: 0,
@@ -72,7 +72,7 @@ export const getState = function getState(
 		};
 	}
 
-	return window.__c15tTanstackBench;
+	return window.__inthTanstackBench;
 };
 
 export const isElementVisible = function isElementVisible(

@@ -54,7 +54,7 @@ describe('validateProjectUrl', () => {
 
 	it('should validate relative URLs correctly', () => {
 		const testCases = [
-			{ expected: '/api/c15t', input: '/api/c15t' },
+			{ expected: '/api/inth', input: '/api/inth' },
 			{ expected: '/path/to/api', input: '/path/to/api' },
 		];
 
@@ -67,7 +67,7 @@ describe('validateProjectUrl', () => {
 
 	it('should trim trailing slashes from relative URLs', () => {
 		const testCases = [
-			{ expected: '/api/c15t', input: '/api/c15t/' },
+			{ expected: '/api/inth', input: '/api/inth/' },
 			{ expected: '/path/to/api', input: '/path/to/api/' },
 			// Root path should be preserved
 			{ expected: '/', input: '/' },
@@ -85,7 +85,7 @@ describe('validateProjectUrl', () => {
 			'not-a-url',
 			'http://',
 			'https://',
-			'api/c15t',
+			'api/inth',
 		];
 
 		for (const url of invalidRelativeURLs) {
@@ -135,8 +135,8 @@ describe('normalizeProjectUrl', () => {
 			'x-forwarded-proto': 'http',
 		});
 
-		const result = normalizeProjectUrl('/api/c15t', headers);
-		expect(result).toBe('https://example.com/api/c15t');
+		const result = normalizeProjectUrl('/api/inth', headers);
+		expect(result).toBe('https://example.com/api/inth');
 	});
 
 	it('should construct URL from x-forwarded headers when trusted', () => {
@@ -145,17 +145,17 @@ describe('normalizeProjectUrl', () => {
 			'x-forwarded-proto': 'https',
 		});
 
-		const result = normalizeProjectUrl('/api/c15t', headers, {
+		const result = normalizeProjectUrl('/api/inth', headers, {
 			trustForwardedHeaders: true,
 		});
-		expect(result).toBe('https://example.com/api/c15t');
+		expect(result).toBe('https://example.com/api/inth');
 	});
 
 	it('should construct URL from the host header and trim trailing slashes', () => {
 		const testCases = [
 			{
-				expected: 'https://my-instance.c15t.dev/api/c15t',
-				input: '/api/c15t/',
+				expected: 'https://my-instance.c15t.dev/api/inth',
+				input: '/api/inth/',
 			},
 			{ expected: 'https://my-instance.c15t.dev/api', input: '/api/' },
 		];
@@ -171,8 +171,8 @@ describe('normalizeProjectUrl', () => {
 			host: 'localhost:3000',
 		});
 
-		const result = normalizeProjectUrl('/api/c15t', headers);
-		expect(result).toBe('http://localhost:3000/api/c15t');
+		const result = normalizeProjectUrl('/api/inth', headers);
+		expect(result).toBe('http://localhost:3000/api/inth');
 	});
 
 	it('should not use the referer', () => {
@@ -180,14 +180,14 @@ describe('normalizeProjectUrl', () => {
 			referer: 'https://example.com/some/path',
 		});
 
-		const result = normalizeProjectUrl('/api/c15t', headers);
+		const result = normalizeProjectUrl('/api/inth', headers);
 		expect(result).toBeNull();
 	});
 
 	it('should return null when no headers are available to determine base URL', () => {
 		const headers = createMockHeaders({});
 
-		const result = normalizeProjectUrl('/api/c15t', headers);
+		const result = normalizeProjectUrl('/api/inth', headers);
 		expect(result).toBeNull();
 	});
 

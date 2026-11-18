@@ -1,7 +1,7 @@
 /**
  * The app a build without the stock native consent screens runs: its own
  * banner, preferences screen and IAB screen, built only from the headless
- * hooks. `C15T_NATIVE_UI=0 expo prebuild` makes that build; see
+ * hooks. `INTH_NATIVE_UI=0 expo prebuild` makes that build; see
  * `app.config.ts`.
  */
 

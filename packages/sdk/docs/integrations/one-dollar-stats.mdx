@@ -1,16 +1,16 @@
 ---
 title: OneDollarStats
-description: Load the OneDollarStats tracker only after measurement consent with the c15t oneDollarStats helper, forward its data-attribute settings, and check it in DevTools.
-seoTitle: OneDollarStats cookie consent with c15t
-seoDescription: Load the OneDollarStats tracker only with measurement consent. Set it up with the c15t oneDollarStats helper and check it in DevTools.
+description: Load the OneDollarStats tracker only after measurement consent with the Inth oneDollarStats helper, forward its data-attribute settings, and check it in DevTools.
+seoTitle: OneDollarStats cookie consent with Inth
+seoDescription: Load the OneDollarStats tracker only with measurement consent. Set it up with the Inth oneDollarStats helper and check it in DevTools.
 icon: circle-dollar
 group: integrations
 ---
 
-The c15t `oneDollarStats` helper keeps the OneDollarStats tracker, `stonks.js`,
+The Inth `oneDollarStats` helper keeps the OneDollarStats tracker, `stonks.js`,
 off the page until `measurement` has consent. The helper sends no consent signal
-to OneDollarStats. If the visitor withdraws consent, c15t removes the script
-element. By default, c15t also reloads the page.
+to OneDollarStats. If the visitor withdraws consent, Inth removes the script
+element. By default, Inth also reloads the page.
 
 ## Configure OneDollarStats
 
@@ -54,7 +54,7 @@ measurement is allowed. On revocation the helper removes the script element
 and calls no OneDollarStats API.
 
 The tracker installs history hooks and event listeners that removing its
-script cannot undo, so the c15t reload on revocation is what stops it. Keep
+script cannot undo, so the Inth reload on revocation is what stops it. Keep
 `reloadOnConsentRevoked` enabled.
 
 ## Verify OneDollarStats

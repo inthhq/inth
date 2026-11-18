@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-	description: 'Testing c15t bundle sizes with different import patterns',
+	description: 'Testing inth bundle sizes with different import patterns',
 	title: 'Bundle Test App',
 };
 

@@ -1,6 +1,6 @@
 ---
-title: c15t vs OneTrust
-description: Choose c15t to own the consent engine, framework components and backend. Compare OneTrust's headless API, cookie scans, mobile SDKs and broader privacy operations.
+title: Inth vs OneTrust
+description: Choose Inth to own the consent engine, framework components and backend. Compare OneTrust's headless API, cookie scans, mobile SDKs and broader privacy operations.
 group: reference
 ---
 
@@ -10,17 +10,17 @@ Pick OneTrust if consent is one part of a larger privacy programme run by a
 legal or privacy team. It scans your site for cookies, and separate OneTrust
 products cover more of that programme.
 
-Pick c15t if your engineers own consent. The banner, the engine that decides
+Pick Inth if your engineers own consent. The banner, the engine that decides
 what may run and the backend that stores records are all code your team can
 read, change and ship with the rest of the product. OneTrust has a headless API
-too, so either one lets you build your own UI. With c15t you can also change
+too, so either one lets you build your own UI. With Inth you can also change
 the engine and the backend.
 
 <include src="../shared/comparisons/inth-hosting.mdx" />
 
 ## Feature by feature
 
-| What you need | c15t | OneTrust |
+| What you need | Inth | OneTrust |
 | --- | --- | --- |
 | Build application consent UI | Native components, themes and headless APIs | Web CMP UI and a headless Server-Side CMP API |
 | Resolve consent on the server | Framework helpers and cached public policy | Server-Side CMP API |
@@ -28,31 +28,31 @@ the engine and the backend.
 | Control vendor execution | Declared integrations, request rules and embeds | Automatic blocking, tag-manager integrations and script controls |
 | Own the backend implementation | Apache-2.0 backend that you can deploy | OneTrust platform and APIs |
 | Store consent records | Inth hosts the backend and stores records in its database. Self-hosting is optional | Consent transaction database |
-| Scan authenticated or hidden pages | **Not included in the c15t packages** | Documented website scans |
+| Scan authenticated or hidden pages | **Not included in the Inth packages** | Documented website scans |
 | Compare banner layouts | Presentation experiments with your feature flags | A/B tests and template targeting |
-| Run a wider privacy programme | **No complete privacy operations suite in c15t** | Separate OneTrust products extend the consent scope |
+| Run a wider privacy programme | **No complete privacy operations suite in Inth** | Separate OneTrust products extend the consent scope |
 
 Sources: [Cookie Consent](https://www.onetrust.com/products/cookie-consent/), [JavaScript methods](https://developer.onetrust.com/onetrust/docs/javascript-api) and [Server-Side CMP API](https://developer.onetrust.com/onetrust/docs/server-side-cmp-api-introduction).
 
 ## What owning the code gets you
 
-c15t is [Apache-2.0](https://github.com/c15t/c15t/blob/v3/LICENSE.md). Your developers can read it, patch it and pin versions like any other dependency. Consent changes can go through the same code review as the features that depend on them.
+Inth is [Apache-2.0](https://github.com/c15t/c15t/blob/v3/LICENSE.md). Your developers can read it, patch it and pin versions like any other dependency. Consent changes can go through the same code review as the features that depend on them.
 
 The banner and your app share one consent state. A privacy settings screen in your account area can read the same permissions that gate a video embed or your analytics. If the stock components don't fit, build your own on the [headless APIs](/docs/frameworks/react/headless).
 
 ## How consent affects page load
 
-A c15t server can cache the public consent manifest, the file that holds your policy rules. With a warm cache, it resolves each visitor without asking the backend for the policy on every page request. Saving a choice and refreshing the cache still go to the backend. [Data fetching](/docs/concepts/data-fetching) has the details.
+A Inth server can cache the public consent manifest, the file that holds your policy rules. With a warm cache, it resolves each visitor without asking the backend for the policy on every page request. Saving a choice and refreshing the cache still go to the backend. [Data fetching](/docs/concepts/data-fetching) has the details.
 
 In the Next.js App Router, the default setup streams. The page appears first, and the banner follows in a later chunk before hydration. If the page and the banner must arrive together, await consent instead, and the page waits for it. [Rendering options](/docs/frameworks/next/rendering) covers both.
 
-This page doesn't claim c15t is faster than OneTrust. That would need a side-by-side test.
+This page doesn't claim Inth is faster than OneTrust. That would need a side-by-side test.
 
 ## Mobile apps
 
-<include src="../shared/comparisons/mobile-c15t.mdx" />
+<include src="../shared/comparisons/mobile-inth.mdx" />
 
-| What you need | c15t (private prerelease) | OneTrust |
+| What you need | Inth (private prerelease) | OneTrust |
 | --- | --- | --- |
 | Platforms | Swift, Kotlin, React Native and Expo | Android, iOS, MAUI, Unity, React Native, Flutter, Cordova and Ionic, plus OTT and CTV platforms |
 | Stock consent screens | SwiftUI and Compose screens. React Native opens the same native screens | OneTrust-provided UI, with most configuration in the OneTrust tenant |
@@ -66,18 +66,18 @@ This page doesn't claim c15t is faster than OneTrust. That would need a side-by-
 
 Sources: [Mobile and OTT/CTV SDKs](https://developer.onetrust.com/onetrust/docs/mobile-ctv) and [React Native SDK](https://developer.onetrust.com/onetrust/docs/react-native), checked on 10 November 2026.
 
-## What c15t does not include
+## What Inth does not include
 
-- **Site scanning.** c15t doesn't crawl signed-in pages or find every tracker for you. Register each vendor you need.
-- **Privacy operations.** Data-subject request handling, data discovery and organisation-wide assessments are outside the c15t packages.
+- **Site scanning.** Inth doesn't crawl signed-in pages or find every tracker for you. Register each vendor you need.
+- **Privacy operations.** Data-subject request handling, data discovery and organisation-wide assessments are outside the Inth packages.
 - **A drop-in replacement for your current setup.** If you're moving from OneTrust, check identity, record retention, admin access and migration before you switch.
 - **Free backend operations.** Inth has its own service terms. Self-hosting means you run the database, backups and maintenance.
 
-c15t's [document snapshot helpers](/docs/self-host/guides/legal-document-snapshot-integration) attest to which version of a legal document your server supplied, with its content hash. They don't write the legal text, and they don't prove acceptance. Your app still verifies and records acceptance in its own flow.
+inth's [document snapshot helpers](/docs/self-host/guides/legal-document-snapshot-integration) attest to which version of a legal document your server supplied, with its content hash. They don't write the legal text, and they don't prove acceptance. Your app still verifies and records acceptance in its own flow.
 
 ## Try it on one real flow
 
-Set up a trial with [Inth and your framework guide](/docs/frameworks). Pick a signed-in page where a vendor loads after the user does something, and register that vendor with c15t.
+Set up a trial with [Inth and your framework guide](/docs/frameworks). Pick a signed-in page where a vendor loads after the user does something, and register that vendor with Inth.
 
 Then reject, accept and withdraw, and check the saved record after each step. The [verification guide](/docs/guides/verify-consent) walks through every check. If you still need cookie scans, price that service in too, so you compare the full cost.
 

@@ -78,7 +78,7 @@ describe('vendor stub contracts', () => {
 		bootstrapOnly(config);
 		expect(window._elqQ).toContainEqual([
 			'elqSetSiteId',
-			'c15t-placeholder-site',
+			'inth-placeholder-site',
 		]);
 	});
 
@@ -111,9 +111,9 @@ describe('vendor stub contracts', () => {
 		expect(config?.runtimeCheck?.().ok).toBe(true);
 
 		delete (window as unknown as Record<string, unknown>)
-			.__c15tPosthogQueueReplayExpected;
+			.__inthPosthogQueueReplayExpected;
 		delete (window as unknown as Record<string, unknown>)
-			.__c15tPosthogQueueReplayed;
+			.__inthPosthogQueueReplayed;
 	});
 
 	describe('bootstrap stubs satisfy their vendor contract', () => {

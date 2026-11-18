@@ -56,7 +56,7 @@ export const targets: ExampleTarget[] = [
 		start: () => ['serve.ts'],
 	},
 	{
-		// Server-rendered with `provideC15tServer()`. C15T_BACKEND_URL is
+		// Server-rendered with `provideInthServer()`. INTH_PROJECT_URL is
 		// where the server's consent route reads the manifest and forwards
 		// saves; the browser only talks to the app. `/headless` swaps the
 		// stock surfaces for consent UI built on `HeadlessConsent`.
@@ -92,7 +92,7 @@ export const targets: ExampleTarget[] = [
 		// The same shared-HTML routes in client manifest mode, where the
 		// browser resolves the manifest itself.
 		directory: 'nuxt',
-		env: { C15T_NUXT_MANIFEST: 'client' },
+		env: { INTH_NUXT_MANIFEST: 'client' },
 		failureRoute: '/prerendered/consent-example',
 		id: 'nuxt-prerender',
 		routes: ['/prerendered/consent-example', '/cached/consent-example'],
@@ -104,7 +104,7 @@ export const targets: ExampleTarget[] = [
 		// fetches the manifest from the backend and resolves the policy.
 		build: ['run', 'generate'],
 		directory: 'nuxt',
-		env: { C15T_NUXT_OUTPUT: 'static' },
+		env: { INTH_NUXT_OUTPUT: 'static' },
 		failureRoute: '/consent-example',
 		id: 'nuxt-static',
 		routes: ['/consent-example'],
@@ -112,7 +112,7 @@ export const targets: ExampleTarget[] = [
 	},
 	{
 		// Nuxt 4.6 with Vue Vapor: every app page and component is a Vapor
-		// component that renders c15t's virtual DOM components through
+		// component that renders inth's virtual DOM components through
 		// Nuxt's interop. `/headless` swaps ConsentRoot for a Vapor
 		// ConsentPrompt built on the composables.
 		directory: 'nuxt-vapor',
@@ -125,7 +125,7 @@ export const targets: ExampleTarget[] = [
 		// The same app under the Nuxt 5 preview with `early404` and
 		// prerendered error pages.
 		directory: 'nuxt-vapor',
-		env: { C15T_NUXT_FUTURE: '1' },
+		env: { INTH_NUXT_FUTURE: '1' },
 		failureRoute: '/consent-example',
 		id: 'nuxt-vapor-future',
 		routes: ['/consent-example', '/headless'],
@@ -140,10 +140,10 @@ export const targets: ExampleTarget[] = [
 	},
 	// The same TanStack Start pages under each alternative root route in
 	// `internals/fixtures/tanstack-start/src/rendering`: a streamed consent loader, the
-	// same-origin `/api/c15t` server route, and prerendered static files.
+	// same-origin `/api/inth` server route, and prerendered static files.
 	...['streamed', 'same-origin'].map((rendering) => ({
 		directory: 'tanstack-start',
-		env: { C15T_TANSTACK_RENDERING: rendering },
+		env: { INTH_TANSTACK_RENDERING: rendering },
 		failureRoute: '/consent-example',
 		id: `tanstack-start-${rendering}`,
 		routes: ['/consent-example'],
@@ -151,7 +151,7 @@ export const targets: ExampleTarget[] = [
 	})),
 	{
 		directory: 'tanstack-start',
-		env: { C15T_TANSTACK_RENDERING: 'static' },
+		env: { INTH_TANSTACK_RENDERING: 'static' },
 		failureRoute: '/consent-example',
 		id: 'tanstack-start-static',
 		routes: ['/consent-example'],
@@ -176,7 +176,7 @@ export const targets: ExampleTarget[] = [
 		// is prerendered, and the browser resolves the visitor's policy and
 		// applies their stored choice.
 		directory: 'astro-demo',
-		env: { C15T_ASTRO_OUTPUT: 'static' },
+		env: { INTH_ASTRO_OUTPUT: 'static' },
 		failureRoute: '/consent-example',
 		id: 'astro-static',
 		routes: ['/consent-example'],
@@ -221,7 +221,7 @@ export const exampleEnvironment = function exampleEnvironment(
 	const values: NodeJS.ProcessEnv = {
 		...process.env,
 		ASTRO_TELEMETRY_DISABLED: '1',
-		C15T_BACKEND_URL: projectUrl,
+		INTH_PROJECT_URL: projectUrl,
 		HOST: '127.0.0.1',
 		NEXT_TELEMETRY_DISABLED: '1',
 		NITRO_HOST: '127.0.0.1',
@@ -231,7 +231,7 @@ export const exampleEnvironment = function exampleEnvironment(
 		PORT: String(port),
 	};
 	for (const prefix of ['NEXT_PUBLIC_', 'VITE_', 'PUBLIC_', 'NUXT_PUBLIC_']) {
-		values[`${prefix}C15T_BACKEND_URL`] = projectUrl;
+		values[`${prefix}INTH_PROJECT_URL`] = projectUrl;
 		values[`${prefix}POSTHOG_KEY`] = 'phc_example_test';
 		values[`${prefix}X_PIXEL_ID`] = 'example-test';
 	}

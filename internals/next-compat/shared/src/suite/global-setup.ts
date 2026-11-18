@@ -58,7 +58,7 @@ const waitForServer = async function waitForServer(
 	if (child.exitCode !== null) {
 		throw new Error(`next start exited early with code ${child.exitCode}`);
 	}
-	if (await isServerReady(`${baseURL}/api/c15t/__compat/requests`)) {
+	if (await isServerReady(`${baseURL}/api/inth/__compat/requests`)) {
 		return;
 	}
 	await sleep(250);

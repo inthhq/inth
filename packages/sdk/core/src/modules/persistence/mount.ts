@@ -841,7 +841,7 @@ export const mountPersistence = function mountPersistence(
 	};
 
 	if (browser) {
-		// c15t 3.2 stored the subject ID before any choice. It is read once,
+		// Inth 3.2 stored the subject ID before any choice. It is read once,
 		// for records an older version stored without an ID, then removed.
 		// Only a handle that owns the subject adopts it, and a throwaway one
 		// that only reads (`keepSubject`, such as the script-loader

@@ -46,17 +46,17 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
  *
  * It lists the purposes and the partner count from the Global Vendor List,
  * and offers Accept all, Reject all and Customize. Customize opens
- * `<c15t-iab-consent-dialog>` on the purposes tab; the partners link opens
+ * `<inth-iab-consent-dialog>` on the purposes tab; the partners link opens
  * it on the vendors tab.
  *
  * Renders when the provider has `iab` configured, the resolved policy uses
  * the `iab` model and the banner is the active surface. Put it next to
- * `<c15t-iab-consent-dialog>` once, near the root of the app.
+ * `<inth-iab-consent-dialog>` once, near the root of the app.
  *
  * @example
  * ```html
- * <c15t-iab-consent-banner />
- * <c15t-iab-consent-dialog />
+ * <inth-iab-consent-banner />
+ * <inth-iab-consent-dialog />
  * ```
  */
 @Component({
@@ -65,14 +65,14 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 	imports: [Branding, FocusTrap, Overlay, Portal, ScrollLock],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-iab-consent-banner',
+	selector: 'inth-iab-consent-banner',
 	template: `
 		@if (visibility.shouldRender() && summary().isReady) {
 			@let iabT = translations();
-			<div c15tPortal>
+			<div inthPortal>
 				@if (presentation().blocking) {
 					<div
-						c15t-overlay
+						inth-overlay
 						[styles]="styles"
 						[variant]="'iab-banner'"
 						[entering]="!resolvedDisableAnimation()"
@@ -91,14 +91,14 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 							: null
 					"
 					data-testid="iab-consent-banner-root"
-					data-c15t-streamed=""
+					data-inth-streamed=""
 					tabindex="-1"
-					[c15tScrollLock]="presentation().blocking"
+					[inthScrollLock]="presentation().blocking"
 				>
 					<div [class]="cls(styles.cardShell)">
 						@if (showBranding()) {
 							<a
-								c15t-branding
+								inth-branding
 								[noStyle]="resolvedNoStyle()"
 								[variant]="'banner-tag'"
 								[themeKey]="'iabConsentBannerTag'"
@@ -112,7 +112,7 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 							[attr.role]="presentation().blocking ? 'dialog' : 'region'"
 							[attr.aria-modal]="presentation().blocking ? 'true' : null"
 							[attr.aria-label]="iabT.banner.title"
-							[c15tFocusTrap]="presentation().blocking"
+							[inthFocusTrap]="presentation().blocking"
 						>
 							<div
 								[class]="headerStyle().className || ''"
@@ -210,7 +210,7 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 					</div>
 					<!-- The end of the banner's markup; see the stock banner. -->
 					<span
-						data-c15t-stream-end=""
+						data-inth-stream-end=""
 						hidden
 					></span>
 				</div>

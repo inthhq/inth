@@ -32,7 +32,7 @@ import {
 import type { ClientManifestChunk } from '../prefetch';
 
 const initFor = (rule: Partial<PolicyRule>): InitOutput => ({
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'GB', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -198,7 +198,7 @@ describe('preloadDeferredEngine', () => {
 		expect(edited['entry.js']?.imports).toEqual([BANNER, ENGINE]);
 	});
 
-	test('leaves a manifest without the c15t engine alone', () => {
+	test('leaves a manifest without the inth engine alone', () => {
 		const edited = manifest();
 		preloadDeferredEngine(edited, '/app', () => false, true);
 		expect(edited[DEFERRED_ENGINE_MANIFEST_KEY]).toBeUndefined();
@@ -208,7 +208,7 @@ describe('preloadDeferredEngine', () => {
 describe('isDeferredBannerModule', () => {
 	test('matches the banner from an installed, a workspace and a source build', () => {
 		for (const id of [
-			'../node_modules/.pnpm/@c15t+vue@3.3.0/node_modules/@inth/vue/dist/runtime/components/prompt.vue',
+			'../node_modules/.pnpm/@inth+vue@3.3.0/node_modules/@inth/vue/dist/runtime/components/prompt.vue',
 			// A workspace or linked install: Vite names the real path.
 			'../../../packages/sdk/vue/dist/runtime/components/prompt.vue',
 			'/repo/packages/sdk/vue/src/runtime/components/button.vue',

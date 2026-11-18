@@ -19,7 +19,7 @@ const getDefaultClearbitScriptUrl = function getDefaultClearbitScriptUrl(
  * `tags.js` endpoint. Clearbit enrichment can identify visitors and companies,
  * so the default consent category is `marketing` rather than `measurement`.
  * The GitHub issue left the category open between measurement and marketing;
- * c15t treats enrichment and intent profiling as marketing-sensitive.
+ * Inth treats enrichment and intent profiling as marketing-sensitive.
  */
 export const clearbitManifest = {
 	...vendorManifestContract,

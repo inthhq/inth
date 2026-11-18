@@ -3,7 +3,7 @@
  * that sends the request early, while the resolver chunk loads, builds the
  * same request the resolver would, without importing the resolver.
  */
-import { c15tProtocolHeaders } from './version-header';
+import { inthProtocolHeaders } from './version-header';
 
 /**
  * Builds the fetch options for the browser's manifest request.
@@ -21,7 +21,7 @@ export const createManifestRequestInit = function createManifestRequestInit(
 	const init: RequestInit & { headers: Record<string, string> } = {
 		headers: {
 			accept: 'application/json',
-			...c15tProtocolHeaders,
+			...inthProtocolHeaders,
 			...options.headers,
 		},
 		method: 'GET',

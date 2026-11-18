@@ -13,25 +13,25 @@ import {
 	applyBenchThrottleProfile,
 	benchNavigationTimingExpression,
 	installBenchPerformanceObservers,
-} from '@c15t/benchmarking/browser';
+} from '@inth/benchmarking/browser';
 import type {
 	BenchThrottleProfileName,
 	readBenchNavigationTiming,
-} from '@c15t/benchmarking/browser';
-import { reactBrowserBudgetsForScenario } from '@c15t/benchmarking/budgets';
-import type { PolicyBenchFixtureName } from '@c15t/benchmarking/policy-fixtures';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
+} from '@inth/benchmarking/browser';
+import { reactBrowserBudgetsForScenario } from '@inth/benchmarking/budgets';
+import type { PolicyBenchFixtureName } from '@inth/benchmarking/policy-fixtures';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
 import type {
 	BenchmarkResult,
 	MetricSampleSet,
-} from '@c15t/benchmarking/schema';
-import type { BenchScriptTiming } from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/schema';
+import type { BenchScriptTiming } from '@inth/benchmarking/script-timing';
 import {
 	benchScriptTimingExpression,
 	scriptTimingGlossary,
 	summarizeBenchScripts,
 	summarizeIdlePreloadMetrics,
-} from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/script-timing';
 import {
 	getEnvironment,
 	median,
@@ -41,11 +41,11 @@ import {
 	summarizeMetric,
 	summarizeNullableMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import {
 	coldStateMetadata,
 	describeColdState,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import type * as PlaywrightTypes from 'playwright';
 
 import type {
@@ -93,11 +93,11 @@ export const policyScenarios: PolicyScenarioDefinition[] = [
 ];
 
 const bannerRootTestId = 'consent-banner-root';
-const bannerElementTimingName = 'c15t-consent-banner';
+const bannerElementTimingName = 'inth-consent-banner';
 const HYDRATION_WARNING_PATTERN =
 	/hydrat|#418|#423|#425|did not match|Text content does not match/iu;
 const HYDRATION_ITERATIONS = Number(
-	process.env.C15T_BENCH_HYDRATION_ITERATIONS ?? '30'
+	process.env.INTH_BENCH_HYDRATION_ITERATIONS ?? '30'
 );
 const DISMISS_SELECTORS = [
 	'[data-testid="consent-banner-dismiss-button"]',
@@ -108,7 +108,7 @@ const DISMISS_SELECTORS = [
 interface StorageBytes {
 	choiceCookieBytes: number;
 	choiceCookiePresent: number;
-	c15tCookieBytes: number;
+	inthCookieBytes: number;
 	noticeCookieBytes: number;
 	privacyCookieBytes: number;
 	choiceLocalStorageBytes: number;
@@ -119,7 +119,7 @@ interface StorageBytes {
 }
 
 /**
- * Serialized page function: bytes held by the browser under the c15t
+ * Serialized page function: bytes held by the browser under the Inth
  * storage keys. Kept as a string so transpiler wrappers cannot leak into
  * the page.
  */
@@ -135,10 +135,10 @@ const storageBytesExpression = `(() => {
 				? { name: entry, value: '' }
 				: { name: entry.slice(0, index), value: entry.slice(index + 1) };
 		});
-	const c15tCookies = cookies.filter((cookie) => cookie.name.startsWith('c15t'));
-	const choiceCookie = cookies.find((cookie) => cookie.name === 'c15t');
-	const noticeCookie = cookies.find((cookie) => cookie.name === 'c15t-notice');
-    const privacyCookie = cookies.find((cookie) => cookie.name === 'c15t-privacy');
+	const inthCookies = cookies.filter((cookie) => cookie.name.startsWith('inth'));
+	const choiceCookie = cookies.find((cookie) => cookie.name === 'inth');
+	const noticeCookie = cookies.find((cookie) => cookie.name === 'inth-notice');
+    const privacyCookie = cookies.find((cookie) => cookie.name === 'inth-privacy');
 	const readLocal = (key) => {
 		const value = window.localStorage.getItem(key);
 		return value === null ? 0 : utf8(value);
@@ -146,21 +146,21 @@ const storageBytesExpression = `(() => {
 	const localStorageKeys = [];
 	for (let index = 0; index < window.localStorage.length; index += 1) {
 		const key = window.localStorage.key(index);
-		if (key && key.startsWith('c15t')) {
+		if (key && key.startsWith('inth')) {
 			localStorageKeys.push(key);
 		}
 	}
 	return {
-		c15tCookieBytes: utf8(c15tCookies.map(cookie => cookie.name + '=' + cookie.value).join('; ')),
+		inthCookieBytes: utf8(inthCookies.map(cookie => cookie.name + '=' + cookie.value).join('; ')),
 		choiceCookieBytes: choiceCookie ? utf8(choiceCookie.value) : 0,
 		choiceCookiePresent: choiceCookie ? 1 : 0,
-		choiceLocalStorageBytes: readLocal('c15t'),
-		cookieNames: c15tCookies.map((cookie) => cookie.name),
+		choiceLocalStorageBytes: readLocal('inth'),
+		cookieNames: inthCookies.map((cookie) => cookie.name),
 		localStorageKeys,
 		noticeCookieBytes: noticeCookie ? utf8(noticeCookie.value) : 0,
         privacyCookieBytes: privacyCookie ? utf8(privacyCookie.value) : 0,
-		noticeLocalStorageBytes: readLocal('c15t-notice'),
-		privacyLocalStorageBytes: readLocal('c15t-privacy'),
+		noticeLocalStorageBytes: readLocal('inth-notice'),
+		privacyLocalStorageBytes: readLocal('inth-privacy'),
 	};
 })()`;
 
@@ -291,7 +291,7 @@ const waitForPromptReady = async function waitForPromptReady(
 ) {
 	await page.waitForFunction(
 		({ targetScenario, targetFixture }) => {
-			const state = window.__c15tPolicyBench;
+			const state = window.__inthPolicyBench;
 			return (
 				!!state &&
 				state.scenario === targetScenario &&
@@ -325,9 +325,9 @@ const readPageTiming = async function readPageTiming(
 	const longTasks = await page.evaluate(() => {
 		const metrics = (
 			window as typeof window & {
-				__c15tBenchPerfMetrics?: { longTaskTotalMs: number };
+				__inthBenchPerfMetrics?: { longTaskTotalMs: number };
 			}
-		).__c15tBenchPerfMetrics;
+		).__inthBenchPerfMetrics;
 		return { longTaskTotalMs: metrics?.longTaskTotalMs ?? 0 };
 	});
 	return { ...navEntry, ...scriptEntry, ...longTasks };
@@ -348,7 +348,7 @@ const takeAction = async function takeAction(
 		await page.click(selector);
 		await page.waitForFunction(
 			(expected) => {
-				const current = window.__c15tPolicyBench;
+				const current = window.__inthPolicyBench;
 				return (
 					!!current &&
 					current.onChoiceRecordedCount > expected &&
@@ -364,7 +364,7 @@ const takeAction = async function takeAction(
 			() =>
 				document.cookie
 					.split(';')
-					.some((entry) => entry.trim().startsWith('c15t=')),
+					.some((entry) => entry.trim().startsWith('inth=')),
 			undefined,
 			{ timeout: 10_000 }
 		);
@@ -401,14 +401,14 @@ const takeAction = async function takeAction(
 	await page.click('#policy-save-partial');
 	await page.waitForFunction(
 		() => {
-			const current = window.__c15tPolicyBench;
+			const current = window.__inthPolicyBench;
 			return current?.hasStoredChoice === true && current.promptKind === 'none';
 		},
 		undefined,
 		{ timeout: 30_000 }
 	);
 	// Wait for all projections before counting the request cookie header.
-	await page.waitForFunction(() => document.cookie.includes('c15t-notice='));
+	await page.waitForFunction(() => document.cookie.includes('inth-notice='));
 	return {
 		actionTaken: 'dismiss',
 		interactionLatencyMs: performance.now() - startedAt,
@@ -433,7 +433,7 @@ const collectPolicySample = async function collectPolicySample(
 	await page.goto(`/policy/${definition.fixture}?scenario=${scenario}`);
 	await waitForPromptReady(page, scenario, definition.fixture);
 	const state = (await page.evaluate(() => {
-		const current = window.__c15tPolicyBench;
+		const current = window.__inthPolicyBench;
 		if (!current) {
 			return null;
 		}
@@ -455,7 +455,7 @@ const collectPolicySample = async function collectPolicySample(
 	let hydration: PolicyHydrationMeasurement | null = null;
 	if (options.hydrate) {
 		hydration = (await page.evaluate(async (iterations) => {
-			const current = window.__c15tPolicyBench;
+			const current = window.__inthPolicyBench;
 			if (!current?.measureHydration) {
 				throw new Error('measureHydration is not installed on the page');
 			}
@@ -619,7 +619,7 @@ const buildMetrics = function buildMetrics(
 		for (const key of [
 			'choiceCookieBytes',
 			'choiceCookiePresent',
-			'c15tCookieBytes',
+			'inthCookieBytes',
 			'noticeCookieBytes',
 			'privacyCookieBytes',
 			'choiceLocalStorageBytes',
@@ -751,7 +751,7 @@ const writePolicyResult = function writePolicyResult(
 
 			...scriptTimingGlossary,
 		],
-		package: '@c15t/react-browser-bench',
+		package: '@inth/react-browser-bench',
 		runtime: 'playwright',
 		scenario: outputScenario,
 		schemaVersion: BENCHMARK_SCHEMA_VERSION,

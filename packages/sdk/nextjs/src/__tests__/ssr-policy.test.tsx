@@ -313,7 +313,7 @@ describe('Next.js request policy and RSC hydration', () => {
 		);
 	});
 
-	test('C15tPrefetch script and the root share one browser init request', async () => {
+	test('InthPrefetch script and the root share one browser init request', async () => {
 		const config = policyFixture({}, rule);
 		const fetch = vi.fn().mockResolvedValue(
 			new Response(

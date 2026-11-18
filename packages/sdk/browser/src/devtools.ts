@@ -1,5 +1,5 @@
 /**
- * `@inth/sdk/devtools` — the c15t DevTools panel for the script-tag
+ * `@inth/sdk/devtools` — the Inth DevTools panel for the script-tag
  * client, the way `@inth/react/devtools` mounts it for a React provider.
  *
  * The panel inspects consents, scripts, policy and events, and its

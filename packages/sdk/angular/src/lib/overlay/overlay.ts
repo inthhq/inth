@@ -44,7 +44,7 @@ const TEST_IDS = {
  *
  * @example
  * ```html
- * <div c15t-overlay [styles]="styles" variant="dialog" [visible]="open()"></div>
+ * <div inth-overlay [styles]="styles" variant="dialog" [visible]="open()"></div>
  * ```
  * @internal
  */
@@ -57,7 +57,7 @@ const TEST_IDS = {
 		'[style]': 'style()',
 		'aria-hidden': 'true',
 	},
-	selector: 'div[c15t-overlay]',
+	selector: 'div[inth-overlay]',
 	template: '',
 })
 export class Overlay {

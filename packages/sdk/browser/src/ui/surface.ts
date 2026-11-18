@@ -10,7 +10,7 @@ import type { SlotApplier } from './slots';
 export interface SurfaceContext {
 	/** The client whose kernel drives the surface. */
 	client: ConsentClient;
-	/** The `.c15t-theme-root` element surfaces append to. */
+	/** The `.inth-theme-root` element surfaces append to. */
 	root: HTMLElement;
 	/** Ship the DOM without class names. */
 	noStyle: boolean;

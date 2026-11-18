@@ -57,7 +57,7 @@ const otherScript: Script = {
 };
 
 const element = (id: string) =>
-	document.head.querySelector<HTMLScriptElement>(`script#c15t-script-${id}`);
+	document.head.querySelector<HTMLScriptElement>(`script#inth-script-${id}`);
 
 /** The attributes the browser reads when it fetches the script. */
 const fetchAttributes = (id: string) => {
@@ -88,7 +88,7 @@ const start = (
 
 afterEach(() => {
 	document.head.innerHTML = '';
-	delete (window as { c15t?: unknown }).c15t;
+	delete (window as { inth?: unknown }).inth;
 });
 
 describe('scriptLoader.sources', () => {
@@ -798,7 +798,7 @@ describe('experimentalScriptRegistry', () => {
 			mode: browserManifest({
 				projectUrl: '',
 				snapshot: {
-					branding: 'c15t',
+					branding: 'inth',
 					policyPacks: [
 						createConsentManifestPolicyPack({
 							...optInRule({ id: 'everywhere' }),
@@ -829,7 +829,7 @@ describe('experimentalScriptRegistry', () => {
 
 	test("loads by the list a hosted backend's /init carries", async () => {
 		const manifest: ConsentManifest = {
-			branding: 'c15t',
+			branding: 'inth',
 			policyPacks: [
 				createConsentManifestPolicyPack({
 					...optInRule({ id: 'everywhere' }),

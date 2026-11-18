@@ -1,6 +1,6 @@
 ---
 /**
- * Zero-consent baseline layout: the same Astro shell with no c15t component,
+ * Zero-consent baseline layout: the same Astro shell with no Inth component,
  * no boot script and no middleware (the `baseline` build omits the
  * integration entirely). This is the floor `consentTax` subtracts.
  */
@@ -33,21 +33,21 @@ const { scenario } = Astro.props;
 		</main>
 
 		<span
-			data-c15t-bench-probe
+			data-inth-bench-probe
 			data-scenario={scenario}
 			hidden
 		></span>
 
 		<script>
 			// Self-contained on purpose: the floor must not import anything
-			// from `@c15t/*`, or it would include the library it exists to
+			// from `@inth/*`, or it would include the library it exists to
 			// subtract. Mirrors the real probe's settle semantics (double-rAF
 			// after the module runs); here `bannerReadyMs` / `bannerVisibleMs`
 			// mean "app shell parsed and painted".
 			const benchWindow = window as typeof window & {
-				__c15tAstroBench?: Record<string, unknown>;
+				__inthAstroBench?: Record<string, unknown>;
 			};
-			benchWindow.__c15tAstroBench ??= {
+			benchWindow.__inthAstroBench ??= {
 				activeUI: 'none',
 				hasConsented: false,
 				location: null,
@@ -59,14 +59,14 @@ const { scenario } = Astro.props;
 				renderCount: 1,
 				scenario:
 					document
-						.querySelector('[data-c15t-bench-probe]')
+						.querySelector('[data-inth-bench-probe]')
 						?.getAttribute('data-scenario') ?? 'baseline',
 				startedAtMs: performance.now(),
 			};
 
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {
-					const state = benchWindow.__c15tAstroBench;
+					const state = benchWindow.__inthAstroBench;
 					if (state && state.bannerReadyMs === undefined) {
 						const now = performance.now();
 						state.bannerReadyMs = now;

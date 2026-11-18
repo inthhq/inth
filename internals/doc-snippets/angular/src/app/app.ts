@@ -13,13 +13,13 @@ import { ConsentDialog } from '@inth/angular/consent-dialog';
 		<footer>
 			<button
 				type="button"
-				c15tConsentDialogLink
+				inthConsentDialogLink
 			>
 				Privacy settings
 			</button>
 		</footer>
-		<c15t-consent-banner />
-		<c15t-consent-dialog />
+		<inth-consent-banner />
+		<inth-consent-dialog />
 	`,
 })
 export class App {}

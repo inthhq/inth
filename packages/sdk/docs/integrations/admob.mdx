@@ -1,20 +1,20 @@
 ---
 title: AdMob
-description: Connect Google Mobile Ads (AdMob) to native c15t consent in Swift, Kotlin, React Native and Expo, with limited ads, personalization and restricted data processing driven by marketing.
-seoTitle: AdMob consent for mobile apps with c15t
-seoDescription: Drive Google Mobile Ads personalization, limited ads and restricted data processing from c15t consent in Swift, Android, React Native and Expo.
+description: Connect Google Mobile Ads (AdMob) to native Inth consent in Swift, Kotlin, React Native and Expo, with limited ads, personalization and restricted data processing driven by marketing.
+seoTitle: AdMob consent for mobile apps with Inth
+seoDescription: Drive Google Mobile Ads personalization, limited ads and restricted data processing from Inth consent in Swift, Android, React Native and Expo.
 group: integrations
 ---
 
 The AdMob helper reads the three Google Consent Mode advertising types from
-c15t consent and hands them to your app, which applies them to Google Mobile
+Inth consent and hands them to your app, which applies them to Google Mobile
 Ads. Marketing grants `ad_storage`, `ad_user_data` and `ad_personalization`,
 with the same [category mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types)
 the web uses. Pending consent denies all three.
 
 The helper ships in `InthApple`, `inth-android` and
 `@inth/react-native/integrations`. Google Mobile Ads stays a dependency your
-app installs; c15t adds none.
+app installs; Inth adds none.
 
 ## What the helper changes
 
@@ -49,7 +49,7 @@ Complete the [Swift](/docs/frameworks/swift/quickstart),
 Mobile Ads through Google's [iOS](https://developers.google.com/admob/ios/quick-start),
 [Android](https://developers.google.com/admob/android/quick-start) or
 [React Native](https://docs.page/invertase/react-native-google-mobile-ads)
-instructions. c15t's mobile packages are a private prerelease; see
+instructions. inth's mobile packages are a private prerelease; see
 [mobile availability](/docs/guides/mobile-status).
 
 Connect the helper before you request the first ad. The helper does not
@@ -57,7 +57,7 @@ request App Tracking Transparency.
 
 ## Connect a Swift app
 
-Create the helper after installing c15t, and keep it for the app's lifetime:
+Create the helper after installing Inth, and keep it for the app's lifetime:
 
 ```swift title="AdMobConsent.swift"
 import InthApple
@@ -99,7 +99,7 @@ advertising type.
 
 ## Connect an Android app
 
-Create the helper in your `Application` after installing c15t:
+Create the helper in your `Application` after installing Inth:
 
 ```kotlin title="AdMobConsent.kt"
 import android.content.Context
@@ -197,7 +197,7 @@ ads already loaded.
 3. Withdraw marketing. Confirm the denied settings return.
 4. Grant or withdraw measurement only. Confirm nothing changes.
 
-The c15t helper tests cover consent order, withdrawal and reset with recorded
+The Inth helper tests cover consent order, withdrawal and reset with recorded
 calls. They were not run against Google Mobile Ads itself. Inspect real ad
 requests with Google's [Ad Inspector](https://developers.google.com/admob/android/ad-inspector)
 or a proxy before you ship.

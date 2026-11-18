@@ -1,70 +1,70 @@
 :root {
 	/* Primary Colors */
-	--button-primary: var(--c15t-primary);
-	--button-primary-dark: var(--c15t-primary);
-	--button-primary-hover: var(--c15t-primary-hover);
-	--button-primary-hover-dark: var(--c15t-primary-hover);
+	--button-primary: var(--inth-primary);
+	--button-primary-dark: var(--inth-primary);
+	--button-primary-hover: var(--inth-primary-hover);
+	--button-primary-hover-dark: var(--inth-primary-hover);
 
 	/* Neutral Colors */
-	--button-neutral: var(--c15t-text-muted);
-	--button-neutral-dark: var(--c15t-text-muted);
-	--button-neutral-hover: var(--c15t-text);
-	--button-neutral-hover-dark: var(--c15t-text);
-	--button-neutral-soft: var(--c15t-surface-hover);
-	--button-neutral-soft-dark: var(--c15t-surface-hover);
+	--button-neutral: var(--inth-text-muted);
+	--button-neutral-dark: var(--inth-text-muted);
+	--button-neutral-hover: var(--inth-text);
+	--button-neutral-hover-dark: var(--inth-text);
+	--button-neutral-soft: var(--inth-surface-hover);
+	--button-neutral-soft-dark: var(--inth-surface-hover);
 
 	/* Focus Colors */
-	--button-focus-ring: var(--c15t-primary);
-	--button-focus-ring-dark: var(--c15t-primary);
+	--button-focus-ring: var(--inth-primary);
+	--button-focus-ring-dark: var(--inth-primary);
 
 	/* Theme Colors */
-	--button-text: var(--c15t-text);
-	--button-text-dark: var(--c15t-text);
-	--button-text-hover: var(--c15t-text);
-	--button-text-hover-dark: var(--c15t-text);
-	--button-background-color: var(--c15t-surface);
-	--button-background-color-dark: var(--c15t-surface);
-	--button-border: var(--c15t-border);
-	--button-border-dark: var(--c15t-border);
-	--button-hover-overlay: var(--c15t-surface-hover);
-	--button-hover-overlay-dark: var(--c15t-surface-hover);
+	--button-text: var(--inth-text);
+	--button-text-dark: var(--inth-text);
+	--button-text-hover: var(--inth-text);
+	--button-text-hover-dark: var(--inth-text);
+	--button-background-color: var(--inth-surface);
+	--button-background-color-dark: var(--inth-surface);
+	--button-border: var(--inth-border);
+	--button-border-dark: var(--inth-border);
+	--button-hover-overlay: var(--inth-surface-hover);
+	--button-hover-overlay-dark: var(--inth-surface-hover);
 
 	/* Hover States (10% opacity for non-filled variants) */
 	--button-primary-hover-tint: color-mix(
 		in srgb,
-		var(--c15t-primary) 10%,
+		var(--inth-primary) 10%,
 		transparent
 	);
 	--button-neutral-hover-tint: color-mix(
 		in srgb,
-		var(--c15t-text) 10%,
+		var(--inth-text) 10%,
 		transparent
 	);
 
 	/* Component Variables */
-	--button-font: var(--c15t-font-family);
+	--button-font: var(--inth-font-family);
 	--button-border-width: 1px;
 	--button-border-style: solid;
-	--button-border-color: var(--c15t-border);
-	--button-border-radius: var(--c15t-radius-md);
-	--button-font-weight: var(--c15t-font-weight-medium);
-	--button-font-size: var(--c15t-font-size-sm);
-	--button-line-height: var(--c15t-line-height-tight);
+	--button-border-color: var(--inth-border);
+	--button-border-radius: var(--inth-radius-md);
+	--button-font-weight: var(--inth-font-weight-medium);
+	--button-font-size: var(--inth-font-size-sm);
+	--button-line-height: var(--inth-line-height-tight);
 	--button-transition:
-		opacity var(--c15t-duration-fast) var(--c15t-easing),
-		transform var(--c15t-duration-fast) var(--c15t-easing);
-	--button-hover-transition-color: background-color var(--c15t-duration-fast)
-		var(--c15t-easing);
+		opacity var(--inth-duration-fast) var(--inth-easing),
+		transform var(--inth-duration-fast) var(--inth-easing);
+	--button-hover-transition-color: background-color var(--inth-duration-fast)
+		var(--inth-easing);
 	--button-hover-transition-full:
-		background-color var(--c15t-duration-fast) var(--c15t-easing),
-		box-shadow var(--c15t-duration-fast) var(--c15t-easing),
-		color var(--c15t-duration-fast) var(--c15t-easing);
+		background-color var(--inth-duration-fast) var(--inth-easing),
+		box-shadow var(--inth-duration-fast) var(--inth-easing),
+		color var(--inth-duration-fast) var(--inth-easing);
 	--button-cursor: pointer;
 
 	/* Shadows */
 	/* Base Shadows */
-	--button-shadow: var(--c15t-shadow-sm);
-	--button-shadow-dark: var(--c15t-shadow-sm);
+	--button-shadow: var(--inth-shadow-sm);
+	--button-shadow-dark: var(--inth-shadow-sm);
 
 	/* Focus Shadows */
 	--button-shadow-primary-focus: 0 0 0 2px var(--button-focus-ring);
@@ -116,11 +116,11 @@
 		box-shadow: var(--button-shadow-primary-focus);
 	}
 
-	:global(.c15t-dark) .button:focus-visible {
+	:global(.inth-dark) .button:focus-visible {
 		box-shadow: var(--button-shadow-primary-focus-dark);
 	}
 
-	:global(.c15t-dark) .button {
+	:global(.inth-dark) .button {
 		color: var(--button-text-dark);
 	}
 
@@ -169,7 +169,7 @@
 		box-shadow: var(--button-shadow-primary-focus);
 	}
 
-	:global(.c15t-dark) .button-primary-filled {
+	:global(.inth-dark) .button-primary-filled {
 		background-color: var(--button-primary-dark);
 		color: var(--button-background-color-dark);
 	}
@@ -179,7 +179,7 @@
 		transition: var(--button-hover-transition-color);
 	}
 
-	:global(.c15t-dark) .button-primary-filled:hover:not(:disabled) {
+	:global(.inth-dark) .button-primary-filled:hover:not(:disabled) {
 		background-color: var(--button-primary-hover-dark);
 		transition: var(--button-hover-transition-color);
 	}
@@ -190,7 +190,7 @@
 		box-shadow: var(--button-shadow-primary);
 	}
 
-	:global(.c15t-dark) .button-primary-stroke {
+	:global(.inth-dark) .button-primary-stroke {
 		background-color: var(--button-background-color-dark);
 		color: var(--button-primary-dark);
 		box-shadow: var(--button-shadow-primary-dark);
@@ -202,7 +202,7 @@
 		transition: var(--button-hover-transition-full);
 	}
 
-	:global(.c15t-dark) .button-primary-stroke:hover:not(:disabled) {
+	:global(.inth-dark) .button-primary-stroke:hover:not(:disabled) {
 		background-color: var(--button-primary-hover-tint);
 		box-shadow: var(--button-shadow-primary-hover-dark);
 		transition: var(--button-hover-transition-full);
@@ -217,7 +217,7 @@
 		color: color-mix(in srgb, var(--button-primary) 85%, black);
 	}
 
-	:global(.c15t-dark) .button-primary-lighter {
+	:global(.inth-dark) .button-primary-lighter {
 		background-color: color-mix(
 			in srgb,
 			var(--button-primary-dark) 10%,
@@ -235,7 +235,7 @@
 		transition: var(--button-hover-transition-color);
 	}
 
-	:global(.c15t-dark) .button-primary-lighter:hover:not(:disabled) {
+	:global(.inth-dark) .button-primary-lighter:hover:not(:disabled) {
 		background-color: color-mix(
 			in srgb,
 			var(--button-primary-dark) 20%,
@@ -248,7 +248,7 @@
 		color: var(--button-primary);
 	}
 
-	:global(.c15t-dark) .button-primary-ghost {
+	:global(.inth-dark) .button-primary-ghost {
 		color: var(--button-primary-dark);
 	}
 
@@ -257,7 +257,7 @@
 		transition: var(--button-hover-transition-color);
 	}
 
-	:global(.c15t-dark) .button-primary-ghost:hover:not(:disabled) {
+	:global(.inth-dark) .button-primary-ghost:hover:not(:disabled) {
 		background-color: var(--button-primary-hover-tint);
 		transition: var(--button-hover-transition-color);
 	}
@@ -272,7 +272,7 @@
 		box-shadow: var(--button-shadow-neutral-focus);
 	}
 
-	:global(.c15t-dark) .button-neutral-filled {
+	:global(.inth-dark) .button-neutral-filled {
 		background-color: var(--button-neutral-dark);
 		color: var(--button-background-color-dark);
 	}
@@ -283,7 +283,7 @@
 		transition: var(--button-hover-transition-color);
 	}
 
-	:global(.c15t-dark) .button-neutral-filled:hover:not(:disabled) {
+	:global(.inth-dark) .button-neutral-filled:hover:not(:disabled) {
 		background-color: var(--button-neutral-hover-dark);
 		box-shadow: none;
 		transition: var(--button-hover-transition-color);
@@ -294,7 +294,7 @@
 		box-shadow: var(--button-shadow-neutral);
 	}
 
-	:global(.c15t-dark) .button-neutral-stroke {
+	:global(.inth-dark) .button-neutral-stroke {
 		background-color: var(--button-background-color-dark);
 		box-shadow: var(--button-shadow-neutral-dark);
 	}
@@ -306,7 +306,7 @@
 		transition: var(--button-hover-transition-full);
 	}
 
-	:global(.c15t-dark) .button-neutral-stroke:hover:not(:disabled) {
+	:global(.inth-dark) .button-neutral-stroke:hover:not(:disabled) {
 		background-color: var(--button-neutral-hover-tint);
 		box-shadow: none;
 		color: var(--button-text-hover-dark);
@@ -322,7 +322,7 @@
 		color: var(--button-neutral);
 	}
 
-	:global(.c15t-dark) .button-neutral-lighter {
+	:global(.inth-dark) .button-neutral-lighter {
 		background-color: color-mix(
 			in srgb,
 			var(--button-neutral-dark) 10%,
@@ -340,7 +340,7 @@
 		transition: var(--button-hover-transition-color);
 	}
 
-	:global(.c15t-dark) .button-neutral-lighter:hover:not(:disabled) {
+	:global(.inth-dark) .button-neutral-lighter:hover:not(:disabled) {
 		background-color: color-mix(
 			in srgb,
 			var(--button-neutral-dark) 20%,
@@ -353,7 +353,7 @@
 		color: var(--button-neutral);
 	}
 
-	:global(.c15t-dark) .button-neutral-ghost {
+	:global(.inth-dark) .button-neutral-ghost {
 		color: var(--button-neutral-dark);
 	}
 
@@ -363,7 +363,7 @@
 		transition: var(--button-hover-transition-color);
 	}
 
-	:global(.c15t-dark) .button-neutral-ghost:hover:not(:disabled) {
+	:global(.inth-dark) .button-neutral-ghost:hover:not(:disabled) {
 		background-color: var(--button-neutral-hover-tint);
 		box-shadow: none;
 		transition: var(--button-hover-transition-color);
@@ -387,14 +387,14 @@
 		.button-neutral-stroke:hover:not(:disabled),
 		.button-neutral-lighter:hover:not(:disabled),
 		.button-neutral-ghost:hover:not(:disabled),
-		:global(.c15t-dark) .button-primary-filled:hover:not(:disabled),
-		:global(.c15t-dark) .button-primary-stroke:hover:not(:disabled),
-		:global(.c15t-dark) .button-primary-lighter:hover:not(:disabled),
-		:global(.c15t-dark) .button-primary-ghost:hover:not(:disabled),
-		:global(.c15t-dark) .button-neutral-filled:hover:not(:disabled),
-		:global(.c15t-dark) .button-neutral-stroke:hover:not(:disabled),
-		:global(.c15t-dark) .button-neutral-lighter:hover:not(:disabled),
-		:global(.c15t-dark) .button-neutral-ghost:hover:not(:disabled) {
+		:global(.inth-dark) .button-primary-filled:hover:not(:disabled),
+		:global(.inth-dark) .button-primary-stroke:hover:not(:disabled),
+		:global(.inth-dark) .button-primary-lighter:hover:not(:disabled),
+		:global(.inth-dark) .button-primary-ghost:hover:not(:disabled),
+		:global(.inth-dark) .button-neutral-filled:hover:not(:disabled),
+		:global(.inth-dark) .button-neutral-stroke:hover:not(:disabled),
+		:global(.inth-dark) .button-neutral-lighter:hover:not(:disabled),
+		:global(.inth-dark) .button-neutral-ghost:hover:not(:disabled) {
 			transition: none;
 		}
 	}

@@ -23,9 +23,9 @@ void policyRules;
 ({
 	clearOnRevocation,
 	consentCategories,
-	projectUrl: '/api/c15t',
+	projectUrl: '/api/inth',
 }) satisfies ConsentProviderOptions;
 
-// @ts-expect-error Only c15t's categories are category names.
+// @ts-expect-error Only inth's categories are category names.
 const unknownCategory: AllConsentNames = 'advertising';
 void unknownCategory;

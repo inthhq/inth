@@ -151,7 +151,7 @@ describe('policyResolutionWireSchema', () => {
 describe('initOutputSchema', () => {
 	test('carries policyResolution next to the v2 fields', () => {
 		const output = v.parse(initOutputSchema, {
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: null },
 			policyResolution: JSON.parse(JSON.stringify(matched)) as unknown,
 			translations: {
@@ -204,7 +204,7 @@ describe('initOutputSchema', () => {
 			},
 		};
 		const output = v.parse(initOutputSchema, {
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: null },
 			policyResolution: JSON.parse(JSON.stringify(matched)) as unknown,
 			translations: { language: 'en', translations },
@@ -225,7 +225,7 @@ describe('initOutputSchema', () => {
 			title: 'Vendors ({count})',
 		};
 		const base = {
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: null },
 			policyResolution: JSON.parse(JSON.stringify(matched)) as unknown,
 		};
@@ -284,7 +284,7 @@ describe('initOutputSchema', () => {
 
 	test('accepts partial translations that omit the new keys', () => {
 		const output = v.parse(initOutputSchema, {
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: null },
 			policyResolution: JSON.parse(JSON.stringify(matched)) as unknown,
 			translations: {
@@ -306,7 +306,7 @@ describe('initOutputSchema', () => {
 
 	test('drops the v2 jurisdiction label and frame copy', () => {
 		const output = v.parse(initOutputSchema, {
-			branding: 'c15t',
+			branding: 'inth',
 			jurisdiction: 'GDPR',
 			location: { countryCode: 'DE', regionCode: null },
 			policyResolution: JSON.parse(JSON.stringify(matched)) as unknown,

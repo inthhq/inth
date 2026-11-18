@@ -7,9 +7,9 @@
  *
  * ```ts
  * // src/hooks.server.ts
- * import { c15tHandle } from '@inth/svelte/kit';
+ * import { inthHandle } from '@inth/svelte/kit';
  *
- * export const handle = c15tHandle();
+ * export const handle = inthHandle();
  *
  * // src/routes/+layout.server.ts
  * export { loadConsent as load } from '@inth/svelte/kit';
@@ -24,15 +24,15 @@
  * handle:
  *
  * ```ts
- * // src/routes/api/c15t/[...path]/+server.ts
+ * // src/routes/api/inth/[...path]/+server.ts
  * export const { GET } = createConsentRoute();
  *
  * // src/hooks.server.ts
- * export const handle = c15tHandle({ routePrefix: '/api/c15t' });
+ * export const handle = inthHandle({ routePrefix: '/api/inth' });
  * ```
  */
-export type { C15tHandle, C15tHandleOptions } from './handle';
-export { c15tHandle } from './handle';
+export type { InthHandle, InthHandleOptions } from './handle';
+export { inthHandle } from './handle';
 export type { LoadConsentOptions } from './load-consent';
 export { loadConsent } from './load-consent';
 export type {
@@ -44,7 +44,7 @@ export type {
 } from './routes';
 export { createConsentRoute } from './routes';
 export type {
-	C15tLocals,
+	InthLocals,
 	ConsentRequestInputs,
 	ConsentRequestOptions,
 	ConsentState,

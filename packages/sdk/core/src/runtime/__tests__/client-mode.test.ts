@@ -31,7 +31,7 @@ const context = {
 	translations: { language: 'en', translations: {} },
 } as unknown as ProviderTransportContext;
 
-/** A request URL without the query c15t adds to `/init`. */
+/** A request URL without the query Inth adds to `/init`. */
 const pathOf = (url: unknown): string => String(url).split('?')[0] ?? '';
 
 const initContext = (overrides: InitContext['overrides'] = {}): InitContext =>
@@ -44,7 +44,7 @@ const jsonResponse = (body: unknown): Response =>
 	});
 
 const everywhereManifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			...optInRule({ id: 'everywhere' }),
@@ -79,7 +79,7 @@ describe('clientMode()', () => {
 		expect({
 			...clientMode(undefined, {
 				projectUrl: 'https://backend.example',
-				routePrefix: '/api/c15t',
+				routePrefix: '/api/inth',
 			}),
 		}).toEqual({ kind: 'manifest', type: 'manifest' });
 	});
@@ -105,7 +105,7 @@ describe('clientMode()', () => {
 			type: 'manifest',
 		});
 		expect(
-			clientMode({ type: 'testing' }, { projectUrl: '/api/c15t' }).kind
+			clientMode({ type: 'testing' }, { projectUrl: '/api/inth' }).kind
 		).toBe('offline');
 		expect(
 			clientMode(manifest({ resolve: 'browser' }), { projectUrl: '' }).kind
@@ -115,7 +115,7 @@ describe('clientMode()', () => {
 	test('manifest() re-inits through the route prefix and asserts the decision', async () => {
 		const mode = clientMode(manifest(), {
 			projectUrl: 'https://backend.example',
-			routePrefix: '/api/c15t/',
+			routePrefix: '/api/inth/',
 		});
 		const transport = mode(context);
 
@@ -126,7 +126,7 @@ describe('clientMode()', () => {
 
 		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
 		await transport.init?.(initContext()).catch(() => undefined);
-		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe('/api/c15t/init');
+		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe('/api/inth/init');
 	});
 
 	test('manifest() without a route prefix inits against the backend, unasserted', async () => {
@@ -147,21 +147,21 @@ describe('clientMode()', () => {
 		// to it would 404 or 405 after the visitor chose.
 		expect(() =>
 			clientMode(manifest({ snapshot: everywhereManifest }), {
-				routePrefix: '/api/c15t',
+				routePrefix: '/api/inth',
 			})
 		).toThrow('`projectUrl` is required');
 		expect(() =>
 			clientMode(
 				manifest({ resolve: 'browser', snapshot: everywhereManifest }),
-				{ routePrefix: '/api/c15t' }
+				{ routePrefix: '/api/inth' }
 			)
 		).toThrow('`projectUrl` is required');
 	});
 
 	test('manifest() saves through a forwarding route passed as the backend', async () => {
 		const transport = clientMode(manifest(), {
-			projectUrl: '/api/c15t',
-			routePrefix: '/api/c15t',
+			projectUrl: '/api/inth',
+			routePrefix: '/api/inth',
 		})(context);
 
 		await transport.save?.({
@@ -172,13 +172,13 @@ describe('clientMode()', () => {
 			subjectId: 'sub_1',
 		} as unknown as SavePayload);
 
-		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe('/api/c15t/subjects');
+		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe('/api/inth/subjects');
 	});
 
 	test('a testing value needs no backend URL', () => {
 		expect(clientMode({ type: 'testing' }).kind).toBe('offline');
 		expect(
-			clientMode({ type: 'testing' }, { routePrefix: '/api/c15t' }).kind
+			clientMode({ type: 'testing' }, { routePrefix: '/api/inth' }).kind
 		).toBe('offline');
 	});
 
@@ -228,7 +228,7 @@ describe('lazyHosted()', () => {
 		fetchSpy.mockImplementationOnce(() =>
 			Promise.resolve(
 				jsonResponse({
-					branding: 'c15t',
+					branding: 'inth',
 					location: { countryCode: 'DE', regionCode: null },
 					translations: { language: 'de', translations: { common: {} } },
 				})
@@ -275,7 +275,7 @@ describe('lazyHosted()', () => {
 		fetchSpy.mockImplementation(() =>
 			Promise.resolve(
 				jsonResponse({
-					branding: 'c15t',
+					branding: 'inth',
 					location: { countryCode: 'DE', regionCode: null },
 					translations: { language: 'en', translations: { common: {} } },
 				})
@@ -299,7 +299,7 @@ describe('lazyHosted()', () => {
 		fetchSpy.mockImplementation(() =>
 			Promise.resolve(
 				jsonResponse({
-					branding: 'c15t',
+					branding: 'inth',
 					location: { countryCode: 'DE', regionCode: null },
 					translations: { language: 'en', translations: { common: {} } },
 				})
@@ -344,13 +344,13 @@ describe('lazyHosted()', () => {
 		const transport = clientMode(manifest(), {
 			initialData: Promise.resolve({
 				init: {
-					branding: 'c15t',
+					branding: 'inth',
 					location: { countryCode: 'DE', regionCode: null },
 					translations: { language: 'en', translations: { common: {} } },
 				},
 			} as never),
 			projectUrl: 'https://backend.example',
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		})(context);
 
 		const response = await transport.init?.(initContext());
@@ -369,7 +369,7 @@ describe('lazyHosted()', () => {
 					({ init }) as unknown as ReturnType<typeof createHostedTransport>,
 			});
 		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
-		const transport = lazyHosted({ projectUrl: '/api/c15t' }, load)(context);
+		const transport = lazyHosted({ projectUrl: '/api/inth' }, load)(context);
 
 		await expect(transport.init?.(initContext())).rejects.toThrow(
 			'chunk failed'
@@ -420,7 +420,7 @@ describe('lazyBrowserManifest()', () => {
 	test('starts the resolver chunk and the manifest request when built', async () => {
 		fetchSpy.mockImplementation((url: string) =>
 			Promise.resolve(
-				String(url) === '/api/c15t/manifest'
+				String(url) === '/api/inth/manifest'
 					? jsonResponse(everywhereManifest)
 					: jsonResponse({ subjectId: 'sub_saved' })
 			)
@@ -430,11 +430,11 @@ describe('lazyBrowserManifest()', () => {
 		);
 		const transport = clientMode(manifest({ resolve: 'browser' }), {
 			projectUrl: 'https://backend.example',
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
 		const built = lazyBrowserManifest(
 			{
-				manifestUrl: '/api/c15t/manifest',
+				manifestUrl: '/api/inth/manifest',
 				projectUrl: 'https://backend.example',
 			},
 			load
@@ -443,7 +443,7 @@ describe('lazyBrowserManifest()', () => {
 		expect(transport.kind).toBe('manifest');
 		expect(load).toHaveBeenCalledTimes(1);
 		expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
-			'/api/c15t/manifest',
+			'/api/inth/manifest',
 		]);
 
 		const response = await built.init?.(initContext({ country: 'DE' }));
@@ -461,7 +461,7 @@ describe('lazyBrowserManifest()', () => {
 	const routeManifest = () =>
 		fetchSpy.mockImplementation((url: string) =>
 			Promise.resolve(
-				String(url) === '/api/c15t/manifest'
+				String(url) === '/api/inth/manifest'
 					? jsonResponse(everywhereManifest)
 					: jsonResponse({ subjectId: 'sub_saved' })
 			)
@@ -473,7 +473,7 @@ describe('lazyBrowserManifest()', () => {
 	) =>
 		lazyBrowserManifest(
 			{
-				manifestUrl: '/api/c15t/manifest',
+				manifestUrl: '/api/inth/manifest',
 				projectUrl: 'https://backend.example',
 			},
 			load
@@ -507,7 +507,7 @@ describe('lazyBrowserManifest()', () => {
 		const response = built.init?.(initContext());
 
 		expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
-			'/api/c15t/manifest',
+			'/api/inth/manifest',
 		]);
 		chunk.resolve({ createBrowserManifestTransport });
 		expect((await response)?.policyResolution).toMatchObject({
@@ -565,7 +565,7 @@ describe('lazyBrowserManifest()', () => {
 		stream.resolve(undefined);
 		await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1));
 		expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
-			'/api/c15t/manifest',
+			'/api/inth/manifest',
 		]);
 
 		const response = await built.init?.(initContext());

@@ -1,7 +1,7 @@
 /**
  * Guards the layer order statement at the top of every layered entrypoint.
  *
- * Cascade layers rank by first mention. A page that loads c15t's stylesheet
+ * Cascade layers rank by first mention. A page that loads inth's stylesheet
  * before Tailwind 4's (Astro injects it from `page-ssr`, and an app may
  * import it above its `globals.css`) would otherwise declare `components`
  * first, rank it below Tailwind's `base`, and let preflight zero the
@@ -78,7 +78,7 @@ describe.each(FLAT_ENTRYPOINTS)('%s', (entrypoint) => {
 /**
  * Vue components import these one by one, and Vite links a shared chunk's
  * CSS ahead of the app's own. The Tailwind 4 stylesheet then comes after
- * c15t's, so each file needs the order statement too, and every component
+ * inth's, so each file needs the order statement too, and every component
  * rule has to sit in `components`, where a utility can override it.
  */
 const COMPONENT_STYLESHEETS = readdirSync(

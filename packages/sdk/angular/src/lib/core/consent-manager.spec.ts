@@ -17,7 +17,7 @@ import { testLocal, testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from './consent-manager';
 import { ConsentTheme } from './consent-theme';
 import { HeadlessConsent } from './headless-consent';
-import { provideC15t } from './provide-c15t';
+import { provideInth } from './provide-inth';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,7 +35,7 @@ class ConsentReader {
 
 const boot = async () => {
 	TestBed.configureTestingModule({
-		providers: [provideC15t(testOptions())],
+		providers: [provideInth(testOptions())],
 	});
 	const fixture = TestBed.createComponent(ConsentReader);
 	const consent = TestBed.inject(ConsentManager);
@@ -92,7 +92,7 @@ describe('ConsentManager', () => {
 		TestBed.configureTestingModule({
 			providers: [
 				{ provide: PLATFORM_ID, useValue: 'server' },
-				provideC15t(testOptions()),
+				provideInth(testOptions()),
 			],
 		});
 		const fixture = TestBed.createComponent(ConsentReader);
@@ -109,7 +109,7 @@ describe('ConsentManager', () => {
 		});
 		const dispose = vi.spyOn(runtime, 'dispose');
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ runtime })],
+			providers: [provideInth({ runtime })],
 		});
 		const fixture = TestBed.createComponent(ConsentReader);
 		await fixture.whenStable();
@@ -133,7 +133,7 @@ describe('ConsentManager', () => {
 			defaultRuntimeModules
 		);
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ runtime })],
+			providers: [provideInth({ runtime })],
 		});
 		const fixture = TestBed.createComponent(ConsentReader);
 		await fixture.whenStable();
@@ -181,7 +181,7 @@ describe('ConsentManager', () => {
 		});
 		const setConsentCategories = vi.spyOn(runtime, 'setConsentCategories');
 		TestBed.configureTestingModule({
-			providers: [provideC15t({ runtime })],
+			providers: [provideInth({ runtime })],
 		});
 		const fixture = TestBed.createComponent(ConsentReader);
 		await fixture.whenStable();
@@ -203,7 +203,7 @@ describe('ConsentManager', () => {
 		});
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					mode: (() => {
 						throw new Error('mode failed');

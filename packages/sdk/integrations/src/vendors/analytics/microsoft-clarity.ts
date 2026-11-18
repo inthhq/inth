@@ -17,7 +17,7 @@ export type ClarityConsentState = 'granted' | 'denied';
 /**
  * Consent V2 payload sent to Microsoft Clarity.
  *
- * c15t maps `marketing` consent to `ad_Storage` and `measurement` consent to
+ * Inth maps `marketing` consent to `ad_Storage` and `measurement` consent to
  * `analytics_Storage`.
  */
 export interface ClarityConsentV2Payload {
@@ -29,8 +29,8 @@ export interface ClarityConsentV2Payload {
  * Optional boot-time consent override accepted by the Clarity helper.
  *
  * Booleans apply the same value to both Clarity Consent V2 channels. Object
- * values may use Clarity keys or c15t category aliases and are merged over the
- * current c15t consent state.
+ * values may use Clarity keys or Inth category aliases and are merged over the
+ * current Inth consent state.
  */
 export type ClarityConsentValue =
 	| boolean
@@ -65,7 +65,7 @@ declare global {
 }
 
 /**
- * Converts c15t and user-supplied consent values into Clarity Consent V2 state.
+ * Converts Inth and user-supplied consent values into Clarity Consent V2 state.
  *
  * @internal
  */
@@ -111,7 +111,7 @@ const getConsentValue = function getConsentValue(
 };
 
 /**
- * The Consent V2 values `defaultConsent` sets, over the ones c15t's consent
+ * The Consent V2 values `defaultConsent` sets, over the ones inth's consent
  * state gives.
  *
  * @internal
@@ -209,9 +209,9 @@ export interface ClarityOptions {
 	/**
 	 * Optional initial Consent V2 value queued before the script loads.
 	 *
-	 * By default, c15t maps `measurement` to `analytics_Storage` and `marketing`
+	 * By default, Inth maps `measurement` to `analytics_Storage` and `marketing`
 	 * to `ad_Storage`. Pass this only when boot-time consent must override the
-	 * current c15t consent state.
+	 * current Inth consent state.
 	 */
 	defaultConsent?: ClarityConsentValue;
 

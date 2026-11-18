@@ -18,7 +18,7 @@ import type {
 } from '@inth/sdk-ui/utils';
 
 /** Global the loading bundle publishes its lock functions on. */
-export const LOCKS_KEY = '__c15tLocks';
+export const LOCKS_KEY = '__inthLocks';
 
 /** What {@link LOCKS_KEY} holds. @internal */
 export interface SharedLocks {

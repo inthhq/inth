@@ -1,19 +1,19 @@
 ---
 title: RudderStack
-description: Load the RudderStack JavaScript SDK after measurement consent with the c15t rudderstack helper, or map c15t categories to destination consent IDs, and check each mode.
-seoTitle: RudderStack cookie consent with c15t
-seoDescription: Load RudderStack only after measurement consent, or use RudderStack consent management with mapped consent IDs. Set it up with the c15t rudderstack helper.
+description: Load the RudderStack JavaScript SDK after measurement consent with the Inth rudderstack helper, or map Inth categories to destination consent IDs, and check each mode.
+seoTitle: RudderStack cookie consent with Inth
+seoDescription: Load RudderStack only after measurement consent, or use RudderStack consent management with mapped consent IDs. Set it up with the Inth rudderstack helper.
 icon: rudderstack
 group: integrations
 ---
 
-By default, the c15t `rudderstack` helper keeps the RudderStack JavaScript SDK
+By default, the Inth `rudderstack` helper keeps the RudderStack JavaScript SDK
 off the page until `measurement` has consent. In this mode, the helper sends no
 consent signal to RudderStack. With `consentManagement`, the helper loads the
 SDK on every page in the RudderStack pre-consent mode, before the visitor
 chooses. In that mode, the SDK keeps events in a buffer and uses no persistent
 storage. The helper then calls `rudderanalytics.consent()` and puts each mapped
-consent ID in the allowed or denied list, from its c15t category.
+consent ID in the allowed or denied list, from its Inth category.
 
 ## Configure RudderStack
 
@@ -41,7 +41,7 @@ export const scripts = [
 | --- | --- | --- |
 | `writeKey` | Required | Source write key. Surrounding whitespace is trimmed. An empty value logs an error and the script does not load. |
 | `dataPlaneUrl` | Required | Data plane URL. A missing, invalid or non-HTTPS URL logs an error and the script does not load. |
-| `consentManagement` | None | `{ mapping }` from c15t categories to RudderStack consent IDs. Switches to destination consent mode. |
+| `consentManagement` | None | `{ mapping }` from Inth categories to RudderStack consent IDs. Switches to destination consent mode. |
 | `loadOptions` | `{}` | Third argument to `rudderanalytics.load()`. Use JSON-serializable values only. |
 | `trackPageView` | `true` | Queues `rudderanalytics.page()` before the loader. |
 | `scriptUrl` | `https://cdn.rudderlabs.com/v3/modern/rsa.min.js` | Loader URL override. A non-HTTPS URL throws; a blank value uses the default. |
@@ -60,7 +60,7 @@ mode:
 
 `consentManagement` loads the RudderStack SDK before the visitor chooses. Use
 it only when every destination in your workspace carries a consent ID from the
-mapping; c15t cannot check destination settings from the browser. Add the
+mapping; Inth cannot check destination settings from the browser. Add the
 mapping to the helper call:
 
 ```ts
@@ -99,7 +99,7 @@ destinations instead. Test in a private window with an opt-in policy:
 2. Open Privacy settings and allow measurement. Without a reload,
    destinations with measurement IDs start receiving events. Destinations
    mapped only to marketing still receive none.
-3. Turn measurement off and save. c15t reloads the page, and destinations with
+3. Turn measurement off and save. Inth reloads the page, and destinations with
    measurement IDs receive no events from the new page.
 
 See the [consent verification guide](/docs/guides/verify-consent) for

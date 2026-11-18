@@ -50,7 +50,7 @@ import { generateThemeCSS } from '@inth/sdk/ui/theme';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import { assertIABAvailable } from './libs/iab-unavailable';
-import type { C15tColorScheme, C15tLocals, C15tResolvedOptions } from './types';
+import type { InthColorScheme, InthLocals, InthResolvedOptions } from './types';
 
 /** Input for {@link resolveConsentContext}. */
 export interface ResolveConsentContextOptions {
@@ -63,7 +63,7 @@ export interface ResolveConsentContextOptions {
 	 */
 	url?: string;
 	/** The integration options, already normalized. */
-	options: C15tResolvedOptions;
+	options: InthResolvedOptions;
 	/**
 	 * This request's experiment arm, resolved by the middleware's
 	 * `experimentArm`. Overrides a static `experiment.arm`.
@@ -120,7 +120,7 @@ export { DEFAULT_RESOLVE_TIMEOUT_MS };
  * serializable and typed loosely; the shape is the same.
  */
 const readTranslationOverrides = function readTranslationOverrides(
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): TranslationOverrides | undefined {
 	return options.i18n?.messages as TranslationOverrides | undefined;
 };
@@ -133,7 +133,7 @@ const readTranslationOverrides = function readTranslationOverrides(
  * @returns The kernel translations for this request.
  */
 export const resolveTranslations = function resolveTranslations(
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	inputs: ConsentRequestHeaderInputs
 ): KernelTranslations {
 	const detect = options.i18n?.detectLanguage !== false;
@@ -170,7 +170,7 @@ export const resolveTranslations = function resolveTranslations(
  * configuration.
  */
 const modeOptions = function modeOptions(
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	translations: KernelTranslations,
 	fetch: typeof globalThis.fetch | undefined
 ): Partial<ResolveRequestConsentOptions> {
@@ -230,7 +230,7 @@ const modeOptions = function modeOptions(
  */
 const withResolvedGvl = async function withResolvedGvl(input: {
 	config: KernelConfig;
-	options: C15tResolvedOptions;
+	options: InthResolvedOptions;
 	language: string;
 	fetch?: typeof globalThis.fetch;
 }): Promise<KernelConfig> {
@@ -328,15 +328,15 @@ const settle = async function settle(task: Promise<unknown>): Promise<void> {
  * should render server-side.
  *
  * @param input - Request headers and integration options.
- * @returns The value the middleware stores on `Astro.locals.c15t`.
+ * @returns The value the middleware stores on `Astro.locals.inth`.
  * @example
  * ```ts
- * const c15t = await resolveConsentContext({ headers: request.headers, options });
+ * const Inth = await resolveConsentContext({ headers: request.headers, options });
  * ```
  */
 export const resolveConsentContext = async function resolveConsentContext(
 	input: ResolveConsentContextOptions
-): Promise<C15tLocals> {
+): Promise<InthLocals> {
 	const { options } = input;
 	const prerendered = input.prerendered === true;
 	const startedAt = Date.now();
@@ -442,7 +442,7 @@ export const resolveConsentContext = async function resolveConsentContext(
  * Build the boot payload as JSON for a data block.
  *
  * The components render it as
- * `<script type="application/json" data-c15t-config>`, which the browser
+ * `<script type="application/json" data-inth-config>`, which the browser
  * never runs. A Content Security Policy does not govern a data block, so a
  * policy that allows inline scripts only by hash or nonce still lets the
  * payload through, even though it changes per visitor.
@@ -454,8 +454,8 @@ export const resolveConsentContext = async function resolveConsentContext(
  * <script
  *   is:inline
  *   type="application/json"
- *   data-c15t-config
- *   set:html={buildConfigJSON(Astro.locals.c15t.config)}
+ *   data-inth-config
+ *   set:html={buildConfigJSON(Astro.locals.inth.config)}
  * />
  * ```
  */
@@ -485,22 +485,22 @@ export const buildConfigJSON = function buildConfigJSON(
 export const buildConfigScript = function buildConfigScript(
 	config: KernelConfig
 ): string {
-	return `window.__c15tAstroConfig=${buildConfigJSON(config)};`;
+	return `window.__inthAstroConfig=${buildConfigJSON(config)};`;
 };
 
 /**
  * Build the theme stylesheet for the configured theme tokens.
  *
  * The banner is server-rendered and the dialog islands no longer generate
- * theme CSS in the browser, so the server writes the `--c15t-*` variables
- * once, next to the config script. Dark tokens follow the `c15t-dark`
+ * theme CSS in the browser, so the server writes the `--inth-*` variables
+ * once, next to the config script. Dark tokens follow the `inth-dark`
  * class the colour-scheme script sets.
  *
  * @param theme - The integration's theme option.
  * @returns CSS for a `<style>` element, or an empty string without a theme.
  * @example
  * ```astro
- * <style is:inline id="c15t-theme" set:html={buildThemeCSS(theme)} />
+ * <style is:inline id="inth-theme" set:html={buildThemeCSS(theme)} />
  * ```
  */
 export const buildThemeCSS = function buildThemeCSS(
@@ -512,7 +512,7 @@ export const buildThemeCSS = function buildThemeCSS(
 /**
  * Build the first-paint colour-scheme script.
  *
- * Dark mode is the `c15t-dark` class on `<html>`, and the client boot sets
+ * Dark mode is the `inth-dark` class on `<html>`, and the client boot sets
  * it — but that runs after the stylesheet has already painted the
  * server-rendered banner in the light palette. This runs in `<head>`,
  * before the browser has anything to paint, so a system-dark visitor never
@@ -531,17 +531,17 @@ export const buildThemeCSS = function buildThemeCSS(
  * ```
  */
 export const buildColorSchemeScript = function buildColorSchemeScript(
-	colorScheme: C15tColorScheme
+	colorScheme: InthColorScheme
 ): string {
 	if (colorScheme === 'light' || colorScheme === 'none') {
 		return '';
 	}
 	if (colorScheme === 'dark') {
-		return "document.documentElement.classList.add('c15t-dark');";
+		return "document.documentElement.classList.add('inth-dark');";
 	}
 	// Wrapped because `matchMedia` is absent in some embedded webviews, and
 	// a throw here would abort the rest of the document's parsing.
-	return "try{document.documentElement.classList.toggle('c15t-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
+	return "try{document.documentElement.classList.toggle('inth-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
 };
 
 /**
@@ -564,7 +564,7 @@ export const buildColorSchemeScript = function buildColorSchemeScript(
  * ```
  */
 export const buildBannerRevealScript = function buildBannerRevealScript(
-	storageConfig: C15tResolvedOptions['storageConfig'],
+	storageConfig: InthResolvedOptions['storageConfig'],
 	testId: 'consent-banner' | 'iab-consent-banner'
 ): string {
 	const keys = resolveStorageKeys(storageConfig);
@@ -577,7 +577,7 @@ export const buildBannerRevealScript = function buildBannerRevealScript(
 	// cookies or storage (sandboxes, some privacy modes) throw on access: each
 	// is read as "nothing stored there" so the other still decides, and any
 	// other throw is swallowed so it cannot abort the rest of the document.
-	return `(function(){try{var names=${json},cookies=[],stored;try{cookies=document.cookie.split(';').map(function(p){return p.split('=')[0].trim()})}catch(e){}stored=function(n){if(cookies.indexOf(n)>=0)return true;try{return window.localStorage.getItem(n)!==null}catch(e){return false}};if(names.some(stored))return;var root=document.querySelector('[data-testid="${testId}-root"][hidden]'),overlay=document.querySelector('[data-testid="${testId}-overlay"][hidden]');if(root){root.hidden=false;root.setAttribute('data-c15t-visible','true');if(overlay)overlay.hidden=false}}catch(e){}})();`;
+	return `(function(){try{var names=${json},cookies=[],stored;try{cookies=document.cookie.split(';').map(function(p){return p.split('=')[0].trim()})}catch(e){}stored=function(n){if(cookies.indexOf(n)>=0)return true;try{return window.localStorage.getItem(n)!==null}catch(e){return false}};if(names.some(stored))return;var root=document.querySelector('[data-testid="${testId}-root"][hidden]'),overlay=document.querySelector('[data-testid="${testId}-overlay"][hidden]');if(root){root.hidden=false;root.setAttribute('data-inth-visible','true');if(overlay)overlay.hidden=false}}catch(e){}})();`;
 };
 
 export { buildPrefetchScript } from '@inth/sdk/engine';
@@ -631,7 +631,7 @@ export type { KernelConfig } from '@inth/sdk/engine';
  * `Astro.locals`, which Astro creates fresh for every request.
  */
 export interface ConfigEmissionScope {
-	c15t?: C15tLocals;
+	inth?: InthLocals;
 }
 
 const emitted = new WeakSet<ConfigEmissionScope>();

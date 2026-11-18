@@ -106,7 +106,7 @@ export interface ConsentRequestOptions {
 	/** Request clock reused for record validation and hydration. */
 	now?: number;
 	/**
-	 * Cookie name holding persisted consent. Defaults to `c15t`, the
+	 * Cookie name holding persisted consent. Defaults to `inth`, the
 	 * persistence module's storage key. Set this only if you customized
 	 * `storageConfig.storageKey` client-side; it must match.
 	 */
@@ -245,13 +245,13 @@ const reportPrefetchError = function reportPrefetchError(
 	}
 	const message = error instanceof Error ? error.message : String(error);
 	console.warn(
-		`[c15t] resolveConsent: request to ${url ?? 'the backend'} failed (${message}); rendering with the request-only state and letting the client retry.`
+		`[inth] resolveConsent: request to ${url ?? 'the backend'} failed (${message}); rendering with the request-only state and letting the client retry.`
 	);
 };
 
 /**
  * Resolve the visitor's consent state for the current request, from
- * `c15t.config.ts`.
+ * `inth.config.ts`.
  *
  * 1. Reads the consent cookie, geo headers, language, and GPC from the
  *    request.

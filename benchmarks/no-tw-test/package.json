@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/no-tw-css-test",
+	"name": "@inth/no-tw-css-test",
 	"private": true,
 	"scripts": {
 		"build": "rm -rf .next && next build",
@@ -7,7 +7,7 @@
 		"start": "next start --port 3123"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/nextjs": "workspace:*",
 		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",

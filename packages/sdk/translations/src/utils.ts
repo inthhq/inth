@@ -106,7 +106,7 @@ const warnLegacyFrameOnce = function warnLegacyFrameOnce(): void {
 	}
 	warnedLegacyFrame = true;
 	console.warn(
-		'c15t: the `frame` translations were renamed to `consentGate`. c15t reads `frame` as `consentGate` for now; rename the key in your translations.'
+		'inth: the `frame` translations were renamed to `consentGate`. inth reads `frame` as `consentGate` for now; rename the key in your translations.'
 	);
 };
 

@@ -10,10 +10,10 @@ import { rb2b } from './rb2b';
 describe('rb2b', () => {
 	setupScriptHelperTest();
 	it('matches registry metadata and the official loader URL', () => {
-		expectScriptMatchesIntegration('rb2b', rb2b({ accountKey: 'c15tfake' }), {
+		expectScriptMatchesIntegration('rb2b', rb2b({ accountKey: 'inthfake' }), {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: true,
-			src: 'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/c15tfake.js.gz',
+			src: 'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz',
 		});
 	});
 	it('skips invalid required IDs', () => {
@@ -26,13 +26,13 @@ describe('rb2b', () => {
 		}
 	});
 	it.each([
-		'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/custom.js?cache=1#loader',
-		'https://s3-us-west-2.amazonaws.com/b2bjsstore/b/c15tfake/reb2b.js.gz',
-		'https://b2bjsstore.s3.us-west-2.amazonaws.com/b/c15tfake/reb2b.js.gz',
-		'https://DDWL4M2HDECBV.CLOUDFRONT.NET:443/b/c15tfake/reb2b.js.gz',
-		'https://ddwl4m2hdecbv.cloudfront.net/b/other/../c15tfake/custom.js?next=/b/OTHER/#loader',
+		'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/custom.js?cache=1#loader',
+		'https://s3-us-west-2.amazonaws.com/b2bjsstore/b/inthfake/reb2b.js.gz',
+		'https://b2bjsstore.s3.us-west-2.amazonaws.com/b/inthfake/reb2b.js.gz',
+		'https://DDWL4M2HDECBV.CLOUDFRONT.NET:443/b/inthfake/reb2b.js.gz',
+		'https://ddwl4m2hdecbv.cloudfront.net/b/other/../inthfake/custom.js?next=/b/OTHER/#loader',
 	])('accepts a vendor-supported source: %s', (scriptUrl) => {
-		expect(rb2b({ accountKey: 'c15tfake', scriptUrl }).src).toBe(scriptUrl);
+		expect(rb2b({ accountKey: 'inthfake', scriptUrl }).src).toBe(scriptUrl);
 	});
 	describe.each([
 		'https://ddwl4m2hdecbv.cloudfront.net/b/',
@@ -40,19 +40,19 @@ describe('rb2b', () => {
 		'https://b2bjsstore.s3.us-west-2.amazonaws.com/b/',
 	])('account path under %s', (prefix) => {
 		it.each([
-			'c15tfake/',
-			'c15tfake/?file=loader.js',
-			'c15tfake/#loader.js',
-			'c15tfake/?file=loader.js#loader.js',
-			'c15tfake//',
-			'c15tfake/nested/',
-			'c15tfake/nested/?file=loader.js#loader.js',
-			'c15tfake/./',
-			'c15tfake/loader/..',
+			'inthfake/',
+			'inthfake/?file=loader.js',
+			'inthfake/#loader.js',
+			'inthfake/?file=loader.js#loader.js',
+			'inthfake//',
+			'inthfake/nested/',
+			'inthfake/nested/?file=loader.js#loader.js',
+			'inthfake/./',
+			'inthfake/loader/..',
 			'%6315tfake/',
 		])('skips an account path without a script filename: %s', (suffix) => {
 			expectSkippedScript(
-				() => rb2b({ accountKey: 'c15tfake', scriptUrl: `${prefix}${suffix}` }),
+				() => rb2b({ accountKey: 'inthfake', scriptUrl: `${prefix}${suffix}` }),
 				{ category: 'marketing', id: 'rb2b' },
 				'rb2b: scriptUrl must use a supported HTTPS CloudFront or S3 prefix and /b/<accountKey>/<filename> path'
 			);
@@ -71,25 +71,25 @@ describe('rb2b', () => {
 		])(
 			'accepts a script filename without extension restrictions: %s',
 			(filename) => {
-				const scriptUrl = `${prefix}c15tfake/${filename}`;
-				expect(rb2b({ accountKey: 'c15tfake', scriptUrl }).src).toBe(scriptUrl);
+				const scriptUrl = `${prefix}inthfake/${filename}`;
+				expect(rb2b({ accountKey: 'inthfake', scriptUrl }).src).toBe(scriptUrl);
 			}
 		);
 		it.each([
-			'OTHER/OTHER.js.gz?next=/b/c15tfake/',
-			'OTHER/OTHER.js.gz#next=/b/c15tfake/',
-			'OTHER/b/c15tfake/custom.js',
-			'c15tfake?next=/b/c15tfake/',
-			'C15TFAKE/custom.js',
+			'OTHER/OTHER.js.gz?next=/b/inthfake/',
+			'OTHER/OTHER.js.gz#next=/b/inthfake/',
+			'OTHER/b/inthfake/custom.js',
+			'inthfake?next=/b/inthfake/',
+			'INTHFAKE/custom.js',
 			'%4315tfake/custom.js',
-			'c15tfake-extra/custom.js',
-			'c15tfake%2Fextra/custom.js',
-			'c15tfake%/custom.js',
-			'c15tfake%GG/custom.js',
-			'c15tfake%C3%28/custom.js',
+			'inthfake-extra/custom.js',
+			'inthfake%2Fextra/custom.js',
+			'inthfake%/custom.js',
+			'inthfake%GG/custom.js',
+			'inthfake%C3%28/custom.js',
 		])('skips a misplaced account match: %s', (suffix) => {
 			expectSkippedScript(
-				() => rb2b({ accountKey: 'c15tfake', scriptUrl: `${prefix}${suffix}` }),
+				() => rb2b({ accountKey: 'inthfake', scriptUrl: `${prefix}${suffix}` }),
 				{ category: 'marketing', id: 'rb2b' },
 				'rb2b: scriptUrl must use a supported HTTPS CloudFront or S3 prefix and /b/<accountKey>/<filename> path'
 			);
@@ -99,8 +99,8 @@ describe('rb2b', () => {
 			expect(rb2b({ accountKey: ' a/b?c ', scriptUrl }).src).toBe(scriptUrl);
 		});
 		it.each([
-			['C15TFAKE', 'C15TFAKE'],
-			['c15tfake', '%6315tfake'],
+			['INTHFAKE', 'INTHFAKE'],
+			['inthfake', '%6315tfake'],
 			['a/b?c', '%61%2Fb%3Fc'],
 			['a/b?c', 'a%2fb%3fc'],
 			['a%2Fb', 'a%252Fb'],
@@ -113,7 +113,7 @@ describe('rb2b', () => {
 			expect(rb2b({ accountKey, scriptUrl }).src).toBe(scriptUrl);
 		});
 		it.each([
-			['C15TFAKE', 'c15tfake'],
+			['INTHFAKE', 'inthfake'],
 			['a/b?c', 'A%2fb%3fc'],
 			['a%2Fb', 'a%252fb'],
 			['a%2Fb', 'a%2Fb'],
@@ -130,23 +130,23 @@ describe('rb2b', () => {
 		});
 	});
 	it('falls back for blank overrides', () => {
-		expect(rb2b({ accountKey: 'c15tfake', scriptUrl: '   ' }).src).toBe(
-			'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/c15tfake.js.gz'
+		expect(rb2b({ accountKey: 'inthfake', scriptUrl: '   ' }).src).toBe(
+			'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz'
 		);
 	});
 	it.each([
 		'https://cdn.example.com/vendor.js',
 		'https://ddwl4m2hdecbv.cloudfront.net/b/anotherfake/reb2b.js.gz',
-		'https://s3-us-west-2.amazonaws.com/anotherbucket/b/c15tfake/reb2b.js.gz',
-		'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake',
-		'https://ddwl4m2hdecbv.cloudfront.net.example.com/b/c15tfake/reb2b.js.gz',
-		'https://user:password@ddwl4m2hdecbv.cloudfront.net/b/c15tfake/reb2b.js.gz',
-		'http://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/reb2b.js.gz',
-		'/b/c15tfake/reb2b.js.gz',
+		'https://s3-us-west-2.amazonaws.com/anotherbucket/b/inthfake/reb2b.js.gz',
+		'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake',
+		'https://ddwl4m2hdecbv.cloudfront.net.example.com/b/inthfake/reb2b.js.gz',
+		'https://user:password@ddwl4m2hdecbv.cloudfront.net/b/inthfake/reb2b.js.gz',
+		'http://ddwl4m2hdecbv.cloudfront.net/b/inthfake/reb2b.js.gz',
+		'/b/inthfake/reb2b.js.gz',
 		'not a URL',
 	])('skips unsupported SDK sources: %s', (scriptUrl) => {
 		expectSkippedScript(
-			() => rb2b({ accountKey: 'c15tfake', scriptUrl }),
+			() => rb2b({ accountKey: 'inthfake', scriptUrl }),
 			{ category: 'marketing', id: 'rb2b' },
 			'rb2b: scriptUrl must use a supported HTTPS CloudFront or S3 prefix and /b/<accountKey>/<filename> path'
 		);

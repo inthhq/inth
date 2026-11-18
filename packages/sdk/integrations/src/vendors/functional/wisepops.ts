@@ -74,7 +74,7 @@ export interface WisepopsOptions {
 	category?: HasCondition<AllConsentNames>;
 	/** Documented runtime options. The helper always sets `defaultConsent: 'denied'`. */
 	options?: WisepopsRuntimeOptions;
-	/** CSP nonce for the c15t-managed loader element. */
+	/** CSP nonce for the inth-managed loader element. */
 	nonce?: string;
 }
 

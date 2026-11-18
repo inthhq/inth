@@ -47,7 +47,7 @@ import type {
 
 /**
  * The consent dialog's body, without the deferred loading. The package
- * root's `<c15t-consent-dialog>` imports this component on first use; the
+ * root's `<inth-consent-dialog>` imports this component on first use; the
  * inputs are the same.
  *
  * @internal
@@ -77,14 +77,14 @@ import type {
 			},
 		},
 	],
-	selector: 'c15t-consent-dialog-panel',
+	selector: 'inth-consent-dialog-panel',
 	// The floating trigger is an entry point of its own, loaded only for a
 	// dialog that renders it. A parent that owns `open` opens the dialog
 	// from it, and it hides while that dialog is open.
 	template: `@if (triggerOptions(); as trigger) {
 			@if (!(controlled() && open())) {
 				@defer (on immediate) {
-					<c15t-consent-dialog-trigger
+					<inth-consent-dialog-trigger
 						[defaultPosition]="trigger.defaultPosition ?? 'bottom-right'"
 						[persistPosition]="trigger.persistPosition ?? true"
 						[showWhen]="trigger.showWhen ?? 'always'"
@@ -98,8 +98,8 @@ import type {
 			}
 		}
 		<ng-container
-			c15tDialog
-			#dialog="c15tDialog"
+			inthDialog
+			#dialog="inthDialog"
 			[open]="isOpen()"
 			(openChange)="closeWhenDismissed($event)"
 			[closeOnInteractOutside]="false"
@@ -111,12 +111,12 @@ import type {
 		>
 			@if (dialog.shouldRender()) {
 				<div
-					c15tPortal
+					inthPortal
 					style="display: contents;"
 				>
 					@if (preferences().blocking) {
 						<div
-							c15tDialogBackdrop
+							inthDialogBackdrop
 							[class]="overlayStyle().className || ''"
 							[attr.style]="styleOf(overlayStyle())"
 							[attr.data-disable-animation]="disableMotion() ? '' : null"
@@ -126,12 +126,12 @@ import type {
 					<!-- data-disable-animation stops the data-state keyframes the
 					     stylesheet runs on the overlay and positioner. -->
 					<div
-						c15tDialogPositioner
+						inthDialogPositioner
 						[class]="positionerClass()"
 						[attr.data-disable-animation]="disableMotion() ? '' : null"
 					>
 						<div
-							c15tDialogContent
+							inthDialogContent
 							[class]="contentClass()"
 							[attr.style]="styleOf(rootStyle())"
 							[attr.dir]="textDirection()"
@@ -168,7 +168,7 @@ import type {
 										{{ translations().consentManagerDialog.description }}
 										@if (hasLegalLinks()) {
 											<span
-												c15t-inline-legal-links
+												inth-inline-legal-links
 												[links]="legalLinks()"
 												[testIdPrefix]="'consent-dialog-legal-link'"
 											></span>
@@ -181,7 +181,7 @@ import type {
 									[attr.style]="styleOf(contentStyle())"
 									data-testid="consent-dialog-content"
 								>
-									<!-- The widget's root, not <c15t-consent-widget>: the
+									<!-- The widget's root, not <inth-consent-widget>: the
 									     dialog's stylesheet lays it out as a direct child. -->
 									@if (hasConsentUi()) {
 										<div
@@ -193,7 +193,7 @@ import type {
 								</div>
 								@if (showBranding()) {
 									<a
-										c15t-branding
+										inth-branding
 										[noStyle]="resolvedNoStyle()"
 										[variant]="'dialog-tag'"
 										[themeKey]="'consentDialogTag'"
@@ -232,7 +232,7 @@ export class ConsentDialogPanel {
 	/** Which of the provider's legal links follow the description. */
 	readonly legalLinks = input<ConsentDialogLegalLinks | undefined>(undefined);
 	/**
-	 * Render a `<c15t-consent-dialog-trigger>` with the dialog. Pass an
+	 * Render a `<inth-consent-dialog-trigger>` with the dialog. Pass an
 	 * object to set the trigger's inputs.
 	 */
 	readonly showTrigger = input<boolean | ConsentDialogTriggerOptions>(false);

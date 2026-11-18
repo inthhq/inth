@@ -8,7 +8,7 @@ import { ScrollLock } from './scroll-lock';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ScrollLock],
 	selector: 'test-scroll-lock-host',
-	template: '<div [c15tScrollLock]="lock()"></div>',
+	template: '<div [inthScrollLock]="lock()"></div>',
 })
 class ScrollLockHost {
 	readonly lock = signal(false);
@@ -19,7 +19,7 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-test('c15tScrollLock locks the document while on', async () => {
+test('inthScrollLock locks the document while on', async () => {
 	const fixture = TestBed.createComponent(ScrollLockHost);
 	await fixture.whenStable();
 	const locked = () =>

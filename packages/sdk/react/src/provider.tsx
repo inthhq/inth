@@ -147,7 +147,7 @@ export interface ConsentProviderOptions
 	 */
 	journey?: ConsentJourneyOption;
 	/**
-	 * Content Security Policy nonce applied to DOM nodes c15t injects.
+	 * Content Security Policy nonce applied to DOM nodes Inth injects.
 	 *
 	 * @remarks
 	 * Set this when your CSP uses a nonce-based policy instead of
@@ -163,9 +163,9 @@ export interface ConsentProviderOptions
 	 *
 	 * @remarks
 	 * The banner, dialog trigger, ConsentGate, dialog and preference widget
-	 * each render the c15t rules they use as a `<style>` element: in the
+	 * each render the Inth rules they use as a `<style>` element: in the
 	 * server-rendered HTML, or with the surface's own code in the browser.
-	 * No c15t stylesheet `<link>` then holds back the page's first paint.
+	 * No Inth stylesheet `<link>` then holds back the page's first paint.
 	 * React 19 moves them into `<head>` and renders each once. They carry
 	 * {@link ConsentProviderOptions.nonce}.
 	 *
@@ -176,14 +176,14 @@ export interface ConsentProviderOptions
 	 */
 	styles?: boolean;
 	/**
-	 * Backend URL, relative (`/api/c15t`) or absolute: your Inth project
+	 * Backend URL, relative (`/api/inth`) or absolute: your Inth project
 	 * URL, or the route that proxies it. Required unless `mode` is
 	 * `testing()` or `enabled` is `false`. Initial-only: remount the
 	 * provider to change it.
 	 *
 	 * @example
 	 * ```tsx
-	 * <ConsentProvider options={{ projectUrl: '/api/c15t' }}>
+	 * <ConsentProvider options={{ projectUrl: '/api/inth' }}>
 	 *   {children}
 	 * </ConsentProvider>
 	 * ```
@@ -339,7 +339,7 @@ export interface ConsentProviderOptions
 	 */
 	preloadDialog?: DialogPreload;
 	/**
-	 * Adapter package name reported by `window.c15t`.
+	 * Adapter package name reported by `window.inth`.
 	 * @internal
 	 */
 	__debugPkg?: string;
@@ -1001,7 +1001,7 @@ const isPromiseLike = function isPromiseLike(
  *
  * Pass `runtime` to render a runtime someone else created. The provider
  * then borrows its kernel and starts nothing — no second `init()`, no
- * second persistence handle, no second `window.c15t` — and does not
+ * second persistence handle, no second `window.inth` — and does not
  * dispose it on unmount. Handing it a different runtime switches the tree
  * to that runtime's kernel; switching between a borrowed runtime and a
  * provider-built one still needs a remount.
@@ -1010,7 +1010,7 @@ const isPromiseLike = function isPromiseLike(
  * ```tsx
  * import { createConsentRuntime } from '@inth/sdk/runtime';
  *
- * const runtime = createConsentRuntime({ projectUrl: '/api/c15t' });
+ * const runtime = createConsentRuntime({ projectUrl: '/api/inth' });
  * runtime.start();
  *
  * <ConsentProvider runtime={runtime} options={{ theme }}>
@@ -1089,7 +1089,7 @@ export const ConsentProvider = (props: ConsentProviderProps) => {
 			return;
 		}
 		console.warn(
-			'c15t ConsentProvider: `options.callbacks` is ignored when you pass `runtime`. Pass them to createConsentRuntime({ callbacks }) instead.'
+			'inth ConsentProvider: `options.callbacks` is ignored when you pass `runtime`. Pass them to createConsentRuntime({ callbacks }) instead.'
 		);
 	}, [hasBorrowedCallbacks]);
 
@@ -1122,12 +1122,12 @@ export const ConsentProvider = (props: ConsentProviderProps) => {
 		if (
 			!userTheme ||
 			!tokenKeys.some((key) => key in userTheme) ||
-			document.getElementById('c15t-theme')
+			document.getElementById('inth-theme')
 		) {
 			return;
 		}
 		console.warn(
-			'c15t: `theme` tokens are no longer turned into CSS in the browser. Render <ConsentTheme theme={theme} /> on the server, or put the CSS from generateThemeCSS() in your stylesheet. See https://c15t.com/docs/frameworks/react/customize'
+			'inth: `theme` tokens are no longer turned into CSS in the browser. Render <ConsentTheme theme={theme} /> on the server, or put the CSS from generateThemeCSS() in your stylesheet. See https://c15t.com/docs/frameworks/react/customize'
 		);
 	}, [userTheme]);
 

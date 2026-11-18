@@ -39,8 +39,8 @@ group: reference
   IAB is opt-in. The standard `ConsentBanner` and `ConsentDialog` do not
   handle the IAB model, so when a visitor's policy uses it, the backend
   sends its vendor list and the app has no `IABProvider`, they throw an
-  `IABUnavailableError` (code `C15T_IAB_UNAVAILABLE`):
-  `c15t: this visitor's policy uses IAB TCF, but no <IABProvider> is mounted`.
+  `IABUnavailableError` (code `INTH_IAB_UNAVAILABLE`):
+  `inth: this visitor's policy uses IAB TCF, but no <IABProvider> is mounted`.
   The error happens during render, on the server and in the browser, so
   your error boundary or the framework's error overlay shows it. Render `IABProvider` from
   `@inth/react/iab` for those visitors, or remove the `iab` model from the

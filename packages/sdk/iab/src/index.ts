@@ -1,5 +1,5 @@
 /**
- * `@inth/sdk/iab` — IAB TCF 2.4 module for the c15t consent kernel.
+ * `@inth/sdk/iab` — IAB TCF 2.4 module for the Inth consent kernel.
  *
  * Consumes the `@inth/sdk/engine` kernel and provides CMP-compliant IAB TCF
  * functionality:
@@ -33,7 +33,7 @@ import type {
 	NonIABVendor,
 } from '@inth/sdk-core';
 import {
-	c15tProtocolParams,
+	inthProtocolParams,
 	registerIABControls,
 } from '@inth/sdk-core/iab-support';
 import { appendInitParams } from '@inth/sdk-schema/types';
@@ -73,9 +73,9 @@ import {
 	validatePublisherRestrictions,
 } from './tcf/publisher-restrictions';
 import {
-	C15T_TO_IAB_PURPOSE_MAP,
-	c15tConsentsToIabPurposes,
-	iabPurposesToC15tConsents,
+	INTH_TO_IAB_PURPOSE_MAP,
+	inthConsentsToIabPurposes,
+	iabPurposesToInthConsents,
 } from './tcf/purpose-mapping';
 import { destroyIABStub as destroyStub, initializeIABStub } from './tcf/stub';
 import { generateTCString, resolveIsServiceSpecific } from './tcf/tc-string';
@@ -113,7 +113,7 @@ export interface CreateIABOptions {
 	/** Publisher country code (ISO 3166-1 alpha-2). Default: 'US'. */
 	publisherCountryCode?: string;
 	/**
-	 * Ignored: c15t always encodes IsServiceSpecific=1.
+	 * Ignored: Inth always encodes IsServiceSpecific=1.
 	 *
 	 * @deprecated TCF requires IsServiceSpecific=1. Group-specific scope is
 	 * also encoded as 1. Passing `false` logs a warning once and has no
@@ -122,7 +122,7 @@ export interface CreateIABOptions {
 	isServiceSpecific?: boolean;
 	/**
 	 * Publisher restrictions encoded into every TC string this CMP saves and
-	 * applied when c15t gates IAB scripts. Checked against the vendor list
+	 * applied when Inth gates IAB scripts. Checked against the vendor list
 	 * once it loads: an unsupported restriction rejects `whenReady()`,
 	 * `generateTCString()` and `save()` with a `PublisherRestrictionError`.
 	 * `whenReady()` does not retry it. With an explicit `gvl` it lasts for the
@@ -180,7 +180,7 @@ export interface IABProviderConfig extends IABUserConfig {
  * import { iab } from '@inth/sdk-iab';
  *
  * <ConsentProvider options={{
- *   mode: hosted({ projectUrl: '/api/c15t' }),
+ *   mode: hosted({ projectUrl: '/api/inth' }),
  *   iab: iab({ cmpId: 28, vendors: [1, 2, 755] }),
  * }}>
  *   {children}
@@ -290,7 +290,7 @@ const distinctCustomVendors = function distinctCustomVendors(
 		if (!reportedCollisions.has(key)) {
 			reportedCollisions.add(key);
 			console.error(
-				`[c15t] Custom vendor "${vendor.name}" (id ${id}) is ignored: the Global Vendor List has a registered vendor with id ${id}. Give each custom vendor an id no registered vendor uses, such as a string.`
+				`[inth] Custom vendor "${vendor.name}" (id ${id}) is ignored: the Global Vendor List has a registered vendor with id ${id}. Give each custom vendor an id no registered vendor uses, such as a string.`
 			);
 		}
 		return false;
@@ -558,7 +558,7 @@ const grantsDeniedCategory = function grantsDeniedCategory(
 			return false;
 		}
 		const purposes =
-			C15T_TO_IAB_PURPOSE_MAP[category as keyof typeof C15T_TO_IAB_PURPOSE_MAP];
+			INTH_TO_IAB_PURPOSE_MAP[category as keyof typeof INTH_TO_IAB_PURPOSE_MAP];
 		const granted = (purpose: number) =>
 			authority.purposeConsents[purpose] === true;
 		return decision.confirmedAt > authority.confirmedAt
@@ -590,7 +590,7 @@ const withoutDeniedPurposes = function withoutDeniedPurposes(
 			continue;
 		}
 		const purposes =
-			C15T_TO_IAB_PURPOSE_MAP[category as keyof typeof C15T_TO_IAB_PURPOSE_MAP];
+			INTH_TO_IAB_PURPOSE_MAP[category as keyof typeof INTH_TO_IAB_PURPOSE_MAP];
 		for (const purpose of purposes ?? []) {
 			next[purpose] = false;
 		}
@@ -784,7 +784,7 @@ const referenceEndpoint = (
 		return requested?.url;
 	}
 	return appendInitParams(requested.url, {
-		...c15tProtocolParams,
+		...inthProtocolParams,
 		country: requested.context?.country ?? undefined,
 		gpc: requested.context?.gpc,
 		region: requested.context?.region ?? undefined,
@@ -1018,7 +1018,7 @@ export const createIAB = function createIAB(
 			} catch (error) {
 				adTechProviderRequest = null;
 				console.warn(
-					'[c15t] Additional Consent is off: the ad tech provider list did not load.',
+					'[inth] Additional Consent is off: the ad tech provider list did not load.',
 					error
 				);
 				return null;
@@ -2197,7 +2197,7 @@ export const createIAB = function createIAB(
 			) {
 				return;
 			}
-			const consents = iabPurposesToC15tConsents(
+			const consents = iabPurposesToInthConsents(
 				consentData.purposeConsents,
 				consentBasisPurposes(
 					snapshot.iab.gvl,
@@ -2357,8 +2357,8 @@ export {
  * need to thread through `@inth/sdk/iab`'s internal subpaths.
  */
 export {
-	c15tConsentsToIabPurposes,
+	inthConsentsToIabPurposes,
 	clearGVLCache,
 	fetchGVL,
-	iabPurposesToC15tConsents,
+	iabPurposesToInthConsents,
 };

@@ -26,7 +26,7 @@ describe('fetchSSRData', () => {
 
 	it('returns SSR metadata with cache-hit diagnostics and request duration', async () => {
 		const initResponse = {
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'US', regionCode: 'CA' },
 			translations: { language: 'en', translations: {} },
 		};
@@ -47,7 +47,7 @@ describe('fetchSSRData', () => {
 
 		const result = await fetchSSRData({
 			headers: createRequestHeaders(),
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		expect(result?.init).toEqual(initResponse);
@@ -59,7 +59,7 @@ describe('fetchSSRData', () => {
 			country: 'US',
 			gpc: false,
 			language: null,
-			projectUrl: 'https://example.com/api/c15t',
+			projectUrl: 'https://example.com/api/inth',
 			region: null,
 		});
 		expect(typeof result?.metadata?.requestDurationMs).toBe('number');
@@ -68,7 +68,7 @@ describe('fetchSSRData', () => {
 
 	it('returns cache metadata for non-hit responses', async () => {
 		const initResponse = {
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: null },
 			translations: { language: 'de', translations: {} },
 		};
@@ -88,7 +88,7 @@ describe('fetchSSRData', () => {
 
 		const result = await fetchSSRData({
 			headers: createRequestHeaders(),
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		expect(result?.metadata?.cache).toEqual({
@@ -112,11 +112,11 @@ describe('fetchSSRData', () => {
 
 			await fetchSSRData({
 				headers: requestHeaders,
-				projectUrl: 'https://consent.example.com/api/c15t',
+				projectUrl: 'https://consent.example.com/api/inth',
 			});
 
 			expect(fetchMock).toHaveBeenCalledWith(
-				'https://consent.example.com/api/c15t/init',
+				'https://consent.example.com/api/inth/init',
 				expect.objectContaining({
 					headers: expect.objectContaining({
 						'x-c15t-version': incomingVersion ?? version,
@@ -135,10 +135,10 @@ describe('fetchSSRData', () => {
 		headers.set('x-forwarded-host', 'attacker.example');
 		headers.set('x-forwarded-proto', 'http');
 
-		await fetchSSRData({ headers, projectUrl: '/api/c15t' });
+		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/c15t/init',
+			'https://example.com/api/inth/init',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
@@ -159,10 +159,10 @@ describe('fetchSSRData', () => {
 			'x-forwarded-host': 'example.com',
 		});
 
-		await fetchSSRData({ headers, projectUrl: '/api/c15t' });
+		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/c15t/init',
+			'https://example.com/api/inth/init',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
@@ -196,11 +196,11 @@ describe('fetchSSRData', () => {
 		await Promise.all([
 			fetchSSRData({
 				headers,
-				projectUrl: 'https://consent.example.com/api/c15t',
+				projectUrl: 'https://consent.example.com/api/inth',
 			}),
 			fetchSSRData({
 				headers,
-				projectUrl: 'https://consent.example.com/api/c15t',
+				projectUrl: 'https://consent.example.com/api/inth',
 			}),
 		]);
 
@@ -217,7 +217,7 @@ describe('fetchSSRData', () => {
 
 		const result = await fetchSSRData({
 			headers,
-			projectUrl: 'https://consent.example.com/api/c15t',
+			projectUrl: 'https://consent.example.com/api/inth',
 		});
 
 		expect(result).toMatchObject({
@@ -233,7 +233,7 @@ describe('fetchSSRData', () => {
 				country: 'US',
 				gpc: false,
 				language: null,
-				projectUrl: 'https://consent.example.com/api/c15t',
+				projectUrl: 'https://consent.example.com/api/inth',
 				region: null,
 			},
 			requestDurationMs: expect.any(Number),
@@ -264,14 +264,14 @@ describe('fetchSSRData', () => {
 				language: 'de',
 				region: 'BE',
 			},
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		expect(result?.metadata?.requestContext).toEqual({
 			country: 'DE',
 			gpc: true,
 			language: 'de',
-			projectUrl: 'https://example.com/api/c15t',
+			projectUrl: 'https://example.com/api/inth',
 			region: 'BE',
 		});
 	});
@@ -287,7 +287,7 @@ describe('fetchSSRData', () => {
 
 		const result = await fetchSSRData({
 			headers,
-			projectUrl: 'https://consent.example.com/api/c15t',
+			projectUrl: 'https://consent.example.com/api/inth',
 		});
 
 		expect(result).toBeUndefined();

@@ -252,7 +252,7 @@ test('built-in assignment lands after mount and is stored for the next visit', a
 	try {
 		await vi.waitFor(() =>
 			expect(mounted.read()).toMatchObject({
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'banner-shape',
 			})
 		);
@@ -346,7 +346,7 @@ test('an arm theme reaches useResolvedTheme() and a ConsentTheme rendered from i
 				)
 			).toEqual({ colors: { primary: '#123456', surface: '#abcdef' } })
 		);
-		const css = document.getElementById('c15t-theme')?.textContent ?? '';
+		const css = document.getElementById('inth-theme')?.textContent ?? '';
 		expect(css).toContain('#123456');
 		expect(css).toContain('#abcdef');
 	} finally {
@@ -387,7 +387,7 @@ const mountDraftWithLateArm = function mountDraftWithLateArm() {
 			runtime.kernel.set.experiment({
 				acknowledgedDiagnostics: false,
 				arm: 'bar',
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'defaults',
 			});
 		},
@@ -487,7 +487,7 @@ test('a provider enabled after mount builds its controller then', async () => {
 		render(true);
 		await vi.waitFor(() =>
 			expect(JSON.parse(readText('experiment') ?? 'null')).toMatchObject({
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'banner-shape',
 			})
 		);

@@ -116,8 +116,8 @@ export const fetchGVL = function fetchGVL(
 	const windowMockGVL =
 		typeof window === 'undefined'
 			? undefined
-			: (window as unknown as { __c15t_mock_gvl?: GlobalVendorList | null })
-					.__c15t_mock_gvl;
+			: (window as unknown as { __inth_mock_gvl?: GlobalVendorList | null })
+					.__inth_mock_gvl;
 
 	if (windowMockGVL !== undefined) {
 		cachedGVL = windowMockGVL;

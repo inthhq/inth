@@ -1,5 +1,5 @@
 /**
- * Checks c15t's GPP encoder against the IAB reference implementation
+ * Checks inth's GPP encoder against the IAB reference implementation
  * (`@iabgpp/cmpapi`, a dev dependency only).
  */
 

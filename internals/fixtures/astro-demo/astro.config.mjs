@@ -5,23 +5,23 @@
  * `examples/astro` and `examples/astro-static`, plus the vendor scenario, and
  * the example suite builds each of them against a backend:
  *
- *   C15T_BACKEND_URL=https://your-project.inth.app bun run --cwd internals/fixtures/astro-demo build
- *   C15T_BACKEND_URL=https://your-project.inth.app C15T_ASTRO_OUTPUT=static bun run --cwd internals/fixtures/astro-demo build
+ *   INTH_PROJECT_URL=https://your-project.inth.app bun run --cwd internals/fixtures/astro-demo build
+ *   INTH_PROJECT_URL=https://your-project.inth.app INTH_ASTRO_OUTPUT=static bun run --cwd internals/fixtures/astro-demo build
  *
- * Without a backend URL, or with `C15T_IAB`, `C15T_UI` or `C15T_EXPERIMENT`
+ * Without a backend URL, or with `INTH_IAB`, `INTH_UI` or `INTH_EXPERIMENT`
  * set, the showcase build runs instead. See `astro.showcase.config.mjs`.
  */
 const showcase =
-	!process.env.C15T_BACKEND_URL ||
-	process.env.C15T_IAB === '1' ||
-	process.env.C15T_EXPERIMENT === '1' ||
-	Boolean(process.env.C15T_UI);
+	!process.env.INTH_PROJECT_URL ||
+	process.env.INTH_IAB === '1' ||
+	process.env.INTH_EXPERIMENT === '1' ||
+	Boolean(process.env.INTH_UI);
 
 const load = async function load() {
 	if (showcase) {
 		return (await import('./astro.showcase.config.mjs')).default;
 	}
-	if (process.env.C15T_ASTRO_OUTPUT === 'static') {
+	if (process.env.INTH_ASTRO_OUTPUT === 'static') {
 		return (await import('./astro.static.config.mjs')).default;
 	}
 	const config = (await import('./astro.server.config.mjs')).default;

@@ -29,7 +29,7 @@ pnpm add @inth/nuxt
 
 ## Usage
 
-1. Register the module and set `NUXT_PUBLIC_C15T_BACKEND_URL` to your Inth backend URL
+1. Register the module and set `NUXT_PUBLIC_INTH_PROJECT_URL` to your Inth backend URL
 
 ```ts
 // nuxt.config.ts
@@ -55,7 +55,7 @@ export default defineNuxtConfig({
 
 ## Hosting
 
-c15t needs somewhere to keep policies and consent records. Pick one:
+Inth needs somewhere to keep policies and consent records. Pick one:
 
 - **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fnuxt)**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
 - **Self-hosted**: Run [`@c15t/backend`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
@@ -71,11 +71,11 @@ See the [documentation](https://c15t.com/docs/frameworks/nuxt/quickstart) for gu
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/nuxt/AGENTS.md`. It indexes every guide in `node_modules/@inth/nuxt/docs/`.
 
-On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the Inth agent skills with `npx skills add inth/skills`.
 
 ## Support
 
-- Join our [Discord community](https://c15t.link/discord)
+- Join our [Discord community](https://inth.link/discord)
 - Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)
 - Visit [inth.com](https://inth.com) and use the chat widget
 - Contact our support team via email [support@inth.com](mailto:support@inth.com)

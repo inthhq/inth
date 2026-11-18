@@ -63,13 +63,13 @@ describe('Svelte manifest module', () => {
 	])(
 		'a $app gets the snapshot in the browser: $snapshotInBrowser',
 		async ({ plugins, snapshotInBrowser }) => {
-			const root = await mkdtemp(path.join(tmpdir(), 'c15t-svelte-manifest-'));
+			const root = await mkdtemp(path.join(tmpdir(), 'inth-svelte-manifest-'));
 			directories.push(root);
 			const [plugin] = consentManifest({
 				fetch: () =>
 					Promise.resolve(
 						Response.json({
-							branding: 'c15t',
+							branding: 'inth',
 							revision: 'svelte-build',
 							schemaVersion: 2,
 						})
@@ -94,7 +94,7 @@ describe('location advice', () => {
 	const regional = () =>
 		Promise.resolve(
 			Response.json({
-				branding: 'c15t',
+				branding: 'inth',
 				policyPacks: [
 					createConsentManifestPolicyPack({
 						id: 'regional',
@@ -171,7 +171,7 @@ describe('resolveChunkHrefs', () => {
 
 describe('consentManifest module preload', () => {
 	const setup = async function setup() {
-		const root = await mkdtemp(path.join(tmpdir(), 'c15t-preload-'));
+		const root = await mkdtemp(path.join(tmpdir(), 'inth-preload-'));
 		directories.push(root);
 		const server = path.join(root, '.svelte-kit', 'output', 'server');
 		await mkdir(path.join(server, 'chunks'), { recursive: true });
@@ -277,7 +277,7 @@ describe('Svelte backend URL variables', () => {
 		env: Record<string, unknown>,
 		options: { projectUrl?: string } = {}
 	) => {
-		const root = await mkdtemp(path.join(tmpdir(), 'c15t-inth-env-'));
+		const root = await mkdtemp(path.join(tmpdir(), 'inth-inth-env-'));
 		try {
 			const [plugin] = consentManifest({
 				...options,
@@ -308,7 +308,7 @@ describe('Svelte backend URL variables', () => {
 		}
 	};
 	const INTH = 'https://inth.example.com';
-	const C15T = 'https://c15t.example.com';
+	const INTH = 'https://inth.example.com';
 
 	test('PUBLIC_INTH_PROJECT_URL alone gives the backend URL', async () => {
 		const { projectUrl } = await resolveProjectUrl({
@@ -317,18 +317,18 @@ describe('Svelte backend URL variables', () => {
 		expect(projectUrl).toBe(INTH);
 	});
 
-	test('either c15t variable beats either Inth variable', async () => {
+	test('either inth variable beats either Inth variable', async () => {
 		const { projectUrl } = await resolveProjectUrl({
-			PUBLIC_C15T_BACKEND_URL: C15T,
+			PUBLIC_INTH_PROJECT_URL: INTH,
 			PUBLIC_INTH_PROJECT_URL: INTH,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(projectUrl).toBe(C15T);
+		expect(projectUrl).toBe(INTH);
 		const vite = await resolveProjectUrl({
 			PUBLIC_INTH_PROJECT_URL: INTH,
-			VITE_C15T_BACKEND_URL: C15T,
+			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(vite.projectUrl).toBe(C15T);
+		expect(vite.projectUrl).toBe(INTH);
 	});
 
 	test('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
@@ -336,20 +336,20 @@ describe('Svelte backend URL variables', () => {
 			VITE_INTH_PROJECT_URL: INTH,
 		});
 		expect(projectUrl).toBe(INTH);
-		expect(env.VITE_C15T_BACKEND_URL).toBe(INTH);
+		expect(env.VITE_INTH_PROJECT_URL).toBe(INTH);
 	});
 
-	test('VITE_C15T_BACKEND_URL wins when both are set', async () => {
+	test('VITE_INTH_PROJECT_URL wins when both are set', async () => {
 		const { projectUrl } = await resolveProjectUrl({
-			VITE_C15T_BACKEND_URL: C15T,
+			VITE_INTH_PROJECT_URL: INTH,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(projectUrl).toBe(C15T);
+		expect(projectUrl).toBe(INTH);
 	});
 
 	test('an explicit projectUrl beats both variables', async () => {
 		const { projectUrl } = await resolveProjectUrl(
-			{ VITE_C15T_BACKEND_URL: C15T, VITE_INTH_PROJECT_URL: INTH },
+			{ VITE_INTH_PROJECT_URL: INTH, VITE_INTH_PROJECT_URL: INTH },
 			{ projectUrl: 'https://option.example.com' }
 		);
 		expect(projectUrl).toBe('https://option.example.com');
@@ -375,7 +375,7 @@ describe('consentManifest first-load chunk', () => {
 		});
 		const groups = groupsOf(options);
 
-		expect(groups.map((group) => group.name)).toEqual(['app', 'c15t']);
+		expect(groups.map((group) => group.name)).toEqual(['app', 'inth']);
 		const { test: matches } = groups[1] as Group;
 		for (const id of [
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/vendor-listing.js',

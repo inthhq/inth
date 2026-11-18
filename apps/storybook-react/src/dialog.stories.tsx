@@ -1,4 +1,4 @@
-import { openAndClose } from '@c15t/conformance/play/dialog';
+import { openAndClose } from '@inth/conformance/play/dialog';
 import { Button, Dialog, Switch } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
@@ -21,7 +21,7 @@ type Story = StoryObj<typeof meta>;
 const { common, consentManagerDialog, consentTypes } = enTranslations;
 
 const overlayStyle: React.CSSProperties = {
-	background: 'var(--c15t-overlay)',
+	background: 'var(--inth-overlay)',
 	border: 0,
 	cursor: 'default',
 	inset: 0,
@@ -29,11 +29,11 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const contentStyle: React.CSSProperties = {
-	background: 'var(--c15t-surface)',
-	border: '1px solid var(--c15t-border)',
-	borderRadius: 'var(--c15t-radius-lg)',
-	boxShadow: 'var(--c15t-shadow-lg)',
-	color: 'var(--c15t-text)',
+	background: 'var(--inth-surface)',
+	border: '1px solid var(--inth-border)',
+	borderRadius: 'var(--inth-radius-lg)',
+	boxShadow: 'var(--inth-shadow-lg)',
+	color: 'var(--inth-text)',
 	display: 'grid',
 	gap: '1rem',
 	left: '50%',
@@ -76,7 +76,7 @@ export const Default: Story = {
 						{consentManagerDialog.title}
 					</Dialog.Title>
 					<Dialog.Description
-						style={{ color: 'var(--c15t-text-muted)', margin: 0 }}
+						style={{ color: 'var(--inth-text-muted)', margin: 0 }}
 					>
 						{consentManagerDialog.description}
 					</Dialog.Description>
@@ -93,7 +93,7 @@ export const Default: Story = {
 							</div>
 							<div
 								style={{
-									color: 'var(--c15t-text-muted)',
+									color: 'var(--inth-text-muted)',
 									fontSize: '0.925rem',
 								}}
 							>
@@ -146,7 +146,7 @@ export const Controlled: Story = {
 								Controlled dialog
 							</Dialog.Title>
 							<Dialog.Description
-								style={{ color: 'var(--c15t-text-muted)', margin: 0 }}
+								style={{ color: 'var(--inth-text-muted)', margin: 0 }}
 							>
 								This story proves the primitive works in controlled mode.
 							</Dialog.Description>

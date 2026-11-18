@@ -23,8 +23,8 @@ import { warnOnUnappliedThemeTokens } from './theme-warning';
  * The provider's theme and UI options, as signals, for the stock surfaces
  * and for custom ones that want to follow them.
  *
- * Provided by `provideC15t()`. It also applies `colorScheme`: unset mirrors
- * a `dark` class on `<html>` as `c15t-dark`; `null` leaves the class to the
+ * Provided by `provideInth()`. It also applies `colorScheme`: unset mirrors
+ * a `dark` class on `<html>` as `inth-dark`; `null` leaves the class to the
  * site.
  */
 @Injectable()

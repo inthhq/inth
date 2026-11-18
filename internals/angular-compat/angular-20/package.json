@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/angular-compat-20",
+	"name": "@inth/angular-compat-20",
 	"version": "0.0.0",
 	"private": true,
 	"description": "Compatibility fixture: the oldest Angular version @inth/angular supports.",

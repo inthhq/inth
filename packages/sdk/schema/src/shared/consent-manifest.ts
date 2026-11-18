@@ -101,7 +101,7 @@ export interface ConsentManifest {
 	/** Version label of `vendors`, surfaced for display and audit only. */
 	vendorListVersion?: string;
 	/**
-	 * What the Inth script registry tells c15t, such as where it serves
+	 * What the Inth script registry tells Inth, such as where it serves
 	 * each script. Copied onto every `/init` resolved from this manifest.
 	 * Absent from producers without a registry.
 	 */

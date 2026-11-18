@@ -3,7 +3,7 @@
  * list. An expanded category with vendor cards must make that list
  * overflow and scroll, even when the app styles the list or its items with
  * `overflow: hidden`, a common way to clip them to rounded corners. App CSS
- * sits outside c15t's cascade layer, so it beats c15t's normal rules.
+ * sits outside inth's cascade layer, so it beats inth's normal rules.
  */
 import '@inth/sdk/ui/styles.css';
 import type { Vendor } from '@inth/sdk/engine';

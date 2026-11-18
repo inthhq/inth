@@ -1,6 +1,6 @@
 ---
 title: Translations
-description: Choose the language of the c15t banner and preference dialog on a plain HTML site, change its wording, and add languages with the script tag.
+description: Choose the language of the Inth banner and preference dialog on a plain HTML site, change its wording, and add languages with the script tag.
 group: frameworks
 ---
 
@@ -21,7 +21,7 @@ key by key. Text you set in `ui.banner`, such as `title` or
 
 ## Pick the language
 
-In hosted and manifest mode, c15t follows the visitor's browser language. To
+In hosted and manifest mode, Inth follows the visitor's browser language. To
 force one, add `data-language` to the tag:
 
 {/* example: fragment */}
@@ -37,9 +37,9 @@ force one, add `data-language` to the tag:
 A multilingual site can print each page's language into the tag, for example
 from the `lang` attribute your CMS already writes on `<html>`.
 
-To switch after load, call `c15t.setLanguage('fr')`. With a backend, c15t asks
+To switch after load, call `inth.setLanguage('fr')`. With a backend, Inth asks
 the backend for French copy and re-renders the banner and dialog. On a test
-page with `c15t.testing.js`, `data-language` and `c15t.setLanguage()` switch
+page with `c15t.testing.js`, `data-language` and `inth.setLanguage()` switch
 to a language that has copy in the bundle or in `i18n.messages`. A language
 with no copy shows the default copy. See
 [add a language on a test page](#add-a-language-on-a-test-page).
@@ -53,8 +53,8 @@ change; the rest keep their default text:
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     i18n: {
       locale: 'en',
       messages: {
@@ -71,15 +71,15 @@ change; the rest keep their default text:
 With a backend, the `/init` response or the manifest carries your Inth
 project's copy for the visitor's language. Your `i18n.messages` for that
 language override it key by key, and keys you leave out keep the project's
-copy. c15t looks for the exact language first, then the primary language, so a
+copy. Inth looks for the exact language first, then the primary language, so a
 visitor on `de-AT` gets your `de` messages. Messages for other languages are
 not applied.
 
-A key only overrides the backend when your text differs from c15t's built-in
+A key only overrides the backend when your text differs from inth's built-in
 wording for that language. So passing the stock bundles from
 `@inth/sdk/translations/all` to enable languages keeps edits made in your Inth project visible,
 while a key you actually reworded stays pinned in code. Core bundles only
-English; for other languages, import `@inth/sdk/translations/all` so c15t can
+English; for other languages, import `@inth/sdk/translations/all` so Inth can
 recognize its stock wording.
 
 ## Add a language on a test page
@@ -92,8 +92,8 @@ English defaults:
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     i18n: {
       locale: 'de',
       messages: {
@@ -117,11 +117,11 @@ English defaults:
 ```
 
 Keys you leave out stay in English, so translate every key your banner and
-dialog show. The messages follow the same structure every c15t package uses.
+dialog show. The messages follow the same structure every Inth package uses.
 
 `c15t.testing.js` bundles English only, so every other language needs an
 entry in `i18n.messages`. With one entry per language,
-`data-language` and `c15t.setLanguage()` switch between them. A regional
+`data-language` and `inth.setLanguage()` switch between them. A regional
 code such as `de-AT` uses the `de` entry when there is no `de-AT` entry. A
 language with no entry shows the default copy.
 

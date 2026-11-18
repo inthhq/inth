@@ -36,7 +36,7 @@ export const useEventDispatcher = function useEventDispatcher(
 	const services = useContext(ProviderServicesContext);
 	if (!services) {
 		throw new Error(
-			'c15t: useEventDispatcher() needs <ConsentProvider> from @inth/react.'
+			'inth: useEventDispatcher() needs <ConsentProvider> from @inth/react.'
 		);
 	}
 	const latest = useCommittedRef(options);

@@ -884,7 +884,7 @@ export const checkPackedAutolinking = function checkPackedAutolinking(
 export const withPackedPackage = function withPackedPackage<T>(
 	body: (packed: PackedPackage) => T
 ): T {
-	const workDir = mkdtempSync(join(tmpdir(), 'c15t-autolink-'));
+	const workDir = mkdtempSync(join(tmpdir(), 'inth-autolink-'));
 
 	try {
 		return body(packReactNativePackage(workDir));

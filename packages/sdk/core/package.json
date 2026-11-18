@@ -2,7 +2,7 @@
 	"name": "@inth/sdk-core",
 	"version": "3.2.0-canary.0",
 	"private": true,
-	"description": "Headless consent engine behind c15t. Stores consent, decides who sees the banner and gates configured scripts on each visitor's consent policy.",
+	"description": "Headless consent engine behind inth. Stores consent, decides who sees the banner and gates configured scripts on each visitor's consent policy.",
 	"keywords": [
 		"banner",
 		"ccpa",
@@ -302,8 +302,8 @@
 		"@inth/sdk-translations": "workspace:*"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rsbuild/plugin-react": "1.4.6",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",

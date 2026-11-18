@@ -134,7 +134,7 @@ export interface StaticBannerChunk {
  * Where the `@inth/react` a page's entry loads statically is installed,
  * when that includes the stock banner, or the browser `ConsentBanner` that
  * loads it; otherwise `undefined`. A page that imports the banner only in
- * a lazy chunk of its own, or no c15t at all, such as a second entry, gets
+ * a lazy chunk of its own, or no Inth at all, such as a second entry, gets
  * nothing.
  *
  * @param chunk - The page's entry chunk.
@@ -308,7 +308,7 @@ export const renderStaticBannerSheets = function renderStaticBannerSheets(
 	return sheets
 		.map(
 			({ css, id }) =>
-				`<style data-href="${id}" data-precedence="c15t">${css.replaceAll('</style', '<\\/style')}</style>`
+				`<style data-href="${id}" data-precedence="inth">${css.replaceAll('</style', '<\\/style')}</style>`
 		)
 		.join('');
 };

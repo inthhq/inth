@@ -96,15 +96,15 @@ describe('ng-add', () => {
 		).toEqual([]);
 	});
 
-	it('adds provideC15t and the components to a standalone app', async () => {
+	it('adds provideInth and the components to a standalone app', async () => {
 		const { tree, warnings } = await run(await createApp(), {
 			projectUrl: 'https://acme.inth.app',
 		});
 
 		const config = tree.readText(`${root}/app/app.config.ts`);
-		expect(config).toContain("import { provideC15t } from '@inth/angular';");
+		expect(config).toContain("import { provideInth } from '@inth/angular';");
 		expect(config).toMatch(
-			/provideRouter\(routes\),\n {4}provideC15t\(\{\n {6}projectUrl: 'https:\/\/acme\.inth\.app',\n {4}\}\)\n/u
+			/provideRouter\(routes\),\n {4}provideInth\(\{\n {6}projectUrl: 'https:\/\/acme\.inth\.app',\n {4}\}\)\n/u
 		);
 		expect(config).not.toContain('Replace with');
 
@@ -116,7 +116,7 @@ describe('ng-add', () => {
 			/imports: \[RouterOutlet, ConsentBanner, ConsentDialog\]/u
 		);
 		expect(tree.readText(`${root}/app/app.html`)).toMatch(
-			/<router-outlet \/>\n<c15t-consent-banner \/>\n<c15t-consent-dialog \/>\n$/u
+			/<router-outlet \/>\n<inth-consent-banner \/>\n<inth-consent-dialog \/>\n$/u
 		);
 		expect(warnings).toEqual([]);
 	});
@@ -138,7 +138,7 @@ describe('ng-add', () => {
 
 		const component = tree.readText(`${root}/app/app.ts`);
 		expect(component).toMatch(
-			/<router-outlet \/>\n {4}<c15t-consent-banner \/>\n {4}<c15t-consent-dialog \/>\n {2}`/u
+			/<router-outlet \/>\n {4}<inth-consent-banner \/>\n {4}<inth-consent-dialog \/>\n {2}`/u
 		);
 		expect(tree.exists(`${root}/app/app.html`)).toBe(false);
 	});
@@ -149,7 +149,7 @@ describe('ng-add', () => {
 		const component = tree.readText(`${root}/app/app.component.ts`);
 		expect(component).toContain('ConsentBanner, ConsentDialog]');
 		expect(tree.readText(`${root}/app/app.component.html`)).toContain(
-			'<c15t-consent-dialog />'
+			'<inth-consent-dialog />'
 		);
 	});
 
@@ -168,9 +168,9 @@ describe('ng-add', () => {
 		const { tree } = await run(app);
 
 		const main = tree.readText(`${root}/main.ts`);
-		expect(main).toContain("import { provideC15t } from '@inth/angular';");
+		expect(main).toContain("import { provideInth } from '@inth/angular';");
 		expect(main).toContain(
-			"  providers: [provideC15t({\n    // Replace with the backend URL of your Inth project.\n    projectUrl: 'https://your-project.inth.app',\n  })]"
+			"  providers: [provideInth({\n    // Replace with the backend URL of your Inth project.\n    projectUrl: 'https://your-project.inth.app',\n  })]"
 		);
 		expect(tree.readText(`${root}/app/app.ts`)).toContain(
 			'ConsentBanner, ConsentDialog]'
@@ -189,30 +189,30 @@ describe('ng-add', () => {
 		const second = await run(first.tree);
 
 		expect(files(second.tree)).toEqual(before);
-		expect(before['app/app.config.ts']?.match(/provideC15t\(/gu)).toHaveLength(
+		expect(before['app/app.config.ts']?.match(/provideInth\(/gu)).toHaveLength(
 			1
 		);
 	});
 
-	it('adds the providers when provideC15t( appears only in a comment or string', async () => {
+	it('adds the providers when provideInth( appears only in a comment or string', async () => {
 		const app = await createApp();
 		const config = `${root}/app/app.config.ts`;
 		app.overwrite(
 			config,
-			`// TODO: add provideC15t() here.\nconst note = 'provideC15t(';\n${app.readText(config)}`
+			`// TODO: add provideInth() here.\nconst note = 'provideInth(';\n${app.readText(config)}`
 		);
 		const { tree } = await run(app);
 
-		expect(tree.readText(config)).toMatch(/\n {4}provideC15t\(\{\n/u);
+		expect(tree.readText(config)).toMatch(/\n {4}provideInth\(\{\n/u);
 	});
 
-	it('finds provideC15t in a file the app config imports', async () => {
+	it('finds provideInth in a file the app config imports', async () => {
 		const app = await createApp();
 		const config = `${root}/app/app.config.ts`;
 		const providers = `${root}/app/consent.providers.ts`;
 		app.create(
 			providers,
-			"import { hosted, provideC15t } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
+			"import { hosted, provideInth } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideInth({ mode: hosted({ projectUrl: '/api/inth' }) }),\n];\n"
 		);
 		app.overwrite(
 			config,
@@ -227,15 +227,15 @@ describe('ng-add', () => {
 		const { tree } = await run(app);
 
 		expect(tree.readText(config)).toBe(before);
-		expect(tree.readText(providers).match(/provideC15t\(/gu)).toHaveLength(1);
+		expect(tree.readText(providers).match(/provideInth\(/gu)).toHaveLength(1);
 	});
 
-	it('ignores a local function named provideC15t', async () => {
+	it('ignores a local function named provideInth', async () => {
 		const app = await createApp();
 		const config = `${root}/app/app.config.ts`;
 		app.create(
 			`${root}/app/legacy-consent.ts`,
-			'function provideC15t(): unknown[] {\n\treturn [];\n}\n\nexport const legacyConsent = provideC15t();\n'
+			'function provideInth(): unknown[] {\n\treturn [];\n}\n\nexport const legacyConsent = provideInth();\n'
 		);
 		app.overwrite(
 			config,
@@ -244,21 +244,21 @@ describe('ng-add', () => {
 		const { tree } = await run(app);
 
 		expect(tree.readText(config)).toContain(
-			"import { provideC15t } from '@inth/angular';"
+			"import { provideInth } from '@inth/angular';"
 		);
-		expect(tree.readText(config)).toMatch(/\n {4}provideC15t\(\{\n/u);
+		expect(tree.readText(config)).toMatch(/\n {4}provideInth\(\{\n/u);
 	});
 
-	it('counts an aliased provideC15t import', async () => {
+	it('counts an aliased provideInth import', async () => {
 		const app = await createApp();
 		const config = `${root}/app/app.config.ts`;
 		app.overwrite(
 			config,
-			`import { hosted, provideC15t as consent } from '@inth/angular';\n${app
+			`import { hosted, provideInth as consent } from '@inth/angular';\n${app
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
-					"provideRouter(routes), consent({ mode: hosted({ projectUrl: '/api/c15t' }) })"
+					"provideRouter(routes), consent({ mode: hosted({ projectUrl: '/api/inth' }) })"
 				)}`
 		);
 		const before = app.readText(config);
@@ -267,16 +267,16 @@ describe('ng-add', () => {
 		expect(tree.readText(config)).toBe(before);
 	});
 
-	it('counts provideC15t through a namespace import', async () => {
+	it('counts provideInth through a namespace import', async () => {
 		const app = await createApp();
 		const config = `${root}/app/app.config.ts`;
 		app.overwrite(
 			config,
-			`import * as c15t from '@inth/angular';\n${app
+			`import * as inth from '@inth/angular';\n${app
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
-					"provideRouter(routes), c15t.provideC15t({ mode: c15t.hosted({ projectUrl: '/api/c15t' }) })"
+					"provideRouter(routes), inth.provideInth({ mode: c15t.hosted({ projectUrl: '/api/inth' }) })"
 				)}`
 		);
 		const before = app.readText(config);
@@ -286,10 +286,10 @@ describe('ng-add', () => {
 	});
 
 	it.each([
-		['provideC15t', 'provideC15t'],
-		['provideC15t as consent', 'consent'],
+		['provideInth', 'provideInth'],
+		['provideInth as consent', 'consent'],
 	])(
-		'counts provideC15t re-exported by a local barrel (%s)',
+		'counts provideInth re-exported by a local barrel (%s)',
 		async (exported, called) => {
 			const app = await createApp();
 			const config = `${root}/app/app.config.ts`;
@@ -303,7 +303,7 @@ describe('ng-add', () => {
 					.readText(config)
 					.replace(
 						'provideRouter(routes)',
-						`provideRouter(routes), ${called}({ mode: hosted({ projectUrl: '/api/c15t' }) })`
+						`provideRouter(routes), ${called}({ mode: hosted({ projectUrl: '/api/inth' }) })`
 					)}`
 			);
 			const before = app.readText(config);
@@ -352,7 +352,7 @@ describe('ng-add', () => {
 			}
 			app.create(
 				`${root}/app/consent/providers.ts`,
-				"import { hosted, provideC15t } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
+				"import { hosted, provideInth } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideInth({ mode: hosted({ projectUrl: '/api/inth' }) }),\n];\n"
 			);
 			const config = `${root}/app/app.config.ts`;
 			app.overwrite(
@@ -393,14 +393,14 @@ describe('ng-add', () => {
 
 		expect(text).toContain("import { ConsentBanner } from './my-banner';");
 		expect(text).toContain(
-			"import { ConsentBanner as C15tConsentBanner } from '@inth/angular';"
+			"import { ConsentBanner as InthConsentBanner } from '@inth/angular';"
 		);
 		expect(text).toMatch(
-			/imports: \[RouterOutlet, C15tConsentBanner, ConsentDialog\]/u
+			/imports: \[RouterOutlet, InthConsentBanner, ConsentDialog\]/u
 		);
 	});
 
-	it("reuses a binding that already is c15t's component", async () => {
+	it("reuses a binding that already is inth's component", async () => {
 		const app = await createApp();
 		const component = `${root}/app/app.ts`;
 		app.create(
@@ -478,7 +478,7 @@ describe('ng-add', () => {
 		expect(warnings).toEqual([]);
 		expect(text).toContain("import { ConsentBanner } from '@inth/angular';");
 		expect(text).toMatch(/imports: \[\s*ConsentBanner, ConsentDialog\s*\]/u);
-		expect(text).toContain('<c15t-consent-banner />');
+		expect(text).toContain('<inth-consent-banner />');
 	});
 
 	it.each([
@@ -535,10 +535,10 @@ describe('ng-add', () => {
 
 		expect(text).toContain(line);
 		expect(text).toContain(
-			"import { ConsentBanner as C15tConsentBanner } from '@inth/angular';"
+			"import { ConsentBanner as InthConsentBanner } from '@inth/angular';"
 		);
 		expect(text).toMatch(
-			/imports: \[RouterOutlet, C15tConsentBanner, ConsentDialog\]/u
+			/imports: \[RouterOutlet, InthConsentBanner, ConsentDialog\]/u
 		);
 	});
 
@@ -547,12 +547,12 @@ describe('ng-add', () => {
 		const html = `${root}/app/app.html`;
 		app.overwrite(
 			html,
-			'<!-- <c15t-consent-banner /> goes here -->\n<router-outlet />\n'
+			'<!-- <inth-consent-banner /> goes here -->\n<router-outlet />\n'
 		);
 		const { tree } = await run(app);
 
 		expect(tree.readText(html)).toBe(
-			'<!-- <c15t-consent-banner /> goes here -->\n<router-outlet />\n<c15t-consent-banner />\n<c15t-consent-dialog />\n'
+			'<!-- <inth-consent-banner /> goes here -->\n<router-outlet />\n<inth-consent-banner />\n<inth-consent-dialog />\n'
 		);
 	});
 
@@ -561,7 +561,7 @@ describe('ng-add', () => {
 		const html = `${root}/app/app.html`;
 		app.overwrite(
 			html,
-			'<router-outlet />\n@if (ready) {\n  <c15t-consent-banner />\n}\n@defer {\n  <c15t-consent-dialog />\n}\n'
+			'<router-outlet />\n@if (ready) {\n  <inth-consent-banner />\n}\n@defer {\n  <inth-consent-dialog />\n}\n'
 		);
 		const before = app.readText(html);
 		const { tree } = await run(app);
@@ -644,25 +644,25 @@ describe('ng-add', () => {
 		// Components without a provider would throw at run time, so ng-add
 		// adds neither and says what to add.
 		expect(warnings).toEqual([
-			expect.stringContaining('Could not add provideC15t()'),
+			expect.stringContaining('Could not add provideInth()'),
 			expect.stringContaining('Add ConsentBanner from @inth/angular'),
 		]);
 		expect(tree.readText(`${root}/app/app.ts`)).toBe(component);
 	});
 
-	it('adds a root provider when the only provideC15t is on a route', async () => {
+	it('adds a root provider when the only provideInth is on a route', async () => {
 		const app = await createApp();
 		const routes = `${root}/app/app.routes.ts`;
 		app.overwrite(
 			routes,
 			[
 				"import { Routes } from '@angular/router';",
-				"import { hosted, provideC15t } from '@inth/angular';",
+				"import { hosted, provideInth } from '@inth/angular';",
 				'',
 				'export const routes: Routes = [',
 				'\t{',
 				"\t\tpath: 'account',",
-				"\t\tproviders: [provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) })],",
+				"\t\tproviders: [provideInth({ mode: hosted({ projectUrl: '/api/inth' }) })],",
 				'\t\tchildren: [],',
 				'\t},',
 				'];',
@@ -674,7 +674,7 @@ describe('ng-add', () => {
 			projectUrl: 'https://acme.inth.app',
 		});
 
-		expect(tree.readText(config)).toMatch(/\n {4}provideC15t\(\{\n/u);
+		expect(tree.readText(config)).toMatch(/\n {4}provideInth\(\{\n/u);
 		expect(warnings).toEqual([expect.stringContaining('app/app.routes.ts')]);
 	});
 
@@ -682,13 +682,13 @@ describe('ng-add', () => {
 		['importProvidersFrom', 'importProvidersFrom(...consentProviders)'],
 		['makeEnvironmentProviders', 'makeEnvironmentProviders(consentProviders)'],
 	])(
-		'counts provideC15t inside %s in the root providers',
+		'counts provideInth inside %s in the root providers',
 		async (wrapper, call) => {
 			const app = await createApp();
 			const config = `${root}/app/app.config.ts`;
 			app.create(
 				`${root}/app/consent.providers.ts`,
-				"import { hosted, provideC15t } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
+				"import { hosted, provideInth } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideInth({ mode: hosted({ projectUrl: '/api/inth' }) }),\n];\n"
 			);
 			app.overwrite(
 				config,
@@ -711,12 +711,12 @@ describe('ng-add', () => {
 			[
 				"import { mergeApplicationConfig } from '@angular/core';",
 				"import { bootstrapApplication } from '@angular/platform-browser';",
-				"import { hosted, provideC15t } from '@inth/angular';",
+				"import { hosted, provideInth } from '@inth/angular';",
 				"import { appConfig } from './app/app.config';",
 				"import { App } from './app/app';",
 				'',
 				'const consentConfig = {',
-				"\tproviders: [provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) })],",
+				"\tproviders: [provideInth({ mode: hosted({ projectUrl: '/api/inth' }) })],",
 				'};',
 				'',
 				'bootstrapApplication(App, mergeApplicationConfig(appConfig, consentConfig));',
@@ -736,11 +736,11 @@ describe('ng-add', () => {
 		const config = `${root}/app/app.config.ts`;
 		app.overwrite(
 			config,
-			`import { hosted, provideC15t } from '@inth/angular';\n${app
+			`import { hosted, provideInth } from '@inth/angular';\n${app
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
-					"provideRouter(routes), provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) })"
+					"provideRouter(routes), provideInth({ mode: hosted({ projectUrl: '/api/inth' }) })"
 				)}`
 		);
 		app.create(
@@ -781,88 +781,88 @@ describe('ng-add', () => {
 		const header = [
 			"import { ApplicationConfig, importProvidersFrom, makeEnvironmentProviders, mergeApplicationConfig } from '@angular/core';",
 			"import { provideRouter } from '@angular/router';",
-			"import { hosted, provideC15t } from '@inth/angular';",
+			"import { hosted, provideInth } from '@inth/angular';",
 			"import { routes } from './app.routes';",
 			'',
-			"const c15t = provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) });",
+			"const inth = provideInth({ mode: hosted({ projectUrl: '/api/inth' }) });",
 			'',
 		].join('\n');
 		const known: readonly (readonly [string, string])[] = [
 			[
 				'a plain property',
-				'export const appConfig: ApplicationConfig = { providers: [provideRouter(routes), c15t] };',
+				'export const appConfig: ApplicationConfig = { providers: [provideRouter(routes), inth] };',
 			],
 			[
 				'shorthand',
-				'const providers = [provideRouter(routes), c15t];\nexport const appConfig: ApplicationConfig = { providers };',
+				'const providers = [provideRouter(routes), inth];\nexport const appConfig: ApplicationConfig = { providers };',
 			],
 			[
 				'a string-literal key',
-				"export const appConfig: ApplicationConfig = { 'providers': [c15t] };",
+				"export const appConfig: ApplicationConfig = { 'providers': [inth] };",
 			],
 			[
 				'a spread',
-				'const base = { providers: [c15t] };\nexport const appConfig: ApplicationConfig = { ...base };',
+				'const base = { providers: [inth] };\nexport const appConfig: ApplicationConfig = { ...base };',
 			],
 			[
 				'nested spreads',
-				'const inner = { providers: [c15t] };\nconst outer = { ...inner };\nexport const appConfig: ApplicationConfig = { ...outer };',
+				'const inner = { providers: [inth] };\nconst outer = { ...inner };\nexport const appConfig: ApplicationConfig = { ...outer };',
 			],
 			[
 				'a const alias chain',
-				'const first = { providers: [c15t] };\nconst second = first;\nexport const appConfig: ApplicationConfig = second;',
+				'const first = { providers: [inth] };\nconst second = first;\nexport const appConfig: ApplicationConfig = second;',
 			],
 			[
 				'concat',
-				'const extra = [c15t];\nexport const appConfig: ApplicationConfig = { providers: [provideRouter(routes)].concat(extra) };',
+				'const extra = [inth];\nexport const appConfig: ApplicationConfig = { providers: [provideRouter(routes)].concat(extra) };',
 			],
 			[
 				'an array spread',
-				'const extra = [c15t];\nexport const appConfig: ApplicationConfig = { providers: [provideRouter(routes), ...extra] };',
+				'const extra = [inth];\nexport const appConfig: ApplicationConfig = { providers: [provideRouter(routes), ...extra] };',
 			],
 			[
 				'importProvidersFrom',
-				'export const appConfig: ApplicationConfig = { providers: [importProvidersFrom(c15t)] };',
+				'export const appConfig: ApplicationConfig = { providers: [importProvidersFrom(inth)] };',
 			],
 			[
 				'makeEnvironmentProviders',
-				'export const appConfig: ApplicationConfig = { providers: [makeEnvironmentProviders([c15t])] };',
+				'export const appConfig: ApplicationConfig = { providers: [makeEnvironmentProviders([inth])] };',
 			],
 			[
 				'an override then a spread',
-				'const withC15t = { providers: [c15t] };\nexport const appConfig: ApplicationConfig = { providers: [provideRouter(routes)], ...withC15t };',
+				'const withInth = { providers: [inth] };\nexport const appConfig: ApplicationConfig = { providers: [provideRouter(routes)], ...withInth };',
 			],
 			[
-				'two spreads, the later with c15t',
-				'const routing = { providers: [provideRouter(routes)] };\nconst withC15t = { providers: [c15t] };\nexport const appConfig: ApplicationConfig = { ...routing, ...withC15t };',
+				'two spreads, the later with inth',
+				'const routing = { providers: [provideRouter(routes)] };\nconst withInth = { providers: [inth] };\nexport const appConfig: ApplicationConfig = { ...routing, ...withInth };',
 			],
 			[
 				'mergeApplicationConfig',
-				'const extra = { providers: [c15t] };\nexport const appConfig: ApplicationConfig = mergeApplicationConfig({ providers: [provideRouter(routes)] }, extra);',
+				'const extra = { providers: [inth] };\nexport const appConfig: ApplicationConfig = mergeApplicationConfig({ providers: [provideRouter(routes)] }, extra);',
 			],
 		];
 		const overridden: readonly (readonly [string, string])[] = [
 			[
 				'a spread then an override',
-				'const withC15t = { providers: [c15t] };\nexport const appConfig: ApplicationConfig = { ...withC15t, providers: [provideRouter(routes)] };',
+				'const withInth = { providers: [inth] };\nexport const appConfig: ApplicationConfig = { ...withInth, providers: [provideRouter(routes)] };',
 			],
 			[
-				'two spreads, the earlier with c15t',
-				'const routing = { providers: [provideRouter(routes)] };\nconst withC15t = { providers: [c15t] };\nexport const appConfig: ApplicationConfig = { ...withC15t, ...routing };',
+				'two spreads, the earlier with inth',
+				'const routing = { providers: [provideRouter(routes)] };\nconst withInth = { providers: [inth] };\nexport const appConfig: ApplicationConfig = { ...withInth, ...routing };',
 			],
 		];
 		const unknown: readonly (readonly [string, string])[] = [
 			[
 				'a function returning the config',
-				'function makeConfig(): ApplicationConfig {\n\treturn { providers: [c15t] };\n}\nexport const appConfig: ApplicationConfig = makeConfig();',
+				'function makeConfig(): ApplicationConfig {\n\treturn { providers: [inth] };\n}\nexport const appConfig: ApplicationConfig = makeConfig();',
 			],
 			[
 				'a conditional',
-				'declare const ssr: boolean;\nexport const appConfig: ApplicationConfig = { providers: ssr ? [c15t] : [] };',
+				'declare const ssr: boolean;\nexport const appConfig: ApplicationConfig = { providers: ssr ? [inth] : [] };',
 			],
 			[
 				'a local provider factory',
-				'function consentProviders() {\n\treturn [c15t];\n}\nexport const appConfig: ApplicationConfig = { providers: [consentProviders()] };',
+				'function consentProviders() {\n\treturn [inth];\n}\nexport const appConfig: ApplicationConfig = { providers: [consentProviders()] };',
 			],
 		];
 		const config = `${root}/app/app.config.ts`;
@@ -877,7 +877,7 @@ describe('ng-add', () => {
 			return { before, ...result };
 		};
 
-		it.each(known)('finds provideC15t through %s', async (_form, body) => {
+		it.each(known)('finds provideInth through %s', async (_form, body) => {
 			const { before, tree, warnings } = await withConfig(body);
 
 			expect(warnings).toEqual([]);
@@ -885,11 +885,11 @@ describe('ng-add', () => {
 		});
 
 		it.each(overridden)(
-			"adds a provider when %s replaces c15t's providers",
+			"adds a provider when %s replaces inth's providers",
 			async (_form, body) => {
 				const { before, tree, warnings } = await withConfig(body);
 				const calls = (text: string) =>
-					text.match(/provideC15t\(/gu)?.length ?? 0;
+					text.match(/provideInth\(/gu)?.length ?? 0;
 
 				// The overridden call is not in the root providers.
 				expect(warnings).toEqual([
@@ -907,7 +907,7 @@ describe('ng-add', () => {
 				expect(tree.readText(config)).toBe(before);
 				expect(warnings).toEqual([
 					expect.stringContaining(
-						"provideC15t({ projectUrl: 'https://acme.inth.app' })"
+						"provideInth({ projectUrl: 'https://acme.inth.app' })"
 					),
 				]);
 			}
@@ -946,7 +946,7 @@ describe('ng-add', () => {
 		);
 		app.overwrite(
 			`${root}/app/app.html`,
-			'<c15t-consent-banner />\n<router-outlet />\n'
+			'<inth-consent-banner />\n<router-outlet />\n'
 		);
 		const { tree } = await run(app);
 
@@ -957,7 +957,7 @@ describe('ng-add', () => {
 			'[RouterOutlet, ConsentBanner, ConsentDialog]'
 		);
 		expect(tree.readText(`${root}/app/app.html`)).toBe(
-			'<c15t-consent-banner />\n<router-outlet />\n<c15t-consent-dialog />\n'
+			'<inth-consent-banner />\n<router-outlet />\n<inth-consent-dialog />\n'
 		);
 	});
 
@@ -968,7 +968,7 @@ describe('ng-add', () => {
 		const { tree } = await run(app, { components: false });
 
 		expect(tree.readText(`${root}/app/app.config.ts`)).toContain(
-			'provideC15t('
+			'provideInth('
 		);
 		expect(tree.readText(`${root}/app/app.ts`)).toBe(component);
 		expect(tree.readText(`${root}/app/app.html`)).toBe(template);
@@ -980,7 +980,7 @@ describe('ng-add', () => {
 		);
 
 		expect(tree.readText(`${root}/app/app-module.ts`)).toContain(
-			'provideC15t('
+			'provideInth('
 		);
 		expect(warnings).toEqual([
 			expect.stringContaining('Replace https://your-project.inth.app'),

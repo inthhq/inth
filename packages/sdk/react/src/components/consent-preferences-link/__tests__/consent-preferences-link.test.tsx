@@ -38,7 +38,7 @@ describe('ConsentDialogLink', () => {
 					expect(
 						document.querySelector(`[data-testid="${testId}"]`)
 					).toHaveAttribute(
-						'data-c15t-rights',
+						'data-inth-rights',
 						model === 'opt-out'
 							? 'disclosure opt-out preferences'
 							: 'disclosure preferences'

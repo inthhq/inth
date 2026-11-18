@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/tw3-css-test",
+	"name": "@inth/tw3-css-test",
 	"private": true,
 	"scripts": {
 		"build": "rm -rf .next && next build",
@@ -8,7 +8,7 @@
 		"verify:tailwind-override": "node scripts/verify-tailwind-override.mjs"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/nextjs": "workspace:*",
 		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",

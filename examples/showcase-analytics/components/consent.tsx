@@ -10,11 +10,11 @@ import { scripts, vendors } from '@/lib/scripts';
 
 import { ConsentDevTools } from './consent-dev-tools';
 
-// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// The backend is your Inth project: set NEXT_PUBLIC_INTH_PROJECT_URL in
 // .env.local. The policy comes from its consent manifest.
 const config = {
 	projectUrl:
-		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+		process.env.NEXT_PUBLIC_INTH_PROJECT_URL ?? 'https://your-project.inth.app',
 };
 
 const options: ConsentRootProps['options'] = {
@@ -27,7 +27,7 @@ const options: ConsentRootProps['options'] = {
 	theme: brandTheme,
 };
 
-// The reload stops vendor code, but cookies it already wrote stay. c15t
+// The reload stops vendor code, but cookies it already wrote stay. Inth
 // deletes these whenever their category is denied.
 const clearOnRevocation: ClearOnRevocationConfig = {
 	marketing: { cookies: ['_fbp', '_fbc'] },

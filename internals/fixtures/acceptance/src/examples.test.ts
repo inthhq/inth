@@ -31,7 +31,7 @@ import type { Requests } from './browser';
 import { startExample } from './server';
 import { selectedTargets } from './targets';
 
-/** The `--c15t-primary` each example's Branded design sets, where checked. */
+/** The `--inth-primary` each example's Branded design sets, where checked. */
 const BRANDED_PRIMARY: Record<string, string> = {
 	angular: '#6943a3',
 	svelte: '#6943a3',
@@ -64,7 +64,7 @@ for (const target of selectedTargets()) {
 		let context: BrowserContext | undefined;
 		let page: Page;
 		let requests: Requests;
-		// `@inth/sdk` from npm installs no `window.c15t`, and its page is
+		// `@inth/sdk` from npm installs no `window.inth`, and its page is
 		// not hydrated, so opening preferences does not wait for it.
 		const hasRuntimeGlobal = target.id !== 'javascript';
 
@@ -164,7 +164,7 @@ for (const target of selectedTargets()) {
 					const learned = (): Promise<string[]> =>
 						page.evaluate(
 							() =>
-								JSON.parse(localStorage.getItem('c15t-engine-chunks') ?? 'null')
+								JSON.parse(localStorage.getItem('inth-engine-chunks') ?? 'null')
 									?.u ?? []
 						);
 					const lowPreloads = (): Promise<string[]> =>
@@ -178,7 +178,7 @@ for (const target of selectedTargets()) {
 						);
 					await visit(route);
 					await acceptButton(page).click();
-					await page.waitForFunction(() => document.cookie.includes('c15t='));
+					await page.waitForFunction(() => document.cookie.includes('inth='));
 					await expect.poll(learned).not.toEqual([]);
 					for (const visitNumber of [2, 3]) {
 						// oxlint-disable-next-line no-await-in-loop -- Each visit follows the last.
@@ -338,7 +338,7 @@ for (const target of selectedTargets()) {
 				// Hiding the banner precedes the deferred persistence effect.
 				// Let every adapter finish saving before destroying its runtime.
 				await expect
-					.poll(() => page.evaluate(() => localStorage.getItem('c15t')))
+					.poll(() => page.evaluate(() => localStorage.getItem('inth')))
 					.not.toBeNull();
 				// These routes await consent on the server, so the reloaded HTML
 				// reflects the stored rejection.
@@ -354,7 +354,7 @@ for (const target of selectedTargets()) {
 					await expect
 						.poll(async () =>
 							(await page.context().cookies()).some(
-								(cookie) => cookie.name === 'c15t'
+								(cookie) => cookie.name === 'inth'
 							)
 						)
 						.toBe(true);
@@ -457,7 +457,7 @@ for (const target of selectedTargets()) {
 						.poll(() =>
 							page.evaluate(() =>
 								getComputedStyle(document.documentElement)
-									.getPropertyValue('--c15t-primary')
+									.getPropertyValue('--inth-primary')
 									.trim()
 							)
 						)
@@ -487,7 +487,7 @@ for (const target of selectedTargets()) {
 				const button =
 					choice === 'accept' ? acceptButton(page) : rejectButton(page);
 				const storedChoice = () =>
-					page.evaluate(() => localStorage.getItem('c15t'));
+					page.evaluate(() => localStorage.getItem('inth'));
 				await page.goto(route, { waitUntil: 'commit' });
 				await button.waitFor({ state: 'visible' });
 				// The banner is server HTML: no bundle has run yet.
@@ -505,7 +505,7 @@ for (const target of selectedTargets()) {
 				await expect.poll(storedChoice).not.toBeNull();
 				// The hiding style goes on the frame after the banner leaves.
 				await expect
-					.poll(() => page.locator('#c15t-early-tap').count())
+					.poll(() => page.locator('#inth-early-tap').count())
 					.toBe(0);
 				if (choice === 'accept') {
 					await expect.poll(() => requests.posthog).toBe(1);
@@ -618,7 +618,7 @@ for (const target of selectedTargets()) {
 			test('Tailwind 4 utilities that rely on @property also need the page link', async () => {
 				// The same page without its own <link> to the Tailwind build, so
 				// the build loads only inside the shadow root. The observer sees
-				// the document, not the shadow root, so c15t's link stays.
+				// the document, not the shadow root, so inth's link stays.
 				await visit('/consent-example/tailwind', false, async (fresh) => {
 					await fresh.addInitScript(() => {
 						new MutationObserver((records) => {
@@ -719,14 +719,14 @@ for (const target of selectedTargets()) {
 				await expect.poll(() => rejectButton(page).isVisible()).toBe(true);
 				await page.evaluate(() => {
 					(window as unknown as { __runtimeMarker: unknown }).__runtimeMarker =
-						(window as unknown as { __c15tAstro: unknown }).__c15tAstro;
+						(window as unknown as { __inthAstro: unknown }).__inthAstro;
 				});
 				const sameRuntime = () =>
 					page.evaluate(
 						() =>
 							(window as unknown as { __runtimeMarker: unknown })
 								.__runtimeMarker ===
-							(window as unknown as { __c15tAstro: unknown }).__c15tAstro
+							(window as unknown as { __inthAstro: unknown }).__inthAstro
 					);
 
 				// A swapped-in page still owes the banner until someone chooses.
@@ -785,7 +785,7 @@ for (const target of selectedTargets()) {
 		}
 
 		if (target.id === 'nuxt') {
-			test('NUXT_PUBLIC_C15T_BACKEND_URL set at start moves the init route to that backend', async () => {
+			test('NUXT_PUBLIC_INTH_PROJECT_URL set at start moves the init route to that backend', async () => {
 				// A second backend address: it records each request and forwards
 				// it to the fixture. The build carries the fixture's own URL.
 				const received: string[] = [];
@@ -814,9 +814,9 @@ for (const target of selectedTargets()) {
 				const address = relay.address() as AddressInfo;
 				try {
 					await server.restart({
-						NUXT_PUBLIC_C15T_BACKEND_URL: `http://127.0.0.1:${address.port}`,
+						NUXT_PUBLIC_INTH_PROJECT_URL: `http://127.0.0.1:${address.port}`,
 					});
-					const response = await fetch(`${server.baseURL}/api/c15t/init`, {
+					const response = await fetch(`${server.baseURL}/api/inth/init`, {
 						headers: { 'x-vercel-ip-country': 'DE' },
 					});
 					expect(response.status).toBe(200);
@@ -836,7 +836,7 @@ for (const target of selectedTargets()) {
 				const head = html.slice(0, html.indexOf('</head>'));
 				// The class is set in <head>, before the banner paints.
 				expect(head).toContain('prefers-color-scheme:dark');
-				expect(head).toContain('--c15t-primary: #7fd1a8;');
+				expect(head).toContain('--inth-primary: #7fd1a8;');
 
 				({ context, page, requests } = await openBrowserContext(
 					browser,
@@ -848,9 +848,9 @@ for (const target of selectedTargets()) {
 				await expect.poll(() => rejectButton(page).isVisible()).toBe(true);
 				expect(
 					await page.evaluate(() => ({
-						dark: document.documentElement.classList.contains('c15t-dark'),
+						dark: document.documentElement.classList.contains('inth-dark'),
 						primary: getComputedStyle(document.documentElement)
-							.getPropertyValue('--c15t-primary')
+							.getPropertyValue('--inth-primary')
 							.trim(),
 					}))
 				).toEqual({ dark: true, primary: '#7fd1a8' });
@@ -859,7 +859,7 @@ for (const target of selectedTargets()) {
 				await expect
 					.poll(() =>
 						page.evaluate(() =>
-							document.documentElement.classList.contains('c15t-dark')
+							document.documentElement.classList.contains('inth-dark')
 						)
 					)
 					.toBe(false);
@@ -883,7 +883,7 @@ for (const target of selectedTargets()) {
 				await expect.poll(dataLayer).toContainEqual(
 					expect.objectContaining({
 						arm: 'wall',
-						event: 'c15t_surface_shown',
+						event: 'inth_surface_shown',
 						experiment_id: 'banner-shape',
 						surface: 'banner',
 					})
@@ -893,13 +893,13 @@ for (const target of selectedTargets()) {
 					expect.objectContaining({
 						arm: 'wall',
 						consent_action: 'all',
-						event: 'c15t_choice_recorded',
+						event: 'inth_choice_recorded',
 						experiment_id: 'banner-shape',
 					})
 				);
 				await expect
 					.poll(() => page.getByTestId('experiment').textContent())
-					.toContain('c15t_choice_recorded');
+					.toContain('inth_choice_recorded');
 			});
 		}
 
@@ -910,9 +910,9 @@ for (const target of selectedTargets()) {
 				// the package defaults load after the theme and must still lose.
 				const firstStyle = await page.evaluate(
 					() =>
-						document.querySelector('#c15t-theme, link[rel="stylesheet"]')?.id
+						document.querySelector('#inth-theme, link[rel="stylesheet"]')?.id
 				);
-				expect(firstStyle).toBe('c15t-theme');
+				expect(firstStyle).toBe('inth-theme');
 				const token = (name: string) =>
 					page.evaluate(
 						(property) =>
@@ -921,8 +921,8 @@ for (const target of selectedTargets()) {
 								.trim(),
 						name
 					);
-				expect(await token('--c15t-primary')).toBe('#6943a3');
-				expect(await token('--c15t-radius-lg')).toBe('18px');
+				expect(await token('--inth-primary')).toBe('#6943a3');
+				expect(await token('--inth-radius-lg')).toBe('18px');
 				expect(requests.unexpected).toEqual([]);
 			});
 		}

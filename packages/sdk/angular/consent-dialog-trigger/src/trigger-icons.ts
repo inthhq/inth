@@ -10,7 +10,7 @@
  *
  * @example
  * ```html
- * <svg c15t-close-icon aria-hidden="true" width="16" height="16"></svg>
+ * <svg inth-close-icon aria-hidden="true" width="16" height="16"></svg>
  * ```
  *
  * @packageDocumentation
@@ -36,7 +36,7 @@ const STROKE_HOST = {
 		fill: 'none',
 		viewBox: '0 0 140 97',
 	},
-	selector: 'svg[c15t-consent-icon]',
+	selector: 'svg[inth-consent-icon]',
 	template: `<svg:title [attr.id]="titleId()">{{ label() }}</svg:title>
 		<svg:path
 			fill="currentColor"
@@ -68,7 +68,7 @@ export class ConsentIcon {
 		'stroke-linecap': 'round',
 		'stroke-linejoin': 'round',
 	},
-	selector: 'svg[c15t-dev-tools-icon]',
+	selector: 'svg[inth-dev-tools-icon]',
 	template: `<svg:path d="m18 16 4-4-4-4" />
 		<svg:path d="m6 8-4 4 4 4" />
 		<svg:path d="m14.5 4-5 16" />`,

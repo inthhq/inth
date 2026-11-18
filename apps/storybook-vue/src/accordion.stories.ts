@@ -1,7 +1,7 @@
 import {
 	multipleModeToggle,
 	singleModeToggle,
-} from '@c15t/conformance/play/accordion';
+} from '@inth/conformance/play/accordion';
 import {
 	getAccordionItemState,
 	isAccordionItemOpen,
@@ -202,7 +202,7 @@ export const WithIntroduction: Story = {
 			<div style="display:grid;gap:1rem;width:32rem">
 				<div style="display:grid;gap:0.5rem">
 					<h3 style="font-size:1.25rem;margin:0">{{ dialogTitle }}</h3>
-					<p style="color:var(--c15t-text-muted);margin:0">{{ dialogDesc }}</p>
+					<p style="color:var(--inth-text-muted);margin:0">{{ dialogDesc }}</p>
 				</div>
 				<div :class="rootClass">
 					<div :class="itemClass" data-slot="accordion-item" :data-state="itemState('purpose-1')">

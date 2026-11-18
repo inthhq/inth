@@ -1,4 +1,4 @@
-import { POLICY_CHOICE } from '@c15t/conformance/fixtures/policy-scenarios';
+import { POLICY_CHOICE } from '@inth/conformance/fixtures/policy-scenarios';
 import { expect, it } from 'vitest';
 
 import { createPolicySession } from './policy-driver';
@@ -23,7 +23,7 @@ it('observes real gate transitions and separate callback records', async () => {
 		expect(evidence.gates?.scriptAttached).toBe(true);
 		expect(evidence.gates?.scriptLoads).toBe(1);
 		expect(evidence.gates?.networkCompletions).toBe(1);
-		expect(evidence.gates?.iframeSrc).toContain('c15t-policy-probe');
+		expect(evidence.gates?.iframeSrc).toContain('inth-policy-probe');
 		expect(evidence.gates?.consentMode.ad_storage).toBe('granted');
 		expect(
 			evidence.logs.callbacks.filter(

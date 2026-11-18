@@ -1,6 +1,6 @@
 ---
 title: Transports
-description: Choose where a JavaScript app's c15t policy comes from and where choices go, with projectUrl and the hosted, manifest and testing modes for @inth/sdk, createConsentRuntime and your own kernel.
+description: Choose where a JavaScript app's Inth policy comes from and where choices go, with projectUrl and the hosted, manifest and testing modes for @inth/sdk, createConsentRuntime and your own kernel.
 group: frameworks
 ---
 
@@ -63,7 +63,7 @@ create yourself, `createHostedTransport({ projectUrl })` from
 
 | Option | What it does |
 | --- | --- |
-| `projectUrl` | The backend URL. Relative URLs such as `/api/c15t` work behind a proxy. |
+| `projectUrl` | The backend URL. Relative URLs such as `/api/inth` work behind a proxy. |
 | `headers` | Request headers to forward on `/init`: `accept-language`, the geo headers and `sec-gpc`. Meant for server code forwarding a visitor's request. |
 | `fetch` | A `fetch` implementation, for tests or unusual runtimes. |
 | `domain` | The domain recorded with each save. Defaults to the page's host. |
@@ -132,7 +132,7 @@ only. It bundles every language. Browser code uses `manifest()`, or
 ### Bundle the manifest during Vite builds
 
 The [quickstart](/docs/frameworks/javascript/quickstart) and
-`examples/javascript` in the c15t repository use this setup.
+`examples/javascript` in the Inth repository use this setup.
 
 <include src="../../shared/build-manifests/javascript.mdx" />
 
@@ -177,5 +177,5 @@ in `data-policy`; see [Modes](/docs/concepts/modes#testing).
 2. With a build-time manifest, it shows no `/manifest` request. With runtime
    manifest mode, it shows a `/manifest` request. Neither calls `/init`, unless
    the policy needs a country the page did not supply.
-3. In a test with `testing()`, it shows no c15t request at all, and the
+3. In a test with `testing()`, it shows no Inth request at all, and the
    choice survives a reload.

@@ -2,7 +2,7 @@ import {
 	recipeAccepts,
 	recipeRejects,
 	recipeRenders,
-} from '@c15t/conformance/play/docs-recipes';
+} from '@inth/conformance/play/docs-recipes';
 import { ConsentBanner } from '@inth/svelte';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 

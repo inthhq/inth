@@ -7,7 +7,7 @@ export type ConsentDevToolsProps = Omit<
 >;
 
 /** Backward-compatible props name for the ConsentDevTools component. */
-export type C15TDevToolsProps = ConsentDevToolsProps;
+export type InthDevToolsProps = ConsentDevToolsProps;
 
 /** Compatible props name for the DevTools component alias. */
 export type DevToolsProps = ConsentDevToolsProps;

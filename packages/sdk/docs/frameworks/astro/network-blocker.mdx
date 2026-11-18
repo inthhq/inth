@@ -1,6 +1,6 @@
 ---
 title: Network blocker
-description: Block fetch and XMLHttpRequest calls to tracking hosts on an Astro site until the visitor allows their consent category, with c15t's network blocker rules and an onRequestBlocked handler.
+description: Block fetch and XMLHttpRequest calls to tracking hosts on an Astro site until the visitor allows their consent category, with inth's network blocker rules and an onRequestBlocked handler.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ until the visitor allows the rule's category. A blocked `fetch` resolves to a
 the page makes, such as an SDK you load yourself or a tag manager's own calls.
 
 It does not stop `navigator.sendBeacon`, WebSockets, image pixels, `<script>`
-tags or iframes. Load scripts through c15t and gate iframes as
+tags or iframes. Load scripts through Inth and gate iframes as
 [Scripts](/docs/frameworks/astro/scripts) and
 [Embeds](/docs/frameworks/astro/embeds) describe.
 
@@ -23,7 +23,7 @@ Rules are plain data, so they can go in the integration options:
 {/* example: fragment */}
 
 ```js title="astro.config.mjs (partial)"
-c15t({
+inth({
 	networkBlocker: {
 		rules: [
 			{ category: 'measurement', domain: 'google-analytics.com' },
@@ -74,7 +74,7 @@ export default {
 			console.info('Blocked until consent:', url, rule?.category);
 		},
 	},
-} satisfies C15tClientOptionsExtension;
+} satisfies InthClientOptionsExtension;
 ```
 
 ## Check the network blocker

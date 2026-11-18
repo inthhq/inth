@@ -157,7 +157,7 @@ export const createNetworkBlockerWith = function createNetworkBlockerWith(
 		if (logBlocked) {
 			// oxlint-disable-next-line no-console -- user-configurable warning
 			console.warn(
-				`[c15t] blocked ${info.method} ${info.url}${
+				`[inth] blocked ${info.method} ${info.url}${
 					info.rule?.id ? ` (rule: ${info.rule.id})` : ''
 				}`
 			);

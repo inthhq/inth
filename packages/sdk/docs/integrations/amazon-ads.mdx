@@ -1,14 +1,14 @@
 ---
 title: Amazon Ads
-description: Load Amazon Ads with c15t after marketing consent and verify its loader, storage and revocation behavior.
-seoTitle: Amazon Ads consent with c15t
-seoDescription: Configure the c15t amazonAdsTag helper, gate vendor requests on marketing consent and understand what happens when consent is withdrawn.
+description: Load Amazon Ads with Inth after marketing consent and verify its loader, storage and revocation behavior.
+seoTitle: Amazon Ads consent with Inth
+seoDescription: Configure the Inth amazonAdsTag helper, gate vendor requests on marketing consent and understand what happens when consent is withdrawn.
 icon: radar
 group: integrations
 ---
 
 The `amazonAdsTag` helper keeps Amazon Ads off the page until `marketing` consent is granted.
-Remove direct snippets and tag manager copies so they cannot bypass c15t.
+Remove direct snippets and tag manager copies so they cannot bypass Inth.
 
 ## Configure Amazon Ads
 
@@ -18,7 +18,7 @@ Remove direct snippets and tag manager copies so they cannot bypass c15t.
 
 <include src="../shared/integrations/register-scripts.mdx" />
 
-The c15t `amazonAdsTag` helper loads Amazon's advertising tag after
+The Inth `amazonAdsTag` helper loads Amazon's advertising tag after
 `marketing` consent. It creates no Amazon queue or script before that grant.
 When you supply the visitor's country, the helper also loads Amazon Consent
 Signal, ACS, and forwards the current permission for ad storage and user data.
@@ -29,7 +29,7 @@ that value. It never assumes `US`. The `region` option selects your Amazon
 advertising account's region and does not identify the visitor's country.
 
 Amazon's template requires a country code to process ACS data. If the country
-is unknown, omit `countryCode`; c15t then loads only the main tag. Confirm
+is unknown, omit `countryCode`; Inth then loads only the main tag. Confirm
 which signals your account and traffic require before deploying. Amazon's
 template states that EEA traffic needs at least one of TCF, GPP or ACS.
 Amazon's [consent-signal requirements](https://advertising.amazon.com/en-gb/resources/ad-policy/consent-signal-requirements)
@@ -64,7 +64,7 @@ present.
 
 ## Loading and revocation
 
-Before the script's permission is granted, c15t creates no `window.amzn`,
+Before the script's permission is granted, Inth creates no `window.amzn`,
 `amzn.q` or `amznConsent`, loads neither Amazon library and sets no Amazon
 cookie or browser storage. This guarantee covers the helper's own actions.
 Remove other Amazon loaders to apply the same gate to the whole page.
@@ -75,7 +75,7 @@ a timestamp, `[arguments, Date.now()]`.
 
 When ACS is enabled, the helper inserts `amzn-consent.js` before the main
 `amzn.js` element and uses ordered script execution. The downloads can
-overlap. After the consent helper executes, c15t calls `amznConsent` with the
+overlap. After the consent helper executes, Inth calls `amznConsent` with the
 real country and both permissions set to `true`. It then queues `setRegion`,
 `addTag` and the optional PageView before the main library executes. Without
 ACS, it queues those commands before inserting the main tag. The helper
@@ -86,7 +86,7 @@ forwards both permissions as `false` and skips initialization. An already
 started helper can still execute after withdrawal. Amazon's helper writes a
 cookie during evaluation, before the first explicit consent update.
 
-If Amazon has not consumed c15t's queued initialization commands, withdrawal
+If Amazon has not consumed inth's queued initialization commands, withdrawal
 removes those entries. Amazon can still be waiting to consume the queue after
 the browser reports that `amzn.js` has loaded. The helper preserves commands
 your application queued itself.
@@ -95,7 +95,7 @@ Both loaders stay on the page after revocation. When ACS is available, the
 helper calls `amznConsent` with `enableAdStorage: false` and
 `enableUserData: false`. This forwards withdrawal. Amazon documents no
 shutdown or unload command for this tag, and ACS denial does not stop all
-requests from the running runtime. Keep c15t's default reload on revocation
+requests from the running runtime. Keep inth's default reload on revocation
 to stop that runtime. Removing script elements cannot undo executed code,
 requests already sent or cookies already set.
 
@@ -107,10 +107,10 @@ once for the new grant. Changes to unrelated consent categories do not
 repeat these calls.
 
 Full loader disposal or configuration replacement detaches that lifecycle's
-load and error listeners. c15t removes its ACS element after the final
+load and error listeners. Inth removes its ACS element after the final
 registration using that element releases it, including registrations with
 different options that borrow the same helper.
-c15t leaves externally supplied helper elements in place. A disposed helper's
+Inth leaves externally supplied helper elements in place. A disposed helper's
 late completion cannot initialize the tag or forward an old consent state.
 ACS permission stays granted while at least one active distinct configuration
 with `countryCode` passes its effective consent gate. Releasing or withdrawing
@@ -124,7 +124,7 @@ vendor restrictions.
 Removing an element does not abort code already downloaded or stop a running
 Amazon runtime. Keep the default revocation reload enabled.
 
-If the ACS library fails to load, c15t reports the failure and withholds the
+If the ACS library fails to load, Inth reports the failure and withholds the
 tag registration and initial PageView. The main library remains a normal
 core script resource with its own load and error events. Reload to retry a
 failed consent-helper download.
@@ -166,7 +166,7 @@ cookies on Amazon's domains.
 3. Change an unrelated consent category. There should be no second loader
    or initial PageView.
 4. Withdraw marketing. With ACS enabled, check that both signals become
-   denied. After c15t reloads the page, neither Amazon library should load.
+   denied. After Inth reloads the page, neither Amazon library should load.
    If reload is disabled, test your application event guards and do not
    treat ACS denial as proof that all Amazon traffic stopped.
 

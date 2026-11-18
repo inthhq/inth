@@ -48,7 +48,7 @@ export const policyTypeSchema = v.picklist([
 
 /**
  * Valibot schema validating any consent policy type that can be stored or
- * returned by c15t.
+ * returned by Inth.
  *
  * This preserves the closed built-in {@link policyTypeSchema} while also
  * accepting suffixed legal-document variants through

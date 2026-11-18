@@ -52,7 +52,7 @@ describe('IAB Events E2E Tests', () => {
 			// only after both records are stored, as a reload would.
 			await vi.waitFor(() => {
 				expect(window.localStorage.getItem('euconsent-v2')).toBeTruthy();
-				expect(window.localStorage.getItem('c15t')).toBeTruthy();
+				expect(window.localStorage.getItem('inth')).toBeTruthy();
 			});
 			await firstVisit.unmount();
 			delete (window as { __tcfapi?: unknown }).__tcfapi;

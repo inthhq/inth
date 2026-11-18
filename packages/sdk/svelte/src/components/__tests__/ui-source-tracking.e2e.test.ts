@@ -67,7 +67,7 @@ describe('UI Source Tracking E2E Tests', () => {
 			await fireEvent.click(acceptButton);
 
 			await waitFor(() => {
-				const stored = window.localStorage.getItem('c15t');
+				const stored = window.localStorage.getItem('inth');
 				expect(stored).toBeTruthy();
 				const consent = readStoredRecords(undefined, Date.now()).records.choice;
 				expect(consent?.version).toBe(3);
@@ -171,7 +171,7 @@ describe('UI Source Tracking E2E Tests', () => {
 
 			// Verify consent was saved
 			await waitFor(() => {
-				const stored = window.localStorage.getItem('c15t');
+				const stored = window.localStorage.getItem('inth');
 				expect(stored).toBeTruthy();
 				const consent = readStoredRecords(undefined, Date.now()).records.choice;
 				expect(consent?.categories).toBeTruthy();

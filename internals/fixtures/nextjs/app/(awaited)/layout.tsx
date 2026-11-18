@@ -2,7 +2,7 @@ import { resolveConsent } from '@inth/nextjs/server';
 import { Suspense } from 'react';
 import type { ReactNode } from 'react';
 
-import consentConfig from '@/c15t.config';
+import consentConfig from '@/inth.config';
 import { Consent } from '@/components/consent';
 
 import '@/styles/globals.css';

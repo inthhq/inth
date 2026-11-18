@@ -12,7 +12,7 @@ import {
 } from '../libs/request-context-headers';
 import type { InitContext } from '../types';
 import { trimSlash } from './hosted-records';
-import { c15tProtocolParams } from './version-header';
+import { inthProtocolParams } from './version-header';
 
 /** The `GET /init` request the hosted transport sends. */
 export interface HostedInitRequest {
@@ -61,7 +61,7 @@ export const createHostedInitRequest =
 	}): HostedInitRequest {
 		const base = options.initUrl ?? `${trimSlash(options.projectUrl)}/init`;
 		const params = appendInitParams(base, {
-			...c15tProtocolParams,
+			...inthProtocolParams,
 			...buildRequestContextParams(options.overrides),
 			experiment: options.experiment,
 		});
@@ -72,7 +72,7 @@ export const createHostedInitRequest =
 					storedChoice: options.journey.storedChoice,
 				})
 			: params;
-		// An `initUrl` parameter c15t does not replace, such as `?gpc=1`,
+		// An `initUrl` parameter Inth does not replace, such as `?gpc=1`,
 		// reaches the backend, so the response is read against it too.
 		const requestHeaders = Object.fromEntries(
 			applyInitParamsToHeaders(

@@ -24,7 +24,7 @@ let client: AstroConsentClient | null = null;
 /** Boots the page as the server rendered it, and returns the vendor's tag. */
 const loadedTag = (experimentalScriptRegistry?: boolean) => {
 	// The server's init, with the registry's list, as the page carries it.
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig = {
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = {
 		initialPolicyResolution: testResolution(),
 		initialScriptRegistry: {
 			sources: {
@@ -66,7 +66,7 @@ afterEach(() => {
 	client?.dispose();
 	client = null;
 	document.head.innerHTML = '';
-	(window as unknown as Record<string, unknown>).__c15tAstro = undefined;
+	(window as unknown as Record<string, unknown>).__inthAstro = undefined;
 });
 
 it('loads an integration from the registry source init lists', () => {

@@ -20,12 +20,12 @@ import { saveFailure } from './save-rejection';
 import { buildSubjectPostBody, subjectsURL } from './subject-body';
 import type { SubjectSavePayload } from './subject-body';
 import type { TransportHydrationRecords } from './subject-record';
-import { c15tProtocolHeaders } from './version-header';
+import { inthProtocolHeaders } from './version-header';
 
 /** Options for {@link createHostedRecordTransport}. */
 export interface HostedRecordTransportOptions {
 	/**
-	 * Backend URL. Can be relative (`/api/c15t`) or absolute.
+	 * Backend URL. Can be relative (`/api/inth`) or absolute.
 	 * Trailing slashes are stripped.
 	 */
 	projectUrl: string;
@@ -141,7 +141,7 @@ export const resolveFetch = function resolveFetch(
  * ```ts
  * import { createHostedRecordTransport } from '@inth/sdk-core';
  *
- * const records = createHostedRecordTransport({ projectUrl: '/api/c15t' });
+ * const records = createHostedRecordTransport({ projectUrl: '/api/inth' });
  * await records.save(payload);
  * ```
  */
@@ -158,7 +158,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 	const jsonHeaders = {
 		accept: 'application/json',
 		'content-type': 'application/json',
-		...c15tProtocolHeaders,
+		...inthProtocolHeaders,
 	};
 
 	const subjectURL = (subjectId: string): string =>
@@ -168,7 +168,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 		route: string,
 		response: Response
 	): Promise<Error> {
-		return failedResponseError(`c15t hosted transport: ${route}`, response);
+		return failedResponseError(`inth hosted transport: ${route}`, response);
 	};
 
 	return {
@@ -204,7 +204,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 		): Promise<TransportHydrationRecords | null> {
 			const response = await fetchImpl(subjectURL(subjectId), {
 				credentials,
-				headers: { accept: 'application/json', ...c15tProtocolHeaders },
+				headers: { accept: 'application/json', ...inthProtocolHeaders },
 				method: 'GET',
 			});
 			if (response.status === 404) {
@@ -220,7 +220,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 			const record = reviveSubjectRecord(body);
 			if (!record) {
 				throw new Error(
-					'c15t hosted transport: /subjects/:id returned an unreadable record'
+					'inth hosted transport: /subjects/:id returned an unreadable record'
 				);
 			}
 			return mapSubjectRecordToHydrationRecords(record, { now: now() });
@@ -245,7 +245,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 				}
 				if (!buildDecisionAssertion(payload, decision.inputs())) {
 					throw new Error(
-						'c15t hosted transport: cannot save before init resolved a policy decision (assertDecisionInputs is set).'
+						'inth hosted transport: cannot save before init resolved a policy decision (assertDecisionInputs is set).'
 					);
 				}
 			}
@@ -261,7 +261,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 			});
 
 			if (!response.ok) {
-				throw await saveFailure(response, 'c15t hosted transport');
+				throw await saveFailure(response, 'inth hosted transport');
 			}
 
 			return toSaveResult(await response.json());

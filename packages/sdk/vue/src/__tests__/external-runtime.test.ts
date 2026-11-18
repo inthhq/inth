@@ -7,7 +7,7 @@ import { defineComponent, h, inject } from 'vue';
 
 import { createIAB } from '../../../iab/src';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { c15tVue } from '../index';
+import { inthVue } from '../index';
 import { createVueConsentKernelContext } from '../runtime/kernel';
 import { selectedMode } from '../runtime/modes';
 import { symbolKernel } from '../runtime/utils/symbols';
@@ -65,7 +65,7 @@ describe('createVueConsentKernelContext with an external runtime', () => {
 	test('still owns the kernel when no runtime is passed', () => {
 		const context = createVueConsentKernelContext({
 			config: {},
-			mode: selectedMode({ projectUrl: '/api/c15t' }),
+			mode: selectedMode({ projectUrl: '/api/inth' }),
 		});
 		const dispose = vi.spyOn(context.kernel, 'dispose');
 
@@ -93,7 +93,7 @@ describe('starting a context around an external runtime', () => {
 
 		expect(init).not.toHaveBeenCalled();
 		expect(
-			(window as Window & { c15t?: { pkg: string } }).c15t
+			(window as Window & { inth?: { pkg: string } }).inth
 		).toBeUndefined();
 
 		stop();
@@ -101,14 +101,14 @@ describe('starting a context around an external runtime', () => {
 	});
 });
 
-describe('the c15tVue plugin', () => {
+describe('the inthVue plugin', () => {
 	test('provides the runtime kernel and leaves its lifecycle alone', () => {
 		const runtime = createRuntime();
 		const dispose = vi.spyOn(runtime.kernel, 'dispose');
 		const init = vi.spyOn(runtime.kernel.commands, 'init');
 
 		const wrapper = mount(KernelProbe, {
-			global: { plugins: [[c15tVue, { runtime }]] },
+			global: { plugins: [[inthVue, { runtime }]] },
 		});
 
 		expect(wrapper.vm.$.appContext.provides[symbolKernel as symbol]).toBe(

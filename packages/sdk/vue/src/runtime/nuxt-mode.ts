@@ -6,12 +6,12 @@
 import type { ConsentMode, HostedMode } from '@inth/sdk/modes';
 
 /** Where the module serves its consent route unless `routePrefix` says otherwise. */
-export const DEFAULT_NUXT_ROUTE_PREFIX = '/api/c15t';
+export const DEFAULT_NUXT_ROUTE_PREFIX = '/api/inth';
 
 /** The Nuxt module options that choose where the policy comes from. */
 export interface NuxtConsentModeConfig {
 	/**
-	 * Backend URL. Defaults to `NUXT_PUBLIC_C15T_BACKEND_URL`, then
+	 * Backend URL. Defaults to `NUXT_PUBLIC_INTH_PROJECT_URL`, then
 	 * `NUXT_PUBLIC_INTH_PROJECT_URL`, read when the build starts and again
 	 * by the server at runtime.
 	 */
@@ -40,7 +40,7 @@ export interface NuxtConsentModeConfig {
 	 * and the browser asks the backend. `/` is rejected when the module
 	 * sets up: a catch-all route at the site root would catch every page.
 	 *
-	 * @default '/api/c15t'
+	 * @default '/api/inth'
 	 */
 	routePrefix?: string | false;
 }

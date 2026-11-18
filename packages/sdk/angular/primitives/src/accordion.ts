@@ -24,18 +24,18 @@ import { uniqueId } from './unique-id';
  *
  * @example
  * ```html
- * <div c15tAccordion type="single" [collapsible]="true" [(value)]="open">
- *   <div c15tAccordionItem value="analytics">
- *     <button c15tAccordionTrigger>Analytics</button>
- *     <section c15tAccordionContent>…</section>
+ * <div inthAccordion type="single" [collapsible]="true" [(value)]="open">
+ *   <div inthAccordionItem value="analytics">
+ *     <button inthAccordionTrigger>Analytics</button>
+ *     <section inthAccordionContent>…</section>
  *   </div>
  * </div>
  * ```
  */
 @Directive({
-	exportAs: 'c15tAccordion',
+	exportAs: 'inthAccordion',
 	host: { 'data-slot': 'accordion-root' },
-	selector: '[c15tAccordion]',
+	selector: '[inthAccordion]',
 })
 export class Accordion {
 	/** One open item, or any number. */
@@ -88,13 +88,13 @@ export class Accordion {
 
 /** One accordion item. */
 @Directive({
-	exportAs: 'c15tAccordionItem',
+	exportAs: 'inthAccordionItem',
 	host: {
 		'[attr.data-disabled]': 'dataDisabled()',
 		'[attr.data-state]': 'dataState()',
 		'data-slot': 'accordion-item',
 	},
-	selector: '[c15tAccordionItem]',
+	selector: '[inthAccordionItem]',
 })
 export class AccordionItem {
 	readonly #root = inject(Accordion);
@@ -104,9 +104,9 @@ export class AccordionItem {
 	readonly disabled = input(false);
 
 	/** @internal */
-	readonly triggerId = uniqueId('c15t-accordion-trigger');
+	readonly triggerId = uniqueId('inth-accordion-trigger');
 	/** @internal */
-	readonly contentId = uniqueId('c15t-accordion-content');
+	readonly contentId = uniqueId('inth-accordion-content');
 	/** Whether the item is open. */
 	readonly open = computed(() =>
 		isAccordionItemOpen(this.#root.type(), this.#root.value(), this.value())
@@ -147,7 +147,7 @@ export class AccordionItem {
 		'[id]': 'item.triggerId',
 		'data-slot': 'accordion-trigger',
 	},
-	selector: '[c15tAccordionTrigger]',
+	selector: '[inthAccordionTrigger]',
 })
 export class AccordionTrigger {
 	/** @internal */
@@ -175,7 +175,7 @@ export class AccordionTrigger {
 		'[id]': 'item.contentId',
 		'data-slot': 'accordion-content',
 	},
-	selector: '[c15tAccordionContent]',
+	selector: '[inthAccordionContent]',
 })
 export class AccordionContent {
 	/** @internal */

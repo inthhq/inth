@@ -89,7 +89,7 @@ export const missingFrameworks = function missingFrameworks(
  * the snippet the docs publish for that adapter, and the adapters customize
  * differently (React compound parts, Vue and Svelte slot classes, Astro's
  * server-rendered components), so a shared title does not promise shared
- * markup. The shared conformance plays (`@c15t/conformance/play`) check
+ * markup. The shared conformance plays (`@inth/conformance/play`) check
  * their behavior in each Storybook's `test-storybook` run instead; parity
  * stays on the component stories.
  */

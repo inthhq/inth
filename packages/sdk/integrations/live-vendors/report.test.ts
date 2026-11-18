@@ -99,7 +99,7 @@ describe('buildMonitorIssueBody', () => {
 			loader: {
 				contentType: 'text/html',
 				status: 500,
-				url: 'https://www.clarity.ms/tag/c15tfake00',
+				url: 'https://www.clarity.ms/tag/inthfake00',
 			},
 			ok: false,
 			phases: {
@@ -112,7 +112,7 @@ describe('buildMonitorIssueBody', () => {
 		expect(body).toContain('`microsoft-clarity`');
 		expect(body).toContain('@inth/integrations/microsoft-clarity');
 		expect(body).toContain('**Failed phase(s)**: load');
-		expect(body).toContain('https://www.clarity.ms/tag/c15tfake00');
+		expect(body).toContain('https://www.clarity.ms/tag/inthfake00');
 		expect(body).toContain('HTTP 500');
 		expect(body).toContain('abc1234');
 		expect(body).toContain('https://github.com/c15t/c15t/actions/runs/1');

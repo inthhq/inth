@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Zero-consent baseline: the same SvelteKit shell, server-rendered, with
-	 * no c15t anywhere in the route's module graph. Gives the floor that
+	 * no Inth anywhere in the route's module graph. Gives the floor that
 	 * `consentTax = bannerVisible − floor` subtracts.
 	 */
 	import { publishBaselineProbe } from '$lib/baseline-probe';

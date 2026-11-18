@@ -10,7 +10,7 @@ export interface IABConsentBannerHarnessFilters extends BaseHarnessFilters {
 }
 
 /**
- * Drives `<c15t-iab-consent-banner>`, the first layer of an IAB TCF CMP.
+ * Drives `<inth-iab-consent-banner>`, the first layer of an IAB TCF CMP.
  *
  * The banner renders into `<body>`, so find it with
  * `TestbedHarnessEnvironment.documentRootLoader(fixture)`. It renders once

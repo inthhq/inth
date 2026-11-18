@@ -84,15 +84,15 @@ export interface ConsentManagerOptions
 			| 'trapFocus'
 		> {
 	/**
-	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how the
+	 * Backend URL, relative (`/api/inth`) or absolute. Setting it is how the
 	 * provider talks to the hosted backend. Defaults to the URL
 	 * `consentManifest()` from `@inth/svelte/vite` read from
-	 * `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. Initial-only:
+	 * `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`. Initial-only:
 	 * remount the provider to change it.
 	 *
 	 * @example
 	 * ```svelte
-	 * <ConsentProvider projectUrl="/api/c15t">
+	 * <ConsentProvider projectUrl="/api/inth">
 	 *   {@render children()}
 	 * </ConsentProvider>
 	 * ```
@@ -129,7 +129,7 @@ export interface ConsentManagerOptions
 	 *
 	 * @example
 	 * ```svelte
-	 * <ConsentProvider projectUrl="/api/c15t" gpp={{ usApproach: 'national' }}>
+	 * <ConsentProvider projectUrl="/api/inth" gpp={{ usApproach: 'national' }}>
 	 *   {@render children()}
 	 * </ConsentProvider>
 	 * ```
@@ -154,7 +154,7 @@ export interface ConsentManagerOptions
 	 * The standard and IAB banners and dialogs, dialog trigger, ConsentGate
 	 * and preference widget each insert their rules into `<head>` as
 	 * `<style>` elements, carrying `nonce`. On a server-rendered SvelteKit page,
-	 * `c15tHandle` writes the banner's rules into the HTML. No c15t
+	 * `inthHandle` writes the banner's rules into the HTML. No Inth
 	 * stylesheet `<link>` then holds back the page's first paint.
 	 *
 	 * Set `false` when the app imports `@inth/svelte/styles.css` itself, for
@@ -168,9 +168,9 @@ export interface ConsentManagerOptions
 	 * Slot styles and consent-action variants. Design tokens (colors, dark,
 	 * typography, spacing, radius, shadows, motion) are not applied in the
 	 * browser: render `generateThemeCSS(theme)` from `@inth/sdk/ui/theme` in a
-	 * server `load` as `<style id="c15t-theme">` in `<svelte:head>`, or put
+	 * server `load` as `<style id="inth-theme">` in `<svelte:head>`, or put
 	 * its output in a stylesheet. In development the provider warns when
-	 * `theme` has tokens and the page has no `#c15t-theme` element.
+	 * `theme` has tokens and the page has no `#inth-theme` element.
 	 */
 	theme?: Theme;
 }
@@ -189,17 +189,17 @@ export type ConsentProviderCallbacks = NonNullable<
  */
 export interface ConsentRootState {
 	/**
-	 * How `c15tHandle()` resolves the visitor, as data: `manifest()`,
+	 * How `inthHandle()` resolves the visitor, as data: `manifest()`,
 	 * `hosted()` or `testing()`.
 	 */
 	mode: KitMode;
 	/** The visitor's consent state the server resolved. */
 	prefetch: Omit<KernelConfig, 'transport'> & ExperimentState;
-	/** The c15t backend. Saves go here. */
+	/** The Inth backend. Saves go here. */
 	projectUrl?: string;
 	/**
-	 * Prefix of the app's consent route, such as `/api/c15t`, when
-	 * `c15tHandle()` was given one. The browser re-inits and fetches the
+	 * Prefix of the app's consent route, such as `/api/inth`, when
+	 * `inthHandle()` was given one. The browser re-inits and fetches the
 	 * manifest through it.
 	 */
 	routePrefix?: string;

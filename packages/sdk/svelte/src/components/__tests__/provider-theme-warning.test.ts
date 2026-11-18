@@ -25,7 +25,7 @@ describe('ConsentProvider theme tokens warning', () => {
 
 	afterEach(() => {
 		warn.mockRestore();
-		document.getElementById('c15t-theme')?.remove();
+		document.getElementById('inth-theme')?.remove();
 	});
 
 	test('warns when theme tokens have no stylesheet on the page', async () => {
@@ -43,7 +43,7 @@ describe('ConsentProvider theme tokens warning', () => {
 
 	test('stays quiet when the page renders the theme stylesheet', async () => {
 		const style = document.createElement('style');
-		style.id = 'c15t-theme';
+		style.id = 'inth-theme';
 		document.head.append(style);
 
 		render(ThemeSwapFixture, {

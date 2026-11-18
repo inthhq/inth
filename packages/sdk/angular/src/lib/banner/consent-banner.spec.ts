@@ -6,7 +6,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ConsentRoot } from '../../../consent-root/src/consent-root';
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
-import { provideC15t } from '../core/provide-c15t';
+import { provideInth } from '../core/provide-inth';
 import { ConsentButton } from '../shared/consent-button';
 import {
 	ConsentBannerAction,
@@ -26,25 +26,25 @@ import { ConsentBanner } from './consent-banner';
 	],
 	selector: 'test-custom-banner',
 	template: `
-		<c15t-consent-banner>
+		<inth-consent-banner>
 			<ng-template
-				c15tConsentBannerTitle
+				inthConsentBannerTitle
 				let-title
 				>Custom: {{ title }}</ng-template
 			>
 			<ng-template
-				c15tConsentBannerDescription
+				inthConsentBannerDescription
 				let-notice="notice"
 				>Notice: {{ notice }}</ng-template
 			>
 			<ng-template
-				c15tConsentBannerAction
+				inthConsentBannerAction
 				let-action
 				let-label="label"
 				let-testId="testId"
 			>
 				<button
-					c15t-consent-button
+					inth-consent-button
 					[action]="action"
 					[attr.data-testid]="'custom-' + testId"
 				>
@@ -56,7 +56,7 @@ import { ConsentBanner } from './consent-banner';
 				href="/cookies"
 				>Cookies</a
 			>
-		</c15t-consent-banner>
+		</inth-consent-banner>
 	`,
 })
 class CustomBannerHost {}
@@ -65,12 +65,12 @@ class CustomBannerHost {}
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentRoot],
 	selector: 'test-root-host',
-	template: '<c15t-consent-root [hideBranding]="true" />',
+	template: '<inth-consent-root [hideBranding]="true" />',
 })
 class RootHost {}
 
 const boot = async (host: new () => unknown) => {
-	TestBed.configureTestingModule({ providers: [provideC15t(testOptions())] });
+	TestBed.configureTestingModule({ providers: [provideInth(testOptions())] });
 	const fixture = TestBed.createComponent(host);
 	const consent = TestBed.inject(ConsentManager);
 	await fixture.whenStable();
@@ -88,7 +88,7 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-describe('<c15t-consent-banner> lifecycle', () => {
+describe('<inth-consent-banner> lifecycle', () => {
 	test('leaves the page in the change detection after a choice, with motion on', async () => {
 		const { byTestId, consent, fixture } = await boot(CustomBannerHost);
 		expect(byTestId('consent-banner-root')).not.toBeNull();
@@ -101,14 +101,14 @@ describe('<c15t-consent-banner> lifecycle', () => {
 	test('ends its markup with the marker the stylesheet waits for', async () => {
 		const { byTestId } = await boot(CustomBannerHost);
 		const root = byTestId('consent-banner-root');
-		expect(root?.hasAttribute('data-c15t-streamed')).toBe(true);
-		expect(root?.lastElementChild?.hasAttribute('data-c15t-stream-end')).toBe(
+		expect(root?.hasAttribute('data-inth-streamed')).toBe(true);
+		expect(root?.lastElementChild?.hasAttribute('data-inth-stream-end')).toBe(
 			true
 		);
 	});
 });
 
-describe('<c15t-consent-banner> templates', () => {
+describe('<inth-consent-banner> templates', () => {
 	test('replace the copy and the buttons, and project into the footer', async () => {
 		const { byTestId, consent, fixture } = await boot(CustomBannerHost);
 		expect(byTestId('consent-banner-title')?.textContent?.trim()).toBe(
@@ -136,7 +136,7 @@ describe('<c15t-consent-banner> templates', () => {
 	});
 });
 
-describe('<c15t-consent-root>', () => {
+describe('<inth-consent-root>', () => {
 	test('renders the banner and opens the dialog from Customize', async () => {
 		const { byTestId, fixture } = await boot(RootHost);
 		expect(byTestId('consent-banner-root')).not.toBeNull();
@@ -151,10 +151,10 @@ describe('<c15t-consent-root>', () => {
 });
 
 describe('a tap before hydration', () => {
-	const EARLY_TAPS = '__c15tEarlyTaps';
+	const EARLY_TAPS = '__inthEarlyTaps';
 
 	afterEach(() => {
-		document.getElementById('c15t-early-tap')?.remove();
+		document.getElementById('inth-early-tap')?.remove();
 		Reflect.deleteProperty(window, EARLY_TAPS);
 	});
 
@@ -178,9 +178,9 @@ describe('a tap before hydration', () => {
 	test('records the tapped accept once the banner hydrates', async () => {
 		tapServerBanner('accept');
 		// The script hid the banner for the visitor.
-		expect(document.getElementById('c15t-early-tap')).not.toBeNull();
+		expect(document.getElementById('inth-early-tap')).not.toBeNull();
 		TestBed.configureTestingModule({
-			providers: [provideC15t(testOptions())],
+			providers: [provideInth(testOptions())],
 		});
 		const fixture = TestBed.createComponent(RootHost);
 		const consent = TestBed.inject(ConsentManager);
@@ -194,14 +194,14 @@ describe('a tap before hydration', () => {
 			expect(
 				document.querySelector('[data-testid="consent-banner-root"]')
 			).toBeNull();
-			expect(document.getElementById('c15t-early-tap')).toBeNull();
+			expect(document.getElementById('inth-early-tap')).toBeNull();
 		});
 	});
 
 	test('opens the dialog for a tapped Customize', async () => {
 		tapServerBanner('customize');
 		TestBed.configureTestingModule({
-			providers: [provideC15t(testOptions())],
+			providers: [provideInth(testOptions())],
 		});
 		const fixture = TestBed.createComponent(RootHost);
 		const consent = TestBed.inject(ConsentManager);

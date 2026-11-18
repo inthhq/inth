@@ -5,11 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { installGlobal } from '../global';
 import { mountGPP } from '../gpp';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+import type { TestingInthGlobal as InthGlobal } from '../testing-global';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { init } from './fixtures/factory-init';
 
-const testWindow = window as Window & { c15t?: unknown };
+const testWindow = window as Window & { inth?: unknown };
 const options: ScriptTagClientOptions = {
 	overrides: { country: 'US', region: 'CA' },
 	persistence: false,
@@ -35,13 +35,13 @@ const loadAddon = async function loadAddon(): Promise<void> {
 };
 
 /** Install the main tag over whatever the page queued. */
-const loadTag = function loadTag(): C15tGlobal {
+const loadTag = function loadTag(): InthGlobal {
 	return installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 };
 
 afterEach(() => {
-	(testWindow.c15t as C15tGlobal | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	for (const client of clients.splice(0)) {
 		client.dispose();
 	}
@@ -83,7 +83,7 @@ describe('mountGPP', () => {
 
 describe('c15t.gpp.js', () => {
 	it('mounts __gpp when it loads before the main tag', async () => {
-		testWindow.c15t = [['config', options]];
+		testWindow.inth = [['config', options]];
 		await loadAddon();
 		expect(ping()?.cmpStatus).toBe('stub');
 
@@ -129,7 +129,7 @@ describe('c15t.gpp.js', () => {
 	});
 
 	it('stays off and removes its stub when the page sets gpp: false', async () => {
-		testWindow.c15t = [['config', { ...options, gpp: false }]];
+		testWindow.inth = [['config', { ...options, gpp: false }]];
 		await loadAddon();
 		const api = loadTag();
 		api.init();

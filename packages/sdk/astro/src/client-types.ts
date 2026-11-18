@@ -13,7 +13,7 @@ import type {
 } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 
-import type { C15tResolvedOptions } from './types';
+import type { InthResolvedOptions } from './types';
 import type { ConsentDialogKind } from './ui/adapter';
 
 /** Actions the banner can trigger. */
@@ -48,7 +48,7 @@ export interface AstroConsentClient {
 	 */
 	readonly runtime: ConsentRuntime | undefined;
 	/** The resolved integration options. */
-	readonly options: C15tResolvedOptions;
+	readonly options: InthResolvedOptions;
 	/**
 	 * Resolves once the consent engine has loaded and `runtime` is set.
 	 * Reading it does not load the engine.

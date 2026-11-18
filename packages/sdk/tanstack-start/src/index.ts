@@ -40,7 +40,7 @@
  * the state carries it, the mode and the route prefix to `ConsentRoot`.
  * The browser gets init from `${projectUrl}/init` and saves to
  * `${projectUrl}/subjects`. Apps that mount `createConsentRoute()` at
- * `/api/c15t/$` pass `routePrefix: '/api/c15t'` to
+ * `/api/inth/$` pass `routePrefix: '/api/inth'` to
  * `createConsentStateHandler()` to resolve init on their own origin, the
  * same option Next.js `defineConsentConfig` takes. With
  * `createConsentRoute({ proxy: true })`, also pass `proxy: true` there;

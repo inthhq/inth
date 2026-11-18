@@ -286,7 +286,7 @@ const reactCss = reactAssets
 	.map((file) => readFileSync(join(root, 'react/dist/assets', file), 'utf8'))
 	.join('');
 check(
-	reactCss.includes('--c15t-'),
+	reactCss.includes('--inth-'),
 	'@inth/react/styles.css brings the UI tokens'
 );
 
@@ -376,7 +376,7 @@ write(
 	`import { hosted } from '@inth/nuxt';
 
 export default defineNuxtConfig({
-	c15t: { mode: hosted(), projectUrl: 'https://example.inth.app' },
+	inth: { mode: hosted(), projectUrl: 'https://example.inth.app' },
 	compatibilityDate: '2026-07-04',
 	modules: ['@inth/nuxt'],
 });
@@ -397,7 +397,7 @@ import ConsentBanner from '@inth/nuxt/components/consent-banner';
 `
 );
 run(join(root, 'node_modules/.bin/nuxt'), ['build', 'nuxt-app'], root, {
-	C15T_ON_BUILD_ERROR: 'runtime',
+	INTH_ON_BUILD_ERROR: 'runtime',
 });
 check(
 	existsSync(join(root, 'nuxt-app/.output/server/index.mjs')),

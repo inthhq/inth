@@ -21,7 +21,7 @@ const createDeferredPromise = function createDeferredPromise<Value>(
 	return deferred.promise;
 };
 
-const RETRY_SESSIONS_COOKIE = 'c15t_demo_retry_sessions';
+const RETRY_SESSIONS_COOKIE = 'inth_demo_retry_sessions';
 const MAX_RETRY_SESSIONS = 12;
 
 const noStoreHeaders = function noStoreHeaders(contentType: string) {
@@ -130,8 +130,8 @@ export const GET = async function GET(request: Request) {
 
 		const encodedSession = JSON.stringify(session);
 		return new Response(
-			`window.__c15tIntegrationFixtures ??= {};
-			window.__c15tIntegrationFixtures[${encodedSession}] = {
+			`window.__inthIntegrationFixtures ??= {};
+			window.__inthIntegrationFixtures[${encodedSession}] = {
 				attempt: 2,
 				session: ${encodedSession}
 			};`,

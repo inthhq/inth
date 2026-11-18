@@ -86,7 +86,7 @@ const BenchmarkContents = ({
 }) => (
 	<>
 		<TanstackBenchmarkProbe scenario={scenario} />
-		{import.meta.env.C15T_BENCH_IAB === '1' && (
+		{import.meta.env.INTH_BENCH_IAB === '1' && (
 			<IABProvider cmpId={28}>
 				<IABConsentBanner disableAnimation />
 			</IABProvider>
@@ -124,7 +124,7 @@ export const TanstackManifestClientBenchmarkProvider = ({
 	const transport = useMemo(
 		() =>
 			createManifestTransport({
-				manifestUrl: '/api/c15t/manifest',
+				manifestUrl: '/api/inth/manifest',
 				projectUrl: BENCH_BACKEND_URL,
 			}),
 		[]
@@ -175,7 +175,7 @@ export const TanstackManifestBenchmarkProvider = ({
 	projectUrl = BENCH_BACKEND_URL,
 	children,
 	state,
-	routePrefix = '/api/c15t',
+	routePrefix = '/api/inth',
 	scenario,
 }: {
 	projectUrl?: string;

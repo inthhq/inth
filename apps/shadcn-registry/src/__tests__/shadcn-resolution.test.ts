@@ -36,13 +36,13 @@ afterAll(() => {
 });
 
 /**
- * Resolves an item the way `shadcn add @c15t/...` does in a project with
+ * Resolves an item the way `shadcn add @inth/...` does in a project with
  * this `style`. An empty `tailwindConfig` is how shadcn marks Tailwind v4.
  */
 const resolve = async (style: string | undefined, tailwindConfig: string) => {
 	const [item] = await getRegistryItems(['@c15t/react-consent-banner'], {
 		config: {
-			registries: { '@c15t': template },
+			registries: { '@inth': template },
 			style,
 			tailwind: {
 				baseColor: 'neutral',
@@ -56,7 +56,7 @@ const resolve = async (style: string | undefined, tailwindConfig: string) => {
 	return item?.name;
 };
 
-describe('the @c15t namespace', () => {
+describe('the @inth namespace', () => {
 	it.each(styles.map(({ name }) => name))(
 		'resolves for a Tailwind v4 project with style %s',
 		async (style) => {

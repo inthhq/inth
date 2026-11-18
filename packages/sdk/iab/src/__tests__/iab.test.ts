@@ -4,7 +4,7 @@
  * Verifies:
  * - createIAB seeds the kernel's iab slice (cmpId, customVendors).
  * - setVendorConsent / setPurposeConsent route through kernel.set.iab.
- * - setPurposeConsent also propagates to c15t categories.
+ * - setPurposeConsent also propagates to Inth categories.
  * - acceptAll / rejectAll flip every vendor + purpose.
  * - dispose cleans up the CMP API + kernel subscription.
  */
@@ -180,7 +180,7 @@ describe('createIAB: mutations', () => {
 		iab.dispose();
 	});
 
-	test('setPurposeConsent propagates to c15t categories when all related purposes are granted', () => {
+	test('setPurposeConsent propagates to inth categories when all related purposes are granted', () => {
 		const kernel = createConsentKernel();
 		const iab = createIAB({ cmpId: 28, gvl: MOCK_GVL, kernel });
 
@@ -210,7 +210,7 @@ describe('createIAB: mutations', () => {
 		expect(snap.iab?.purposeConsents[3]).toBe(true);
 		// No vendor declares the special feature, so it is never shown.
 		expect(snap.iab?.specialFeatureOptIns[1]).toBe(false);
-		// c15t categories should follow.
+		// Inth categories should follow.
 		expect(snap.effectivePermissions.marketing).toBe(false);
 		expect(snap.explicitChoice).toBeNull();
 

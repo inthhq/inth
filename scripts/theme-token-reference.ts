@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-/** Source of truth for documented `--c15t-*` variables. */
+/** Source of truth for documented `--inth-*` variables. */
 export const themeTokenSource = 'packages/sdk/ui/src/theme/types.ts';
 
 /** Generated token table included by the customization docs. */
@@ -15,10 +15,10 @@ interface ThemeToken {
 }
 
 const tokenPattern =
-	/\/\*\* `(?<key>[a-zA-Z.]+)` \((?<value>[^)]*(?:\([^)]*\)[^)]*)*)\) \*\/\s*'(?<variable>--c15t-[a-z0-9-]+)'\?/gu;
+	/\/\*\* `(?<key>[a-zA-Z.]+)` \((?<value>[^)]*(?:\([^)]*\)[^)]*)*)\) \*\/\s*'(?<variable>--inth-[a-z0-9-]+)'\?/gu;
 
 /**
- * Reads every documented `--c15t-*` variable from `ThemeCSSVariables`.
+ * Reads every documented `--inth-*` variable from `ThemeCSSVariables`.
  *
  * @throws {Error} When the interface is missing or a variable lacks its
  * `theme.key (default: …)` comment.
@@ -36,7 +36,7 @@ export const readThemeTokens = function readThemeTokens(
 		value: (match.groups?.value ?? '').replace(/^default: /u, ''),
 		variable: match.groups?.variable ?? '',
 	}));
-	const declared = body.match(/'--c15t-[a-z0-9-]+'\?/gu)?.length ?? 0;
+	const declared = body.match(/'--inth-[a-z0-9-]+'\?/gu)?.length ?? 0;
 	if (tokens.length !== declared) {
 		throw new Error(
 			`${declared - tokens.length} ThemeCSSVariables entries lack a \`theme.key\` (default: …) comment.`

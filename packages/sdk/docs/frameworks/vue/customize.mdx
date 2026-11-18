@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Change the c15t banner and dialog in a Vue app with theme tokens, layout presentation, component slots and copy.
+description: Change the Inth banner and dialog in a Vue app with theme tokens, layout presentation, component slots and copy.
 group: frameworks
 ---
 
@@ -17,7 +17,7 @@ group: frameworks
 
 The [customization overview](/docs/customization/overview) explains these
 choices across frameworks. All three options go in the object you pass to
-`app.use(c15tVue, ...)`.
+`app.use(inthVue, ...)`.
 
 See the [design gallery](/docs/customization/recipes) for five banner designs,
 from a bottom bar to a fully custom one, with tested code for this framework.
@@ -35,12 +35,12 @@ for `brand-consent-card`.
 
 ## Set theme tokens
 
-`tokens` sets c15t's CSS variables. Keys are the variable names without the
+`tokens` sets inth's CSS variables. Keys are the variable names without the
 leading `--`. [Theme tokens](/docs/customization/tokens) lists every token.
 
-The c15tVue plugin adds every token, including the defaults you did not set,
-to `document.head` in a `<style id="c15t-css-vars">` element when you install
-it, before the first render. Every c15t component gets them, with or without
+The inthVue plugin adds every token, including the defaults you did not set,
+to `document.head` in a `<style id="inth-css-vars">` element when you install
+it, before the first render. Every Inth component gets them, with or without
 `ConsentRoot`. A `:root` rule in your stylesheet can lose to that element
 depending on stylesheet order, so set token values through the `tokens`
 option. `defineTheme` from `@inth/vue/vue-plugin` only types a theme object; it
@@ -77,9 +77,9 @@ other class sources.
 
 ## Turn on dark mode
 
-`colorScheme` in the `c15tVue` options decides when the banner and dialog turn dark:
+`colorScheme` in the `inthVue` options decides when the banner and dialog turn dark:
 `'light'`, `'dark'`, `'system'`, or unset to copy a `dark` class on `<html>`.
-The plugin ships c15t's stock dark palette, so a `dark` class alone turns the
+The plugin ships inth's stock dark palette, so a `dark` class alone turns the
 banner dark. `theme` takes the same token
 object as the other frameworks, including `theme.dark`, and wins over `tokens`
 where both set a variable.
@@ -95,7 +95,7 @@ to your privacy policy and similar pages:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-app.use(c15tVue, {
+app.use(inthVue, {
 	bannerLegalLinks: ['privacyPolicy'],
 	legalLinks: { privacyPolicy: { href: '/privacy' } },
 	mode: hosted(),
@@ -120,5 +120,5 @@ message keys and writing labels.
 ## Check the result
 
 Run `vite` and open the app in a private window so the banner shows. In the
-Elements panel, the `<style id="c15t-css-vars">` element in `<head>` holds
+Elements panel, the `<style id="inth-css-vars">` element in `<head>` holds
 your token values.

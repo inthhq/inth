@@ -16,7 +16,7 @@ import type { BasicSourceMap } from './attribute';
 
 describe('attributeChunk', () => {
 	it('assigns every byte of a minified bundle to its source or to unmapped', async () => {
-		const directory = await mkdtemp(join(tmpdir(), 'c15t-attribution-'));
+		const directory = await mkdtemp(join(tmpdir(), 'inth-attribution-'));
 		try {
 			const dependencyDir = join(directory, 'node_modules/@c15t/fake/dist');
 			const dependency = join(dependencyDir, 'big.js');
@@ -125,8 +125,8 @@ describe('packageOf and moduleOf', () => {
 			)
 		).toBe('@inth/react');
 		expect(
-			packageOf('turbopack:///[project]/node_modules/c15t/shims/next.js')
-		).toBe('c15t');
+			packageOf('turbopack:///[project]/node_modules/inth/shims/next.js')
+		).toBe('inth');
 		expect(
 			packageOf(
 				'turbopack:///[project]/node_modules/next/node_modules/@swc/helpers/esm/x.js'

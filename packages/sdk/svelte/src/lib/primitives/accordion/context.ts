@@ -1,8 +1,8 @@
 import type { AccordionType } from '@inth/sdk/ui/primitives';
 import { getContext, setContext } from 'svelte';
 
-const ACCORDION_ROOT_CONTEXT_KEY = Symbol('c15t-svelte-accordion-root');
-const ACCORDION_ITEM_CONTEXT_KEY = Symbol('c15t-svelte-accordion-item');
+const ACCORDION_ROOT_CONTEXT_KEY = Symbol('inth-svelte-accordion-root');
+const ACCORDION_ITEM_CONTEXT_KEY = Symbol('inth-svelte-accordion-item');
 
 export interface AccordionRootContextValue {
 	readonly collapsible: boolean;

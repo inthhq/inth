@@ -19,16 +19,16 @@ import {
 	],
 	selector: 'app-consent-banner',
 	template: `
-		<c15t-consent-banner>
+		<inth-consent-banner>
 			<!-- The translated title, as let-title. The <h2> stays. -->
 			<ng-template
-				c15tConsentBannerTitle
+				inthConsentBannerTitle
 				let-title
 			>
 				<span aria-hidden="true">🍪</span> {{ title }}
 			</ng-template>
 			<ng-template
-				c15tConsentBannerDescription
+				inthConsentBannerDescription
 				let-notice="notice"
 			>
 				@if (notice) {
@@ -40,14 +40,14 @@ import {
 			</ng-template>
 			<!-- Once per action the policy shows, in the policy's order. -->
 			<ng-template
-				c15tConsentBannerAction
+				inthConsentBannerAction
 				let-action
 				let-label="label"
 				let-variant="variant"
 				let-mode="mode"
 			>
 				<button
-					c15t-consent-button
+					inth-consent-button
 					[action]="action"
 					[variant]="variant"
 					[mode]="mode"
@@ -55,7 +55,7 @@ import {
 					{{ label }}
 				</button>
 			</ng-template>
-		</c15t-consent-banner>
+		</inth-consent-banner>
 	`,
 })
 export class AppConsentBanner {}

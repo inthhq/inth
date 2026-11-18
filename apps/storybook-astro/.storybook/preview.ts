@@ -6,18 +6,18 @@ import type { Preview } from '@storybook/html-vite';
 import '@inth/astro/styles.css';
 import '@inth/sdk/ui/iab/styles.css';
 
-const storybookCanvasStyleId = 'c15t-storybook-canvas';
+const storybookCanvasStyleId = 'inth-storybook-canvas';
 const canvasCSS = `
 	:root {
-		color: var(--c15t-text);
-		background: var(--c15t-surface-hover);
-		font-family: var(--c15t-font-family);
+		color: var(--inth-text);
+		background: var(--inth-surface-hover);
+		font-family: var(--inth-font-family);
 	}
 
 	body {
-		font-family: var(--c15t-font-family);
-		color: var(--c15t-text);
-		background: var(--c15t-surface-hover);
+		font-family: var(--inth-font-family);
+		color: var(--inth-text);
+		background: var(--inth-surface-hover);
 	}
 `;
 

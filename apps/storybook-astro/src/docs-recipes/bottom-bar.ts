@@ -1,5 +1,5 @@
 /**
- * The bottom bar design as `c15t()` integration options. The Storybook
+ * The bottom bar design as `inth()` integration options. The Storybook
  * prerenders the banner with them; the docs publish the region.
  */
 export const bottomBarOptions = {

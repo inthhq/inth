@@ -46,7 +46,7 @@ const renderWithRule = function renderWithRule(
 
 const queryPreferencesAction = function queryPreferencesAction() {
 	return document.querySelector<HTMLButtonElement>(
-		'[role="toolbar"] [data-c15t-trigger-action="preferences"]'
+		'[role="toolbar"] [data-inth-trigger-action="preferences"]'
 	);
 };
 
@@ -72,7 +72,7 @@ describe('ConsentDialogTriggerToolbar rights-aware action', () => {
 			'Do not sell or share my data'
 		);
 		expect(action.dataset.right).toBe('opt-out');
-		expect(action.dataset.c15tRights?.split(' ')).toContain('opt-out');
+		expect(action.dataset.inthRights?.split(' ')).toContain('opt-out');
 	});
 
 	test('labels the built-in action as the preferences right under an opt-in rule', async () => {
@@ -81,7 +81,7 @@ describe('ConsentDialogTriggerToolbar rights-aware action', () => {
 		const action = await waitForPreferencesAction();
 		expect(action).toHaveAttribute('aria-label', 'Manage preferences');
 		expect(action.dataset.right).toBe('preferences');
-		expect(action.dataset.c15tRights?.split(' ')).not.toContain('opt-out');
+		expect(action.dataset.inthRights?.split(' ')).not.toContain('opt-out');
 	});
 
 	test('a host label overrides the rights-based default', async () => {
@@ -161,7 +161,7 @@ describe('after-prompt visibility', () => {
 			expect(queryToolbar()).toBeInTheDocument();
 		});
 		expect(
-			queryToolbar()?.querySelector('[data-c15t-trigger-item="theme"]')
+			queryToolbar()?.querySelector('[data-inth-trigger-item="theme"]')
 		).toBeInTheDocument();
 		expect(queryPreferencesAction()).not.toBeInTheDocument();
 
@@ -171,7 +171,7 @@ describe('after-prompt visibility', () => {
 			expect(queryPreferencesAction()).toBeInTheDocument();
 		});
 		expect(
-			queryToolbar()?.querySelector('[data-c15t-trigger-item="theme"]')
+			queryToolbar()?.querySelector('[data-inth-trigger-item="theme"]')
 		).toBeInTheDocument();
 	});
 
@@ -210,7 +210,7 @@ describe('after-prompt visibility', () => {
 		});
 		expect(queryToolbar()?.querySelectorAll('button')).toHaveLength(1);
 		expect(
-			queryToolbar()?.querySelector('[data-c15t-trigger-item="theme"]')
+			queryToolbar()?.querySelector('[data-inth-trigger-item="theme"]')
 		).toBeInTheDocument();
 		expect(queryPreferencesAction()).not.toBeInTheDocument();
 	});
@@ -227,7 +227,7 @@ describe('after-prompt visibility', () => {
 			).toBeInTheDocument();
 		});
 		expect(
-			document.querySelector('button[data-c15t-trigger="true"]')
+			document.querySelector('button[data-inth-trigger="true"]')
 		).not.toBeInTheDocument();
 
 		const accept = document.querySelector<HTMLButtonElement>(
@@ -240,7 +240,7 @@ describe('after-prompt visibility', () => {
 
 		await vi.waitFor(() => {
 			expect(
-				document.querySelector('button[data-c15t-trigger="true"]')
+				document.querySelector('button[data-inth-trigger="true"]')
 			).toBeInTheDocument();
 		});
 	});

@@ -9,7 +9,7 @@
  * - The server renders the whole root (`EagerConsentRoot`): the banner, its
  *   styles and the scripts the server starts are in the first HTML, as
  *   before, plus the snapshots the page rendered from.
- * - The browser renders the page at once, with c15t's hooks reading those
+ * - The browser renders the page at once, with inth's hooks reading those
  *   snapshots. Hook actions ask for the engine and run when it attaches.
  * - When the visitor still has to choose and nothing optional is granted,
  *   nothing the engine does can show before a tap, so it loads after the
@@ -225,19 +225,19 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
 
 /**
  * Mounts the consent provider for a Next.js app. Render it once, near the
- * top of the tree. It reads `c15t.config.ts` itself, so a Server Component
+ * top of the tree. It reads `inth.config.ts` itself, so a Server Component
  * layout renders it directly with the `state` it resolved.
  *
  * Props win over the config's browser options of the same name. `options`
  * merges one key at a time, and `options.callbacks` one callback at a time.
  *
  * The consent engine loads after the page. Components under the root that
- * call c15t's hooks render from the server's consent state until then, and
+ * call inth's hooks render from the server's consent state until then, and
  * their actions run once it has loaded. For a visitor the banner asks to
  * choose, it loads after the page's priority images, or at the first tap.
  *
  * @throws {Error} When `manifest()` or `hosted()` has no backend URL: no
- * `c15t.config.ts` sets one and neither `NEXT_PUBLIC_C15T_BACKEND_URL` nor
+ * `inth.config.ts` sets one and neither `NEXT_PUBLIC_INTH_PROJECT_URL` nor
  * `NEXT_PUBLIC_INTH_PROJECT_URL` is set.
  * `local()` needs none.
  *

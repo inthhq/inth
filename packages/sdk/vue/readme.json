@@ -17,7 +17,7 @@
 	"manualInstallation": ["", "```bash\npnpm add @inth/vue\n```"],
 	"usage": [
 		"Add `consentManifest()` from `@inth/vue/vite` to `vite.config.ts`",
-		"Install the plugin with `app.use(c15tVue, { mode: hosted() })` from `@inth/vue/vue-plugin`, and render `ConsentRoot` in `App.vue`",
+		"Install the plugin with `app.use(inthVue, { mode: hosted() })` from `@inth/vue/vue-plugin`, and render `ConsentRoot` in `App.vue`",
 		"For the full setup, see the [Vue quickstart](https://c15t.com/docs/frameworks/vue/quickstart)"
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/vue/quickstart",

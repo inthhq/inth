@@ -5,7 +5,7 @@ import {
 import userConfig from '@inth/nextjs/user-config';
 /**
  * Where the server helpers resolve consent from, read from
- * `c15t.config.ts` and the build-time snapshot.
+ * `inth.config.ts` and the build-time snapshot.
  *
  * @internal
  */
@@ -15,16 +15,16 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 import type { ConsentConfig } from './config';
 import { checkRoutePrefix, readProjectUrlFromEnv } from './config';
 
-/** Options every server helper takes to override `c15t.config.ts`. */
+/** Options every server helper takes to override `inth.config.ts`. */
 export interface ConsentSourceOptions {
 	/**
-	 * The config to use instead of `c15t.config.ts`.
+	 * The config to use instead of `inth.config.ts`.
 	 */
 	config?: ConsentConfig;
 
 	/**
 	 * Backend base URL. Defaults to the config's, then
-	 * `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL`.
+	 * `NEXT_PUBLIC_INTH_PROJECT_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL`.
 	 */
 	projectUrl?: string;
 

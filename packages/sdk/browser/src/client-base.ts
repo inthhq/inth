@@ -52,7 +52,7 @@ import type {
 
 export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
 
-/** Values `data-c15t-action` accepts. */
+/** Values `data-inth-action` accepts. */
 export type PageAction =
 	| 'accept'
 	| 'reject'
@@ -84,10 +84,10 @@ export interface CreateConsentClientContext {
 	mountUI?: ConsentUIMounter;
 	/**
 	 * The launcher slot the prebuilt UI's trigger reads. Only the
-	 * script-tag global uses it; see `C15tGlobalBase.publishDevToolsLauncher`.
+	 * script-tag global uses it; see `InthGlobalBase.publishDevToolsLauncher`.
 	 */
 	publishDevToolsLauncher?: PublishDevToolsLauncher;
-	/** Package name reported on `window.c15t`. */
+	/** Package name reported on `window.inth`. */
 	pkg?: string;
 	/**
 	 * Set by the script-tag global. Script-tag files are always production
@@ -109,12 +109,12 @@ const dispatchDocumentEvent = function dispatchDocumentEvent(
 	if (typeof document === 'undefined') {
 		return;
 	}
-	document.dispatchEvent(new CustomEvent(`c15t:${name}`, { detail }));
+	document.dispatchEvent(new CustomEvent(`inth:${name}`, { detail }));
 };
 
 /**
  * Run one `on()` listener so a throw is reported instead of stopping the
- * listeners after it and the matching `c15t:*` document event.
+ * listeners after it and the matching `inth:*` document event.
  */
 const callListener = function callListener<PayloadType>(
 	event: keyof ConsentClientEventMap,
@@ -200,7 +200,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		theme: options.ui === false ? undefined : options.ui?.theme,
 		user: options.user,
 		vendors: options.vendors,
-		// The script-tag build owns `window.c15t`; core must not overwrite it.
+		// The script-tag build owns `window.inth`; core must not overwrite it.
 		windowDebug: false,
 	});
 	const { kernel } = runtime;
@@ -598,7 +598,7 @@ export const createConsentClientWith = function createConsentClientWith(
 			if (disposed) {
 				return;
 			}
-			// Inert `<script type="text/plain" data-c15t-category>` tags a
+			// Inert `<script type="text/plain" data-inth-category>` tags a
 			// returning visitor already consented to run straight away.
 			gatedScripts.scan();
 			if (disposed) {

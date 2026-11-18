@@ -154,7 +154,7 @@ const requiredIdCases: {
 	},
 	{
 		create: (id) =>
-			ada({ ...{ handle: 'c15t-live-probe-placeholder' }, handle: asId(id) }),
+			ada({ ...{ handle: 'inth-live-probe-placeholder' }, handle: asId(id) }),
 		helper: 'ada',
 		option: 'handle',
 		script: { category: 'functionality', id: 'ada' },
@@ -180,14 +180,14 @@ const requiredIdCases: {
 	},
 	{
 		create: (id) =>
-			theTradeDeskPixel({ advertiserId: 'c15tfake', pixelIds: [asId(id)] }),
+			theTradeDeskPixel({ advertiserId: 'inthfake', pixelIds: [asId(id)] }),
 		helper: 'theTradeDeskPixel',
 		option: 'pixelIds',
 		script: { category: 'marketing', id: 'the-trade-desk' },
 	},
 	{
 		create: (id) =>
-			theTradeDeskPixel({ advertiserId: asId(id), pixelIds: ['c15tfake'] }),
+			theTradeDeskPixel({ advertiserId: asId(id), pixelIds: ['inthfake'] }),
 		helper: 'theTradeDeskPixel',
 		option: 'advertiserId',
 		script: { category: 'marketing', id: 'the-trade-desk' },
@@ -200,14 +200,14 @@ const requiredIdCases: {
 	},
 	{
 		create: (id) =>
-			adrollPixel({ advertiserId: 'c15tfake', pixelId: asId(id) }),
+			adrollPixel({ advertiserId: 'inthfake', pixelId: asId(id) }),
 		helper: 'adrollPixel',
 		option: 'pixelId',
 		script: { category: 'marketing', id: 'adroll' },
 	},
 	{
 		create: (id) =>
-			adrollPixel({ advertiserId: asId(id), pixelId: 'c15tfake' }),
+			adrollPixel({ advertiserId: asId(id), pixelId: 'inthfake' }),
 		helper: 'adrollPixel',
 		option: 'advertiserId',
 		script: { category: 'marketing', id: 'adroll' },
@@ -312,7 +312,7 @@ const requiredIdCases: {
 		script: { category: 'experience', id: 'appcues' },
 	},
 	{
-		create: (id) => wisepops({ ...{ siteId: 'c15tfake' }, siteId: asId(id) }),
+		create: (id) => wisepops({ ...{ siteId: 'inthfake' }, siteId: asId(id) }),
 		helper: 'wisepops',
 		option: 'siteId',
 		script: { category: 'marketing', id: 'wisepops' },
@@ -347,7 +347,7 @@ const requiredIdCases: {
 		script: { category: 'marketing', id: 'customer-io' },
 	},
 	{
-		create: (id) => insiderTag({ partnerId: asId(id), partnerName: 'c15t' }),
+		create: (id) => insiderTag({ partnerId: asId(id), partnerName: 'inth' }),
 		helper: 'insiderTag',
 		option: 'partnerId',
 		script: { category: 'marketing', id: 'insider' },
@@ -355,7 +355,7 @@ const requiredIdCases: {
 	{
 		create: (id) =>
 			insiderTag({
-				...{ partnerId: '123456', partnerName: 'c15t' },
+				...{ partnerId: '123456', partnerName: 'inth' },
 				partnerName: asId(id),
 			}),
 		helper: 'insiderTag',

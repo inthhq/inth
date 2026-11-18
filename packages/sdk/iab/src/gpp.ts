@@ -1,5 +1,5 @@
 /**
- * `@inth/sdk/iab/gpp` — IAB Global Privacy Platform (GPP 1.1) for the c15t
+ * `@inth/sdk/iab/gpp` — IAB Global Privacy Platform (GPP 1.1) for the Inth
  * consent kernel.
  *
  * Installs `__gpp` and keeps the GPP string in step with the visitor's

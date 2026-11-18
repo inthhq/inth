@@ -13,7 +13,7 @@ export const describeTree = function describeTree(element: Element): Tree {
 	for (const { name, value } of element.attributes) {
 		if (
 			name === 'hidden' ||
-			name === 'data-c15t-visible' ||
+			name === 'data-inth-visible' ||
 			name.startsWith('data-astro-source')
 		) {
 			continue;

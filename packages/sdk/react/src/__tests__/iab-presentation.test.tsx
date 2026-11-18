@@ -1,4 +1,4 @@
-import { MINIMAL_GVL } from '@c15t/conformance';
+import { MINIMAL_GVL } from '@inth/conformance';
 import {
 	deferInitGvl,
 	createConsentKernel,
@@ -231,7 +231,7 @@ it.each(
 			vi.unstubAllGlobals();
 		});
 		vi.stubGlobal('fetch', fetch);
-		vi.stubGlobal('__c15t_mock_gvl', undefined);
+		vi.stubGlobal('__inth_mock_gvl', undefined);
 		const mounted: { screen?: Awaited<ReturnType<typeof render>> } = {};
 		onTestFinished(async () => {
 			await mounted.screen?.unmount();

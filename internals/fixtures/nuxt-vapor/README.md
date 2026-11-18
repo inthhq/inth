@@ -1,8 +1,8 @@
-# c15t × Nuxt Vapor example
+# Inth × Nuxt Vapor example
 
-c15t in a Nuxt 4.6 app with [Vue Vapor](https://nuxt.com/blog/v4-6) turned
+Inth in a Nuxt 4.6 app with [Vue Vapor](https://nuxt.com/blog/v4-6) turned
 on. Every page and component in `app/` is a Vapor component
-(`<script setup vapor>`). The c15t components stay on the virtual DOM and
+(`<script setup vapor>`). The Inth components stay on the virtual DOM and
 render inside them through Nuxt's Vapor interop:
 
 - `app/app.vue` mounts `ConsentRoot` and `ConsentDialogLink`.
@@ -26,15 +26,15 @@ Open `/consent-example`. Without a backend URL the demo uses a self-hosted
 setup as `internals/fixtures/nuxt`. The route uses `defineEventHandler` from
 `nuxt/server`, whose event carries a standard `Request` for the backend
 handler. A production build needs `DATABASE_URL`, or set
-`NUXT_PUBLIC_C15T_BACKEND_URL` to a hosted backend.
+`NUXT_PUBLIC_INTH_PROJECT_URL` to a hosted backend.
 
 ## Nuxt 5 preview
 
-`C15T_NUXT_FUTURE=1` builds with `future.compatibilityVersion: 5`,
+`INTH_NUXT_FUTURE=1` builds with `future.compatibilityVersion: 5`,
 `experimental.early404` and `experimental.prerenderErrorPages`:
 
 ```bash
-C15T_NUXT_FUTURE=1 bun run --cwd internals/fixtures/nuxt-vapor build
+INTH_NUXT_FUTURE=1 bun run --cwd internals/fixtures/nuxt-vapor build
 ```
 
 ## Tests

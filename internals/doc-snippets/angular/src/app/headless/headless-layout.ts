@@ -20,14 +20,14 @@ import { CustomConsentBanner } from './custom-consent-banner';
 		<footer>
 			<button
 				type="button"
-				c15tConsentDialogLink
+				inthConsentDialogLink
 			>
 				Privacy settings
 			</button>
 		</footer>
 		<!-- Your banner; the stock dialog handles Customize. -->
 		<app-custom-consent-banner />
-		<c15t-consent-dialog />
+		<inth-consent-dialog />
 	`,
 })
 export class App {}

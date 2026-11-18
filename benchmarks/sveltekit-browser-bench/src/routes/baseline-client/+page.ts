@@ -1,2 +1,2 @@
-/** SPA floor: the shell with no server render and no c15t. */
+/** SPA floor: the shell with no server render and no Inth. */
 export const ssr = false;

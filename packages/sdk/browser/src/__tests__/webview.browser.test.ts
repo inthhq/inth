@@ -1,12 +1,12 @@
 /**
- * A site page inside a c15t mobile app's WebView, in real Chromium.
+ * A site page inside a Inth mobile app's WebView, in real Chromium.
  *
  * The fixture server puts the canonical native document-start script
  * (`packages/native-protocol/webview/document-start.js`) first in `<head>`, which is
  * where `WKUserScript` and `addDocumentStartJavaScript` run it. The page then
- * starts web c15t with its stock banner and `webViewConsentSource()`.
+ * starts web Inth with its stock banner and `webViewConsentSource()`.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, expect, it, vi } from 'vitest';
 
 import UPDATE_SCRIPT from '../../../../native-protocol/webview/update.js?raw';
@@ -29,13 +29,13 @@ const banner = (tab: Window, page: WebViewPage): Element | null =>
 	tab.document.querySelector(BANNER);
 
 const openPage = async (query = ''): Promise<[Window, WebViewPage]> => {
-	const tab = window.open(`/__c15t-test__/webview${query}`, '_blank');
+	const tab = window.open(`/__inth-test__/webview${query}`, '_blank');
 	if (!tab) {
 		throw new Error('The browser blocked the page');
 	}
 	opened.push(tab);
 	const read = () =>
-		(tab as Window & { c15tWebView?: WebViewPage }).c15tWebView;
+		(tab as Window & { inthWebView?: WebViewPage }).inthWebView;
 	// A cold tab transforms the client's module graph first, which takes
 	// longer while other suites load theirs.
 	await expect.poll(read, { timeout: 45_000 }).toBeDefined();
@@ -96,7 +96,7 @@ it('shows no banner after a native choice and follows the native permissions', a
 	});
 	// Nothing is stored in the page: the app keeps the record.
 	expect(snapshot.explicitChoice).toBeNull();
-	expect(tab.document.cookie).not.toContain('c15t');
+	expect(tab.document.cookie).not.toContain('inth');
 });
 
 it('follows a native change while the page is open, and only from the app', async () => {
@@ -148,7 +148,7 @@ it('asks the app for its preferences instead of opening a web dialog', async () 
 		.toBe(true);
 	page.client.openDialog();
 	expect(page.posted).toEqual([
-		'{"type":"c15t:open-preferences","key":"0badc0de0badc0de0badc0de0badc0de"}',
+		'{"type":"inth:open-preferences","key":"0badc0de0badc0de0badc0de0badc0de"}',
 	]);
 	expect(page.client.getSnapshot().activeUI).toBe('none');
 	expect(banner(tab, page)).toBeNull();

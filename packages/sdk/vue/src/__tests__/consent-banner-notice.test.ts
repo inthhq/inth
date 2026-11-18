@@ -62,7 +62,7 @@ const buildInit = function buildInit(
 	bundle: typeof translations = translations
 ): InitOutput {
 	return {
-		branding: 'c15t',
+		branding: 'inth',
 		location: { countryCode: 'US', regionCode: 'CA' },
 		policyResolution: writePolicyResolutionWire(
 			resolvePolicyRules({ countryCode: null, regionCode: null, rules: [rule] })
@@ -169,7 +169,7 @@ describe('ConsentBanner under a notice prompt', () => {
 		expect(optOut?.classList.contains(bannerStyles.rightLink)).toBe(true);
 		expect(optOut?.hasAttribute('data-variant')).toBe(false);
 		expect(optOut?.hasAttribute('data-mode')).toBe(false);
-		expect(optOut?.getAttribute('data-c15t-rights')?.split(' ')).toContain(
+		expect(optOut?.getAttribute('data-inth-rights')?.split(' ')).toContain(
 			'opt-out'
 		);
 		expect(query('consent-banner-right-link-preferences')).toBeNull();

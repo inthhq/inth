@@ -19,7 +19,7 @@ describe('the offline transport warning', () => {
 	let warn: ReturnType<typeof vi.spyOn>;
 
 	beforeEach(() => {
-		Reflect.deleteProperty(globalThis, Symbol.for('c15t.noRecordsWarned'));
+		Reflect.deleteProperty(globalThis, Symbol.for('inth.noRecordsWarned'));
 		warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 	});
 
@@ -48,7 +48,7 @@ describe('the offline transport warning', () => {
 
 	test('names what is missing without blocking anything', () => {
 		expect(NO_RECORDS_WARNING).toContain(
-			'c15t keeps no server-side record of consent'
+			'inth keeps no server-side record of consent'
 		);
 		expect(NO_RECORDS_WARNING).toContain('acknowledgeNoRecords: true');
 	});

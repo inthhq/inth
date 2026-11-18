@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createConsentClient } from '../client';
 import { installGlobal } from '../global';
 import { createTestingGlobal } from '../testing-global';
-import type { TestingC15tGlobal } from '../testing-global';
+import type { TestingInthGlobal } from '../testing-global';
 import type { ConsentClient, ConsentClientOptions } from '../types';
 
 const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
@@ -48,8 +48,8 @@ const listing: ConsentClientOptions = {
 	ui: false,
 };
 
-const testWindow = window as Window & { c15t?: unknown };
-let client: ConsentClient | TestingC15tGlobal | undefined;
+const testWindow = window as Window & { inth?: unknown };
+let client: ConsentClient | TestingInthGlobal | undefined;
 
 /** The vendor's script tag, once the loader inserted it. */
 const loadedTag = async () => {
@@ -67,7 +67,7 @@ const loadedTag = async () => {
 afterEach(() => {
 	client?.dispose?.();
 	client = undefined;
-	testWindow.c15t = undefined;
+	testWindow.inth = undefined;
 	document.head.replaceChildren();
 });
 
@@ -93,7 +93,7 @@ describe('a queued config call', () => {
 	])(
 		'with experimentalScriptRegistry: %s loads %o',
 		async (experimentalScriptRegistry, expected) => {
-			testWindow.c15t = [
+			testWindow.inth = [
 				['config', { ...listing, experimentalScriptRegistry }],
 			];
 			client = installGlobal(createTestingGlobal({ pkg: '@inth/sdk/test' }));

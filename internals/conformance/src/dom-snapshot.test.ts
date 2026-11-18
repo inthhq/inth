@@ -34,7 +34,7 @@ test('strips s-hash scoped classes', () => {
 
 test('normalizes CSS module classes across framework bundlers', () => {
 	const react = makeEl('<button class="_button_1du3d_94"></button>');
-	const svelte = makeEl('<button class="c15t-ui-button-IiSDl"></button>');
+	const svelte = makeEl('<button class="inth-ui-button-IiSDl"></button>');
 	expect(domSnapshot(react)).toBe(domSnapshot(svelte));
 	expect(domSnapshot(react)).toBe('<button class="button"></button>');
 });

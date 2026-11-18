@@ -1,14 +1,14 @@
 import { join } from 'node:path';
 
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
 import {
 	getEnvironment,
 	safeBaseSha,
 	safeCommitSha,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import { bench, run } from 'mitata';
 
 export { bench };
@@ -49,7 +49,7 @@ export const runMicroBenchmarkSuite = async function runMicroBenchmarkSuite(
 		},
 		metrics,
 		notes: ['Micro benchmarks use mitata and emit nanosecond samples.'],
-		package: '@c15t/benchmarks',
+		package: '@inth/benchmarks',
 		runtime: 'bun/mitata',
 		scenario: `micro-${scenario}`,
 		schemaVersion: BENCHMARK_SCHEMA_VERSION,

@@ -1,19 +1,19 @@
 ---
 title: Static export
-description: Add c15t to a Next.js site built with output export, where the browser resolves consent through Inth without request helpers or API routes.
+description: Add Inth to a Next.js site built with output export, where the browser resolves consent through Inth without request helpers or API routes.
 group: frameworks
 ---
 
 ## Resolve consent in the browser
 
 A site built with `output: 'export'` has no Next.js server at runtime. There is
-no `/api/c15t` route, no rewrite, and no request for `resolveConsent` to read.
+no `/api/inth` route, no rewrite, and no request for `resolveConsent` to read.
 The browser calls your Inth backend directly and resolves consent after the
 page loads. Static hosting still gets hosted policies and consent records.
 
 <include src="../../shared/examples/nextjs/static-export-next-config.mdx" />
 
-`withConsentManifest` finds your `c15t.config.ts`. With `output: 'export'` it
+`withConsentManifest` finds your `inth.config.ts`. With `output: 'export'` it
 skips the manifest download, because no server would read the snapshot.
 
 [Create an Inth project](https://inth.com), set its policy rules and add your
@@ -23,13 +23,13 @@ exported site's origin to its trusted origins. Copy the project's backend URL.
 
 ## Share the backend URL
 
-Set `NEXT_PUBLIC_C15T_BACKEND_URL` to your project's backend URL, including
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your project's backend URL, including
 any path prefix, in `.env.local` and in your host's build settings. Keep it
-absolute. A path such as `/api/c15t` would point at your static host, which
+absolute. A path such as `/api/inth` would point at your static host, which
 has nothing to answer it. `NEXT_PUBLIC_INTH_PROJECT_URL` works too; when both
-are set, `NEXT_PUBLIC_C15T_BACKEND_URL` wins.
+are set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
 
-Create `c15t.config.ts` at the project root with `mode: hosted()`. Without a
+Create `inth.config.ts` at the project root with `mode: hosted()`. Without a
 server there is no consent route, so the browser calls `${projectUrl}/init`.
 
 <include src="../../shared/examples/nextjs/client-side-config.mdx" />
@@ -39,7 +39,7 @@ Add your `scripts` to the same config, as the
 
 ## Mount the root
 
-There is no c15t stylesheet to import. The components render their own rules
+There is no Inth stylesheet to import. The components render their own rules
 as `<style>` elements, so no stylesheet request holds back the first paint.
 With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
 `styles: false` in `ConsentRoot`'s `options`, as
@@ -75,7 +75,7 @@ server. `next dev` can hide a dependency on an API route that the export does
 not have. Then open the site in a fresh browser session with DevTools open.
 
 1. The Network panel shows `/init` and `/subjects` requests to your backend's
-   origin, and no failed same-origin `/api/c15t` request.
+   origin, and no failed same-origin `/api/inth` request.
 2. Under an opt-in policy, the banner appears and no PostHog request runs.
    Click **Reject All** and reload. The banner stays closed and PostHog does
    not load.
@@ -90,7 +90,7 @@ site's origin. Add it to your Inth project's trusted origins. See
 
 ## Other static options
 
-A same-origin `/api/c15t` URL needs a proxy at your host, because Next.js
+A same-origin `/api/inth` URL needs a proxy at your host, because Next.js
 rewrites need a server. Without one, keep the absolute backend URL.
 
 To resolve a manifest in the browser instead, set

@@ -6,6 +6,6 @@ import type { BuiltOptions } from '../runtime/server/build-options';
 
 const built: BuiltOptions = {
 	mode: { type: 'manifest' },
-	routePrefix: '/api/c15t',
+	routePrefix: '/api/inth',
 };
 export default built;

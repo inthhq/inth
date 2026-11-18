@@ -48,9 +48,9 @@ export const Demo = ({ children }: { children: ReactNode }) => {
 				<a
 					className="wordmark"
 					href="/app-router"
-					aria-label="c15t example home"
+					aria-label="inth example home"
 				>
-					c15t<span> / next.js</span>
+					inth<span> / next.js</span>
 				</a>
 				<nav aria-label="Example routes">
 					{routes.map(({ href, label }) => (
@@ -152,7 +152,7 @@ export const Demo = ({ children }: { children: ReactNode }) => {
 							<IntegrationStatus allowed={marketingAllowed} />
 						</div>
 						<p className="caption">
-							Open c15t DevTools in the corner to inspect consent state and
+							Open inth DevTools in the corner to inspect consent state and
 							script activity, or to clear stored records.
 						</p>
 					</section>

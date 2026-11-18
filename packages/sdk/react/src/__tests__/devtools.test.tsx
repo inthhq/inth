@@ -10,11 +10,11 @@ import { render } from 'vitest-browser-react';
 import { mockGVL } from '../components/iab/__tests__/fixtures/mock-consent-state';
 import { KernelContext } from '../context';
 import {
-	C15TDevTools,
-	C15tTanStackDevtoolsPanel,
+	InthDevTools,
+	InthTanStackDevtoolsPanel,
 	ConsentDevTools,
-	c15tDevtools,
-	c15tDevtoolsPlugin,
+	inthDevtools,
+	inthDevtoolsPlugin,
 	DevTools,
 } from '../devtools';
 import { ConsentProvider } from '../provider';
@@ -34,9 +34,9 @@ const Provider = ({ children }: { children: ReactNode }) => (
 
 /** The panel roots, which live inside each host's shadow root. */
 const mountedDevTools = (): HTMLElement[] =>
-	[...document.querySelectorAll<HTMLElement>('[data-c15t-dev-tools-host]')]
+	[...document.querySelectorAll<HTMLElement>('[data-inth-dev-tools-host]')]
 		.map((host) =>
-			host.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]')
+			host.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]')
 		)
 		.filter((root): root is HTMLElement => root !== null && root !== undefined);
 
@@ -45,7 +45,7 @@ const getMountedDevTools = (): HTMLElement | null =>
 
 afterEach(() => {
 	for (const element of document.querySelectorAll(
-		'[data-c15t-dev-tools-host]'
+		'[data-inth-dev-tools-host]'
 	)) {
 		element.remove();
 	}
@@ -71,7 +71,7 @@ describe('v3 React DevTools adapter', () => {
 					}}
 				>
 					{embedded ? (
-						<C15tTanStackDevtoolsPanel />
+						<InthTanStackDevtoolsPanel />
 					) : (
 						<ConsentDevTools defaultOpen />
 					)}
@@ -134,7 +134,7 @@ describe('v3 React DevTools adapter', () => {
 		}
 	);
 
-	test.each([ConsentDevTools, C15tTanStackDevtoolsPanel])(
+	test.each([ConsentDevTools, InthTanStackDevtoolsPanel])(
 		'keeps explicit service callbacks live without remounting (%s)',
 		async (Component) => {
 			const firstClear = vi.fn();
@@ -149,7 +149,7 @@ describe('v3 React DevTools adapter', () => {
 							defaultTab="policy"
 						/>
 					) : (
-						<C15tTanStackDevtoolsPanel
+						<InthTanStackDevtoolsPanel
 							clearRecords={() => clear()}
 							getPresentation={() => undefined}
 							defaultTab="policy"
@@ -190,7 +190,7 @@ describe('v3 React DevTools adapter', () => {
 					}}
 				>
 					{embedded ? (
-						<C15tTanStackDevtoolsPanel defaultTab="policy" />
+						<InthTanStackDevtoolsPanel defaultTab="policy" />
 					) : (
 						<ConsentDevTools
 							defaultOpen
@@ -260,7 +260,7 @@ describe('v3 React DevTools adapter', () => {
 			const view = await render(
 				<KernelContext.Provider value={kernel}>
 					{embedded ? (
-						<C15tTanStackDevtoolsPanel {...props} />
+						<InthTanStackDevtoolsPanel {...props} />
 					) : (
 						<DevTools
 							defaultOpen
@@ -341,7 +341,7 @@ describe('v3 React DevTools adapter', () => {
 			const view = await render(
 				<KernelContext.Provider value={kernel}>
 					{embedded ? (
-						<C15tTanStackDevtoolsPanel defaultTab="iab" />
+						<InthTanStackDevtoolsPanel defaultTab="iab" />
 					) : (
 						<DevTools
 							defaultOpen
@@ -381,7 +381,7 @@ describe('v3 React DevTools adapter', () => {
 			}
 		}
 	);
-	test.each([ConsentDevTools, C15tTanStackDevtoolsPanel])(
+	test.each([ConsentDevTools, InthTanStackDevtoolsPanel])(
 		'does not evaluate category callbacks during server rendering (%s)',
 		(Component) => {
 			const getConsentCategories = vi.fn(() => {
@@ -397,7 +397,7 @@ describe('v3 React DevTools adapter', () => {
 			expect(getConsentCategories).not.toHaveBeenCalled();
 		}
 	);
-	test.each([ConsentDevTools, C15tTanStackDevtoolsPanel])(
+	test.each([ConsentDevTools, InthTanStackDevtoolsPanel])(
 		'does not evaluate category callbacks while disabled (%s)',
 		async (Component) => {
 			const getConsentCategories = vi.fn(() => {
@@ -462,7 +462,7 @@ describe('v3 React DevTools adapter', () => {
 				return (
 					<Provider>
 						{embedded ? (
-							<C15tTanStackDevtoolsPanel
+							<InthTanStackDevtoolsPanel
 								getConsentCategories={() =>
 									measurement ? measurementScope : ['necessary', 'marketing']
 								}
@@ -527,7 +527,7 @@ describe('v3 React DevTools adapter', () => {
 	);
 	test('exports the compatible component names', () => {
 		expect(DevTools).toBe(ConsentDevTools);
-		expect(C15TDevTools).toBe(ConsentDevTools);
+		expect(InthDevTools).toBe(ConsentDevTools);
 	});
 
 	test('mounts the engine with the provider kernel', async () => {
@@ -544,9 +544,9 @@ describe('v3 React DevTools adapter', () => {
 			expect(getMountedDevTools()).not.toBeNull();
 		});
 		const devTools = getMountedDevTools();
-		expect(devTools?.classList.contains('c15t-dev-tools--top-left')).toBe(true);
+		expect(devTools?.classList.contains('inth-dev-tools--top-left')).toBe(true);
 		expect(
-			devTools?.querySelector<HTMLElement>('.c15t-dev-tools__panel')?.hidden
+			devTools?.querySelector<HTMLElement>('.inth-dev-tools__panel')?.hidden
 		).toBe(false);
 
 		await view.unmount();
@@ -561,10 +561,10 @@ describe('v3 React DevTools adapter', () => {
 		try {
 			await vi.waitFor(() => {
 				expect(
-					document.body.querySelector('[data-c15t-dev-tools]')
+					document.body.querySelector('[data-inth-dev-tools]')
 				).not.toBeNull();
 			});
-			expect(document.querySelector('[data-c15t-dev-tools-host]')).toBeNull();
+			expect(document.querySelector('[data-inth-dev-tools-host]')).toBeNull();
 		} finally {
 			await view.unmount();
 		}
@@ -600,7 +600,7 @@ describe('v3 TanStack Devtools adapter', () => {
 		const secondRef = vi.fn(() => secondCleanup);
 		const tree = (ref: typeof firstRef) => (
 			<Provider>
-				<C15tTanStackDevtoolsPanel ref={ref} />
+				<InthTanStackDevtoolsPanel ref={ref} />
 			</Provider>
 		);
 		const view = await render(tree(firstRef));
@@ -620,8 +620,8 @@ describe('v3 TanStack Devtools adapter', () => {
 		const callbackRef = vi.fn();
 		const view = await render(
 			<Provider>
-				<C15tTanStackDevtoolsPanel ref={objectRef} />
-				<C15tTanStackDevtoolsPanel ref={callbackRef} />
+				<InthTanStackDevtoolsPanel ref={objectRef} />
+				<InthTanStackDevtoolsPanel ref={callbackRef} />
 			</Provider>
 		);
 		expect(objectRef.current).toBeInstanceOf(HTMLDivElement);
@@ -633,7 +633,7 @@ describe('v3 TanStack Devtools adapter', () => {
 	test('limits embedded consent controls to the displayed scope', async () => {
 		const view = await render(
 			<Provider>
-				<C15tTanStackDevtoolsPanel
+				<InthTanStackDevtoolsPanel
 					getConsentCategories={() => ['necessary', 'measurement']}
 				/>
 			</Provider>
@@ -644,14 +644,14 @@ describe('v3 TanStack Devtools adapter', () => {
 		await view.unmount();
 	});
 	test('creates the compatible plugin configuration and embedded panel', async () => {
-		const plugin = c15tDevtools({
-			'data-testid': 'c15t-tanstack-panel',
+		const plugin = inthDevtools({
+			'data-testid': 'inth-tanstack-panel',
 			defaultOpen: true,
 			id: 'consent',
 			name: 'Consent',
 		});
 
-		expect(c15tDevtoolsPlugin).toBe(c15tDevtools);
+		expect(inthDevtoolsPlugin).toBe(inthDevtools);
 		expect(plugin).toMatchObject({
 			defaultOpen: true,
 			id: 'consent',
@@ -667,14 +667,14 @@ describe('v3 TanStack Devtools adapter', () => {
 		});
 
 		const container = document.querySelector(
-			'[data-testid="c15t-tanstack-panel"]'
+			'[data-testid="inth-tanstack-panel"]'
 		);
 		const devTools = getMountedDevTools();
 		// The panel sits in a shadow root; `contains` stops at the host.
 		const host = (devTools?.getRootNode() as ShadowRoot | undefined)?.host;
 		expect(container?.contains(host ?? null)).toBe(true);
-		expect(devTools?.classList.contains('c15t-dev-tools--embedded')).toBe(true);
-		expect(element.type).toBe(C15tTanStackDevtoolsPanel);
+		expect(devTools?.classList.contains('inth-dev-tools--embedded')).toBe(true);
+		expect(element.type).toBe(InthTanStackDevtoolsPanel);
 		// The panel follows TanStack's theme, not the operating system.
 		expect(devTools ? getComputedStyle(devTools).colorScheme : undefined).toBe(
 			'dark'
@@ -685,12 +685,12 @@ describe('v3 TanStack Devtools adapter', () => {
 	});
 
 	test('keeps the theme option when TanStack passes no theme', () => {
-		const element = c15tDevtools({ theme: 'dark' }).render(
+		const element = inthDevtools({ theme: 'dark' }).render(
 			document.createElement('div')
 		);
 		expect(element.props).toMatchObject({ theme: 'dark' });
 		expect(
-			c15tDevtools({ theme: 'dark' }).render(document.createElement('div'), {
+			inthDevtools({ theme: 'dark' }).render(document.createElement('div'), {
 				theme: 'light',
 			}).props
 		).toMatchObject({ theme: 'light' });

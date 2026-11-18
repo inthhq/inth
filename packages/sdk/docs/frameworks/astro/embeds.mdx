@@ -1,6 +1,6 @@
 ---
 title: Embeds
-description: Gate YouTube videos, maps, social posts and other iframes on an Astro site so they load only after the visitor allows their consent category, with a custom element or the c15t iframe blocker.
+description: Gate YouTube videos, maps, social posts and other iframes on an Astro site so they load only after the visitor allows their consent category, with a custom element or the Inth iframe blocker.
 group: frameworks
 ---
 
@@ -27,7 +27,7 @@ iframe out while the visitor has switched YouTube off in
 [vendor consent](/docs/frameworks/astro/vendor-consent).
 
 The component reads `client.isVendorAllowed('youtube')`, so declare `youtube`
-in the `vendors` option of `c15t()` with `category: 'measurement'`. An
+in the `vendors` option of `inth()` with `category: 'measurement'`. An
 undeclared vendor reads as not allowed, and the video never loads:
 
 <include src="../../shared/examples/astro/consent-video.mdx" />
@@ -39,7 +39,7 @@ Use it like any Astro component. How it works:
 - `client.subscribe(render)` renders again on every consent change.
 - `connectedCallback` runs again when `ClientRouter` swaps in a page that
   contains the element, so the embed works across navigation.
-- The first `connect()` can run before c15t has started, so the element tries
+- The first `connect()` can run before Inth has started, so the element tries
   again on `DOMContentLoaded`.
 
 Change the category, the iframe `src` and the placeholder text for other
@@ -76,7 +76,7 @@ reach with `ClientRouter`, which replaces `<body>` on each navigation.
 
 ## Gate an embed on the server
 
-On a server-rendered page, `Astro.locals.c15t.snapshot.effectivePermissions`
+On a server-rendered page, `Astro.locals.inth.snapshot.effectivePermissions`
 tells you whether the visitor had allowed the category when the request
 arrived. Rendering the iframe on the server from it works for returning
 visitors. A visitor who allows the category on the page sees the embed only

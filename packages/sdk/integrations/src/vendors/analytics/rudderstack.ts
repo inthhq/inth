@@ -198,9 +198,9 @@ export interface RudderStackApi {
 	 *
 	 * @remarks
 	 * This API is for RudderStack's consent-management flow. In the default
-	 * (blocked-load) mode it is not a c15t revocation hook; c15t unloads the
+	 * (blocked-load) mode it is not a Inth revocation hook; Inth unloads the
 	 * SDK when measurement consent is revoked. In the opt-in pre-consent mode
-	 * (`consentManagement` option) c15t calls it with the mapped consent IDs on
+	 * (`consentManagement` option) Inth calls it with the mapped consent IDs on
 	 * every consent decision and change.
 	 */
 	consent: (consentOptions?: Record<string, unknown>) => unknown;
@@ -229,7 +229,7 @@ declare global {
  *
  * Creates RudderStack's v3 `window.rudderanalytics` queue, marks the snippet as
  * seeded, queues the required `load()` call and optional `page()` call, then
- * lets c15t own the script element.
+ * lets Inth own the script element.
  */
 export const rudderstackManifest = {
 	...vendorManifestContract,
@@ -299,7 +299,7 @@ export const rudderstackManifest = {
 } as const satisfies VendorManifest;
 
 /**
- * c15t consent categories accepted by the RudderStack consent mapping.
+ * Inth consent categories accepted by the RudderStack consent mapping.
  */
 export type RudderStackConsentCategory =
 	| 'necessary'
@@ -313,20 +313,20 @@ export type RudderStackConsentCategory =
  *
  * When provided, the SDK loads immediately for every visitor in RudderStack's
  * pre-consent state (no persistent storage, events buffered in memory) and
- * c15t signals consent decisions through `rudderanalytics.consent()` with the
+ * Inth signals consent decisions through `rudderanalytics.consent()` with the
  * mapped consent IDs. This preserves pre-consent event attribution for users
  * who go on to consent, at the cost of running vendor code before consent.
  *
  * Every destination in your RudderStack workspace must carry the consent IDs
- * used here — c15t cannot verify that configuration from the browser, which is
+ * used here — Inth cannot verify that configuration from the browser, which is
  * why this mode is opt-in and blocking the load stays the default.
  */
 export interface RudderStackConsentManagementOptions {
 	/**
-	 * c15t consent category → RudderStack consent IDs.
+	 * Inth consent category → RudderStack consent IDs.
 	 *
 	 * IDs come from your RudderStack destination consent settings. Categories
-	 * granted in c15t contribute their IDs to `allowedConsentIds`; everything
+	 * granted in Inth contribute their IDs to `allowedConsentIds`; everything
 	 * else lands in `deniedConsentIds`.
 	 *
 	 * @example
@@ -352,7 +352,7 @@ export interface RudderStackOptions {
 	dataPlaneUrl: string;
 
 	/**
-	 * Opt into RudderStack's pre-consent mode with c15t as the consent
+	 * Opt into RudderStack's pre-consent mode with Inth as the consent
 	 * provider instead of blocking the SDK load until consent.
 	 *
 	 * Defaults to `undefined`, which keeps the safe default: the SDK does not
@@ -364,7 +364,7 @@ export interface RudderStackOptions {
 	/**
 	 * Optional JSON-serializable RudderStack `load()` options.
 	 *
-	 * Values must be JSON-serializable because c15t resolves the manifest into
+	 * Values must be JSON-serializable because Inth resolves the manifest into
 	 * script lifecycle callbacks. Do not pass functions, Dates, Maps, Sets,
 	 * class instances, symbols, or other non-JSON values.
 	 */
@@ -452,7 +452,7 @@ const validateConsentMapping = function validateConsentMapping(
 
 	if (Object.keys(normalized).length === 0) {
 		throw new Error(
-			'rudderstack: consentManagement.mapping must map at least one c15t category to a non-empty list of RudderStack consent IDs'
+			'rudderstack: consentManagement.mapping must map at least one inth category to a non-empty list of RudderStack consent IDs'
 		);
 	}
 
@@ -525,14 +525,14 @@ const isHttpsUrl = function isHttpsUrl(value: string): boolean {
  * returns a script that never loads.
  *
  * RudderStack collects customer behavior and sends it to destinations through
- * your configured data plane. By default c15t gates the browser SDK on
+ * your configured data plane. By default Inth gates the browser SDK on
  * `measurement` consent and unloads it when that consent is revoked.
  * `loadOptions` is passed directly as the third `load()` argument and must be
  * JSON-serializable.
  *
  * Pass `consentManagement` to opt into RudderStack's pre-consent mode instead:
  * the SDK loads immediately with no persistent storage and buffered events,
- * and c15t signals every consent decision through `rudderanalytics.consent()`
+ * and Inth signals every consent decision through `rudderanalytics.consent()`
  * with your mapped consent IDs — preserving pre-consent event attribution for
  * users who consent. Requires consent IDs on every RudderStack destination.
  *
@@ -583,7 +583,7 @@ export const rudderstack = function rudderstack({
 		const consentMapping = validateConsentMapping(consentManagement);
 
 		// Pre-consent mode: the SDK loads immediately but inert (no persistent
-		// storage, buffered events) and c15t signals consent decisions through
+		// storage, buffered events) and Inth signals consent decisions through
 		// rudderanalytics.consent() — queued before load, live afterwards.
 		manifest = {
 			...manifest,

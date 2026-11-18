@@ -411,7 +411,7 @@ describe('vendor-only subject through a server render', () => {
 		const drop = vi
 			.spyOn(document, 'cookie', 'set')
 			.mockImplementation((value: string) => {
-				if (!value.startsWith('c15t-vendors=')) {
+				if (!value.startsWith('inth-vendors=')) {
 					setter?.call(document, value);
 				}
 			});
@@ -432,8 +432,8 @@ describe('vendor-only subject through a server render', () => {
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([
 			'meta-pixel',
 		]);
-		expect(cookieValue('c15t-sid')).toBeNull();
-		expect(localStorage.getItem('c15t-sid')).toBeNull();
+		expect(cookieValue('inth-sid')).toBeNull();
+		expect(localStorage.getItem('inth-sid')).toBeNull();
 		seeded.handle.dispose();
 		seeded.kernel.dispose();
 	});
@@ -451,7 +451,7 @@ describe('vendor-only subject through a server render', () => {
 		}
 		handle.dispose();
 		kernel.dispose();
-		document.cookie = `c15t-vendors=${encodeVendorChoiceCompact({ ...record, subject: { subjectId: 'sub_sibling' } })}; path=/`;
+		document.cookie = `inth-vendors=${encodeVendorChoiceCompact({ ...record, subject: { subjectId: 'sub_sibling' } })}; path=/`;
 
 		const { initialRecords, subject } = serverRender();
 		expect(subject?.subjectId).toBe('sub_sibling');
@@ -468,7 +468,7 @@ describe('vendor-only subject through a server render', () => {
 		// Focus and a storage event read the records again. Neither moves the
 		// local ID.
 		window.dispatchEvent(new Event('focus'));
-		window.dispatchEvent(new StorageEvent('storage', { key: 'c15t-vendors' }));
+		window.dispatchEvent(new StorageEvent('storage', { key: 'inth-vendors' }));
 		await vi.runAllTimersAsync();
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([
 			'meta-pixel',
@@ -489,7 +489,7 @@ describe('vendor-only subject through a server render', () => {
 		);
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([]);
 		expect(serverRender().subject?.subjectId).toBe(local);
-		expect(cookieValue('c15t-sid')).toBeNull();
+		expect(cookieValue('inth-sid')).toBeNull();
 		seeded.handle.dispose();
 		seeded.kernel.dispose();
 	});

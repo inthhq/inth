@@ -27,7 +27,7 @@ const client = createConsentClient({
 		],
 	}),
 	presentation: { prompt: { position: 'bottom-right' } },
-	storageConfig: { storageKey: 'c15t-zaraz-lab' },
+	storageConfig: { storageKey: 'inth-zaraz-lab' },
 	ui: {
 		banner: {
 			description:
@@ -102,7 +102,7 @@ const render = () => {
 		'connection',
 		ready ? 'Connected to live Zaraz' : 'Connecting to Zaraz…'
 	);
-	setText('c15t-state', measurementAllowed() ? 'Allowed' : 'Denied');
+	setText('inth-state', measurementAllowed() ? 'Allowed' : 'Denied');
 	let zarazPermission = 'Connecting…';
 	if (ready) {
 		zarazPermission = window.zaraz.consent.getAll().feGw ? 'Allowed' : 'Denied';
@@ -117,7 +117,7 @@ const render = () => {
 	}
 	if (ready && !observedReady) {
 		observedReady = true;
-		log('Zaraz connected. c15t synchronized measurement permission.');
+		log('Zaraz connected. inth synchronized measurement permission.');
 		setText(
 			'result',
 			'Ready. Run the demo to watch a blocked pageview execute after consent.'
@@ -146,8 +146,8 @@ const save = async (allowed: boolean) => {
 	await savePermissions(allowed, false);
 	log(
 		allowed
-			? 'c15t granted measurement. Zaraz may replay queued pageviews.'
-			: 'c15t denied measurement. Zaraz blocks subsequent pageviews.'
+			? 'inth granted measurement. Zaraz may replay queued pageviews.'
+			: 'inth denied measurement. Zaraz blocks subsequent pageviews.'
 	);
 	render();
 };
@@ -242,12 +242,12 @@ Object.entries(actions).forEach(([id, action]) => {
 });
 const unsubscribeConsent = client.on('consent', () => {
 	log(
-		`c15t consent saved. Measurement is ${measurementAllowed() ? 'allowed' : 'denied'}.`
+		`inth consent saved. Measurement is ${measurementAllowed() ? 'allowed' : 'denied'}.`
 	);
 	render();
 });
 log(
-	`c15t ${client.hasConsented() ? 'restored your saved choice' : 'started without a saved choice'}. Measurement is ${measurementAllowed() ? 'allowed' : 'denied'}. No pageview sent yet.`
+	`inth ${client.hasConsented() ? 'restored your saved choice' : 'started without a saved choice'}. Measurement is ${measurementAllowed() ? 'allowed' : 'denied'}. No pageview sent yet.`
 );
 render();
 const renderInterval = setInterval(render, 200);
@@ -260,7 +260,7 @@ const connectionTimeout = setTimeout(() => {
 	}
 }, 10000);
 
-Object.defineProperty(window, 'c15tLab', {
+Object.defineProperty(window, 'inthLab', {
 	value: {
 		apiReadyAtMount,
 		dispose: () => {

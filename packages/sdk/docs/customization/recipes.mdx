@@ -1,12 +1,12 @@
 ---
 title: Banner designs
-description: Five consent banner designs built with c15t, from one prop to your own markup, with tested code for React, Vue, Svelte, Astro and plain HTML.
+description: Five consent banner designs built with Inth, from one prop to your own markup, with tested code for React, Vue, Svelte, Astro and plain HTML.
 group: customization
 ---
 
 ## Pick a design
 
-Each design below is a real c15t banner. The screenshots and the code come from
+Each design below is a real Inth banner. The screenshots and the code come from
 the same Storybook stories, which CI runs to check that each design renders and
 that Accept and Reject record a choice.
 
@@ -47,13 +47,13 @@ right.
     Render `CookieBanner` and `ConsentManager` from
     `@inth/vue/runtime/components/consent-manager.vue` in place of
     `ConsentRoot`. To keep `ConsentRoot`, set `presentation.prompt` in the
-    `c15tVue` options instead, as in [customize](/docs/frameworks/vue/customize).
+    `inthVue` options instead, as in [customize](/docs/frameworks/vue/customize).
 
     <include src="../shared/examples/storybook-vue/bottom-bar.mdx" />
   </Tab>
 
   <Tab value="Astro">
-    Add `presentation` to the `c15t()` options in `astro.config.mjs`. The
+    Add `presentation` to the `inth()` options in `astro.config.mjs`. The
     server renders the banner as a bar.
 
     <include src="../shared/examples/storybook-astro/bottom-bar.mdx" />
@@ -140,7 +140,7 @@ requires.
   </Tab>
 
   <Tab value="Vue">
-    Spread `slimBar` into the options you pass to `app.use(c15tVue, ...)`.
+    Spread `slimBar` into the options you pass to `app.use(inthVue, ...)`.
     `ConsentRoot` then renders the slim bar.
 
     <include src="../shared/examples/storybook-vue/slim-bar.mdx" />
@@ -161,7 +161,7 @@ requires.
 
 ![A dark navy bar across the bottom of the page with one line of white copy, an underlined Preferences link, and white pill-shaped Reject all and Accept all buttons](../assets/v3/headless-bar.png)
 
-The headless bar is your own markup and CSS, driven by c15t's headless API. It
+The headless bar is your own markup and CSS, driven by inth's headless API. It
 shows the same design in every framework. The policy still decides which
 buttons appear and in what order, the Preferences button is always there, and
 a choice is recorded only when the visitor clicks.
@@ -195,8 +195,8 @@ a choice is recorded only when the visitor clicks.
 
   <Tab value="HTML">
     The headless build, `c15t.headless.js`, keeps script gating and
-    `window.c15t` and ships no banner, dialog or CSS. Buttons with
-    `data-c15t-action` need no code. Because there is no stock dialog,
+    `window.inth` and ships no banner, dialog or CSS. Buttons with
+    `data-inth-action` need no code. Because there is no stock dialog,
     Preferences opens category switches inside the bar and a Save button
     records them. Replace `https://your-project.inth.app` with the backend URL
     from your Inth project, and put the block before `</body>`.

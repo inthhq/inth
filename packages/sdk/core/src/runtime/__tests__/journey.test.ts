@@ -25,7 +25,7 @@ import { JOURNEY_STORAGE_KEY } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
-import { c15tProtocolHeaders } from '../../transports/version-header';
+import { inthProtocolHeaders } from '../../transports/version-header';
 import type { KernelTransport } from '../../types';
 import {
 	createConsentProviderRuntime,
@@ -76,13 +76,13 @@ const fakeFetch: typeof globalThis.fetch = (input, init) => {
 		Response.json(
 			url.pathname.endsWith('/init')
 				? {
-						branding: 'c15t',
+						branding: 'inth',
 						location: { countryCode: 'DE', regionCode: null },
 						policyResolution: writePolicyResolutionWire(initPolicy),
 						translations: { language: 'en', translations },
 					}
 				: { subjectId: 'sub_1' },
-			{ headers: c15tProtocolHeaders }
+			{ headers: inthProtocolHeaders }
 		)
 	);
 };
@@ -136,9 +136,9 @@ beforeEach(() => {
 	sessionStorage.clear();
 	clearStoredConsentRecords();
 	// Each test is a fresh page load.
-	delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
-	delete (window as Window & { __c15tInitialDataPromises?: unknown })
-		.__c15tInitialDataPromises;
+	delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+	delete (window as Window & { __inthInitialDataPromises?: unknown })
+		.__inthInitialDataPromises;
 	vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
@@ -717,7 +717,7 @@ describe('a journey a request before the runtime started', () => {
 	});
 
 	test('a server render id outranks an early request id', async () => {
-		(window as Window & { __c15tJourney?: unknown }).__c15tJourney = {
+		(window as Window & { __inthJourney?: unknown }).__inthJourney = {
 			id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
 			scope: 'page',
 			storedChoice: false,

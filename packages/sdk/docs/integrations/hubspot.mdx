@@ -1,7 +1,7 @@
 ---
 title: HubSpot
-description: Gate HubSpot's tracking code on marketing consent, forward c15t categories and enable chat only after functionality consent.
-seoTitle: HubSpot cookie consent with c15t
+description: Gate HubSpot's tracking code on marketing consent, forward Inth categories and enable chat only after functionality consent.
+seoTitle: HubSpot cookie consent with Inth
 seoDescription: Load HubSpot after marketing consent, disable its banner and forward consent categories. Enable chat separately and understand revocation limits.
 icon: radar
 group: integrations
@@ -13,8 +13,8 @@ not load it. HubSpot can connect browsing history to CRM contacts and use
 tracking data for partner profiling, so the default gates the whole loader on
 marketing consent.
 
-After consent, the helper disables HubSpot's banner and sends c15t's categories
-to HubSpot before inserting the loader. c15t remains the consent interface.
+After consent, the helper disables HubSpot's banner and sends inth's categories
+to HubSpot before inserting the loader. Inth remains the consent interface.
 
 ## Configure HubSpot
 
@@ -67,7 +67,7 @@ The reserved identity survives final teardown. Reload the page to change it.
 An externally installed `hs-script-loader` with a matching URL can be reused,
 with a warning. Its nonce must also match if the reserved configuration chose
 an explicit nonce. A different URL or incompatible explicit nonce blocks
-controller startup until reload, because c15t cannot safely control that SDK.
+controller startup until reload, because Inth cannot safely control that SDK.
 Reusing an external script cannot gate requests it already sent.
 
 If a non-script element has that ID, the helper leaves it untouched and does
@@ -84,7 +84,7 @@ has a saved grant. It does not use an inline server-start snippet.
 
 ## Consent categories
 
-| c15t category | HubSpot consent field |
+| Inth category | HubSpot consent field |
 | --- | --- |
 | `measurement` | `analytics` |
 | `marketing` | `advertisement` |
@@ -106,7 +106,7 @@ override another active owner's denial. Initially denied owners restrict the
 controller too, even if their registrations have never loaded. Startup requires
 at least one owner and every owner's loader gate to pass.
 
-c15t's `necessary` and `experience` categories have no corresponding field in
+inth's `necessary` and `experience` categories have no corresponding field in
 this helper. HubSpot manages its necessary cookies separately.
 
 The helper forwards these values through `_hsp.push(['setHubSpotConsent', ...])`
@@ -230,7 +230,7 @@ can itself trigger a revocation request. It does not remove every browser
 storage entry or unload the child scripts.
 
 The helper retains its loader through consent withdrawal and provider
-remounts to avoid running HubSpot's bootstrap again. Keep c15t's default
+remounts to avoid running HubSpot's bootstrap again. Keep inth's default
 `reloadOnConsentRevoked` enabled. Reload ends the running page, and the saved
 denial prevents a fresh load. With reload disabled, previously loaded HubSpot
 code and child requests can continue despite the denied consent signal.

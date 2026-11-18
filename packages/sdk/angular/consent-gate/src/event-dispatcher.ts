@@ -15,7 +15,7 @@ import type {
 /**
  * Get the app's event dispatcher. Call it in an injection context, such as
  * a component's or service's field initializer or constructor, under
- * `provideC15t()`.
+ * `provideInth()`.
  *
  * It delivers to the provider's `scripts`, plus any you pass, and checks
  * consent when it sends, so a revoked category stops the next event. Every
@@ -26,7 +26,7 @@ import type {
  * injectable `globals`. Pass a function, which may read signals, to
  * resolve them on each call.
  * @returns A dispatcher with `track` and `pageview`.
- * @throws {Error} Outside an injection context, or without `provideC15t()`.
+ * @throws {Error} Outside an injection context, or without `provideInth()`.
  * @example
  * ```ts
  * import { Component, inject } from '@angular/core';

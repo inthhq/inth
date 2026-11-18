@@ -74,7 +74,7 @@ describe('global vendor list validation', () => {
 		});
 	});
 
-	it('types only the fields c15t knows', () => {
+	it('types only the fields inth knows', () => {
 		const parsed: GlobalVendorList = v.parse(
 			globalVendorListSchema,
 			vendorList

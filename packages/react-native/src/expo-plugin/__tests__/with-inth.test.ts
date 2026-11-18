@@ -171,10 +171,10 @@ describe('withInth standard install', () => {
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.inth.backend.url': BACKEND,
-			'com.inth.iab.cmpId': 1234,
-			'com.inth.iab.cmpVersion': 7,
-			'com.inth.iab.consentScreen': 3,
-			'com.inth.iab.publisherCountryCode': 'DE',
+			'com.c15t.iab.cmpId': 1234,
+			'com.c15t.iab.cmpVersion': 7,
+			'com.c15t.iab.consentScreen': 3,
+			'com.c15t.iab.publisherCountryCode': 'DE',
 		});
 
 		const manifestApplied = await runMod(
@@ -204,8 +204,8 @@ describe('withInth standard install', () => {
 			iab: { cmpId: 1234, cmpVersion: 7, publisherCountryCode: 'DE' },
 		});
 		const plist = (await runInfoPlist(config)).ios?.infoPlist ?? {};
-		expect(plist['com.inth.iab.cmpId']).toBe(1234);
-		expect(plist).not.toHaveProperty('com.inth.iab.consentScreen');
+		expect(plist['com.c15t.iab.cmpId']).toBe(1234);
+		expect(plist).not.toHaveProperty('com.c15t.iab.consentScreen');
 	});
 
 	it('writes a declared category scope to both platforms', async () => {

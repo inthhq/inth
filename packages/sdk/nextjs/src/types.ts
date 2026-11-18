@@ -20,7 +20,7 @@ import type { Script } from '@inth/sdk/modules/script-loader';
 export type ConsentState = ConsentProviderPrefetch;
 
 /**
- * Browser options `ConsentRoot` reads. Set them in `c15t.config.ts`, or as
+ * Browser options `ConsentRoot` reads. Set them in `inth.config.ts`, or as
  * `ConsentRoot` props, which win over the config's.
  */
 export interface ConsentClientOptions {

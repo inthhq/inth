@@ -24,19 +24,19 @@ import {
 } from '../client';
 import type { AstroConsentClient } from '../client';
 import { boot, EVENTS_KEY } from '../client-engine';
-import type { C15tClientOptionsExtension } from '../client-types';
+import type { InthClientOptionsExtension } from '../client-types';
 import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
 import { snapshotFromConfig } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { registerDialogAdapter } from '../ui/adapter';
 import type { ConsentDialogContext } from '../ui/adapter';
 import { testResolution, testRule } from './policy-fixture';
 
 registerRuntimeModules(onDemandRuntimeModules);
 
-const OPTIONS: C15tAstroOptions = {
+const OPTIONS: InthAstroOptions = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 	mode: testingMode({ policy: [testRule] }),
 };
@@ -121,17 +121,17 @@ const heldEngine = () => {
 
 /** A server-rendered page: config, boot block, banner and a loading hero. */
 const renderPage = function renderPage(defer = true): void {
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig = config();
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = config();
 	document.body.innerHTML = `
-		<script type="application/json" data-c15t-boot>${JSON.stringify({
+		<script type="application/json" data-inth-boot>${JSON.stringify({
 			d: defer,
 			s: serverSnapshot(),
 		})}</script>
 		<img fetchpriority="high" src="/hero.png" alt="">
 		<div data-testid="consent-banner-root">
-			<button data-action="reject" data-c15t-action="reject" type="button">Reject</button>
-			<button data-action="customize" data-c15t-action="customize" type="button">Customize</button>
-			<button data-action="accept" data-c15t-action="accept" type="button">Accept</button>
+			<button data-action="reject" data-inth-action="reject" type="button">Reject</button>
+			<button data-action="customize" data-inth-action="customize" type="button">Customize</button>
+			<button data-action="accept" data-inth-action="accept" type="button">Accept</button>
 		</div>
 		<p id="outside">Article</p>
 	`;
@@ -144,8 +144,8 @@ const engineLoader = () =>
 
 const startShell = function startShell(
 	loadEngine = engineLoader(),
-	extension: C15tClientOptionsExtension = {},
-	options: C15tAstroOptions = OPTIONS
+	extension: InthClientOptionsExtension = {},
+	options: InthAstroOptions = OPTIONS
 ) {
 	const started = startDeferredClient(
 		resolveOptions(options),
@@ -158,7 +158,7 @@ const startShell = function startShell(
 
 const click = function click(action: string): void {
 	(
-		document.querySelector(`[data-c15t-action="${action}"]`) as HTMLElement
+		document.querySelector(`[data-inth-action="${action}"]`) as HTMLElement
 	).click();
 };
 
@@ -167,9 +167,9 @@ beforeEach(() => {
 	document.head.innerHTML = '';
 	document.body.innerHTML = '';
 	const globals = window as unknown as Record<string, unknown>;
-	globals.__c15tAstro = undefined;
-	globals.__c15tAstroConfig = undefined;
-	globals.__c15tStarted = undefined;
+	globals.__inthAstro = undefined;
+	globals.__inthAstroConfig = undefined;
+	globals.__inthStarted = undefined;
 	globals[EARLY_TAPS_KEY] = undefined;
 	// The delegated listener stays installed across tests: it reads the
 	// page's client at each click.
@@ -222,7 +222,7 @@ describe('the first-load shell', () => {
 		const { client: shell, loadEngine } = startShell();
 
 		document
-			.querySelector('[data-c15t-action="reject"]')
+			.querySelector('[data-inth-action="reject"]')
 			?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 		await settle();
 		expect(loadEngine).not.toHaveBeenCalled();
@@ -260,7 +260,7 @@ describe('the first-load shell', () => {
 		await shell.ready;
 		await settle();
 		expect(loadEngine).toHaveBeenCalledOnce();
-		expect(document.cookie).toMatch(/(?:^|; )c15t=/u);
+		expect(document.cookie).toMatch(/(?:^|; )inth=/u);
 		const engine = getConsentClient() as AstroConsentClient;
 		expect(engine).not.toBe(shell);
 		expect(engine.getConsent().activeUI).toBe('none');
@@ -349,7 +349,7 @@ describe('the first-load shell', () => {
 		await settle();
 		// The record is stored, nothing is queued, and nothing is announced:
 		// the engine records the tap.
-		expect(JSON.parse(localStorage.getItem('c15t') ?? 'null')).toMatchObject({
+		expect(JSON.parse(localStorage.getItem('inth') ?? 'null')).toMatchObject({
 			categories: { measurement: { value: true } },
 		});
 		expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
@@ -378,7 +378,7 @@ describe('the first-load shell', () => {
 
 	it('leaves the choice to the engine when a clear epoch is stored', async () => {
 		renderPage();
-		localStorage.setItem('c15t-epoch', String(Date.now() - 1000));
+		localStorage.setItem('inth-epoch', String(Date.now() - 1000));
 		const { client: shell, loadEngine } = startShell();
 		const accepted = shell.acceptAll();
 		// Nothing committed in the tap's task; the engine records it.
@@ -404,7 +404,7 @@ describe('the first-load shell', () => {
 			renderPage(serverDefers);
 			const { client: shell, loadEngine } = startShell(
 				engineLoader(),
-				extension as C15tClientOptionsExtension
+				extension as InthClientOptionsExtension
 			);
 			await shell.ready;
 			expect(loadEngine).toHaveBeenCalledOnce();
@@ -425,7 +425,7 @@ describe('the first-load shell', () => {
 	});
 
 	it('boots the engine straight away on a page without boot data', async () => {
-		(window as unknown as Record<string, unknown>).__c15tAstroConfig = config();
+		(window as unknown as Record<string, unknown>).__inthAstroConfig = config();
 		const loadEngine = engineLoader();
 		expect(startDeferredClient(resolveOptions(OPTIONS), loadEngine)).toBeNull();
 		await settle();
@@ -481,7 +481,7 @@ describe('the first-load shell', () => {
 		const renderBannerPage = function renderBannerPage(): void {
 			renderPage();
 			const style = document.createElement('style');
-			style.setAttribute('data-c15t-styles', 'c15t-first-paint');
+			style.setAttribute('data-inth-styles', 'inth-first-paint');
 			document.head.append(style);
 		};
 
@@ -584,7 +584,7 @@ describe('the first-load shell', () => {
 			} satisfies EngineModule)
 		);
 		const { client: shell } = startShell(loadEngine);
-		expect(Symbol.for('c15t.astro.events')).toBe(EVENTS_KEY);
+		expect(Symbol.for('inth.astro.events')).toBe(EVENTS_KEY);
 
 		getEventDispatcher().track('signup', { plan: 'pro' });
 		await settle();

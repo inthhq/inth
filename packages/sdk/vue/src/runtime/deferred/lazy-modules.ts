@@ -1,5 +1,5 @@
 /**
- * Which server-rendered c15t modules a deferred visitor's HTML should not
+ * Which server-rendered Inth modules a deferred visitor's HTML should not
  * preload: the stock banner's components below `ConsentRoot`, which
  * hydrate only once the consent engine loads.
  *
@@ -8,7 +8,7 @@
  */
 
 /**
- * A c15t component's module, as Vite names it in `ssrContext.modules`:
+ * A Inth component's module, as Vite names it in `ssrContext.modules`:
  * `…/@inth/vue/dist/…` from an installed package, `…/packages/sdk/vue/dist/…`
  * from a workspace or linked install (Vite names the real path), and
  * `…/packages/sdk/vue/src/…` in this repository's tests.

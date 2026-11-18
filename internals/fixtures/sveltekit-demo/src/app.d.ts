@@ -1,4 +1,4 @@
-// Types `event.locals.c15t`, which `c15tHandle` fills once per request.
+// Types `event.locals.inth`, which `inthHandle` fills once per request.
 /// <reference types="@inth/svelte/kit/locals" />
 
 // See https://svelte.dev/docs/kit/types#app.d.ts

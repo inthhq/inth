@@ -6,7 +6,7 @@ export const getServerSideProps = withConsentProps();
 
 const Page = () => (
 	<main>
-		<h1>c15t with the Next.js Pages Router</h1>
+		<h1>inth with the Next.js Pages Router</h1>
 		<p>
 			This page resolves consent in getServerSideProps, so the banner is part of
 			the server HTML. PostHog loads once you allow measurement.

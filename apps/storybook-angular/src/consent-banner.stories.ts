@@ -4,7 +4,7 @@ import {
 	bannerContract,
 	bannerFocusManagement,
 	bannerToDialogFlow,
-} from '@c15t/conformance/play/consent-banner';
+} from '@inth/conformance/play/consent-banner';
 import { ConsentBanner } from '@inth/angular';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
 import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
@@ -56,14 +56,14 @@ const meta = {
 		},
 		props: args,
 		template: `
-			<c15t-consent-banner
+			<inth-consent-banner
 				[trapFocus]="trapFocus"
 				[variant]="variant"
 				[position]="position"
 				[blocking]="blocking"
 			/>
 			@if (includeDialog || notice) {
-				<c15t-consent-dialog />
+				<inth-consent-dialog />
 			}
 		`,
 	}),

@@ -13,8 +13,8 @@
  * import { init } from '@inth/sdk-browser';
  * import '@inth/sdk-browser/styles.css'; // only with `ui: { shadow: false }`
  *
- * const c15t = init({ projectUrl: 'https://your-project.inth.app' });
- * c15t.on('consent', (snapshot) => console.log(snapshot.effectivePermissions));
+ * const Inth = init({ projectUrl: 'https://your-project.inth.app' });
+ * inth.on('consent', (snapshot) => console.log(snapshot.effectivePermissions));
  * ```
  */
 

@@ -723,7 +723,7 @@ describe('evidence checker CLI', () => {
 	});
 
 	it('runs the actual Bun CLI on both a file and stdin and prints no TC bytes', async () => {
-		const folder = await mkdtemp(join(tmpdir(), 'c15t-google-evidence-'));
+		const folder = await mkdtemp(join(tmpdir(), 'inth-google-evidence-'));
 		try {
 			const evidence = decision(true);
 			const file = join(folder, 'capture.json');

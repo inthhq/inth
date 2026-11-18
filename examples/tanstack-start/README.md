@@ -1,12 +1,12 @@
 # TanStack Start
 
-The smallest c15t setup for a server-rendered TanStack Start app. The build
+The smallest Inth setup for a server-rendered TanStack Start app. The build
 bundles your project's policy into the server, and the root loader resolves
 each visitor from it, so the banner is part of the first HTML. PostHog loads
 only after the visitor allows measurement, and a "Privacy settings" link
 reopens the dialog.
 
-- `.env` sets `VITE_C15T_BACKEND_URL`, the project the policy comes from.
+- `.env` sets `VITE_INTH_PROJECT_URL`, the project the policy comes from.
 - `vite.config.ts` adds the `consentManifest` plugin, which downloads the
   policy when `vite dev` or `vite build` starts and bundles it into the
   server.
@@ -29,7 +29,7 @@ The app's `.env` points it at the `https://example-inth.inth.app` demo Inth
 project. `vite dev` and `vite build` download its policy when they start. If
 the download fails, `vite build` stops with an error, and `vite dev` logs a
 warning and the server fetches the policy at runtime. To use your own project,
-set `VITE_C15T_BACKEND_URL` in `.env.local` to its backend URL and add the
+set `VITE_INTH_PROJECT_URL` in `.env.local` to its backend URL and add the
 app's origin to its trusted origins.
 
 Rebuild after you change the policy, translations or vendors in your project.

@@ -1,5 +1,5 @@
 export default defineAppConfig({
-	c15t: {
+	inth: {
 		components: {},
 		tokens: {},
 	},

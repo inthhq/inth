@@ -101,9 +101,9 @@ describe('mergeInitResponseIntoKernelConfig', () => {
 		);
 		expect(merged.initialBranding).toBeUndefined();
 		expect(
-			mergeInitResponseIntoKernelConfig({}, { branding: 'c15t' })
+			mergeInitResponseIntoKernelConfig({}, { branding: 'inth' })
 				.initialBranding
-		).toBe('c15t');
+		).toBe('inth');
 	});
 
 	test('hosting survives a prefetch round trip', () => {
@@ -187,7 +187,7 @@ describe('mergeInitResponseIntoKernelConfig', () => {
 	test('initOutputToKernelConfig wraps the full pipeline', () => {
 		const config = initOutputToKernelConfig(
 			{
-				branding: 'c15t',
+				branding: 'inth',
 				location: { countryCode: 'DE', regionCode: null },
 				// oxlint-disable-next-line typescript/no-explicit-any -- minimal policy fixture
 				policyResolution: POLICY,
@@ -206,7 +206,7 @@ describe('mergeInitResponseIntoKernelConfig', () => {
 			policyId: 'p1',
 			status: 'matched',
 		});
-		expect(config.initialBranding).toBe('c15t');
+		expect(config.initialBranding).toBe('inth');
 		// A producer that sent no `policyResolution` and declared no contract
 		// is a legacy producer: its policy is lifted on the server, once.
 		expect(config.initialPolicyResolution).toMatchObject({
@@ -233,7 +233,7 @@ describe('kernelConfigToInitResponse', () => {
 			const base: KernelConfig = { initialRecords: records };
 			const config: KernelConfig = {
 				...base,
-				initialBranding: 'c15t',
+				initialBranding: 'inth',
 				initialLocation: { countryCode: 'DE', regionCode: null },
 				initialOverrides: { country: 'DE', gpc: false, language: 'de' },
 				initialPolicyResolution,
@@ -279,7 +279,7 @@ test('server mapping accepts a reference without a redundant gvl field', () => {
 	const gvlReference = {
 		language: 'en',
 		summary: { items: ['Storage'], vendorCount: 2 },
-		url: '/api/c15t/init?c15t-gvl=1',
+		url: '/api/inth/init?c15t-gvl=1',
 		vendorListVersion: 1,
 	};
 	const result = mergeInitResponseIntoKernelConfig({}, { gvlReference });

@@ -11,7 +11,7 @@ import { useConsentKernelContext } from './kernel';
 /**
  * Get the app's event dispatcher.
  *
- * It delivers to the `scripts` in the c15t config, plus any you pass, and
+ * It delivers to the `scripts` in the Inth config, plus any you pass, and
  * checks consent when it sends, so a revoked category stops the next event.
  * Every dispatcher in the app shares one pageview history, so a component
  * that mounts again does not replay a navigation.
@@ -19,7 +19,7 @@ import { useConsentKernelContext } from './kernel';
  * @param options - Extra `scripts`, SPA `pageviews` integrations and
  * injectable `globals`. A ref or getter is read on each call.
  * @returns A dispatcher with `track` and `pageview`.
- * @throws {Error} When the c15t plugin is not installed.
+ * @throws {Error} When the Inth plugin is not installed.
  * @example
  * ```ts
  * const events = useEventDispatcher({ pageviews: ['posthog'] });

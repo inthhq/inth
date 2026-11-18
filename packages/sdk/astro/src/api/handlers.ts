@@ -13,7 +13,7 @@ import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
 import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
 import type { ManifestFetch } from '@inth/sdk/server';
 
-import type { C15tResolvedOptions } from '../types';
+import type { InthResolvedOptions } from '../types';
 import { resolveManifestSourceFrom } from './manifest-init';
 import type { FetchGvl } from './manifest-init';
 
@@ -55,7 +55,7 @@ export const waitUntilFromLocals = function waitUntilFromLocals(
 /** Options accepted by the route handler factory. */
 export interface ConsentRouteHandlerOptions {
 	/** The resolved integration options. */
-	options: C15tResolvedOptions;
+	options: InthResolvedOptions;
 	/** Override fetch, mainly for tests. */
 	fetch?: ManifestFetch;
 	/**
@@ -87,7 +87,7 @@ export interface ConsentRouteHandlerOptions {
  */
 export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
 	request: Request,
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): string {
 	return resolveManifestSourceFrom(
 		{ headers: request.headers, url: request.url },
@@ -103,7 +103,7 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
  * these: a page the server resolved inits again through the backend's
  * `/init`. Mount them for other clients, or let browser resolution fetch
  * the manifest from them with
- * `manifest({ resolve: 'browser', manifestUrl: '/api/c15t/manifest' })`.
+ * `manifest({ resolve: 'browser', manifestUrl: '/api/inth/manifest' })`.
  * To have the browser use the route for `/init`, keep the injected route
  * and change its path with `routePrefix`.
  *
@@ -112,9 +112,9 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
  * the last path segment.
  * @example
  * ```ts
- * // src/pages/api/c15t/[...path].ts, with routePrefix: false and
- * // mode: manifest({ resolve: 'browser', manifestUrl: '/api/c15t/manifest' })
- * import options from 'virtual:c15t/options';
+ * // src/pages/api/inth/[...path].ts, with routePrefix: false and
+ * // mode: manifest({ resolve: 'browser', manifestUrl: '/api/inth/manifest' })
+ * import options from 'virtual:inth/options';
  * import { createConsentRouteHandlers } from '@inth/astro/server';
  *
  * const handlers = createConsentRouteHandlers({ options });

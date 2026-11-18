@@ -22,13 +22,13 @@ const distVitePath = join(packageDir, 'dist/vite.mjs');
 
 describe('Vue manifest module', () => {
 	it('serves the snapshot to the browser of a Vue single-page app', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-vue-manifest-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-vue-manifest-'));
 		try {
 			const plugin = consentManifest({
 				fetch: vi.fn<typeof globalThis.fetch>().mockImplementation(() =>
 					Promise.resolve(
 						Response.json({
-							branding: 'c15t',
+							branding: 'inth',
 							revision: 'vue-build',
 							schemaVersion: 2,
 						})
@@ -42,7 +42,7 @@ describe('Vue manifest module', () => {
 				plugin.resolveId('@inth/sdk/generated') as string
 			);
 			expect(source).toContain('vue-build');
-			expect(existsSync(join(root, 'src/c15t-manifest.ts'))).toBe(false);
+			expect(existsSync(join(root, 'src/inth-manifest.ts'))).toBe(false);
 		} finally {
 			await rm(root, { force: true, recursive: true });
 		}
@@ -53,7 +53,7 @@ describe('Vue production builds', () => {
 	const modesPath = join(packageDir, 'src/runtime/modes.ts');
 	/** Builds an app entry that imports the Vue plugin's modes. */
 	const buildApp = async (source: string, fetch: typeof globalThis.fetch) => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-vue-build-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-vue-build-'));
 		try {
 			const entry = join(root, 'entry.ts');
 			await writeFile(entry, source.replace('MODES', modesPath));
@@ -88,7 +88,7 @@ describe('Vue production builds', () => {
 	it('builds an app that uses the hosted backend while the backend is down', async () => {
 		const fetch = unreachable();
 		await buildApp(
-			"import { selectedMode } from 'MODES';\nexport const mode = selectedMode({ projectUrl: '/api/c15t' });\n",
+			"import { selectedMode } from 'MODES';\nexport const mode = selectedMode({ projectUrl: '/api/inth' });\n",
 			fetch
 		);
 		expect(fetch).not.toHaveBeenCalled();
@@ -113,7 +113,7 @@ describe('location advice', () => {
 			fetch: vi.fn<typeof globalThis.fetch>().mockImplementation(() =>
 				Promise.resolve(
 					Response.json({
-						branding: 'c15t',
+						branding: 'inth',
 						policyPacks: [
 							createConsentManifestPolicyPack({
 								id: 'regional',
@@ -154,13 +154,13 @@ describe('consentManifest()', () => {
 		const { optimizeDeps } = consentManifest().config();
 
 		expect(optimizeDeps.exclude).toEqual(
-			expect.arrayContaining(['@inth/sdk/generated', '@inth/vue', 'c15t'])
+			expect.arrayContaining(['@inth/sdk/generated', '@inth/vue', 'inth'])
 		);
 	});
 });
 
 describe('runtime specifiers', () => {
-	// `#imports` and `#c15t/composables` resolve through the package's own
+	// `#imports` and `#inth/composables` resolve through the package's own
 	// `imports` field in a plain Vue app, so it needs no resolver plugin.
 	// Nuxt aliases both first.
 	it.runIf(existsSync(distVitePath))(
@@ -171,7 +171,7 @@ describe('runtime specifiers', () => {
 			) as PackageImports;
 
 			expect(Object.keys(imports).sort()).toEqual([
-				'#c15t/composables',
+				'#inth/composables',
 				'#imports',
 			]);
 			for (const target of Object.values(imports)) {
@@ -188,7 +188,7 @@ describe('Vue backend URL variables', () => {
 		env: Record<string, unknown>,
 		options: { projectUrl?: string } = {}
 	) => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-inth-env-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-inth-env-'));
 		try {
 			const plugin = consentManifest({
 				...options,
@@ -219,27 +219,27 @@ describe('Vue backend URL variables', () => {
 		}
 	};
 	const INTH = 'https://inth.example.com';
-	const C15T = 'https://c15t.example.com';
+	const INTH = 'https://inth.example.com';
 
 	it('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
 		const { projectUrl, env } = await resolveProjectUrl({
 			VITE_INTH_PROJECT_URL: INTH,
 		});
 		expect(projectUrl).toBe(INTH);
-		expect(env.VITE_C15T_BACKEND_URL).toBe(INTH);
+		expect(env.VITE_INTH_PROJECT_URL).toBe(INTH);
 	});
 
-	it('VITE_C15T_BACKEND_URL wins when both are set', async () => {
+	it('VITE_INTH_PROJECT_URL wins when both are set', async () => {
 		const { projectUrl } = await resolveProjectUrl({
-			VITE_C15T_BACKEND_URL: C15T,
+			VITE_INTH_PROJECT_URL: INTH,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(projectUrl).toBe(C15T);
+		expect(projectUrl).toBe(INTH);
 	});
 
 	it('an explicit projectUrl beats both variables', async () => {
 		const { projectUrl } = await resolveProjectUrl(
-			{ VITE_C15T_BACKEND_URL: C15T, VITE_INTH_PROJECT_URL: INTH },
+			{ VITE_INTH_PROJECT_URL: INTH, VITE_INTH_PROJECT_URL: INTH },
 			{ projectUrl: 'https://option.example.com' }
 		);
 		expect(projectUrl).toBe('https://option.example.com');

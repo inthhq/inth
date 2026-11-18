@@ -2,7 +2,7 @@
  * GPP section definitions.
  *
  * Field order and widths follow the IAB GPP section specifications. Every US
- * field c15t encodes is a fixed-width integer or a list of 2-bit integers,
+ * field Inth encodes is a fixed-width integer or a list of 2-bit integers,
  * so one table per section is enough to encode it and to describe it to
  * `getSection` callers.
  *
@@ -35,7 +35,7 @@ export type GPPFieldSpec = readonly [
 	count?: number,
 ];
 
-/** API prefixes of the US sections c15t encodes. */
+/** API prefixes of the US sections Inth encodes. */
 export type USSectionPrefix =
 	| 'usnat'
 	| 'usca'
@@ -55,7 +55,7 @@ export type USSectionPrefix =
 	| 'ustn'
 	| 'usmn';
 
-/** A US section c15t can encode. */
+/** A US section Inth can encode. */
 export interface USSectionDefinition {
 	/** GPP section ID. */
 	id: number;
@@ -234,7 +234,7 @@ export const US_STATE_SECTIONS: Readonly<Record<string, USSectionDefinition>> =
 		VA: state(9, 'usva', sharingNoticeLayout(8, 1), false),
 	};
 
-/** Every US section c15t can encode, ordered by section ID. */
+/** Every US section Inth can encode, ordered by section ID. */
 export const US_SECTIONS: readonly USSectionDefinition[] = [
 	US_NATIONAL_SECTION,
 	...Object.values(US_STATE_SECTIONS),

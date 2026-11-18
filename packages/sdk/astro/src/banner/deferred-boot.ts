@@ -11,10 +11,10 @@ import { isIABConfigured } from '@inth/sdk/runtime';
 import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
 import { declaresVendor, isRunnableNow } from '../browser/deferred-scripts';
-import type { C15tLocals, C15tResolvedOptions } from '../types';
+import type { InthLocals, InthResolvedOptions } from '../types';
 
 type DeferOptions = Pick<
-	C15tResolvedOptions,
+	InthResolvedOptions,
 	'experiment' | 'gpp' | 'iab' | 'networkBlocker' | 'scripts' | 'vendors'
 >;
 
@@ -82,7 +82,7 @@ const grantsOptional = function grantsOptional(
  * browser adds what only it knows, such as the `clientEntrypoint` options.
  *
  * Vendors are checked on the options and the config as well as the
- * snapshot: the server's snapshot leaves out the vendors `c15t()` declares,
+ * snapshot: the server's snapshot leaves out the vendors `inth()` declares,
  * which the browser runtime merges in, and a bulk choice also decides
  * every declared vendor, which only the kernel records.
  *
@@ -146,13 +146,13 @@ export const buildConsentBootJSON = function buildConsentBootJSON(
  * banner (see {@link canDeferEngine}); a prerendered page's snapshot is the
  * one a first-time visitor gets, so it never waits.
  *
- * @param locals - `Astro.locals.c15t`.
+ * @param locals - `Astro.locals.inth`.
  * @returns JSON safe to place inside a `<script>` element.
  * @internal
  */
 export const buildLocalsBootJSON = function buildLocalsBootJSON(
 	locals: Pick<
-		C15tLocals,
+		InthLocals,
 		'config' | 'options' | 'prerendered' | 'shouldShowBanner' | 'snapshot'
 	>
 ): string {

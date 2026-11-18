@@ -123,7 +123,7 @@ and preferences UI. These examples do not create a second consent provider.
   </Tab>
 
   <Tab value="Vue">
-    Render this component inside the app that installed the c15t Vue plugin.
+    Render this component inside the app that installed the Inth Vue plugin.
 
     ```vue title="src/ConsentEmbed.vue"
     <script setup lang="ts">
@@ -158,7 +158,7 @@ and preferences UI. These examples do not create a second consent provider.
     Add this component to pages using your consent-enabled base layout:
 
     ```astro title="src/components/ConsentEmbed.astro"
-    <c15t-consent-embed style="display: block"></c15t-consent-embed>
+    <inth-consent-embed style="display: block"></inth-consent-embed>
 
     <script>
       import { getConsentClient } from '@inth/astro/client';
@@ -195,13 +195,13 @@ and preferences UI. These examples do not create a second consent provider.
         }
       }
 
-      if (!customElements.get('c15t-consent-embed')) {
-        customElements.define('c15t-consent-embed', ConsentEmbed);
+      if (!customElements.get('inth-consent-embed')) {
+        customElements.define('inth-consent-embed', ConsentEmbed);
       }
     </script>
     ```
 
-    The first mount waits for the page's module scripts, including c15t's boot
+    The first mount waits for the page's module scripts, including inth's boot
     script. Later `ClientRouter` mounts reuse the existing runtime. Removing the
     component unsubscribes and removes the iframe. Do not create another consent
     runtime for this embed.
@@ -266,19 +266,19 @@ and preferences UI. These examples do not create a second consent provider.
   </Tab>
 
   <Tab value="Angular">
-    Render this component anywhere below the existing `provideC15t()`.
+    Render this component anywhere below the existing `provideInth()`.
     Import `ConsentEmbed` into the component that uses it.
 
     <include src="../examples/angular/integration-embed.mdx" />
 
-    The iframe is in a `c15tConsentGateContent` template, so Angular creates
+    The iframe is in a `inthConsentGateContent` template, so Angular creates
     it only while the category is allowed and destroys it on revocation. The
     gate fills in one frame after the first browser render, also after server
     rendering. Its default placeholder opens preferences.
   </Tab>
 
   <Tab value="HTML">
-    The c15t script tag gates iframes that name a category. Put the embed's URL
+    The Inth script tag gates iframes that name a category. Put the embed's URL
     in `data-src` instead of `src`. Replace `EMBED_URL`, `EMBED_CATEGORY` and
     `EMBED_TITLE` with `embedURL`, `embedCategory` and `embedTitle` from the
     configuration on this page:
@@ -293,9 +293,9 @@ and preferences UI. These examples do not create a second consent provider.
     ></iframe>
     ```
 
-    c15t sets `src` once the category is allowed and removes it on revocation.
+    Inth sets `src` once the category is allowed and removes it on revocation.
     Without `src` the iframe loads nothing, so hide it with CSS and show a link
-    to `#c15t-preferences` in its place. See
+    to `#inth-preferences` in its place. See
     [HTML embeds](/docs/frameworks/html/embeds).
   </Tab>
 

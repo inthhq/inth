@@ -145,6 +145,6 @@ describe.each(['ordinary', 'IAB'])('%s script-tag legal links', (variant) => {
 	it('does not mount UI when the tag has data-no-ui', async () => {
 		const client = await start({ ...legalAttributes, 'data-no-ui': '' });
 		expect(client.ui).toBeNull();
-		expect(document.querySelector('[data-c15t-ui]')).toBeNull();
+		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 	});
 });

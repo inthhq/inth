@@ -9,7 +9,7 @@ import {
 import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { SSRInitialData } from '../../options/ssr';
-import { c15tProtocolParams } from '../../transports/version-header';
+import { inthProtocolParams } from '../../transports/version-header';
 import type { InitContext, KernelJourney } from '../../types';
 import {
 	claimEarlyExperimentArm,
@@ -68,7 +68,7 @@ const buildInitQuery = function buildInitQuery(
 	overrides: PrefetchOptions['overrides']
 ): string {
 	return appendInitParams('', {
-		...c15tProtocolParams,
+		...inthProtocolParams,
 		...buildRequestContextParams(overrides),
 	});
 };

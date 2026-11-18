@@ -31,7 +31,7 @@ export interface FetchCachedGvlOptions {
 	language: string;
 	/** Override fetch, mainly for tests. Defaults to `globalThis.fetch`. */
 	fetch?: ManifestFetch;
-	/** Extra request headers, such as the c15t protocol headers. */
+	/** Extra request headers, such as the Inth protocol headers. */
 	headers?: Record<string, string>;
 	/** Error prefix naming the caller. */
 	label?: string;

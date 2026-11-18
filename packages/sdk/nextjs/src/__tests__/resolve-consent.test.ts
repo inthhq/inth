@@ -27,7 +27,7 @@ const policyCalls = (spy: { mock: { calls: unknown[][] } }): string[] =>
 		.filter((url) => !url.endsWith('/sessions'));
 
 const INIT = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -172,7 +172,7 @@ describe('resolveConsent wiring', () => {
 			config: hostedAt('https://consent.example.com'),
 			country: 'FR',
 			fetch,
-			request: requestOf({ 'accept-language': 'de-DE' }, 'c15t=x; session=y'),
+			request: requestOf({ 'accept-language': 'de-DE' }, 'inth=x; session=y'),
 		});
 		// The query carries the consent journey the render started.
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
@@ -182,22 +182,22 @@ describe('resolveConsent wiring', () => {
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		expect(headers.get('x-c15t-country')).toBe('FR');
 		expect(headers.get('accept-language')).toBe('de');
-		expect(headers.get('cookie')).toBe('c15t=x');
+		expect(headers.get('cookie')).toBe('inth=x');
 		expect(state.initialPolicyResolution?.status).toBe('matched');
 	});
 
-	test('a /api/c15t backend prefix (rewrite or mounted backend) is asked for /init', async () => {
-		// Next.js mounts no c15t handler at /api/c15t: the docs use it as the
+	test('a /api/inth backend prefix (rewrite or mounted backend) is asked for /init', async () => {
+		// Next.js mounts no Inth handler at /api/inth: the docs use it as the
 		// backend prefix, through a rewrite or a backend catch-all route.
 		const fetch = backend();
 		const state = await resolveConsent({
-			config: hostedAt('/api/c15t'),
+			config: hostedAt('/api/inth'),
 			fetch,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(
 			fetch.mock.calls.map(([input]) => String(input).split('?')[0])
-		).toEqual(['https://app.example.com/api/c15t/init']);
+		).toEqual(['https://app.example.com/api/inth/init']);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		expect(headers.get('x-c15t-country')).toBe('DE');
 		expect(state.initialPolicyResolution?.status).toBe('matched');
@@ -206,7 +206,7 @@ describe('resolveConsent wiring', () => {
 	test('a render reached by another render’s own request does not fetch its origin again', async () => {
 		const fetch = backend();
 		const first = await resolveConsent({
-			config: hostedAt('/api/c15t'),
+			config: hostedAt('/api/inth'),
 			fetch,
 			request: requestOf({}),
 		});
@@ -216,14 +216,14 @@ describe('resolveConsent wiring', () => {
 		const sent = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const nested = await resolveConsent({
-			config: hostedAt('/api/c15t'),
+			config: hostedAt('/api/inth'),
 			fetch,
 			request: requestOf(Object.fromEntries(sent)),
 		});
 		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(nested.initialPolicyResolution).toBeUndefined();
 		expect(String(warn.mock.calls[0]?.[0])).toContain(
-			'https://app.example.com/api/c15t/init'
+			'https://app.example.com/api/inth/init'
 		);
 	});
 
@@ -232,8 +232,8 @@ describe('resolveConsent wiring', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const config = defineConsentConfig({
 			mode: manifest(),
-			projectUrl: '/api/c15t',
-			routePrefix: '/api/c15t',
+			projectUrl: '/api/inth',
+			routePrefix: '/api/inth',
 		});
 		const state = await resolveConsent({
 			config,
@@ -243,7 +243,7 @@ describe('resolveConsent wiring', () => {
 		expect(fetch).not.toHaveBeenCalled();
 		expect(state.initialPolicyResolution).toBeUndefined();
 		expect(String(warn.mock.calls[0]?.[0])).toContain(
-			'https://app.example.com/api/c15t/manifest'
+			'https://app.example.com/api/inth/manifest'
 		);
 		// The handler's own upstream resolves it, as the docs describe.
 		const resolved = await resolveConsent({
@@ -266,19 +266,19 @@ describe('resolveConsent wiring', () => {
 				request: requestOf({}),
 			})
 		).rejects.toThrow(
-			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'."
 		);
 	});
 
 	test('rejects a config routePrefix that is neither a path nor an http(s) URL', async () => {
 		await expect(
 			resolveConsent({
-				config: { routePrefix: 'api/c15t' },
+				config: { routePrefix: 'api/inth' },
 				projectUrl: 'https://consent.example.com',
 				request: requestOf({}),
 			})
 		).rejects.toThrow(
-			'@inth/nextjs: defineConsentConfig `routePrefix` must be an absolute http(s) URL or a `/`-relative path, received "api/c15t".'
+			'@inth/nextjs: defineConsentConfig `routePrefix` must be an absolute http(s) URL or a `/`-relative path, received "api/inth".'
 		);
 	});
 
@@ -319,12 +319,12 @@ describe('resolveConsent wiring', () => {
 			experiment,
 			fetch,
 			request: {
-				cookies: () => ({ toString: () => 'c15t=x' }),
+				cookies: () => ({ toString: () => 'inth=x' }),
 				headers: () => new Headers({ host: 'app.example.com' }),
 			},
 		});
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
-		expect(headers.get('cookie')).toBe('c15t=x');
+		expect(headers.get('cookie')).toBe('inth=x');
 		expect(state.experiment).toBe(experiment);
 	});
 });

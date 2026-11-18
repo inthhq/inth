@@ -53,7 +53,7 @@ describe('defaults from @inth/sdk/generated', () => {
 		const { GET } = createConsentRoute({ fetch });
 		const response = await GET({
 			params: { _splat: 'manifest' },
-			request: new Request('https://app.example.com/api/c15t/manifest'),
+			request: new Request('https://app.example.com/api/inth/manifest'),
 		});
 		expect(await response.json()).toEqual(MANIFEST_FIXTURE);
 		expect(fetch).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe('the client half of the state', () => {
 				type: 'manifest',
 			},
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
-			routePrefix: '/api/c15t/',
+			routePrefix: '/api/inth/',
 		});
 		expect(state.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -78,7 +78,7 @@ describe('the client half of the state', () => {
 			manifestUrl: 'https://cdn.example/manifest',
 			type: 'manifest',
 		});
-		expect(state.routePrefix).toBe('/api/c15t');
+		expect(state.routePrefix).toBe('/api/inth');
 		expect(JSON.stringify(state)).not.toContain(MANIFEST_FIXTURE.revision);
 	});
 
@@ -86,11 +86,11 @@ describe('the client half of the state', () => {
 		const state = await resolveConsent({
 			proxy: true,
 			request: requestOf(),
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
 		expect(state).toMatchObject({
-			projectUrl: '/api/c15t',
-			routePrefix: '/api/c15t',
+			projectUrl: '/api/inth',
+			routePrefix: '/api/inth',
 		});
 		await expect(
 			resolveConsent({ proxy: true, request: requestOf() })
@@ -105,10 +105,10 @@ describe('the client half of the state', () => {
 			projectUrl: 'https://backend.example',
 			proxy: true,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
 		// The browser's init and saves go through the route.
-		expect(state).toMatchObject({ projectUrl: '/api/c15t' });
+		expect(state).toMatchObject({ projectUrl: '/api/inth' });
 		expect(state.mode).toEqual({ type: 'hosted' });
 		// The server still asks the hosted backend.
 		expect(String(fetch.mock.calls[0]?.[0])).toMatch(

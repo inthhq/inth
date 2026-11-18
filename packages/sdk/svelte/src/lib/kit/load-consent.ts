@@ -7,7 +7,7 @@
  * hydration. The resolution itself is `resolveRequestConsent` from
  * `@inth/sdk/server`; this module supplies what SvelteKit knows about the
  * request: `event.request`, `event.url`, `event.fetch`, the platform's
- * `waitUntil`, and the config and inputs `c15tHandle` stored.
+ * `waitUntil`, and the config and inputs `inthHandle` stored.
  */
 import { building } from '$app/env';
 import {
@@ -19,7 +19,7 @@ import type { ResolveRequestConsentOptions } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import type { ConsentRootState } from '../types';
-import type { C15tLocals, ConsentRequestOptions, KitMode } from './types';
+import type { InthLocals, ConsentRequestOptions, KitMode } from './types';
 
 /** Options for {@link loadConsent}, when you call it from your own `load`. */
 export interface LoadConsentOptions extends ConsentRequestOptions {
@@ -81,8 +81,8 @@ export interface LoadConsentOptions extends ConsentRequestOptions {
 
 const readLocals = function readLocals(
 	event: RequestEvent
-): C15tLocals | undefined {
-	return (event.locals as { c15t?: C15tLocals }).c15t;
+): InthLocals | undefined {
+	return (event.locals as { inth?: InthLocals }).inth;
 };
 
 /** Prefer the adapter's hook; use the caller's hook on other platforms. */
@@ -102,7 +102,7 @@ const backgroundWorkFor = (
 /** How the server resolves each mode. */
 const serverResolution = function serverResolution(
 	mode: KitMode,
-	locals: C15tLocals | undefined,
+	locals: InthLocals | undefined,
 	projectUrl: string | undefined
 ): Pick<
 	ResolveRequestConsentOptions,
@@ -155,12 +155,12 @@ const browserMode = function browserMode(mode: KitMode): KitMode {
 };
 
 /**
- * The request as `c15tHandle` left it: its inputs, unless this call
+ * The request as `inthHandle` left it: its inputs, unless this call
  * overrides them.
  */
 const requestFrom = function requestFrom(
 	event: RequestEvent,
-	locals: C15tLocals | undefined,
+	locals: InthLocals | undefined,
 	overridesPerCall: boolean
 ) {
 	return {
@@ -184,7 +184,7 @@ const requestFrom = function requestFrom(
  * <ConsentRoot state={data.consent}>
  * ```
  *
- * It resolves with the mode `c15tHandle()` was given. With none it asks
+ * It resolves with the mode `inthHandle()` was given. With none it asks
  * the hosted backend's `/init`. With `manifest()` it resolves from the
  * snapshot `consentManifest()` downloaded, or fetches and caches the
  * backend's manifest.

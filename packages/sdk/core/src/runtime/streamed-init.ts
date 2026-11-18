@@ -86,12 +86,12 @@ export const resolveStreamedInit = async function resolveStreamedInit(
 	try {
 		config = (await options.prefetch) ?? {};
 	} catch (error) {
-		warn('c15t: prefetch rejected; using transport init.', error);
+		warn('inth: prefetch rejected; using transport init.', error);
 		return transport.init?.(context) ?? {};
 	}
 	if (config.experiment && !options.runsExperiment) {
 		warn(
-			'c15t: the streamed consent state carries an experiment, but the runtime started before it arrived and runs none. Await the server result, or also pass `experiment` to the options.'
+			'inth: the streamed consent state carries an experiment, but the runtime started before it arrived and runs none. Await the server result, or also pass `experiment` to the options.'
 		);
 	}
 	options.onResolved(config);

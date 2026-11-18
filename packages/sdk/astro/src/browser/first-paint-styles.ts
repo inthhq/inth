@@ -13,7 +13,7 @@
 import { css as firstPaintCSS } from '@inth/sdk/ui/styles/sheets/first-paint';
 
 /** Marks the inlined `<style>`, as the React and Svelte surfaces do. */
-export const INLINE_STYLES_ID = 'c15t-first-paint';
+export const INLINE_STYLES_ID = 'inth-first-paint';
 
 const HIDDEN_BANNER_CSS =
 	'[data-testid=consent-banner-root][hidden],[data-testid=consent-banner-overlay][hidden],[data-testid=iab-consent-banner-root][hidden],[data-testid=iab-consent-banner-overlay][hidden]{display:none!important}';

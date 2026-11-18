@@ -220,7 +220,7 @@ describe('each component rule lands in the stylesheet for its surface', () => {
 describe('styles.css holds no primitive or IAB rule', () => {
 	/** Hashed class names of a class map in `dist/styles/<dir>/<name>.js`. */
 	const classNamesOf = function classNamesOf(path: string): string[] {
-		return [...readDist(path).matchAll(/c15t-ui-[\w-]+/gu)].map(
+		return [...readDist(path).matchAll(/inth-ui-[\w-]+/gu)].map(
 			(match) => match[0]
 		);
 	};

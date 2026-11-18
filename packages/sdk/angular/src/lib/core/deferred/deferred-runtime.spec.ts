@@ -8,12 +8,12 @@ import { pendingBootSnapshot } from '@inth/sdk/surface-state';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testLocal } from '../../../__tests__/test-local';
-import type { C15tResolvedOptions } from '../options';
+import type { InthResolvedOptions } from '../options';
 import { createDeferredRuntime } from './deferred-runtime';
 
 const SRC = 'https://vendor.test/measure.js';
 
-const options = (): C15tResolvedOptions => ({
+const options = (): InthResolvedOptions => ({
 	scripts: [{ category: 'measurement', id: 'measure', src: SRC }],
 });
 
@@ -40,10 +40,10 @@ afterEach(() => {
 		script.remove();
 	}
 	localStorage.clear();
-	for (const name of ['c15t', 'c15t-epoch', 'site-consent']) {
+	for (const name of ['inth', 'inth-epoch', 'site-consent']) {
 		document.cookie = `${name}=; Max-Age=0; path=/`;
 	}
-	delete (window as { __c15tStarted?: unknown }).__c15tStarted;
+	delete (window as { __inthStarted?: unknown }).__inthStarted;
 });
 
 describe('createDeferredRuntime', () => {
@@ -81,7 +81,7 @@ describe('createDeferredRuntime', () => {
 	});
 
 	describe('update() before the engine', () => {
-		const scripts: C15tResolvedOptions['scripts'] = [
+		const scripts: InthResolvedOptions['scripts'] = [
 			{ category: 'measurement', id: 'measure', src: SRC },
 		];
 		const deferredWithEngine = () => {
@@ -191,7 +191,7 @@ describe('createDeferredRuntime', () => {
 		await vi.waitFor(() => {
 			expect(localStorage.getItem('site-consent')).not.toBeNull();
 		});
-		expect(localStorage.getItem('c15t')).toBeNull();
+		expect(localStorage.getItem('inth')).toBeNull();
 		runtime.dispose();
 
 		const engine = createConsentProviderRuntime(
@@ -210,8 +210,8 @@ describe('createDeferredRuntime', () => {
 
 	test('clears the stored choice before the engine loads', () => {
 		const stored = `c.necessary:1,c.measurement:1,i.t:${Date.now()}`;
-		document.cookie = `c15t=${stored}; path=/`;
-		localStorage.setItem('c15t', stored);
+		document.cookie = `inth=${stored}; path=/`;
+		localStorage.setItem('inth', stored);
 		const runtime = createDeferredRuntime({
 			boot: { d: 1, s: snapshotFor('none', true) },
 			// The engine never lands: the page reloads or tears down first.
@@ -227,10 +227,10 @@ describe('createDeferredRuntime', () => {
 		runtime.clearRecords();
 		runtime.dispose();
 
-		expect(localStorage.getItem('c15t')).toBeNull();
-		expect(document.cookie).not.toMatch(/(?:^|; )c15t=/u);
+		expect(localStorage.getItem('inth')).toBeNull();
+		expect(document.cookie).not.toMatch(/(?:^|; )inth=/u);
 		// A reload sees the clear: decisions from before it stay void.
-		expect(localStorage.getItem('c15t-epoch')).not.toBeNull();
+		expect(localStorage.getItem('inth-epoch')).not.toBeNull();
 		expect(runtime.kernel.getSnapshot().explicitChoice).toBeNull();
 		expect(runtime.kernel.getSnapshot().effectivePermissions.measurement).toBe(
 			false
@@ -299,7 +299,7 @@ describe('createDeferredRuntime', () => {
 			.fn<() => Promise<typeof factory>>()
 			.mockRejectedValueOnce(new Error('chunk failed'))
 			.mockResolvedValue(factory);
-		const scripts: C15tResolvedOptions['scripts'] = [];
+		const scripts: InthResolvedOptions['scripts'] = [];
 		const runtime = createDeferredRuntime({
 			boot: { d: 1, s: snapshotFor('banner', false) },
 			loadEngine,

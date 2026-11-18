@@ -2,8 +2,8 @@
  * The visitor's subject ID for one server request, read from the consent
  * records the request's cookies carry.
  *
- * c15t 3.2 gave a new visitor a subject ID in a `<storageKey>-sid` cookie on
- * their first response, before they chose anything. c15t no longer stores
+ * Inth 3.2 gave a new visitor a subject ID in a `<storageKey>-sid` cookie on
+ * their first response, before they chose anything. Inth no longer stores
  * a subject ID before a choice: a visitor's ID is stored with the record
  * their first save writes, and the server reads it from those cookies like
  * the rest of the records.
@@ -20,7 +20,7 @@ import type { RequestHeaderSource } from './request-origin';
 /**
  * Options for {@link resolveRequestSubject}.
  *
- * @deprecated c15t no longer sets a subject cookie. Removed in v4.
+ * @deprecated Inth no longer sets a subject cookie. Removed in v4.
  */
 export interface ResolveRequestSubjectOptions {
 	/** The incoming request. */
@@ -50,7 +50,7 @@ export interface ResolveRequestSubjectOptions {
 	/**
 	 * Ignored. It set the subject cookie's `Secure` and `Domain` attributes.
 	 *
-	 * @deprecated c15t no longer sets a subject cookie.
+	 * @deprecated Inth no longer sets a subject cookie.
 	 */
 	trustForwardedHeaders?: boolean;
 
@@ -59,7 +59,7 @@ export interface ResolveRequestSubjectOptions {
 }
 
 /**
- * The subject cookie a response set before c15t stopped setting one.
+ * The subject cookie a response set before Inth stopped setting one.
  *
  * @deprecated {@link resolveRequestSubject} never returns one. Removed in v4.
  */
@@ -97,7 +97,7 @@ export interface RequestSubject {
 	subjectId: string;
 	/** The request `Cookie` header, unchanged. */
 	cookie: string;
-	/** Always `null`: c15t no longer sets a subject cookie. */
+	/** Always `null`: Inth no longer sets a subject cookie. */
 	setCookie: SubjectCookie | null;
 }
 
@@ -151,7 +151,7 @@ const toHeaders = function toHeaders(
  * (prerendered or cached HTML) and a speculative request (prefetch or
  * prerender).
  *
- * @deprecated c15t no longer sets a subject cookie, so there is nothing to
+ * @deprecated Inth no longer sets a subject cookie, so there is nothing to
  * add to a response. `readRequestConsent()` returns the same subject with
  * the rest of the records. Removed in v4.
  * @param options - The request, the storage configuration and whether the

@@ -1,5 +1,5 @@
 /**
- * Tailwind 3 PostCSS plugin for c15t stylesheets, re-exported from
+ * Tailwind 3 PostCSS plugin for Inth stylesheets, re-exported from
  * `@inth/react/postcss-tailwind3` so an app that installs
  * `@inth/tanstack-start` can list
  * `@inth/tanstack-start/postcss-tailwind3` without installing `@inth/sdk/ui`.

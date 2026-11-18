@@ -373,7 +373,7 @@ const onAction = function onAction(action: PresentationAction) {
 										"
 										type="button"
 										data-action="right"
-										:data-c15t-rights="snapshot.policyRule.rights.join(' ')"
+										:data-inth-rights="snapshot.policyRule.rights.join(' ')"
 										:data-right="right"
 										:data-testid="`consent-banner-right-link-${right}`"
 										@click="onRight"

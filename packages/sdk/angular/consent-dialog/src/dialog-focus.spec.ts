@@ -4,14 +4,14 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentBanner } from '../../src/lib/banner/consent-banner';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { ConsentDialog } from './consent-dialog';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, ConsentDialog],
 	selector: 'test-dialog-focus',
-	template: `<c15t-consent-banner /><c15t-consent-dialog />`,
+	template: `<inth-consent-banner /><inth-consent-dialog />`,
 })
 class Host {}
 
@@ -25,7 +25,7 @@ class Host {}
 		>
 			Preferences
 		</button>
-		<c15t-consent-dialog [(open)]="open" />`,
+		<inth-consent-dialog [(open)]="open" />`,
 })
 class ControlledHost {
 	readonly open = signal<boolean | undefined>(false);
@@ -42,7 +42,7 @@ class ControlledHost {
 			Preferences
 		</button>
 		@if (shown()) {
-			<c15t-consent-dialog
+			<inth-consent-dialog
 				[open]="true"
 				(openChange)="shown.set($event)"
 			/>
@@ -66,7 +66,7 @@ describe('a non-blocking consent dialog', () => {
 	test('takes focus when it opens, and gives it back when it closes', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					scrollLock: false,
@@ -114,7 +114,7 @@ describe('a non-blocking consent dialog', () => {
 	test('a non-blocking dialog controlled through [(open)] gives focus back to its opener', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					scrollLock: false,
@@ -154,7 +154,7 @@ describe('a non-blocking consent dialog', () => {
 	test('gives focus back when the parent hands open back while the dialog is closed to the consent state', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					scrollLock: false,
@@ -195,7 +195,7 @@ describe('a non-blocking consent dialog', () => {
 	test('a dialog mounted already open gives focus back to its opener', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					scrollLock: false,

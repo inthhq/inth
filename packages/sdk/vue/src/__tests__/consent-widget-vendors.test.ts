@@ -97,7 +97,7 @@ const rule: PolicyRule = {
 const fingerprints = createPolicyRuleFingerprints(normalizePolicyRule(rule));
 
 const initFor = (translations: TranslationsResponse): InitOutput => ({
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({ countryCode: null, regionCode: null, rules: [rule] })

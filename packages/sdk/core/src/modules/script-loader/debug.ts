@@ -4,7 +4,7 @@
  * Two paths:
  * - `onDebug` — synchronous listener supplied by the consumer.
  * - v2 compat — listeners installed on
- *   `window.__c15tScriptDebugListeners` (still consumed by the v2
+ *   `window.__inthScriptDebugListeners` (still consumed by the v2
  *   devtools surface). Optional and browser-only.
  *
  * Listener errors are swallowed on both paths so debug instrumentation
@@ -14,7 +14,7 @@ import type { ScriptLoaderDebugEvent } from './types';
 
 /**
  * Dispatch a debug event to v2-compat listeners, if any are registered
- * on `window.__c15tScriptDebugListeners`. No-op outside the browser.
+ * on `window.__inthScriptDebugListeners`. No-op outside the browser.
  */
 export const emitV2Debug = function emitV2Debug(
 	event: ScriptLoaderDebugEvent
@@ -23,7 +23,7 @@ export const emitV2Debug = function emitV2Debug(
 		return;
 	}
 	const listeners = (window as unknown as Record<string, unknown>)
-		.__c15tScriptDebugListeners as
+		.__inthScriptDebugListeners as
 		| Set<(e: ScriptLoaderDebugEvent) => void>
 		| undefined;
 	if (!listeners) {

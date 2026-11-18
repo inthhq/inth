@@ -40,7 +40,7 @@ import type { NetworkBlockerRule } from './types';
  * still evaluated.
  * @internal
  */
-export const XHR_REQUEST = Symbol('c15t-xhr-request');
+export const XHR_REQUEST = Symbol('inth-xhr-request');
 
 /** @internal */
 export interface XhrStash {

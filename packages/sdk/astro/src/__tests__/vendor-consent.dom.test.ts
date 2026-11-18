@@ -14,7 +14,7 @@ import type { AstroConsentClient } from '../client';
 import type { AstroEngineClient } from '../client-types';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
 import { vueDialogAdapter } from '../ui/vue';
@@ -35,7 +35,7 @@ const VENDORS: Vendor[] = [
 	},
 ];
 
-const OPTIONS: C15tAstroOptions = {
+const OPTIONS: InthAstroOptions = {
 	consentCategories: ['necessary', 'measurement'],
 	mode: testingMode({ policy: [testRule] }),
 	reloadOnConsentRevoked: false,
@@ -64,7 +64,7 @@ afterEach(async () => {
 		// oxlint-disable-next-line no-await-in-loop -- Tear down in reverse mount order.
 		await step();
 	}
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig = undefined;
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = undefined;
 	document.body.innerHTML = '';
 	localStorage.clear();
 	for (const entry of document.cookie.split(';')) {
@@ -76,19 +76,19 @@ afterEach(async () => {
 });
 
 const start = function start(
-	options: C15tAstroOptions = OPTIONS,
+	options: InthAstroOptions = OPTIONS,
 	{ resolved = true } = {}
 ): AstroEngineClient {
 	if (resolved) {
 		// The server resolved the policy, as it does for a rendered page.
-		(window as unknown as Record<string, unknown>).__c15tAstroConfig = {
+		(window as unknown as Record<string, unknown>).__inthAstroConfig = {
 			initialPolicyResolution: testResolution(),
 		};
 	}
 	const client = boot(resolveOptions(options));
 	cleanup.push(() => {
 		client.dispose();
-		document.getElementById('c15t-dialog-host')?.remove();
+		document.getElementById('inth-dialog-host')?.remove();
 	});
 	return client;
 };
@@ -139,28 +139,28 @@ describe('reading vendor consent from the page client', () => {
 	});
 });
 
-describe('inert tags with data-c15t-vendor', () => {
+describe('inert tags with data-inth-vendor', () => {
 	it('waits on the vendor as well as the category', async () => {
 		const client = start();
 		await client.save({ measurement: true, vendors: { posthog: false } });
 		document.body.innerHTML = [
-			'<script type="text/plain" data-c15t-category="measurement" data-c15t-vendor="posthog">1</script>',
-			'<script type="text/plain" data-c15t-category="measurement" data-c15t-vendor="youtube">2</script>',
+			'<script type="text/plain" data-inth-category="measurement" data-inth-vendor="posthog">1</script>',
+			'<script type="text/plain" data-inth-category="measurement" data-inth-vendor="youtube">2</script>',
 		].join('');
 
 		expect(activateGatedScripts(client.getConsent())).toBe(1);
 		const posthog = document.querySelector(
-			'script[data-c15t-vendor="posthog"]'
+			'script[data-inth-vendor="posthog"]'
 		);
 		expect(posthog?.getAttribute('type')).toBe('text/plain');
-		expect(posthog?.hasAttribute('data-c15t-activated')).toBe(false);
+		expect(posthog?.hasAttribute('data-inth-activated')).toBe(false);
 
 		await client.save({ measurement: true, vendors: { posthog: true } });
 		await vi.waitFor(() =>
 			expect(
 				document
-					.querySelector('script[data-c15t-vendor="posthog"]')
-					?.getAttribute('data-c15t-activated')
+					.querySelector('script[data-inth-vendor="posthog"]')
+					?.getAttribute('data-inth-activated')
 			).toBe('true')
 		);
 	});
@@ -170,7 +170,7 @@ const openDialog = async function openDialog(
 	ui: 'react' | 'vue'
 ): Promise<AstroConsentClient> {
 	const host = document.createElement('div');
-	host.setAttribute('data-c15t-dialog-host', 'preferences');
+	host.setAttribute('data-inth-dialog-host', 'preferences');
 	document.body.append(host);
 	cleanup.push(() => host.remove());
 	if (ui === 'react') {

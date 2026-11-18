@@ -51,7 +51,7 @@
 		 * updates and disposes it. Absent for a borrowed runtime.
 		 */
 		owned?: ConsentProviderRuntime;
-		/** `<meta name="c15t-modulepreload">` content, or `''`. */
+		/** `<meta name="inth-modulepreload">` content, or `''`. */
 		preloadMarker: string;
 		/**
 		 * HTML rendered after the children: the boot data `ConsentRoot`
@@ -75,7 +75,7 @@
 	const boot = untrack(() => props.boot ?? '');
 	// When the visitor's consent already lets some `scripts` run, the
 	// server render starts them from the HTML, before hydration:
-	// `c15tHandle` adds a `<script>` for them at the end of `<body>`, and the
+	// `inthHandle` adds a `<script>` for them at the end of `<body>`, and the
 	// loader adopts the tags.
 	if (
 		ownsRuntime &&
@@ -435,7 +435,7 @@
 	});
 
 	// Unset mirrors a `dark` class on `<html>`, as in React and Vue. `null`
-	// leaves `c15t-dark` to the site, or to a host that owns the class, such
+	// leaves `inth-dark` to the site, or to a host that owns the class, such
 	// as the Astro page runtime behind a dialog island.
 	$effect(() => {
 		if (options.colorScheme === null) {
@@ -455,7 +455,7 @@
 <svelte:head>
 	{#if preloadMarker}
 		<meta
-			name="c15t-modulepreload"
+			name="inth-modulepreload"
 			content={preloadMarker}
 		/>
 	{/if}

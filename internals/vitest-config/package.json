@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/vitest-config",
+	"name": "@inth/vitest-config",
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
@@ -15,12 +15,12 @@
 	},
 	"scripts": {
 		"check-types": "tsc --noEmit",
-		"dev": "echo '@c15t/vitest-config has no watch task'",
+		"dev": "echo '@inth/vitest-config has no watch task'",
 		"fmt": "oxfmt -c ../../oxfmt.sdk.config.ts .",
 		"lint": "oxlint -c ../../oxlint.sdk.config.ts ./src"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
 		"@types/node": "25.5.0",
 		"@vitest/coverage-istanbul": "4.1.10",
 		"@vitest/ui": "4.1.10",

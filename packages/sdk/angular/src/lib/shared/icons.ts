@@ -10,7 +10,7 @@
  *
  * @example
  * ```html
- * <svg c15t-close-icon aria-hidden="true" width="16" height="16"></svg>
+ * <svg inth-close-icon aria-hidden="true" width="16" height="16"></svg>
  * ```
  *
  * @packageDocumentation
@@ -29,7 +29,7 @@ import { uniqueId } from '../core/unique-id';
 		class: 'c15t-icon',
 		viewBox: '0 0 446 445',
 	},
-	selector: 'svg[c15t-brand-mark-icon]',
+	selector: 'svg[inth-brand-mark-icon]',
 	template: `<svg:title [attr.id]="titleId()">{{ label() }}</svg:title>
 		<svg:path
 			fill="currentColor"
@@ -51,7 +51,7 @@ export class BrandMarkIcon {
 		fill: 'none',
 		viewBox: '0 0 88 90',
 	},
-	selector: 'svg[c15t-inth-logo]',
+	selector: 'svg[inth-logo]',
 	template: `<svg:title [attr.id]="titleId()">{{ label() }}</svg:title>
 		<svg:path
 			fill="currentColor"

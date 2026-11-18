@@ -17,7 +17,7 @@ import { translations as english } from '@inth/sdk/translations/en';
 
 /** Global key the owned runtime registers the defaults under. @internal */
 export const DEFAULT_TRANSLATIONS_KEY = Symbol.for(
-	'c15t.angular.defaultTranslations'
+	'inth.angular.defaultTranslations'
 );
 
 /**

@@ -11,8 +11,8 @@ export type ConsentWidgetHarnessFilters = BaseHarnessFilters;
 const ITEM_PREFIX = 'consent-widget-accordion-item-';
 
 /**
- * Drives the preference center: `<c15t-consent-widget>` on a page, and
- * the same widget inside `<c15t-consent-dialog>`.
+ * Drives the preference center: `<inth-consent-widget>` on a page, and
+ * the same widget inside `<inth-consent-dialog>`.
  *
  * A widget on a page renders in place, so the fixture's loader finds it.
  * The one inside the consent dialog renders into `<body>`: get it from

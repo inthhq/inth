@@ -1,6 +1,6 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type * as InthCoreTypes from '@inth/sdk/engine';
 /**
  * @packageDocumentation
  * Provides the IAB TCF 2.4 compliant cookie banner component.
@@ -63,7 +63,7 @@ export interface IABConsentBannerProps {
 	 * Which consent models this banner responds to.
 	 * @default ['iab']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.
@@ -88,7 +88,7 @@ export interface IABConsentBannerProps {
  * ```tsx
  * <ConsentProvider
  *   options={{
- *     mode: hosted({ projectUrl: '/api/c15t' }),
+ *     mode: hosted({ projectUrl: '/api/inth' }),
  *     iab: { cmpId: 123, vendors: [1, 2, 10] },
  *   }}
  * >

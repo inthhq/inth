@@ -2,7 +2,7 @@
  * The runtime `ConsentManager` renders in the browser before the consent
  * engine has loaded.
  *
- * `provideC15tServer()` and the server render put the banner, its
+ * `provideInthServer()` and the server render put the banner, its
  * first-paint styles and the boot (`boot.ts`) in the HTML. The browser's
  * first-load chunk holds only this: a runtime over a stand-in kernel
  * (`stand-in.ts`) that reads the snapshot the server rendered with, so the
@@ -53,7 +53,7 @@ import {
 	pendingBootSnapshot,
 } from '@inth/sdk/surface-state';
 
-import type { C15tResolvedOptions } from '../options';
+import type { InthResolvedOptions } from '../options';
 import type { ConsentBoot } from './boot';
 import type * as CommitModule from './commit';
 import type {
@@ -83,7 +83,7 @@ export interface DeferredRuntimeOptions {
 	/** The boot the server rendered the page with. */
 	boot: ConsentBoot;
 	/** The provider's current options. */
-	options: () => C15tResolvedOptions;
+	options: () => InthResolvedOptions;
 	/** Loads the engine chunk. */
 	loadEngine: () => Promise<EngineFactory>;
 	/** Completes a commit; loads `commit.ts` by default. A test seam. */
@@ -289,7 +289,7 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		try {
 			return await buildEngine();
 		} catch (error) {
-			console.error('[c15t] The consent engine failed to load.', error);
+			console.error('[inth] The consent engine failed to load.', error);
 			if (handle.attached()) {
 				// It failed after it took over; the page runs on it.
 				return engine?.runtime;

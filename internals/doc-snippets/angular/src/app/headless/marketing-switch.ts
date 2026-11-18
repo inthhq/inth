@@ -19,15 +19,15 @@ import {
 		>
 			<label id="marketing-label">Marketing emails</label>
 			<button
-				c15tSwitch
+				inthSwitch
 				aria-labelledby="marketing-label"
 				[(ngModel)]="marketing"
 				name="marketing-switch"
 			>
-				<span c15tSwitchControl><span c15tSwitchThumb></span></span>
+				<span inthSwitchControl><span inthSwitchThumb></span></span>
 				<!-- Submits "on" with the form while checked. -->
 				<input
-					c15tSwitchHiddenInput
+					inthSwitchHiddenInput
 					name="marketing"
 				/>
 			</button>

@@ -1,6 +1,6 @@
 ---
 title: Server API
-description: Reference for c15tHandle, loadConsent, createConsentRoute and resolveConsent from @inth/svelte/kit and @inth/svelte/server, with every option and default.
+description: Reference for inthHandle, loadConsent, createConsentRoute and resolveConsent from @inth/svelte/kit and @inth/svelte/server, with every option and default.
 group: frameworks
 ---
 
@@ -14,10 +14,10 @@ the browser bundle. Components import from `@inth/svelte`.
 
 | Export | From | Use it in | Page |
 | --- | --- | --- | --- |
-| `c15tHandle(options)` | `@inth/svelte/kit` | `hooks.server.ts` | [c15tHandle](#c15thandle) |
+| `inthHandle(options)` | `@inth/svelte/kit` | `hooks.server.ts` | [inthHandle](#inthhandle) |
 | `loadConsent` | `@inth/svelte/kit` | `+layout.server.ts`, as `load` | [loadConsent](#loadconsent) |
 | `createConsentRoute(options)` | `@inth/svelte/kit` | `+server.ts` | [createConsentRoute](#createconsentroute) |
-| `manifest()`, `hosted()`, `testing()` | `@inth/svelte/kit` | `hooks.server.ts`, as `c15tHandle({ mode })` | [Rendering](./rendering#pick-a-rendering-path) |
+| `manifest()`, `hosted()`, `testing()` | `@inth/svelte/kit` | `hooks.server.ts`, as `inthHandle({ mode })` | [Rendering](./rendering#pick-a-rendering-path) |
 | `resolveConsent(options)` | `@inth/svelte/server` | Any server code | [resolveConsent](#resolveconsent) |
 | `consentManifest(options)` | `@inth/svelte/vite` | `vite.config.ts` | [consentManifest](#consentmanifest) |
 
@@ -26,9 +26,9 @@ through `loadConsent`. `@inth/svelte/server` re-exports the browser
 transports `hosted`, `local` and `custom` from the engine, for code that
 builds a provider itself.
 
-## c15tHandle
+## inthHandle
 
-`c15tHandle(options?)` returns a SvelteKit `Handle` that holds the consent
+`inthHandle(options?)` returns a SvelteKit `Handle` that holds the consent
 config for the app. Register it in `src/hooks.server.ts`. For every request
 it:
 
@@ -36,7 +36,7 @@ it:
 2. writes them back as `x-c15t-country`, `x-c15t-region`, `accept-language`
    and `sec-gpc`, so later code sees one normalized form,
 3. reads the consent cookie, and the subject ID its records carry,
-4. stores the result and its own options on `event.locals.c15t`,
+4. stores the result and its own options on `event.locals.inth`,
 5. writes a server-rendered banner's styles into the page `<head>`, and
 6. on pages whose provider has `scripts` or network blocker rules, links
    the chunk that holds both with `<link rel="modulepreload">`, once
@@ -48,14 +48,14 @@ headers either: the page goes to every visitor.
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. A `custom()` transport throws; pass it to `ConsentRoot`'s `mode` prop instead. |
-| `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/c15t`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/init`. `'/'` throws ``@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` when the hook is created. |
+| `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/inth`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/init`. `'/'` throws ``@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` when the hook is created. |
 | `projectUrl` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here. |
 | `snapshot` | `ConsentManifest` | the manifest `consentManifest()` downloaded | A manifest to resolve with. `createConsentRoute()` reads it too. |
-| `cookieName` | `string` | `c15t` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
-| `storage`, `trustForwardedHeaders`, `subjectCookie` | | | Deprecated. They do nothing: c15t no longer sets a subject ID cookie. Removed in v4. |
+| `cookieName` | `string` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
+| `storage`, `trustForwardedHeaders`, `subjectCookie` | | | Deprecated. They do nothing: Inth no longer sets a subject ID cookie. Removed in v4. |
 | `country`, `region`, `language` | `string` | from headers | Forces the input for every request. |
 
-`event.locals.c15t` has this shape, exported as `C15tLocals`:
+`event.locals.inth` has this shape, exported as `InthLocals`:
 
 | Field | Value |
 | --- | --- |
@@ -66,9 +66,9 @@ headers either: the page goes to every visitor.
 | `shared` | `true` while SvelteKit prerenders. |
 
 Some runtimes refuse to change request headers. The handle then skips step
-2, and `event.locals.c15t.inputs` still carries the values. Compose it with
+2, and `event.locals.inth.inputs` still carries the values. Compose it with
 your own handles through `sequence()` from `@sveltejs/kit/hooks`. Type
-`event.locals.c15t` by adding
+`event.locals.inth` by adding
 `/// <reference types="@inth/svelte/kit/locals" />` to `src/app.d.ts`.
 
 ## loadConsent
@@ -88,7 +88,7 @@ Privacy Control, then resolves the policy with the handle's `mode`:
 | `manifest({ source: 'runtime' })` | From the manifest at `${projectUrl}/manifest`, or `manifestUrl`, fetched and cached in memory. |
 | `manifest({ resolve: 'browser' })` | Reads the cookie only. The browser resolves the policy. |
 | `hosted()` | Calls the backend's `/init`. |
-| `testing()` | From the mode's `policy`, or c15t's recommended rules. |
+| `testing()` | From the mode's `policy`, or inth's recommended rules. |
 
 `consent` holds the resolved state, the mode as data, the backend URL and the
 handle's `routePrefix`. It is plain, serializable data; pass it to
@@ -114,7 +114,7 @@ export const load = (event) => loadConsent(event, { timeoutMs: 1000 });
 | --- | --- | --- | --- |
 | `timeoutMs` | `number` or `false` | `500` | Longest wait for the backend or the manifest, in milliseconds. `false` or `Infinity` waits as long as it takes; any other value that is not a finite, non-negative number uses the default. |
 | `onBackgroundRevalidate` | `(promise, event) => void` | platform hook when available | Keeps session reports and unfinished requests alive after the response. `event.platform.context.waitUntil` takes precedence; this callback is the fallback. See [keep background work alive](./rendering#keep-background-work-alive-after-the-response). |
-| `cookieName` | `string` | the handle's, or `c15t` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
+| `cookieName` | `string` | the handle's, or `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | `string` | from the handle or headers | Forces one input for this call. |
 | `forwardHeaders` | `string[]` | none | Extra request headers to send to the backend's `/init`, only over `https`, to a loopback host, or in-process. `cookie`, `forwarded` and `x-forwarded-*` cannot be named. |
 | `trustForwardedHeaders` | `boolean` | `false` | Resolves a relative backend URL against the request's forwarding headers instead of `event.url`, and sends the visitor IP to the backend as `x-forwarded-for`. |
@@ -145,7 +145,7 @@ denied, and the browser resolves the policy after hydration. A manifest fetch
 that runs out of time keeps running in the background and fills the manifest
 cache for the next request.
 
-When `c15tHandle` ran for the request, `loadConsent` reuses the inputs it
+When `inthHandle` ran for the request, `loadConsent` reuses the inputs it
 normalized. Passing `country`, `region` or `language` makes it read the
 headers again for that call.
 
@@ -153,11 +153,11 @@ headers again for that call.
 
 `createConsentRoute(options?)` returns the request handlers for the consent
 route. Export them from a catch-all route such as
-`src/routes/api/c15t/[...path]/+server.ts`, and set
-`c15tHandle({ routePrefix: '/api/c15t' })` so the browser uses it. Only pages
+`src/routes/api/inth/[...path]/+server.ts`, and set
+`inthHandle({ routePrefix: '/api/inth' })` so the browser uses it. Only pages
 the server did not resolve, such as prerendered ones, need it. The route
-reads the snapshot, backend URL and mode `c15tHandle()` stored on
-`event.locals.c15t`, so you set them once, on the handle. Options you pass to
+reads the snapshot, backend URL and mode `inthHandle()` stored on
+`event.locals.inth`, so you set them once, on the handle. Options you pass to
 the route win.
 
 <include src="../../shared/examples/sveltekit/route-handlers.mdx" />
@@ -171,9 +171,9 @@ With `proxy` on, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `projectUrl` | `string` | the handle's: a `hosted()` mode's `projectUrl`, then `c15tHandle({ projectUrl })`, then the URL `consentManifest()` read from `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL` | The backend's base URL, absolute or `/`-relative. The manifest is at `<projectUrl>/manifest` when there is no snapshot. A handle `projectUrl` that points at this route, as in the proxy setup, is skipped. |
+| `projectUrl` | `string` | the handle's: a `hosted()` mode's `projectUrl`, then `inthHandle({ projectUrl })`, then the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL` or `PUBLIC_INTH_PROJECT_URL` | The backend's base URL, absolute or `/`-relative. The manifest is at `<projectUrl>/manifest` when there is no snapshot. A handle `projectUrl` that points at this route, as in the proxy setup, is skipped. |
 | `manifestUrl` | `string` | the handle's `manifest({ manifestUrl })` | A manifest URL of its own, such as a CDN. Wins over `projectUrl`. Absolute or `/`-relative. |
-| `snapshot` | `ConsentManifest` | the handle's: the mode's `snapshot`, then `c15tHandle({ snapshot })`, then the manifest `consentManifest()` downloaded | A manifest to resolve with. |
+| `snapshot` | `ConsentManifest` | the handle's: the mode's `snapshot`, then `inthHandle({ snapshot })`, then the manifest `consentManifest()` downloaded | A manifest to resolve with. |
 | `proxy` | `true` or `{ paths?, cookieNames? }` | off | Forwards consent writes to `projectUrl`. See [save consent through your own origin](./rendering#save-consent-through-your-own-origin). |
 | `onBackgroundRevalidate` | `(promise, event) => void` | `event.platform.context.waitUntil`, when the adapter provides it | Keeps background manifest refreshes and session reports alive on runtimes that stop work after the response. SvelteKit 3's Cloudflare and Vercel adapters provide none; see [keep background work alive](./rendering#keep-background-work-alive-after-the-response). |
 | `fetchGvl` | `({ reference, language, fetch }) => Promise<GlobalVendorList \| null>` | the shared server cache, with a five-second deadline | Fetches the Global Vendor List under an IAB policy. A rejection fails the init request instead of answering `gvl: null`. |
@@ -185,8 +185,8 @@ your app, names a route in this app. The handlers request it through
 `event.fetch`, which SvelteKit answers in-process, so it is never resolved
 against `event.url` or the request's `Host` header. The proxy forwards to a
 relative `projectUrl` the same way. Do not point it at the route the handlers
-serve, such as `/api/c15t`, or the route requests itself. The route skips a
-`c15tHandle()` `projectUrl` that names its own path for this reason. A relative
+serve, such as `/api/inth`, or the route requests itself. The route skips a
+`inthHandle()` `projectUrl` that names its own path for this reason. A relative
 `projectUrl` also turns off session reports, which need an absolute backend.
 
 With runtime fetching, the manifest is cached in memory per server process
@@ -221,7 +221,7 @@ send traces anywhere.
 
 The consent route uses one catch-all path for initialization, the manifest,
 and consent writes. Add an operation name so your collector can distinguish
-those requests. Also record the returned HTTP status. c15t returns `502` when
+those requests. Also record the returned HTTP status. Inth returns `502` when
 it cannot reach the backend, `504` when the proxy times out, and forwards other
 upstream HTTP errors. These are responses, so SvelteKit's exception reporting
 does not mark the endpoint span as failed.
@@ -232,9 +232,9 @@ OpenTelemetry import:
 
 <include src="../../shared/examples/sveltekit/trace-consent.mdx" />
 
-Wrap the handlers in `src/routes/api/c15t/[...path]/+server.ts`. This example
+Wrap the handlers in `src/routes/api/inth/[...path]/+server.ts`. This example
 uses the [consent proxy](./rendering#save-consent-through-your-own-origin).
-Keep the backend URL and `routePrefix` configured on `c15tHandle` as described
+Keep the backend URL and `routePrefix` configured on `inthHandle` as described
 there. The helper reads the `path` rest parameter, so keep that parameter name
 when you copy the route:
 
@@ -251,11 +251,11 @@ handler. The helper labels those consent reads as `init` or `manifest` too.
 
 In your collector, check these requests:
 
-| Request | `c15t.operation` | `http.response.status_code` | Endpoint span status |
+| Request | `inth.operation` | `http.response.status_code` | Endpoint span status |
 | --- | --- | --- | --- |
-| `GET /api/c15t/init` | `init` | `200` | Unchanged |
-| `GET /api/c15t/manifest` | `manifest` | `200`, or `304` for a cached copy | Unchanged |
-| `POST /api/c15t/subjects` | `proxy` | The backend's status | Error for `500` or higher |
+| `GET /api/inth/init` | `init` | `200` | Unchanged |
+| `GET /api/inth/manifest` | `manifest` | `200`, or `304` for a cached copy | Unchanged |
+| `POST /api/inth/subjects` | `proxy` | The backend's status | Error for `500` or higher |
 | A proxy request with an unreachable backend | `proxy` | `502` | Error |
 | A proxy request that times out | `proxy` | `504` | Error |
 
@@ -265,7 +265,7 @@ original response, including its streaming body and headers. Thrown errors
 continue to SvelteKit's exception handling.
 
 With tracing disabled, the helper calls the handler without writing span
-attributes. c15t continues to support SvelteKit 2.63 and later in version 2,
+attributes. Inth continues to support SvelteKit 2.63 and later in version 2,
 and SvelteKit 3.0. Those versions expose the same tracing API, but do not create
 a separate endpoint span. If you use the helper there with tracing enabled,
 its attributes describe the enclosing framework span. Upgrade to 3.1 or later
@@ -290,7 +290,7 @@ with each visitor's request inputs.
 | `onBackgroundRevalidate` | `(promise) => void` | none | Pass the host's `waitUntil` to keep session reports alive after a serverless response. |
 | `requestUrl` | `string` or `URL` | none | The URL the framework resolved the request under, such as SvelteKit's `event.url`. `loadConsent` passes it for you. |
 | `trustForwardedHeaders` | `boolean` | `false` | Resolves a relative `projectUrl` against `forwarded`, `x-forwarded-host` and `x-forwarded-proto`, and sends the visitor IP to the backend as `x-forwarded-for`. |
-| `cookieName` | `string` | `c15t` | The consent cookie. |
+| `cookieName` | `string` | `inth` | The consent cookie. |
 | `cookieHeader` | `string` or `null` | `headers.get('cookie')` | A cookie header to read instead. |
 | `country`, `region`, `language` | `string` | from headers | Forces one input. |
 | `forwardHeaders` | `string[]` | none | Extra headers to send to `/init`, under the same rule as `loadConsent`. |
@@ -310,8 +310,8 @@ without an import. The plugin writes no file into your project.
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `projectUrl` | `string` | `PUBLIC_C15T_BACKEND_URL`, then `VITE_C15T_BACKEND_URL`, then `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` | Absolute `http` or `https` backend URL. The plugin appends `/manifest`. |
-| `onBuildError` | `'fail' \| 'runtime'` | Unset | What a failed fetch does. Unset, `vite build` stops and `vite dev` logs a warning. A missing backend URL counts as a failed fetch. The `C15T_ON_BUILD_ERROR` environment variable overrides it. |
+| `projectUrl` | `string` | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL`, then `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` | Absolute `http` or `https` backend URL. The plugin appends `/manifest`. |
+| `onBuildError` | `'fail' \| 'runtime'` | Unset | What a failed fetch does. Unset, `vite build` stops and `vite dev` logs a warning. A missing backend URL counts as a failed fetch. The `INTH_ON_BUILD_ERROR` environment variable overrides it. |
 
 The plugin detects `sveltekit()` and keeps the snapshot on the server: the
 browser bundle never holds it. A Svelte app without SvelteKit gets it in the
@@ -322,12 +322,12 @@ The plugin fetches once Vite has resolved its config: for `vite build`,
 run it. The fetch waits at most 10 seconds. When it fails, `vite build` stops.
 `vite dev` logs a warning instead, and `loadConsent` fetches the policy at
 runtime. In a SvelteKit build the plugin also writes the URL of the chunk
-that holds the script loader and the network blocker, which `c15tHandle`
+that holds the script loader and the network blocker, which `inthHandle`
 preloads.
 
-With Vite 8, which bundles with Rolldown, the plugin also puts the small c15t
+With Vite 8, which bundles with Rolldown, the plugin also puts the small Inth
 modules that `ConsentRoot`'s first load shares with the consent engine into
-one chunk named `c15t`. Rolldown would otherwise give each of them a file of
+one chunk named `inth`. Rolldown would otherwise give each of them a file of
 its own, about a dozen requests of a few hundred bytes each. The page loads
 the same code in fewer files. The plugin leaves the chunks alone when your
 config sets `manualChunks` or `advancedChunks` or turns code splitting off,
@@ -341,7 +341,7 @@ Vite first.
 
 ## ConsentState
 
-`resolveConsent` and `event.locals.c15t.config` return a `ConsentState`:
+`resolveConsent` and `event.locals.inth.config` return a `ConsentState`:
 plain, serializable data a load can return. It holds the stored records, the request's location,
 language and GPC, the resolved policy and translations when the backend
 answered, and the IAB state for an IAB policy. It holds no computed

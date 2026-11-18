@@ -22,14 +22,14 @@ afterEach(() => {
 test.each(['react', 'nextjs', 'tanstack-start'])(
 	'writes wrapper and inline CSS for %s',
 	(name) => {
-		const workspace = mkdtempSync(join(tmpdir(), 'c15t-css-'));
+		const workspace = mkdtempSync(join(tmpdir(), 'inth-css-'));
 		directories.push(workspace);
 		const packageRoot = join(workspace, name);
 		mkdirSync(join(packageRoot, 'src/iab'), { recursive: true });
 		mkdirSync(join(workspace, 'ui/dist/iab'), { recursive: true });
 		writeFileSync(
 			join(packageRoot, 'package.json'),
-			JSON.stringify({ name: `@c15t/${name}` })
+			JSON.stringify({ name: `@inth/${name}` })
 		);
 		for (const prefix of ['', 'iab/']) {
 			writeFileSync(
@@ -50,7 +50,7 @@ test.each(['react', 'nextjs', 'tanstack-start'])(
 				join(packageRoot, `dist/${prefix}styles.tw3.css`),
 				'utf8'
 			);
-			expect(inlined).toContain(`@c15t/${name} - Tailwind 3-compatible`);
+			expect(inlined).toContain(`@inth/${name} - Tailwind 3-compatible`);
 			expect(inlined).toContain('.banner { color: red; }');
 			expect(inlined).not.toContain('@import');
 		}

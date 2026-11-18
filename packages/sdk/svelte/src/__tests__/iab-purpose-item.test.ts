@@ -65,7 +65,7 @@ describe('IAB purpose row consent switch', () => {
 			// The objection control is there either way, in the row's content,
 			// which mounts when the row first opens.
 			container
-				.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+				.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 				?.click();
 			await tick();
 			expect(container.querySelector('button[aria-pressed]')).not.toBeNull();

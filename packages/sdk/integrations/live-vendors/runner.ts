@@ -65,14 +65,14 @@ const PAGE_HTML = `<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>c15t live vendor probe</title>
+		<title>inth live vendor probe</title>
 		<script type="module" src="/harness.js"></script>
 	</head>
 	<body></body>
 </html>`;
 
 interface ProbeWindow {
-	__c15tLiveVendorProbe?: LiveVendorProbeHarness;
+	__inthLiveVendorProbe?: LiveVendorProbeHarness;
 }
 
 interface CliOptions {
@@ -271,7 +271,7 @@ const probeDeniedConsentEgress = async function probeDeniedConsentEgress(
 		const outcome = await page.evaluate<LiveProbeLoadOutcome, string>(
 			(vendor) => {
 				const harness = (globalThis as unknown as ProbeWindow)
-					.__c15tLiveVendorProbe;
+					.__inthLiveVendorProbe;
 				if (!harness) {
 					throw new Error('harness missing');
 				}
@@ -299,7 +299,7 @@ const probeDeniedConsentEgress = async function probeDeniedConsentEgress(
 
 		const storage = await page.evaluate<LiveStorageSnapshot>(() => {
 			const harness = (globalThis as unknown as ProbeWindow)
-				.__c15tLiveVendorProbe;
+				.__inthLiveVendorProbe;
 			if (!harness) {
 				throw new Error('harness missing');
 			}
@@ -381,7 +381,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 		await page.goto(baseUrl, { waitUntil: 'load' });
 
 		const hasHarness = await page.evaluate(() =>
-			Boolean((globalThis as unknown as ProbeWindow).__c15tLiveVendorProbe)
+			Boolean((globalThis as unknown as ProbeWindow).__inthLiveVendorProbe)
 		);
 		if (!hasHarness) {
 			throw new Error('probe harness did not initialize in the page');
@@ -400,7 +400,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 			const deniedOutcome = await page.evaluate<LiveProbeLoadOutcome, string>(
 				(vendor) => {
 					const harness = (globalThis as unknown as ProbeWindow)
-						.__c15tLiveVendorProbe;
+						.__inthLiveVendorProbe;
 					if (!harness) {
 						throw new Error('harness missing');
 					}
@@ -454,7 +454,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 		const grantedOutcome = await page.evaluate<LiveProbeLoadOutcome, string>(
 			(vendor) => {
 				const harness = (globalThis as unknown as ProbeWindow)
-					.__c15tLiveVendorProbe;
+					.__inthLiveVendorProbe;
 				if (!harness) {
 					throw new Error('harness missing');
 				}
@@ -553,7 +553,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 				runtime = await page.evaluate<LiveProbeCheckResult, string>(
 					(vendor) => {
 						const harness = (globalThis as unknown as ProbeWindow)
-							.__c15tLiveVendorProbe;
+							.__inthLiveVendorProbe;
 						if (!harness) {
 							throw new Error('harness missing');
 						}
@@ -581,7 +581,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 					(vendor) =>
 						(
 							globalThis as unknown as ProbeWindow
-						).__c15tLiveVendorProbe?.version(vendor),
+						).__inthLiveVendorProbe?.version(vendor),
 					config.vendor
 				)
 			: undefined;

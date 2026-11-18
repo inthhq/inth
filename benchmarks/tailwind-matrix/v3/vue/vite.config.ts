@@ -4,6 +4,6 @@ import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	plugins: [vue(), consentManifest({ projectUrl: '/api/c15t' })],
+	plugins: [vue(), consentManifest({ projectUrl: '/api/inth' })],
 });
 // #endregion docs:vite-config

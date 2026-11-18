@@ -37,33 +37,33 @@ describe('defineConsentConfig', () => {
 		expect(Object.isFrozen(config)).toBe(true);
 	});
 
-	test('reads the backend URL from NEXT_PUBLIC_C15T_BACKEND_URL', () => {
-		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://env.example.com');
+	test('reads the backend URL from NEXT_PUBLIC_INTH_PROJECT_URL', () => {
+		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', 'https://env.example.com');
 
 		expect(defineConsentConfig().projectUrl).toBe('https://env.example.com');
 	});
 
 	test('names NEXT_PUBLIC_INTH_PROJECT_URL in the missing-URL error', () => {
-		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', '');
+		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', '');
 		expect(() => defineConsentConfig()).toThrow(
-			'@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.'
+			'@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.'
 		);
 	});
 
 	test('needs no backend URL for testing()', () => {
-		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', '');
+		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', '');
 
 		expect(defineConsentConfig({ mode: testing() })).toEqual({
 			mode: { type: 'testing' },
 		});
 		expect(() => defineConsentConfig({ mode: hosted() })).toThrow(
-			/NEXT_PUBLIC_C15T_BACKEND_URL/u
+			/NEXT_PUBLIC_INTH_PROJECT_URL/u
 		);
 		expect(() => defineConsentConfig({})).toThrow(
-			/NEXT_PUBLIC_C15T_BACKEND_URL/u
+			/NEXT_PUBLIC_INTH_PROJECT_URL/u
 		);
 		expect(() => defineConsentConfig()).toThrow(
-			/NEXT_PUBLIC_C15T_BACKEND_URL/u
+			/NEXT_PUBLIC_INTH_PROJECT_URL/u
 		);
 	});
 
@@ -80,12 +80,12 @@ describe('defineConsentConfig', () => {
 			defineConsentConfig({
 				projectUrl: 'https://consent.example.com',
 				proxy: true,
-				routePrefix: '/api/c15t/',
+				routePrefix: '/api/inth/',
 			})
 		).toMatchObject({
 			projectUrl: 'https://consent.example.com',
 			proxy: true,
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		});
 	});
 
@@ -100,7 +100,7 @@ describe('defineConsentConfig', () => {
 						routePrefix,
 					})
 				).toThrow(
-					"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+					"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'."
 				);
 			}
 		}
@@ -112,24 +112,24 @@ describe('defineConsentConfig', () => {
 				mode: manifest({
 					manifestUrl: 'http://localhost:3000/api/consent/manifest',
 				}),
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			})
 		).not.toThrow();
 	});
 
 	test.each([
 		['empty projectUrl', { projectUrl: '' }],
-		['bare path', { projectUrl: 'api/c15t' }],
+		['bare path', { projectUrl: 'api/inth' }],
 		['protocol-relative URL', { projectUrl: '//consent.example.com' }],
 		['non-http scheme', { projectUrl: 'ftp://consent.example.com' }],
-		['bare routePrefix', { projectUrl: '/api/c15t', routePrefix: 'api/c15t' }],
+		['bare routePrefix', { projectUrl: '/api/inth', routePrefix: 'api/inth' }],
 		[
 			'invalid manifestUrl',
-			{ mode: manifest({ manifestUrl: 'manifest' }), projectUrl: '/api/c15t' },
+			{ mode: manifest({ manifestUrl: 'manifest' }), projectUrl: '/api/inth' },
 		],
 		['removed testing option shape', { mode: { type: 'without-network' } }],
-		['unknown mode', { mode: { type: 'custom' }, projectUrl: '/api/c15t' }],
-		['unknown journey', { journey: 'session', projectUrl: '/api/c15t' }],
+		['unknown mode', { mode: { type: 'custom' }, projectUrl: '/api/inth' }],
+		['unknown journey', { journey: 'session', projectUrl: '/api/inth' }],
 	])('rejects %s', (_label, input) => {
 		expect(() => defineConsentConfig(input as never)).toThrow(TypeError);
 	});

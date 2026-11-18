@@ -57,7 +57,7 @@ export interface FrontChatOptions {
 /**
  * Creates a Front Chat script gated on functionality consent.
  *
- * Keep c15t's default reload-on-revocation behaviour enabled to stop an
+ * Keep inth's default reload-on-revocation behaviour enabled to stop an
  * already-running widget. Removing its loader cannot unload the SDK.
  *
  * @param options - Front channel and launcher configuration.

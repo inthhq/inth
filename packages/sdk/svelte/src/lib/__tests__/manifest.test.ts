@@ -12,7 +12,7 @@ import { manifest } from '../transports/manifest';
 import { setGenerated } from './generated';
 
 const BUILT: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'built',
 	schemaVersion: 2,
 };

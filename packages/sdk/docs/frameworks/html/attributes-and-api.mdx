@@ -1,6 +1,6 @@
 ---
 title: Script tag attributes
-description: Reference for the c15t script tag on plain HTML pages, covering the bundle files, every data attribute on the script tag, the DevTools tag and your own markup, and the modes the attributes select.
+description: Reference for the Inth script tag on plain HTML pages, covering the bundle files, every data attribute on the script tag, the DevTools tag and your own markup, and the modes the attributes select.
 group: frameworks
 ---
 
@@ -9,13 +9,13 @@ group: frameworks
 | Reference | Page |
 | --- | --- |
 | Bundle files and every `data-*` attribute | This page |
-| `window.c15t` methods and the call queue | [window.c15t API](/docs/frameworks/html/api) |
-| Options for `c15t.push(['config', …])` | [Configuration](/docs/frameworks/html/configuration) |
-| Events, `c15t:*` DOM events and callbacks | [Events and callbacks](/docs/frameworks/html/callbacks) |
+| `window.inth` methods and the call queue | [window.inth API](/docs/frameworks/html/api) |
+| Options for `inth.push(['config', …])` | [Configuration](/docs/frameworks/html/configuration) |
+| Events, `inth:*` DOM events and callbacks | [Events and callbacks](/docs/frameworks/html/callbacks) |
 
 ## Script files
 
-`@inth/sdk` publishes browser bundles. Inth and a self-hosted c15t
+`@inth/sdk` publishes browser bundles. Inth and a self-hosted Inth
 backend serve `c15t.js`, `c15t.headless.js` and `c15t.iab.js` from the
 backend's URL, such as `https://your-project.inth.app/c15t.js`, with the
 backend URL already configured. Headless and IAB routes also inline the
@@ -27,12 +27,12 @@ same path on unpkg, when no backend serves it, such as `c15t.devtools.js` or
 | File | What it contains |
 | --- | --- |
 | `c15t.js` | The default tag for hosted mode. A small init script that starts `/init`, shows the stock banner and loads `c15t.hosted.js`. Excludes the policy presets, the testing transport and manifest transport code. Requires a backend URL. |
-| `c15t.hosted.js` | The consent engine and the rest of the stock UI, such as the trigger. `c15t.js` loads it; you do not add a tag for it. Loaded on its own, it works as the complete one-file tag `c15t.js` was before c15t 3.2. It includes a copy of the dialog, which it uses when `c15t.dialog.js` is not next to it. |
+| `c15t.hosted.js` | The consent engine and the rest of the stock UI, such as the trigger. `c15t.js` loads it; you do not add a tag for it. Loaded on its own, it works as the complete one-file tag `c15t.js` was before Inth 3.2. It includes a copy of the dialog, which it uses when `c15t.dialog.js` is not next to it. |
 | `c15t.dialog.js` | The preference dialog, with its preference switches and vendor list. `c15t.js` loads it when the visitor taps Customize before the engine has loaded, and `c15t.hosted.js` loads it the first time it opens the dialog; you do not add a tag for it. |
 | `c15t.commit.js` | The code that stores an Accept or Reject tapped on the banner `c15t.js` shows. `c15t.js` loads it when the visitor presses the banner; you do not add a tag for it. |
 | `c15t.records.js` | The code that reads a stored choice. `c15t.js` loads it at once for a returning visitor, never on a first visit; you do not add a tag for it. |
 | `c15t.testing.js` | For test pages only. The stock UI with `testing()`: it resolves a policy in the browser with no backend. Includes the policy presets. The other files contain neither. |
-| `c15t.headless.js` | The same runtime and `window.c15t` API with no banner, dialog or CSS. Your page renders the UI. See [headless](/docs/frameworks/html/headless). |
+| `c15t.headless.js` | The same runtime and `window.inth` API with no banner, dialog or CSS. Your page renders the UI. See [headless](/docs/frameworks/html/headless). |
 | `c15t.iab.js` | Replaces `c15t.js` when your policy uses IAB TCF. See [IAB TCF](/docs/frameworks/html/iab). |
 | `c15t.devtools.js` | The DevTools panel, loaded as a second tag. See [DevTools](/docs/frameworks/html/dev-tools). |
 
@@ -41,7 +41,7 @@ test page, and loads `c15t.testing.js`.
 
 Load one of `c15t.js`, `c15t.testing.js`, `c15t.headless.js` or
 `c15t.iab.js` on a page, never two. `c15t.iab.js` throws an error if another one loaded first. When
-`c15t.js`, `c15t.testing.js` or `c15t.headless.js` finds another c15t bundle
+`c15t.js`, `c15t.testing.js` or `c15t.headless.js` finds another Inth bundle
 already installed, it leaves the first one in place and does not start a
 second client.
 
@@ -50,26 +50,26 @@ second client.
 `c15t.js` is the part of the tag that runs while the page loads. Before the
 engine arrives it:
 
-1. Puts a stand-in `window.c15t` on the page. Calls you make on it, such as
-   `c15t.init()`, `c15t.on()`, `c15t.subscribe()` or `c15t.openDialog()`, are
-   queued and run in order once the engine has loaded. `c15t.getSnapshot()`
-   and `c15t.has()` answer from what `c15t.js` knows so far.
+1. Puts a stand-in `window.inth` on the page. Calls you make on it, such as
+   `c15t.init()`, `inth.on()`, `inth.subscribe()` or `inth.openDialog()`, are
+   queued and run in order once the engine has loaded. `inth.getSnapshot()`
+   and `inth.has()` answer from what `c15t.js` knows so far.
 2. Sends the visitor's `/init` request at once, or when your page calls
    `c15t.init()` if the tag has `data-manual`.
 3. Shows the stock banner when `/init` answers, with only the banner's
    styles.
 4. Records an Accept or Reject tapped on the banner, or on a
-   `data-c15t-action` button. In the tap itself the banner closes and the
+   `data-inth-action` button. In the tap itself the banner closes and the
    gated scripts the choice allows start. `c15t.js` then stores the choice
    and queues its save with `c15t.commit.js`, which it starts fetching when
    the visitor presses the banner, so the file has usually arrived by the
    time the click lands. Until the choice is stored, a small
-   `c15t-pending-tap` entry in `localStorage` holds it: if the visitor
+   `inth-pending-tap` entry in `localStorage` holds it: if the visitor
    leaves first, the engine on the next page records the choice once, if
    the banner is still due under the same policy. If `c15t.commit.js` fails
    to load, the engine records the choice when it takes over.
 5. Opens the stock preference dialog when the visitor taps Customize on the
-   banner, or on a `data-c15t-action="customize"` button, without the
+   banner, or on a `data-inth-action="customize"` button, without the
    engine. It fetches `c15t.dialog.js` when the visitor presses Customize,
    shows the dialog when the file has run, and then loads `c15t.commit.js`
    and the engine. A save from the dialog is recorded the way an Accept is,
@@ -81,7 +81,7 @@ engine arrives it:
 6. For a visitor with a stored choice, loads `c15t.records.js` at once and
    starts the gated scripts that choice allows without waiting for `/init`.
    It checks the choice against the policy the last `/init` sent, which it
-   keeps in `localStorage` under `c15t-init-policy` once the visitor has made
+   keeps in `localStorage` under `inth-init-policy` once the visitor has made
    a choice. A policy you changed since that visit applies when `/init`
    answers: until then, for one round trip, the scripts the earlier policy
    allowed can start. A server-started script under a build-time manifest
@@ -114,8 +114,8 @@ for the engine.
 
 Until the engine has loaded, `c15t.init()` returns the stand-in, not the
 client: its `getSnapshot()`, `subscribe()`, `on()` and consent methods work,
-and `c15t.client` is `null`. Use `c15t.onInit((client) => …)` for the client
-itself. `c15t.isVendorAllowed()` throws until the engine has loaded.
+and `inth.client` is `null`. Use `inth.onInit((client) => …)` for the client
+itself. `inth.isVendorAllowed()` throws until the engine has loaded.
 
 `c15t.js` finds `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
 `c15t.dialog.js` next to its own URL and adds the package version, such as
@@ -136,7 +136,7 @@ tags carry `data-nonce` or the tag's `nonce`.
 
 ### Start /init before c15t.js
 
-A self-hosted c15t backend also serves `c15t.init.js`. Put it before the
+A self-hosted Inth backend also serves `c15t.init.js`. Put it before the
 `c15t.js` tag with `async` when `c15t.js` is low on the page, so the
 visitor's `/init` request starts while `c15t.js` downloads:
 
@@ -153,7 +153,7 @@ different `/init`, and the first request goes unused. The
 [endpoint reference](/docs/self-host/api/endpoints#serve-the-script-tag) lists
 every case.
 
-`dist/c15t.css` and `dist/c15t.iab.css` are the stylesheets, for pages that
+`dist/inth.css` and `dist/c15t.iab.css` are the stylesheets, for pages that
 render the UI with `data-shadow="false"` and load the CSS themselves.
 
 ## Script tag attributes
@@ -183,8 +183,8 @@ the call queue, `data-manual` and the page hooks described below.
 | `data-shadow="false"` | Render the UI into the page instead of a shadow root, so your stylesheet applies. See [customize](/docs/frameworks/html/customize#style-it-with-your-own-stylesheet). |
 | `data-no-ui` | Start the runtime without the stock UI. `c15t.hosted.js` still downloads the UI code and CSS; load `c15t.headless.js` to skip them. The UI attributes above are ignored. |
 | `data-hosted-src` | On `c15t.js`: where to load `c15t.hosted.js` from, when it is not next to `c15t.js`. |
-| `data-manual` | Do not start. Your page calls `c15t.init()` later. See [start c15t yourself](/docs/frameworks/html/api#start-c15t-yourself). |
-| `data-nonce` | The Content Security Policy nonce for the stock UI's `<style>` element and the scripts c15t loads. Without it, c15t uses the tag's own `nonce` attribute. See [Content Security Policy](/docs/frameworks/html/content-security-policy). |
+| `data-manual` | Do not start. Your page calls `c15t.init()` later. See [start Inth yourself](/docs/frameworks/html/api#start-inth-yourself). |
+| `data-nonce` | The Content Security Policy nonce for the stock UI's `<style>` element and the scripts Inth loads. Without it, Inth uses the tag's own `nonce` attribute. See [Content Security Policy](/docs/frameworks/html/content-security-policy). |
 
 Flag attributes such as `data-trigger` are on when present, unless their value
 is `false`. `data-shadow` is the exception. Only `data-shadow="false"` changes
@@ -211,19 +211,19 @@ These work anywhere on the page, including markup added after load:
 
 | Markup | What it does | Page |
 | --- | --- | --- |
-| `data-c15t-action="accept"`, `"reject"`, `"customize"`, `"dismiss"`, `"banner"` or `"close"` | Runs the action on click. | [Action buttons](/docs/frameworks/html/components/action-buttons) |
-| A link whose `href` ends in `#c15t-preferences` | Opens the preference dialog on click. | [Preferences link](/docs/frameworks/html/components/preferences-link) |
-| `<script type="text/plain" data-c15t-category="…">` | Runs the script once that category is allowed. `data-c15t-vendor` adds a vendor gate. | [Gated scripts](/docs/frameworks/html/components/gated-script) |
+| `data-inth-action="accept"`, `"reject"`, `"customize"`, `"dismiss"`, `"banner"` or `"close"` | Runs the action on click. | [Action buttons](/docs/frameworks/html/components/action-buttons) |
+| A link whose `href` ends in `#inth-preferences` | Opens the preference dialog on click. | [Preferences link](/docs/frameworks/html/components/preferences-link) |
+| `<script type="text/plain" data-inth-category="…">` | Runs the script once that category is allowed. `data-inth-vendor` adds a vendor gate. | [Gated scripts](/docs/frameworks/html/components/gated-script) |
 | `<iframe data-src="…" data-category="…">` | Sets the iframe's `src` once that category is allowed. `data-vendor` adds a vendor gate. | [Embeds](/docs/frameworks/html/embeds) |
 
-c15t sets these attributes itself. Read them in CSS or tests, but do not
+Inth sets these attributes itself. Read them in CSS or tests, but do not
 write them:
 
 | Attribute | Where | Meaning |
 | --- | --- | --- |
-| `data-c15t-activated` | Gated `<script>` | `true` once the tag ran, `invalid` when its category is unknown, `untrusted` when the page has a nonce and the tag lacks it. |
-| `data-c15t-paused` | Gated `<iframe>` | c15t removed a `src` the iframe already had. |
-| `data-c15t-ui` | The UI host `<div>` | The element that holds the banner, dialog and trigger. |
+| `data-inth-activated` | Gated `<script>` | `true` once the tag ran, `invalid` when its category is unknown, `untrusted` when the page has a nonce and the tag lacks it. |
+| `data-inth-paused` | Gated `<iframe>` | Inth removed a `src` the iframe already had. |
+| `data-inth-ui` | The UI host `<div>` | The element that holds the banner, dialog and trigger. |
 | `data-testid` | Parts of the stock UI | Stable names for styling and tests. Each component page lists them. |
 
 ## Choose a mode
@@ -232,16 +232,16 @@ write them:
 | --- | --- | --- |
 | Hosted | `c15t.js` with `data-project-url` | Each fresh visit asks the backend's `/init` endpoint for the visitor's policy. Choices are saved to the backend. |
 | Manifest | `c15t.headless.js` or `c15t.iab.js` with `data-manifest-url`, or `mode: 'manifest'` with an inline `manifest` in `config` | The browser resolves the policy from the backend's public, cacheable `/manifest`. Choices still go to the backend. |
-| Testing | `c15t.testing.js` on a test page | Policy rules come from `data-policy` or c15t's recommended rules. Choices stay in the browser. Never load it on a production page. |
+| Testing | `c15t.testing.js` on a test page | Policy rules come from `data-policy` or inth's recommended rules. Choices stay in the browser. Never load it on a production page. |
 
 A tag loaded from a backend's `/c15t.js`, such as
 `https://your-project.inth.app/c15t.js`, starts in hosted mode with the
 backend URL already configured, so it needs no `data-project-url`.
 
-In manifest mode, c15t can take the backend URL from a manifest URL that ends
+In manifest mode, Inth can take the backend URL from a manifest URL that ends
 in `/manifest`. A manifest on another host, or an inline manifest, also needs
 `data-project-url` so saves have somewhere to go. When a policy depends on the
-visitor's location and the page does not supply it, c15t falls back to the
+visitor's location and the page does not supply it, Inth falls back to the
 backend's `/init`. [Data fetching](/docs/concepts/data-fetching) compares the
 modes.
 

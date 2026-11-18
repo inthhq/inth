@@ -2,7 +2,7 @@ import {
 	recipeAccepts,
 	recipeRejects,
 	recipeRenders,
-} from '@c15t/conformance/play/docs-recipes';
+} from '@inth/conformance/play/docs-recipes';
 import ConsentManager from '@inth/vue/runtime/components/consent-manager.vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import type { Component } from 'vue';

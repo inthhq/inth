@@ -5,7 +5,7 @@
  * The shell — markup, copy, layout, the policy-driven button order — is
  * produced on the server with zero framework JavaScript. Only one small
  * bundled script ships, and it is shared by every banner on the site: a
- * delegated click handler that turns `data-c15t-action` into runtime calls.
+ * delegated click handler that turns `data-inth-action` into runtime calls.
  *
  * The server renders the banner only when the decision it already resolved
  * says to, so a returning visitor gets no banner markup at all — no client
@@ -20,7 +20,7 @@
  * init resolves.
  *
  * Beside the config it leaves the snapshot it rendered from in a
- * `data-c15t-boot` data block. The page script reads it and, for a visitor
+ * `data-inth-boot` data block. The page script reads it and, for a visitor
  * who still has to choose, loads the consent engine after the page; an
  * inline script ahead of the markup then records a tap that lands before
  * the page script runs.
@@ -58,7 +58,7 @@ interface Props extends PromptProps {
 	force?: boolean;
 	/**
 	 * Content Security Policy nonce for this banner's inline code.
-	 * Defaults to `Astro.locals.c15t.nonce`. `<ConsentBannerDeferred />`
+	 * Defaults to `Astro.locals.inth.nonce`. `<ConsentBannerDeferred />`
 	 * passes the page's nonce here: the island renders in a request of its
 	 * own, whose nonce the page's policy does not list.
 	 */
@@ -74,36 +74,36 @@ const {
 	...props
 } = Astro.props;
 
-const { c15t } = Astro.locals;
+const { inth } = Astro.locals;
 
-if (!c15t) {
+if (!inth) {
 	throw new Error(
-		'@inth/astro: `Astro.locals.c15t` is missing. The c15t() integration registers the middleware that populates it — check it is listed in astro.config, and that you have not set `middleware: false`.'
+		'@inth/astro: `Astro.locals.inth` is missing. The inth() integration registers the middleware that populates it — check it is listed in astro.config, and that you have not set `middleware: false`.'
 	);
 }
 
-const { snapshot } = c15t;
+const { snapshot } = inth;
 // An arm's theme overrides ride on the host theme: its tokens, its
 // `consentActions` and its `slots` all follow the assignment.
 const theme = applyExperimentTheme(
-	c15t.options.theme,
-	c15t.options.experiment,
+	inth.options.theme,
+	inth.options.experiment,
 	snapshot.experiment
 );
 // Rendered as a server island, this is a request of its own with its own
 // nonce, but the page's policy is the one that judges the inserted markup.
-const nonce = nonceProp ?? c15t.nonce;
+const nonce = nonceProp ?? inth.nonce;
 // No resolved policy means no consent surface, even when forced.
-const shouldRender = c15t.hasConsentUi && (force || c15t.shouldShowBanner);
+const shouldRender = inth.hasConsentUi && (force || inth.shouldShowBanner);
 // A prerendered page is shared by every visitor, so it cannot know whether
 // this one has already chosen. It ships hidden, and the browser shows it
 // after reading the visitor's cookie.
-const hidden = c15t.prerendered && !force;
+const hidden = inth.prerendered && !force;
 const emitConfig = markConfigEmitted(Astro.locals);
 // A fallback for layouts with no <ConsentScript /> in <head>. It still runs
 // before the banner markup it precedes, so the first paint is right.
 const colorSchemeScript = emitConfig
-	? buildColorSchemeScript(c15t.options.colorScheme)
+	? buildColorSchemeScript(inth.options.colorScheme)
 	: '';
 const themeCSS = emitConfig
 	? buildThemeCSS(theme)
@@ -111,12 +111,12 @@ const themeCSS = emitConfig
 
 const model = resolvePromptModel({
 	classNames: promptClassNames,
-	disableAnimation: c15t.options.disableAnimation,
-	legalLinks: c15t.options.legalLinks,
+	disableAnimation: inth.options.disableAnimation,
+	legalLinks: inth.options.legalLinks,
 	// The arm is the host-resolved `variant`, already on the server snapshot.
 	presentation: applyExperimentAssignment(
-		c15t.options.presentation,
-		c15t.options.experiment,
+		inth.options.presentation,
+		inth.options.experiment,
 		snapshot.experiment
 	),
 	props,
@@ -131,14 +131,14 @@ const earlyTaps =
 	inlineStyles &&
 	shouldRender &&
 	!hidden &&
-	c15t.shouldShowBanner &&
-	!c15t.prerendered &&
+	inth.shouldShowBanner &&
+	!inth.prerendered &&
 	canDeferEngine(
 		snapshot,
-		c15t.options,
+		inth.options,
 		model.blocking,
 		Date.now(),
-		c15t.config
+		inth.config
 	);
 ---
 
@@ -146,7 +146,7 @@ const earlyTaps =
 	emitConfig && colorSchemeScript && (
 		<script
 			is:inline
-			data-c15t-inline
+			data-inth-inline
 			nonce={nonce}
 			set:html={colorSchemeScript}
 		/>
@@ -157,7 +157,7 @@ const earlyTaps =
 
 {
 	themeCSS && (
-		<style is:inline id="c15t-theme" nonce={nonce} set:html={themeCSS} />
+		<style is:inline id="inth-theme" nonce={nonce} set:html={themeCSS} />
 	)
 }
 
@@ -166,9 +166,9 @@ const earlyTaps =
 		<script
 			is:inline
 			type="application/json"
-			data-c15t-config
+			data-inth-config
 			nonce={nonce}
-			set:html={buildConfigJSON(c15t.config)}
+			set:html={buildConfigJSON(inth.config)}
 		/>
 	)
 }
@@ -178,9 +178,9 @@ const earlyTaps =
 		<script
 			is:inline
 			type="application/json"
-			data-c15t-boot
+			data-inth-boot
 			nonce={nonce}
-			set:html={buildLocalsBootJSON(c15t)}
+			set:html={buildLocalsBootJSON(inth)}
 		/>
 	)
 }
@@ -189,7 +189,7 @@ const earlyTaps =
 	earlyTaps && (
 		<script
 			is:inline
-			data-c15t-inline
+			data-inth-inline
 			nonce={nonce}
 			set:html={EARLY_CONSENT_TAP_SCRIPT}
 		/>
@@ -204,7 +204,7 @@ const earlyTaps =
 	 * init failed. The browser renders it into this spot from the same
 	 * model, with the same props and class names.
 	 */
-	!c15t.hasPolicy && (
+	!inth.hasPolicy && (
 		<div
 			hidden
 			{...{
@@ -235,7 +235,7 @@ const earlyTaps =
 			class={model.classes.root}
 			style={model.styles.root}
 			data-blocking={model.blocking ? 'true' : undefined}
-			data-c15t-visible={hidden ? 'false' : 'true'}
+			data-inth-visible={hidden ? 'false' : 'true'}
 			data-model={model.model}
 			data-position={model.position}
 			data-prompt={model.prompt}
@@ -324,7 +324,7 @@ const earlyTaps =
 										class={model.classes.rightLink}
 										style={model.styles.rightLink}
 										data-action="right"
-										data-c15t-action="customize"
+										data-inth-action="customize"
 										data-right={right}
 										data-testid={`consent-banner-right-link-${right}`}
 										type="button"
@@ -347,7 +347,7 @@ const earlyTaps =
 										class={className}
 										style={style}
 										data-action={action}
-										data-c15t-action={action}
+										data-inth-action={action}
 										data-mode={mode}
 										data-size={props.noStyle ? undefined : 'small'}
 										data-testid={`consent-banner-${action}-button`}
@@ -374,10 +374,10 @@ const earlyTaps =
 	shouldRender && hidden && (
 		<script
 			is:inline
-			data-c15t-inline
+			data-inth-inline
 			nonce={nonce}
 			set:html={buildBannerRevealScript(
-				c15t.options.storageConfig,
+				inth.options.storageConfig,
 				'consent-banner'
 			)}
 		/>

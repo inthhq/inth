@@ -5,7 +5,7 @@ import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 
 interface PingData {
 	applicableSections: number[];
@@ -14,8 +14,8 @@ interface PingData {
 
 type GPPWindow = Window & {
 	__gpp?: (command: string, callback: (data: unknown) => void) => void;
-	__c15tAstro?: unknown;
-	__c15tAstroConfig?: unknown;
+	__inthAstro?: unknown;
+	__inthAstroConfig?: unknown;
 };
 
 const gppWindow = window as GPPWindow;
@@ -59,9 +59,9 @@ const settle = async function settle(): Promise<void> {
 let client: AstroConsentClient | null = null;
 
 const start = function start(
-	options: Partial<C15tAstroOptions>
+	options: Partial<InthAstroOptions>
 ): AstroConsentClient {
-	gppWindow.__c15tAstroConfig = CALIFORNIA_CONFIG;
+	gppWindow.__inthAstroConfig = CALIFORNIA_CONFIG;
 	client = boot(
 		resolveOptions({
 			consentCategories: ['necessary', 'marketing'],
@@ -75,8 +75,8 @@ const start = function start(
 beforeEach(() => {
 	localStorage.clear();
 	document.body.innerHTML = '';
-	gppWindow.__c15tAstro = undefined;
-	gppWindow.__c15tAstroConfig = undefined;
+	gppWindow.__inthAstro = undefined;
+	gppWindow.__inthAstroConfig = undefined;
 });
 
 afterEach(() => {

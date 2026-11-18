@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Add c15t to a Vue 3 app built with Vite, using the Vue plugin, Inth, consent-gated scripts and a preferences link.
+description: Add Inth to a Vue 3 app built with Vite, using the Vue plugin, Inth, consent-gated scripts and a preferences link.
 group: frameworks
 ---
 
@@ -10,7 +10,7 @@ This guide is for a Vue 3 single-page app built with Vite. After the page
 loads, the browser asks your consent backend for the visitor's policy, so the
 app works on any static host. The backend reads the visitor's location from
 the request, so regional policies need no extra setup. For a Vue app that
-renders on the server, use the c15t Nuxt module.
+renders on the server, use the Inth Nuxt module.
 [Choose your setup](/docs/concepts/choose-your-setup) compares every option.
 
 The guide uses [Inth](https://inth.com) for policies and consent records.
@@ -23,7 +23,7 @@ without a backend through `testing()`; see
 The guide uses `hosted()` mode. Policy, translation and vendor edits in your
 project reach visitors on their next page load, without a rebuild.
 
-## Install c15t
+## Install Inth
 
 <CommandTabs command="@inth/vue @inth/integrations" mode="install" />
 
@@ -34,18 +34,18 @@ Add `consentManifest()` from `@inth/vue/vite` to `vite.config.ts`, next to
 
 <include src="../../shared/examples/vue/vite-config.mdx" />
 
-Set `VITE_C15T_BACKEND_URL` to your project's backend URL, including any
+Set `VITE_INTH_PROJECT_URL` to your project's backend URL, including any
 path prefix, in `.env` or wherever you build:
 
 ```sh title=".env"
-VITE_C15T_BACKEND_URL=https://your-project.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
 If your app already sets `VITE_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `VITE_C15T_BACKEND_URL` wins.
+too. When both are set, `VITE_INTH_PROJECT_URL` wins.
 
 `consentManifest()` hands the backend URL to the Vue plugin, and keeps the
-c15t components, which ship as `.vue` files, out of Vite's dependency
+Inth components, which ship as `.vue` files, out of Vite's dependency
 pre-bundling. No file is written into your project.
 
 The plugin also adds a small script to `index.html` that sends `/init` while
@@ -65,7 +65,7 @@ script loader for the `scripts` you pass. `mode: hosted()` makes one `/init`
 request to your backend, started early by the script in `index.html`. The
 backend picks the policy from the visitor's location and language and returns
 its current version. Consent choices go to the same backend URL. Vite reads
-`VITE_C15T_BACKEND_URL` at build time, so set it before you build, not when
+`VITE_INTH_PROJECT_URL` at build time, so set it before you build, not when
 you serve the files.
 
 ## Register consent-gated scripts
@@ -121,7 +121,7 @@ under a policy that asks for consent.
 
 - [Rendering and deployment](/docs/frameworks/vue/rendering) covers static
   hosting, each `mode` and server rendering.
-- [c15tVue plugin](/docs/frameworks/vue/plugin) lists every option.
+- [inthVue plugin](/docs/frameworks/vue/plugin) lists every option.
 - [Scripts](/docs/frameworks/vue/scripts), [embeds](/docs/frameworks/vue/embeds)
   and the [network blocker](/docs/frameworks/vue/network-blocker) cover
   gating and revocation.

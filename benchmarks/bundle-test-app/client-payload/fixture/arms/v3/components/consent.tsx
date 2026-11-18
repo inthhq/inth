@@ -9,7 +9,7 @@ import {
 import type { ConsentRootProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
-import consentConfig from '../c15t.config';
+import consentConfig from '../inth.config';
 import { theme } from './theme';
 
 /**

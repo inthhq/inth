@@ -11,8 +11,8 @@ import Fixture from '../../__tests__/fixtures/trigger-devtools-fixture.svelte';
 /** DevTools root inside its shadow host. */
 const devToolsRoot = function devToolsRoot(): HTMLElement {
 	const root = document
-		.querySelector('[data-c15t-dev-tools-host]')
-		?.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]');
+		.querySelector('[data-inth-dev-tools-host]')
+		?.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]');
 	if (!root) {
 		throw new Error('Expected DevTools to be mounted');
 	}
@@ -22,20 +22,20 @@ const devToolsRoot = function devToolsRoot(): HTMLElement {
 const devToolsItem = async function devToolsItem(): Promise<HTMLElement> {
 	await waitFor(() => {
 		expect(
-			document.querySelector('[data-c15t-trigger-action="devtools"]')
+			document.querySelector('[data-inth-trigger-action="devtools"]')
 		).not.toBeNull();
 	});
 	return document.querySelector(
-		'[data-c15t-trigger-action="devtools"]'
+		'[data-inth-trigger-action="devtools"]'
 	) as HTMLElement;
 };
 
 const toolbarActions = (): (string | undefined)[] =>
 	[
 		...document.querySelectorAll<HTMLElement>(
-			'[role="toolbar"] [data-c15t-trigger-action]'
+			'[role="toolbar"] [data-inth-trigger-action]'
 		),
-	].map((item) => item.dataset.c15tTriggerAction);
+	].map((item) => item.dataset.inthTriggerAction);
 
 describe('ConsentDialogTrigger with ConsentDevTools', () => {
 	test('becomes a toolbar that docks and toggles the DevTools panel', async () => {
@@ -46,15 +46,15 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 		expect(toolbarActions()).toEqual(['devtools', 'preferences']);
 		expect(
 			document.querySelector(
-				'[data-c15t-trigger-action="preferences"][aria-label="Open privacy settings"]'
+				'[data-inth-trigger-action="preferences"][aria-label="Open privacy settings"]'
 			)
 		).not.toBeNull();
 		await waitFor(() => {
-			expect(devToolsRoot().classList).toContain('c15t-dev-tools--docked');
+			expect(devToolsRoot().classList).toContain('inth-dev-tools--docked');
 		});
 
 		const panel = () =>
-			devToolsRoot().querySelector<HTMLElement>('.c15t-dev-tools__panel');
+			devToolsRoot().querySelector<HTMLElement>('.inth-dev-tools__panel');
 		expect(item.getAttribute('aria-expanded')).toBe('false');
 		await fireEvent.click(item);
 		await waitFor(() => {
@@ -88,10 +88,10 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 			'[data-testid="consent-dialog-trigger"]'
 		);
 		expect(trigger?.tagName).toBe('BUTTON');
-		expect(trigger?.getAttribute('data-c15t-trigger')).toBe('true');
+		expect(trigger?.getAttribute('data-inth-trigger')).toBe('true');
 		expect(document.querySelector('[role="toolbar"]')).toBeNull();
 		expect(
-			document.querySelector('[data-c15t-trigger-action="devtools"]')
+			document.querySelector('[data-inth-trigger-action="devtools"]')
 		).toBeNull();
 	});
 
@@ -99,23 +99,23 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 		const result = render(Fixture);
 		await devToolsItem();
 		await waitFor(() => {
-			expect(devToolsRoot().classList).toContain('c15t-dev-tools--docked');
+			expect(devToolsRoot().classList).toContain('inth-dev-tools--docked');
 		});
 
 		await result.rerender({ showWhen: 'never' });
 		await waitFor(() => {
-			expect(devToolsRoot().classList).not.toContain('c15t-dev-tools--docked');
+			expect(devToolsRoot().classList).not.toContain('inth-dev-tools--docked');
 		});
 
 		await result.rerender({ showWhen: 'always' });
 		await devToolsItem();
 		await waitFor(() => {
-			expect(devToolsRoot().classList).toContain('c15t-dev-tools--docked');
+			expect(devToolsRoot().classList).toContain('inth-dev-tools--docked');
 		});
 
 		await result.rerender({ trigger: false });
 		await waitFor(() => {
-			expect(devToolsRoot().classList).not.toContain('c15t-dev-tools--docked');
+			expect(devToolsRoot().classList).not.toContain('inth-dev-tools--docked');
 		});
 	});
 });

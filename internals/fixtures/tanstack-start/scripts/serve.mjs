@@ -45,5 +45,5 @@ const instance = serve({
 });
 await instance.ready();
 console.log(
-	`c15t TanStack Start example listening on http://${hostname}:${port}`
+	`inth TanStack Start example listening on http://${hostname}:${port}`
 );

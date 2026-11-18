@@ -50,7 +50,7 @@ describe('vercelSpeedInsights', () => {
 			src: 'https://va.vercel-scripts.com/v1/speed-insights/script.js',
 		});
 		expect(script.defer).toBe(true);
-		expect(script.attributes).toEqual({ 'data-sdkn': 'c15t' });
+		expect(script.attributes).toEqual({ 'data-sdkn': 'inth' });
 	});
 
 	it('uses debug bundle when mode or debug flag requests it', () => {
@@ -85,7 +85,7 @@ describe('vercelSpeedInsights', () => {
 			'data-dsn': 'dsn_123',
 			'data-endpoint': 'https://vitals.example.com/v1/vitals',
 			'data-sample-rate': '0.25',
-			'data-sdkn': 'c15t',
+			'data-sdkn': 'inth',
 		});
 	});
 

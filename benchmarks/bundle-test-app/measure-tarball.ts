@@ -105,7 +105,7 @@ export const runTarballSize = (
 		packageDir,
 		readPackOutput(packageDir, pack(resolvedDir, ['--dry-run']))
 	);
-	const staging = mkdtempSync(join(tmpdir(), 'c15t-pack-'));
+	const staging = mkdtempSync(join(tmpdir(), 'inth-pack-'));
 	try {
 		let excluded = 0;
 		for (const path of paths) {
@@ -145,7 +145,7 @@ export const runTarballSize = (
 		const includesDialogRules =
 			flatStyles === null
 				? null
-				: /\.c15t-ui-dialogVisible-[\w-]+[^{}]*\{/u.test(flatStyles);
+				: /\.inth-ui-dialogVisible-[\w-]+[^{}]*\{/u.test(flatStyles);
 		return { includesDialogRules, notes, size: artifact.size };
 	} finally {
 		rmSync(staging, { force: true, recursive: true });

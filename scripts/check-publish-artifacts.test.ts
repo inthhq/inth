@@ -48,7 +48,7 @@ const makeTree = function makeTree(
 
 describe('release artifact selection', () => {
 	it('checks exactly the requested public packages and rejects unknown or private names', () => {
-		const root = mkdtempSync(join(tmpdir(), 'c15t-publish-selection-'));
+		const root = mkdtempSync(join(tmpdir(), 'inth-publish-selection-'));
 		try {
 			for (const name of ['first', 'second', 'private']) {
 				mkdirSync(join(root, name));
@@ -93,14 +93,14 @@ describe('release artifact selection', () => {
 	});
 
 	it('guards selected tarballs after reusing preparation and leaves unrelated packages out', () => {
-		const root = mkdtempSync(join(tmpdir(), 'c15t-publish-guard-'));
+		const root = mkdtempSync(join(tmpdir(), 'inth-publish-guard-'));
 		try {
 			for (const name of ['selected', 'unrelated']) {
 				makeTree(root, {
 					[`packages/sdk/${name}/package.json`]: JSON.stringify({
 						exports: './dist/index.js',
 						files: ['dist'],
-						name: `c15t-ci-${name}`,
+						name: `inth-ci-${name}`,
 						scripts: {
 							// This hook cannot run in the fixture. The guard must reuse its build.
 							prepack: 'bun ../../../scripts/verify-package-artifacts.ts',
@@ -116,10 +116,10 @@ describe('release artifact selection', () => {
 					[join(ROOT, 'scripts/check-publish-artifacts.ts'), '--built', name],
 					{ cwd: root, encoding: 'utf8', timeout: 10_000 }
 				);
-			const selected = guard('c15t-ci-selected');
+			const selected = guard('inth-ci-selected');
 			expect(selected.status, selected.stderr).toBe(0);
 			expect(selected.stdout).toContain('Checked 1 packages.');
-			const missing = guard('c15t-ci-unrelated');
+			const missing = guard('inth-ci-unrelated');
 			expect(missing.status).toBe(1);
 			expect(missing.stderr).toContain(
 				'manifest target missing from packed files'
@@ -127,7 +127,7 @@ describe('release artifact selection', () => {
 			makeTree(root, {
 				'packages/sdk/selected/dist/leaked.test.js': 'export {};',
 			});
-			const leaked = guard('c15t-ci-selected');
+			const leaked = guard('inth-ci-selected');
 			expect(leaked.status).toBe(1);
 			expect(leaked.stderr).toContain('test file');
 		} finally {
@@ -236,7 +236,7 @@ describe('native leak shapes', () => {
 });
 
 describe('the files allowlist against a build tree', () => {
-	const workDir = mkdtempSync(join(tmpdir(), 'c15t-files-allowlist-'));
+	const workDir = mkdtempSync(join(tmpdir(), 'inth-files-allowlist-'));
 
 	afterAll(() => {
 		rmSync(workDir, { force: true, recursive: true });
@@ -372,7 +372,7 @@ describe('the files allowlist against a build tree', () => {
 
 describe('published license copies', () => {
 	it('accepts root NOTICE attribution and rejects a modified copy', () => {
-		const packageDir = mkdtempSync(join(tmpdir(), 'c15t-notice-'));
+		const packageDir = mkdtempSync(join(tmpdir(), 'inth-notice-'));
 		try {
 			const notice = readFileSync(join(ROOT, 'NOTICE'), 'utf8');
 			makeTree(packageDir, { NOTICE: notice });
@@ -393,7 +393,7 @@ describe('published license copies', () => {
 		}
 	});
 
-	const workDir = mkdtempSync(join(tmpdir(), 'c15t-license-'));
+	const workDir = mkdtempSync(join(tmpdir(), 'inth-license-'));
 
 	afterAll(() => {
 		rmSync(workDir, { force: true, recursive: true });
@@ -495,7 +495,7 @@ describe('allowedCommonJsArtifacts', () => {
 });
 
 describe('vendored native sources', () => {
-	const workDir = mkdtempSync(join(tmpdir(), 'c15t-vendored-'));
+	const workDir = mkdtempSync(join(tmpdir(), 'inth-vendored-'));
 
 	afterAll(() => {
 		rmSync(workDir, { force: true, recursive: true });
@@ -656,7 +656,7 @@ describe('vendored native sources', () => {
 				.join('\n');
 
 			expect(spec).not.toMatch(/s\.dependency\s+"InthCore"/u);
-			expect(spec).not.toMatch(/C15T_CORE_POD_VERSION/u);
+			expect(spec).not.toMatch(/INTH_CORE_POD_VERSION/u);
 			expect(spec).toMatch(/vendor\/InthCore\/\*\*\/\*\.swift/u);
 			expect(
 				scanPackedVendoredSources(reactNativeDir, new Set(packedPaths))
@@ -666,7 +666,7 @@ describe('vendored native sources', () => {
 });
 
 describe('packages that must stay clear of the consent kernel', () => {
-	const workDir = mkdtempSync(join(tmpdir(), 'c15t-kernel-free-'));
+	const workDir = mkdtempSync(join(tmpdir(), 'inth-kernel-free-'));
 
 	afterAll(() => {
 		rmSync(workDir, { force: true, recursive: true });
@@ -926,7 +926,7 @@ describe('scanUiComponentStyleArtifacts', () => {
 	// @inth/sdk ships the UI part under lib/ui/; its sources sit in
 	// packages/sdk/ui, beside the package.
 	const createUiPackage = (classMap: string) => {
-		const root = mkdtempSync(join(tmpdir(), 'c15t-ui-artifacts-'));
+		const root = mkdtempSync(join(tmpdir(), 'inth-ui-artifacts-'));
 		packageDir = root;
 		const dist = join(root, 'sdk/lib/ui/dist/styles/components');
 		mkdirSync(join(root, 'ui/src/styles/components'), { recursive: true });
@@ -935,7 +935,7 @@ describe('scanUiComponentStyleArtifacts', () => {
 			join(root, 'ui/src/styles/components/prompt.module.css'),
 			'.root {}\n'
 		);
-		writeFileSync(join(dist, 'prompt.css'), '.c15t-ui-root-abc {}\n');
+		writeFileSync(join(dist, 'prompt.css'), '.inth-ui-root-abc {}\n');
 		writeFileSync(join(dist, 'prompt.js'), classMap);
 		writeFileSync(
 			join(dist, 'prompt.d.ts'),
@@ -953,7 +953,7 @@ describe('scanUiComponentStyleArtifacts', () => {
 
 	it('accepts CSS-free class maps', () => {
 		const dir = createUiPackage(
-			'const styles = { root: "c15t-ui-root-abc" };\nexport default styles;\n'
+			'const styles = { root: "inth-ui-root-abc" };\nexport default styles;\n'
 		);
 
 		expect(
@@ -965,7 +965,7 @@ describe('scanUiComponentStyleArtifacts', () => {
 		// styles.css already carries these rules; the import made bundlers
 		// emit them a second time.
 		const dir = createUiPackage(
-			'import "./prompt.css";\nconst styles = { root: "c15t-ui-root-abc" };\nexport default styles;\n'
+			'import "./prompt.css";\nconst styles = { root: "inth-ui-root-abc" };\nexport default styles;\n'
 		);
 
 		expect(

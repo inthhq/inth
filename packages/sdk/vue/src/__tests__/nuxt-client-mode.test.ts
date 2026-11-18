@@ -32,7 +32,7 @@ test("browser resolution sends a visitor without a location to the backend's /in
 		{
 			resolve: 'browser',
 			snapshot: {
-				branding: 'c15t',
+				branding: 'inth',
 				policyPacks: [
 					createConsentManifestPolicyPack({
 						id: 'eu-opt-in',

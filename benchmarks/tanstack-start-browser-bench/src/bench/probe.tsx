@@ -9,7 +9,7 @@ import {
 } from './state';
 import type { TanstackBenchScenario } from './state';
 
-const BANNER_ELEMENT_TIMING_NAME = 'c15t-consent-banner';
+const BANNER_ELEMENT_TIMING_NAME = 'inth-consent-banner';
 
 interface BenchmarkElementTimingEntry extends PerformanceEntry {
 	identifier?: string;

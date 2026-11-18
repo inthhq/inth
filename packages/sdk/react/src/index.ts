@@ -1,12 +1,12 @@
 /**
- * `@inth/react` — React adapter for the c15t consent kernel.
+ * `@inth/react` — React adapter for the Inth consent kernel.
  *
  * Pattern:
  *   import { ConsentProvider, useConsent, useSaveConsents } from '@inth/react';
  *
  *   function App({ children }) {
  *     return (
- *       <ConsentProvider options={{ projectUrl: '/api/c15t' }}>
+ *       <ConsentProvider options={{ projectUrl: '/api/inth' }}>
  *         {children}
  *       </ConsentProvider>
  *     );

@@ -39,13 +39,13 @@ const Surface = ({ sheet }: { sheet: SurfaceStyleSheet }) => {
 
 const stylesFor = (id: string) => [
 	...document.querySelectorAll<HTMLStyleElement>(
-		`style[data-href~="${id}"],style[data-c15t-styles="${id}"]`
+		`style[data-href~="${id}"],style[data-inth-styles="${id}"]`
 	),
 ];
 
 describe('deferred surface sheets', () => {
 	test('hydrating over the server-rendered sheet adopts it without loading', async () => {
-		const id = 'c15t-test-hydrate';
+		const id = 'inth-test-hydrate';
 		const { load, sheet } = deferredSheet(id);
 		// The server renders the eager sheet: same id, full text.
 		const html = renderToString(<Surface sheet={{ css: CSS, id }} />);
@@ -84,7 +84,7 @@ describe('deferred surface sheets', () => {
 	});
 
 	test('a surface the browser renders first waits for the loaded sheet', async () => {
-		const id = 'c15t-test-client';
+		const id = 'inth-test-client';
 		const { load, sheet } = deferredSheet(id);
 		const screen = await render(<Surface sheet={sheet} />);
 
@@ -95,10 +95,10 @@ describe('deferred surface sheets', () => {
 	});
 
 	test('with a nonce, a later surface reuses the text of the in-place sheet', async () => {
-		const id = 'c15t-test-nonce';
+		const id = 'inth-test-nonce';
 		const { load, sheet } = deferredSheet(id);
 		const serverStyle = document.createElement('style');
-		serverStyle.dataset.c15tStyles = id;
+		serverStyle.dataset.inthStyles = id;
 		serverStyle.textContent = CSS;
 		document.body.append(serverStyle);
 
@@ -122,7 +122,7 @@ describe('deferred surface sheets', () => {
 	});
 
 	test('a surface shows without a sheet that failed to load, and the next one retries it', async () => {
-		const id = 'c15t-test-retry';
+		const id = 'inth-test-retry';
 		const load = vi
 			.fn<() => Promise<string>>()
 			.mockRejectedValueOnce(new Error('chunk failed to load'))

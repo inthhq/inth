@@ -1,18 +1,18 @@
 import {
 	devToolsProviderOptions,
 	getDevToolsCategories,
-} from '@c15t/conformance/fixtures/devtools';
-import { devToolsFlow } from '@c15t/conformance/play/devtools';
+} from '@inth/conformance/fixtures/devtools';
+import { devToolsFlow } from '@inth/conformance/play/devtools';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import { c15tDevtools } from '../../../packages/sdk/react/src/devtools';
+import { inthDevtools } from '../../../packages/sdk/react/src/devtools';
 import { ConsentProvider } from '../../../packages/sdk/react/src/index';
 
 const plugins = [
-	c15tDevtools({
+	inthDevtools({
 		defaultOpen: true,
 		getConsentCategories: getDevToolsCategories,
 	}),
@@ -52,13 +52,13 @@ export const ConsentAndScriptsFlow: Story = {
 		await devToolsFlow(context);
 		const panelRoot = () =>
 			document
-				.querySelector('[data-c15t-dev-tools-host]')
-				?.shadowRoot?.querySelector('[data-c15t-dev-tools]') ?? null;
+				.querySelector('[data-inth-dev-tools-host]')
+				?.shadowRoot?.querySelector('[data-inth-dev-tools]') ?? null;
 		const root = panelRoot();
-		expect(root?.classList.contains('c15t-dev-tools--embedded')).toBe(true);
+		expect(root?.classList.contains('inth-dev-tools--embedded')).toBe(true);
 		expect(
 			within(document.body).queryByRole('button', {
-				name: 'Open c15t DevTools',
+				name: 'Open inth DevTools',
 			})
 		).toBeNull();
 		await userEvent.click(
@@ -70,7 +70,7 @@ export const ConsentAndScriptsFlow: Story = {
 		);
 		await waitFor(() => {
 			expect(
-				document.querySelectorAll('[data-c15t-dev-tools-host]')
+				document.querySelectorAll('[data-inth-dev-tools-host]')
 			).toHaveLength(1);
 			expect(panelRoot()).not.toBeNull();
 		});

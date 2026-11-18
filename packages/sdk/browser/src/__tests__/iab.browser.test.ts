@@ -1,5 +1,5 @@
-import { runAxe } from '@c15t/conformance/a11y';
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { runAxe } from '@inth/conformance/a11y';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -12,7 +12,7 @@ let opener: HTMLButtonElement | undefined;
 const start = async (shadow: boolean) => {
 	opener = document.createElement('button');
 	opener.textContent = 'Open privacy settings';
-	opener.setAttribute('data-c15t-action', 'customize');
+	opener.setAttribute('data-inth-action', 'customize');
 	document.body.append(opener);
 	client = init({
 		iab: { cmpId: 28, gvl: completeGVL },
@@ -65,7 +65,7 @@ describe.each([false, true])('IAB browser interaction, shadow=%s', (shadow) => {
 		expect(activeElement()?.getAttribute('aria-label')).toBe('Close');
 		await userEvent.tab();
 		await userEvent.keyboard('{ArrowRight}');
-		expect(activeElement()?.id).toBe('c15t-iab-vendors-tab');
+		expect(activeElement()?.id).toBe('inth-iab-vendors-tab');
 		await userEvent.tab();
 		expect(activeElement()?.getAttribute('type')).toBe('search');
 		await userEvent.keyboard('{Escape}');

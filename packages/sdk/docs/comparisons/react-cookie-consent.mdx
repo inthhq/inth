@@ -1,12 +1,12 @@
 ---
-title: c15t vs react-cookie-consent
-description: Choose c15t when a React application needs consent rules, vendor controls and backend records beyond an accept-and-decline banner.
+title: Inth vs react-cookie-consent
+description: Choose Inth when a React application needs consent rules, vendor controls and backend records beyond an accept-and-decline banner.
 group: reference
 ---
 
-## Choose c15t when consent controls product behaviour
+## Choose Inth when consent controls product behaviour
 
-c15t is the stronger fit when consent determines which vendors and features can run. It combines the banner, preferences, policy state and vendor integrations with a record backend.
+Inth is the stronger fit when consent determines which vendors and features can run. It combines the banner, preferences, policy state and vendor integrations with a record backend.
 
 react-cookie-consent gives you a customisable React bar, cookie helpers and callbacks. It is a useful small component when your application already owns the rest of the consent system.
 
@@ -14,7 +14,7 @@ react-cookie-consent gives you a customisable React bar, cookie helpers and call
 
 ## Compare what your team must build
 
-| What you need | c15t | react-cookie-consent |
+| What you need | Inth | react-cookie-consent |
 | --- | --- | --- |
 | Show a consent banner | Policy-aware framework components | Configurable React bar |
 | Offer category and vendor preferences | Built-in controls | Build the rest of the preference flow |
@@ -31,34 +31,34 @@ Custom application code can extend the component. Those extensions are work that
 
 ## Connect the choice to the vendor
 
-With c15t, your team can read whether a feature can run from the same state that drives the consent interface. Register analytics or embeds through [c15t integrations](/docs/integrations/overview).
+With Inth, your team can read whether a feature can run from the same state that drives the consent interface. Register analytics or embeds through [Inth integrations](/docs/integrations/overview).
 
 This gives the application a shared model for first visits, saved choices and later withdrawal. You still need to remove unconditional loaders.
 
-A callback that starts analytics after acceptance also needs to handle rejection, reload and withdrawal. c15t supplies those integration points as part of its consent runtime.
+A callback that starts analytics after acceptance also needs to handle rejection, reload and withdrawal. Inth supplies those integration points as part of its consent runtime.
 
 ## Keep permission separate from a recorded choice
 
-c15t distinguishes the permissions allowed by a policy from what the visitor explicitly chose. Your application can read both without a false record of consent.
+Inth distinguishes the permissions allowed by a policy from what the visitor explicitly chose. Your application can read both without a false record of consent.
 
 That distinction matters for regional policies, stored choices and privacy signals. See the [consent model](/docs/concepts/how-consent-works).
 
 The backend can store confirmed choices. Browser state changes first, so check the actual record after a save. A failed request is not a completed record.
 
-## What c15t does not include
+## What Inth does not include
 
 - **Setup as small as a standalone bar.** Production policy and records need an Inth connection or your own backend.
 - **Automatic control of current analytics code.** Move it from old callbacks into registered integrations or explicit rules.
 - **A safe automatic conversion of a boolean cookie.** Review what visitors previously accepted before you create category or vendor grants.
-- **Legal-policy generation or a website scanner.** These are outside the c15t packages.
+- **Legal-policy generation or a website scanner.** These are outside the Inth packages.
 
 If you only need a bar and already have the other consent infrastructure, react-cookie-consent can be enough.
 
 ## Replace one acceptance callback first
 
-Choose c15t when you want the consent infrastructure as well as the React interface. Follow the [React quickstart](/docs/frameworks/react/quickstart) with [Inth](https://inth.com).
+Choose Inth when you want the consent infrastructure as well as the React interface. Follow the [React quickstart](/docs/frameworks/react/quickstart) with [Inth](https://inth.com).
 
-For a Next.js application, use its [router guide](/docs/frameworks/next/quickstart). Find the old `onAccept` loader, register its c15t replacement and remove the duplicate.
+For a Next.js application, use its [router guide](/docs/frameworks/next/quickstart). Find the old `onAccept` loader, register its Inth replacement and remove the duplicate.
 
 Test a fresh visit and a visitor who previously rejected consent. Finish with the [verification guide](/docs/guides/verify-consent).
 

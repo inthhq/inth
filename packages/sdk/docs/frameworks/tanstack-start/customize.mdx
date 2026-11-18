@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Change the colors, fonts, layout, button styles and copy of the c15t banner and dialog in a TanStack Start app with theme tokens, ConsentRoot options and component parts, and load the stylesheet yourself when you need to.
+description: Change the colors, fonts, layout, button styles and copy of the Inth banner and dialog in a TanStack Start app with theme tokens, ConsentRoot options and component parts, and load the stylesheet yourself when you need to.
 group: frameworks
 ---
 
@@ -26,12 +26,12 @@ from a bottom bar to a fully custom one, with tested code for this framework.
 ## Load the stylesheet yourself
 
 The [quickstart](/docs/frameworks/tanstack-start/quickstart) root route links
-no c15t stylesheet. `ConsentBanner`, `ConsentDialog` and the other stock
+no Inth stylesheet. `ConsentBanner`, `ConsentDialog` and the other stock
 components render the rules they use as `<style>` elements, in the server
 HTML for the banner. The rules live in `@layer components`, so Tailwind 4
 utilities override them without extra specificity.
 
-Load the stylesheet yourself with Tailwind CSS 3, to put c15t's rules in a
+Load the stylesheet yourself with Tailwind CSS 3, to put inth's rules in a
 named cascade layer. Set `styles: false` in `ConsentRoot`'s
 `options`, so the components add no second copy, and link the stylesheet
 through `head()`:
@@ -48,7 +48,7 @@ import consentCss from '@inth/tanstack-start/styles.css?url';
 options={{ styles: false }}
 ```
 
-If your app already has a global stylesheet, you can `@import` the c15t
+If your app already has a global stylesheet, you can `@import` the Inth
 stylesheet from it instead. Tailwind 3 needs a PostCSS plugin and the import
 above the `@tailwind` directives;
 [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3) shows the
@@ -57,17 +57,17 @@ explains the layer order.
 
 ## Change colors, fonts and radius
 
-Colors, radii, shadows, typography and motion come from `--c15t-*` CSS
+Colors, radii, shadows, typography and motion come from `--inth-*` CSS
 variables. Pick one of two ways to set them:
 
 - **Set the variables in your CSS.** Nothing extra ships to the browser:
 
   ```css title="src/styles.css"
   :root {
-    --c15t-primary: #2f6f4e;
-    --c15t-primary-hover: #24563c;
-    --c15t-text-on-primary: #fff;
-    --c15t-radius-lg: 4px;
+    --inth-primary: #2f6f4e;
+    --inth-primary-hover: #24563c;
+    --inth-text-on-primary: #fff;
+    --inth-radius-lg: 4px;
   }
   ```
 
@@ -183,6 +183,6 @@ keys.
 
 Clear site data and reload under a policy that shows a banner. View the page
 source: with an awaited loader, the banner is in the HTML with your classes
-and, if you render `ConsentTheme`, a `<style id="c15t-theme">` element. Open
+and, if you render `ConsentTheme`, a `<style id="inth-theme">` element. Open
 the preference dialog too, since it reads the same tokens. Test a narrow
 window, keyboard focus and contrast on the primary button.

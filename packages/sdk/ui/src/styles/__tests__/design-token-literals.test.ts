@@ -5,8 +5,8 @@
  * A literal colour, font stack, shadow or radius in a component rule is a
  * value no theme and no host stylesheet can change without out-specifying
  * the rule. A component variable whose default is a literal instead of a
- * `--c15t-*` token is subtler: it can be overridden, but a `theme` never
- * reaches it, so one surface keeps c15t's defaults while the rest of the UI
+ * `--inth-*` token is subtler: it can be overridden, but a `theme` never
+ * reaches it, so one surface keeps inth's defaults while the rest of the UI
  * follows the site's palette. The "Secured by" tag and the preference list's
  * font both shipped that way. So does a literal fallback on a component
  * variable nothing declares, like `var(--accordion-focus-ring, hsl(...))`:
@@ -101,12 +101,12 @@ const withoutVariables = function withoutVariables(value: string): string {
 
 /**
  * `withoutVariables`, with each `calc()` built on a theme token also
- * replaced: `calc(var(--c15t-radius-md) - 0.25rem)` follows the theme.
+ * replaced: `calc(var(--inth-radius-md) - 0.25rem)` follows the theme.
  * `calc(1.5rem * var(--space-y-reverse))` does not, so it stays.
  */
 const withoutDerived = function withoutDerived(value: string): string {
 	return withoutVariables(
-		withoutCalls(value, 'calc', (call) => !call.includes('var(--c15t-'))
+		withoutCalls(value, 'calc', (call) => !call.includes('var(--inth-'))
 	);
 };
 
@@ -138,7 +138,7 @@ const componentFallbacks = function componentFallbacks(
 				break;
 			}
 		}
-		if (split !== -1 && !inner.startsWith('--c15t-')) {
+		if (split !== -1 && !inner.startsWith('--inth-')) {
 			const fallback = inner.slice(split + 1).trim();
 			found.push(fallback, ...componentFallbacks(fallback));
 		}
@@ -455,7 +455,7 @@ const sizesText = function sizesText(
 /**
  * Whether a declaration sizes text in `px`, which ignores the visitor's
  * text-size setting while the rest of the UI follows it. Every `var()`
- * fallback counts, a theme token's included: `--c15t-font-size-xs` is an
+ * fallback counts, a theme token's included: `--inth-font-size-xs` is an
  * override hook no theme declares, so its fallback is what renders.
  */
 const setsPxFontSize = function setsPxFontSize(
@@ -534,7 +534,7 @@ describe('design token literals', () => {
 		const added = violations.filter((entry) => !baseline.includes(entry));
 		expect(
 			added,
-			'Use a --c15t-* token, or a component variable that defaults to one.'
+			'Use a --inth-* token, or a component variable that defaults to one.'
 		).toEqual([]);
 	});
 
@@ -552,13 +552,13 @@ describe('text sizes', () => {
 	test('use rem, not px, so they follow the visitor text size', () => {
 		expect(
 			findPxFontSizes(),
-			'Size text with a --c15t-font-size-* token or rem, fallbacks included.'
+			'Size text with a --inth-font-size-* token or rem, fallbacks included.'
 		).toEqual([]);
 	});
 
 	test.each([
 		['font-size', '14px'],
-		['font-size', 'var(--c15t-font-size-sm, 14px)'],
+		['font-size', 'var(--inth-font-size-sm, 14px)'],
 		['font-size', 'var(--a, var(--b, 13.5px))'],
 		['font-size', 'calc(1rem + 2px)'],
 		['font', '600 14px/1.5 system-ui'],
@@ -569,9 +569,9 @@ describe('text sizes', () => {
 
 	test.each([
 		['font-size', '0.875rem'],
-		['font-size', 'var(--c15t-font-size-sm, 0.875rem)'],
+		['font-size', 'var(--inth-font-size-sm, 0.875rem)'],
 		['font', 'inherit'],
-		['--consent-dialog-footer-font-size', 'var(--c15t-font-size-sm)'],
+		['--consent-dialog-footer-font-size', 'var(--inth-font-size-sm)'],
 		['outline-offset', '2px'],
 		['--cdt-offset', '16px'],
 	])('accepts %s: %s', (property, value) => {
@@ -620,18 +620,18 @@ describe('the literal detector', () => {
 	test.each([
 		['color', 'var(--consent-banner-text-color)'],
 		['color', 'color-mix(in srgb, var(--button-primary) 85%, black)'],
-		['border', '1px solid var(--c15t-border)'],
+		['border', '1px solid var(--inth-border)'],
 		['box-shadow', '0 0 0 2px var(--focus-color)'],
 		['padding', '0'],
 		['margin-block-end', '-1px'],
 		['border-radius', '50%'],
-		['border-radius', 'calc(var(--c15t-radius-md) - 0.25rem)'],
+		['border-radius', 'calc(var(--inth-radius-md) - 0.25rem)'],
 		['color', 'currentColor'],
 		['font-family', 'inherit'],
 		['font', 'inherit'],
 		['animation', 'spin var(--x) linear infinite'],
-		['transition', 'opacity calc(var(--c15t-duration-normal) * 0.35) linear'],
-		['animation', 'consent-dialog-fade-out var(--x) var(--c15t-easing)'],
+		['transition', 'opacity calc(var(--inth-duration-normal) * 0.35) linear'],
+		['animation', 'consent-dialog-fade-out var(--x) var(--inth-easing)'],
 	])('accepts %s: %s', (property, value) => {
 		expect(ruleViolation(property, value)).toBeUndefined();
 	});
@@ -668,12 +668,12 @@ describe('the literal detector', () => {
 
 	test('accepts a variable whose default follows the theme', () => {
 		expect(
-			declarationViolations('--legal-links-color', 'var(--c15t-primary)')
+			declarationViolations('--legal-links-color', 'var(--inth-primary)')
 		).toEqual([]);
 		expect(
 			declarationViolations(
 				'--consent-gate-placeholder-border-radius',
-				'calc(var(--c15t-radius-lg) * 5 / 3)'
+				'calc(var(--inth-radius-lg) * 5 / 3)'
 			)
 		).toEqual([]);
 		// Named for a property the theme has no scale for.
@@ -701,13 +701,13 @@ describe('the literal detector', () => {
 
 	test("accepts a theme token's fallback and a fallback to a token", () => {
 		// The tokens ship with the stylesheet, so their fallback never renders.
-		expect(declarationViolations('color', 'var(--c15t-text, #171717)')).toEqual(
+		expect(declarationViolations('color', 'var(--inth-text, #171717)')).toEqual(
 			[]
 		);
 		expect(
 			declarationViolations(
 				'color',
-				'var(--accordion-arrow-color, var(--c15t-text-muted))'
+				'var(--accordion-arrow-color, var(--inth-text-muted))'
 			)
 		).toEqual([]);
 	});

@@ -8,12 +8,12 @@ Each restriction type has a requirement that depends on the vendor list:
 
 Type `2` is never allowed for purposes 1, 3, 4, 5 and 6, which TCF allows
 only with consent. TCF allows restrictions only in service-specific TC strings.
-c15t always writes those, so the deprecated `isServiceSpecific` option has no
+Inth always writes those, so the deprecated `isServiceSpecific` option has no
 effect on restrictions.
-c15t copies the restrictions when the CMP starts, so changing your array
+Inth copies the restrictions when the CMP starts, so changing your array
 afterwards has no effect.
 
-c15t checks restrictions when the vendor list loads and again before each TC
+Inth checks restrictions when the vendor list loads and again before each TC
 String is encoded. Unsupported restrictions include type `3`, which the spec
 reserves, a vendor or purpose missing from the list, and a vendor with two
 restriction types for one purpose. They are never dropped. Loading IAB
@@ -26,8 +26,8 @@ explicit `gvl` option that never happens, so saving keeps failing even if the
 kernel later holds a different list. When the CMP follows the kernel's list
 instead, a replacement list is checked again and saving works once it accepts
 the restrictions. When a replacement vendor list makes a restriction
-unsupported, c15t also clears the TC authority confirmed under the previous
-list, so gated scripts stop until the configuration is fixed. Whenever c15t
+unsupported, Inth also clears the TC authority confirmed under the previous
+list, so gated scripts stop until the configuration is fixed. Whenever Inth
 withdraws the authority it confirmed, it also removes the TC String from the
 `euconsent-v2` cookie and localStorage entry. Because the check reads the
 current vendor list, a vendor that stops declaring a purpose or its flexibility
@@ -40,7 +40,7 @@ purpose ID, then vendor ID. A stored TC String whose restrictions differ from
 the current configuration is not restored. If the visitor's stored choice is
 otherwise current, the banner opens again, as it does after a policy change,
 and closes once the visitor saves. IAB gates that depend on the TC String stay
-denied until then. c15t also removes the superseded TC String from the
+denied until then. Inth also removes the superseded TC String from the
 `euconsent-v2` cookie and localStorage entry, so vendors reading standard
 storage do not pick it up. An unchanged configuration restores the stored TC
 String without asking.
@@ -53,8 +53,8 @@ range 21 to 52. A string saved that way still restores. If you then add a vendor
 from inside the range, such as vendor 30, the stored restrictions no longer
 match, so the banner opens once. The string saved after that lists only the
 vendors you restricted.
-When reading a string written under TCF policy version 2 or 3, c15t accepts
-type `2` for purposes 3 to 6, which those versions allowed. Strings c15t
+When reading a string written under TCF policy version 2 or 3, Inth accepts
+type `2` for purposes 3 to 6, which those versions allowed. Strings Inth
 writes always follow the current policy.
 
 The React, Vue, Svelte and `@inth/sdk/iab-client` preference centres list each
@@ -63,7 +63,7 @@ now requires legitimate interest gets an objection control instead of a
 consent toggle, and a prohibited purpose no longer lists the vendor. A
 purpose whose vendors all use legitimate interest has no consent switch,
 because turning one off would change nothing the vendors rely on; its
-objection control is the opt-out. Such a purpose does not decide its c15t
+objection control is the opt-out. Such a purpose does not decide its Inth
 category: the category follows the purposes in it that the visitor can
 consent to. Legitimate interest never grants a category on its own. If none of
 a category's purposes has a consent basis, nothing can consent to them, Accept

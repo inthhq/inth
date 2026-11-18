@@ -12,7 +12,7 @@ import { createPagesConsentRoute } from '../pages';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 const params = (...segments: string[]) => ({
-	params: Promise.resolve({ c15t: segments }),
+	params: Promise.resolve({ inth: segments }),
 });
 
 const upstream = () =>
@@ -41,13 +41,13 @@ describe('createConsentRoute', () => {
 		});
 
 		const manifest = await GET(
-			new Request('https://app.example.com/api/c15t/manifest'),
+			new Request('https://app.example.com/api/inth/manifest'),
 			params('manifest')
 		);
 		expect(await manifest.json()).toEqual(MANIFEST_FIXTURE);
 
 		const init = await GET(
-			new Request('https://app.example.com/api/c15t/init', {
+			new Request('https://app.example.com/api/inth/init', {
 				headers: { 'x-vercel-ip-country': 'DE' },
 			}),
 			params('init')
@@ -67,7 +67,7 @@ describe('createConsentRoute', () => {
 		const responses = await Promise.all(
 			[['foo'], ['subjects'], ['manifest', 'extra']].map((segments) =>
 				GET(
-					new Request(`https://app.example.com/api/c15t/${segments.join('/')}`),
+					new Request(`https://app.example.com/api/inth/${segments.join('/')}`),
 					params(...segments)
 				)
 			)
@@ -84,12 +84,12 @@ describe('createConsentRoute', () => {
 		const { GET } = createConsentRoute({
 			config: defineConsentConfig({
 				projectUrl: 'https://consent.example.com',
-				routePrefix: '/api/c15t',
+				routePrefix: '/api/inth',
 			}),
 		});
 
 		await GET(
-			new Request('https://app.example.com/api/c15t/manifest'),
+			new Request('https://app.example.com/api/inth/manifest'),
 			params('manifest')
 		);
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
@@ -106,7 +106,7 @@ describe('createConsentRoute', () => {
 		});
 
 		const response = await handlers.POST(
-			new Request('https://app.example.com/api/c15t/subjects', {
+			new Request('https://app.example.com/api/inth/subjects', {
 				body: '{}',
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
@@ -128,7 +128,7 @@ describe('createConsentRoute', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).toThrow(
-			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'."
 		);
 		expect(() =>
 			createPagesConsentRoute({
@@ -136,7 +136,7 @@ describe('createConsentRoute', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).toThrow(
-			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'."
 		);
 	});
 });

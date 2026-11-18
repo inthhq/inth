@@ -10,13 +10,13 @@ export const useE2eObserver = (): void => {
 	const { kind } = useConsentSource();
 
 	useEffect(() => {
-		if (process.env.C15T_APP_E2E !== '1') {
+		if (process.env.INTH_APP_E2E !== '1') {
 			return;
 		}
 
 		const publish = async (): Promise<void> => {
 			await fetch(
-				`${process.env.C15T_E2E_URL || 'http://localhost:3000'}/e2e/state`,
+				`${process.env.INTH_E2E_URL || 'http://localhost:3000'}/e2e/state`,
 				{
 					body: JSON.stringify({
 						bootstrap:

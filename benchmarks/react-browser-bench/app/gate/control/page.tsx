@@ -2,7 +2,7 @@
 import {
 	gatePageCSS,
 	gatePageHTML,
-} from '@c15t/benchmarking/consent-gate-page';
+} from '@inth/benchmarking/consent-gate-page';
 
 /** The gate page's article without any consent library: the LCP control. */
 const GateControlPage = () => (

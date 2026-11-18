@@ -6,14 +6,14 @@ import type { ReactNode } from 'react';
 
 import { brandTheme } from '@/lib/consent-theme';
 
-// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// The backend is your Inth project: set NEXT_PUBLIC_INTH_PROJECT_URL in
 // .env.local. The policy comes from its consent manifest.
 const config = {
 	projectUrl:
-		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+		process.env.NEXT_PUBLIC_INTH_PROJECT_URL ?? 'https://your-project.inth.app',
 };
 
-// The support chat is a script, not an iframe. c15t adds it to the page only
+// The support chat is a script, not an iframe. Inth adds it to the page only
 // while Functionality is allowed. The script loader handles loading; the chat
 // card in the article shows the placeholder.
 const scripts = [

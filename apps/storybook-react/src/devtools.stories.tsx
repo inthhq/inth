@@ -1,8 +1,8 @@
 import {
 	devToolsProviderOptions,
 	getDevToolsCategories,
-} from '@c15t/conformance/fixtures/devtools';
-import { devToolsFlow, devToolsReady } from '@c15t/conformance/play/devtools';
+} from '@inth/conformance/fixtures/devtools';
+import { devToolsFlow, devToolsReady } from '@inth/conformance/play/devtools';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { DevTools } from '../../../packages/sdk/react/src/devtools';

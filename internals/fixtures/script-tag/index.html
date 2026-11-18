@@ -113,11 +113,11 @@
 		</style>
 
 		<script>
-			// One global. Before the tag loads, window.c15t is a queue of calls;
+			// One global. Before the tag loads, window.inth is a queue of calls;
 			// the tag replays them in order. Everything here is plain JSON except
 			// the script callbacks.
-			window.c15t = window.c15t || [];
-			c15t.push([
+			window.inth = window.inth || [];
+			inth.push([
 				'config',
 				{
 					legalLinks: {
@@ -160,7 +160,7 @@
 				},
 			]);
 			// `?experiment=1` runs a banner-shape experiment: `control` is the
-			// default banner and `wall` blocks the page. c15t picks the arm;
+			// default banner and `wall` blocks the page. inth picks the arm;
 			// `&arm=wall` sets it the way a flag provider would (any other `arm`
 			// value runs `control`). The callbacks log each impression and
 			// choice made under the arm.
@@ -174,7 +174,7 @@
 				if (arm !== null) {
 					experiment.arm = arm === 'wall' ? 'wall' : 'control';
 				}
-				c15t.push([
+				inth.push([
 					'config',
 					{
 						experiment,
@@ -182,14 +182,14 @@
 							onSurfaceShown: (event) => {
 								if (event.experiment) {
 									log(
-										`c15t_surface_shown · ${event.experiment.arm} · ${event.surface}`
+										`inth_surface_shown · ${event.experiment.arm} · ${event.surface}`
 									);
 								}
 							},
 							onChoiceRecorded: (event) => {
 								if (event.experiment) {
 									log(
-										`c15t_choice_recorded · ${event.experiment.arm} · ${event.consentAction}`
+										`inth_choice_recorded · ${event.experiment.arm} · ${event.consentAction}`
 									);
 								}
 							},
@@ -198,7 +198,7 @@
 				]);
 			}
 			// Listeners queue the same way and attach once the client exists.
-			c15t.push(
+			inth.push(
 				[
 					'on',
 					'ready',
@@ -263,7 +263,7 @@
 
 			<h2>Banner experiment</h2>
 			<p>
-				Open <a href="/?experiment=1">?experiment=1</a> to let c15t pick a
+				Open <a href="/?experiment=1">?experiment=1</a> to let inth pick a
 				banner-shape arm (<code>control</code> or <code>wall</code>), or
 				<a href="/?experiment=1&arm=wall">?experiment=1&amp;arm=wall</a> to set
 				the wall arm. Arm:
@@ -276,16 +276,16 @@
 
 			<h2>Page hooks</h2>
 			<p>
-				Any element can drive the banner with <code>data-c15t-action</code>, and
-				a link to <code>#c15t-preferences</code> opens the preference centre. No
+				Any element can drive the banner with <code>data-inth-action</code>, and
+				a link to <code>#inth-preferences</code> opens the preference centre. No
 				JavaScript on the page.
 			</p>
 			<p>
-				<button data-c15t-action="customize">Cookie settings</button>
-				<button data-c15t-action="banner">Show banner</button>
-				<button data-c15t-action="accept">Accept all</button>
-				<button data-c15t-action="reject">Reject all</button>
-				<a href="#c15t-preferences">Preferences link</a>
+				<button data-inth-action="customize">Cookie settings</button>
+				<button data-inth-action="banner">Show banner</button>
+				<button data-inth-action="accept">Accept all</button>
+				<button data-inth-action="reject">Reject all</button>
+				<a href="#inth-preferences">Preferences link</a>
 			</p>
 
 			<h2>Gated scripts</h2>
@@ -321,7 +321,7 @@
 						A
 						<code
 							>&lt;script type="text/plain"
-							data-c15t-category="marketing"&gt;</code
+							data-inth-category="marketing"&gt;</code
 						>
 						in the HTML. Inert until marketing is granted, then re-inserted and
 						executed.
@@ -333,7 +333,7 @@
 					>
 					<script
 						type="text/plain"
-						data-c15t-category="marketing"
+						data-inth-category="marketing"
 					>
 						window.dispatchEvent(new CustomEvent('example:log', { detail: 'inline marketing pixel executed' }));
 					</script>
@@ -392,7 +392,7 @@
 					type="button"
 					id="check"
 				>
-					Check c15t.has('marketing')
+					Check inth.has('marketing')
 				</button>
 			</p>
 
@@ -415,10 +415,10 @@
 				}
 			});
 			document.getElementById('check').addEventListener('click', () => {
-				log(`c15t.has('marketing') = ${c15t.has('marketing')}`);
+				log(`inth.has('marketing') = ${inth.has('marketing')}`);
 			});
 			// Keep the category badges honest.
-			c15t.push([
+			inth.push([
 				'onInit',
 				(client) => {
 					const paint = () => {

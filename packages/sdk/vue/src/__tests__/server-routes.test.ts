@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 const MANIFEST: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			categories: [],
@@ -64,7 +64,7 @@ const manifestResponse = function manifestResponse(
 /**
  * Drives the real handler through h3 so we assert on a real Response. The
  * handler is mounted as the module mounts it in Nitro: at the default
- * `/api/c15t/**`.
+ * `/api/inth/**`.
  *
  * The mounting calls are cast because the workspace currently resolves h3 v1
  * at runtime while type resolution picks up the h3 v2 pulled in transitively
@@ -77,7 +77,7 @@ const callRoute = function callRoute(path: string, handler: unknown) {
 	return (requestHeaders: Record<string, string> = {}) => {
 		const app = createApp();
 		const router = createRouter();
-		(router.use as unknown as MountRoute)('/api/c15t/**', handler);
+		(router.use as unknown as MountRoute)('/api/inth/**', handler);
 		(app.use as unknown as (handler: unknown) => unknown)(router);
 		return toWebHandler(app)(
 			new Request(`http://localhost${path}`, { headers: requestHeaders })
@@ -90,18 +90,18 @@ const routeDependencies = {
 	useRuntimeConfig: mocks.useRuntimeConfig,
 };
 const callManifestRoute = callRoute(
-	'/api/c15t/manifest',
+	'/api/inth/manifest',
 	createConsentRoute(routeDependencies)
 );
 const callInitRoute = callRoute(
-	'/api/c15t/init',
+	'/api/inth/init',
 	createConsentRoute(routeDependencies)
 );
 
 beforeEach(() => {
 	clearManifestCache();
 	mocks.useRuntimeConfig.mockReturnValue({
-		public: { c15t: { backendURL: '/api/self-host' } },
+		public: { inth: { backendURL: '/api/self-host' } },
 	});
 });
 
@@ -114,18 +114,18 @@ describe('manifest route background revalidation', () => {
 	test('serves the build snapshot and resolves init without upstream policy requests', async () => {
 		mocks.useRuntimeConfig.mockReturnValue({
 			public: {
-				c15t: {
+				inth: {
 					backendURL: 'https://consent.example.com',
 				},
 			},
 		});
 		const dependencies = { ...routeDependencies, manifest: MANIFEST };
 		const callSnapshotManifestRoute = callRoute(
-			'/api/c15t/manifest',
+			'/api/inth/manifest',
 			createConsentRoute(dependencies)
 		);
 		const callSnapshotInitRoute = callRoute(
-			'/api/c15t/init',
+			'/api/inth/init',
 			createConsentRoute(dependencies)
 		);
 		expect(await (await callSnapshotManifestRoute()).json()).toEqual(MANIFEST);
@@ -157,7 +157,7 @@ describe('manifest route background revalidation', () => {
 			);
 			const registered: { refresh: Promise<void>; method: string }[] = [];
 			const call = callRoute(
-				'/api/c15t/manifest',
+				'/api/inth/manifest',
 				createConsentRoute({
 					...routeDependencies,
 					onBackgroundRevalidate: (refresh, event) => {
@@ -202,16 +202,16 @@ describe('manifest route default background registration', () => {
 			const handler = createConsentRoute(routeDependencies);
 			const call = () => {
 				const app = createApp();
-				app.use('/api/c15t/manifest', (event) => {
+				app.use('/api/inth/manifest', (event) => {
 					(event as { waitUntil?: unknown }).waitUntil = (
 						promise: Promise<unknown>
 					) => {
 						registered.push(promise);
 					};
 				});
-				(app.use as unknown as MountRoute)('/api/c15t/manifest', handler);
+				(app.use as unknown as MountRoute)('/api/inth/manifest', handler);
 				return toWebHandler(app)(
-					new Request('http://localhost/api/c15t/manifest')
+					new Request('http://localhost/api/inth/manifest')
 				);
 			};
 
@@ -334,8 +334,8 @@ describe('init route', () => {
 
 	test('private runtime config wins over the public one', async () => {
 		mocks.useRuntimeConfig.mockReturnValue({
-			c15t: { backendURL: 'https://private.example' },
-			public: { c15t: { backendURL: '/api/self-host' } },
+			inth: { backendURL: 'https://private.example' },
+			public: { inth: { backendURL: '/api/self-host' } },
 		});
 		mocks.serverFetch.mockResolvedValue(manifestResponse({}));
 
@@ -347,10 +347,10 @@ describe('init route', () => {
 	});
 
 	test('an empty private URL leaves the public one', async () => {
-		// What Nitro hands over when only NUXT_PUBLIC_C15T_BACKEND_URL is set.
+		// What Nitro hands over when only NUXT_PUBLIC_INTH_PROJECT_URL is set.
 		mocks.useRuntimeConfig.mockReturnValue({
-			c15t: { backendURL: '', ssr: true },
-			public: { c15t: { backendURL: 'https://public.example' } },
+			inth: { backendURL: '', ssr: true },
+			public: { inth: { backendURL: 'https://public.example' } },
 		});
 		mocks.serverFetch.mockResolvedValue(manifestResponse({}));
 
@@ -364,7 +364,7 @@ describe('init route', () => {
 	test("reads the manifest from the mode's manifestUrl", async () => {
 		mocks.useRuntimeConfig.mockReturnValue({
 			public: {
-				c15t: {
+				inth: {
 					backendURL: 'https://consent.example.com',
 					mode: {
 						manifestUrl: 'https://cdn.example.com/manifest.json',
@@ -384,7 +384,7 @@ describe('init route', () => {
 
 	test('answers no path but init and manifest', async () => {
 		const response = await callRoute(
-			'/api/c15t/subjects',
+			'/api/inth/subjects',
 			createConsentRoute(routeDependencies)
 		)();
 
@@ -432,16 +432,16 @@ describe('serverFetch', () => {
 
 describe('saves', () => {
 	test('the route answers a save with 404, so the browser never posts one here', async () => {
-		mocks.useRuntimeConfig.mockReturnValue({ public: { c15t: {} } });
+		mocks.useRuntimeConfig.mockReturnValue({ public: { inth: {} } });
 		const app = createApp();
 		const router = createRouter();
 		(router.use as unknown as MountRoute)(
-			'/api/c15t/**',
+			'/api/inth/**',
 			createConsentRoute({ ...routeDependencies, manifest: MANIFEST })
 		);
 		(app.use as unknown as (handler: unknown) => unknown)(router);
 		const response = await toWebHandler(app)(
-			new Request('http://localhost/api/c15t/subjects', {
+			new Request('http://localhost/api/inth/subjects', {
 				body: '{}',
 				method: 'POST',
 			})

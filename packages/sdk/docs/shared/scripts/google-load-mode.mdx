@@ -15,8 +15,8 @@ group: reference
 
   | `loadMode` | Until the category is allowed | Use it when |
   | --- | --- | --- |
-  | `'always'` (default) | c15t loads Google's script, sends Consent Mode `default` with the current permissions, then sends `update` as they change. Google receives requests with the optional consent types denied. | You want Consent Mode signals from visitors who have not allowed the category. |
-  | `'after-consent'` | c15t sends no request to Google. | Your site must make no request to Google before opt-in. You give up Consent Mode's cookieless pings and conversion modeling for visitors who haven't allowed the category. |
+  | `'always'` (default) | Inth loads Google's script, sends Consent Mode `default` with the current permissions, then sends `update` as they change. Google receives requests with the optional consent types denied. | You want Consent Mode signals from visitors who have not allowed the category. |
+  | `'after-consent'` | Inth sends no request to Google. | Your site must make no request to Google before opt-in. You give up Consent Mode's cookieless pings and conversion modeling for visitors who haven't allowed the category. |
 
   With `'after-consent'`, `gtag` waits for its `category`, and
   `googleTagManager` waits for `measurement` or `marketing` because a container
@@ -37,7 +37,7 @@ group: reference
   allowed only measurement starts the container, and a marketing pixel in it
   loads too. With `'always'`, both load before any choice. Add a
   consent check to each of those tags in GTM, or move the vendor out of the
-  container to its own c15t helper. See
+  container to its own Inth helper. See
   [configure consent inside the container](/docs/integrations/google-tag-manager#configure-consent-inside-the-container).
 
   Set it on each Google helper in your `scripts` array:

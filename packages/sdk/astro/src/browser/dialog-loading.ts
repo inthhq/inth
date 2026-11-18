@@ -10,7 +10,7 @@
  * @internal
  */
 
-import type { C15tUIAdapterName } from '../types';
+import type { InthUIAdapterName } from '../types';
 import { loadDialogAdapter, requireDialogSurface } from '../ui/adapter';
 import type { ConsentDialogAdapter, ConsentDialogKind } from '../ui/adapter';
 import { loadDialogStyles } from './dialog-styles';
@@ -20,7 +20,7 @@ import { loadDialogStyles } from './dialog-styles';
  * load, is left to the adapter's `mount()`, which reports it.
  */
 const startSurface = async function startSurface(
-	ui: C15tUIAdapterName
+	ui: InthUIAdapterName
 ): Promise<void> {
 	try {
 		await requireDialogSurface(ui)();
@@ -40,7 +40,7 @@ const startSurface = async function startSurface(
  * @throws {Error} When the adapter is not registered or fails to load.
  */
 export const loadDialog = async function loadDialog(
-	ui: C15tUIAdapterName,
+	ui: InthUIAdapterName,
 	kind: ConsentDialogKind,
 	nonce: string | undefined
 ): Promise<ConsentDialogAdapter> {
@@ -62,7 +62,7 @@ export const loadDialog = async function loadDialog(
  * @param nonce - The page's CSP nonce.
  */
 export const preloadDialogChunks = async function preloadDialogChunks(
-	ui: C15tUIAdapterName,
+	ui: InthUIAdapterName,
 	kind: ConsentDialogKind,
 	nonce: string | undefined
 ): Promise<void> {

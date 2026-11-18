@@ -1,20 +1,20 @@
 ---
 title: Geography headers
-description: Which request headers the c15t Astro middleware reads for the visitor's country, region, language and Global Privacy Control, how to check your host sends them, and how to test a region locally.
+description: Which request headers the Inth Astro middleware reads for the visitor's country, region, language and Global Privacy Control, how to check your host sends them, and how to test a region locally.
 group: frameworks
 ---
 
 ## Where the location comes from
 
-On server output, the c15t middleware reads the visitor's location from the
+On server output, the Inth middleware reads the visitor's location from the
 request headers your host adds, and resolves the policy for that location.
 The headers never leave your server. With `hosted()`, the middleware sends
-the resolved values to your backend's `/init` as c15t override headers. With
+the resolved values to your backend's `/init` as Inth override headers. With
 `manifest()`, it resolves the policy itself.
 
 On a static or prerendered page, there is no request at build time. The
 browser's own `/init` request carries the location instead, and your backend
-or the `/api/c15t/init` route reads it from that request.
+or the `/api/inth/init` route reads it from that request.
 
 ## Which headers are read?
 
@@ -22,9 +22,9 @@ Within each group, the first header with a value wins:
 
 | Input | Headers, highest precedence first | Source |
 | --- | --- | --- |
-| Country | `x-c15t-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | c15t override, Cloudflare, Vercel, CloudFront, generic |
-| Region | `x-c15t-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | c15t override, Cloudflare, Vercel, generic |
-| Global Privacy Control | `x-c15t-gpc`, `sec-gpc` | c15t override, browser signal |
+| Country | `x-c15t-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic |
+| Region | `x-c15t-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic |
+| Global Privacy Control | `x-c15t-gpc`, `sec-gpc` | Inth override, browser signal |
 | Language | `accept-language` | Browser |
 
 `i18n.locale` in the integration outranks `accept-language`. GPC values count
@@ -36,7 +36,7 @@ policy's rule for an unknown location applies to every visitor.
 
 ## Check that your host sends them
 
-c15t does not keep a list of which hosts add which headers. Check your own
+Inth does not keep a list of which hosts add which headers. Check your own
 deployment. Add a page that prints the inputs the middleware saw, deploy it,
 and open it.
 
@@ -45,7 +45,7 @@ and open it.
 ```astro title="src/pages/consent-debug.astro"
 ---
 export const prerender = false;
-const { inputs } = Astro.locals.c15t;
+const { inputs } = Astro.locals.inth;
 ---
 
 <pre>{JSON.stringify(inputs, null, 2)}</pre>
@@ -64,7 +64,7 @@ traffic.
 ## Only your edge may set `x-c15t-*` headers
 
 `x-c15t-country`, `x-c15t-region` and `x-c15t-gpc` override the host's
-headers. A visitor who sends them chooses their own policy rule. The c15t
+headers. A visitor who sends them chooses their own policy rule. The Inth
 middleware does not strip them. In production, the edge that terminates all
 traffic must delete incoming `x-c15t-*` headers before anything else sets
 them. Blocking direct access to your origin keeps requests on that edge, but

@@ -1,17 +1,17 @@
 ---
 title: Segment
-description: Load Segment Analytics.js only after measurement consent with the c15t segment helper, guard your own track and identify calls, and check it in DevTools.
-seoTitle: Segment cookie consent with c15t
-seoDescription: Load Segment Analytics.js only with measurement consent. The c15t segment helper sends the first page call after consent.
+description: Load Segment Analytics.js only after measurement consent with the Inth segment helper, guard your own track and identify calls, and check it in DevTools.
+seoTitle: Segment cookie consent with Inth
+seoDescription: Load Segment Analytics.js only with measurement consent. The Inth segment helper sends the first page call after consent.
 icon: segment
 group: integrations
 ---
 
-The c15t `segment` helper keeps Segment Analytics.js off the page until
-`measurement` has consent. Until then, c15t does not create `window.analytics`.
+The Inth `segment` helper keeps Segment Analytics.js off the page until
+`measurement` has consent. Until then, Inth does not create `window.analytics`.
 When `measurement` has consent, the helper queues a `page()` call and loads
 Analytics.js. The helper sends no consent signal to Segment. If the visitor
-withdraws consent, c15t removes the script element. By default, c15t also
+withdraws consent, Inth removes the script element. By default, Inth also
 reloads the page.
 
 ## Configure Segment
@@ -40,7 +40,7 @@ export const scripts = [segment({ writeKey: 'YOUR_SOURCE_WRITE_KEY' })];
 
 ## Loading and revocation
 
-`segment` uses the `measurement` category. Before measurement is allowed, c15t
+`segment` uses the `measurement` category. Before measurement is allowed, Inth
 defines no `window.analytics` and loads nothing from Segment. When measurement
 becomes allowed, the helper creates the `window.analytics` queue with `track`,
 `page`, `identify`, `group`, `alias` and `reset`, sets the load options,
@@ -50,7 +50,7 @@ removes the script element and calls no Segment API.
 Segment forwards events to every destination enabled on the source. A
 measurement grant does not cover a destination that needs marketing
 permission. Configure destination consent in Segment, or load that vendor with
-its own c15t helper instead.
+its own Inth helper instead.
 
 ## Guard your own Segment calls
 

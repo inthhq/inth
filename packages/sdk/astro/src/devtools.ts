@@ -1,5 +1,5 @@
 /**
- * `@inth/astro/devtools`: the c15t DevTools panel for an Astro site.
+ * `@inth/astro/devtools`: the Inth DevTools panel for an Astro site.
  *
  * The panel inspects consents, scripts, policy and events. Mount it from a
  * client script during development:
@@ -32,7 +32,7 @@ export type AstroDevToolsOptions = Omit<DevToolsOptions, 'kernel'>;
  *
  * @param options - Panel placement and initial state.
  * @returns The panel; call `destroy()` to remove it.
- * @throws {Error} When the page has no c15t client, such as on the server
+ * @throws {Error} When the page has no Inth client, such as on the server
  * or on a page without the integration.
  */
 export const mountDevTools = async function mountDevTools(
@@ -41,7 +41,7 @@ export const mountDevTools = async function mountDevTools(
 	const client = getConsentClient();
 	if (!client) {
 		throw new Error(
-			'@inth/astro/devtools: no consent client on this page. Mount the panel from a client script on a page that uses the c15t integration.'
+			'@inth/astro/devtools: no consent client on this page. Mount the panel from a client script on a page that uses the inth integration.'
 		);
 	}
 	await client.ready;

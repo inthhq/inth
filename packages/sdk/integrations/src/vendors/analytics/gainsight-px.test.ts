@@ -20,7 +20,7 @@ describe('gainsightPx', () => {
 	setupScriptHelperTest();
 	afterEach(() => {
 		delete getTestGlobal().aptrinsic;
-		delete getTestGlobal().__c15tGainsightPxProductKey;
+		delete getTestGlobal().__inthGainsightPxProductKey;
 	});
 
 	it('returns metadata and a blocked loader without browser side effects', () => {

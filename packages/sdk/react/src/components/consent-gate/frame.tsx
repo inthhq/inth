@@ -34,7 +34,7 @@ const warnDeprecated = function warnDeprecated(
 	warned.add(name);
 	// oxlint-disable-next-line no-console -- Development-only deprecation notice.
 	console.warn(
-		`c15t: \`${name}\` is deprecated and will be removed in a future major release. Use \`${replacement}\` instead.`
+		`inth: \`${name}\` is deprecated and will be removed in a future major release. Use \`${replacement}\` instead.`
 	);
 };
 

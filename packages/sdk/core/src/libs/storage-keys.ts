@@ -1,15 +1,15 @@
 import type { StorageConfig } from './cookie';
 
 /**
- * Default consent storage keys (aligned with legacy c15t store).
+ * Default consent storage keys (aligned with legacy Inth store).
  */
 
-export const STORAGE_KEY_V2 = 'c15t';
+export const STORAGE_KEY_V2 = 'inth';
 
 export const STORAGE_KEY = 'privacy-consent-storage';
 
 /** Failed v3 consent saves waiting for a backend replay. */
-export const PENDING_SAVES_STORAGE_KEY = 'c15t-v3-pending-consent-saves:v1';
+export const PENDING_SAVES_STORAGE_KEY = 'inth-v3-pending-consent-saves:v1';
 
 /**
  * Subject ids the backend refused as another tenant's, each with the id this
@@ -17,19 +17,19 @@ export const PENDING_SAVES_STORAGE_KEY = 'c15t-v3-pending-consent-saves:v1';
  * queued saves.
  */
 export const SUBJECT_REASSIGNMENTS_STORAGE_KEY =
-	'c15t-v3-subject-reassignments:v1';
+	'inth-v3-subject-reassignments:v1';
 
 /**
  * The banner-experiment arm this browser was shown, as `{ id, variant }`.
  * Written only once the banner has rendered that arm.
  */
-export const EXPERIMENT_STORAGE_KEY = 'c15t-experiment-v1';
+export const EXPERIMENT_STORAGE_KEY = 'inth-experiment-v1';
 
 /**
  * The consent journey id a `journey: 'tab'` runtime keeps in
  * `sessionStorage` while a prompt is due. Removed once a choice is recorded.
  */
-export const JOURNEY_STORAGE_KEY = 'c15t-journey-v1';
+export const JOURNEY_STORAGE_KEY = 'inth-journey-v1';
 
 /**
  * The storage keys one configuration resolves to. Notice dismissals,
@@ -54,7 +54,7 @@ export interface ResolvedStorageKeys {
 	 */
 	cookieMiss: string;
 	/**
-	 * Where c15t 3.2 stored the visitor's subject ID before any choice.
+	 * Where Inth 3.2 stored the visitor's subject ID before any choice.
 	 * Nothing writes or reads it now; startup and `clear()` remove a copy
 	 * an earlier version left.
 	 */

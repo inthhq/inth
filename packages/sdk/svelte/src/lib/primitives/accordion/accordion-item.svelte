@@ -28,8 +28,8 @@
 	const open = $derived(isAccordionItemOpen(root.type, root.value, value));
 	const dataState = $derived(getOpenState(open));
 	const dataDisabled = $derived(getDataDisabled(disabled));
-	const triggerId = `c15t-accordion-trigger-${componentId}`;
-	const contentId = `c15t-accordion-content-${componentId}`;
+	const triggerId = `inth-accordion-trigger-${componentId}`;
+	const contentId = `inth-accordion-content-${componentId}`;
 
 	setAccordionItemContext({
 		get contentId() {

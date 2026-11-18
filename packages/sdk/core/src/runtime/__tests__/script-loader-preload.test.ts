@@ -118,7 +118,7 @@ const storeChoice = function storeChoice(
 ): void {
 	const resolution = matchedResolution(optInRule());
 	localStorage.setItem(
-		'c15t',
+		'inth',
 		encodeStoredConsentEnvelopeJson({
 			categories: explicitChoice(
 				{ marketing },

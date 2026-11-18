@@ -14,7 +14,7 @@ const granted = {
 
 afterEach(() => {
 	document.head.replaceChildren();
-	Reflect.deleteProperty(window, '__c15tStarted');
+	Reflect.deleteProperty(window, '__inthStarted');
 });
 
 test('leaves an integration script to the loader', () => {

@@ -1,6 +1,6 @@
 ---
 title: Content Security Policy
-description: Write a Content Security Policy for a Svelte app using c15t, with the hosts to allow, the provider's nonce option and what c15t injects.
+description: Write a Content Security Policy for a Svelte app using Inth, with the hosts to allow, the provider's nonce option and what Inth injects.
 group: frameworks
 ---
 
@@ -18,10 +18,10 @@ in each response, so allow each vendor's script host in `script-src` instead
 of relying on the provider's `nonce`.
 
 In a Svelte app without server rendering, Svelte sets every `style` value
-through the DOM, which a policy does not block, so c15t needs no
+through the DOM, which a policy does not block, so Inth needs no
 `'unsafe-inline'` for style attributes.
 
-c15t's components add their rules to `<head>` as `<style>` elements, and a
+inth's components add their rules to `<head>` as `<style>` elements, and a
 `style-src` without `'unsafe-inline'` blocks those. A static host has no
 nonce to give the provider, so set `styles={false}` on
 `ConsentProvider` and import `@inth/svelte/styles.css` from your

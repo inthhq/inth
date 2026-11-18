@@ -1,4 +1,4 @@
-import { benchPolicy } from '@c15t/benchmarking/bench-policy';
+import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import {
 	ConsentBanner,
 	ConsentDialog,

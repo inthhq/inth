@@ -1,5 +1,5 @@
 /**
- * `<c15t-consent-gate>`: keeps an embed out of the page until its consent
+ * `<inth-consent-gate>`: keeps an embed out of the page until its consent
  * category is allowed.
  *
  * @packageDocumentation
@@ -59,14 +59,14 @@ export interface ConsentGatePlaceholderContext {
  *
  * @example
  * ```html
- * <c15t-consent-gate category="marketing">
- *   <ng-template c15tConsentGateContent>
+ * <inth-consent-gate category="marketing">
+ *   <ng-template inthConsentGateContent>
  *     <app-video-player />
  *   </ng-template>
- * </c15t-consent-gate>
+ * </inth-consent-gate>
  * ```
  */
-@Directive({ selector: 'ng-template[c15tConsentGateContent]' })
+@Directive({ selector: 'ng-template[inthConsentGateContent]' })
 export class ConsentGateContent {
 	/** @internal */
 	readonly template = inject<TemplateRef<void>>(TemplateRef);
@@ -80,13 +80,13 @@ export class ConsentGateContent {
  *
  * @example
  * ```html
- * <ng-template c15tConsentGatePlaceholder let-category let-open="openDialog">
+ * <ng-template inthConsentGatePlaceholder let-category let-open="openDialog">
  *   <p>Allow {{ category }} to load this video.</p>
  *   <button type="button" (click)="open()">Choose video permissions</button>
  * </ng-template>
  * ```
  */
-@Directive({ selector: 'ng-template[c15tConsentGatePlaceholder]' })
+@Directive({ selector: 'ng-template[inthConsentGatePlaceholder]' })
 export class ConsentGatePlaceholder {
 	/** @internal */
 	readonly template =
@@ -125,13 +125,13 @@ export class ConsentGatePlaceholder {
  *
  * @example
  * ```html
- * <c15t-consent-gate category="measurement" class="video">
+ * <inth-consent-gate category="measurement" class="video">
  *   <iframe title="YouTube video" src="https://www.youtube-nocookie.com/embed/…"></iframe>
- *   <ng-template c15tConsentGatePlaceholder>
+ *   <ng-template inthConsentGatePlaceholder>
  *     <p>Allow measurement to load this video.</p>
- *     <button type="button" c15tConsentDialogLink>Choose video permissions</button>
+ *     <button type="button" inthConsentDialogLink>Choose video permissions</button>
  *   </ng-template>
- * </c15t-consent-gate>
+ * </inth-consent-gate>
  * ```
  */
 @Component({
@@ -139,7 +139,7 @@ export class ConsentGatePlaceholder {
 	imports: [ConsentButton, NgTemplateOutlet],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-consent-gate',
+	selector: 'inth-consent-gate',
 	styles: ':host { display: block; }',
 	template: `
 		@if (ready()) {
@@ -170,7 +170,7 @@ export class ConsentGatePlaceholder {
 					</div>
 					@if (!policyBlocked()) {
 						<button
-							c15t-consent-button
+							inth-consent-button
 							[action]="'customize'"
 							[variant]="'primary'"
 							[mode]="'stroke'"
@@ -204,7 +204,7 @@ export class ConsentGate {
 	 * `isVendorAllowed(vendor)`.
 	 */
 	readonly vendor = input<string | undefined>(undefined);
-	/** Drop c15t's classes from the built-in placeholder. Defaults to the provider's `noStyle`. */
+	/** Drop inth's classes from the built-in placeholder. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
 
 	/** @internal */

@@ -15,7 +15,7 @@ import {
 	useConsentConfig,
 	useConsentInit,
 	useIabTranslations,
-} from '#c15t/composables';
+} from '#inth/composables';
 
 import type { IabProcessedPurpose, IabVendorId } from './iab-purpose-item.vue';
 import ConsentSwitch from './switch.vue';

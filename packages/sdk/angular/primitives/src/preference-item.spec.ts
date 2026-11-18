@@ -35,17 +35,17 @@ afterEach(() => {
 	selector: 'test-preference-item',
 	template: `
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			class="mine"
 			[(open)]="open"
 		>
-			<button c15tPreferenceItemTrigger>Analytics</button>
-			<div c15t-preference-item-content>
+			<button inthPreferenceItemTrigger>Analytics</button>
+			<div inth-preference-item-content>
 				<span data-testid="body">Body</span>
 			</div>
 		</div>
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			[noStyle]="true"
 			data-testid="bare"
 		></div>
@@ -55,7 +55,7 @@ class PreferenceItemHost {
 	readonly open = signal(false);
 }
 
-describe('c15tPreferenceItem', () => {
+describe('inthPreferenceItem', () => {
 	test('renders the content on first open and keeps it', async () => {
 		const { fixture, get, root } = await render(PreferenceItemHost);
 		const item = get('[data-slot="preference-item-root"]');
@@ -93,11 +93,11 @@ describe('c15tPreferenceItem', () => {
 	selector: 'test-preference-item-blocks',
 	template: `
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			[open]="true"
 		>
-			<button c15tPreferenceItemTrigger>Marketing</button>
-			<div c15t-preference-item-content>
+			<button inthPreferenceItemTrigger>Marketing</button>
+			<div inth-preference-item-content>
 				Description
 				@if (vendors()) {
 					<section data-testid="vendors">Vendors</section>
@@ -105,12 +105,12 @@ describe('c15tPreferenceItem', () => {
 			</div>
 		</div>
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			[(open)]="lazyOpen"
 		>
-			<button c15tPreferenceItemTrigger>Lazy</button>
-			<div c15t-preference-item-content>
-				<ng-template c15tPreferenceItemBody>
+			<button inthPreferenceItemTrigger>Lazy</button>
+			<div inth-preference-item-content>
+				<ng-template inthPreferenceItemBody>
 					<span data-testid="lazy">Lazy body</span>
 				</ng-template>
 			</div>
@@ -122,7 +122,7 @@ class PreferenceItemBlocksHost {
 	readonly lazyOpen = signal(false);
 }
 
-describe('c15t-preference-item-content', () => {
+describe('inth-preference-item-content', () => {
 	test('projects control flow in place, not as the lazy body template', async () => {
 		const { fixture, get, root } = await render(PreferenceItemBlocksHost);
 		const inner = get('[data-slot="preference-item-content-inner"]');
@@ -139,7 +139,7 @@ describe('c15t-preference-item-content', () => {
 		);
 	});
 
-	test('creates a c15tPreferenceItemBody template from the first open', async () => {
+	test('creates a inthPreferenceItemBody template from the first open', async () => {
 		const { fixture, root } = await render(PreferenceItemBlocksHost);
 		expect(root.querySelector('[data-testid="lazy"]')).toBeNull();
 		fixture.componentInstance.lazyOpen.set(true);

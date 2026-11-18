@@ -131,7 +131,7 @@ export interface ConsentRequestOptions {
 	/** Request clock reused for validation and hydration. */
 	now?: number;
 	/**
-	 * Cookie name holding persisted consent. Defaults to `c15t`, the
+	 * Cookie name holding persisted consent. Defaults to `inth`, the
 	 * persistence module's storage key. Set this only if you customized
 	 * `storageConfig.storageKey` client-side; it must match.
 	 */
@@ -175,7 +175,7 @@ export interface ConsentClientConfig {
 	projectUrl?: string;
 	/** The mode, as data. `undefined` means `manifest()`. */
 	mode?: ConsentMode;
-	/** Where the consent route is mounted, such as `/api/c15t`. */
+	/** Where the consent route is mounted, such as `/api/inth`. */
 	routePrefix?: string;
 }
 
@@ -217,9 +217,9 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	mode?: ConsentMode;
 
 	/**
-	 * Backend base URL of your c15t instance, for example
+	 * Backend base URL of your Inth instance, for example
 	 * `https://consent.example.com`. Defaults to the URL `consentManifest()`
-	 * read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. The
+	 * read from `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`. The
 	 * helper reads
 	 * `${projectUrl}/manifest` through the in-process manifest cache and
 	 * resolves init locally, so the first paint already carries policy, UI,
@@ -229,7 +229,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * (`request.url`); set `trustForwardedHeaders` to use `x-forwarded-*`
 	 * behind a trusted proxy. Do not point this at the app's own consent
 	 * route: a server fetching itself during SSR deadlocks the dev server,
-	 * so the helper never fetches under `routePrefix` (`/api/c15t` when
+	 * so the helper never fetches under `routePrefix` (`/api/inth` when
 	 * unset) and returns the cookie-and-headers state instead. Other
 	 * relative URLs are fetched.
 	 */
@@ -260,7 +260,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 
 	/**
 	 * Cookie names to forward on the manifest fetch. No cookies are
-	 * forwarded by default: the manifest is tenant-level data and the c15t
+	 * forwarded by default: the manifest is tenant-level data and the Inth
 	 * backend does not read cookies, so nothing from your origin's cookie
 	 * jar needs to leave. Set this only for a backend that gates the
 	 * manifest on a cookie.
@@ -330,8 +330,8 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	experiment?: ServerExperiment;
 
 	/**
-	 * Where you mounted `createConsentRoute()`, such as `/api/c15t` for
-	 * `src/routes/api/c15t/$.ts`. The state carries it to `ConsentRoot`: the
+	 * Where you mounted `createConsentRoute()`, such as `/api/inth` for
+	 * `src/routes/api/inth/$.ts`. The state carries it to `ConsentRoot`: the
 	 * browser then gets init from `${routePrefix}/init`, and saves assert the
 	 * decision inputs it resolved. Deferred public vendor lists load through
 	 * the route, and the render never fetches a URL under the prefix on its
@@ -567,8 +567,8 @@ export { consentLoaderOptions } from './libs/loader-options';
  *
  * @example
  * ```ts
- * // With src/routes/api/c15t/$.ts mounted, the browser re-inits there.
- * createConsentStateHandler({ routePrefix: '/api/c15t' });
+ * // With src/routes/api/inth/$.ts mounted, the browser re-inits there.
+ * createConsentStateHandler({ routePrefix: '/api/inth' });
  * ```
  *
  * @param options - {@link resolveConsent} options: `mode`, `routePrefix`,

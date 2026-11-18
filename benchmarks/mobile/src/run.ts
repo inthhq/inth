@@ -20,7 +20,7 @@ import {
 	safeCommitSha,
 	safeGitDirty,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 
 import { coverageNotes } from './axes';
 import { loadBudgets } from './budgets';

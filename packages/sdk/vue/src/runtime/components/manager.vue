@@ -80,7 +80,7 @@ const refreshOverlayFallback = async function refreshOverlayFallback() {
 	}
 
 	overlayFallbackStyle.value = {
-		backgroundColor: 'var(--c15t-overlay, hsla(0, 0%, 0%, 0.5))',
+		backgroundColor: 'var(--inth-overlay, hsla(0, 0%, 0%, 0.5))',
 		inset: '0',
 		position: 'fixed',
 		zIndex: '999998',

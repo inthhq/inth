@@ -1,6 +1,6 @@
 ---
 title: "ConsentBanner"
-description: "Shared ConsentBanner reference for the c15t Vue plugin and Nuxt module."
+description: "Shared ConsentBanner reference for the Inth Vue plugin and Nuxt module."
 group: reference
 ---
 
@@ -57,7 +57,7 @@ group: reference
   The policy has the last word. A choice `wall` always blocks. A notice never
   blocks, and a notice `wall` falls back to `floating`. A position the variant
   does not accept falls back to the variant's default. Each correction logs a
-  `[c15t]` warning in the browser console.
+  `[inth]` warning in the browser console.
 
   Right-to-left languages keep the same position; only the text direction
   changes.
@@ -73,7 +73,7 @@ group: reference
   | `blocking` | `boolean` | `presentation.prompt.blocking`, else `true` for `wall` only | Backdrop, scroll lock and focus trap, as one value. |
 
   A prop you set beats the matching `presentation.prompt` option. Leave a prop
-  unset to follow your c15t options. `PromptVariant` and `PromptPosition` are
+  unset to follow your Inth options. `PromptVariant` and `PromptPosition` are
   exported as types from `@inth/vue`.
 </section>
 

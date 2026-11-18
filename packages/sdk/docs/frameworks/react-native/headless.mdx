@@ -332,7 +332,7 @@ nativeUI: false,
 Prebuild then writes `inth.nativeUI` as `false` to `ios/Podfile.properties.json`
 and `android/gradle.properties`. In a bare app, add `inth.nativeUI=false` to
 `android/gradle.properties`, and either add `"inth.nativeUI": "false"` to
-`ios/Podfile.properties.json` or run `C15T_NATIVE_UI=0 pod install`. Run
+`ios/Podfile.properties.json` or run `INTH_NATIVE_UI=0 pod install`. Run
 `pod install` and rebuild both apps after changing it.
 
 The iOS pod then compiles without the SwiftUI screens, and the Android build

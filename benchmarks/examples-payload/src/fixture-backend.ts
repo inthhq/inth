@@ -50,7 +50,7 @@ export const PUBLIC_ORIGIN_HEADER = 'x-examples-payload-origin';
  */
 export const scriptPrelude = function scriptPrelude(projectUrl: string) {
 	const config = JSON.stringify({ mode: 'hosted', projectUrl });
-	return `(function(c){window.c15t=window.c15t||[];Array.isArray(window.c15t)?window.c15t.unshift(["config",c]):window.c15t.config(c)})(${config});\n`;
+	return `(function(c){window.inth=window.inth||[];Array.isArray(window.inth)?window.inth.unshift(["config",c]):window.inth.config(c)})(${config});\n`;
 };
 
 const readBody = async function readBody(
@@ -65,7 +65,7 @@ const readBody = async function readBody(
 
 /**
  * Cross-origin with credentials: echo the caller's origin and any
- * requested headers, because examples send c15t's protocol headers.
+ * requested headers, because examples send inth's protocol headers.
  */
 const corsHeaders = function corsHeaders(
 	request: IncomingMessage

@@ -1,4 +1,4 @@
-import { customizeFlow } from '@c15t/conformance/play/iab-consent-banner';
+import { customizeFlow } from '@inth/conformance/play/iab-consent-banner';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import IabConsentDialog from '../../../packages/sdk/vue/src/runtime/components/iab-panel.vue';

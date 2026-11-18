@@ -15,7 +15,7 @@ import { expect, it } from 'vitest';
 import { replaceBenchmarkFixtures } from './benchmark-overlay';
 
 it('removes retired routes, includes new fixtures, and preserves base product code', () => {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-overlay-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-overlay-'));
 	try {
 		for (const arm of ['base', 'head']) {
 			const cwd = join(root, arm);
@@ -84,7 +84,7 @@ it.each([
 ])(
 	'keeps overlaid fixtures styled, automatic=$automatic, IAB=$iabAutomatic',
 	({ automatic, iabAutomatic }) => {
-		const root = mkdtempSync(join(tmpdir(), 'c15t-overlay-styles-'));
+		const root = mkdtempSync(join(tmpdir(), 'inth-overlay-styles-'));
 		try {
 			for (const arm of ['base', 'head']) {
 				const cwd = join(root, arm);
@@ -164,13 +164,13 @@ it.each([
 );
 
 it('gives the base copy of a fixture the older form of an API the head introduced', () => {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-overlay-api-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-overlay-api-'));
 	try {
 		const gate = 'benchmarks/nuxt-browser-bench/app/pages/gate/index.vue';
 		const headPage = [
 			"import { onMounted, watch } from 'vue';",
 			'',
-			"import { useConsentSnapshot, useScriptLoader } from '#c15t/composables';",
+			"import { useConsentSnapshot, useScriptLoader } from '#inth/composables';",
 			'',
 			'const snapshot = useConsentSnapshot();',
 			'// The scripts come from the page URL, so they register in the browser, as',

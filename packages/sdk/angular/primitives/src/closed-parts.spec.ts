@@ -43,15 +43,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 	],
 	selector: 'test-dialog',
 	template: `<ng-container
-		c15tDialog
-		#dialog="c15tDialog"
+		inthDialog
+		#dialog="inthDialog"
 		[(open)]="open"
 	>
 		@if (dialog.shouldRender()) {
-			<div c15tDialogBackdrop></div>
-			<div c15tDialogPositioner>
-				<div c15tDialogContent>
-					<h2 c15tDialogTitle>Title</h2>
+			<div inthDialogBackdrop></div>
+			<div inthDialogPositioner>
+				<div inthDialogContent>
+					<h2 inthDialogTitle>Title</h2>
 					<button
 						type="button"
 						data-inside
@@ -72,17 +72,17 @@ class DialogHost {
 	imports: [Accordion, AccordionItem, AccordionTrigger, AccordionContent],
 	selector: 'test-accordion',
 	template: `<div
-		c15tAccordion
+		inthAccordion
 		type="single"
 		[collapsible]="true"
 		[(value)]="open"
 	>
 		<div
-			c15tAccordionItem
+			inthAccordionItem
 			value="a"
 		>
-			<button c15tAccordionTrigger>A</button>
-			<section c15tAccordionContent>
+			<button inthAccordionTrigger>A</button>
+			<section inthAccordionContent>
 				<button
 					type="button"
 					data-inside
@@ -102,11 +102,11 @@ class AccordionHost {
 	imports: [Collapsible, CollapsibleTrigger, CollapsibleContent],
 	selector: 'test-collapsible',
 	template: `<div
-		c15tCollapsible
+		inthCollapsible
 		[(open)]="open"
 	>
-		<button c15tCollapsibleTrigger>More</button>
-		<div c15tCollapsibleContent>
+		<button inthCollapsibleTrigger>More</button>
+		<div inthCollapsibleContent>
 			<button
 				type="button"
 				data-inside
@@ -125,11 +125,11 @@ class CollapsibleHost {
 	imports: [PreferenceItem, PreferenceItemTrigger, PreferenceItemContent],
 	selector: 'test-preference-item',
 	template: `<div
-		c15tPreferenceItem
+		inthPreferenceItem
 		[(open)]="open"
 	>
-		<button c15tPreferenceItemTrigger>Analytics</button>
-		<div c15t-preference-item-content>
+		<button inthPreferenceItemTrigger>Analytics</button>
+		<div inth-preference-item-content>
 			<button
 				type="button"
 				data-inside
@@ -148,25 +148,25 @@ class PreferenceItemHost {
 	imports: [Tabs, TabsList, TabsTrigger, TabsContent],
 	selector: 'test-tabs',
 	template: `<div
-		c15tTabs
+		inthTabs
 		[(value)]="open"
 	>
-		<div c15tTabsList>
+		<div inthTabsList>
 			<button
-				c15tTabsTrigger
+				inthTabsTrigger
 				value="a"
 			>
 				A
 			</button>
 			<button
-				c15tTabsTrigger
+				inthTabsTrigger
 				value="other"
 			>
 				Other
 			</button>
 		</div>
 		<div
-			c15tTabsContent
+			inthTabsContent
 			value="a"
 		>
 			<button

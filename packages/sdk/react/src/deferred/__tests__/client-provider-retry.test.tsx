@@ -43,7 +43,7 @@ const failingOnce = () =>
 afterEach(() => {
 	vi.unstubAllGlobals();
 	Reflect.deleteProperty(window, PREFETCH_WINDOW_KEY);
-	document.cookie = 'c15t=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+	document.cookie = 'inth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 	localStorage.clear();
 });
 

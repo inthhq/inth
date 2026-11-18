@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 import { isLocale, matchLocale } from '@/lib/locales';
 
 // Sends a path without a locale to the visitor's language: `/` becomes
-// `/de` for a German browser. c15t's banner then follows the route.
+// `/de` for a German browser. inth's banner then follows the route.
 export const proxy = (request: NextRequest) => {
 	const { pathname } = request.nextUrl;
 	const first = pathname.split('/')[1] ?? '';

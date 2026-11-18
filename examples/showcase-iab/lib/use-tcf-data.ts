@@ -7,9 +7,9 @@ import type { AdPartner } from '@/lib/ad-partners';
 
 /**
  * The visitor's TCF choices, read the way an ad tag reads them: through
- * `window.__tcfapi`, the standard CMP API that c15t's IAB module installs.
+ * `window.__tcfapi`, the standard CMP API that inth's IAB module installs.
  * Google Publisher Tag, Prebid.js and other TCF vendors call the same API,
- * so nothing here depends on c15t.
+ * so nothing here depends on Inth.
  *
  * @returns The latest saved TC data, the reduced data when the visitor's
  * policy does not use TCF, or `null` while there is no choice.

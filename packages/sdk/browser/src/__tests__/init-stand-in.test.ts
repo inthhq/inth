@@ -20,7 +20,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PREFETCH_WINDOW_KEY } from '../../../core/src/libs/prefetch/window-key';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { autoInit, createGlobal, installGlobal } from '../global';
-import type { C15tGlobalBase } from '../global-base';
+import type { InthGlobalBase } from '../global-base';
 import { releaseBoot } from '../init/adopt';
 import type { InitBoot } from '../init/boot';
 import { runInitScript } from '../init/run';
@@ -30,13 +30,13 @@ import { version } from '../version';
 const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.js';
 const BACKEND_URL = 'https://consent.example';
 
-type StandIn = C15tGlobalBase & { __c15tBoot: InitBoot };
+type StandIn = InthGlobalBase & { __inthBoot: InitBoot };
 
 const target = window as unknown as Record<string, unknown>;
 
 /** The `/init` answer: an opt-in policy for measurement and marketing. */
 const initBody = () => ({
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -66,9 +66,9 @@ const tag = () => {
 	return script;
 };
 
-/** Runs the init script over `queued`, the page's `window.c15t` array. */
+/** Runs the init script over `queued`, the page's `window.inth` array. */
 const start = (queued: unknown[] = []): StandIn => {
-	target.c15t = queued;
+	target.inth = queued;
 	return runInitScript(tag()) as unknown as StandIn;
 };
 
@@ -79,7 +79,7 @@ const loaded = (file: string) =>
 
 const banner = () =>
 	document
-		.querySelector('[data-c15t-ui]')
+		.querySelector('[data-inth-ui]')
 		?.shadowRoot?.querySelector('[data-testid="consent-banner-root"]') ?? null;
 
 const settle = () =>
@@ -97,7 +97,7 @@ const showBanner = async () => {
 
 /** Hands the init script `c15t.commit.js`, as the file does when it runs. */
 const provideCommit = (standIn: StandIn) => {
-	standIn.__c15tBoot.provide({
+	standIn.__inthBoot.provide({
 		name: 'commit',
 		planEarlyCommit,
 		storeEarlyCommit,
@@ -130,13 +130,13 @@ const queuedSaves = (): unknown[] =>
 	JSON.parse(localStorage.getItem(PENDING_SAVES_STORAGE_KEY) ?? '[]');
 
 const storedChoice = () =>
-	JSON.parse(localStorage.getItem('c15t') ?? 'null') as {
+	JSON.parse(localStorage.getItem('inth') ?? 'null') as {
 		categories?: Record<string, { value: boolean }>;
 	} | null;
 
 /** The calls the init script queued for the engine, without the page's config. */
 const queuedForEngine = (standIn: StandIn) =>
-	standIn.__c15tBoot.calls.filter(([method]) => method !== 'config');
+	standIn.__inthBoot.calls.filter(([method]) => method !== 'config');
 
 beforeEach(() => {
 	// The init script runs while the page is still parsing: the engine
@@ -171,7 +171,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 	releaseBoot();
-	delete target.c15t;
+	delete target.inth;
 	Reflect.deleteProperty(target, PREFETCH_WINDOW_KEY);
 	localStorage.clear();
 	for (const cookie of document.cookie.split(';')) {
@@ -198,7 +198,7 @@ describe('the banner before the engine', () => {
 		const shownAt = standIn.getSnapshot().surfaceShownAt.banner;
 		expect(shownAt).toBe(impression.shownAt);
 		// The engine starts from the stamp instead of stamping its own.
-		expect(standIn.__c15tBoot.prefetch?.config.initialSurfaceShownAt).toEqual({
+		expect(standIn.__inthBoot.prefetch?.config.initialSurfaceShownAt).toEqual({
 			banner: shownAt,
 			dialog: null,
 		});
@@ -321,7 +321,7 @@ describe('dispose() before the engine', () => {
 		vi.advanceTimersByTime(ENGINE_TIMEOUT_MS + 1);
 
 		expect(loaded('c15t.hosted.js')).toEqual([]);
-		expect(standIn.__c15tBoot.disposed).toBe(true);
+		expect(standIn.__inthBoot.disposed).toBe(true);
 	});
 
 	it('reads nothing from a /init answer that lands after it', async () => {
@@ -332,9 +332,9 @@ describe('dispose() before the engine', () => {
 		await settle();
 
 		expect(banner()).toBeNull();
-		expect(document.querySelector('[data-c15t-ui]')).toBeNull();
+		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 		expect(() => standIn.getSnapshot()).toThrow(/init/u);
-		expect(standIn.__c15tBoot.prefetch).toBeNull();
+		expect(standIn.__inthBoot.prefetch).toBeNull();
 		expect(loaded('c15t.hosted.js')).toEqual([]);
 	});
 
@@ -346,8 +346,8 @@ describe('dispose() before the engine', () => {
 		standIn.init();
 
 		expect(loaded('c15t.hosted.js')).toHaveLength(1);
-		expect(standIn.__c15tBoot.calls).toEqual([['init']]);
-		expect(standIn.__c15tBoot.disposed).toBe(false);
+		expect(standIn.__inthBoot.calls).toEqual([['init']]);
+		expect(standIn.__inthBoot.disposed).toBe(false);
 	});
 
 	it('leaves an engine that still arrives without a client', async () => {
@@ -359,13 +359,13 @@ describe('dispose() before the engine', () => {
 		expect(autoInit(api)).toBeNull();
 		answerInit.reject();
 		await vi.waitFor(() => {
-			expect(target.c15t).toBe(api);
+			expect(target.inth).toBe(api);
 		});
 		await settle();
 
 		expect(api.client).toBeNull();
 		expect(banner()).toBeNull();
-		expect(standIn.__c15tBoot.disposed).toBe(true);
+		expect(standIn.__inthBoot.disposed).toBe(true);
 		api.dispose();
 	});
 });

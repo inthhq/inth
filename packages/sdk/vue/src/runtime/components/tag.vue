@@ -4,7 +4,7 @@ import brandingStyles from '@inth/sdk/ui/styles/components/branding';
 import '@inth/sdk/ui/styles/components/branding.css';
 import { computed, onMounted, ref } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '#c15t/composables';
+import { useConsentConfig, useConsentInit } from '#inth/composables';
 
 import { slotAttrs } from '../utils/slot-attrs';
 

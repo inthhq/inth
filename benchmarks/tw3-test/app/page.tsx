@@ -5,7 +5,7 @@ const Home = () => {
 		<main className="css-layer-home">
 			<div className="css-layer-home-copy">
 				<p className="css-layer-home-eyebrow">Tailwind CSS 3 Environment</p>
-				<h1 className="css-layer-home-title">c15t CSS layer review routes</h1>
+				<h1 className="css-layer-home-title">inth CSS layer review routes</h1>
 				<p className="css-layer-home-description">
 					This app renders the shared manual-review scenarios with a real
 					Tailwind CSS 3 pipeline. Open the preview shell on port{' '}

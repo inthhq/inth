@@ -1,5 +1,5 @@
 // #region docs:callbacks title="app/consent-callbacks.ts"
-import type { C15tNuxtConfig } from '@inth/nuxt';
+import type { InthNuxtConfig } from '@inth/nuxt';
 
 export const callbacks = {
 	// The visitor clicked Accept all, Reject all or Save.
@@ -7,12 +7,12 @@ export const callbacks = {
 		console.info('Choice recorded', snapshot.explicitChoice);
 	},
 	onError: ({ error }) => {
-		console.error('c15t', error);
+		console.error('inth', error);
 	},
 	// Permissions changed for any reason: a choice, an expired choice, a new
 	// policy or a privacy signal.
 	onPermissionsChanged: ({ previous, snapshot }) => {
 		console.info('Permissions', previous, snapshot.effectivePermissions);
 	},
-} satisfies NonNullable<C15tNuxtConfig['callbacks']>;
+} satisfies NonNullable<InthNuxtConfig['callbacks']>;
 // #endregion docs:callbacks

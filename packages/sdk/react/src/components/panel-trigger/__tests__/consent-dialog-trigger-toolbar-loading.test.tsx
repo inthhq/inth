@@ -51,11 +51,11 @@ describe('ConsentDialogTrigger toolbar loading', () => {
 		);
 		await vi.waitFor(() => {
 			expect(
-				document.querySelector('[data-c15t-trigger-action="devtools"]')
+				document.querySelector('[data-inth-trigger-action="devtools"]')
 			).toBeInTheDocument();
 		});
 		expect(
-			document.querySelector('[data-c15t-trigger-action="preferences"]')
+			document.querySelector('[data-inth-trigger-action="preferences"]')
 		).toBeInTheDocument();
 	});
 });

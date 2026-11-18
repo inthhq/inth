@@ -13,7 +13,7 @@ const committed = resolve(
 );
 
 it('keeps the native Consent Mode fixture in step with the web mapping', () => {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-consent-mode-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-consent-mode-'));
 	try {
 		const result = spawnSync(
 			'bun',

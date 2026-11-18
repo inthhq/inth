@@ -83,7 +83,7 @@ export const tiktokPixelManifest = {
 	category: 'marketing',
 	install: [
 		// Mirror the bookkeeping `ttq.load(pixelId)` does in TikTok's base code.
-		// c15t appends events.js itself, so it records the pixel directly
+		// Inth appends events.js itself, so it records the pixel directly
 		// instead of calling `load`, which would insert a second loader.
 		{
 			ifGlobalIsQueue: true,

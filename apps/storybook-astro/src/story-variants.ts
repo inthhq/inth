@@ -32,7 +32,7 @@ export interface AstroStoryVariant {
 	/** Slot content, by slot name. */
 	slots?: Record<string, string>;
 	/**
-	 * Integration options, in the shape `c15t()` takes in `astro.config`.
+	 * Integration options, in the shape `inth()` takes in `astro.config`.
 	 * The prerender resolves them with the package's own `resolveOptions`,
 	 * so the server context and the browser boot see the same object a real
 	 * site would.
@@ -55,7 +55,7 @@ export interface AstroStoryVariant {
 	 * integration's own default.
 	 */
 	ui?: AstroUIAdapter;
-	/** Put `c15t-dark` on `<html>` while the story is mounted. */
+	/** Put `inth-dark` on `<html>` while the story is mounted. */
 	dark?: boolean;
 	/**
 	 * Open a dialog once the runtime has booted. `<ConsentDialog />` only

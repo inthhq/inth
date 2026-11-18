@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Add a c15t cookie banner, preference dialog and consent-gated scripts to an Angular 20, 21 or 22 app with provideC15t, standalone components and Inth as the consent backend.
+description: Add a Inth cookie banner, preference dialog and consent-gated scripts to an Angular 20, 21 or 22 app with provideInth, standalone components and Inth as the consent backend.
 group: frameworks
 ---
 
@@ -47,11 +47,11 @@ The Angular CLI installs `@inth/angular`, then asks for your backend URL
 and whether to add the banner and dialog. With
 the default answers it makes two changes:
 
-1. It adds `provideC15t({ projectUrl: '...' })` to the
+1. It adds `provideInth({ projectUrl: '...' })` to the
    providers in `src/app/app.config.ts`, or to the `bootstrapApplication()`
    call in `src/main.ts` when the app has no config file.
 2. It adds `ConsentBanner` and `ConsentDialog` to the root component's
-   `imports`, and `<c15t-consent-banner />` and `<c15t-consent-dialog />` to
+   `imports`, and `<inth-consent-banner />` and `<inth-consent-dialog />` to
    the end of its template. That is `src/app/app.ts` and `app.html`, or
    `app.component.ts` and `app.component.html` in apps created before
    Angular 20.
@@ -63,10 +63,10 @@ a comment to replace it. `--components=false` leaves
 the root component alone. Running
 `ng add` again adds only what is missing. When it cannot find the root
 component, as in an NgModule app, it prints what to add by hand. When it
-cannot tell whether the root providers already include `provideC15t()`, it
+cannot tell whether the root providers already include `provideInth()`, it
 adds neither the provider nor the components, and prints both steps.
 
-`ng add` does not create `src/scripts.ts`, add `scripts` to `provideC15t()`
+`ng add` does not create `src/scripts.ts`, add `scripts` to `provideInth()`
 or add a privacy settings button. Install the vendor helpers:
 
 <CommandTabs command="@inth/integrations" mode="install" />
@@ -82,25 +82,25 @@ skip the steps `ng add` already did.
 
 ## List the vendor scripts
 
-Create `src/scripts.ts` with the vendors c15t should load:
+Create `src/scripts.ts` with the vendors Inth should load:
 
 <include src="../../shared/examples/angular/scripts.mdx" />
 
 PostHog waits for measurement permission. Replace `phc_your_project_key`
 with your PostHog project key. Remove any `<script>` tags in `index.html` or
-SDK imports that already load PostHog, so c15t is the only thing that loads
+SDK imports that already load PostHog, so Inth is the only thing that loads
 it.
 
-## Add provideC15t
+## Add provideInth
 
-Add `provideC15t()` to the providers in `src/app/app.config.ts`:
+Add `provideInth()` to the providers in `src/app/app.config.ts`:
 
 <include src="../../shared/examples/angular/app-config.mdx" />
 
 Replace `https://your-project.inth.app` with your project's backend URL,
 including any path prefix. The URL is public configuration, not a secret.
 
-`provideC15t()` creates the consent runtime with the application, before any
+`provideInth()` creates the consent runtime with the application, before any
 component renders, so script gating starts even on routes without a banner.
 It provides `ConsentManager`, `HeadlessConsent` and `ConsentTheme`, which any
 component can `inject()`. In the browser, the runtime starts after the first
@@ -109,9 +109,9 @@ render: it reads the stored choice, starts the script loader and makes one
 language and returns its current version. Consent choices go to the same
 backend.
 
-`provideC15t()` adds no change detection of its own. Keep
+`provideInth()` adds no change detection of its own. Keep
 `provideZonelessChangeDetection()` or zone.js, whichever your app uses.
-[provideC15t](/docs/frameworks/angular/provide-c15t) lists every option.
+[provideInth](/docs/frameworks/angular/provide-inth) lists every option.
 
 ## Render the banner and dialog
 
@@ -119,10 +119,10 @@ Add the components to your root component, `src/app/app.ts`:
 
 <include src="../../shared/examples/angular/app-component.mdx" />
 
-`<c15t-consent-banner>` shows the banner when the visitor's policy asks for
-one. `<c15t-consent-dialog>`, from `@inth/angular/consent-dialog`, is the
+`<inth-consent-banner>` shows the banner when the visitor's policy asks for
+one. `<inth-consent-dialog>`, from `@inth/angular/consent-dialog`, is the
 preference dialog; it loads its code in idle time after the page loads,
-before anyone opens it. `c15tConsentDialogLink` turns your own button into the persistent way back
+before anyone opens it. `inthConsentDialogLink` turns your own button into the persistent way back
 to preferences. Put it where visitors look for privacy settings, such as the
 footer. The directive hides the button while the policy offers no
 preferences.
@@ -130,7 +130,7 @@ preferences.
 There is no stylesheet to import. Each component adds the rules it uses to
 `<head>` as `<style>` elements when it first renders. With Tailwind CSS 3, or
 to put the rules in a cascade layer, add `@inth/angular/styles.css` to the
-`styles` array in `angular.json` and pass `styles: false` to `provideC15t()`;
+`styles` array in `angular.json` and pass `styles: false` to `provideInth()`;
 see [stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
 
 ## Verify consent
@@ -147,7 +147,7 @@ on the Network tab:
    category) and save. PostHog loads.
 4. Turn it off and save. The page reloads and PostHog does not load.
 
-`window.c15t` in the console shows `pkg: '@inth/angular'`. If the banner does
+`window.inth` in the console shows `pkg: '@inth/angular'`. If the banner does
 not appear, check the `/init` request, then see
 [troubleshooting](/docs/frameworks/angular/troubleshooting).
 [Verify consent](/docs/guides/verify-consent) has the release checklist.
@@ -162,10 +162,10 @@ production builds. With no arguments it uses the recommended rules; pass
 {/* example: fragment */}
 
 ```ts
-import { provideC15t } from '@inth/angular';
+import { provideInth } from '@inth/angular';
 import { testing } from '@inth/angular/testing';
 
-provideC15t({ mode: testing(), scripts });
+provideInth({ mode: testing(), scripts });
 ```
 
 [Consent modes](/docs/concepts/modes#testing) lists what each country

@@ -58,10 +58,10 @@ export { hasStoredClearEpoch } from './instant-commit';
  */
 const NO_POLICY_CHANGE: PolicyResolvers = {
 	buildEvaluationPolicy: () => {
-		throw new Error('c15t: a choice does not change the policy.');
+		throw new Error('inth: a choice does not change the policy.');
 	},
 	resolveEffectivePolicy: () => {
-		throw new Error('c15t: a choice does not change the policy.');
+		throw new Error('inth: a choice does not change the policy.');
 	},
 };
 
@@ -234,7 +234,7 @@ export const storeEarlyCommit = function storeEarlyCommit(
 			{ config: storage.storageConfig, now: Date.now() }
 		);
 		if (result.ok === false) {
-			console.warn('[c15t] Consent record was not written.', result.issues);
+			console.warn('[inth] Consent record was not written.', result.issues);
 		}
 	}
 	return (storage.outbox ?? createBrowserOutboxStore()).transact((tx) => {

@@ -14,8 +14,8 @@ import { createBrowserOutboxStore } from '../save-outbox';
 import type { BrowserOutboxEnvironment } from '../save-outbox/store';
 
 // The stored format is part of the interface: spelled out, not imported.
-const SAVES_KEY = 'c15t-v3-pending-consent-saves:v1';
-const REASSIGNMENTS_KEY = 'c15t-v3-subject-reassignments:v1';
+const SAVES_KEY = 'inth-v3-pending-consent-saves:v1';
+const REASSIGNMENTS_KEY = 'inth-v3-subject-reassignments:v1';
 
 afterEach(() => {
 	vi.restoreAllMocks();

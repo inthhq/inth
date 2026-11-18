@@ -6,7 +6,7 @@
  * the epoch too. A decision confirmed before the epoch was made before the
  * clear, so it is void wherever it turns up: in a record another runtime
  * that missed the clear writes back, in the memory of such a runtime, or
- * in a record an older version of c15t stored. Epoch `0` means no clear
+ * in a record an older version of Inth stored. Epoch `0` means no clear
  * was ever recorded, which is how every legacy, v2 and pre-epoch record
  * reads.
  *

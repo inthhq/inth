@@ -4,7 +4,7 @@
  *
  * The same deal as `<ConsentBanner />`: markup, copy and the purposes
  * summary are produced on the server with no framework JavaScript, and the
- * only client code is the delegated `data-c15t-action` handler every banner
+ * only client code is the delegated `data-inth-action` handler every banner
  * on the site already shares. `customize` opens the TCF preference centre
  * through `<IABConsentDialog />`'s island, so the TCF surface downloads
  * only when someone asks for it.
@@ -56,29 +56,29 @@ interface Props extends IABPromptProps {
 
 const { force = false, ...props } = Astro.props;
 
-const { c15t } = Astro.locals;
+const { inth } = Astro.locals;
 
-if (!c15t) {
+if (!inth) {
 	throw new Error(
-		'@inth/astro: `Astro.locals.c15t` is missing. The c15t() integration registers the middleware that populates it — check it is listed in astro.config, and that you have not set `middleware: false`.'
+		'@inth/astro: `Astro.locals.inth` is missing. The inth() integration registers the middleware that populates it — check it is listed in astro.config, and that you have not set `middleware: false`.'
 	);
 }
 
-const { snapshot } = c15t;
+const { snapshot } = inth;
 // An arm's theme overrides ride on the host theme: its tokens, its
 // `consentActions` and its `slots` all follow the assignment.
 const theme = applyExperimentTheme(
-	c15t.options.theme,
-	c15t.options.experiment,
+	inth.options.theme,
+	inth.options.experiment,
 	snapshot.experiment
 );
 const model = resolveIABPromptModel({
 	classNames: iabPromptClassNames,
-	disableAnimation: c15t.options.disableAnimation,
+	disableAnimation: inth.options.disableAnimation,
 	// The arm is the host-resolved `variant`, already on the server snapshot.
 	presentation: applyExperimentAssignment(
-		c15t.options.presentation,
-		c15t.options.experiment,
+		inth.options.presentation,
+		inth.options.experiment,
 		snapshot.experiment
 	),
 	props,
@@ -87,7 +87,7 @@ const model = resolveIABPromptModel({
 });
 const emitConfig = markConfigEmitted(Astro.locals);
 const colorSchemeScript = emitConfig
-	? buildColorSchemeScript(c15t.options.colorScheme)
+	? buildColorSchemeScript(inth.options.colorScheme)
 	: '';
 const themeCSS = emitConfig
 	? buildThemeCSS(theme)
@@ -96,18 +96,18 @@ const themeCSS = emitConfig
 // No vendor list, no banner: every line of copy interpolates a count the
 // summary derives from it.
 const shouldRender =
-	c15t.hasConsentUi && (force || c15t.shouldShowBanner) && model.canRender;
+	inth.hasConsentUi && (force || inth.shouldShowBanner) && model.canRender;
 // A prerendered page is shared by every visitor, so it ships hidden and the
 // browser shows it after reading the visitor's own cookie.
-const hidden = c15t.prerendered && !force;
+const hidden = inth.prerendered && !force;
 ---
 
 {
 	emitConfig && colorSchemeScript && (
 		<script
 			is:inline
-			data-c15t-inline
-			nonce={c15t.nonce}
+			data-inth-inline
+			nonce={inth.nonce}
 			set:html={colorSchemeScript}
 		/>
 	)
@@ -117,7 +117,7 @@ const hidden = c15t.prerendered && !force;
 
 {
 	themeCSS && (
-		<style is:inline id="c15t-theme" nonce={c15t.nonce} set:html={themeCSS} />
+		<style is:inline id="inth-theme" nonce={inth.nonce} set:html={themeCSS} />
 	)
 }
 
@@ -126,9 +126,9 @@ const hidden = c15t.prerendered && !force;
 		<script
 			is:inline
 			type="application/json"
-			data-c15t-config
-			nonce={c15t.nonce}
-			set:html={buildConfigJSON(c15t.config)}
+			data-inth-config
+			nonce={inth.nonce}
+			set:html={buildConfigJSON(inth.config)}
 		/>
 	)
 }
@@ -138,9 +138,9 @@ const hidden = c15t.prerendered && !force;
 		<script
 			is:inline
 			type="application/json"
-			data-c15t-boot
-			nonce={c15t.nonce}
-			set:html={buildLocalsBootJSON(c15t)}
+			data-inth-boot
+			nonce={inth.nonce}
+			set:html={buildLocalsBootJSON(inth)}
 		/>
 	)
 }
@@ -151,7 +151,7 @@ const hidden = c15t.prerendered && !force;
 	 * banner once its own init and the vendor list arrive. It renders it
 	 * into this spot from the same model, props and class names.
 	 */
-	!shouldRender && (!c15t.hasPolicy || !model.vendorListReady) && (
+	!shouldRender && (!inth.hasPolicy || !model.vendorListReady) && (
 		<div
 			hidden
 			{...{
@@ -181,7 +181,7 @@ const hidden = c15t.prerendered && !force;
 		<div
 			class={model.classes.root}
 			style={model.styles.root}
-			data-c15t-visible={hidden ? 'false' : 'true'}
+			data-inth-visible={hidden ? 'false' : 'true'}
 			data-blocking={model.blocking ? 'true' : undefined}
 			data-position={model.position}
 			data-testid="iab-consent-banner-root"
@@ -221,9 +221,9 @@ const hidden = c15t.prerendered && !force;
 							{model.copy.descriptionBefore}
 							<button
 								class={model.classes.partnersLink}
-								data-c15t-action="customize"
-								data-c15t-dialog="iab"
-								data-c15t-tab="vendors"
+								data-inth-action="customize"
+								data-inth-dialog="iab"
+								data-inth-tab="vendors"
 								data-testid="iab-consent-banner-partners-link"
 								type="button"
 							>
@@ -254,7 +254,7 @@ const hidden = c15t.prerendered && !force;
 									class={button.className}
 									style={button.style}
 									data-action={button.action}
-									data-c15t-action={button.action}
+									data-inth-action={button.action}
 									data-mode={button.mode}
 									data-size={props.noStyle ? undefined : 'small'}
 									data-testid={`iab-consent-banner-${button.action}-button`}
@@ -270,8 +270,8 @@ const hidden = c15t.prerendered && !force;
 								class={model.customizeButton.className}
 								style={model.customizeButton.style}
 								data-action="customize"
-								data-c15t-action="customize"
-								data-c15t-dialog="iab"
+								data-inth-action="customize"
+								data-inth-dialog="iab"
 								data-mode={model.customizeButton.mode}
 								data-size={props.noStyle ? undefined : 'small'}
 								data-testid="iab-consent-banner-customize-button"
@@ -296,10 +296,10 @@ const hidden = c15t.prerendered && !force;
 	shouldRender && hidden && (
 		<script
 			is:inline
-			data-c15t-inline
-			nonce={c15t.nonce}
+			data-inth-inline
+			nonce={inth.nonce}
 			set:html={buildBannerRevealScript(
-				c15t.options.storageConfig,
+				inth.options.storageConfig,
 				'iab-consent-banner'
 			)}
 		/>

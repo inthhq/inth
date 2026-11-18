@@ -1,5 +1,5 @@
 /**
- * The `c15t-dark` class, kept in its own module so a page that only sets
+ * The `inth-dark` class, kept in its own module so a page that only sets
  * the color scheme does not load the dialog's focus-trap and scroll-lock
  * helpers.
  */
@@ -11,7 +11,7 @@
  * `'system'` is light.
  *
  * @param colorScheme - 'light' | 'dark' | 'system'. Unset mirrors a `dark`
- * class on `<html>` into `c15t-dark` as it changes.
+ * class on `<html>` into `inth-dark` as it changes.
  * @returns Cleanup function
  */
 export const setupColorScheme = function setupColorScheme(
@@ -24,7 +24,7 @@ export const setupColorScheme = function setupColorScheme(
 	const defaultDarkQuery = document.documentElement.classList.contains('dark');
 
 	const updateSystemColorScheme = (e: { matches: boolean }) => {
-		document.documentElement.classList.toggle('c15t-dark', e.matches);
+		document.documentElement.classList.toggle('inth-dark', e.matches);
 	};
 
 	const updateDefaultColorScheme = (mutationList: MutationRecord[]) => {
@@ -34,7 +34,7 @@ export const setupColorScheme = function setupColorScheme(
 				mutation.attributeName === 'class'
 			) {
 				const darkExists = document.documentElement.classList.contains('dark');
-				document.documentElement.classList.toggle('c15t-dark', darkExists);
+				document.documentElement.classList.toggle('inth-dark', darkExists);
 			}
 		}
 	};
@@ -44,11 +44,11 @@ export const setupColorScheme = function setupColorScheme(
 	const apply = () => {
 		switch (colorScheme) {
 			case 'light': {
-				document.documentElement.classList.remove('c15t-dark');
+				document.documentElement.classList.remove('inth-dark');
 				break;
 			}
 			case 'dark': {
-				document.documentElement.classList.add('c15t-dark');
+				document.documentElement.classList.add('inth-dark');
 				break;
 			}
 			case 'system': {
@@ -58,7 +58,7 @@ export const setupColorScheme = function setupColorScheme(
 			}
 			default: {
 				document.documentElement.classList.toggle(
-					'c15t-dark',
+					'inth-dark',
 					defaultDarkQuery
 				);
 				observer.observe(document.documentElement, { attributes: true });

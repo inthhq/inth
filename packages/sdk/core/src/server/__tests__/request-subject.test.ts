@@ -4,7 +4,7 @@ import { readRequestConsent } from '../request-consent';
 import { resolveRequestSubject } from '../request-subject';
 
 const NOW = 1_780_000_000_000;
-const RECORDED = `c15t=c.necessary:1,c.marketing:1,i.t:${NOW - 1000},i.sid:sub_recorded`;
+const RECORDED = `inth=c.necessary:1,c.marketing:1,i.t:${NOW - 1000},i.sid:sub_recorded`;
 
 const resolve = function resolve(
 	cookie: string | undefined,
@@ -29,14 +29,14 @@ describe('resolveRequestSubject', () => {
 		expect(resolve('theme=dark')).toBeNull();
 	});
 
-	test('a c15t 3.2 subject cookie on its own is not an ID', () => {
-		expect(resolve('theme=dark; c15t-sid=sub_legacy')).toBeNull();
+	test('a inth 3.2 subject cookie on its own is not an ID', () => {
+		expect(resolve('theme=dark; inth-sid=sub_legacy')).toBeNull();
 		expect(
 			readRequestConsent({
 				adapter: '@c15t/test',
 				now: NOW,
 				request: {
-					cookie: 'c15t-sid=sub_legacy',
+					cookie: 'inth-sid=sub_legacy',
 					headers: new Headers(),
 				},
 			}).state.initialRecords?.subject ?? null
@@ -44,7 +44,7 @@ describe('resolveRequestSubject', () => {
 	});
 
 	test('a returning visitor gets the ID their records carry, and the cookie header unchanged', () => {
-		const cookie = `c15t-sid=sub_legacy; ${RECORDED}`;
+		const cookie = `inth-sid=sub_legacy; ${RECORDED}`;
 		expect(resolve(cookie)).toEqual({
 			cookie,
 			setCookie: null,
@@ -53,7 +53,7 @@ describe('resolveRequestSubject', () => {
 	});
 
 	test('a custom storage key reads the records under that key', () => {
-		const cookie = RECORDED.replace(/^c15t=/u, 'custom=');
+		const cookie = RECORDED.replace(/^inth=/u, 'custom=');
 		expect(resolve(cookie)).toBeNull();
 		expect(
 			resolve(cookie, { request: {}, storage: { storageKey: 'custom' } })

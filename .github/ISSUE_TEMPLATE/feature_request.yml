@@ -8,7 +8,7 @@ body:
       label: Product
       options:
         - Inth CLI
-        - Web SDK (c15t packages)
+        - Web SDK (inth packages)
         - React Native SDK
         - Swift SDK
         - Android SDK

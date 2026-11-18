@@ -378,7 +378,7 @@ export interface PinterestTagOptions {
  * Creates a Pinterest Tag script.
  *
  * This script persists after consent is revoked because Pinterest exposes
- * `pintrk('setconsent', boolean)`, which lets c15t disable tracking and clear
+ * `pintrk('setconsent', boolean)`, which lets Inth disable tracking and clear
  * Pinterest's first-party storage without removing the script element.
  *
  * @param options.tagId - Pinterest Tag ID used in `pintrk('load', ...)`.
@@ -388,7 +388,7 @@ export interface PinterestTagOptions {
  * @param options.trackPageVisit - Whether to queue the default `pintrk('page')`
  *   call during setup. Defaults to `true`.
  * @param options.scriptUrl - Override for Pinterest's `core.js` loader URL.
- * @returns A resolved c15t `Script` configuration that defines the `pintrk`
+ * @returns A resolved Inth `Script` configuration that defines the `pintrk`
  *   queue stub, queues `load`, `setconsent`, and optionally `page`, then loads
  *   Pinterest's `core.js`.
  * @remarks When `tagId` is missing or blank, the

@@ -12,7 +12,7 @@ export interface SwitchHarnessFilters extends BaseHarnessFilters {
 }
 
 /**
- * Drives a `[c15tSwitch]` element: your own switches, and the category and
+ * Drives a `[inthSwitch]` element: your own switches, and the category and
  * vendor switches inside the stock consent widget and IAB dialog.
  *
  * The switch renders where you put it, so the fixture's loader finds your
@@ -31,7 +31,7 @@ export interface SwitchHarnessFilters extends BaseHarnessFilters {
  * ```
  */
 export class SwitchHarness extends ComponentHarness {
-	/** Matches the host of every `[c15tSwitch]`. */
+	/** Matches the host of every `[inthSwitch]`. */
 	static hostSelector = '[data-slot="switch"]';
 
 	/**

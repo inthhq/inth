@@ -481,7 +481,7 @@ const forwardPixelConsent = function forwardPixelConsent(
  *
  * The Pixel receives measurement consent as `analytics` and marketing consent
  * as `marketing`. Effective helper or vendor denial sends both values as false.
- * Keep c15t's default revocation reload enabled. Default's consent API does not
+ * Keep inth's default revocation reload enabled. Default's consent API does not
  * stop form capture, scheduler activity or an already loaded Vector script.
  * `loadMode: 'always'` explicitly permits the loader and form-list requests
  * before consent, plus form capture and scheduling while tracking is denied.
@@ -600,7 +600,7 @@ export const defaultComPixel = function defaultComPixel(
  * Removal and disposal withdraw consent from the owned SDK after its final
  * registration leaves. The loaded SDK stays for the page, and a later helper
  * with the same URL reuses it. A changed URL logs an error and does not load.
- * Keep c15t's default revocation reload enabled because
+ * Keep inth's default revocation reload enabled because
  * Default does not offer a complete form or scheduler shutdown API.
  * Missing, blank or non-string keys log an error and skip loading.
  * @example defaultComFormsSdk({ publicKey: 'YOUR_PUBLIC_KEY' });

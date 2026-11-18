@@ -1,12 +1,12 @@
 /**
- * Repository wrapper around `c15t mobile-manifest`'s exporter, for the example
+ * Repository wrapper around `inth mobile-manifest`'s exporter, for the example
  * and fixture resources that need an explicit `--expires-at`. Apps use the CLI.
  */
 import { writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { exportMobilePolicy } from '../packages/cli/vendor/c15t-mobile/src/mobile/export-manifest';
+import { exportMobilePolicy } from '../packages/cli/vendor/inth-mobile/src/mobile/export-manifest';
 
 export { exportMobilePolicy };
 

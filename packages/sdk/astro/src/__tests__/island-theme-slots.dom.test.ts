@@ -17,7 +17,7 @@ import * as reactPanelSurface from '../components/islands/panel-surface';
 import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { C15tUIAdapterName } from '../types';
+import type { InthUIAdapterName } from '../types';
 import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { buildProviderProps } from '../ui/provider-props';
 import { reactDialogAdapter } from '../ui/react';
@@ -63,7 +63,7 @@ afterEach(async () => {
 		// oxlint-disable-next-line no-await-in-loop -- Tear down in reverse mount order.
 		await step();
 	}
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig = undefined;
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = undefined;
 	localStorage.clear();
 });
 
@@ -71,7 +71,7 @@ const openDialog = async function openDialog(
 	ui: 'react' | 'vue'
 ): Promise<void> {
 	const host = document.createElement('div');
-	host.setAttribute('data-c15t-dialog-host', 'preferences');
+	host.setAttribute('data-inth-dialog-host', 'preferences');
 	document.body.append(host);
 	cleanup.push(() => host.remove());
 	if (ui === 'react') {
@@ -93,7 +93,7 @@ const openDialog = async function openDialog(
 	);
 	cleanup.push(() => {
 		client.dispose();
-		document.getElementById('c15t-dialog-host')?.remove();
+		document.getElementById('inth-dialog-host')?.remove();
 	});
 	await client.openDialog();
 	await vi.waitFor(
@@ -136,7 +136,7 @@ describe('the svelte dialog island', () => {
 				policy: [testRule],
 			}),
 			theme: THEME,
-			ui: 'svelte' satisfies C15tUIAdapterName,
+			ui: 'svelte' satisfies InthUIAdapterName,
 		});
 		// The props read the experiment assignment off the page runtime.
 		const runtime = { kernel: { getSnapshot: () => ({}) } };

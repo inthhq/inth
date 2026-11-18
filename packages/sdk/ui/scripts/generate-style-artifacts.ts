@@ -34,7 +34,7 @@
  *
  * Each `<name>.css` opens with Tailwind 4's layer order and keeps its rules
  * in `@layer components`, the same shape as the aggregates, so a Vue app's
- * utilities override c15t whichever stylesheet the bundler links first.
+ * utilities override Inth whichever stylesheet the bundler links first.
  */
 import {
 	existsSync,

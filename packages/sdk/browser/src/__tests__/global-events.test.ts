@@ -7,10 +7,10 @@ import {
 	createTestingGlobal as createGlobal,
 	createTestingConsentClient as createConsentClient,
 } from '../testing-global';
-import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+import type { TestingInthGlobal as InthGlobal } from '../testing-global';
 import type { ConsentClient, ConsentClientOptions } from '../types';
 
-const testWindow = window as Window & { c15t?: unknown };
+const testWindow = window as Window & { inth?: unknown };
 const clients: ConsentClient[] = [];
 const observers = new Set<MutationObserver>();
 const policy = {
@@ -38,7 +38,7 @@ const persistGrant = async (): Promise<void> => {
 	client.dispose();
 };
 
-const install = (): C15tGlobal =>
+const install = (): InthGlobal =>
 	installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 
 const trackObservers = (): void => {
@@ -58,8 +58,8 @@ const trackObservers = (): void => {
 };
 
 afterEach(() => {
-	(testWindow.c15t as C15tGlobal | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	for (const client of clients.splice(0)) {
 		client.dispose();
 	}
@@ -81,7 +81,7 @@ describe('global event listeners', () => {
 		async (prefetched) => {
 			await persistGrant();
 			const onConsent = vi.fn();
-			testWindow.c15t = [
+			testWindow.inth = [
 				['config', optionsFor(prefetched)],
 				['on', 'consent', onConsent],
 			];
@@ -184,7 +184,7 @@ describe('global event listeners', () => {
 		expect(client.started).toBe(false);
 		expect(observers.size).toBe(0);
 		const button = document.createElement('button');
-		button.setAttribute('data-c15t-action', 'customize');
+		button.setAttribute('data-inth-action', 'customize');
 		document.body.append(button);
 		const click = new MouseEvent('click', { bubbles: true, cancelable: true });
 		button.dispatchEvent(click);

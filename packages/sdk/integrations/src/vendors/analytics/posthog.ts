@@ -343,7 +343,7 @@ export interface PosthogConsentOptions {
 	scriptUrl?: string;
 
 	/**
-	 * How c15t should load the PostHog script.
+	 * How Inth should load the PostHog script.
 	 *
 	 * - `always`: load immediately and synchronize consent through PostHog APIs.
 	 * - `after-consent`: wait for measurement consent before loading PostHog.
@@ -465,14 +465,14 @@ const resolveFeatureInitOptions = function resolveFeatureInitOptions(
 };
 
 /**
- * Creates a c15t PostHog script helper.
+ * Creates a Inth PostHog script helper.
  *
  * The `posthog()` helper uses `region` to resolve the PostHog API, UI, and
  * bootstrap script hosts. By default, `loadMode: 'always'` loads PostHog
  * immediately and syncs consent with `posthog.opt_in_capturing()` or
  * `posthog.opt_out_capturing()`.
  *
- * With `loadMode: 'after-consent'`, the script is consent-gated and c15t calls
+ * With `loadMode: 'after-consent'`, the script is consent-gated and Inth calls
  * `posthog.opt_in_capturing()` or `posthog.opt_out_capturing()` after load
  * based on the user's measurement consent. With `loadMode: 'disabled'`, no
  * PostHog script is loaded and no `posthog.opt_in_capturing()` or

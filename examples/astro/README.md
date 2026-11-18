@@ -7,7 +7,7 @@ it, so the banner is in the first HTML. PostHog loads once the visitor allows
 measurement.
 
 - `astro.config.mjs` registers the integration.
-- `src/c15t.client.ts` lists the consent-gated scripts. The integration finds
+- `src/inth.client.ts` lists the consent-gated scripts. The integration finds
   it on its own.
 - `src/layouts/base.astro` renders the banner, the dialog and the
   "Privacy settings" link.
@@ -26,7 +26,7 @@ The site's `.env` points it at the `https://example-inth.inth.app` demo Inth
 project. `astro dev` and `astro build` download its policy when they start. If
 the download fails, `astro build` stops with an error, and `astro dev` logs a
 warning and the server fetches the policy at runtime. To use your own project,
-set `PUBLIC_C15T_BACKEND_URL` in `.env.local` to its backend URL and add the
+set `PUBLIC_INTH_PROJECT_URL` in `.env.local` to its backend URL and add the
 site's origin to its trusted origins.
 
 The config reads the URL when it loads, so set it for `build` as well as
@@ -34,7 +34,7 @@ The config reads the URL when it loads, so set it for `build` as well as
 rebuild after you change the URL or your project's policies, translations or
 vendors.
 
-Replace `phc_your_project_key` in `src/c15t.client.ts` with your PostHog
+Replace `phc_your_project_key` in `src/inth.client.ts` with your PostHog
 project key.
 
 For a site with no server, see [`examples/astro-static`](../astro-static).

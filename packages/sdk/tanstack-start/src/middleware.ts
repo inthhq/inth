@@ -41,7 +41,7 @@ export interface ConsentRequestMiddlewareOptions {
 	normalizeHeaders?: boolean;
 
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the middleware
+	 * @deprecated Inth no longer sets a subject cookie, so the middleware
 	 * reads nothing from this. Removed in v4.
 	 */
 	storage?: Pick<
@@ -50,13 +50,13 @@ export interface ConsentRequestMiddlewareOptions {
 	>;
 
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the middleware
+	 * @deprecated Inth no longer sets a subject cookie, so the middleware
 	 * reads nothing from this. Removed in v4.
 	 */
 	trustForwardedHeaders?: boolean;
 
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so this does
+	 * @deprecated Inth no longer sets a subject cookie, so this does
 	 * nothing. Removed in v4.
 	 */
 	subjectCookie?: boolean;
@@ -231,7 +231,7 @@ const keepVisitorRenderPrivate = function keepVisitorRenderPrivate<
  *
  * @example
  * ```ts
- * export const Route = createFileRoute('/api/c15t/$')({
+ * export const Route = createFileRoute('/api/inth/$')({
  *   server: {
  *     middleware: [consentRequestMiddleware()],
  *     handlers: createConsentRoute(),

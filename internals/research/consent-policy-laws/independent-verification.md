@@ -13,7 +13,7 @@ uncommitted and untracked files; HEAD was not assumed to be the implementation.
 This is a source-verification review, not legal advice. Every conclusion below
 names the primary document it rests on. Where I could not read the operative
 text, the item says INACCESSIBLE or UNTRANSLATED. Statutory requirement,
-regulator guidance, c15t product default and my own inference are labelled as
+regulator guidance, Inth product default and my own inference are labelled as
 such. Nothing was changed in runtime code, docs or research notes.
 
 ## Method
@@ -725,7 +725,7 @@ research note's section numbers for Minnesota (325M.11), Delaware
 right, not the signal duty; correct them.
 
 **California regulations effective 1 January 2026** (CPPA approved text, OAL
-22 September 2025). Three items bear on c15t:
+22 September 2025). Three items bear on Inth:
 
 - s.7025(c)(6) now says a business "must display whether it has processed the
   consumer's opt-out preference signal as a valid request to opt-out of

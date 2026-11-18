@@ -25,13 +25,13 @@ import {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [Collapsible, CollapsibleTrigger, CollapsibleContent],
 	selector: 'app-root',
-	template: `<div c15tCollapsible>
-			<button c15tCollapsibleTrigger>More</button>
-			<div c15tCollapsibleContent>Body</div>
+	template: `<div inthCollapsible>
+			<button inthCollapsibleTrigger>More</button>
+			<div inthCollapsibleContent>Body</div>
 		</div>
-		<div c15tCollapsible>
-			<button c15tCollapsibleTrigger>Again</button>
-			<div c15tCollapsibleContent>Body</div>
+		<div inthCollapsible>
+			<button inthCollapsibleTrigger>Again</button>
+			<div inthCollapsibleContent>Body</div>
 		</div>`,
 })
 class App {}

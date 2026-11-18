@@ -5,7 +5,7 @@ Crisp support chat. None of them loads until the visitor allows it. Each one
 waits behind a drawn placeholder that says what loading it sends to whom, and
 an Allow and load button that turns on that one consent category and loads
 the embed where it sits, without a reload. Turning the category off in
-Privacy settings removes the embed. c15t reloads the page at that point, so
+Privacy settings removes the embed. Inth reloads the page at that point, so
 code the embed already ran stops too.
 
 Nothing contacts YouTube, Google or Crisp before consent. The placeholders
@@ -46,8 +46,8 @@ bun run --cwd examples/showcase-gated-embeds dev
 
 Open <http://localhost:3112>.
 
-Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
-such as `https://your-project.inth.app`. c15t reads the project's consent
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. Inth reads the project's consent
 manifest and sends each choice there. Add your site's origin to the
 project's trusted origins.
 

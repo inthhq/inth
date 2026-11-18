@@ -1,6 +1,6 @@
 ---
 title: Geography headers
-description: Which request headers SvelteKit's c15t helpers read for country, region, language and Global Privacy Control, how to trust them, and how to test another location.
+description: Which request headers SvelteKit's Inth helpers read for country, region, language and Global Privacy Control, how to trust them, and how to test another location.
 group: frameworks
 ---
 
@@ -14,7 +14,7 @@ its rule for an unknown location.
 
 ## Which headers are read
 
-`loadConsent`, `c15tHandle`, the manifest route and `resolveConsent` read the
+`loadConsent`, `inthHandle`, the manifest route and `resolveConsent` read the
 same headers, in this order. The first one present wins.
 
 | Input | Headers, highest priority first |
@@ -42,15 +42,15 @@ cookies and authorization by itself.
 
 ## Resolve the inputs once per request
 
-`c15tHandle` in `src/hooks.server.ts` reads the headers once, stores the
-inputs on `event.locals.c15t.inputs`, and rewrites the request's headers to
+`inthHandle` in `src/hooks.server.ts` reads the headers once, stores the
+inputs on `event.locals.inth.inputs`, and rewrites the request's headers to
 the normalized `x-c15t-country`, `x-c15t-region`, `accept-language` and
 `sec-gpc`. Later loads, endpoints and proxied backend calls then see one
 form, whichever CDN header carried the value:
 
 <include src="../../shared/examples/sveltekit/hooks.mdx" />
 
-[Server API](./server-api#c15thandle) lists its options.
+[Server API](./server-api#inthhandle) lists its options.
 
 ## Trust the headers
 
@@ -81,7 +81,7 @@ neither unless you set `trustForwardedHeaders`. See
 
 Pass `country`, `region` or `language` to force an input:
 
-- On `c15tHandle({ country: 'DE' })`, for every request, such as a site that
+- On `inthHandle({ country: 'DE' })`, for every request, such as a site that
   serves one country.
 - On one `loadConsent(event, { country: 'DE' })` call, from a layout's own
   `load`, such as a `/de/` section.

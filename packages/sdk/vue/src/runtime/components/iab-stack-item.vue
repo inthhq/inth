@@ -19,7 +19,7 @@ import {
 	useConsentConfig,
 	useConsentInit,
 	useIabTranslations,
-} from '#c15t/composables';
+} from '#inth/composables';
 
 import {
 	PreferenceItemContent,

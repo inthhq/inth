@@ -1,4 +1,4 @@
-import { c15tProtocolHeaders } from '@inth/sdk/engine';
+import { inthProtocolHeaders } from '@inth/sdk/engine';
 import { createConsentRouteHandler } from '@inth/sdk/server';
 import type {
 	ConsentProxyOptions,
@@ -20,7 +20,7 @@ type NextFetchInit = RequestInit & {
 
 /**
  * Options for {@link createConsentRoute} and `createPagesConsentRoute`.
- * Everything defaults to `c15t.config.ts`.
+ * Everything defaults to `inth.config.ts`.
  */
 export interface NextConsentRouteOptions extends ConsentSourceOptions {
 	/**
@@ -72,7 +72,7 @@ export interface NextConsentRouteOptions extends ConsentSourceOptions {
 	/**
 	 * Forward the other consent paths (`subjects`, `subjects/:id`, `health`,
 	 * `status`) to the backend, so browser saves stay on the app's origin.
-	 * Pair it with `proxy: true` in `c15t.config.ts`, which points the
+	 * Pair it with `proxy: true` in `inth.config.ts`, which points the
 	 * browser at `routePrefix`. Without it, those paths answer 404.
 	 *
 	 * @default false
@@ -82,7 +82,7 @@ export interface NextConsentRouteOptions extends ConsentSourceOptions {
 
 /**
  * The upstream manifest request as the App Router sees it: JSON with the
- * c15t protocol headers, and a `next.revalidate` hint for the Data Cache.
+ * Inth protocol headers, and a `next.revalidate` hint for the Data Cache.
  *
  * @param options - Handler options; reads `manifestRevalidateSeconds`.
  * @returns The `fetch` init for the manifest request.
@@ -91,7 +91,7 @@ export const createManifestFetchInit = function createManifestFetchInit(
 	options: Pick<NextConsentRouteOptions, 'manifestRevalidateSeconds'> = {}
 ): NextFetchInit {
 	return {
-		headers: { accept: 'application/json', ...c15tProtocolHeaders },
+		headers: { accept: 'application/json', ...inthProtocolHeaders },
 		method: 'GET',
 		next: {
 			revalidate:
@@ -105,10 +105,10 @@ export const createManifestFetchInit = function createManifestFetchInit(
 
 /**
  * The core handler for a set of Next.js options. Built on the first
- * request, so `c15t.config.ts` is read once every module has loaded.
+ * request, so `inth.config.ts` is read once every module has loaded.
  */
 const createHandler = function createHandler(options: NextConsentRouteOptions) {
-	// `c15t.config.ts` went through `defineConsentConfig`; a config passed
+	// `inth.config.ts` went through `defineConsentConfig`; a config passed
 	// here did not, so check its prefix now rather than on a request.
 	readConfigRoutePrefix(options.config);
 	// Two cache layers on purpose. `next.revalidate` reaches the App Router
@@ -179,7 +179,7 @@ export type NextConsentRouteHandlersFor<Options> = Options extends {
 
 /**
  * The path below the route prefix, from the route's catch-all parameter
- * (`['manifest']` from `[...c15t]`, whatever the folder calls it). Without
+ * (`['manifest']` from `[...inth]`, whatever the folder calls it). Without
  * one the route is a fixed mount and core reads the last URL segment.
  */
 const readCatchAllPath = async function readCatchAllPath(
@@ -199,22 +199,22 @@ const readCatchAllPath = async function readCatchAllPath(
 
 /**
  * Build the handlers for one catch-all consent route,
- * `app/api/c15t/[...c15t]/route.ts`. `GET` serves `/manifest` and `/init`;
+ * `app/api/inth/[...inth]/route.ts`. `GET` serves `/manifest` and `/init`;
  * every other path answers 404 unless `proxy` forwards it to the backend.
  *
- * Set `routePrefix: '/api/c15t'` in `c15t.config.ts` so a browser that
+ * Set `routePrefix: '/api/inth'` in `inth.config.ts` so a browser that
  * resolves consent itself asks this route. Pages the root layout resolves
  * on the server don't need it. The manifest defaults to the snapshot
  * `withConsentManifest` downloaded, and the backend to the config's.
  *
- * @param options - Overrides of `c15t.config.ts`, caching, and `proxy`.
+ * @param options - Overrides of `inth.config.ts`, caching, and `proxy`.
  * @returns `GET`, plus `POST`, `PATCH`, `PUT`, `DELETE` and `OPTIONS` when
  * `proxy` is on. A handler throws when it has no manifest, backend URL or
  * `manifestUrl` to read.
  * @throws {TypeError} When `options.config` sets `routePrefix: '/'`.
  * @example
  * ```ts
- * // app/api/c15t/[...c15t]/route.ts
+ * // app/api/inth/[...inth]/route.ts
  * import { createConsentRoute } from '@inth/nextjs/api';
  *
  * export const { GET } = createConsentRoute();

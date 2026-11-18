@@ -1,16 +1,16 @@
-import type { CssLayerEnvironment } from '@c15t/benchmarking';
+import type { CssLayerEnvironment } from '@inth/benchmarking';
 
 export const cssLayerEnvironments: CssLayerEnvironment[] = [
 	{
 		description:
-			'Next.js + Tailwind CSS 3 using the dedicated c15t Tailwind 3 stylesheet entrypoint.',
+			'Next.js + Tailwind CSS 3 using the dedicated inth Tailwind 3 stylesheet entrypoint.',
 		id: 'tw3',
 		label: 'Tailwind 3',
 		port: 3121,
 	},
 	{
 		description:
-			'Next.js + Tailwind CSS 4 with c15t styles joining the components layer automatically.',
+			'Next.js + Tailwind CSS 4 with inth styles joining the components layer automatically.',
 		id: 'tw4',
 		label: 'Tailwind 4',
 		port: 3122,

@@ -8,7 +8,7 @@ import { ConsentDialog } from '@inth/angular/consent-dialog';
 	imports: [ConsentBanner, ConsentDialog],
 	selector: 'app-consent',
 	template: `
-		<c15t-consent-banner
+		<inth-consent-banner
 			variant="bar"
 			position="bottom"
 			heading="Your privacy"
@@ -16,7 +16,7 @@ import { ConsentDialog } from '@inth/angular/consent-dialog';
 			[layout]="[['reject', 'accept'], 'customize']"
 			primaryButton="accept"
 		/>
-		<c15t-consent-dialog />
+		<inth-consent-dialog />
 	`,
 })
 export class Consent {}

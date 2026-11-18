@@ -52,10 +52,10 @@ origin.
 ## Why does a gated script in my HTML never run?
 
 **Check.** With the `nonce` option set, `@inth/sdk` runs only
-`<script type="text/plain" data-c15t-category>` tags that carry the same
-nonce. Open the console and look for a warning that c15t skipped a
-`data-c15t-category` script, and check the tag for
-`data-c15t-activated="untrusted"`.
+`<script type="text/plain" data-inth-category>` tags that carry the same
+nonce. Open the console and look for a warning that Inth skipped a
+`data-inth-category` script, and check the tag for
+`data-inth-activated="untrusted"`.
 
 **Fix.** Add the page's nonce to the tag, including tags your code inserts
 later. See
@@ -75,7 +75,7 @@ describes.
 
 **Check.** A [network blocker](/docs/frameworks/javascript/modules/network-blocker)
 rule matched the request and its category is not allowed. The console logs
-`[c15t] blocked` with the rule's ID.
+`[inth] blocked` with the rule's ID.
 
 **Fix.** If the request should not match, check the rule's `domain` and
 `pathIncludes`.

@@ -8,5 +8,5 @@ import { InjectionToken } from '@angular/core';
  * @internal
  */
 export const SURFACE_CLOSED = new InjectionToken<() => void>(
-	'C15T_SURFACE_CLOSED'
+	'INTH_SURFACE_CLOSED'
 );

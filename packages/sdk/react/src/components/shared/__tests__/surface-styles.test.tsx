@@ -10,7 +10,7 @@ import { ConsentBanner } from '~/components/prompt';
 import { testing } from '../../../testing';
 
 /**
- * The stock surfaces render the c15t rules they use, so an app that imports
+ * The stock surfaces render the Inth rules they use, so an app that imports
  * no stylesheet still gets styled surfaces: the banner the tokens, button
  * and banner sheets, the dialog those and its own. React 19 hoists them into
  * `<head>` and renders each once. These tests share one document, whose
@@ -18,10 +18,10 @@ import { testing } from '../../../testing';
  * expect no styles run first.
  */
 
-const c15tStyles = () =>
+const inthStyles = () =>
 	[
 		...document.head.querySelectorAll<HTMLStyleElement>(
-			'style[data-precedence="c15t"]'
+			'style[data-precedence="inth"]'
 		),
 	].map((element) => element.dataset.href);
 
@@ -41,7 +41,7 @@ describe('surface styles', () => {
 			.element(screen.getByTestId('consent-banner-root'))
 			.toBeInTheDocument();
 
-		expect(c15tStyles()).toEqual([]);
+		expect(inthStyles()).toEqual([]);
 		await screen.unmount();
 	});
 
@@ -55,7 +55,7 @@ describe('surface styles', () => {
 			.element(screen.getByTestId('consent-banner-root'))
 			.toBeInTheDocument();
 
-		expect(c15tStyles()).toEqual([]);
+		expect(inthStyles()).toEqual([]);
 		await screen.unmount();
 	});
 
@@ -73,10 +73,10 @@ describe('surface styles', () => {
 		const ids = [
 			...html.matchAll(/<style[^>]*data-href="(?<ids>[^"]+)"/gu),
 		].flatMap((match) => match.groups?.ids?.split(' ') ?? []);
-		expect(ids).toEqual(['c15t-tokens', 'c15t-button', 'c15t-banner']);
+		expect(ids).toEqual(['inth-tokens', 'inth-button', 'inth-banner']);
 		// Not the trigger's, the ConsentGate's or the dialog's rules.
-		expect(html).not.toContain('c15t-first-paint');
-		expect(html).not.toContain('c15t-dialog');
+		expect(html).not.toContain('inth-first-paint');
+		expect(html).not.toContain('inth-dialog');
 		// The rules reach the HTML as written, not entity-escaped.
 		expect(html).not.toMatch(/<style[^>]*>[^<]*&gt;/u);
 	});
@@ -93,11 +93,11 @@ describe('surface styles', () => {
 		expect(
 			[
 				...html.matchAll(
-					/<style data-c15t-styles="(?<id>[^"]+)" nonce="test-nonce">/gu
+					/<style data-inth-styles="(?<id>[^"]+)" nonce="test-nonce">/gu
 				),
 			].map((match) => match.groups?.id)
-		).toEqual(['c15t-tokens', 'c15t-button', 'c15t-banner']);
-		expect(html).not.toContain('data-precedence="c15t"');
+		).toEqual(['inth-tokens', 'inth-button', 'inth-banner']);
+		expect(html).not.toContain('data-precedence="inth"');
 		expect(html).not.toMatch(/<style[^>]*>[^<]*&gt;/u);
 	});
 
@@ -111,23 +111,23 @@ describe('surface styles', () => {
 			.element(banner.getByTestId('consent-banner-root'))
 			.toBeInTheDocument();
 
-		expect(c15tStyles()).toEqual(['c15t-tokens', 'c15t-button', 'c15t-banner']);
+		expect(inthStyles()).toEqual(['inth-tokens', 'inth-button', 'inth-banner']);
 		await banner.unmount();
 
 		// The app's own token rules win wherever the hoisted sheet lands:
 		// here it comes after them.
 		const appTokens = document.createElement('style');
 		appTokens.textContent =
-			':root{--c15t-surface:rgb(1, 2, 3)}:root.c15t-dark{--c15t-surface:rgb(4, 5, 6)}';
+			':root{--inth-surface:rgb(1, 2, 3)}:root.inth-dark{--inth-surface:rgb(4, 5, 6)}';
 		document.head.prepend(appTokens);
 		const surface = () =>
 			getComputedStyle(document.documentElement)
-				.getPropertyValue('--c15t-surface')
+				.getPropertyValue('--inth-surface')
 				.trim();
 		expect(surface()).toBe('rgb(1, 2, 3)');
-		document.documentElement.classList.add('c15t-dark');
+		document.documentElement.classList.add('inth-dark');
 		expect(surface()).toBe('rgb(4, 5, 6)');
-		document.documentElement.classList.remove('c15t-dark');
+		document.documentElement.classList.remove('inth-dark');
 		appTokens.remove();
 
 		const dialog = await render(
@@ -140,11 +140,11 @@ describe('surface styles', () => {
 			.element(dialog.getByTestId('consent-dialog-root'))
 			.toBeInTheDocument();
 
-		expect(c15tStyles()).toEqual([
-			'c15t-tokens',
-			'c15t-button',
-			'c15t-banner',
-			'c15t-dialog',
+		expect(inthStyles()).toEqual([
+			'inth-tokens',
+			'inth-button',
+			'inth-banner',
+			'inth-dialog',
 		]);
 		const card = document.querySelector<HTMLElement>(
 			'[data-testid="consent-dialog-root"]'

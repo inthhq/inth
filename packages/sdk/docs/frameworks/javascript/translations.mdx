@@ -1,12 +1,12 @@
 ---
 title: Translations
-description: Choose the language of the c15t banner and preference dialog in a JavaScript app, change its wording with i18n, and add languages with @inth/sdk or createConsentRuntime.
+description: Choose the language of the Inth banner and preference dialog in a JavaScript app, change its wording with i18n, and add languages with @inth/sdk or createConsentRuntime.
 group: frameworks
 ---
 
 ## Where the copy comes from
 
-`@inth/sdk` and `c15t` bundle English only. Other languages come from
+`@inth/sdk` and `inth` bundle English only. Other languages come from
 outside the bundle, and which source wins depends on the transport:
 
 | Transport | Where the copy comes from |
@@ -31,15 +31,15 @@ This example runs with `testing()`, so the German copy shows as written. With a
 backend, the `/init` response, a server prefetch or the manifest carries your
 Inth project's copy for the visitor's language. Your `i18n.messages` for that
 language override it key by key, and keys you leave out keep the project's
-copy. c15t looks for the exact language first, then the primary language, so
+copy. Inth looks for the exact language first, then the primary language, so
 a visitor on `de-AT` gets your `de` messages. Messages for other languages
 are not applied.
 
-A key only overrides the backend when your text differs from c15t's built-in
+A key only overrides the backend when your text differs from inth's built-in
 wording for that language. So passing the stock bundles from
 `@inth/sdk/translations/all` to enable languages keeps edits made in your Inth project visible,
 while a key you actually reworded stays pinned in code. Core bundles only
-English; for other languages, import `@inth/sdk/translations/all` so c15t can
+English; for other languages, import `@inth/sdk/translations/all` so Inth can
 recognize its stock wording.
 
 `testing()` is shown here to keep the example short. It is for tests only
@@ -64,7 +64,7 @@ shows the default copy, and the language a server prefetch detected from
 `Accept-Language` does not switch the copy. The bundle has English only, so
 put every other language in `messages`.
 
-## Use c15t's bundled translations
+## Use inth's bundled translations
 
 `@inth/sdk/translations` has complete copy in more than 30 languages. Its
 `@inth/sdk/translations/all` entry exports `baseTranslations`, keyed by language

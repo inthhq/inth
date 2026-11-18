@@ -36,4 +36,4 @@ const page: StorageSyncPage = {
 	recordOnly: (values) =>
 		client.kernel.commands.save(Object.fromEntries(Object.entries(values))),
 };
-Object.assign(window, { c15tStorageSync: page });
+Object.assign(window, { inthStorageSync: page });

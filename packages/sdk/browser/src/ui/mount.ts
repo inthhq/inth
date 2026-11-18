@@ -164,7 +164,7 @@ const mountRoot = function mountRoot(
  * it yourself.
  *
  * Every part named in `theme.slots` carries its slot key as a CSS part, so
- * page CSS reaches it through `[data-c15t-ui]::part(consentBannerCard)`
+ * page CSS reaches it through `[data-inth-ui]::part(consentBannerCard)`
  * even inside the shadow root. A slot's classes need their rules in the
  * same root: in the page with `shadow: false`, or through `stylesheetUrls`
  * or `css` in shadow mode.

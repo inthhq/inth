@@ -10,11 +10,11 @@ import { IABConsentBanner, IABConsentDialog } from '@inth/angular/iab';
 	selector: 'app-consent-surfaces',
 	template: `
 		<!-- Visitors whose policy is not IAB get the standard banner and dialog. -->
-		<c15t-consent-banner />
-		<c15t-consent-dialog />
+		<inth-consent-banner />
+		<inth-consent-dialog />
 		<!-- Visitors under an IAB policy get the TCF banner and preference center. -->
-		<c15t-iab-consent-banner />
-		<c15t-iab-consent-dialog />
+		<inth-iab-consent-banner />
+		<inth-iab-consent-dialog />
 	`,
 })
 export class ConsentSurfaces {}

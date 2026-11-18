@@ -15,10 +15,10 @@
  * {@link applyInitParamsToHeaders} folds the parameters onto their header
  * names, so the code that reads those headers needs no second path.
  *
- * The names are short and unprefixed (`/init?v=3.0.0&country=GB`), so c15t
- * reserves them on an init URL. When c15t sends a parameter, its value
+ * The names are short and unprefixed (`/init?v=3.0.0&country=GB`), so Inth
+ * reserves them on an init URL. When Inth sends a parameter, its value
  * replaces any the URL already carried under that name, and the name
- * appears once. A parameter c15t does not send passes through, and a
+ * appears once. A parameter Inth does not send passes through, and a
  * backend reads it as that input.
  */
 

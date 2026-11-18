@@ -12,7 +12,7 @@ describe('defaultComPixel', () => {
 	it('matches registry metadata and the official loader URL', () => {
 		expectScriptMatchesIntegration(
 			'defaultComPixel',
-			defaultComPixel({ publicKey: 'c15tfake' }),
+			defaultComPixel({ publicKey: 'inthfake' }),
 			{
 				alwaysLoad: undefined,
 				persistAfterConsentRevoked: true,
@@ -32,12 +32,12 @@ describe('defaultComPixel', () => {
 	it('uses custom URLs and falls back for blank overrides', () => {
 		expect(
 			defaultComPixel({
-				...{ publicKey: 'c15tfake' },
+				...{ publicKey: 'inthfake' },
 				scriptUrl: 'https://cdn.example.com/vendor.js',
 			}).src
 		).toBe('https://cdn.example.com/vendor.js');
 		expect(
-			defaultComPixel({ ...{ publicKey: 'c15tfake' }, scriptUrl: '   ' }).src
+			defaultComPixel({ ...{ publicKey: 'inthfake' }, scriptUrl: '   ' }).src
 		).toBe('https://handshake.default.com/index.js');
 	});
 });

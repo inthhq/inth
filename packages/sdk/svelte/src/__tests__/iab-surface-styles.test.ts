@@ -11,21 +11,21 @@ import { iabStyleOptions } from './iab-style-options';
 const sheets = () =>
 	[
 		...document.head.querySelectorAll<HTMLStyleElement>(
-			'style[data-c15t-styles]'
+			'style[data-inth-styles]'
 		),
-	].map((element) => element.dataset.c15tStyles);
+	].map((element) => element.dataset.inthStyles);
 
 const ALL_SHEETS = [
-	'c15t-first-paint',
-	'c15t-dialog',
-	'c15t-primitives',
-	'c15t-iab-first-paint',
-	'c15t-iab-dialog',
+	'inth-first-paint',
+	'inth-dialog',
+	'inth-primitives',
+	'inth-iab-first-paint',
+	'inth-iab-dialog',
 ];
 
 afterEach(() => {
 	for (const element of document.head.querySelectorAll(
-		'style[data-c15t-styles]'
+		'style[data-inth-styles]'
 	)) {
 		element.remove();
 	}
@@ -45,14 +45,14 @@ describe('automatic IAB styles', () => {
 				document.querySelector('[data-testid="iab-consent-banner-card"]')
 			).not.toBeNull()
 		);
-		expect(sheets()).toEqual(['c15t-first-paint', 'c15t-iab-first-paint']);
+		expect(sheets()).toEqual(['inth-first-paint', 'inth-iab-first-paint']);
 		const followingContent = document.querySelector(
 			'[data-testid="iab-style-following-content"]'
 		);
 		expect(followingContent?.textContent).toContain('The page after');
 		expect(
 			document.head.querySelector(
-				'style[data-c15t-styles="c15t-iab-first-paint"]'
+				'style[data-inth-styles="inth-iab-first-paint"]'
 			)?.textContent
 		).toBe(iabFirstPaintCSS);
 
@@ -64,7 +64,7 @@ describe('automatic IAB styles', () => {
 		);
 		expect(sheets().toSorted()).toEqual(ALL_SHEETS.toSorted());
 		expect(
-			document.head.querySelector('style[data-c15t-styles="c15t-iab-dialog"]')
+			document.head.querySelector('style[data-inth-styles="inth-iab-dialog"]')
 				?.textContent
 		).toBe(iabDialogCSS);
 		kernel?.set.activeUI('banner');
@@ -83,7 +83,7 @@ describe('automatic IAB styles', () => {
 		expect(
 			[
 				...document.head.querySelectorAll<HTMLStyleElement>(
-					'style[data-c15t-styles]'
+					'style[data-inth-styles]'
 				),
 			].map((element) => element.nonce)
 		).toEqual(ALL_SHEETS.map(() => 'iab-nonce'));
@@ -123,7 +123,7 @@ describe('automatic IAB styles', () => {
 			expect(
 				[
 					...document.head.querySelectorAll<HTMLStyleElement>(
-						'style[data-c15t-styles]'
+						'style[data-inth-styles]'
 					),
 				].map((element) => element.nonce)
 			).toEqual(ALL_SHEETS.map(() => 'kit-nonce'));

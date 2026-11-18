@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/sveltekit-browser-bench",
+	"name": "@inth/sveltekit-browser-bench",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -14,7 +14,7 @@
 		"start": "node build/index.js"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/sdk": "workspace:*",
 		"@inth/svelte": "workspace:*"
 	},

@@ -1,41 +1,41 @@
-const quickPackages = ['@c15t/core-benchmarks', '@c15t/script-lifecycle-bench'];
+const quickPackages = ['@inth/core-benchmarks', '@inth/script-lifecycle-bench'];
 
 /**
  * The bench that hosts each consent gate target. The script tag has no
  * framework bench, so the script-lifecycle bench serves its page.
  */
 export const gateTargetPackages = {
-	angular: '@c15t/angular-browser-bench',
-	astro: '@c15t/astro-browser-bench',
-	nextjs: '@c15t/nextjs-browser-bench',
-	nuxt: '@c15t/nuxt-browser-bench',
-	react: '@c15t/react-browser-bench',
-	'script-tag': '@c15t/script-lifecycle-bench',
-	sveltekit: '@c15t/sveltekit-browser-bench',
-	'tanstack-start': '@c15t/tanstack-start-browser-bench',
+	angular: '@inth/angular-browser-bench',
+	astro: '@inth/astro-browser-bench',
+	nextjs: '@inth/nextjs-browser-bench',
+	nuxt: '@inth/nuxt-browser-bench',
+	react: '@inth/react-browser-bench',
+	'script-tag': '@inth/script-lifecycle-bench',
+	sveltekit: '@inth/sveltekit-browser-bench',
+	'tanstack-start': '@inth/tanstack-start-browser-bench',
 } as const;
 
 export type GateTarget = keyof typeof gateTargetPackages;
 
 const profiles: Record<string, { packages: string[]; suites: string[] }> = {
 	bundle: {
-		packages: ['@c15t/next-bundle-bench'],
+		packages: ['@inth/next-bundle-bench'],
 		suites: ['bundle', 'artifact'],
 	},
 	// Each revision builds and measures its own `examples/` starters.
 	examples: {
-		packages: ['@c15t/examples-payload-bench'],
+		packages: ['@inth/examples-payload-bench'],
 		suites: ['examples-payload'],
 	},
 	full: {
 		packages: [
 			...quickPackages,
-			'@c15t/react-browser-bench',
-			'@c15t/nextjs-browser-bench',
-			'@c15t/nuxt-browser-bench',
-			'@c15t/sveltekit-browser-bench',
-			'@c15t/astro-browser-bench',
-			'@c15t/tanstack-start-browser-bench',
+			'@inth/react-browser-bench',
+			'@inth/nextjs-browser-bench',
+			'@inth/nuxt-browser-bench',
+			'@inth/sveltekit-browser-bench',
+			'@inth/astro-browser-bench',
+			'@inth/tanstack-start-browser-bench',
 		],
 		suites: [
 			'core-runtime',
@@ -57,7 +57,7 @@ const profiles: Record<string, { packages: string[]; suites: string[] }> = {
 
 /**
  * Packages split across several runners, with the share each one measures in
- * `C15T_BENCH_ONLY` / `C15T_BENCH_SKIP` syntax (see
+ * `INTH_BENCH_ONLY` / `INTH_BENCH_SKIP` syntax (see
  * `benchmarks/shared/src/selection.ts`).
  *
  * Every core-benchmarks pass spends about 30 seconds on each policy fixture
@@ -69,7 +69,7 @@ const profiles: Record<string, { packages: string[]; suites: string[] }> = {
  */
 const shards: Record<string, { id: string; only: string[]; skip: string[] }[]> =
 	{
-		'@c15t/core-benchmarks': [
+		'@inth/core-benchmarks': [
 			{
 				id: 'core-benchmarks-eu',
 				only: ['core-runtime', 'policy-runtime:optin-choice-eu'],
@@ -110,7 +110,7 @@ export const createBenchmarkShards = function createBenchmarkShards(
 ): BenchmarkShard[] {
 	if (mode === 'gate') {
 		return packages.map((name) => ({
-			id: `gate-${name.replace('@c15t/', '')}`,
+			id: `gate-${name.replace('@inth/', '')}`,
 			only: [],
 			package: name,
 			skip: [],
@@ -121,7 +121,7 @@ export const createBenchmarkShards = function createBenchmarkShards(
 			(Object.hasOwn(shards, name) ? shards[name] : undefined)?.map(
 				(shard) => ({ ...shard, package: name })
 			) ?? [
-				{ id: name.replace('@c15t/', ''), only: [], package: name, skip: [] },
+				{ id: name.replace('@inth/', ''), only: [], package: name, skip: [] },
 			]
 	);
 };
@@ -182,7 +182,7 @@ export const createBenchmarkPlan = function createBenchmarkPlan(
 	return {
 		// The Nuxt runner records results under the Vue adapter's package name.
 		expectedPackages: packages.map((name) =>
-			name === '@c15t/nuxt-browser-bench' ? '@inth/vue' : name
+			name === '@inth/nuxt-browser-bench' ? '@inth/vue' : name
 		),
 		only: shard?.only ?? [],
 		packages,

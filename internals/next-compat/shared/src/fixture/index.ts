@@ -1,8 +1,8 @@
 /**
- * In-process stand-in for the c15t backend.
+ * In-process stand-in for the Inth backend.
  *
  * @remarks
- * Every fixture app mounts these handlers under `/api/c15t` so the suite can
+ * Every fixture app mounts these handlers under `/api/inth` so the suite can
  * assert what the backend saw (forwarded geo headers, request counts) without
  * a network dependency. Handlers use only the Web `Request`/`Response` types so
  * they work in App Router route handlers, Pages API routes, and plain Node
@@ -116,7 +116,7 @@ export const buildInitResponse = function buildInitResponse(
 	countryCode: string
 ) {
 	return {
-		branding: 'c15t',
+		branding: 'inth',
 		location: {
 			countryCode,
 			regionCode: null,
@@ -139,7 +139,7 @@ const NO_STORE = { 'cache-control': 'no-store' } as const;
 export const buildManifestResponse =
 	function buildManifestResponse(): CompatManifest {
 		return {
-			branding: 'c15t',
+			branding: 'inth',
 			policyPacks: [
 				{ fingerprints, match: { fallback: true, isDefault: true }, rule },
 			],
@@ -198,7 +198,7 @@ export const handleSubjects = async function handleSubjects(
 };
 
 /**
- * Diagnostics endpoint: `GET /api/c15t/__compat/requests` lists what `/init`
+ * Diagnostics endpoint: `GET /api/inth/__compat/requests` lists what `/init`
  * received, `DELETE` clears the log between tests.
  */
 export const handleDiagnostics = function handleDiagnostics(
@@ -219,7 +219,7 @@ export const handleDiagnostics = function handleDiagnostics(
 };
 
 /**
- * Routes a request by the path segments after `/api/c15t`.
+ * Routes a request by the path segments after `/api/inth`.
  */
 export const handleFixtureRequest = function handleFixtureRequest(
 	request: Request,

@@ -1,5 +1,5 @@
 /**
- * The c15t DevTools panel for an Angular app, bound to the app's consent
+ * The Inth DevTools panel for an Angular app, bound to the app's consent
  * runtime.
  *
  * @packageDocumentation
@@ -119,7 +119,7 @@ const mountDevTools = function mountDevTools(
 				kernel,
 			})
 		);
-		// A visible `<c15t-consent-dialog-trigger>` for the same kernel can
+		// A visible `<inth-consent-dialog-trigger>` for the same kernel can
 		// render the launcher instead.
 		const withdrawLauncher = publishDevToolsLauncher(kernel, devTools);
 		onCleanup(() => {
@@ -134,9 +134,9 @@ const optionalBoolean = (value: unknown): boolean | undefined =>
 	value === undefined ? undefined : booleanAttribute(value);
 
 /**
- * Renders the c15t DevTools panel for the app's consent runtime: consent
+ * Renders the Inth DevTools panel for the app's consent runtime: consent
  * state, policy, events and actions. Place it once, anywhere under
- * `provideC15t()`. It renders nothing itself; the panel mounts in its own
+ * `provideInth()`. It renders nothing itself; the panel mounts in its own
  * shadow root on `<body>` in the browser and is removed with the
  * component.
  *
@@ -153,7 +153,7 @@ const optionalBoolean = (value: unknown): boolean | undefined =>
  *   imports: [ConsentDevTools],
  *   template: `
  *     @if (dev) {
- *       @defer { <c15t-consent-dev-tools position="bottom-left" /> }
+ *       @defer { <inth-consent-dev-tools position="bottom-left" /> }
  *     }
  *   `,
  * })
@@ -164,7 +164,7 @@ const optionalBoolean = (value: unknown): boolean | undefined =>
  */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	selector: 'c15t-consent-dev-tools',
+	selector: 'inth-consent-dev-tools',
 	styles: ':host { display: none; }',
 	template: '',
 })
@@ -211,8 +211,8 @@ export class ConsentDevTools {
 }
 
 /**
- * Mounts the c15t DevTools panel with the application, without a
- * component. Add it after `provideC15t()`.
+ * Mounts the Inth DevTools panel with the application, without a
+ * component. Add it after `provideInth()`.
  *
  * A static import ships the panel in every build, even behind
  * `isDevMode()`. Keep it out of production by adding it in a
@@ -224,18 +224,18 @@ export class ConsentDevTools {
  * @example
  * ```ts
  * // app.config.development.ts
- * import { hosted, provideC15t } from '@inth/angular';
- * import { provideC15tDevTools } from '@inth/angular/devtools';
+ * import { hosted, provideInth } from '@inth/angular';
+ * import { provideInthDevTools } from '@inth/angular/devtools';
  *
  * export const appConfig: ApplicationConfig = {
  *   providers: [
- *     provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),
- *     provideC15tDevTools({ position: 'bottom-left' }),
+ *     provideInth({ mode: hosted({ projectUrl: '/api/inth' }) }),
+ *     provideInthDevTools({ position: 'bottom-left' }),
  *   ],
  * };
  * ```
  */
-export const provideC15tDevTools = function provideC15tDevTools(
+export const provideInthDevTools = function provideInthDevTools(
 	options: ConsentDevToolsOptions = {}
 ): EnvironmentProviders {
 	return makeEnvironmentProviders([

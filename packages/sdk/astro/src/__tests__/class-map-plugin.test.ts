@@ -11,7 +11,7 @@ import {
 } from '../libs/class-map-plugin';
 import { testing as testingMode } from '../testing';
 
-const directory = mkdtempSync(join(tmpdir(), 'c15t-class-maps-'));
+const directory = mkdtempSync(join(tmpdir(), 'inth-class-maps-'));
 const withCSS = join(directory, 'panel.js');
 writeFileSync(withCSS, 'import "./panel.css"; export default {};');
 writeFileSync(join(directory, 'panel.node.js'), 'export default {};');
@@ -139,10 +139,10 @@ describe('buildVitePlugins', () => {
 		).map((plugin) => plugin.name);
 
 	it('drops the islands’ CSS when the full stylesheet is injected', async () => {
-		expect(await names()).toContain('c15t:class-maps-without-css');
+		expect(await names()).toContain('inth:class-maps-without-css');
 	});
 
 	it('keeps the islands’ CSS with `styles: false`', async () => {
-		expect(await names(false)).not.toContain('c15t:class-maps-without-css');
+		expect(await names(false)).not.toContain('inth:class-maps-without-css');
 	});
 });

@@ -25,8 +25,8 @@ const repository = resolve(
 	dirname(fileURLToPath(import.meta.url)),
 	'../../../..'
 );
-const sourceRoot = process.env.C15T_DEFAULT_RUNTIME_SOURCE_ROOT ?? repository;
-const artifacts = process.env.C15T_DEFAULT_RUNTIME_ARTIFACTS;
+const sourceRoot = process.env.INTH_DEFAULT_RUNTIME_SOURCE_ROOT ?? repository;
+const artifacts = process.env.INTH_DEFAULT_RUNTIME_ARTIFACTS;
 const fixtures = new URL('./__tests__/fixtures/default-com/', import.meta.url);
 const keyA = '00000000-0000-4000-8000-000000000001';
 const keyB = '00000000-0000-4000-8000-000000000002';
@@ -56,7 +56,7 @@ const seedIdentity = () =>
 	context.addCookies([
 		{
 			name: '_dflt_aid',
-			url: 'https://c15t-runtime.test/',
+			url: 'https://inth-runtime.test/',
 			value: 'runtime-seeded-anonymous-id',
 		},
 	]);
@@ -184,7 +184,7 @@ beforeEach(async () => {
 			});
 			return;
 		}
-		if (url === 'https://c15t-runtime.test/') {
+		if (url === 'https://inth-runtime.test/') {
 			await route.fulfill({
 				body: '<!doctype html><html><head></head><body><div id="one"></div><div id="two"></div></body></html>',
 				contentType: 'text/html',
@@ -215,7 +215,7 @@ beforeEach(async () => {
 	await page.addInitScript(() => {
 		window.__defaultPixel__logging__verbose = true;
 	});
-	await page.goto('https://c15t-runtime.test/');
+	await page.goto('https://inth-runtime.test/');
 	await page.addScriptTag({ content: bundle });
 });
 

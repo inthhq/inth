@@ -270,7 +270,7 @@ const ConsentWidgetAccordionRow = ({
 						aria-label={title}
 						checked={checked}
 						aria-describedby={
-							restricted ? `c15t-restriction-${consent.name}` : undefined
+							restricted ? `inth-restriction-${consent.name}` : undefined
 						}
 						onCheckedChange={(value) => draft.set(consent.name, value)}
 						disabled={consent.disabled}
@@ -283,7 +283,7 @@ const ConsentWidgetAccordionRow = ({
 				<output
 					className={noStyle ? undefined : accordionStyles.restriction}
 					data-testid={`consent-widget-restriction-${consent.name}`}
-					id={`c15t-restriction-${consent.name}`}
+					id={`inth-restriction-${consent.name}`}
 				>
 					Your saved choice is restricted by the current privacy settings.
 				</output>

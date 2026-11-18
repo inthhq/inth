@@ -72,7 +72,7 @@ export const clearConsentState = function clearConsentState() {
 	}
 
 	// Clear window-level mock GVL state between tests
-	delete (window as unknown as { __c15t_mock_gvl?: unknown }).__c15t_mock_gvl;
+	delete (window as unknown as { __inth_mock_gvl?: unknown }).__inth_mock_gvl;
 };
 
 /**

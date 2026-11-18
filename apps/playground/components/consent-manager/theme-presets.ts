@@ -3,7 +3,7 @@ import type { Theme } from '@inth/sdk/ui';
 /**
  * Theme presets for the demo.
  *
- * Each preset deliberately leans on a different part of c15t's base theme
+ * Each preset deliberately leans on a different part of inth's base theme
  * system — tokens (colors/dark, typography, spacing, radius, shadows,
  * motion), `consentActions` button treatments, and slots — to show how far
  * the stock components can be pushed without headless mode or compound
@@ -119,31 +119,31 @@ const brutalistTheme: Theme = {
 	},
 	radius: { full: '0', lg: '0', md: '0', sm: '0' },
 	shadows: {
-		lg: '8px 8px 0 var(--c15t-border)',
-		md: '4px 4px 0 var(--c15t-border)',
-		sm: '2px 2px 0 var(--c15t-border)',
+		lg: '8px 8px 0 var(--inth-border)',
+		md: '4px 4px 0 var(--inth-border)',
+		sm: '2px 2px 0 var(--inth-border)',
 	},
 	slots: {
 		buttonPrimary: {
 			style: {
-				border: '2px solid var(--c15t-border)',
-				boxShadow: '3px 3px 0 var(--c15t-border)',
+				border: '2px solid var(--inth-border)',
+				boxShadow: '3px 3px 0 var(--inth-border)',
 			},
 		},
 		buttonSecondary: {
 			style: {
-				border: '2px solid var(--c15t-border)',
-				boxShadow: '3px 3px 0 var(--c15t-border)',
+				border: '2px solid var(--inth-border)',
+				boxShadow: '3px 3px 0 var(--inth-border)',
 			},
 		},
 		consentBannerCard: {
-			style: { border: '2px solid var(--c15t-border)' },
+			style: { border: '2px solid var(--inth-border)' },
 		},
 		consentDialogCard: {
-			style: { border: '2px solid var(--c15t-border)' },
+			style: { border: '2px solid var(--inth-border)' },
 		},
 		iabConsentBannerCard: {
-			style: { border: '2px solid var(--c15t-border)' },
+			style: { border: '2px solid var(--inth-border)' },
 		},
 	},
 	typography: {
@@ -252,10 +252,10 @@ const terminalTheme: Theme = {
 	},
 	slots: {
 		consentBannerCard: {
-			style: { border: '1px solid var(--c15t-border)' },
+			style: { border: '1px solid var(--inth-border)' },
 		},
 		iabConsentBannerCard: {
-			style: { border: '1px solid var(--c15t-border)' },
+			style: { border: '1px solid var(--inth-border)' },
 		},
 	},
 	typography: {
@@ -334,8 +334,8 @@ const editorialTheme: Theme = {
  */
 const liquidGlassSurface = {
 	background:
-		'linear-gradient(135deg, color-mix(in srgb, var(--c15t-surface) 72%, transparent) 0%, color-mix(in srgb, var(--c15t-surface) 48%, transparent) 100%)',
-	border: '1px solid color-mix(in srgb, var(--c15t-text) 10%, transparent)',
+		'linear-gradient(135deg, color-mix(in srgb, var(--inth-surface) 72%, transparent) 0%, color-mix(in srgb, var(--inth-surface) 48%, transparent) 100%)',
+	border: '1px solid color-mix(in srgb, var(--inth-text) 10%, transparent)',
 	boxShadow: [
 		// specular rim: bright top edge, soft side glints, shaded bottom edge
 		'inset 0 1px 1px rgba(255, 255, 255, 0.55)',
@@ -351,9 +351,9 @@ const liquidGlassSurface = {
 // oxlint-disable-next-line sort-keys -- Preserve declaration order, interface shape, and public compatibility.
 const liquidGlassTag = {
 	backdropFilter: 'blur(12px) saturate(160%)',
-	background: 'color-mix(in srgb, var(--c15t-primary) 82%, transparent)',
+	background: 'color-mix(in srgb, var(--inth-primary) 82%, transparent)',
 	border: '1px solid rgba(255, 255, 255, 0.35)',
-	borderRadius: 'var(--c15t-radius-full)',
+	borderRadius: 'var(--inth-radius-full)',
 	boxShadow:
 		'inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 12px rgba(10, 8, 32, 0.18)',
 	// Float clear of the card instead of fusing to its top edge, and pull in
@@ -414,9 +414,9 @@ const glassTheme: Theme = {
 			style: {
 				WebkitBackdropFilter: 'blur(10px)',
 				backdropFilter: 'blur(10px)',
-				background: 'color-mix(in srgb, var(--c15t-surface) 45%, transparent)',
+				background: 'color-mix(in srgb, var(--inth-surface) 45%, transparent)',
 				border:
-					'1px solid color-mix(in srgb, var(--c15t-text) 12%, transparent)',
+					'1px solid color-mix(in srgb, var(--inth-text) 12%, transparent)',
 				boxShadow:
 					'inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 8px rgba(10, 8, 32, 0.08)',
 			},
@@ -476,7 +476,7 @@ export const themePresets = {
 		theme: minimalTheme,
 	},
 	none: {
-		description: 'Base c15t styling, untouched',
+		description: 'Base inth styling, untouched',
 		label: 'Default',
 		theme: undefined,
 	},

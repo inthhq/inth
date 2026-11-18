@@ -1,16 +1,16 @@
 ---
 title: Klaviyo
-description: Load Klaviyo signup forms and onsite tracking only after marketing and measurement consent with the c15t klaviyo helper, gate your own events, and check it in DevTools.
-seoTitle: Klaviyo cookie consent with c15t
-seoDescription: Load Klaviyo only after marketing and measurement consent, or show its signup forms with marketing consent only. Set it up with the c15t klaviyo helper.
+description: Load Klaviyo signup forms and onsite tracking only after marketing and measurement consent with the Inth klaviyo helper, gate your own events, and check it in DevTools.
+seoTitle: Klaviyo cookie consent with Inth
+seoDescription: Load Klaviyo only after marketing and measurement consent, or show its signup forms with marketing consent only. Set it up with the Inth klaviyo helper.
 icon: klaviyo
 group: integrations
 ---
 
-The c15t `klaviyo` helper keeps Klaviyo.js off the page until both `marketing`
+The Inth `klaviyo` helper keeps Klaviyo.js off the page until both `marketing`
 and `measurement` have consent. Klaviyo.js shows signup forms and also tracks
-visitors on your site. Until then, c15t does not create the `klaviyo` object. If
-the visitor withdraws consent, c15t removes the loader and, by default, reloads
+visitors on your site. Until then, Inth does not create the `klaviyo` object. If
+the visitor withdraws consent, Inth removes the loader and, by default, reloads
 the page. With `mode: 'forms-only'`, the helper needs only `marketing` and sets
 the Klaviyo `__kla_off` opt-out cookie before the bundle runs. The `category`
 option replaces the default consent condition.
@@ -33,7 +33,7 @@ export const scripts = [klaviyo({ publicApiKey: 'YOUR_PUBLIC_API_KEY' })];
 
 Remove Klaviyo's own snippet first. On Shopify, BigCommerce, WooCommerce and
 the other platforms where Klaviyo installs Klaviyo.js for you, turn that
-installation off, or c15t is not the only thing loading it.
+installation off, or Inth is not the only thing loading it.
 
 <include src="../shared/integrations/register-scripts.mdx" />
 
@@ -55,7 +55,7 @@ on the site and feeds segments, attribution and automated email and SMS flows.
 Klaviyo classifies its `__kla_id` cookie as a targeting cookie.
 
 So by default `klaviyo` loads only when both marketing and measurement are
-allowed. With either category alone, or neither, c15t requests nothing from
+allowed. With either category alone, or neither, Inth requests nothing from
 Klaviyo and Klaviyo writes no storage. Once the second category is allowed,
 Klaviyo.js loads without a page reload, once.
 
@@ -107,7 +107,7 @@ while still tracking visitors.
 The helper sets the vendor slug `klaviyo`, so a visitor can allow marketing
 and measurement and still switch Klaviyo off. Declare the vendor with a name
 and privacy policy URL so your preference UI can show the switch; until then
-c15t logs a warning in the console. See
+Inth logs a warning in the console. See
 [vendor consent for your framework](/docs/integrations/overview#vendor-switches-and-cookie-cleanup).
 
 - With the switch off, Klaviyo.js does not load. Switching it off after
@@ -143,7 +143,7 @@ window.klaviyo?.track('Added to Cart', {
 });
 ```
 
-This check assumes c15t reloads the page on revocation, which it does by
+This check assumes Inth reloads the page on revocation, which it does by
 default. With `reloadOnConsentRevoked: false`, the object stays after a
 revocation, so check the categories with your framework's consent API before
 each call. In forms-only mode, Klaviyo drops these calls even though the
@@ -151,7 +151,7 @@ object exists.
 
 ## Account settings that change what Klaviyo collects
 
-c15t controls when Klaviyo.js loads. These Klaviyo account settings control
+Inth controls when Klaviyo.js loads. These Klaviyo account settings control
 what it does once loaded:
 
 - **Anonymous visitor activity backfill** stores frontend events for
@@ -168,7 +168,7 @@ what it does once loaded:
 
 ## Cookie consent is not subscription consent
 
-Your c15t banner asks whether Klaviyo may run in the browser. A Klaviyo signup
+Your Inth banner asks whether Klaviyo may run in the browser. A Klaviyo signup
 form asks whether someone wants your emails or texts. They are separate
 records: allowing marketing cookies does not subscribe anyone, and a
 subscription does not grant cookie consent. Keep collecting email and SMS

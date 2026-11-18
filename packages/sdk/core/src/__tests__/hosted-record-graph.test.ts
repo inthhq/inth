@@ -183,7 +183,7 @@ describe('createHostedRecordTransport', () => {
 	test('a required decision refuses a save that carries none', async () => {
 		const fetch = vi.fn();
 		const records = createHostedRecordTransport(
-			{ fetch, projectUrl: '/api/c15t' },
+			{ fetch, projectUrl: '/api/inth' },
 			{ inputs: () => undefined, pending: () => undefined, required: true }
 		);
 
@@ -199,10 +199,10 @@ describe('createHostedRecordTransport', () => {
 		);
 		const records = createHostedRecordTransport({
 			fetch,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		await expect(records.loadSubjectRecord('sub_1')).resolves.toBeNull();
-		expect(fetch.mock.calls[0]?.[0]).toBe('/api/c15t/subjects/sub_1');
+		expect(fetch.mock.calls[0]?.[0]).toBe('/api/inth/subjects/sub_1');
 	});
 });

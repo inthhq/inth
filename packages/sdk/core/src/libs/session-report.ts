@@ -29,7 +29,7 @@ import {
 } from '@inth/sdk-schema/types';
 import type { BuildConsentSessionReportOptions } from '@inth/sdk-schema/types';
 
-import { c15tProtocolHeaders } from '../transports/version-header';
+import { inthProtocolHeaders } from '../transports/version-header';
 
 /**
  * The only request headers a report carries about the visitor: the user
@@ -276,7 +276,7 @@ export const reportConsentSession = function reportConsentSession(
 				body: JSON.stringify(body),
 				headers: {
 					'content-type': 'application/json',
-					...c15tProtocolHeaders,
+					...inthProtocolHeaders,
 					...forwardSessionReportHeaders(options.headers),
 				},
 				method: 'POST',

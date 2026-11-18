@@ -188,7 +188,7 @@ describe('projectUrl', () => {
 		expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
 			'https://backend.example/init'
 		);
-		expect((window as { c15t?: { mode?: string } }).c15t?.mode).toBe('hosted');
+		expect((window as { inth?: { mode?: string } }).inth?.mode).toBe('hosted');
 		runtime.dispose();
 	});
 

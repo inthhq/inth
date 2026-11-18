@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@c15t/fixture-expo-dev",
+      "name": "@inth/fixture-expo-dev",
       "dependencies": {
         "@didomi/react-native": "2.38.1",
         "expo": "57.0.22",

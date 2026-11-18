@@ -1,5 +1,5 @@
 /**
- * Content Security Policy hashes for the inline code c15t renders.
+ * Content Security Policy hashes for the inline code Inth renders.
  *
  * Astro's CSP feature (`security.csp`, or `experimental.csp` before Astro 6)
  * hashes the scripts and styles Astro processes, but not the `is:inline`
@@ -7,7 +7,7 @@
  * (`Astro.csp.insertScriptHash()`) do not help either: the policy header is
  * computed before `<body>` renders, and the banner lives there.
  *
- * What c15t inlines is either static for a given set of options, or data:
+ * What Inth inlines is either static for a given set of options, or data:
  *
  * - the colour-scheme script, the banner reveal scripts, the early-tap
  *   script a banner whose engine loads after the page runs, the first-paint
@@ -37,7 +37,7 @@ import {
 	buildThemeCSS,
 	EARLY_CONSENT_TAP_SCRIPT,
 } from './server';
-import type { C15tBrowserCsp, C15tResolvedOptions } from './types';
+import type { InthBrowserCsp, InthResolvedOptions } from './types';
 
 export type { CspHashAlgorithm } from './libs/csp-hash';
 
@@ -48,7 +48,7 @@ export interface InlineCodeHashes {
 }
 
 /**
- * The hashes of every inline script and style the c15t components can
+ * The hashes of every inline script and style the Inth components can
  * render for these options.
  *
  * The per-visitor boot payload is not among them: it renders as a JSON data
@@ -61,7 +61,7 @@ export interface InlineCodeHashes {
  * @returns Script and style hashes.
  */
 export const buildInlineCodeHashes = async function buildInlineCodeHashes(
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	algorithm: CspHashAlgorithm = 'SHA-256'
 ): Promise<InlineCodeHashes> {
 	const scripts = [
@@ -86,7 +86,7 @@ export const buildInlineCodeHashes = async function buildInlineCodeHashes(
 	const themes = [options.theme, ...armThemes];
 	const styles = [
 		// The first-paint rules the components inline, unless the page
-		// links c15t's stylesheet instead.
+		// links inth's stylesheet instead.
 		options.inlineStyles === false ? '' : INLINE_STYLES_CSS,
 		options.inlineStyles && isIABConfigured(options.iab)
 			? INLINE_IAB_STYLES_CSS
@@ -154,18 +154,18 @@ const readSiteScriptHashes = function readSiteScriptHashes(
 
 /** What the integration does with Astro's CSP turned on. */
 export interface AstroCspSetup {
-	/** The `updateConfig()` argument that allows c15t's inline code. */
+	/** The `updateConfig()` argument that allows inth's inline code. */
 	update: Record<string, unknown>;
 	/**
 	 * What the browser checks `clientEntrypoint` inline scripts against.
 	 * Only set with a `clientEntrypoint`, the one source of scripts the
 	 * config cannot hash.
 	 */
-	browser?: C15tBrowserCsp;
+	browser?: InthBrowserCsp;
 }
 
 /**
- * Allow c15t's inline code under Astro's CSP.
+ * Allow inth's inline code under Astro's CSP.
  *
  * The algorithm is always set: a site that enabled CSP with `csp: true`
  * gets Astro's defaults filled in before integrations run, and an object
@@ -184,7 +184,7 @@ export interface AstroCspSetup {
  */
 export const buildAstroCsp = async function buildAstroCsp(
 	config: unknown,
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): Promise<AstroCspSetup | undefined> {
 	const found = findAstroCsp(config);
 	if (!found) {

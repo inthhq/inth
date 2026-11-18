@@ -3,7 +3,7 @@
  * with no backend.
  *
  * Pass `testing()` as `<ConsentProvider mode>`, or as
- * `c15tHandle({ mode })` in SvelteKit. It needs no `projectUrl`. It
+ * `inthHandle({ mode })` in SvelteKit. It needs no `projectUrl`. It
  * resolves the recommended policy pack in the browser and sends nothing;
  * set `overrides.country` (and `overrides.region`) to pick the policy:
  *
@@ -41,7 +41,7 @@ export type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 /**
  * A `mode` for tests that resolves `policy`, or the recommended policy
  * pack, in the browser and makes no network requests. It serializes as plain data, so
- * `c15tHandle()` can carry it to the browser.
+ * `inthHandle()` can carry it to the browser.
  *
  * @param options - `policy` replaces the recommended pack; `iab: true` picks its IAB TCF variant.
  * @returns The value for `mode`.

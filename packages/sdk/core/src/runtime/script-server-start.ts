@@ -132,31 +132,31 @@ const AFTER_PRIORITY_IMAGES = `function(f){var h=[].filter.call(document.querySe
 
 /**
  * Creates one script the way the loader does and leaves the element for
- * the loader to adopt under `__c15tStarted[key]`, keyed like the loader's
+ * the loader to adopt under `__inthStarted[key]`, keyed like the loader's
  * element id by `resourceKey ?? id`, then inserts it after the page's
- * priority images; until then `__c15tInsert` holds the insert, and the
+ * priority images; until then `__inthInsert` holds the insert, and the
  * loader cancels it by deleting it. Until a loader adopts it, the insert
  * checks the stored consent again first: when it changed during the wait,
- * it sets `__c15tHeld` and leaves the insert to a loader that runs the
+ * it sets `__inthHeld` and leaves the insert to a loader that runs the
  * script. An adopted element skips that check, since its loader decides
- * consent and cancels a revoked insert itself. `__c15tConsent`
- * records whether its setup ran with consent, and `__c15tScript` for
+ * consent and cancels a revoked insert itself. `__inthConsent`
+ * records whether its setup ran with consent, and `__inthScript` for
  * which script. A render that took the page over meanwhile (`q`, a page
  * object with another id) holds the insert too. The script's own `nonce`
  * wins over the inline script's. No DOM id or marker, so the anonymized id
  * the loader gives it later is the only one it has.
  */
-const INSERT_SCRIPT = `function(id,src,o){var e=document.createElement('script');e.src=src;e.__c15tStartRender=R;e.__c15tDeclaration=o.declaration;e.__c15tConsent=o.consent;e.__c15tScript=o.script;if(o.async!=null)e.async=o.async;if(o.defer)e.defer=true;if(o.fetchPriority)e.fetchPriority=o.fetchPriority;if(o.nonce||n)e.nonce=o.nonce||n;for(var k in o.attributes||{})e.setAttribute(k,o.attributes[k]);e.addEventListener('load',function(){e.__c15tDone='load'});e.addEventListener('error',function(){e.__c15tDone='error'});s[id]=e;a(e,o)}`;
+const INSERT_SCRIPT = `function(id,src,o){var e=document.createElement('script');e.src=src;e.__inthStartRender=R;e.__inthDeclaration=o.declaration;e.__inthConsent=o.consent;e.__inthScript=o.script;if(o.async!=null)e.async=o.async;if(o.defer)e.defer=true;if(o.fetchPriority)e.fetchPriority=o.fetchPriority;if(o.nonce||n)e.nonce=o.nonce||n;for(var k in o.attributes||{})e.setAttribute(k,o.attributes[k]);e.addEventListener('load',function(){e.__inthDone='load'});e.addEventListener('error',function(){e.__inthDone='error'});s[id]=e;a(e,o)}`;
 
 /**
  * Schedules `e`'s insert under this render, after the page's priority
- * images: `__c15tInsert` is the pending insert, and a newer one replaces
+ * images: `__inthInsert` is the pending insert, and a newer one replaces
  * it. {@link INSERT_SCRIPT} calls it for each element it creates, and a
  * render that takes over an earlier render's element calls it again, so
  * the insert checks this render's page object rather than the earlier
  * one's, which this render replaced.
  */
-const ARM_INSERT = `function(e,o){delete e.__c15tHeld;var g=e.__c15tInsert=function(){if(e.__c15tInsert!==g)return;delete e.__c15tInsert;if(!e.__c15tAdopted&&(z()||q())){e.__c15tHeld=true;return}(o.target==='body'?document.body||document.head:document.head).appendChild(e)};w(g)}`;
+const ARM_INSERT = `function(e,o){delete e.__inthHeld;var g=e.__inthInsert=function(){if(e.__inthInsert!==g)return;delete e.__inthInsert;if(!e.__inthAdopted&&(z()||q())){e.__inthHeld=true;return}(o.target==='body'?document.body||document.head:document.head).appendChild(e)};w(g)}`;
 
 /**
  * Runs `r` in a task after the next frame. The start script streams in
@@ -356,7 +356,7 @@ const serverStartCandidates = function serverStartCandidates(
  *
  * @internal
  */
-export const PAGE_RENDER_KEY = '__c15tRender';
+export const PAGE_RENDER_KEY = '__inthRender';
 
 /**
  * The ids of the renders a deferred root ended (`endPageRender` in
@@ -366,7 +366,7 @@ export const PAGE_RENDER_KEY = '__c15tRender';
  *
  * @internal
  */
-export const ENDED_RENDERS_KEY = '__c15tEndedRenders';
+export const ENDED_RENDERS_KEY = '__inthEndedRenders';
 
 /**
  * How many ended render ids {@link ENDED_RENDERS_KEY} keeps. An evicted id
@@ -381,7 +381,7 @@ export const ENDED_RENDERS_LIMIT = 1000;
  * setup, or the shared prelude, throws: a deferred root that hears it
  * loads the engine at once. @internal
  */
-export const SERVER_START_FAILED_EVENT = '__c15tServerStartFailed';
+export const SERVER_START_FAILED_EVENT = '__inthServerStartFailed';
 
 /** A new id for one server render's inline scripts and boot data. @internal */
 export const newRenderId = (): string =>
@@ -433,7 +433,7 @@ const startHash = (
  * that follows shares the scope.
  */
 const replaceStale = (element: string, declaration: string): string =>
-	`if(${element}&&${element}.__c15tStartRender&&!${element}.__c15tAdopted&&!${element}.__c15tEarly&&${element}.__c15tDeclaration!==${declaration}){delete ${element}.__c15tInsert;${element}.remove();delete ${element}}`;
+	`if(${element}&&${element}.__inthStartRender&&!${element}.__inthAdopted&&!${element}.__inthEarly&&${element}.__inthDeclaration!==${declaration}){delete ${element}.__inthInsert;${element}.remove();delete ${element}}`;
 
 /**
  * Inline code that schedules the insert of `element`, an earlier render's
@@ -443,7 +443,7 @@ const replaceStale = (element: string, declaration: string): string =>
  * loader adopted or a root started, is left alone.
  */
 const rearmTakenOver = (element: string, options: string): string =>
-	`if(!${element}.isConnected&&!${element}.__c15tAdopted&&!${element}.__c15tEarly&&(${element}.__c15tInsert||${element}.__c15tHeld))a(${element},${options})`;
+	`if(!${element}.isConnected&&!${element}.__inthAdopted&&!${element}.__inthEarly&&(${element}.__inthInsert||${element}.__inthHeld))a(${element},${options})`;
 
 /**
  * Inline condition: `element` is one a deferred root or hook inserted
@@ -454,7 +454,7 @@ const rearmTakenOver = (element: string, options: string): string =>
  * setup to the engine.
  */
 const earlyStarted = (element: string): string =>
-	`${element}.__c15tEarly&&!${element}.__c15tAdopted`;
+	`${element}.__inthEarly&&!${element}.__inthAdopted`;
 
 /** What {@link serverScriptStartPlan} returns. @internal */
 export interface ServerScriptStartPlan {
@@ -502,7 +502,7 @@ const startCode = function startCode({
 	starts: string[];
 }): string {
 	const id = inlineJSON(renderId);
-	const marks = `(function(){${pageRenderFor(renderId)}if(window.__c15tLoaderRan)return;${check}${startedKeys.map((key) => `g.starts[${inlineJSON(key)}]=1`).join(';')}})();`;
+	const marks = `(function(){${pageRenderFor(renderId)}if(window.__inthLoaderRan)return;${check}${startedKeys.map((key) => `g.starts[${inlineJSON(key)}]=1`).join(';')}})();`;
 	const fail = `E=function(k){var g=window.${PAGE_RENDER_KEY};if(g&&g.id===${id}){delete g.starts[k];g.failed=1}try{window.dispatchEvent(new Event(${inlineJSON(SERVER_START_FAILED_EVENT)}))}catch(x){}}`;
 	const prelude = preludes.length
 		? `try{${preludes.join(';')}}catch(x){${startedKeys.map((key) => `E(${inlineJSON(key)})`).join(';')};return}`
@@ -512,7 +512,7 @@ const startCode = function startCode({
 	// an earlier render, so only this render's root releases it.
 	// `q` is true once another render's page object replaced this one's, as
 	// after a client-side navigation: that render's state decides what runs.
-	return `${marks}(function(){var n=document.currentScript&&document.currentScript.nonce,R=${id},${fail},q=function(){var g=window.${PAGE_RENDER_KEY};return!g||g.id!==${id}},r=function(){if(window.__c15tLoaderRan||q())return;${check}var s=window.__c15tStarted=window.__c15tStarted||{},w=${AFTER_PRIORITY_IMAGES},a=${ARM_INSERT},i=${INSERT_SCRIPT};${prelude}${starts.join('')}};${AFTER_FIRST_PAINT}})()`;
+	return `${marks}(function(){var n=document.currentScript&&document.currentScript.nonce,R=${id},${fail},q=function(){var g=window.${PAGE_RENDER_KEY};return!g||g.id!==${id}},r=function(){if(window.__inthLoaderRan||q())return;${check}var s=window.__inthStarted=window.__inthStarted||{},w=${AFTER_PRIORITY_IMAGES},a=${ARM_INSERT},i=${INSERT_SCRIPT};${prelude}${starts.join('')}};${AFTER_FIRST_PAINT}})()`;
 };
 
 /**
@@ -597,7 +597,7 @@ export const serverScriptStartPlan = function serverScriptStartPlan(
 		};
 		startedKeys.push(key);
 		starts.push(
-			`try{${replaceStale(`s[${inlineJSON(key)}]`, inlineJSON(declaration))}if(!s[${inlineJSON(key)}]){${start.code};i(${inlineJSON(key)},${inlineJSON(script.src)},${inlineJSON(insertOptions)})}else if(${earlyStarted(`s[${inlineJSON(key)}]`)})E(${inlineJSON(key)});else{s[${inlineJSON(key)}].__c15tStartRender=R;${rearmTakenOver(`s[${inlineJSON(key)}]`, inlineJSON(insertOptions))}}}catch(x){E(${inlineJSON(key)})}`
+			`try{${replaceStale(`s[${inlineJSON(key)}]`, inlineJSON(declaration))}if(!s[${inlineJSON(key)}]){${start.code};i(${inlineJSON(key)},${inlineJSON(script.src)},${inlineJSON(insertOptions)})}else if(${earlyStarted(`s[${inlineJSON(key)}]`)})E(${inlineJSON(key)});else{s[${inlineJSON(key)}].__inthStartRender=R;${rearmTakenOver(`s[${inlineJSON(key)}]`, inlineJSON(insertOptions))}}}catch(x){E(${inlineJSON(key)})}`
 		);
 	}
 	if (starts.length === 0) {
@@ -636,7 +636,7 @@ export const serverScriptStartPlan = function serverScriptStartPlan(
  * HTML; a state from a shared render carries no `now` and starts nothing.
  *
  * The work waits until after first paint. When the loader mounts first,
- * it sets `__c15tLoaderRan` and the code does nothing: the loader has
+ * it sets `__inthLoaderRan` and the code does nothing: the loader has
  * started those scripts itself.
  *
  * @param options - The runtime's options, with a resolved `prefetch`.
@@ -654,12 +654,12 @@ export const serverScriptStart = function serverScriptStart(
 const SNAPSHOT_PROBE = {
 	alwaysLoad: true,
 	category: 'necessary',
-	id: 'c15t-stored-choice-probe',
+	id: 'inth-stored-choice-probe',
 	src: '',
 } as Script;
 
 /**
- * An inline script that sets `window.__c15tStoredChoiceCurrent` when the
+ * An inline script that sets `window.__inthStoredChoiceCurrent` when the
  * browser holds nothing that would change the server's consent state: the
  * same test the server start makes (`newerStoredDecision`). The value is a
  * function that runs the test again, so a root that starts a returning

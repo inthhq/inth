@@ -3,7 +3,7 @@
 /**
  * Loads an app's consent UI after the page's largest image.
  *
- * On a slow connection c15t's client chunks share bandwidth with the hero
+ * On a slow connection inth's client chunks share bandwidth with the hero
  * image and delay Largest Contentful Paint. `deferConsent()` wraps the app's
  * own `'use client'` consent module in `React.lazy`. The server imports it at
  * once, so the banner's HTML and CSS stay in the first response and paint
@@ -13,7 +13,7 @@
  * This module imports nothing from the consent runtime, so the first-load
  * chunk only carries the trigger logic.
  *
- * Taps before hydration: c15t's banner already records taps on its stock
+ * Taps before hydration: inth's banner already records taps on its stock
  * actions with an inline script and replays the choice once the runtime
  * starts. The script this module adds wakes the loader on the first input
  * inside the island and queues clicks on its other controls, which it
@@ -65,14 +65,14 @@ interface DeferState {
 }
 
 /** @internal */
-export const DEFER_WINDOW_KEY = '__c15tDefer';
+export const DEFER_WINDOW_KEY = '__inthDefer';
 
 /** Attribute on the island's wrapper element. @internal */
-export const DEFER_ATTRIBUTE = 'data-c15t-deferred';
+export const DEFER_ATTRIBUTE = 'data-inth-deferred';
 
 /**
  * Inline script that runs at parse time, before any chunk. Plain ES5.
- * Leaves `[data-action]` buttons in the stock banner to c15t's early-tap
+ * Leaves `[data-action]` buttons in the stock banner to inth's early-tap
  * script, which hides the banner and replays the choice. @internal
  */
 export const DEFER_CAPTURE_SCRIPT = `(function(w,k){if(w[k])return;var s=w[k]={q:[],w:false,h:false};function inside(e){var t=e.target;return t&&t.closest&&t.closest('[${DEFER_ATTRIBUTE}]')}function wake(){s.w=true;if(s.f)s.f()}['pointerdown','keydown','focusin'].forEach(function(n){w.addEventListener(n,function(e){if(!s.h&&inside(e))wake()},true)});w.addEventListener('click',function(e){if(s.h||!inside(e))return;wake();var b=e.target.closest('button,a,[role=button],input,label,summary');if(!b||b.closest('[data-testid="consent-banner-root"] [data-action]'))return;e.preventDefault();e.stopImmediatePropagation();if(s.q.indexOf(b)<0){s.q.push(b);b.setAttribute('aria-busy','true')}},true)})(window,'${DEFER_WINDOW_KEY}')`;
@@ -156,9 +156,9 @@ const replayQueued = (): void => {
  * image, while the server still renders its HTML.
  *
  * Call it at module scope in a `'use client'` file. The loaded component
- * should hold everything that uses c15t: `ConsentRoot`, the banner, the
- * dialog, and any component that calls c15t hooks. Render the page itself
- * outside it, so the page hydrates without waiting for c15t.
+ * should hold everything that uses Inth: `ConsentRoot`, the banner, the
+ * dialog, and any component that calls Inth hooks. Render the page itself
+ * outside it, so the page hydrates without waiting for Inth.
  *
  * Until the module loads, the banner shows but its buttons only record
  * taps. Scripts that `ConsentRoot` starts on the server for a returning
@@ -212,7 +212,7 @@ export const deferConsent = function deferConsent<Props extends object>(
 			'div',
 			{ [DEFER_ATTRIBUTE]: '', style: { display: 'contents' } },
 			createElement('script', {
-				// oxlint-disable-next-line react/no-danger -- c15t's own constant script, no interpolated input.
+				// oxlint-disable-next-line react/no-danger -- inth's own constant script, no interpolated input.
 				dangerouslySetInnerHTML: {
 					// The server's script already ran; the browser keeps it.
 					__html: typeof window === 'undefined' ? DEFER_CAPTURE_SCRIPT : '',

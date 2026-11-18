@@ -10,7 +10,7 @@ import { enginePreloadScript } from '../engine-preload-script';
 
 const CHUNKS = '/_next/static/';
 
-/** A consent-gated vendor script, which c15t may start while the engine loads. */
+/** A consent-gated vendor script, which Inth may start while the engine loads. */
 const VENDOR = 'https://vendor.example/pixel.js';
 
 const added: Element[] = [];
@@ -74,7 +74,7 @@ describe('learnEngineChunks', () => {
 		addScript('/_next/static/chunks/shell.js', true);
 		await learnEngineChunks(() => {
 			addScript('/_next/static/chunks/engine-a.js', false);
-			// c15t starts granted vendor scripts while the engine loads.
+			// Inth starts granted vendor scripts while the engine loads.
 			addScript(VENDOR, true);
 			addScript(`${VENDOR}?from=/_next/static/`, true);
 			return Promise.resolve();
@@ -95,7 +95,7 @@ describe('learnEngineChunks', () => {
 				finish = resolve;
 			});
 		}, CHUNKS);
-		// c15t starts a granted script, bundled as an asset, in a later task.
+		// Inth starts a granted script, bundled as an asset, in a later task.
 		await new Promise((resolve) => {
 			setTimeout(resolve, 0);
 		});
@@ -138,7 +138,7 @@ describe('enginePreloadScript', () => {
 				return Promise.resolve();
 			}, CHUNKS);
 			const host = window as unknown as Record<string, unknown>;
-			host.__c15tRender =
+			host.__inthRender =
 				typeof verifier === 'string'
 					? { current: () => true, id: verifier, starts: {} }
 					: { current: verifier, id: 'this-render', starts: {} };
@@ -149,7 +149,7 @@ describe('enginePreloadScript', () => {
 					document.head.querySelectorAll('link[rel="preload"]')
 				).toHaveLength(expected);
 			} finally {
-				Reflect.deleteProperty(host, '__c15tRender');
+				Reflect.deleteProperty(host, '__inthRender');
 			}
 		}
 	);

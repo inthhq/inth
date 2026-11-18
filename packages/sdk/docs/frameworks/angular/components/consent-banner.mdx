@@ -1,19 +1,19 @@
 ---
 title: ConsentBanner
-description: Show the c15t cookie banner in an Angular app with c15t-consent-banner, and set its variant, position, button layout, copy, ng-template slots, accessibility and styling hooks.
+description: Show the Inth cookie banner in an Angular app with inth-consent-banner, and set its variant, position, button layout, copy, ng-template slots, accessibility and styling hooks.
 group: frameworks
 ---
 
 ## Render the banner
 
-Import `ConsentBanner` and render `<c15t-consent-banner>` once, in
-your root component, next to `<c15t-consent-dialog>` so its Customize button
+Import `ConsentBanner` and render `<inth-consent-banner>` once, in
+your root component, next to `<inth-consent-dialog>` so its Customize button
 has a dialog to open:
 
 <include src="../../../shared/examples/angular/app-component.mdx" />
 
 The banner decides for itself whether to show, so do not wrap it in `@if`. It
-renders into `<body>` through `c15tPortal`, so it escapes the stacking and
+renders into `<body>` through `inthPortal`, so it escapes the stacking and
 overflow of the element you put it in. On the server it renders in place, and
 it moves to `<body>` after the first browser render, so hydration finds the
 server's markup.
@@ -21,7 +21,7 @@ server's markup.
 ## Change the shape
 
 `variant` and `position` set the shape for one banner. The `presentation`
-option of `provideC15t()` sets them for every surface; an input on the banner
+option of `provideInth()` sets them for every surface; an input on the banner
 wins. This banner is a full-width bar along the bottom edge:
 
 <include src="../../../shared/examples/angular/bottom-bar.mdx" />
@@ -51,8 +51,8 @@ you set no position, a corner position flips to the other side.
 | `acceptButtonText`, `rejectButtonText`, `customizeButtonText`, `dismissButtonText` | `string` | translated copy | Replace one button label for this banner. |
 | `legalLinks` | array of `LegalLinks` keys, or `null` | every configured link | Which of the provider's `legalLinks` to show after the description. `null` shows none. |
 | `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
-| `models` | `Model[]` | `['opt-in', 'opt-out']` | Policy models this banner renders for. IAB policies render `<c15t-iab-consent-banner>` instead. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes, keeping markup and behavior. |
+| `models` | `Model[]` | `['opt-in', 'opt-out']` | Policy models this banner renders for. IAB policies render `<inth-iab-consent-banner>` instead. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops inth's classes, keeping markup and behavior. |
 | `disableAnimation` | `boolean` | provider's value | Shows without the fade-in. The banner leaves at once either way. |
 | `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Lock page scroll or trap focus while the banner shows. |
 | `rootClass` | `string` | none | Extra class on the root element. |
@@ -65,15 +65,15 @@ translations; see [translations](../translations).
 ## Replace the title, description or buttons
 
 Three `ng-template` slots replace parts of the banner's markup and keep the
-rest. Put them inside `<c15t-consent-banner>` and import their directives:
+rest. Put them inside `<inth-consent-banner>` and import their directives:
 
 <include src="../../../shared/examples/angular/banner-templates.mdx" />
 
 | Directive | Replaces | Template context |
 | --- | --- | --- |
-| `ng-template[c15tConsentBannerTitle]` (`ConsentBannerTitle`) | The title's text. The `<h2>` and its classes stay. | `$implicit`, the resolved title; `notice`, whether the policy asks for a notice. |
-| `ng-template[c15tConsentBannerDescription]` (`ConsentBannerDescription`) | The description's text. The legal links still follow it. | `$implicit`, the resolved description; `notice`. |
-| `ng-template[c15tConsentBannerAction]` (`ConsentBannerAction`) | Each action button, once per action the policy shows. | `$implicit`, the action id; `label`; `primary`; `variant`; `mode`; `testId`, the stock button's `data-testid`. |
+| `ng-template[inthConsentBannerTitle]` (`ConsentBannerTitle`) | The title's text. The `<h2>` and its classes stay. | `$implicit`, the resolved title; `notice`, whether the policy asks for a notice. |
+| `ng-template[inthConsentBannerDescription]` (`ConsentBannerDescription`) | The description's text. The legal links still follow it. | `$implicit`, the resolved description; `notice`. |
+| `ng-template[inthConsentBannerAction]` (`ConsentBannerAction`) | Each action button, once per action the policy shows. | `$implicit`, the action id; `label`; `primary`; `variant`; `mode`; `testId`, the stock button's `data-testid`. |
 
 The templates are type-checked: `let-action` is a `ConsentBannerButton`, so
 binding it to `[action]` on `ConsentButton` compiles under strict templates.
@@ -81,7 +81,7 @@ Keep `testId` on your button if your tests select the stock test ids.
 
 ## When the banner shows
 
-`<c15t-consent-banner>` renders when all of these are true:
+`<inth-consent-banner>` renders when all of these are true:
 
 - A policy has resolved for the visitor and it asks for a prompt.
 - The visitor has not chosen yet, or the policy asks them to choose again.
@@ -103,7 +103,7 @@ shows each one as a text button that opens the preference dialog.
 
 Accept and Reject record the choice and close the banner in the same task.
 The backend request runs after; a failed request is retried and does not
-reopen the banner. Customize opens `<c15t-consent-dialog>`, so render the
+reopen the banner. Customize opens `<inth-consent-dialog>`, so render the
 dialog too.
 
 ## Accessibility
@@ -122,7 +122,7 @@ dialog too.
 
 ## Style the banner
 
-`<c15t-consent-banner>` reads these theme slots from the `theme` option:
+`<inth-consent-banner>` reads these theme slots from the `theme` option:
 `consentBanner`, `consentBannerCard`, `consentBannerHeader`,
 `consentBannerTitle`, `consentBannerDescription`, `consentBannerFooter`,
 `consentBannerFooterSubGroup`, `consentBannerRights`,

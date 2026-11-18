@@ -18,7 +18,7 @@ export const GOOGLE_CONSENT_TYPES = [
 export type GoogleConsentType = (typeof GOOGLE_CONSENT_TYPES)[number];
 
 /**
- * Default c15t consent category mapping for Google Consent Mode v2.
+ * Default Inth consent category mapping for Google Consent Mode v2.
  *
  * @remarks
  * Shared by direct gtag.js and Google Tag Manager integrations so both emit the
@@ -51,7 +51,7 @@ export const GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING: Record<string, string[]> =
  *
  * @param manifest - Vendor manifest that already contains the default consent
  * mapping.
- * @param consentMapping - Optional caller-provided mapping from c15t consent
+ * @param consentMapping - Optional caller-provided mapping from Inth consent
  * categories to Google consent types.
  * @returns The original manifest when no override is provided, or a shallow
  * copy with the override mapping when one is provided.

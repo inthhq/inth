@@ -106,14 +106,14 @@ describe('ConsentDialogTrigger compatibility', () => {
 		await vi.waitFor(() => {
 			expect(
 				document.querySelector(
-					'button[data-c15t-trigger="true"][aria-label="Open privacy settings"]'
+					'button[data-inth-trigger="true"][aria-label="Open privacy settings"]'
 				)
 			).toBeInTheDocument();
 		});
 
 		const trigger = queryRequiredElement<HTMLButtonElement>(
 			document,
-			'button[data-c15t-trigger="true"]'
+			'button[data-inth-trigger="true"]'
 		);
 		expect(trigger.className).toContain(styles.trigger);
 		expect(document.querySelector('[role="toolbar"]')).not.toBeInTheDocument();
@@ -131,12 +131,12 @@ describe('ConsentDialogTrigger compatibility', () => {
 
 		await vi.waitFor(() => {
 			expect(
-				document.querySelector('button[data-c15t-trigger="true"]')
+				document.querySelector('button[data-inth-trigger="true"]')
 			).toBeInTheDocument();
 		});
 		const trigger = queryRequiredElement<HTMLButtonElement>(
 			document,
-			'button[data-c15t-trigger="true"]'
+			'button[data-inth-trigger="true"]'
 		);
 
 		await dragElement(trigger);
@@ -174,7 +174,7 @@ describe('ConsentDialogTriggerToolbar', () => {
 		);
 		const toolbar = await getToolbar();
 		const preferencesActions = toolbar.querySelectorAll(
-			'[data-c15t-trigger-action="preferences"]'
+			'[data-inth-trigger-action="preferences"]'
 		);
 
 		expect(toolbar.querySelectorAll('button')).toHaveLength(2);
@@ -183,7 +183,7 @@ describe('ConsentDialogTriggerToolbar', () => {
 		await userEvent.click(
 			queryRequiredElement<HTMLButtonElement>(
 				toolbar,
-				'[data-c15t-trigger-action="custom"]'
+				'[data-inth-trigger-action="custom"]'
 			)
 		);
 		expect(onCustomSelect).toHaveBeenCalledOnce();
@@ -192,7 +192,7 @@ describe('ConsentDialogTriggerToolbar', () => {
 		await userEvent.click(
 			queryRequiredElement<HTMLButtonElement>(
 				toolbar,
-				'[data-c15t-trigger-action="preferences"]'
+				'[data-inth-trigger-action="preferences"]'
 			)
 		);
 		expect(onPreferencesSelect).toHaveBeenCalledOnce();
@@ -228,9 +228,9 @@ describe('ConsentDialogTriggerToolbar', () => {
 
 			expect(toolbar).toHaveAttribute('dir', 'ltr');
 			expect(toolbar).toHaveAttribute('data-corner', defaultPosition);
-			expect(buttons[0]).toHaveAttribute('data-c15t-trigger-item', firstItem);
+			expect(buttons[0]).toHaveAttribute('data-inth-trigger-item', firstItem);
 			expect(buttons.at(-1)).toHaveAttribute(
-				'data-c15t-trigger-item',
+				'data-inth-trigger-item',
 				lastItem
 			);
 		}
@@ -261,15 +261,15 @@ describe('ConsentDialogTriggerToolbar', () => {
 		const toolbar = await getToolbar();
 		const disabled = queryRequiredElement<HTMLButtonElement>(
 			toolbar,
-			'[data-c15t-trigger-item="disabled"]'
+			'[data-inth-trigger-item="disabled"]'
 		);
 		const theme = queryRequiredElement<HTMLButtonElement>(
 			toolbar,
-			'[data-c15t-trigger-item="theme"]'
+			'[data-inth-trigger-item="theme"]'
 		);
 		const preferences = queryRequiredElement<HTMLButtonElement>(
 			toolbar,
-			'[data-c15t-trigger-action="preferences"]'
+			'[data-inth-trigger-action="preferences"]'
 		);
 
 		expect(disabled).toBeDisabled();
@@ -311,11 +311,11 @@ describe('ConsentDialogTriggerToolbar', () => {
 		const toolbar = await getToolbar();
 		const customAction = queryRequiredElement<HTMLElement>(
 			toolbar,
-			'[data-c15t-trigger-action="custom"]'
+			'[data-inth-trigger-action="custom"]'
 		);
 		const preferences = queryRequiredElement<HTMLElement>(
 			toolbar,
-			'[data-c15t-trigger-action="preferences"]'
+			'[data-inth-trigger-action="preferences"]'
 		);
 		const icon = customAction.querySelector<HTMLElement>(
 			'[aria-hidden="true"]'
@@ -350,7 +350,7 @@ describe('ConsentDialogTriggerToolbar', () => {
 		const toolbar = await getToolbar();
 		const action = queryRequiredElement<HTMLButtonElement>(
 			toolbar,
-			'[data-c15t-trigger-item="support"]'
+			'[data-inth-trigger-item="support"]'
 		);
 
 		await dragElement(toolbar);

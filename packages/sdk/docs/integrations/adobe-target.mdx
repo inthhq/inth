@@ -1,13 +1,13 @@
 ---
 title: Adobe Target
 description: Gate a self-hosted Adobe Target at.js download or Adobe Experience Platform Web SDK on experience consent, send consent updates and check revocation limits.
-seoTitle: Adobe Target cookie consent with c15t
-seoDescription: Load Adobe Target after experience consent with c15t. Configure at.js opt-in or Web SDK setConsent, and understand what revocation can stop.
+seoTitle: Adobe Target cookie consent with Inth
+seoDescription: Load Adobe Target after experience consent with Inth. Configure at.js opt-in or Web SDK setConsent, and understand what revocation can stop.
 icon: 'bullseye'
 group: integrations
 ---
 
-Adobe Target runs A/B tests and personalizes page content. The c15t
+Adobe Target runs A/B tests and personalizes page content. The Inth
 `adobeTarget` helper waits for `experience` consent before it creates Adobe
 globals or requests the SDK. Pick one mode per page: your self-hosted `at.js`
 file or Adobe Experience Platform Web SDK.
@@ -20,7 +20,7 @@ Target already changed, so keep `reloadOnConsentRevoked` enabled.
 
 Remove the original loader, any Adobe Tags rule and any Web SDK prehiding
 snippet for this installation. A separate Adobe installation can make requests
-before c15t has permission. Without the prehiding snippet, visitors see the
+before Inth has permission. Without the prehiding snippet, visitors see the
 original page first, then Target's changes once consent allows the SDK to load.
 
 <CommandTabs command="@inth/integrations" mode="install" />
@@ -46,7 +46,7 @@ permissions for ECID and other Adobe products alone. The helper doesn't load
 or configure the ID service. Any ID service deployment needs its own consent
 gate and Adobe configuration.
 
-Without that service, `optinEnabled` alone gives no runtime stop API. c15t
+Without that service, `optinEnabled` alone gives no runtime stop API. Inth
 still gates the at.js download, but only the page reload stops an at.js that
 is already running.
 
@@ -99,7 +99,7 @@ separate Adobe Tags or Web SDK initializer.
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `mode` | Required | `'atjs'` or `'websdk'`. Register one deployment path per page. |
-| `category` | `'experience'` | A c15t category or condition. Use a stricter condition if the SDK also serves other purposes. |
+| `category` | `'experience'` | A Inth category or condition. Use a stricter condition if the SDK also serves other purposes. |
 | `nonce` | None | CSP nonce for the loader. Surrounding whitespace is trimmed. A nonce from the consent provider also reaches the loader. |
 | `scriptUrl` | Required for at.js | URL of your at.js download. Root-relative URLs work. Surrounding whitespace is trimmed. |
 | `targetGlobalSettings` | `{ optinEnabled: true }` | at.js settings applied before the file loads. Supported fields are `cookieDomain`, `secureOnly`, `bodyHidingEnabled`, `bodyHiddenStyle`, `pageLoadEnabled`, `viewsEnabled`, `timeout`, `visitorApiTimeout`, `cspScriptNonce` and `cspStyleNonce`. The helper always sets `optinEnabled` to `true`. |
@@ -139,16 +139,16 @@ The helper checks current consent when configuration finishes. It doesn't
 leave an earlier opt-in waiting in Adobe's configuration queue. Once the
 helper hands a command to Adobe, the SDK can still finish that command or an
 in-flight request after revocation. Its consent API doesn't unload listeners
-or restore rendered decisions. Keep c15t's default reload on revocation.
+or restore rendered decisions. Keep inth's default reload on revocation.
 
-Removing the last c15t registration sends a denial to the installed SDK when
+Removing the last Inth registration sends a denial to the installed SDK when
 its consent API is available. It can't unload Adobe's runtime. Reload the page
 before you mount the helper again after its last registration was removed,
 even with the same options. Web SDK allows configuration only once per
 instance. Also reload before you change IDs, versions or deployment mode.
 
 `defaultConsent: 'pending'` is a configuration default, not a replacement for
-c15t's loading gate. Adobe can use consent saved on an earlier page instead.
+inth's loading gate. Adobe can use consent saved on an earlier page instead.
 The helper resends the permitted state after loading on each page. Web SDK
 persists consent, including an opt-out, in `kndctr_<orgId>_consent`, and its
 consent update can contact Adobe. Adobe replaces `@` with `_` in the

@@ -52,7 +52,7 @@ const subscribe = function subscribe(listener: () => void): () => void {
 /**
  * Whether the page already holds a deferred sheet's rules: a hoisted
  * `<style data-href>` (React adopts it and ignores the text it is given), or
- * an in-place `<style data-c15t-styles>`, whose text is kept so a later
+ * an in-place `<style data-inth-styles>`, whose text is kept so a later
  * surface can render it after this one unmounts.
  */
 const findInPage = function findInPage(id: string): boolean {
@@ -66,7 +66,7 @@ const findInPage = function findInPage(id: string): boolean {
 		hoistedInPage.add(id);
 		return true;
 	}
-	const inPlace = document.querySelector(`style[data-c15t-styles="${id}"]`);
+	const inPlace = document.querySelector(`style[data-inth-styles="${id}"]`);
 	if (inPlace?.textContent) {
 		loadedCss.set(id, inPlace.textContent);
 		return true;
@@ -130,8 +130,8 @@ export const preloadSurfaceSheets = async function preloadSurfaceSheets(
  */
 const HOISTS_STYLES = Number.parseInt(version, 10) >= 19;
 
-/** Groups c15t's `<style>` elements in `<head>`, in the order they render. */
-const PRECEDENCE = 'c15t';
+/** Groups inth's `<style>` elements in `<head>`, in the order they render. */
+const PRECEDENCE = 'inth';
 
 const useStylesDisabled = function useStylesDisabled(
 	noStyle: boolean | undefined
@@ -172,7 +172,7 @@ export const useSurfaceSheetsReady = function useSurfaceSheetsReady(
  * Renders the stylesheets a stock surface needs as `<style>` elements.
  *
  * The banner, trigger, ConsentGate, dialog and widget each render the
- * sheets they use, so an app that imports no c15t stylesheet still gets
+ * sheets they use, so an app that imports no Inth stylesheet still gets
  * styled surfaces, and no stylesheet `<link>` holds back the first paint.
  * A server-rendered surface puts its rules in the HTML. A surface that
  * renders in the browser, like the dialog, inserts them with its own code.
@@ -232,9 +232,9 @@ export const SurfaceStyles = ({
 			// into `&gt;`.
 			<style
 				key={sheet.id}
-				data-c15t-styles={sheet.id}
+				data-inth-styles={sheet.id}
 				nonce={nonce}
-				// oxlint-disable-next-line react/no-danger -- c15t's own build-time CSS.
+				// oxlint-disable-next-line react/no-danger -- inth's own build-time CSS.
 				dangerouslySetInnerHTML={{ __html: css }}
 			/>
 		);

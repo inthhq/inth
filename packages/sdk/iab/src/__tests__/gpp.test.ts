@@ -199,7 +199,7 @@ describe('createGPP: US state sections', () => {
 	test.each([
 		['an unknown region', null],
 		['a state without a section', 'NY'],
-		['a state c15t does not encode yet', 'MD'],
+		['a state inth does not encode yet', 'MD'],
 	])('a US visitor in %s gets usnat', (_, regionCode) => {
 		const kernel = makeKernel(US_OPT_OUT, {
 			initialLocation: { countryCode: 'US', regionCode },
@@ -811,7 +811,7 @@ describe('createGPP: other stubs and CMPs', () => {
 		expect(events).not.toContain('signalStatus:ready');
 	});
 
-	test('the c15t stub removes a listener by a numeric string ID', () => {
+	test('the inth stub removes a listener by a numeric string ID', () => {
 		initializeGPPStub();
 		listen();
 		expect(call<boolean>('removeEventListener', '1').data).toBe(true);

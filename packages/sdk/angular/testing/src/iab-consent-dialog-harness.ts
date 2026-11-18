@@ -18,7 +18,7 @@ export interface IABConsentDialogHarnessFilters extends BaseHarnessFilters {
 const VISIBLE_PANEL = '[role="tabpanel"]:not([hidden])';
 
 /**
- * Drives `<c15t-iab-consent-dialog>`, the IAB TCF preference center.
+ * Drives `<inth-iab-consent-dialog>`, the IAB TCF preference center.
  *
  * The dialog renders into `<body>`, so find it with
  * `TestbedHarnessEnvironment.documentRootLoader(fixture)`. It exists only

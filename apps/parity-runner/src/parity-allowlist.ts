@@ -57,7 +57,7 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		check: 'dom',
 		framework: 'astro',
 		reason:
-			"Astro's server-rendered banner carries the attributes its client boot reads — `data-c15t-visible` on the root, `data-c15t-action` on each button — and the `lang` the server resolved. Nothing else renders them because nothing else needs them.",
+			"Astro's server-rendered banner carries the attributes its client boot reads — `data-inth-visible` on the root, `data-inth-action` on each button — and the `lang` the server resolved. Nothing else renders them because nothing else needs them.",
 		slot: '*',
 		story: 'Core/Consent Banner/Default',
 	},
@@ -65,7 +65,7 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		check: 'dom',
 		framework: 'astro',
 		reason:
-			"Astro's server-rendered IAB banner carries the attributes its client boot reads — `data-c15t-visible` on the root — and the `lang` the server resolved, the same way the core banner does. Nothing else renders them because nothing else needs them.",
+			"Astro's server-rendered IAB banner carries the attributes its client boot reads — `data-inth-visible` on the root — and the `lang` the server resolved, the same way the core banner does. Nothing else renders them because nothing else needs them.",
 		slot: '*',
 		story: 'IAB/IAB Consent Banner/Default',
 	},

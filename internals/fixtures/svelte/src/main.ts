@@ -5,7 +5,7 @@ import App from './App.svelte';
 
 import './style.css';
 
-// The Branded link loads a stylesheet that overrides c15t's theme tokens.
+// The Branded link loads a stylesheet that overrides inth's theme tokens.
 if (new URLSearchParams(location.search).get('design') === 'branded') {
 	await import('./consent-theme.css');
 }

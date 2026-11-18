@@ -95,7 +95,7 @@ export const collectExperimentDiagnostics =
 	};
 
 const label = function label(experiment: ConsentExperiment): string {
-	return `c15t experiment "${experiment.id}"`;
+	return `inth experiment "${experiment.id}"`;
 };
 
 /**
@@ -125,7 +125,7 @@ export const describeRejectedArms = function describeRejectedArms(
  * An arm that trips a diagnostic (a forbidden action, unequal prominence for
  * equivalent actions, an invalid variant or position) is a misconfiguration
  * unless the host set `acknowledgeDiagnostics`. The host owns that review;
- * c15t records the acknowledgement with the arm. The runtime does not call
+ * Inth records the acknowledgement with the arm. The runtime does not call
  * this: it runs the base presentation instead of an arm the visitor's policy
  * rejects. Use it in a test to fail a build on a misconfigured experiment.
  *

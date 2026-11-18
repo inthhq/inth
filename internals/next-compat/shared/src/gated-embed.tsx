@@ -1,7 +1,7 @@
 import { ConsentGate } from '@inth/nextjs';
 
 /** Path of the stub's counted embed document. */
-export const GATED_EMBED_PATH = '/api/c15t/__compat/embed';
+export const GATED_EMBED_PATH = '/api/inth/__compat/embed';
 
 /**
  * A marketing-gated iframe rendered straight from a page, with no `Suspense`

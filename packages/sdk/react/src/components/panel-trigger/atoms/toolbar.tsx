@@ -102,7 +102,7 @@ const DEVTOOLS_ITEM: ToolbarDevToolsItem = {
 	icon: <DevToolsIcon />,
 	id: 'devtools',
 	kind: 'devtools',
-	label: 'c15t DevTools',
+	label: 'inth DevTools',
 };
 
 /**
@@ -121,7 +121,7 @@ interface PreferencesActionDefaults {
 	right: ToolbarPreferencesRight;
 	/** Translated default label for that right. */
 	label: string;
-	/** Every right on the active rule, space separated for `data-c15t-rights`. */
+	/** Every right on the active rule, space separated for `data-inth-rights`. */
 	rights: string;
 }
 
@@ -396,8 +396,8 @@ export const TriggerToolbar = ({
 			aria-label={ariaLabel}
 			aria-orientation={orientation}
 			data-corner={corner}
-			data-c15t-trigger-toolbar="true"
-			data-c15t-trigger="true"
+			data-inth-trigger-toolbar="true"
+			data-inth-trigger="true"
 			data-disable-animation={disableAnimation ? '' : undefined}
 			data-dragging={isDragging || undefined}
 			data-snapping={isSnapping || undefined}
@@ -428,11 +428,11 @@ export const TriggerToolbar = ({
 					className={[itemDOMStyle.className, item.className]
 						.filter(Boolean)
 						.join(' ')}
-					data-c15t-rights={
+					data-inth-rights={
 						item.kind === 'preferences' ? policyRights : undefined
 					}
-					data-c15t-trigger-action={item.kind}
-					data-c15t-trigger-item={item.id}
+					data-inth-trigger-action={item.kind}
+					data-inth-trigger-item={item.id}
 					data-right={item.kind === 'preferences' ? item.right : undefined}
 					disabled={item.disabled}
 					onClick={(event) => handleItemClick(event, item)}

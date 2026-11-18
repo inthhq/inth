@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
 	BENCH_BACKEND_LATENCY_ENV,
 	resolveBenchBackendLatencyMs,
-} from '@c15t/benchmarking/browser';
+} from '@inth/benchmarking/browser';
 import { chromium } from 'playwright';
 import type { Page } from 'playwright';
 
@@ -106,7 +106,7 @@ const collectSample = async function collectSample(
 	await page.goto('/banner-visibility');
 	await page.waitForFunction(
 		() => {
-			const state = window.__c15tBannerVisibilityBench;
+			const state = window.__inthBannerVisibilityBench;
 			return !!state && typeof state.bannerVisibleMs === 'number';
 		},
 		undefined,
@@ -114,7 +114,7 @@ const collectSample = async function collectSample(
 	);
 
 	const state = await page.evaluate(() =>
-		JSON.parse(JSON.stringify(window.__c15tBannerVisibilityBench ?? null))
+		JSON.parse(JSON.stringify(window.__inthBannerVisibilityBench ?? null))
 	);
 	if (!state) {
 		throw new Error('Missing benchmark state');

@@ -30,7 +30,7 @@ describe('backend latency', () => {
 	it('keeps 0 selectable from the environment and the CLI', () => {
 		expect(
 			resolveBenchBackendLatencyMs(noFlags, {
-				C15T_BENCH_BACKEND_LATENCY_MS: '0',
+				INTH_BENCH_BACKEND_LATENCY_MS: '0',
 			})
 		).toBe(0);
 		expect(
@@ -41,7 +41,7 @@ describe('backend latency', () => {
 	it('reads the old variable and flags as aliases', () => {
 		expect(
 			resolveBenchBackendLatencyMs(noFlags, {
-				C15T_BENCH_INIT_LATENCY_MS: '40',
+				INTH_BENCH_INIT_LATENCY_MS: '40',
 			})
 		).toBe(40);
 		expect(
@@ -55,7 +55,7 @@ describe('backend latency', () => {
 	it('prefers a flag over the environment and the new name over the alias', () => {
 		expect(
 			resolveBenchBackendLatencyMs(flags({ '--backend-latency-ms': '10' }), {
-				C15T_BENCH_BACKEND_LATENCY_MS: '20',
+				INTH_BENCH_BACKEND_LATENCY_MS: '20',
 			})
 		).toBe(10);
 		expect(
@@ -66,8 +66,8 @@ describe('backend latency', () => {
 		).toBe(10);
 		expect(
 			resolveBenchBackendLatencyMs(noFlags, {
-				C15T_BENCH_BACKEND_LATENCY_MS: '20',
-				C15T_BENCH_INIT_LATENCY_MS: '30',
+				INTH_BENCH_BACKEND_LATENCY_MS: '20',
+				INTH_BENCH_INIT_LATENCY_MS: '30',
 			})
 		).toBe(20);
 	});
@@ -75,8 +75,8 @@ describe('backend latency', () => {
 	it('ignores an empty variable instead of reading it as 0', () => {
 		expect(
 			resolveBenchBackendLatencyMs(noFlags, {
-				C15T_BENCH_BACKEND_LATENCY_MS: '',
-				C15T_BENCH_INIT_LATENCY_MS: '30',
+				INTH_BENCH_BACKEND_LATENCY_MS: '',
+				INTH_BENCH_INIT_LATENCY_MS: '30',
 			})
 		).toBe(30);
 	});
@@ -88,9 +88,9 @@ describe('backend latency', () => {
 		).toThrow('--backend-latency-ms must be a non-negative number');
 		expect(() =>
 			resolveBenchBackendLatencyMs(noFlags, {
-				C15T_BENCH_BACKEND_LATENCY_MS: 'fast',
+				INTH_BENCH_BACKEND_LATENCY_MS: 'fast',
 			})
-		).toThrow('C15T_BENCH_BACKEND_LATENCY_MS must be a non-negative number');
+		).toThrow('INTH_BENCH_BACKEND_LATENCY_MS must be a non-negative number');
 	});
 });
 
@@ -108,8 +108,8 @@ describe('bench condition in result keys', () => {
 		expect(resolveBenchConditionFromEnv({})).toEqual(defaultBenchCondition);
 		expect(
 			resolveBenchConditionFromEnv({
-				C15T_BENCH_BACKEND_LATENCY_MS: '0',
-				C15T_BENCH_PROFILE: 'mobile',
+				INTH_BENCH_BACKEND_LATENCY_MS: '0',
+				INTH_BENCH_PROFILE: 'mobile',
 			})
 		).toEqual({ backendLatencyMs: 0, profile: 'mobile' });
 	});

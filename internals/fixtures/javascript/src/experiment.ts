@@ -1,7 +1,7 @@
 /**
  * Demo only: the `/experiment/` page. `main.ts` with the banner-shape
  * experiment: `control` is the default banner and `wall` blocks the page
- * until the visitor chooses. c15t picks the arm; `?arm=wall` sets it the
+ * until the visitor chooses. Inth picks the arm; `?arm=wall` sets it the
  * way a flag provider would.
  */
 import { init } from '@inth/sdk';
@@ -30,7 +30,7 @@ const bannerExperiment: ConsentExperiment<'wall'> = {
 	arms: { wall: { prompt: { variant: 'wall' } } },
 	id: 'banner-shape',
 };
-// `arm` comes from your flag provider. Omit it to let c15t pick.
+// `arm` comes from your flag provider. Omit it to let Inth pick.
 const arm = new URLSearchParams(location.search).get('arm');
 const experiment: ConsentExperiment<'wall'> =
 	arm === null
@@ -64,11 +64,11 @@ const consent = init({
 			pushToDataLayer({
 				arm: payload.experiment.arm,
 				consent_action: payload.consentAction,
-				event: 'c15t_choice_recorded',
+				event: 'inth_choice_recorded',
 				experiment_id: payload.experiment.id,
 			});
 			logExperimentEvent(
-				`c15t_choice_recorded · ${payload.experiment.arm} · ${payload.consentAction}`
+				`inth_choice_recorded · ${payload.experiment.arm} · ${payload.consentAction}`
 			);
 		},
 		onSurfaceShown: (payload: OnSurfaceShownPayload) => {
@@ -77,12 +77,12 @@ const consent = init({
 			}
 			pushToDataLayer({
 				arm: payload.experiment.arm,
-				event: 'c15t_surface_shown',
+				event: 'inth_surface_shown',
 				experiment_id: payload.experiment.id,
 				surface: payload.surface,
 			});
 			logExperimentEvent(
-				`c15t_surface_shown · ${payload.experiment.arm} · ${payload.surface}`
+				`inth_surface_shown · ${payload.experiment.arm} · ${payload.surface}`
 			);
 		},
 	},

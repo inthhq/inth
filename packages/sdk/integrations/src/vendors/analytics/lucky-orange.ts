@@ -128,7 +128,7 @@ const createLuckyOrange = function createLuckyOrange(
 /**
  * Enables Lucky Orange privacy consent only after its privacy module is ready.
  * Reports privacy initialization failures with `console.error`.
- * Enable Require Consent in the Lucky Orange dashboard. Keep c15t's reload on
+ * Enable Require Consent in the Lucky Orange dashboard. Keep inth's reload on
  * revocation enabled; false consent is not verified to stop every recording path.
  * @param options - Lucky Orange site and loader configuration.
  * @returns A gated script, or an inactive script for a missing site ID.

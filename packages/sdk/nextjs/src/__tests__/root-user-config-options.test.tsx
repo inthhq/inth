@@ -1,5 +1,5 @@
 /**
- * `ConsentRoot` props merge over `c15t.config.ts` per option: an `options`
+ * `ConsentRoot` props merge over `inth.config.ts` per option: an `options`
  * prop replaces only the keys it names, and `options.callbacks` replaces
  * only the callbacks it names. Passing `options={{ nonce }}` must not drop
  * the config's callbacks, translations or mode.
@@ -17,7 +17,7 @@ const configured = vi.hoisted(() => ({
 	shown: vi.fn(),
 }));
 
-// oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's c15t.config.ts. The mock is that alias; ConsentRoot is real.
+// oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's inth.config.ts. The mock is that alias; ConsentRoot is real.
 vi.mock('@inth/nextjs/user-config', () => ({
 	default: {
 		options: {

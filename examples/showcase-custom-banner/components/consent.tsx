@@ -8,20 +8,20 @@ import { scripts } from '@/lib/scripts';
 
 import { ConsentDialog } from './consent-dialog';
 
-// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// The backend is your Inth project: set NEXT_PUBLIC_INTH_PROJECT_URL in
 // .env.local. The policy comes from its consent manifest.
 const config = {
 	projectUrl:
-		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+		process.env.NEXT_PUBLIC_INTH_PROJECT_URL ?? 'https://your-project.inth.app',
 };
 
-// A wall blocks the page until the visitor answers. c15t reports it as
+// A wall blocks the page until the visitor answers. Inth reports it as
 // `banner.blocking`, and refuses it for a notice, which must never block.
 const presentation: ConsentPresentation = { prompt: { variant: 'wall' } };
 
 /**
- * The c15t runtime with Northwind's own consent UI. No stock banner, dialog
- * or c15t stylesheet: `ConsentDialog` renders everything from the headless
+ * The Inth runtime with Northwind's own consent UI. No stock banner, dialog
+ * or Inth stylesheet: `ConsentDialog` renders everything from the headless
  * hooks.
  */
 export const Consent = ({ children }: { children: ReactNode }) => (

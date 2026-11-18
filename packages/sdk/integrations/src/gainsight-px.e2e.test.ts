@@ -43,9 +43,9 @@ describe('Gainsight PX production loader contract', () => {
 
 	afterEach(() => {
 		Reflect.deleteProperty(window, 'aptrinsic');
-		Reflect.deleteProperty(window, '__c15tGainsightPxProductKey');
-		Reflect.deleteProperty(window, '__c15tGainsightPxSetup');
-		Reflect.deleteProperty(globalThis, '__c15tStarted');
+		Reflect.deleteProperty(window, '__inthGainsightPxProductKey');
+		Reflect.deleteProperty(window, '__inthGainsightPxSetup');
+		Reflect.deleteProperty(globalThis, '__inthStarted');
 		vi.unstubAllGlobals();
 	});
 
@@ -505,8 +505,8 @@ describe('Gainsight PX production loader contract', () => {
 	it('honors a denied shared owner until that owner disposes', async () => {
 		const runtime = Object.assign(vi.fn(), { __sdkBundleStarted: true });
 		Reflect.set(window, 'aptrinsic', runtime);
-		// A runtime c15t started records its product key.
-		Reflect.set(window, '__c15tGainsightPxProductKey', 'AP-SHARED-DENIED-2');
+		// A runtime Inth started records its product key.
+		Reflect.set(window, '__inthGainsightPxProductKey', 'AP-SHARED-DENIED-2');
 		const granted = createConsentKernel();
 		const denied = createConsentKernel();
 		await granted.commands.save(grantedConsents);
@@ -761,13 +761,13 @@ describe('Gainsight PX production loader contract', () => {
 				Reflect.set(window, 'aptrinsic', runtime);
 			}
 			const element = Object.assign(document.createElement('script'), {
-				__c15tConsent: true,
-				__c15tDone: completed ? 'load' : undefined,
-				__c15tScript: script.id,
+				__inthConsent: true,
+				__inthDone: completed ? 'load' : undefined,
+				__inthScript: script.id,
 				src: script.src,
 			});
 			document.head.appendChild(element);
-			Reflect.set(globalThis, '__c15tStarted', { [script.id]: element });
+			Reflect.set(globalThis, '__inthStarted', { [script.id]: element });
 			const kernel = createConsentKernel();
 			await kernel.commands.save(allow ? grantedConsents : deniedConsents);
 			const loader = createScriptLoader({
@@ -783,7 +783,7 @@ describe('Gainsight PX production loader contract', () => {
 					usePOST: true,
 				});
 				expect(window).toHaveProperty(
-					'__c15tGainsightPxProductKey',
+					'__inthGainsightPxProductKey',
 					'AP-SERVER-HYDRATION-2'
 				);
 				expect(document.head.querySelectorAll('script')).toHaveLength(
@@ -828,7 +828,7 @@ describe('Gainsight PX production loader contract', () => {
 		}
 	);
 
-	it('rejects a running PX installation that c15t did not start', () => {
+	it('rejects a running PX installation that inth did not start', () => {
 		const external = Object.assign(vi.fn(), { __sdkBundleStarted: true });
 		Reflect.set(window, 'aptrinsic', external);
 		expect(() =>
@@ -862,12 +862,12 @@ describe('Gainsight PX production loader contract', () => {
 		// oxlint-disable-next-line no-new-func -- Executes the generated server snippet.
 		new Function(`${start?.prelude ?? ''};${start?.code}`)();
 		const element = Object.assign(document.createElement('script'), {
-			__c15tConsent: true,
-			__c15tScript: server.id,
+			__inthConsent: true,
+			__inthScript: server.id,
 			src: server.src,
 		});
 		document.head.appendChild(element);
-		Reflect.set(globalThis, '__c15tStarted', { [resourceKey]: element });
+		Reflect.set(globalThis, '__inthStarted', { [resourceKey]: element });
 		const kernel = createConsentKernel();
 		await kernel.commands.save(grantedConsents);
 		let loader: ReturnType<typeof createScriptLoader> | undefined;
@@ -896,12 +896,12 @@ describe('Gainsight PX production loader contract', () => {
 		// oxlint-disable-next-line no-new-func -- Executes the generated server snippet.
 		new Function(`${start?.prelude ?? ''};${start?.code}`)();
 		const element = Object.assign(document.createElement('script'), {
-			__c15tConsent: true,
-			__c15tScript: server.id,
+			__inthConsent: true,
+			__inthScript: server.id,
 			src: source,
 		});
 		document.head.appendChild(element);
-		Reflect.set(globalThis, '__c15tStarted', { [server.id]: element });
+		Reflect.set(globalThis, '__inthStarted', { [server.id]: element });
 		const kernel = createConsentKernel();
 		await kernel.commands.save(grantedConsents);
 		const loader = createScriptLoader({
@@ -984,13 +984,13 @@ describe('Gainsight PX production loader contract', () => {
 						Reflect.set(window, 'aptrinsic', runtime);
 					}
 					const element = Object.assign(document.createElement('script'), {
-						__c15tConsent: true,
-						__c15tDone: completed ? 'load' : undefined,
-						__c15tScript: server.id,
+						__inthConsent: true,
+						__inthDone: completed ? 'load' : undefined,
+						__inthScript: server.id,
 						src: server.src,
 					});
 					document.head.appendChild(element);
-					Reflect.set(globalThis, '__c15tStarted', { [server.id]: element });
+					Reflect.set(globalThis, '__inthStarted', { [server.id]: element });
 					const kernel = createConsentKernel();
 					await kernel.commands.save(allow ? grantedConsents : deniedConsents);
 					let loader: ReturnType<typeof createScriptLoader> | undefined;

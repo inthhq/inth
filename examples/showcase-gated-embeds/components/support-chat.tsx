@@ -46,7 +46,7 @@ const ChatReady = () => {
 
 /**
  * The chat itself is the Crisp script registered in `consent.tsx`. This card
- * is its in-page placeholder: it grants Functionality, which lets c15t load
+ * is its in-page placeholder: it grants Functionality, which lets Inth load
  * the script, and then offers a button that opens the chat window.
  */
 export const SupportChat = () => (

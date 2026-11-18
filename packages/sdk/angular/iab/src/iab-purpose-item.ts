@@ -91,11 +91,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 		LegitimateInterestIcon,
 		LockIcon,
 	],
-	selector: 'c15t-iab-purpose-item',
+	selector: 'inth-iab-purpose-item',
 	template: `
 		@let t = iabT().preferenceCenter;
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			[(open)]="isExpanded"
 			[noStyle]="true"
 			[class]="cls(styles.purposeItem)"
@@ -103,34 +103,34 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 		>
 			<div [class]="cls(styles.purposeHeader)">
 				<button
-					c15tPreferenceItemTrigger
+					inthPreferenceItemTrigger
 					[class]="cls(styles.purposeTrigger)"
 				>
-					<span c15tPreferenceItemLeading>
+					<span inthPreferenceItemLeading>
 						<svg
-							c15t-chevron-right-icon
+							inth-chevron-right-icon
 							[class]="cls(styles.purposeArrow)"
 							[expanded]="isExpanded()"
 						></svg>
 					</span>
 					<div
-						c15tPreferenceItemHeader
+						inthPreferenceItemHeader
 						[class]="cls(styles.purposeInfo)"
 					>
 						<h3
-							c15tPreferenceItemTitle
+							inthPreferenceItemTitle
 							[class]="cls(styles.purposeName)"
 						>
 							{{ purpose().name }}
 							@if (isLocked()) {
 								<svg
-									c15t-lock-icon
+									inth-lock-icon
 									[class]="cls(styles.lockIcon)"
 								></svg>
 							}
 						</h3>
 						<p
-							c15tPreferenceItemMeta
+							inthPreferenceItemMeta
 							[class]="cls(styles.purposeMeta)"
 						>
 							{{
@@ -139,11 +139,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 						</p>
 						@if (legIntVendors().length > 0) {
 							<span
-								c15tPreferenceItemAuxiliary
+								inthPreferenceItemAuxiliary
 								[class]="cls(styles.legitimateInterestBadge)"
 							>
 								<svg
-									c15t-legitimate-interest-icon
+									inth-legitimate-interest-icon
 									[class]="cls(styles.legitimateInterestIcon)"
 								></svg>
 								{{ liCountText() }}
@@ -152,9 +152,9 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 					</div>
 				</button>
 				@if (showConsentSwitch()) {
-					<div c15tPreferenceItemControl>
+					<div inthPreferenceItemControl>
 						<button
-							c15tSwitch
+							inthSwitch
 							[attr.aria-label]="purpose().name"
 							[checked]="isEnabled()"
 							(checkedChange)="setPurposeConsent($event)"
@@ -163,11 +163,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 							data-size="medium"
 						>
 							<span
-								c15tSwitchControl
+								inthSwitchControl
 								[class]="cls(switchStyles.track)"
 							>
 								<span
-									c15tSwitchThumb
+									inthSwitchThumb
 									[class]="cls(switchStyles.thumb)"
 								></span>
 							</span>
@@ -177,11 +177,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 			</div>
 
 			<div
-				c15t-preference-item-content
+				inth-preference-item-content
 				[innerClassName]="cls(styles.purposeContent)"
 				[noStyle]="resolvedNoStyle()"
 			>
-				<ng-template c15tPreferenceItemBody>
+				<ng-template inthPreferenceItemBody>
 					<p [class]="cls(styles.purposeDescription)">
 						{{ purpose().description }}
 					</p>
@@ -191,7 +191,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 							<div [class]="cls(styles.purposeLiSectionHeader)">
 								<div [class]="cls(styles.purposeLiInfo)">
 									<svg
-										c15t-legitimate-interest-icon
+										inth-legitimate-interest-icon
 										[class]="cls(styles.legitimateInterestIcon)"
 									></svg>
 									<span>{{ liCountText() }}</span>
@@ -218,7 +218,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 					@if (legIntVendors().length > 0 && !purposeObjection()) {
 						<div [class]="cls(styles.legitimateInterestBadge)">
 							<svg
-								c15t-legitimate-interest-icon
+								inth-legitimate-interest-icon
 								[class]="cls(styles.legitimateInterestIcon)"
 							></svg>
 							{{ liCountText() }}
@@ -228,16 +228,16 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 					@if (purpose().illustrations.length > 0) {
 						<div>
 							<div
-								c15tPreferenceItem
+								inthPreferenceItem
 								[(open)]="showExamples"
 								[noStyle]="true"
 							>
 								<button
-									c15tPreferenceItemTrigger
+									inthPreferenceItemTrigger
 									[class]="cls(styles.examplesToggle)"
 								>
 									<svg
-										c15t-chevron-right-icon
+										inth-chevron-right-icon
 										style="height: 0.75rem; width: 0.75rem"
 										[expanded]="showExamples()"
 									></svg>
@@ -245,10 +245,10 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 									({{ purpose().illustrations.length }})
 								</button>
 								<div
-									c15t-preference-item-content
+									inth-preference-item-content
 									[noStyle]="resolvedNoStyle()"
 								>
-									<ng-template c15tPreferenceItemBody>
+									<ng-template inthPreferenceItemBody>
 										<ul [class]="cls(styles.examplesList)">
 											@for (
 												illustration of purpose().illustrations;
@@ -265,16 +265,16 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 
 					<div>
 						<div
-							c15tPreferenceItem
+							inthPreferenceItem
 							[(open)]="showVendors"
 							[noStyle]="true"
 						>
 							<button
-								c15tPreferenceItemTrigger
+								inthPreferenceItemTrigger
 								[class]="cls(styles.vendorsToggle)"
 							>
 								<svg
-									c15t-chevron-right-icon
+									inth-chevron-right-icon
 									style="height: 0.75rem; width: 0.75rem"
 									[expanded]="showVendors()"
 								></svg>
@@ -282,11 +282,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 								({{ partnerCount() }})
 							</button>
 							<div
-								c15t-preference-item-content
+								inth-preference-item-content
 								[innerClassName]="cls(styles.vendorSection)"
 								[noStyle]="resolvedNoStyle()"
 							>
-								<ng-template c15tPreferenceItemBody>
+								<ng-template inthPreferenceItemBody>
 									@if (iabConsentVendors().length > 0) {
 										<h5 [class]="cls(styles.vendorSectionTitle)">
 											{{ t.purposeItem.withYourPermission }}
@@ -335,7 +335,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 											"
 										>
 											<svg
-												c15t-legitimate-interest-icon
+												inth-legitimate-interest-icon
 												[class]="cls(styles.legitimateInterestIcon)"
 											></svg>
 											{{ t.purposeItem.legitimateInterest }}
@@ -386,7 +386,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 										<div [class]="cls(styles.customVendorPurposeSection)">
 											<h5 [class]="cls(styles.vendorSectionTitleCustom)">
 												<svg
-													c15t-globe-icon
+													inth-globe-icon
 													[class]="cls(styles.legitimateInterestIcon)"
 												></svg>
 												{{ t.vendorList.customVendorsHeading }}
@@ -465,7 +465,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 			let-vendor
 		>
 			<button
-				c15tSwitch
+				inthSwitch
 				[attr.aria-label]="vendor.name"
 				[checked]="vendorConsent(vendor.id)"
 				(checkedChange)="
@@ -475,11 +475,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 				data-size="small"
 			>
 				<span
-					c15tSwitchControl
+					inthSwitchControl
 					[class]="cls(switchStyles.track)"
 				>
 					<span
-						c15tSwitchThumb
+						inthSwitchThumb
 						[class]="cls(switchStyles.thumb)"
 					></span>
 				</span>
@@ -527,7 +527,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 				>
 					<span>{{ vendor.name }}</span>
 					<svg
-						c15t-globe-icon
+						inth-globe-icon
 						[class]="cls(styles.customVendorIcon)"
 						[attr.aria-label]="iabT().common.customPartner"
 					></svg>

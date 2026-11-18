@@ -208,7 +208,7 @@ export const createDeferredRuntime = function createDeferredRuntime(
 			create = await options.loadEngine();
 		} catch (error) {
 			// The page keeps the stand-in.
-			console.error('[c15t] The consent engine failed to load.', error);
+			console.error('[inth] The consent engine failed to load.', error);
 			return undefined;
 		}
 		// A commit started while the chunk loaded: the engine starts from it.

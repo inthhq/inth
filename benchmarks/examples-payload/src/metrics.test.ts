@@ -53,7 +53,7 @@ const measurement = function measurement(
 				crossOrigin: false,
 				method: 'GET',
 				phase: 'initial',
-				url: 'http://127.0.0.1:3100/api/c15t/init?x=1',
+				url: 'http://127.0.0.1:3100/api/inth/init?x=1',
 			},
 			{
 				crossOrigin: true,
@@ -76,7 +76,7 @@ const measurement = function measurement(
 describe('request classification', () => {
 	it.each([
 		['http://x/init', true],
-		['http://x/api/c15t/init/', true],
+		['http://x/api/inth/init/', true],
 		['http://x/initial.js', false],
 	])('isInitRequest(%s) is %s', (url, expected) => {
 		expect(isInitRequest(url)).toBe(expected);
@@ -84,7 +84,7 @@ describe('request classification', () => {
 
 	it.each([
 		['http://x/manifest', true],
-		['http://x/api/c15t/manifest?v=2', true],
+		['http://x/api/inth/manifest?v=2', true],
 		['http://x/manifest.json', false],
 		['http://x/site.webmanifest', false],
 	])('isManifestRequest(%s) is %s', (url, expected) => {
@@ -136,7 +136,7 @@ describe('toBenchmarkResult', () => {
 	it('keys the result by package, example and suite with its budgets', () => {
 		const result = toBenchmarkResult(measurement(), context);
 		expect(result).toMatchObject({
-			package: '@c15t/examples-payload-bench',
+			package: '@inth/examples-payload-bench',
 			scenario: 'nextjs',
 			suite: 'examples-payload',
 		});

@@ -68,7 +68,7 @@
 <main
 	style="padding: 32px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;"
 >
-	<h1 style="margin: 0;">Svelte c15t banner benchmark</h1>
+	<h1 style="margin: 0;">Svelte inth banner benchmark</h1>
 </main>
 
 {#if snapshot?.activeUI === 'banner'}

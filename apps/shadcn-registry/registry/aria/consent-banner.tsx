@@ -14,7 +14,7 @@ import {
 } from "@inth/react/headless"
 import type { HeadlessConsentBannerState } from "@inth/react/headless"
 
-import { ConsentBranding } from "@/components/c15t/consent-branding"
+import { ConsentBranding } from "@/components/inth/consent-branding"
 import { Button } from "@/components/ui/button"
 import {
   Card,

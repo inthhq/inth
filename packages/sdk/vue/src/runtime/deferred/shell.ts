@@ -94,7 +94,7 @@ export interface DeferredContextOptions {
 }
 
 /** The hiding `<style>` once the context handles the tap. */
-const COMMITTED_STYLE_ID = 'c15t-early-commit';
+const COMMITTED_STYLE_ID = 'inth-early-commit';
 
 /** The stock dialog's root. */
 const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
@@ -200,7 +200,7 @@ export const createDeferredContext = function createDeferredContext(
 			create = await options.loadEngine();
 		} catch (error) {
 			// The page keeps the stand-in.
-			console.error('[c15t] The consent engine failed to load.', error);
+			console.error('[inth] The consent engine failed to load.', error);
 			return undefined;
 		}
 		// A commit started while the chunk loaded: the engine starts from it.

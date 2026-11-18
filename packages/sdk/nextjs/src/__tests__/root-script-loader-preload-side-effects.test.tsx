@@ -85,7 +85,7 @@ const cases: [string, () => ConsentState][] = [
 				throw new Error('The state records a marketing decision.');
 			}
 			localStorage.setItem(
-				'c15t',
+				'inth',
 				encodeStoredConsentEnvelopeJson({
 					categories: {
 						marketing: {
@@ -121,7 +121,7 @@ const cases: [string, () => ConsentState][] = [
 		'a subject-only record',
 		() => {
 			localStorage.setItem(
-				'c15t',
+				'inth',
 				encodeStoredConsentEnvelopeJson({
 					categories: {},
 					subject: { subjectId: SUBJECT_ID },

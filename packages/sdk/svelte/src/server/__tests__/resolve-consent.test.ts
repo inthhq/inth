@@ -15,7 +15,7 @@ import { MANIFEST_FIXTURE } from '../../lib/kit/__tests__/manifest-fixture';
 import { resolveConsent } from '../../lib/server';
 
 const INIT = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -94,7 +94,7 @@ describe('@inth/svelte/server resolveConsent', () => {
 				headers: new Headers({
 					'accept-language': language,
 					'cf-ipcountry': country,
-					cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1234567890',
+					cookie: 'inth=c.necessary:1,c.marketing:1,i.t:1234567890',
 					'sec-gpc': '1',
 				}),
 				projectUrl,
@@ -123,7 +123,7 @@ describe('@inth/svelte/server resolveConsent', () => {
 			headers: new Headers({
 				'accept-language': 'de-DE,de;q=0.9',
 				'cf-ipcountry': 'DE',
-				cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1234567890',
+				cookie: 'inth=c.necessary:1,c.marketing:1,i.t:1234567890',
 			}),
 		});
 		expect(fetch).not.toHaveBeenCalled();
@@ -139,7 +139,7 @@ describe('@inth/svelte/server resolveConsent', () => {
 		const state = await resolveConsent({
 			fetch,
 			headers: new Headers({
-				cookie: 'session=secret; c15t=stored',
+				cookie: 'session=secret; inth=stored',
 				'x-forwarded-host': 'attacker.example',
 			}),
 			projectUrl: '/consent',
@@ -150,7 +150,7 @@ describe('@inth/svelte/server resolveConsent', () => {
 			'https://app.example.com/consent/init'
 		);
 		const sent = new Headers(fetch.mock.calls[0]?.[1]?.headers);
-		expect(sent.get('cookie')).toBe('c15t=stored');
+		expect(sent.get('cookie')).toBe('inth=stored');
 		expect(state.initialPolicyResolution?.status).toBe('matched');
 	});
 

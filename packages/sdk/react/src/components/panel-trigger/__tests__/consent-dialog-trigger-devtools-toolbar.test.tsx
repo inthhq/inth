@@ -26,7 +26,7 @@ const LauncherProbe = ({ seen }: { seen: boolean[] }) => {
 };
 
 afterEach(() => {
-	for (const host of document.querySelectorAll('[data-c15t-dev-tools-host]')) {
+	for (const host of document.querySelectorAll('[data-inth-dev-tools-host]')) {
 		host.remove();
 	}
 });

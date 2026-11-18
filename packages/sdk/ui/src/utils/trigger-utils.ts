@@ -54,7 +54,7 @@ export const DEFAULT_TRIGGER_CONFIG: TriggerConfig = {
 	defaultPosition: 'bottom-right',
 	offset: 20,
 	persistPosition: true,
-	storageKey: 'c15t-trigger-position',
+	storageKey: 'inth-trigger-position',
 };
 
 /**

@@ -47,7 +47,7 @@ export interface InternalKernel extends ConsentKernel {
 	 */
 	markLive: (at?: number) => void;
 	/**
-	 * Mark `id` as an ID c15t generated that no record carries, or clear the
+	 * Mark `id` as an ID Inth generated that no record carries, or clear the
 	 * mark with `null`. It lives in memory only until a save records it, so
 	 * `identify()` keeps the identity for the first save instead of linking
 	 * an ID the next page load does not have. The first save, vendor save or

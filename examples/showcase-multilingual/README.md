@@ -4,10 +4,10 @@ Northwind Coffee sells in English, German and French, to visitors in Europe,
 the US and beyond. The consent banner follows both. Its language follows the
 route (`/en`, `/de`, `/fr`), and the policy follows the visitor's region: an
 opt-in banner in Germany, opt-out with no banner in California, and no consent
-UI in Brazil under c15t's default rules.
+UI in Brazil under inth's default rules.
 
 The bar above the header previews the site as a visitor from each region. It
-gives c15t a location the way a backend would from the request, and c15t
+gives Inth a location the way a backend would from the request, and Inth
 resolves its policy rules for it in the browser.
 
 ## The files that matter
@@ -16,13 +16,13 @@ resolves its policy rules for it in the browser.
   with the route's locale and the copy for each language. A
   small `FollowLocale` component calls `useSetLanguage` when the route's
   locale changes.
-- [`lib/consent-i18n.ts`](./lib/consent-i18n.ts) imports c15t's built-in
+- [`lib/consent-i18n.ts`](./lib/consent-i18n.ts) imports inth's built-in
   German and French from `@inth/nextjs/translations/de` and `@inth/nextjs/translations/fr`,
   and rewrites one line per language in Northwind's voice. Everything else in
-  the banner and dialog is c15t's own copy.
+  the banner and dialog is inth's own copy.
 - [`components/visitor-preview.tsx`](./components/visitor-preview.tsx) sets
   the visitor's country and region with `useSetOverrides`, then runs `useInit`
-  so c15t resolves the policy again.
+  so Inth resolves the policy again.
 
 The rest is the shop: `proxy.ts` sends `/` to the browser's language,
 `lib/dictionaries.ts` holds the page copy, and `app/[lang]` renders it.
@@ -37,8 +37,8 @@ bun run build:libs
 bun run --cwd examples/showcase-multilingual dev
 ```
 
-Open http://localhost:3116. Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
-such as `https://your-project.inth.app`. c15t reads the project's consent
+Open http://localhost:3116. Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. Inth reads the project's consent
 manifest and sends each choice there.
 
 ## Going to production

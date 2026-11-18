@@ -2,7 +2,7 @@
  * Writes the stylesheets a server-rendered surface named into the page.
  *
  * A stock surface that renders on the server leaves a
- * `<meta name="c15t-styles">` marker in `<head>` naming the sheets it
+ * `<meta name="inth-styles">` marker in `<head>` naming the sheets it
  * needs (see `../surface-styles.ts`). This puts those sheets into the HTML
  * as `<style>` elements, so the banner is styled on the first paint
  * without a stylesheet `<link>` that holds the paint back. In the browser,
@@ -99,7 +99,7 @@ export const injectSurfaceStyles = function injectSurfaceStyles(
 	return styles ? head + styles + html.slice(headEnd) : html;
 };
 
-const EARLY_TAP_TAG = '<script data-c15t-early-tap>';
+const EARLY_TAP_TAG = '<script data-inth-early-tap>';
 
 /**
  * Give the banner's early-tap script the nonce SvelteKit put on its own
@@ -120,7 +120,7 @@ export const nonceEarlyTapScript = function nonceEarlyTapScript(
 	return nonce
 		? html.replaceAll(
 				EARLY_TAP_TAG,
-				`<script data-c15t-early-tap nonce="${nonce}">`
+				`<script data-inth-early-tap nonce="${nonce}">`
 			)
 		: html;
 };

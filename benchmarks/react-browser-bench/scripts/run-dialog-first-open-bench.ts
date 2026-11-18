@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { safeCommitSha, safeGitDirty } from '@c15t/benchmarking/utils';
+import { safeCommitSha, safeGitDirty } from '@inth/benchmarking/utils';
 import { chromium } from 'playwright';
 import type { Page } from 'playwright';
 
@@ -18,7 +18,7 @@ const iterations = parseIterations(process.env.BENCH_ITERATIONS, 10);
 const commitSha = safeCommitSha();
 const metadata = { gitDirty: safeGitDirty() };
 const workspaceRoot = fileURLToPath(new URL('../../../', import.meta.url));
-const output = process.env.BENCH_OUTPUT ?? '/tmp/c15t-dialog-results.json';
+const output = process.env.BENCH_OUTPUT ?? '/tmp/inth-dialog-results.json';
 
 const measure = (page: Page, selector: string) =>
 	page.evaluate((buttonSelector) => {

@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/nextjs-browser-bench",
+	"name": "@inth/nextjs-browser-bench",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -13,7 +13,7 @@
 		"start": "next start"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/integrations": "workspace:*",
 		"@inth/nextjs": "workspace:*",
 		"@inth/sdk": "workspace:*",

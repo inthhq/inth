@@ -18,7 +18,7 @@ DevTools. In the Network panel, find the `/init` request.
    banner shows.
 4. **The component is outside the provider.** `ConsentBanner` must render
    inside `ConsentProvider`; outside it, Svelte throws
-   `c15t: no v3 consent context`.
+   `inth: no v3 consent context`.
 
 ## Svelte throws "no v3 consent context"
 
@@ -45,8 +45,8 @@ only. Colors, radius, typography and other tokens in `theme` are not turned
 into CSS in the browser, and in development the provider logs a warning about
 it.
 
-**Fix.** Set the `--c15t-*` variables on `:root` in a stylesheet, or render
-`generateThemeCSS()` output as `<style id="c15t-theme">`. The customize page
+**Fix.** Set the `--inth-*` variables on `:root` in a stylesheet, or render
+`generateThemeCSS()` output as `<style id="inth-theme">`. The customize page
 shows both.
 
 **Check.** If your values still lose, inspect the element. A generated theme
@@ -56,16 +56,16 @@ uses `:root:root`, so it beats your own `:root` rule.
 
 ## The dialog or banner has no styles
 
-**Check.** Look in `<head>` for `<style data-c15t-styles>` elements, and in
+**Check.** Look in `<head>` for `<style data-inth-styles>` elements, and in
 the console for a Content Security Policy error. On a server-rendered
-SvelteKit page, check that `src/hooks.server.ts` exports `c15tHandle`.
+SvelteKit page, check that `src/hooks.server.ts` exports `inthHandle`.
 
 **Fix.**
 
-- No c15t `<style>` element: the provider sets `styles={false}` or
+- No Inth `<style>` element: the provider sets `styles={false}` or
   `noStyle`. With `styles={false}`, import `@inth/svelte/styles.css` once,
   in the component that renders the provider or in your global stylesheet.
-- The SvelteKit banner is unstyled until hydration: add `c15tHandle` from
+- The SvelteKit banner is unstyled until hydration: add `inthHandle` from
   `@inth/svelte/kit` to `src/hooks.server.ts`, or set `styles={false}` and
   import `@inth/svelte/styles.css`.
 - The console reports a blocked inline style: pass the provider a `nonce`, or

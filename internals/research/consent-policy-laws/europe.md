@@ -1,6 +1,6 @@
 # Europe cookie-policy source review
 
-Reviewed 8 September 2026. This note separates legal conditions from c15t
+Reviewed 8 September 2026. This note separates legal conditions from Inth
 preset decisions. It covers the EEA baseline, selected national analytics
 exceptions, the UK, Switzerland and Türkiye. It is not an article-by-article
 audit of all 30 EEA national implementations.
@@ -56,7 +56,7 @@ France's consolidated January 2026 recommendation distinguishes exemption
 conditions from recommendations: information in a privacy policy, a justified
 tracker lifetime such as 13 months without automatic extension, and
 collected-data retention of at most 25 months. These concern trackers and
-data, not c15t consent-receipt expiry. Earlier developer guidance should not
+data, not Inth consent-receipt expiry. Earlier developer guidance should not
 silently replace current exemption conditions.
 
 Source: [CNIL consolidated recommendation, section 5](https://www.cnil.fr/sites/default/files/2026-01/recommandation_cookies_consolidee.pdf).

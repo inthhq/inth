@@ -11,7 +11,7 @@ import { readList, readScriptOptions } from './auto-init';
 import { createConsentClientWith } from './client-base';
 import type { CreateConsentClientContext } from './client-base';
 import { createGlobalWith } from './global-base';
-import type { C15tGlobalBase } from './global-base';
+import type { InthGlobalBase } from './global-base';
 import { resolveRules } from './policy-rules';
 import type {
 	ConsentClient,
@@ -22,7 +22,7 @@ import type {
 const ENTRY = '@inth/sdk/testing';
 
 /** The global API installed by `c15t.testing.js`. */
-export interface TestingC15tGlobal extends C15tGlobalBase {
+export interface TestingInthGlobal extends InthGlobalBase {
 	/** The testing mode, for `init({ mode: c15t.testing({ policy }) })`. */
 	testing: (
 		options?: TestingModeOptions
@@ -87,7 +87,7 @@ export const createTestingConsentClient = function createTestingConsentClient(
  */
 export const createTestingGlobal = function createTestingGlobal(
 	context: CreateConsentClientContext = {}
-): TestingC15tGlobal {
+): TestingInthGlobal {
 	return Object.assign(
 		createGlobalWith(
 			{ ...context, pkg: context.pkg ?? ENTRY },

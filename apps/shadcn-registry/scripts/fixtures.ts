@@ -17,7 +17,7 @@
  *
  *   bun scripts/fixtures.ts
  *   bun scripts/fixtures.ts --framework next --base aria
- *   bun scripts/fixtures.ts --c15t ../../../other-checkout/packages/sdk/c15t
+ *   bun scripts/fixtures.ts --inth ../../../other-checkout/packages/sdk/inth
  *
  * Pass --browser to also build each project for production and click
  * through it in Chromium. See fixture-browser.ts. Pass --fresh to scaffold
@@ -47,7 +47,7 @@ import { buildRegistry } from '../src/build-registry';
 import type { Base, Framework } from '../src/items';
 import {
 	bases,
-	c15tEntryByFramework,
+	inthEntryByFramework,
 	frameworks,
 	itemName,
 	setupItems,
@@ -58,7 +58,7 @@ import { run } from './fixture-process';
 
 const appDir = path.resolve(import.meta.dirname, '..');
 const shadcn = path.join(appDir, 'node_modules/.bin/shadcn');
-const fixturesDir = path.join(tmpdir(), 'c15t-shadcn-fixtures');
+const fixturesDir = path.join(tmpdir(), 'inth-shadcn-fixtures');
 const packsDir = path.join(fixturesDir, 'packs');
 
 const templates: Record<Framework, string> = {
@@ -68,14 +68,14 @@ const templates: Record<Framework, string> = {
 };
 
 // Type-checks the item props a user is most likely to pass. Not rendered.
-const propsCheck = `import { ConsentBanner } from "@/components/c15t/consent-banner"
-import { ConsentDialog } from "@/components/c15t/consent-dialog"
-import { ConsentDialogTrigger } from "@/components/c15t/consent-dialog-trigger"
-import { ConsentGate } from "@/components/c15t/consent-gate"
-import { ConsentSheet } from "@/components/c15t/consent-sheet"
-import { ConsentWidget } from "@/components/c15t/consent-widget"
+const propsCheck = `import { ConsentBanner } from "@/components/inth/consent-banner"
+import { ConsentDialog } from "@/components/inth/consent-dialog"
+import { ConsentDialogTrigger } from "@/components/inth/consent-dialog-trigger"
+import { ConsentGate } from "@/components/inth/consent-gate"
+import { ConsentSheet } from "@/components/inth/consent-sheet"
+import { ConsentWidget } from "@/components/inth/consent-widget"
 
-export function C15tProps() {
+export function InthProps() {
   return (
     <>
       <ConsentBanner className="sm:max-w-md" />
@@ -92,13 +92,13 @@ export function C15tProps() {
 `;
 
 // The home page. fixture-browser.ts looks for this copy.
-const page = `import { ConsentGate } from "@/components/c15t/consent-gate"
-import { ConsentWidget } from "@/components/c15t/consent-widget"
+const page = `import { ConsentGate } from "@/components/inth/consent-gate"
+import { ConsentWidget } from "@/components/inth/consent-widget"
 
-export function C15tPage() {
+export function InthPage() {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-6 p-6">
-      <h1 className="text-lg font-medium">c15t fixture</h1>
+      <h1 className="text-lg font-medium">inth fixture</h1>
       <ConsentGate category="marketing" className="aspect-video">
         <p>Marketing embed</p>
       </ConsentGate>
@@ -124,7 +124,7 @@ import { consentLoaderOptions } from "@inth/tanstack-start/server"
 import {
   ConsentManager,
   getConsentState,
-} from "@/components/c15t/consent-manager"
+} from "@/components/inth/consent-manager"
 import appCss from "../styles.css?url"
 
 export const Route = createRootRoute({
@@ -167,18 +167,18 @@ function RootDocument({ children }: { children: ReactNode }) {
 
 const startIndexRoute = `import { createFileRoute } from "@tanstack/react-router"
 
-import { C15tPage } from "@/components/c15t-page"
+import { InthPage } from "@/components/inth-page"
 
-export const Route = createFileRoute("/")({ component: C15tPage })
+export const Route = createFileRoute("/")({ component: InthPage })
 `;
 
-const reactApp = `import { C15tPage } from "@/components/c15t-page"
-import { ConsentManager } from "@/components/c15t/consent-manager"
+const reactApp = `import { InthPage } from "@/components/inth-page"
+import { ConsentManager } from "@/components/inth/consent-manager"
 
 export function App() {
   return (
     <ConsentManager>
-      <C15tPage />
+      <InthPage />
     </ConsentManager>
   )
 }
@@ -186,10 +186,10 @@ export function App() {
 export default App
 `;
 
-const nextPage = `import { C15tPage } from "@/components/c15t-page"
+const nextPage = `import { InthPage } from "@/components/inth-page"
 
 export default function Page() {
-  return <C15tPage />
+  return <InthPage />
 }
 `;
 
@@ -276,10 +276,10 @@ const readWorkspace = (packagesDir: string) => {
  * @throws {Error} When a package isn't built or doesn't pack.
  */
 const packWorkspace = async (
-	c15tDir: string,
+	inthDir: string,
 	log: string
 ): Promise<Map<string, string>> => {
-	const workspace = readWorkspace(path.dirname(c15tDir));
+	const workspace = readWorkspace(path.dirname(inthDir));
 	const names = new Set<string>();
 	const visit = (name: string) => {
 		const workspacePackage = workspace.get(name);
@@ -295,10 +295,10 @@ const packWorkspace = async (
 			}
 		}
 	};
-	for (const entry of Object.values(c15tEntryByFramework)) {
+	for (const entry of Object.values(inthEntryByFramework)) {
 		visit(entry);
 		if (!names.has(entry)) {
-			throw new Error(`${path.dirname(c15tDir)} has no ${entry} package.`);
+			throw new Error(`${path.dirname(inthDir)} has no ${entry} package.`);
 		}
 	}
 
@@ -351,7 +351,7 @@ const installFromTarballs = (dir: string, tarballs: Map<string, string>) => {
 			// The items install the framework packages themselves.
 			.filter(
 				([name]) =>
-					!(Object.values(c15tEntryByFramework) as string[]).includes(name)
+					!(Object.values(inthEntryByFramework) as string[]).includes(name)
 			)
 			.map(([name, tarball]) => [name, `file:${tarball}`])
 	);
@@ -380,7 +380,7 @@ const wire = (framework: Framework, dir: string) => {
 		edit(
 			layout,
 			'import { ThemeProvider } from "@/components/theme-provider"',
-			'import { ThemeProvider } from "@/components/theme-provider"\nimport { ConsentManager } from "@/components/c15t/consent-manager"'
+			'import { ThemeProvider } from "@/components/theme-provider"\nimport { ConsentManager } from "@/components/inth/consent-manager"'
 		);
 		edit(
 			layout,
@@ -425,15 +425,15 @@ const wire = (framework: Framework, dir: string) => {
 const declareVendor = (framework: Framework, dir: string, manager: string) => {
 	if (framework === 'next') {
 		edit(
-			path.join(dir, 'c15t.config.ts'),
+			path.join(dir, 'inth.config.ts'),
 			'defineConsentConfig({})',
 			`defineConsentConfig({\n  vendors: [\n    ${fixtureVendor},\n  ],\n})`
 		);
 	} else if (framework === 'react') {
 		edit(
 			manager,
-			'projectUrl: import.meta.env.VITE_C15T_BACKEND_URL as string,',
-			`projectUrl: import.meta.env.VITE_C15T_BACKEND_URL as string,\n  vendors: [\n    ${fixtureVendor},\n  ],`
+			'projectUrl: import.meta.env.VITE_INTH_PROJECT_URL as string,',
+			`projectUrl: import.meta.env.VITE_INTH_PROJECT_URL as string,\n  vendors: [\n    ${fixtureVendor},\n  ],`
 		);
 	} else {
 		edit(
@@ -500,18 +500,18 @@ const checkFixture = async (
 		return ['shadcn add failed'];
 	}
 
-	const banner = findFile(dir, 'components/c15t/consent-banner.tsx');
+	const banner = findFile(dir, 'components/inth/consent-banner.tsx');
 	if (!banner) {
-		return ['components/c15t/consent-banner.tsx was not installed'];
+		return ['components/inth/consent-banner.tsx was not installed'];
 	}
-	if (framework === 'next' && !existsSync(path.join(dir, 'c15t.config.ts'))) {
-		return ['c15t.config.ts was not installed at the project root'];
+	if (framework === 'next' && !existsSync(path.join(dir, 'inth.config.ts'))) {
+		return ['inth.config.ts was not installed at the project root'];
 	}
 	const componentsDir = path.dirname(path.dirname(banner));
-	writeFileSync(path.join(componentsDir, 'c15t-props.tsx'), propsCheck);
-	writeFileSync(path.join(componentsDir, 'c15t-page.tsx'), page);
+	writeFileSync(path.join(componentsDir, 'inth-props.tsx'), propsCheck);
+	writeFileSync(path.join(componentsDir, 'inth-page.tsx'), page);
 	wire(framework, dir);
-	const manager = path.join(componentsDir, 'c15t/consent-manager.tsx');
+	const manager = path.join(componentsDir, 'inth/consent-manager.tsx');
 	declareVendor(framework, dir, manager);
 
 	const tsc = path.join(dir, 'node_modules/.bin/tsc');
@@ -539,14 +539,14 @@ const { values: args } = parseArgs({
 	options: {
 		base: { multiple: true, type: 'string' },
 		browser: { default: false, type: 'boolean' },
-		c15t: { type: 'string' },
+		inth: { type: 'string' },
 		framework: { multiple: true, type: 'string' },
 		fresh: { default: false, type: 'boolean' },
 	},
 });
 
-const c15tDir = path.resolve(
-	args.c15t ?? path.join(appDir, '../../packages/sdk/c15t')
+const inthDir = path.resolve(
+	args.inth ?? path.join(appDir, '../../packages/sdk/inth')
 );
 const fixtures = pick(frameworks, args.framework, '--framework').flatMap(
 	(framework) =>
@@ -572,15 +572,15 @@ let browser: Browser | undefined;
 try {
 	mkdirSync(fixturesDir, { recursive: true });
 	const tarballs = await packWorkspace(
-		c15tDir,
+		inthDir,
 		path.join(fixturesDir, 'pack.log')
 	);
-	// The published items pin a c15t range that may not be on npm yet, so
+	// The published items pin a Inth range that may not be on npm yet, so
 	// the fixtures install the packed workspace copy instead.
 	registry = buildRegistry({
 		appDir,
 		baseUrl: registryUrl,
-		c15tDependency: (name) => `${name}@file:${tarballs.get(name)}`,
+		inthDependency: (name) => `${name}@file:${tarballs.get(name)}`,
 	});
 	if (args.browser) {
 		browser = await chromium.launch();

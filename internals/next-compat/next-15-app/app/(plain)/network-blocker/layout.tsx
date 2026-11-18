@@ -1,9 +1,9 @@
 import {
 	COMPAT_HOSTED_CONFIG,
 	COMPAT_TRACKER_RULES,
-} from '@c15t/next-compat-shared/config';
-import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
-import { SiblingBeacon } from '@c15t/next-compat-shared/sibling-beacon';
+} from '@inth/next-compat-shared/config';
+import { ConsentShell } from '@inth/next-compat-shared/consent-shell';
+import { SiblingBeacon } from '@inth/next-compat-shared/sibling-beacon';
 import { resolveConsent } from '@inth/nextjs/server';
 import type { ReactNode } from 'react';
 

@@ -1,17 +1,17 @@
 ---
 title: Scripts
-description: Hold vendor scripts on a plain HTML page until the visitor allows their category, load scripts with callbacks, handle withdrawal and clear vendor cookies with the c15t script tag and no build step.
+description: Hold vendor scripts on a plain HTML page until the visitor allows their category, load scripts with callbacks, handle withdrawal and clear vendor cookies with the Inth script tag and no build step.
 group: frameworks
 ---
 
 ## Choose how to gate a script
 
-The c15t script tag has two ways to hold a vendor script until its category is
+The Inth script tag has two ways to hold a vendor script until its category is
 allowed:
 
 | Form | Use it when |
 | --- | --- |
-| A `<script type="text/plain" data-c15t-category>` tag in your HTML | You paste a vendor snippet into a theme, a CMS field or a page builder. No JavaScript of your own. |
+| A `<script type="text/plain" data-inth-category>` tag in your HTML | You paste a vendor snippet into a theme, a CMS field or a page builder. No JavaScript of your own. |
 | A `scripts` entry in a queued `config` call | You need a callback after the vendor loads, on an error, or when consent changes. |
 
 Both wait for the same permission and both add their category to the
@@ -22,19 +22,19 @@ preference dialog. Iframes use `data-src` instead; see
 ## Gate a pasted snippet
 
 Change the vendor's tag to `type="text/plain"` and add
-`data-c15t-category`:
+`data-inth-category`:
 
 {/* example: fragment */}
 
 ```html
-<script type="text/plain" data-c15t-category="measurement">
+<script type="text/plain" data-inth-category="measurement">
   // The vendor's snippet, unchanged
 </script>
-<script type="text/plain" data-c15t-category="marketing" src="https://vendor.example/tag.js"></script>
+<script type="text/plain" data-inth-category="marketing" src="https://vendor.example/tag.js"></script>
 ```
 
-On a page whose c15t tag has a nonce, add the same `nonce` to each gated tag,
-or c15t skips it. See
+On a page whose Inth tag has a nonce, add the same `nonce` to each gated tag,
+or Inth skips it. See
 [gated tags on a page with a nonce](/docs/frameworks/html/components/gated-script#gated-tags-on-a-page-with-a-nonce).
 The [quickstart](/docs/frameworks/html/quickstart#gate-your-vendor-scripts)
 shows this with PostHog. [Gated scripts](/docs/frameworks/html/components/gated-script)
@@ -43,11 +43,11 @@ covers load order, copied attributes and tags added after load.
 ## What happens when a visitor withdraws permission
 
 A script that has run cannot be stopped. When a visitor turns off a category
-they had allowed, c15t saves the choice and reloads the page. The new page
+they had allowed, Inth saves the choice and reloads the page. The new page
 starts with the vendor tag inert again. Allowing a category never reloads.
 
 To handle withdrawal yourself, for example by calling a vendor's opt-out
-function, set `reloadOnConsentRevoked: false` in `config`. Then c15t does not
+function, set `reloadOnConsentRevoked: false` in `config`. Then Inth does not
 reload and the vendor code that already ran keeps running until the next page
 load. `callbacks.onBeforeConsentRevocationReload` runs right before the
 reload, if you need to flush something first. See
@@ -61,8 +61,8 @@ List the script under `scripts` in a queued `config` call before the tag:
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     scripts: [
       {
         id: 'analytics',
@@ -79,7 +79,7 @@ List the script under `scripts` in a queued `config` call before the tag:
 ```
 
 `analytics.track` and `analytics.optOut` stand for your vendor's own API.
-c15t adds the script to `<head>` once measurement is allowed, and removes the
+Inth adds the script to `<head>` once measurement is allowed, and removes the
 element again when the visitor withdraws it.
 
 | Field | What it does |
@@ -91,12 +91,12 @@ element again when the visitor withdraws it.
 | `alwaysLoad` | Load whatever the consent state. Use it only for tags that manage consent themselves. |
 | `persistAfterConsentRevoked` | `true` keeps the element after withdrawal, including pending downloads. `'loaded'` keeps only elements whose load event completed; pending and failed loads are removed. |
 | `target` | `'head'` (default) or `'body'`. |
-| `async`, `defer`, `nonce`, `fetchPriority`, `attributes` | Attributes for the created `<script>` element. Without its own `nonce`, the script gets the c15t tag's nonce. |
+| `async`, `defer`, `nonce`, `fetchPriority`, `attributes` | Attributes for the created `<script>` element. Without its own `nonce`, the script gets the Inth tag's nonce. |
 | `anonymizeId` | Give the element a random `id` so blockers cannot match it by name. On by default. |
 | `vendor` | A vendor ID for vendor-level consent. See [vendor consent](/docs/frameworks/html/vendor-consent). |
 | `onBeforeLoad`, `onLoad`, `onError` | Run before a load attempt, after the script loads, or when it fails. |
 | `onConsentChange` | Run each time the script's consent changes. The argument has `hasConsent` and `consents`. |
-| `onDispose` | Run when the script is removed from the configuration or c15t is disposed. |
+| `onDispose` | Run when the script is removed from the configuration or Inth is disposed. |
 
 Every callback receives the script's `id`, the created element's
 `elementId`, `hasConsent`, the current `consents`, and the `element` when
@@ -136,8 +136,8 @@ signals yourself. Put this before Google's tags:
     ad_user_data: 'denied',
     ad_personalization: 'denied',
   });
-  window.c15t = window.c15t || [];
-  c15t.push(['on', 'consent', (snapshot) => {
+  window.inth = window.inth || [];
+  inth.push(['on', 'consent', (snapshot) => {
     const allowed = snapshot.effectivePermissions;
     const state = (granted) => (granted ? 'granted' : 'denied');
     gtag('consent', 'update', {

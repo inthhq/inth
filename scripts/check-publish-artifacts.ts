@@ -723,10 +723,10 @@ const scanStyleEntrypointsContent = function scanStyleEntrypointsContent(
 				size: content.length,
 			});
 		}
-		if (!content.includes('c15t-ui-')) {
+		if (!content.includes('inth-ui-')) {
 			issues.push({
 				path,
-				reason: 'Tailwind v3 dist CSS must contain generated c15t UI rules',
+				reason: 'Tailwind v3 dist CSS must contain generated inth UI rules',
 				size: content.length,
 			});
 		}
@@ -796,10 +796,10 @@ export const scanUiComponentStyleArtifacts =
 						size: content.length,
 					});
 				}
-				if (!content.includes('c15t-ui-')) {
+				if (!content.includes('inth-ui-')) {
 					issues.push({
 						path: cssPath,
-						reason: 'component CSS must contain generated c15t UI class names',
+						reason: 'component CSS must contain generated inth UI class names',
 						size: content.length,
 					});
 				}

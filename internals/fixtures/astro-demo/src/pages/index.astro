@@ -2,7 +2,7 @@
 import ConsentState from '../components/consent-state.astro';
 import BaseLayout from '../layouts/demo.astro';
 
-const { c15t } = Astro.locals;
+const { inth } = Astro.locals;
 ---
 
 <BaseLayout title="Astro demo">
@@ -17,10 +17,10 @@ const { c15t } = Astro.locals;
 		<h2>What the server decided</h2>
 		<pre>{JSON.stringify(
 			{
-				inputs: c15t.inputs,
-				model: c15t.snapshot.model,
-				policy: c15t.snapshot.policyRule.id ?? null,
-				shouldShowBanner: c15t.shouldShowBanner,
+				inputs: inth.inputs,
+				model: inth.snapshot.model,
+				policy: inth.snapshot.policyRule.id ?? null,
+				shouldShowBanner: inth.shouldShowBanner,
 			},
 			null,
 			2
@@ -37,7 +37,7 @@ const { c15t } = Astro.locals;
 			Gated scripts need <code>is:inline</code> so Astro ships the tag as
 			written instead of bundling and running it.
 		</p>
-		<script data-c15t-category="measurement" is:inline type="text/plain">
+		<script data-inth-category="measurement" is:inline type="text/plain">
 			document.getElementById('inline-script-status').textContent =
 				'Measurement script ran';
 		</script>

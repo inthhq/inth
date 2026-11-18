@@ -61,7 +61,7 @@ import {
 } from '@inth/sdk/surface-state';
 import type { Theme } from '@inth/sdk/ui/theme';
 
-import { C15T_BOOT, restoreBoot } from './deferred/boot';
+import { INTH_BOOT, restoreBoot } from './deferred/boot';
 import type { ConsentBoot } from './deferred/boot';
 import { createDeferredRuntime } from './deferred/deferred-runtime';
 import type {
@@ -70,9 +70,9 @@ import type {
 } from './deferred/deferred-runtime';
 import type * as EngineModule from './deferred/engine';
 import { isIABConfigured } from './iab-loader';
-import { C15T_OPTIONS, runtimeOptionsFor } from './options';
-import type { C15tResolvedOptions, C15tSharedOptions } from './options';
-import { C15T_SERVER_STATE, C15T_SERVER_STATE_GATE } from './server-state';
+import { INTH_OPTIONS, runtimeOptionsFor } from './options';
+import type { InthResolvedOptions, InthSharedOptions } from './options';
+import { INTH_SERVER_STATE, INTH_SERVER_STATE_GATE } from './server-state';
 import { registeredDefaultTranslations } from './translation-defaults';
 
 /**
@@ -82,7 +82,7 @@ import { registeredDefaultTranslations } from './translation-defaults';
  */
 export const CONSENT_ENGINE_MODULE = new InjectionToken<
 	() => Promise<typeof EngineModule>
->('C15T_CONSENT_ENGINE_MODULE', {
+>('INTH_CONSENT_ENGINE_MODULE', {
 	factory: () => () => import('./deferred/engine'),
 });
 
@@ -214,9 +214,9 @@ const noopAsync = async () => {
  * The consent state of the application, as signals, and the verbs that
  * change it.
  *
- * Provided by `provideC15t()`. Every readable field is a `Signal`, so it
+ * Provided by `provideInth()`. Every readable field is a `Signal`, so it
  * works in templates, `computed()` and `effect()`; every verb is a method.
- * It projects the c15t consent kernel: it subscribes to the kernel and
+ * It projects the Inth consent kernel: it subscribes to the kernel and
  * writes each snapshot to {@link ConsentManager.snapshot}.
  *
  * The consent engine is a chunk of its own. Until it loads, the manager
@@ -245,7 +245,7 @@ const noopAsync = async () => {
 @Injectable()
 export class ConsentManager {
 	readonly #browser = isPlatformBrowser(inject(PLATFORM_ID));
-	readonly #options = signal<C15tResolvedOptions>({});
+	readonly #options = signal<InthResolvedOptions>({});
 	readonly #owned: DeferredRuntime | undefined;
 	readonly #kernel: WritableSignal<ConsentKernel>;
 	readonly #snapshot: WritableSignal<ConsentSnapshot>;
@@ -276,7 +276,7 @@ export class ConsentManager {
 	 * The options the provider was given, minus `runtime`, as changed by
 	 * {@link ConsentManager.updateOptions}.
 	 */
-	readonly options: Signal<C15tResolvedOptions> = this.#options.asReadonly();
+	readonly options: Signal<InthResolvedOptions> = this.#options.asReadonly();
 
 	/**
 	 * The rendered kernel. An owned runtime swaps it when `enabled` toggles.
@@ -303,7 +303,7 @@ export class ConsentManager {
 	/** `'iab'` under an IAB policy, else the policy rule's model. */
 	readonly model: Signal<Model>;
 	/**
-	 * Whether a policy rule is resolved for this visitor. Every c15t surface
+	 * Whether a policy rule is resolved for this visitor. Every Inth surface
 	 * renders nothing until one is.
 	 */
 	readonly hasPolicy: Signal<boolean>;
@@ -312,10 +312,10 @@ export class ConsentManager {
 	 * resolved.
 	 */
 	readonly hasConsentUi: Signal<boolean>;
-	/** Whether c15t or an external CMP offers a preferences control. */
+	/** Whether Inth or an external CMP offers a preferences control. */
 	readonly hasConsentPreferences: Signal<boolean>;
 	/** The provider's `legalLinks` option. */
-	readonly legalLinks: Signal<C15tSharedOptions['legalLinks']>;
+	readonly legalLinks: Signal<InthSharedOptions['legalLinks']>;
 	/** The translations the surfaces resolve their copy against. */
 	readonly translationConfig: Signal<TranslationConfig>;
 	/** The IAB TCF state, or `null` without IAB. */
@@ -381,12 +381,12 @@ export class ConsentManager {
 	constructor() {
 		const destroyRef = inject(DestroyRef);
 		const errorHandler = inject(ErrorHandler);
-		const { runtime: external, ...given } = inject(C15T_OPTIONS);
-		// What `provideC15tServer()` resolved for this request: set on the
+		const { runtime: external, ...given } = inject(INTH_OPTIONS);
+		// What `provideInthServer()` resolved for this request: set on the
 		// server before the render, read back in the browser, so both start
 		// from it. A `prefetch` the app passed wins.
 		const transferState = inject(TransferState);
-		const serverState = transferState.get(C15T_SERVER_STATE, null);
+		const serverState = transferState.get(INTH_SERVER_STATE, null);
 		// Scripts the loader adds carry Angular's `CSP_NONCE` unless the app
 		// set `nonce` itself, as the injected `<style>` elements do.
 		const cspNonce = inject(CSP_NONCE, { optional: true });
@@ -545,7 +545,7 @@ export class ConsentManager {
 				errorHandler.handleError(
 					new IABUnavailableError(
 						'`iab` is not set',
-						'Set `iab` in provideC15t() and render <c15t-iab-consent-banner>'
+						'Set `iab` in provideInth() and render <inth-iab-consent-banner>'
 					)
 				);
 			}
@@ -580,7 +580,7 @@ export class ConsentManager {
 	 * @param patch - The options to change. `mode` is read once and ignored.
 	 * @returns Resolves once the runtime applied the change.
 	 */
-	updateOptions(patch: Partial<C15tSharedOptions>): Promise<void> {
+	updateOptions(patch: Partial<InthSharedOptions>): Promise<void> {
 		const next = { ...this.#options(), ...patch };
 		this.#options.set(next);
 		if (this.#owned) {
@@ -791,21 +791,21 @@ export class ConsentManager {
 	 * decides when; on the server it loads at once and the render waits.
 	 */
 	#createDeferred(
-		options: C15tResolvedOptions,
+		options: InthResolvedOptions,
 		transferState: TransferState
 	): DeferredRuntime {
 		const read = () => untracked(this.#options);
 		const importEngine = inject(CONSENT_ENGINE_MODULE);
 		const gate = this.#browser
 			? null
-			: inject(C15T_SERVER_STATE_GATE, { optional: true });
+			: inject(INTH_SERVER_STATE_GATE, { optional: true });
 		const loadEngine = async (): Promise<EngineFactory> => {
 			const engine = await importEngine();
 			if (gate) {
-				// Built before `provideC15tServer()` set the request's state:
+				// Built before `provideInthServer()` set the request's state:
 				// the engine starts from it once it is there.
 				await gate.ready;
-				const serverState = transferState.get(C15T_SERVER_STATE, null);
+				const serverState = transferState.get(INTH_SERVER_STATE, null);
 				if (serverState && read().prefetch === undefined) {
 					this.#options.update((current) => ({
 						...current,
@@ -819,7 +819,7 @@ export class ConsentManager {
 				updateOptions: (next) => next,
 			});
 		};
-		const stored = this.#browser ? transferState.get(C15T_BOOT, null) : null;
+		const stored = this.#browser ? transferState.get(INTH_BOOT, null) : null;
 		const boot: ConsentBoot = stored
 			? restoreBoot(stored, options.prefetch?.initialIab?.gvl)
 			: {
@@ -863,7 +863,7 @@ export class ConsentManager {
 			const { planServerBoot } = await import('./deferred/boot-server');
 			// The options the engine started from, with the request's state.
 			transferState.set(
-				C15T_BOOT,
+				INTH_BOOT,
 				planServerBoot(runtime, untracked(this.#options))
 			);
 		});

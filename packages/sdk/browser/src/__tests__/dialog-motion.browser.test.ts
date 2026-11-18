@@ -5,7 +5,7 @@
  * which the stock stylesheet animates with fade and scale keyframes unless
  * `data-disable-animation` is present.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { ConsentClient } from '../types';

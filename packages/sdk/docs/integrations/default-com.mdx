@@ -1,8 +1,8 @@
 ---
 title: Default
 description: Load the Default Pixel after measurement consent or the standalone Forms SDK after functionality consent, configure loading and understand withdrawal limits.
-seoTitle: Default Pixel and Forms SDK consent with c15t
-seoDescription: Gate Default Pixel on measurement or the Forms SDK on functionality, opt into early Pixel loading, and forward consent with c15t.
+seoTitle: Default Pixel and Forms SDK consent with Inth
+seoDescription: Gate Default Pixel on measurement or the Forms SDK on functionality, opt into early Pixel loading, and forward consent with Inth.
 icon: radar
 group: integrations
 ---
@@ -49,7 +49,7 @@ before registering either helper. These helpers support the current
 
 Copy your public key from the Default workspace. It is browser configuration,
 not a secret API key. Import your chosen helper from
-`@inth/integrations/default-com` and register the returned script with c15t.
+`@inth/integrations/default-com` and register the returned script with Inth.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -144,8 +144,8 @@ Scheduler subscriptions and `scheduler.display()` return cleanup functions.
 See the [SDK API reference](https://docs.os.default.com/pixel-sdk-reference) for the
 method options and scheduler event payloads.
 
-Every update includes both of Default's consent fields. The helper maps c15t
-`measurement` to Default `analytics` and c15t `marketing` to Default `marketing`.
+Every update includes both of Default's consent fields. The helper maps Inth
+`measurement` to Default `analytics` and Inth `marketing` to Default `marketing`.
 When the script lacks effective consent, or the visitor turns the Default vendor
 off, both fields are false. A returning visitor whose grants still apply does
 not receive a temporary denial during bootstrap.
@@ -156,7 +156,7 @@ identification can run, while the forwarded marketing denial prevents new
 Vector loads. To require marketing for the Pixel loader itself, set
 `category: 'marketing'` as shown above.
 
-The helpers start through c15t's browser script loader. They do not supply
+The helpers start through inth's browser script loader. They do not supply
 pre-hydration server startup code or add Default's generated loader retries.
 
 ## Choose when the Pixel loads
@@ -181,7 +181,7 @@ Pixel requests its form catalogue from `https://api.default.com` and can capture
 and send form submissions before consent too. Default's analytics and marketing
 permissions do not gate those requests, form capture or scheduler handoffs.
 
-c15t still queues both consent fields before inserting the loader. With no
+Inth still queues both consent fields before inserting the loader. With no
 effective permission, both are false. Subsequent measurement, marketing and
 vendor changes update the forwarded values separately from the loading rule.
 Turning the Default vendor off does not prevent an `always` loader request.
@@ -221,7 +221,7 @@ scheduler handoff can remain.
 Marketing withdrawal prevents later Vector loads. It cannot unload Vector
 after Vector has started, and the helper does not clear the partner's cookies
 or storage. Default's consent API does not block form capture, form-catalogue
-requests or scheduler handoffs. Keep c15t's default `reloadOnConsentRevoked`
+requests or scheduler handoffs. Keep inth's default `reloadOnConsentRevoked`
 behavior enabled. With reload disabled, loaded scripts and form or partner
 activity can continue until navigation.
 

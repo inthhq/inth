@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
-import { provideC15t } from '../core/provide-c15t';
+import { provideInth } from '../core/provide-inth';
 import { InlineLegalLinks } from './inline-legal-links';
 
 @Component({
@@ -13,7 +13,7 @@ import { InlineLegalLinks } from './inline-legal-links';
 	selector: 'test-host',
 	template: `
 		<span
-			c15t-inline-legal-links
+			inth-inline-legal-links
 			[links]="['privacyPolicy', 'termsOfService']"
 			testIdPrefix="legal"
 			data-testid="legal"
@@ -25,7 +25,7 @@ class Host {}
 const boot = async () => {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({
+			provideInth({
 				...testOptions(),
 				legalLinks: {
 					privacyPolicy: { href: '/privacy' },

@@ -1,6 +1,6 @@
 {
 	"title": "@inth/sdk-translations: Cookie consent translations in 53 languages",
-	"description": "Typed cookie consent translations for c15t banners, dialogs, and preference centers, in 53 languages.",
+	"description": "Typed cookie consent translations for inth banners, dialogs, and preference centers, in 53 languages.",
 	"features": [
 		"53 languages, including all 24 official EU languages",
 		"Typed translation objects, so a misspelled key fails type checking",

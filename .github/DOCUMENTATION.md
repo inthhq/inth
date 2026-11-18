@@ -24,7 +24,7 @@ The launcher's `prepack` script regenerates the bundle. Native packaging generat
 
 Agents can start at `node_modules/@inth/cli/AGENTS.md`. A global installation stores the same file under the package directory reported by `npm root -g`. CLI `--help --json` remains the installed command contract, including flags, scopes, and effects.
 
-The longer authentication and c15t integration guides in `packages/cli/docs` remain available. Public task guides belong in `docs/cli`; build experiments and backend integration notes belong in the existing repository guides.
+The longer authentication and Inth integration guides in `packages/cli/docs` remain available. Public task guides belong in `docs/cli`; build experiments and backend integration notes belong in the existing repository guides.
 
 ## Release versions
 

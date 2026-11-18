@@ -20,16 +20,16 @@ import { ConsentBanner } from '../banner/consent-banner';
 import { ConsentManager } from './consent-manager';
 import { BANNER_SHEETS, STYLE_ATTRIBUTE } from './consent-styles';
 import { IfConsent } from './if-consent';
-import { provideC15t } from './provide-c15t';
+import { provideInth } from './provide-inth';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, IfConsent],
 	selector: 'app-root',
 	template: `<p data-testid="ui">{{ consent.activeUI() }}</p>
-		<p *c15tIfConsent="'measurement'; else off">on</p>
+		<p *inthIfConsent="'measurement'; else off">on</p>
 		<ng-template #off><p data-testid="off">off</p></ng-template>
-		<c15t-consent-banner />`,
+		<inth-consent-banner />`,
 })
 class App {
 	protected readonly consent = inject(ConsentManager);
@@ -52,7 +52,7 @@ const render = (nonce?: string, persistence?: false) =>
 					providers: [
 						provideZonelessChangeDetection(),
 						provideServerRendering(),
-						provideC15t({
+						provideInth({
 							...testOptions(),
 							nonce,
 							persistence,
@@ -84,7 +84,7 @@ const bootOf = (html: string) =>
 				html
 			)?.groups?.state ?? '{}'
 		) as Record<string, { d?: number; s?: { activeUI?: string } } | undefined>
-	)['c15t-boot'];
+	)['inth-boot'];
 
 describe('server render', () => {
 	test('renders from the prefetched snapshot without starting the runtime', async () => {
@@ -112,6 +112,6 @@ describe('server render', () => {
 			expect(html).toContain(`${STYLE_ATTRIBUTE}="${sheet.id}"`);
 		}
 		expect(html).toContain('nonce="abc123"');
-		expect(html).not.toContain('data-c15t-pending');
+		expect(html).not.toContain('data-inth-pending');
 	});
 });

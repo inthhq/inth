@@ -153,8 +153,8 @@ export const TriggerButton = createForwardRef<
 				{...buttonStyle}
 				ref={ref}
 				type="button"
-				data-c15t-trigger="true"
-				data-c15t-rights={policy.rights.join(' ')}
+				data-inth-trigger="true"
+				data-inth-rights={policy.rights.join(' ')}
 				// Stops the hover and snap transitions, as on the other surfaces.
 				data-disable-animation={disableAnimation ? '' : undefined}
 				aria-label={ariaLabel}

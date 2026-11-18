@@ -40,7 +40,7 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   without `NODE_ENV=production`, so `testing()` runs; no other file
  *   contains its transport or the policy pack.
  * - `dist/c15t.headless.js` — the same without any UI or CSS, for sites
- *   that render their own banner against `window.c15t`.
+ *   that render their own banner against `window.inth`.
  * - `dist/c15t.iab.js` — an optional replacement with the CMP and IAB UI.
  * - `dist/c15t.devtools.js` — the DevTools panel as a second tag.
  * - `dist/c15t.gpp.js` — IAB GPP as a second tag.

@@ -2,7 +2,7 @@
  * `disableAnimation` stops the floating trigger's hover and snap
  * transitions, as it stops the banner's and the dialog's.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { classes } from '../generated/styles';

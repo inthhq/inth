@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from './consent-manager';
-import { provideC15t } from './provide-c15t';
+import { provideInth } from './provide-inth';
 
 // Its own file: the draft module must not have loaded in an earlier test.
 let loads = 0;
@@ -22,7 +22,7 @@ afterEach(() => {
 
 describe('the preference draft', () => {
 	test('loads again after a failed chunk load', async () => {
-		TestBed.configureTestingModule({ providers: [provideC15t(testOptions())] });
+		TestBed.configureTestingModule({ providers: [provideInth(testOptions())] });
 		const consent = TestBed.inject(ConsentManager);
 
 		consent.preloadDraft();

@@ -6,7 +6,7 @@
 			name="viewport"
 			content="width=device-width, initial-scale=1"
 		/>
-		<title>c15t IAB script example</title>
+		<title>inth IAB script example</title>
 		<style>
 			body {
 				font-family: system-ui, sans-serif;
@@ -24,13 +24,13 @@
 			}
 		</style>
 		<script>
-			window.c15t = [
+			window.inth = [
 				[
 					'config',
 					{
 						projectUrl: 'https://your-project.inth.app',
 						overrides: { country: 'DE' },
-						storageConfig: { storageKey: 'c15t-iab-example' },
+						storageConfig: { storageKey: 'inth-iab-example' },
 						iab: {
 							// Demo CMP ID and sample vendor list. Use your CMP configuration in production.
 							cmpId: 28,
@@ -67,13 +67,13 @@
 		</p>
 		<button
 			type="button"
-			data-c15t-action="customize"
+			data-inth-action="customize"
 		>
 			Privacy settings
 		</button>
 		<button
 			type="button"
-			data-c15t-action="reject"
+			data-inth-action="reject"
 		>
 			Withdraw optional consent
 		</button>

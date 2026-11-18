@@ -14,7 +14,7 @@
  *
  * @internal
  */
-export const STATIC_BANNER_ATTR = 'data-c15t-static-banner';
+export const STATIC_BANNER_ATTR = 'data-inth-static-banner';
 
 /**
  * Whether the page shows a static banner now: its inline script revealed

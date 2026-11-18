@@ -83,7 +83,7 @@ export interface ScriptLoaderTools {
 /**
  * Structured debug event emitted at every reconcile / mount / unmount /
  * callback step. Consumed by adapter devtools and the v2 compat surface
- * (`window.__c15tScriptDebugListeners`).
+ * (`window.__inthScriptDebugListeners`).
  */
 export interface ScriptLoaderDebugEvent {
 	source: 'script-loader';
@@ -146,7 +146,7 @@ export interface ScriptLoaderOptions {
 	};
 	/**
 	 * When true, also dispatch debug events to any listeners registered
-	 * on `window.__c15tScriptDebugListeners` (v2 compat). Default: true
+	 * on `window.__inthScriptDebugListeners` (v2 compat). Default: true
 	 * when running in a browser.
 	 */
 	emitToV2DebugListeners?: boolean;

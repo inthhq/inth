@@ -314,7 +314,7 @@ export interface MetaPixelOptions {
 	/**
 	 * Optional Meta data processing options, such as Limited Data Use.
 	 *
-	 * When provided, c15t queues `fbq('dataProcessingOptions', ...)` before
+	 * When provided, Inth queues `fbq('dataProcessingOptions', ...)` before
 	 * `fbq('init', ...)`.
 	 */
 	dataProcessingOptions?: MetaPixelDataProcessingOptions;

@@ -18,7 +18,7 @@ OUT=$(cd "$OUT" && pwd)
 : > "$OUT/exit-codes.txt"
 failed=0
 cd "$CHECKOUT" || exit 1
-unset C15T_BENCH_SCENARIO BENCHMARK_EXPECTED_SUITES
+unset INTH_BENCH_SCENARIO BENCHMARK_EXPECTED_SUITES
 log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "$OUT/capture.log"; }
 run() { # run <name> <dir> <command...>
   local name=$1 dir=$2; shift 2
@@ -36,9 +36,9 @@ for suite in $SUITES; do
     policy) run policy-runtime benchmarks/core-benchmarks env BENCH_ITERATIONS=$POLICY_ITERS BENCH_WARMUP_ITERATIONS=50 BENCH_OUTPUT_DIR="$OUT/policy-runtime" bunx tsx src/policy-runtime.ts ;;
     bundle) run bundle benchmarks/bundle-test-app env BENCH_OUTPUT_DIR="$OUT/bundle" bunx tsx analyze-bundle.ts
             run bundle-entries benchmarks/bundle-test-app env BENCH_OUTPUT_DIR="$OUT/bundle" bunx tsx analyze-entries.ts ;;
-    react) run react-browser benchmarks/react-browser-bench env C15T_BENCH_ITERATIONS=$BROWSER_ITERS C15T_BENCH_HYDRATION_ITERATIONS=$HYDRATION_ITERS BENCH_OUTPUT_DIR="$OUT/browser-runtime/react" bunx tsx scripts/run-bench.ts ;;
-    nextjs) run nextjs-browser benchmarks/nextjs-browser-bench env C15T_BENCH_ITERATIONS=$BROWSER_ITERS BENCH_OUTPUT_DIR="$OUT/browser-runtime/nextjs" bunx tsx scripts/run-bench.ts ;;
-    nuxt) run nuxt-browser benchmarks/nuxt-browser-bench env C15T_BENCH_ITERATIONS=$BROWSER_ITERS BENCH_OUTPUT_DIR="$OUT/browser-runtime/nuxt" bunx tsx scripts/run-bench.ts ;;
+    react) run react-browser benchmarks/react-browser-bench env INTH_BENCH_ITERATIONS=$BROWSER_ITERS INTH_BENCH_HYDRATION_ITERATIONS=$HYDRATION_ITERS BENCH_OUTPUT_DIR="$OUT/browser-runtime/react" bunx tsx scripts/run-bench.ts ;;
+    nextjs) run nextjs-browser benchmarks/nextjs-browser-bench env INTH_BENCH_ITERATIONS=$BROWSER_ITERS BENCH_OUTPUT_DIR="$OUT/browser-runtime/nextjs" bunx tsx scripts/run-bench.ts ;;
+    nuxt) run nuxt-browser benchmarks/nuxt-browser-bench env INTH_BENCH_ITERATIONS=$BROWSER_ITERS BENCH_OUTPUT_DIR="$OUT/browser-runtime/nuxt" bunx tsx scripts/run-bench.ts ;;
     lifecycle) run script-lifecycle benchmarks/script-lifecycle-bench env BENCH_ITERATIONS=$SL_ITERS BENCH_OUTPUT_DIR="$OUT/script-lifecycle" bunx tsx scripts/run-bench.ts ;;
     *) log "unknown suite: $suite"; failed=1 ;;
   esac

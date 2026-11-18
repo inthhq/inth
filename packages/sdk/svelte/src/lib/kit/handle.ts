@@ -5,7 +5,7 @@
  * Without a handle, every `+layout.server.ts`, `+page.server.ts` and route
  * handler would re-parse the same headers and the same cookie. This runs
  * that work once and publishes it, with the mode `loadConsent` resolves
- * with, on `event.locals.c15t`.
+ * with, on `event.locals.inth`.
  */
 import { building } from '$app/env';
 import type { StorageConfig } from '@inth/sdk/engine';
@@ -23,13 +23,13 @@ import {
 	loadServerScriptStart,
 } from './server-script-start';
 import { injectSurfaceStyles, nonceEarlyTapScript } from './surface-styles';
-import type { C15tLocals, ConsentRequestOptions, KitMode } from './types';
+import type { InthLocals, ConsentRequestOptions, KitMode } from './types';
 
-/** Options for {@link c15tHandle}. */
-export interface C15tHandleOptions extends ConsentRequestOptions {
+/** Options for {@link inthHandle}. */
+export interface InthHandleOptions extends ConsentRequestOptions {
 	/**
-	 * The c15t backend. Defaults to the URL `consentManifest()` read from
-	 * `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL`. Required
+	 * The Inth backend. Defaults to the URL `consentManifest()` read from
+	 * `PUBLIC_INTH_PROJECT_URL` or `PUBLIC_INTH_PROJECT_URL`. Required
 	 * unless `mode` is `testing()`.
 	 */
 	projectUrl?: string;
@@ -50,8 +50,8 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
 	 */
 	mode?: ConsentMode;
 	/**
-	 * Where `createConsentRoute()` is mounted, such as `/api/c15t` for
-	 * `src/routes/api/c15t/[...path]/+server.ts`. The browser then resolves
+	 * Where `createConsentRoute()` is mounted, such as `/api/inth` for
+	 * `src/routes/api/inth/[...path]/+server.ts`. The browser then resolves
 	 * consent on pages the server did not, such as prerendered ones,
 	 * through the app's own route. Without it, the browser asks the
 	 * backend's `/init`. `/` is rejected: a catch-all route at the site
@@ -64,7 +64,7 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
 	 */
 	snapshot?: ConsentManifest;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the handle reads
+	 * @deprecated Inth no longer sets a subject cookie, so the handle reads
 	 * nothing from this. Removed in v4.
 	 */
 	storage?: Pick<
@@ -72,13 +72,13 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
 		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays'
 	>;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the handle reads
+	 * @deprecated Inth no longer sets a subject cookie, so the handle reads
 	 * nothing from this. Removed in v4. `loadConsent` takes its own
 	 * `trustForwardedHeaders` for a relative hosted backend.
 	 */
 	trustForwardedHeaders?: boolean;
 	/**
-	 * @deprecated c15t no longer sets a subject cookie, so this does
+	 * @deprecated Inth no longer sets a subject cookie, so this does
 	 * nothing. Removed in v4.
 	 */
 	subjectCookie?: boolean;
@@ -93,7 +93,7 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
  * Importing either one leaves the other version's apps with an unresolved
  * type, which `skipLibCheck` turns into a silent `any`.
  */
-export type C15tHandle = (input: {
+export type InthHandle = (input: {
 	event: RequestEvent;
 	resolve: (
 		event: RequestEvent,
@@ -113,7 +113,7 @@ export type C15tHandle = (input: {
  * shape instead of whichever CDN header happened to carry it.
  *
  * Request headers are immutable in some runtimes. When the write is refused
- * the normalized values are still on `event.locals.c15t.inputs`, which is
+ * the normalized values are still on `event.locals.inth.inputs`, which is
  * what every helper in this package reads, so the request continues.
  */
 const normalizeRequestHeaders = function normalizeRequestHeaders(
@@ -146,7 +146,7 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
  * factory, such as `manifest()` from `@inth/svelte`, carries its options
  * as data too; only that data reaches the browser.
  */
-const modeData = function modeData(options: C15tHandleOptions): KitMode {
+const modeData = function modeData(options: InthHandleOptions): KitMode {
 	const { mode } = options;
 	if (mode === undefined) {
 		return { type: 'manifest' };
@@ -156,7 +156,7 @@ const modeData = function modeData(options: C15tHandleOptions): KitMode {
 	}
 	if (!(mode as Partial<ConsentMode>).type) {
 		throw new TypeError(
-			'c15t: c15tHandle() takes manifest() or hosted() from @inth/svelte/kit, or testing() from @inth/svelte/testing. Pass a transport to <ConsentRoot mode> instead.'
+			'inth: inthHandle() takes manifest() or hosted() from @inth/svelte/kit, or testing() from @inth/svelte/testing. Pass a transport to <ConsentRoot mode> instead.'
 		);
 	}
 	const { kind: _kind, ...data } = mode as ConsentMode & { kind?: string };
@@ -164,18 +164,18 @@ const modeData = function modeData(options: C15tHandleOptions): KitMode {
 };
 
 /**
- * Creates the c15t SvelteKit handle.
+ * Creates the Inth SvelteKit handle.
  *
  * Register it in `src/hooks.server.ts`, alone or composed with `sequence()`:
  *
  * ```ts
- * import { c15tHandle } from '@inth/svelte/kit';
+ * import { inthHandle } from '@inth/svelte/kit';
  * import { sequence } from '@sveltejs/kit/hooks';
  *
- * export const handle = sequence(c15tHandle(), myOtherHandle);
+ * export const handle = sequence(inthHandle(), myOtherHandle);
  * ```
  *
- * Type `event.locals.c15t` with one line in `src/app.d.ts`:
+ * Type `event.locals.inth` with one line in `src/app.d.ts`:
  *
  * ```ts
  * /// <reference types="@inth/svelte/kit/locals" />
@@ -183,17 +183,17 @@ const modeData = function modeData(options: C15tHandleOptions): KitMode {
  *
  * While SvelteKit prerenders, every page is shared between visitors: the
  * handle reads no cookie or geo header, and leaves no
- * stored consent, clock or privacy signal on `event.locals.c15t`.
+ * stored consent, clock or privacy signal on `event.locals.inth`.
  *
  * @param options - The mode, the consent route's prefix, a snapshot, the
  * cookie name and geo/language overrides.
- * @returns A `handle` hook that populates `event.locals.c15t`.
+ * @returns A `handle` hook that populates `event.locals.inth`.
  * @throws {TypeError} When `mode` is a transport with no data, which
  * cannot reach the browser, or `routePrefix` is `/` or not a path.
  */
-export const c15tHandle = function c15tHandle(
-	options: C15tHandleOptions = {}
-): C15tHandle {
+export const inthHandle = function inthHandle(
+	options: InthHandleOptions = {}
+): InthHandle {
 	const mode = modeData(options);
 	const routePrefix =
 		options.routePrefix === undefined
@@ -220,7 +220,7 @@ export const c15tHandle = function c15tHandle(
 			normalizeRequestHeaders(headers, inputs);
 		}
 
-		const locals: C15tLocals = { config, inputs, mode };
+		const locals: InthLocals = { config, inputs, mode };
 		if (options.projectUrl !== undefined) {
 			locals.projectUrl = options.projectUrl;
 		}
@@ -236,7 +236,7 @@ export const c15tHandle = function c15tHandle(
 		if (building) {
 			locals.shared = true;
 		}
-		(event.locals as { c15t?: C15tLocals }).c15t = locals;
+		(event.locals as { inth?: InthLocals }).inth = locals;
 
 		// When the visitor's consent already lets some `scripts` run, the
 		// provider renders a start for them; it goes at the end of `<body>`,

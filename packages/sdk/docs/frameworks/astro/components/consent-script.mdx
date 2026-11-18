@@ -1,6 +1,6 @@
 ---
 title: ConsentScript
-description: Put the c15t ConsentScript component in the head of an Astro layout so the browser starts with the server's consent decision, the right color scheme and your theme tokens.
+description: Put the Inth ConsentScript component in the head of an Astro layout so the browser starts with the server's consent decision, the right color scheme and your theme tokens.
 group: frameworks
 ---
 
@@ -16,13 +16,13 @@ renders is inline, so it works before any module script has loaded.
 
 ## What it renders
 
-`ConsentScript` renders up to three elements from `Astro.locals.c15t`:
+`ConsentScript` renders up to three elements from `Astro.locals.inth`:
 
 | Element | When | Does |
 | --- | --- | --- |
-| Color-scheme `<script>` | `colorScheme` is `'system'` or `'dark'` | Sets the `c15t-dark` class on `<html>` before first paint |
-| `<style id="c15t-theme">` | The integration sets `theme` | Holds the `--c15t-*` custom properties for your tokens |
-| Boot payload `<script type="application/json" data-c15t-config>` | Always | Hands the browser the consent decision the server resolved |
+| Color-scheme `<script>` | `colorScheme` is `'system'` or `'dark'` | Sets the `inth-dark` class on `<html>` before first paint |
+| `<style id="inth-theme">` | The integration sets `theme` | Holds the `--inth-*` custom properties for your tokens |
+| Boot payload `<script type="application/json" data-inth-config>` | Always | Hands the browser the consent decision the server resolved |
 
 The boot payload is a JSON data block holding the resolved consent
 configuration: the policy, the visitor's stored consent and the translations
@@ -52,14 +52,14 @@ consent, no clock and no privacy signal. The browser reads the visitor's own
 cookie instead. See
 [prerender pages in a server build](/docs/frameworks/astro/rendering#prerender-pages-in-a-server-build).
 
-On a route listed in `middleware.skip`, `Astro.locals.c15t` is unset and
+On a route listed in `middleware.skip`, `Astro.locals.inth` is unset and
 `ConsentScript` renders nothing. The page then starts without a server
 decision, and the browser requests one.
 
 ## Content Security Policy
 
 The color-scheme script and the theme `<style>` are inline code. They carry
-`Astro.locals.c15t.nonce` when your middleware sets it, and under Astro's
+`Astro.locals.inth.nonce` when your middleware sets it, and under Astro's
 `security.csp` the integration adds their hashes to the policy. The boot
 payload is a data block that the browser never runs, so a policy does not
 need to allow it. See

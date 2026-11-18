@@ -100,7 +100,7 @@ export class HeadlessPage {
 		);
 	}
 
-	// Preferences stay open until saved. c15t records the draft locally
+	// Preferences stay open until saved. Inth records the draft locally
 	// before the network request, so closing right away is safe.
 	protected save(): void {
 		void this.consent.saveConsents('custom');

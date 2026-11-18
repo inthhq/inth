@@ -57,7 +57,7 @@ export interface ClearOnRevocationTools {
 	/** Shared persistence key map, including auxiliary records. */
 	resolveStorageKeys: typeof resolveStorageKeys;
 	optionalConsentCategories: readonly OptionalConsentCategory[];
-	/** c15t's own keys besides the configurable consent key. */
+	/** inth's own keys besides the configurable consent key. */
 	protectedStorageKeys: readonly string[];
 	/** The default consent storage key. */
 	storageKey: string;

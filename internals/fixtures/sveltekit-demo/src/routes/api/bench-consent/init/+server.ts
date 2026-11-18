@@ -6,7 +6,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { BENCHMARK_POLICY_RESOLUTION } from '#lib/bench/policy.js';
 
 const response = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: {
 		countryCode: 'DE',
 		regionCode: 'BE',

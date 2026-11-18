@@ -121,7 +121,7 @@ describe('render-count bench', () => {
 		// Stash on window so a test-runner reporter (or adjacent node
 		// harness) can pull it out. Can't write node:fs from the browser
 		// bundle.
-		(globalThis as Record<string, unknown>).__C15T_RENDER_BENCH__ = payload;
+		(globalThis as Record<string, unknown>).__INTH_RENDER_BENCH__ = payload;
 
 		console.log(
 			`\n[render-count-bench] mount=${run.mountRenders} mutation=${run.mutationRenders}\n`

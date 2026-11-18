@@ -1,18 +1,18 @@
 ---
 title: OpenAI Pixel
-description: Load the ChatGPT Ads Measurement Pixel only after marketing consent with the c15t openaiPixel helper, guard oaiq conversion calls, and check it in DevTools.
-seoTitle: OpenAI Pixel cookie consent with c15t
-seoDescription: Load the OpenAI ChatGPT Ads Measurement Pixel only after marketing consent. The c15t openaiPixel helper sends oaiq consent signals for you.
+description: Load the ChatGPT Ads Measurement Pixel only after marketing consent with the Inth openaiPixel helper, guard oaiq conversion calls, and check it in DevTools.
+seoTitle: OpenAI Pixel cookie consent with Inth
+seoDescription: Load the OpenAI ChatGPT Ads Measurement Pixel only after marketing consent. The Inth openaiPixel helper sends oaiq consent signals for you.
 icon: chatgpt
 group: integrations
 ---
 
-The c15t `openaiPixel` helper keeps the OpenAI ChatGPT Ads Measurement Pixel off
-the page until `marketing` has consent. Until then, c15t does not define the
+The Inth `openaiPixel` helper keeps the OpenAI ChatGPT Ads Measurement Pixel off
+the page until `marketing` has consent. Until then, Inth does not define the
 `oaiq` queue. When `marketing` has consent, the helper queues
 `oaiq('consent', false)`, `init`, and `oaiq('consent', true)` before the SDK
 loads. If the visitor withdraws consent, the helper calls
-`oaiq('consent', false)`. The SDK stays on the page. By default, c15t also
+`oaiq('consent', false)`. The SDK stays on the page. By default, Inth also
 reloads the page.
 
 ## Configure the OpenAI Pixel
@@ -40,7 +40,7 @@ export const scripts = [openaiPixel({ pixelId: 'YOUR_PIXEL_ID' })];
 | `user` | None | User matching fields passed to `init`: `email_sha256`, `phone_number_sha256`, `external_id_sha256`, `first_name_sha256`, `last_name_sha256`, `country`, `city`, `region` and `postal_code`. |
 | `scriptSrc` | `https://bzrcdn.openai.com/sdk/oaiq.min.js` | SDK URL override. A blank value falls back to the default. |
 
-c15t forwards `user` unchanged. Normalize and hash identifiers yourself as
+Inth forwards `user` unchanged. Normalize and hash identifiers yourself as
 OpenAI's
 [user data rules](https://developers.openai.com/ads/measurement-pixel#send-user-data)
 describe. If user data arrives after initialization, call
@@ -48,7 +48,7 @@ describe. If user data arrives after initialization, call
 
 ## Loading and revocation
 
-`openaiPixel` uses the `marketing` category. Before marketing is allowed, c15t
+`openaiPixel` uses the `marketing` category. Before marketing is allowed, Inth
 defines no `oaiq` function and loads nothing from OpenAI. Measurement
 permission alone does not load the pixel. When marketing becomes allowed, the
 helper queues `oaiq('consent', false)`, `init` and `oaiq('consent', true)`,

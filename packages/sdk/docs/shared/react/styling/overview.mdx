@@ -7,43 +7,43 @@ group: reference
 {/* This file is NOT rendered directly. Sections are imported by framework pages. */}
 
 <section id="tailwind-layers">
-  c15t's rules live in the cascade layer `components`, and each `<style>`
+  inth's rules live in the cascade layer `components`, and each `<style>`
   element the components render opens with Tailwind CSS 4's layer order,
   `@layer properties, theme, base, components, utilities;`. Unlayered CSS,
-  Tailwind 4 utilities and StyleX's atomic classes override c15t's rules
+  Tailwind 4 utilities and StyleX's atomic classes override inth's rules
   without specificity tricks, whichever stylesheet loads first.
   [Stylesheets and CSS layers](/docs/customization/stylesheets) explains the
   order and which file holds the dialog's rules.
 
   Tailwind CSS 3 has no cascade layers, and its unlayered preflight beats
-  c15t's layered rules. Set `styles: false` in the provider options, import
+  inth's layered rules. Set `styles: false` in the provider options, import
   `styles.css` above the `@tailwind` directives, and add the
   `@inth/react/postcss-tailwind3` PostCSS plugin before `tailwindcss`. Utilities
-  you pass to c15t parts then need the important modifier, such as
+  you pass to Inth parts then need the important modifier, such as
   `!bg-red-500`. [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3)
   shows the tested setup for each framework.
 </section>
 
 <section id="tokens-intro">
-  Colors, radii, shadows, typography, and motion come from `--c15t-*` custom
+  Colors, radii, shadows, typography, and motion come from `--inth-*` custom
   properties. The rules the components render set the default values, as
   does `styles.css` when you import it with `styles: false`. To change them,
   render `ConsentTheme` with your theme where your app renders on the server,
   or override the variables directly in your CSS.
 
-  `ConsentTheme` renders a `<style id="c15t-theme">` element with the
+  `ConsentTheme` renders a `<style id="inth-theme">` element with the
   variables for `theme`. It is not a client component: rendered from a Server
   Component or another server-only file, the theme generator stays out of the
   browser bundle. Rendered from a client component it still works, but the
   browser downloads the generator (about 1.7 KB gzip). The provider no longer
   turns `theme` tokens into CSS. It still reads `consentActions` and slot
   styles from its `theme` option, and warns in development when `theme` holds
-  tokens but the page has no `c15t-theme` stylesheet.
+  tokens but the page has no `inth-theme` stylesheet.
 
   | `ConsentTheme` prop | Purpose |
   | --- | --- |
   | `theme` | Colors, `dark` colors, typography, spacing, radius, shadows and motion. Defaults to the built-in theme. |
-  | `colorScheme` | `'dark'` makes the dark tokens the default before hydration. `'system'` follows `prefers-color-scheme` with a CSS media query. Omit it to follow a `dark` or `c15t-dark` class on `<html>`. |
+  | `colorScheme` | `'dark'` makes the dark tokens the default before hydration. `'system'` follows `prefers-color-scheme` with a CSS media query. Omit it to follow a `dark` or `inth-dark` class on `<html>`. |
   | `nonce` | Content Security Policy nonce for the `<style>` element. |
 
   Pass the same `colorScheme` to `ConsentTheme` and to the provider. If your
@@ -108,15 +108,15 @@ group: reference
 
   ```css
   [data-prompt][data-model='opt-in'] {
-  	--c15t-primary: #2f6f4e;
-  	--c15t-primary-hover: #24563c;
-  	--c15t-text-on-primary: #fff;
+  	--inth-primary: #2f6f4e;
+  	--inth-primary-hover: #24563c;
+  	--inth-text-on-primary: #fff;
   }
 
   [data-prompt][data-model='opt-out'] {
-  	--c15t-primary: #6b3fa0;
-  	--c15t-primary-hover: #55327f;
-  	--c15t-text-on-primary: #fff;
+  	--inth-primary: #6b3fa0;
+  	--inth-primary-hover: #55327f;
+  	--inth-text-on-primary: #fff;
   }
   ```
 

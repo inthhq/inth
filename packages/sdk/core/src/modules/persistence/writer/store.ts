@@ -1,5 +1,5 @@
 /**
- * Storage writes for every c15t record: the v3 envelope, the notice
+ * Storage writes for every Inth record: the v3 envelope, the notice
  * dismissal and the vendor denials. The reads that pair with them are in
  * `../record-storage.ts`; clearing them all is first-load code, in
  * `../clear.ts`.

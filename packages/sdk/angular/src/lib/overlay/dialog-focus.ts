@@ -18,7 +18,7 @@ import { ConsentManager } from '../core/consent-manager';
 
 /**
  * Moves focus into a dialog: to an element marked
- * `data-c15t-dialog-focus="true"`, else the first tabbable one, else the
+ * `data-inth-dialog-focus="true"`, else the first tabbable one, else the
  * dialog itself. The same target a focus trap's `first-tabbable` uses, so
  * a trap never moves it a second time.
  *
@@ -27,7 +27,7 @@ import { ConsentManager } from '../core/consent-manager';
  */
 export const focusInitially = function focusInitially(node: HTMLElement): void {
 	const preferred = node.querySelector<HTMLElement>(
-		'[data-c15t-dialog-focus="true"]'
+		'[data-inth-dialog-focus="true"]'
 	);
 	(preferred ?? firstTabbable(node) ?? node).focus();
 };
@@ -39,7 +39,7 @@ export const focusInitially = function focusInitially(node: HTMLElement): void {
  *
  * @internal
  */
-@Directive({ selector: '[c15tInitialFocus]' })
+@Directive({ selector: '[inthInitialFocus]' })
 export class InitialFocus {
 	constructor() {
 		if (!isPlatformBrowser(inject(PLATFORM_ID))) {

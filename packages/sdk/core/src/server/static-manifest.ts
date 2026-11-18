@@ -1,7 +1,7 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 import { failedResponseError } from '../libs/failed-response';
-import { c15tProtocolHeaders } from '../transports/version-header';
+import { inthProtocolHeaders } from '../transports/version-header';
 
 /** Names that parse but cannot be bound with `export const`. */
 const RESERVED_EXPORT_NAMES = new Set([
@@ -78,7 +78,7 @@ export const loadStaticManifest = async (
 		throw new Error(`${label}: no fetch available.`);
 	}
 	const response = await fetchImpl(options.manifestUrl, {
-		headers: { accept: 'application/json', ...c15tProtocolHeaders },
+		headers: { accept: 'application/json', ...inthProtocolHeaders },
 		method: 'GET',
 	});
 	if (!response.ok) {

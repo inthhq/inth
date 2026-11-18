@@ -10,7 +10,7 @@ import type { APIContext, MiddlewareHandler } from 'astro';
 
 import { waitUntilFromLocals } from './api/handlers';
 import { resolveConsentContext } from './server';
-import type { C15tResolvedOptions } from './types';
+import type { InthResolvedOptions } from './types';
 
 /** Options for {@link createConsentMiddleware}. */
 export interface ConsentMiddlewareOptions {
@@ -56,7 +56,7 @@ const matchesPrefix = function matchesPrefix(
  * @returns Path prefixes to skip.
  */
 const resolveSkipPaths = function resolveSkipPaths(
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): string[] {
 	return [options.routePrefix, ...(options.middleware?.skip ?? [])].filter(
 		(path): path is string => Boolean(path)
@@ -64,7 +64,7 @@ const resolveSkipPaths = function resolveSkipPaths(
 };
 
 /**
- * Build the `pre`-order middleware that populates `Astro.locals.c15t`.
+ * Build the `pre`-order middleware that populates `Astro.locals.inth`.
  *
  * It reads the consent cookie and the geo/GPC headers, resolves the policy
  * decision through the configured mode, and leaves the result on locals so
@@ -79,14 +79,14 @@ const resolveSkipPaths = function resolveSkipPaths(
  *
  * The integration's own route under `routePrefix` is skipped, and so is
  * anything listed in `middleware.skip` — those run `next()` with
- * `Astro.locals.c15t` left unset.
+ * `Astro.locals.inth` left unset.
  *
  * @param options - The resolved integration options.
  * @param middlewareOptions - Test seams.
  * @returns An Astro middleware handler.
  */
 export const createConsentMiddleware = function createConsentMiddleware(
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	middlewareOptions: ConsentMiddlewareOptions = {}
 ): MiddlewareHandler {
 	const skipPaths = resolveSkipPaths(options);
@@ -105,7 +105,7 @@ export const createConsentMiddleware = function createConsentMiddleware(
 			options.experiment && !prerendered
 				? await middlewareOptions.experimentArm?.(context)
 				: undefined;
-		context.locals.c15t = await resolveConsentContext({
+		context.locals.inth = await resolveConsentContext({
 			experimentArm,
 			fetch: middlewareOptions.fetch,
 			headers,

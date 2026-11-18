@@ -1,6 +1,6 @@
 ---
 title: Pages Router
-description: Set up c15t in the Next.js Pages Router with Inth, a build-time policy manifest, getServerSideProps and consent-gated scripts.
+description: Set up Inth in the Next.js Pages Router with Inth, a build-time policy manifest, getServerSideProps and consent-gated scripts.
 group: frameworks
 ---
 
@@ -21,11 +21,11 @@ This setup needs a Next.js server. For `output: 'export'`, follow
 path.
 
 Location-based policies need trusted location headers from your host. Without
-them, c15t applies your unknown-location rule. See
+them, Inth applies your unknown-location rule. See
 [Forward geography headers](/docs/frameworks/next/geography-headers) before
 you deploy.
 
-## Install c15t and configure your backend
+## Install Inth and configure your backend
 
 [Create an Inth project](https://inth.com), set its policy rules and add your
 site's origin to its trusted origins. Copy the project's backend URL.
@@ -34,15 +34,15 @@ site's origin to its trusted origins. Copy the project's backend URL.
 
 ## Set the backend URL
 
-Set `NEXT_PUBLIC_C15T_BACKEND_URL` to your project's backend URL, including
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your project's backend URL, including
 any path prefix, in `.env.local` and in your host's build settings:
 
 ```sh title=".env.local"
-NEXT_PUBLIC_C15T_BACKEND_URL=https://your-project.inth.app
+NEXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
 If your app already sets `NEXT_PUBLIC_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `NEXT_PUBLIC_C15T_BACKEND_URL` wins.
+too. When both are set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
 
 Next.js inlines `NEXT_PUBLIC_` variables at build time, so the build, the
 server and the browser use the same URL, and changing the variable on a built
@@ -54,7 +54,7 @@ app has no effect until you rebuild.
 
 ## Add the consent config
 
-Create `c15t.config.ts` at the project root, next to `next.config.ts`:
+Create `inth.config.ts` at the project root, next to `next.config.ts`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-config.mdx" />
 
@@ -77,16 +77,16 @@ Create one catch-all API route under `routePrefix`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-consent-route.mdx" />
 
-It answers `GET /api/c15t/init` and `GET /api/c15t/manifest` from the bundled
+It answers `GET /api/inth/init` and `GET /api/inth/manifest` from the bundled
 snapshot. With runtime fetching, it fetches `${projectUrl}/manifest` and
-caches the public policy. Any other path under `/api/c15t` returns 404, and
+caches the public policy. Any other path under `/api/inth` returns 404, and
 methods other than `GET` and `HEAD` get `405`. The file must be named
-`[...c15t].ts`; for another name, pass the parameter as the second argument,
+`[...inth].ts`; for another name, pass the parameter as the second argument,
 such as `createPagesConsentRoute({}, 'path')` for `[...path].ts`.
 
 ## Mount one root for every page
 
-There is no c15t stylesheet to import. The components render their own rules
+There is no Inth stylesheet to import. The components render their own rules
 as `<style>` elements, so no stylesheet request holds back the first paint.
 With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
 `styles: false` in `ConsentRoot`'s `options`, as
@@ -100,7 +100,7 @@ server from `pageProps.consent`:
 
 A page with `withConsentProps` supplies `consent`. On any other page,
 including static and `getStaticProps` pages, `consent` is undefined, and the
-browser asks `/api/c15t/init` after hydration. That route resolves the
+browser asks `/api/inth/init` after hydration. That route resolves the
 bundled policy with the browser request's location headers.
 
 ## Resolve consent in getServerSideProps
@@ -110,7 +110,7 @@ Export `withConsentProps()` from `@inth/nextjs/pages` as the page's
 
 <include src="../../shared/examples/nextjs-pages-router/pages-ssr.mdx" />
 
-It resolves the visitor's consent from `c15t.config.ts` and adds it to the
+It resolves the visitor's consent from `inth.config.ts` and adds it to the
 page's props as `consent`, with `undefined` fields removed, as Next.js
 requires. The page renders the banner in the server HTML, and the browser
 applies the same state without an `/init` request.
@@ -143,8 +143,8 @@ browser retries after hydration.
 
 ## Use backend init instead of the manifest
 
-Set `mode: hosted()` in `c15t.config.ts` and remove `routePrefix` and
-`pages/api/c15t/[...c15t].ts`. Keep `withConsentManifest`, which finds the
+Set `mode: hosted()` in `inth.config.ts` and remove `routePrefix` and
+`pages/api/inth/[...inth].ts`. Keep `withConsentManifest`, which finds the
 config. With `hosted()` it downloads no manifest, so `next build` does not
 contact the backend. `_app.tsx` and the pages stay the same. `withConsentProps` and the browser now call
 `${projectUrl}/init`, and consent choices still go to
@@ -170,7 +170,7 @@ open.
 4. Navigate to another page with a Next.js `Link` and reopen
    **Privacy settings**. The choice is still selected.
 5. Open a static page directly. It shows the same choice, resolved in the
-   browser through `/api/c15t/init`.
+   browser through `/api/inth/init`.
 
 Pages with `withConsentProps` make no `/init` request, and choices post to
 `${projectUrl}/subjects`. [Script loading](/docs/frameworks/next/scripts)

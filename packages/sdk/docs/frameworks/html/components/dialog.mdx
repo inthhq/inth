@@ -1,6 +1,6 @@
 ---
 title: Preference dialog
-description: The stock c15t preference dialog on a plain HTML site, where visitors change each consent category, with how it opens, which categories it lists, its options, keyboard behavior and styling hooks.
+description: The stock Inth preference dialog on a plain HTML site, where visitors change each consent category, with how it opens, which categories it lists, its options, keyboard behavior and styling hooks.
 group: frameworks
 ---
 
@@ -13,10 +13,10 @@ change their choice later. `c15t.js` renders it. You add no markup.
 The dialog opens only when something asks for it:
 
 - the banner's **Customize** button;
-- a [`data-c15t-action="customize"` button](/docs/frameworks/html/components/action-buttons);
-- a [link to `#c15t-preferences`](/docs/frameworks/html/components/preferences-link);
+- a [`data-inth-action="customize"` button](/docs/frameworks/html/components/action-buttons);
+- a [link to `#inth-preferences`](/docs/frameworks/html/components/preferences-link);
 - the [floating trigger](/docs/frameworks/html/components/trigger);
-- `c15t.openDialog()` from your own script.
+- `inth.openDialog()` from your own script.
 
 Opening it records nothing and changes no permission.
 
@@ -25,7 +25,7 @@ Opening it records nothing and changes no permission.
 The dialog lists `necessary` first, always on and not switchable, then the
 optional categories this page uses:
 
-- the categories on your `<script type="text/plain" data-c15t-category>` tags,
+- the categories on your `<script type="text/plain" data-inth-category>` tags,
   `<iframe data-category>` embeds, `scripts` entries and network blocker
   rules;
 - the categories in `data-categories` on the tag, or `consentCategories` in
@@ -87,7 +87,7 @@ when your page renders its own dialog with [headless](/docs/frameworks/html/head
 
 - The dialog is a `role="dialog"` named by its title and described by its
   description.
-- By default it blocks the page. c15t moves focus to the first control, keeps
+- By default it blocks the page. Inth moves focus to the first control, keeps
   Tab inside the dialog and stops the page scrolling. Set
   `presentation.preferences.blocking: false` to leave the page usable behind
   it.

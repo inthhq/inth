@@ -3,7 +3,7 @@
 	"extends": ["//"],
 	"tasks": {
 		"build": {
-			"env": ["VITE_C15T_BACKEND_URL"]
+			"env": ["VITE_INTH_PROJECT_URL"]
 		}
 	}
 }

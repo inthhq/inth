@@ -1,6 +1,6 @@
 ---
 title: ConsentDialogTrigger
-description: Show a floating, draggable button that reopens the c15t preference dialog in Nuxt, and configure its corner, size, icon and label.
+description: Show a floating, draggable button that reopens the Inth preference dialog in Nuxt, and configure its corner, size, icon and label.
 group: frameworks
 ---
 
@@ -14,7 +14,7 @@ then renders it. The trigger options are plain data, so they can go in
 
 ```ts title="nuxt.config.ts"
 export default defineNuxtConfig({
-	c15t: { showTrigger: true, triggerDefaultPosition: 'bottom-left' },
+	inth: { showTrigger: true, triggerDefaultPosition: 'bottom-left' },
 });
 ```
 
@@ -27,7 +27,7 @@ the surfaces without `ConsentRoot`, render it yourself:
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#options" />
 
-All trigger options go under the `c15t` key in `nuxt.config.ts` or
+All trigger options go under the `inth` key in `nuxt.config.ts` or
 `app.config.ts`.
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#accessibility" />

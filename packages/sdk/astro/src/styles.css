@@ -1,10 +1,10 @@
 /**
  * @inth/astro — prebuilt component styles.
  *
- * For sites that set `styles: false` and load c15t's styles themselves.
+ * For sites that set `styles: false` and load inth's styles themselves.
  * By default the integration inlines the first-paint rules and links the
  * dialog's when it opens, and this file is not used. It covers the theme
- * tokens, every c15t CSS variable, the server-rendered banner and the
+ * tokens, every Inth CSS variable, the server-rendered banner and the
  * preference dialog. The Svelte dialog also needs `primitives.css`.
  *
  * Usage with `styles: false` (src/styles/global.css):
@@ -22,7 +22,7 @@
  * The browser runtime shows and hides the banner with the `hidden`
  * attribute. The banner's own `display` would otherwise beat the user-agent
  * rule for `[hidden]`, leaving a dismissed banner on screen. Kept in this
- * file rather than imported, so a copy of it (the `c15t` package ships one)
+ * file rather than imported, so a copy of it (the `inth` package ships one)
  * stays self-contained.
  */
 [data-testid='consent-banner-root'][hidden],

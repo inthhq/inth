@@ -40,7 +40,7 @@ export const ConsentDialogLink = createForwardRef<
 			action="open-consent-dialog"
 			noStyle={noStyle}
 			data-testid="consent-dialog-link"
-			data-c15t-rights={policy.rights.join(' ')}
+			data-inth-rights={policy.rights.join(' ')}
 			{...props}
 		>
 			{children}

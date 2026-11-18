@@ -272,7 +272,7 @@ describe('Consent Flow E2E Tests', () => {
 		test('should not show banner if user has already consented', async () => {
 			// Set existing consent
 			window.localStorage.setItem(
-				'c15t',
+				'inth',
 				JSON.stringify(storedAcceptAllConsent())
 			);
 
@@ -297,7 +297,7 @@ describe('Consent Flow E2E Tests', () => {
 	describe('Preference Center Trigger', () => {
 		test('should show trigger after consent given when showWhen is always', async () => {
 			window.localStorage.setItem(
-				'c15t',
+				'inth',
 				JSON.stringify(storedAcceptAllConsent())
 			);
 

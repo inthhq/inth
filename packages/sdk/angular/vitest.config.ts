@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import angular from '@analogjs/vite-plugin-angular';
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
@@ -251,7 +251,7 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, '$1/src/public-api.ts'),
 	},
 	{
-		find: '@c15t/conformance',
+		find: '@inth/conformance',
 		replacement: resolve(
 			__dirname,
 			'../../../internals/conformance/src/index.ts'

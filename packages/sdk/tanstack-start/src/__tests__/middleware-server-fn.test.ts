@@ -110,7 +110,7 @@ test('renders ConsentRoot from a server function that lists it', async () => {
 			createConsentStateHandler({
 				mode: manifest(),
 				// A relative backend is the app's own route: no session report.
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 				request,
 				snapshot: manifestOf([optInRule()]),
 			}) as never
@@ -131,6 +131,6 @@ test('renders ConsentRoot from a server function that lists it', async () => {
 	const html = await new Response(stream).text();
 	expect(html).toContain('<main id="page">Page</main>');
 	// Resolved for this request: the banner's snapshot is in the HTML.
-	expect(html).toContain('data-c15t-boot');
+	expect(html).toContain('data-inth-boot');
 	expect(html).toContain('"activeUI":"banner"');
 });

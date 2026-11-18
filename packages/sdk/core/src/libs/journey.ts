@@ -1,5 +1,5 @@
 /**
- * Consent journey ids: a random UUID on requests c15t already makes, so a
+ * Consent journey ids: a random UUID on requests Inth already makes, so a
  * backend can link an init to the save that follows. Never the subject id.
  */
 
@@ -143,7 +143,7 @@ export const detectJourneyOption = function detectJourneyOption(
  * Window property holding the journey an early request (React's early
  * `/init`, the inline prefetch script) sent, for the runtime to continue.
  */
-export const JOURNEY_WINDOW_KEY = '__c15tJourney';
+export const JOURNEY_WINDOW_KEY = '__inthJourney';
 
 type JourneyWindow = Window & { [JOURNEY_WINDOW_KEY]?: unknown };
 
@@ -226,7 +226,7 @@ export const storedAnswerKeys = function storedAnswerKeys(storageKey: string): {
  * The journey's stored flag counts a dismissal. The experiment arm does not:
  * the runtime sends an arm until the visitor makes a choice.
  *
- * @param storageKey - The consent storage key. Defaults to `c15t`.
+ * @param storageKey - The consent storage key. Defaults to `inth`.
  * @param notice - Whether a notice dismissal counts. Defaults to `true`.
  * @returns `true` when a record is present.
  * @internal

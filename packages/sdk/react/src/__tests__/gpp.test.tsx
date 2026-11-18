@@ -85,7 +85,7 @@ test('logs a mount failure and leaves the app rendered', async () => {
 
 	await expect.element(screen.getByText('app')).toBeVisible();
 	expect(error).toHaveBeenCalledWith(
-		'c15t: GPP was not installed.',
+		'inth: GPP was not installed.',
 		expect.objectContaining({ message: expect.stringContaining('cmpId') })
 	);
 	expect(window.__gpp).toBeUndefined();

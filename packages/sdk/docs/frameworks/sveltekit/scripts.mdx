@@ -17,7 +17,7 @@ configurations hold functions, which a server load cannot send to the browser.
 The script loader runs only in the browser, after hydration. Entries from most
 vendor helpers that the visitor's consent or `alwaysLoad` already allows can
 start earlier, from the server HTML; see
-[Rendering](/docs/frameworks/sveltekit/rendering#resolve-request-context-once-with-c15thandle).
+[Rendering](/docs/frameworks/sveltekit/rendering#resolve-request-context-once-with-inthhandle).
 
 ## Preload the script loader
 
@@ -29,27 +29,27 @@ the app's JavaScript has run, and a returning visitor's consented scripts and
 held requests would wait for that extra request.
 
 `consentManifest()` from `@inth/svelte/vite`, already in `vite.config.ts`
-from the quickstart, lets `c15tHandle` link the chunk from the page's
+from the quickstart, lets `inthHandle` link the chunk from the page's
 `<head>` with `<link rel="modulepreload">`. It does this whenever the
 `sveltekit()` plugin is present; there is nothing else to add.
 
 SvelteKit builds the server before the client, so the server cannot know the
 chunk's file name. After the client build, `consentManifest()` writes the chunk URL
 into the server output, before SvelteKit prerenders pages and before the
-adapter copies the build. Then `c15tHandle` adds one link to every page whose
+adapter copies the build. Then `inthHandle` adds one link to every page whose
 provider has scripts or blocker rules, prerendered pages included. The link
 carries the provider's `nonce`, or else the nonce SvelteKit put on its own
 scripts. It asks for low priority (`fetchpriority="low"`): the
 runtime needs the chunk only after hydration, so the browser fetches your
 app's own chunks first. It does nothing in `vite dev`.
 
-Without the plugin, or without `c15tHandle` in `hooks.server.ts`, scripts
+Without the plugin, or without `inthHandle` in `hooks.server.ts`, scripts
 still load, one request later.
 
 When the visitor's consent or `alwaysLoad` already allows an entry from most
 vendor helpers, a page rendered for that request starts the entry before
 hydration, and the loader adopts its tag. See
-[Rendering](/docs/frameworks/sveltekit/rendering#resolve-request-context-once-with-c15thandle).
+[Rendering](/docs/frameworks/sveltekit/rendering#resolve-request-context-once-with-inthhandle).
 
 ## Send your own analytics events
 

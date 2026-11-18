@@ -1,0 +1,149 @@
+---
+title: provideInth
+description: Every option of provideInth in an Angular app, what it does when the application starts, how to change options later with updateOptions, and how to share one runtime.
+group: frameworks
+---
+
+`provideInth()` sets up consent once for the application. Add it to the
+`providers` of your `ApplicationConfig`, of `bootstrapApplication()`, or of a
+lazy route. It returns `EnvironmentProviders`, so it does not go in a
+component's `providers`. The [quickstart](/docs/frameworks/angular/quickstart)
+shows it in `app.config.ts`.
+
+## What it provides
+
+| Service | Use it for |
+| --- | --- |
+| `ConsentManager` | All consent state as signals, and the verbs that change it. See [services](./services). |
+| `HeadlessConsent` | The banner and dialog state with the policy's presentation resolved, for your own UI. See [headless](./headless). |
+| `ConsentTheme` | The provider's theme and UI options as signals, for custom surfaces that follow them. |
+| `ConsentStyles` | Adds the stock components' stylesheets to `<head>`. The stock components call it; your code rarely needs it. |
+| `INTH_OPTIONS` | The options object as given. Read `ConsentManager.options()` for the live value. |
+
+Inject them with `inject()` in any component, directive or service below the
+provider. Injecting one where `provideInth()` is missing throws Angular's
+`NullInjectorError`.
+
+## Options
+
+`mode` is required unless you pass `runtime`. Every other option is optional.
+
+| Option | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `mode` | `hosted()` or `manifest()` from `@inth/angular`, or `testing()` from `@inth/angular/testing` | `hosted()` | Where policies come from and where choices are saved. Read once. |
+| `scripts` | `Script[]` | none | Vendor scripts that load when their category is allowed. See [scripts](./scripts). |
+| `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. See [vendor consent](./vendor-consent). |
+| `consentCategories` | `AllConsentNames[]` | the policy's categories | Categories the preference UI offers, within the policy's scope. |
+| `theme` | `Theme` | none | Slot classes and `consentActions` button styles. Design tokens in it are not applied in the browser. See [customize](./customize). |
+| `presentation` | `ConsentPresentation` | the policy's defaults | Banner and dialog shape, position, button layout and blocking for every component. |
+| `legalLinks` | `LegalLinks` | none | Privacy policy, cookie policy and terms links shown in the banner and dialog. |
+| `i18n` | `Partial<I18nConfig>` | bundled English | Copy overrides per language; see [translations](./translations). Read once. |
+| `colorScheme` | `'light'`, `'dark'`, `'system'` or `null` | mirrors a `dark` class on `<html>` | Toggles the `inth-dark` class on `<html>`. `null` leaves `<html>` alone. |
+| `noStyle` | `boolean` | `false` | Renders every component without inth's classes. A component's own `noStyle` input wins. |
+| `styles` | `boolean` | `true` | `false` stops the components adding their `<style>` elements, for apps that import `@inth/angular/styles.css` themselves. |
+| `disableAnimation` | `boolean` | follows `prefers-reduced-motion` | Turns off enter and exit transitions. |
+| `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Defaults for the banner and dialog. `blocking` on a component sets both. |
+| `preloadDialog` | `'idle'` or `'intent'` | `'idle'` | When the deferred dialog starts loading before its first open. See [ConsentDialog](./components/consent-dialog#how-the-dialog-loads). |
+| `nonce` | `string` | Angular's `CSP_NONCE` for styles | Content Security Policy nonce for the `<script>` elements the script loader adds and the `<style>` elements the components add. See [Content Security Policy](./content-security-policy). |
+| `networkBlocker` | options or `false` | off | Holds `fetch` and XHR requests to listed domains until their category is allowed. See [network blocker](./network-blocker). |
+| `iframeBlocker` | `{ disableAutomaticBlocking?: boolean }` or `false` | on | Gates iframes that carry `data-category`. See [embeds](./embeds). |
+| `scriptLoader` | options | defaults | Tuning for the script loader. |
+| `iab` | `ProviderIABOptions` or `false` | off | IAB TCF settings. Read once. See [IAB TCF](./iab). |
+| `gpp` | `boolean` or GPP options | off | Installs `window.__gpp`. See [GPP](./gpp). |
+| `callbacks` | `InthCallbacks` | none | `onChoiceRecorded`, `onPermissionsChanged`, `onSurfaceShown`, `onError` and `onBeforeConsentRevocationReload`. See [callbacks](./callbacks). |
+| `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save withdraws a category or vendor that was granted. |
+| `clearOnRevocation` | `ClearOnRevocationConfig` | off | Deletes first-party cookies and storage entries when their category is withdrawn. See [clear on revocation](./clear-on-revocation). Read once. |
+| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once. |
+| `overrides` | `{ country?, region?, language?, gpc? }` | none | Forces the location, language or Global Privacy Control signal the policy resolves for. |
+| `user` | `User` | none | Identity sent with the policy request and every saved choice. |
+| `storageConfig` | `StorageConfig` | cookie and key `inth` | Names and lifetime of the stored choice. Read once. With server rendering, pass the same name as `cookieName` to `provideInthServer()`. |
+| `persistence` | `boolean` or options | `true` | `false` keeps choices in memory only. Read once. |
+| `prefetch` | `RuntimePrefetch` | none | State resolved elsewhere. `provideInthServer()` fills it for you; see [rendering](./rendering). |
+| `experiment` | `ConsentExperiment` | none | A presentation A/B test. The assigned arm merges over `presentation` and `theme`. Read once. |
+| `journey` | `'page'`, `'tab'` or `false` | `'page'` | Links each page load's `/init` to the save that follows. Read once. |
+| `consentSource` | external source | none | Hands authority to another CMP. Inth then stores nothing and shows no choice UI. |
+| `enabled` | `boolean` | `true` | `false` grants every category, hides all consent UI and skips `/init`. |
+| `windowDebug` | `boolean` | `true` | Installs `window.inth` with `{ version, pkg, mode }`. |
+| `runtime` | `ConsentRuntime` | none | A runtime created with `createConsentRuntime()`. Not allowed with `mode`. See [share one runtime](#share-one-runtime). |
+
+Tests pass `testing({ policy })` from `@inth/angular/testing` as `mode`
+to resolve a policy with no backend. The `InthOptions` type from
+`@inth/angular` lists every option.
+
+## When the runtime starts
+
+`provideInth()` sets up the consent state when the application is created,
+before any component renders. The consent engine, which reads storage,
+resolves the policy and runs the script loader, is a separate chunk. In the
+browser, after the first render, `ConsentManager` starts it:
+
+1. It reads the stored choice from the cookie and local storage.
+2. It starts the script loader, the iframe blocker and, if configured, the
+   network blocker and the IAB TCF add-on.
+3. It resolves the policy with its `mode`, unless `prefetch` already holds
+   one.
+
+Waiting for the first render keeps hydration matching the server HTML. When
+the application is destroyed, the runtime is disposed.
+
+On a page rendered with `provideInthServer()`, the browser renders from the
+state the server rendered with, and the engine can wait until the page's
+`fetchpriority="high"` images have loaded, the visitor scrolls or presses a
+key or pointer outside the banner, or 10 seconds pass. It waits when the
+banner asks for a choice, or when nothing is shown and every script the
+visitor allows is a plain `src` the page can start at once. Until it loads,
+an Accept or Reject on the banner is recorded and its scripts start
+in the same tap, and the dialog opens. It loads at once with IAB, GPP, an
+experiment, a consent source, the network blocker, `enabled: false` or
+`persistence: false`.
+
+On the server the runtime is created but never started: no storage, no
+`/init`, no scripts. The server renders from `prefetch`, which
+`provideInthServer()` resolves per request.
+
+## Change options after bootstrap
+
+`provideInth()` reads its object once. To change an option later, call
+`updateOptions()` on `ConsentManager` with the fields to change:
+
+{/* example: fragment */}
+
+```ts
+// In a component or service that injected ConsentManager as `consent`
+await this.consent.updateOptions({ overrides: { language: 'de' } });
+```
+
+The fields merge over the current options. The runtime compares the result
+with the last options and applies only what changed, so a theme-only change
+sends no request. `scripts`, `vendors`, `consentCategories`, `overrides`,
+`user`, `nonce`, `scriptLoader`, `networkBlocker`, `iframeBlocker` and
+`reloadOnConsentRevoked` apply to a running runtime, and the UI options such
+as `theme`, `noStyle`, `legalLinks` and `presentation` re-render the
+components. `mode`, `i18n`, `experiment`, `persistence` and `storageConfig`
+are read once; outside production, changing them logs a warning.
+
+## Share one runtime
+
+Pass `runtime` when the page already has a runtime, for example one shared
+between two Angular applications or with code outside Angular. Create it with
+`createConsentRuntime()` from `@inth/angular`, call `runtime.start()` and
+`runtime.dispose()` yourself, and pass it as `provideInth({ runtime })`. The
+provider never starts or disposes a runtime it did not create.
+
+Options that build the runtime, such as `mode`, `scripts`, `callbacks`, `iab`
+and `gpp`, come from your `createConsentRuntime()` call. Display options such
+as `theme`, `noStyle` and `legalLinks` still apply per application.
+`consentCategories` is passed on to the runtime; `updateOptions()` forwards
+only `consentCategories` to it.
+
+## Verify the provider
+
+Open the page in a private window with DevTools open:
+
+1. The banner appears once the policy resolves. `window.inth` in the console
+   shows `pkg: '@inth/angular'`.
+2. The Network panel shows the request your mode makes: one `/init` for
+   `hosted()`, none for `testing()`, and none when the page came with a
+   server-resolved state.
+3. A component that injects `ConsentManager` renders without a
+   `NullInjectorError`.

@@ -2,29 +2,29 @@
 
 :root {
 	/* Every default follows the theme. The -dark variables point at the same
-	   tokens, which the dark palette redefines under .c15t-dark. */
-	--consent-gate-font-family: var(--c15t-font-family);
-	--consent-gate-line-height: var(--c15t-line-height-normal);
-	--consent-gate-placeholder-gap: var(--c15t-space-md);
+	   tokens, which the dark palette redefines under .inth-dark. */
+	--consent-gate-font-family: var(--inth-font-family);
+	--consent-gate-line-height: var(--inth-line-height-normal);
+	--consent-gate-placeholder-gap: var(--inth-space-md);
 
 	/* Border */
 	/* 1.25rem with the default radius scale. */
-	--consent-gate-placeholder-border-radius: calc(var(--c15t-radius-lg) * 5 / 3);
+	--consent-gate-placeholder-border-radius: calc(var(--inth-radius-lg) * 5 / 3);
 	--consent-gate-placeholder-border-width: 1px;
-	--consent-gate-placeholder-border-color: var(--c15t-border);
-	--consent-gate-placeholder-border-color-dark: var(--c15t-border);
+	--consent-gate-placeholder-border-color: var(--inth-border);
+	--consent-gate-placeholder-border-color-dark: var(--inth-border);
 
 	/* Colors */
-	--consent-gate-placeholder-background-color: var(--c15t-surface);
-	--consent-gate-placeholder-background-color-dark: var(--c15t-surface);
-	--consent-gate-placeholder-text-color: var(--c15t-text);
-	--consent-gate-placeholder-text-color-dark: var(--c15t-text);
-	--consent-gate-placeholder-title-color: var(--c15t-text);
-	--consent-gate-placeholder-title-color-dark: var(--c15t-text);
+	--consent-gate-placeholder-background-color: var(--inth-surface);
+	--consent-gate-placeholder-background-color-dark: var(--inth-surface);
+	--consent-gate-placeholder-text-color: var(--inth-text);
+	--consent-gate-placeholder-text-color-dark: var(--inth-text);
+	--consent-gate-placeholder-title-color: var(--inth-text);
+	--consent-gate-placeholder-title-color-dark: var(--inth-text);
 
 	/* Shadow */
-	--consent-gate-placeholder-shadow: var(--c15t-shadow-lg);
-	--consent-gate-placeholder-shadow-dark: var(--c15t-shadow-lg);
+	--consent-gate-placeholder-shadow: var(--inth-shadow-lg);
+	--consent-gate-placeholder-shadow-dark: var(--inth-shadow-lg);
 
 	--consent-gate-placeholder-opacity: 1;
 	/* Server-rendered placeholders are visible immediately; motion is opt-in. */
@@ -57,7 +57,7 @@
 		animation: var(--consent-gate-placeholder-animation);
 	}
 
-	:global(.c15t-dark) .placeholder {
+	:global(.inth-dark) .placeholder {
 		background-color: var(--consent-gate-placeholder-background-color-dark);
 		border-color: var(--consent-gate-placeholder-border-color-dark);
 		box-shadow: var(--consent-gate-placeholder-shadow-dark);
@@ -66,14 +66,14 @@
 	.title {
 		/* Reset in case a host renders the placeholder title as a heading. */
 		margin: 0;
-		font-size: var(--c15t-font-size-base);
-		line-height: var(--c15t-line-height-normal);
+		font-size: var(--inth-font-size-base);
+		line-height: var(--inth-line-height-normal);
 		letter-spacing: -0.011em;
-		font-weight: var(--c15t-font-weight-medium);
+		font-weight: var(--inth-font-weight-medium);
 		color: var(--consent-gate-placeholder-title-color);
 	}
 
-	:global(.c15t-dark) .title {
+	:global(.inth-dark) .title {
 		color: var(--consent-gate-placeholder-title-color-dark);
 	}
 

@@ -152,7 +152,7 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
 		return 'init()';
 	}
 	if (pkg === '@inth/vue') {
-		return 'the c15tVue plugin';
+		return 'the inthVue plugin';
 	}
 	return pkg === '@inth/nextjs' || pkg === '@inth/tanstack-start'
 		? 'ConsentRoot'

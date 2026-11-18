@@ -29,7 +29,7 @@ describe('AdRoll core loader consent contract', () => {
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
 		const scripts = [
-			adrollPixel({ advertiserId: 'c15tfake', pixelId: 'c15tfake' }),
+			adrollPixel({ advertiserId: 'inthfake', pixelId: 'inthfake' }),
 		];
 		loadScripts(scripts, deniedConsents);
 		updateScripts(scripts, grantedMeasurementConsents);
@@ -47,14 +47,14 @@ describe('AdRoll core loader consent contract', () => {
 		expect(document.cookie).toBe('');
 		updateScripts(scripts, grantedMarketingConsents);
 		const element = document.querySelector('script');
-		expect(element?.src).toBe('https://s.adroll.com/j/c15tfake/roundtrip.js');
+		expect(element?.src).toBe('https://s.adroll.com/j/inthfake/roundtrip.js');
 		element?.dispatchEvent(new Event('load'));
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 	});
 	it('retains one loader across in-flight revoke and regrant', () => {
 		const scripts = [
-			adrollPixel({ advertiserId: 'c15tfake', pixelId: 'c15tfake' }),
+			adrollPixel({ advertiserId: 'inthfake', pixelId: 'inthfake' }),
 		];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');

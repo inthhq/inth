@@ -177,7 +177,7 @@ export const initOutputSchema = v.object({
 		v.object({ gpc: v.optional(v.boolean()) })
 	),
 	/**
-	 * What the Inth script registry tells c15t, such as where it serves
+	 * What the Inth script registry tells Inth, such as where it serves
 	 * each script, copied from the manifest. Absent from backends without a
 	 * registry.
 	 */

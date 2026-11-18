@@ -309,7 +309,7 @@ describe('Shopify Customer Privacy bridge', () => {
 		expect(await isSettled(setup)).toBe(false);
 	});
 
-	it('revokes grants Shopify reports when an IAB visitor owes a choice c15t has no record of', async () => {
+	it('revokes grants Shopify reports when an IAB visitor owes a choice inth has no record of', async () => {
 		const shopify = installCustomerPrivacy();
 		let held: Record<string, string> = {
 			analytics: '',
@@ -387,7 +387,7 @@ describe('Shopify Customer Privacy bridge', () => {
 		expect(shopify.sent).toEqual([]);
 	});
 
-	it('drops only the grants c15t denies before releasing an opt-out visitor to Shopify', async () => {
+	it('drops only the grants inth denies before releasing an opt-out visitor to Shopify', async () => {
 		const shopify = installCustomerPrivacy();
 		Object.assign(
 			(window as { Shopify: { customerPrivacy: object } }).Shopify

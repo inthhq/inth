@@ -36,21 +36,21 @@ import type {
 import { version } from './version';
 
 /** The name the script-tag build installs itself under. */
-export const GLOBAL_NAME = 'c15t';
+export const GLOBAL_NAME = 'inth';
 
 /** A call queued before the script loaded: `[method, ...args]`. */
 export type QueuedCall = [method: string, ...args: unknown[]];
 
 /**
- * `window.c15t`, the one global the script-tag builds use.
+ * `window.inth`, the one global the script-tag builds use.
  *
  * Before the tag loads it is a plain array of queued calls:
  *
  * ```html
  * <script>
- *   window.c15t = window.c15t || [];
- *   c15t.push(['config', { consentCategories: ['measurement'] }]);
- *   c15t.push(['on', 'consent', (snapshot) => console.log(snapshot)]);
+ *   window.inth = window.inth || [];
+ *   inth.push(['config', { consentCategories: ['measurement'] }]);
+ *   inth.push(['on', 'consent', (snapshot) => console.log(snapshot)]);
  * </script>
  * ```
  *
@@ -61,7 +61,7 @@ export type QueuedCall = [method: string, ...args: unknown[]];
  * it everything proxies to the page's client. `version`, `pkg`, `mode` and
  * `hosting` keep the shape `@inth/sdk/engine` installs for devtools.
  */
-export interface C15tGlobalBase {
+export interface InthGlobalBase {
 	/** Package version. */
 	readonly version: string;
 	/** Package name. */
@@ -111,7 +111,7 @@ export interface C15tGlobalBase {
 	provideGPP: (module: { createGPP: ConsentRuntimeGPPFactory }) => void;
 	/**
 	 * Run `[method, ...args]` calls the same way as calls queued before the
-	 * tag loaded, so `window.c15t = window.c15t || []; c15t.push([...])`
+	 * tag loaded, so `window.inth = window.inth || []; inth.push([...])`
 	 * works whether the snippet runs before or after the tag. Unsupported
 	 * methods are skipped with a warning.
 	 *
@@ -165,10 +165,10 @@ export interface C15tGlobalBase {
 }
 
 /** Takeovers of an init script's stand-in still waiting on its `/init`. */
-const takeovers = new WeakMap<C15tGlobalBase, Promise<void>>();
+const takeovers = new WeakMap<InthGlobalBase, Promise<void>>();
 
 type GlobalWindow = Window & {
-	[GLOBAL_NAME]?: C15tGlobalBase | QueuedCall[] | unknown;
+	[GLOBAL_NAME]?: InthGlobalBase | QueuedCall[] | unknown;
 };
 
 /** Queued methods that configure or observe the client, run in place. */
@@ -215,7 +215,7 @@ const reportQueuedFailure = function reportQueuedFailure(
 ): void {
 	// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 	console.error(
-		`@inth/sdk: queued c15t.${queuedName(call)}() failed; continuing with the rest of the queue.`,
+		`@inth/sdk: queued inth.${queuedName(call)}() failed; continuing with the rest of the queue.`,
 		error
 	);
 };
@@ -225,7 +225,7 @@ const reportQueuedFailure = function reportQueuedFailure(
  * promise instead of letting it stop the calls behind it.
  */
 const runQueued = async function runQueued(
-	api: C15tGlobalBase,
+	api: InthGlobalBase,
 	call: QueuedCall
 ): Promise<void> {
 	const [method, ...args] = call;
@@ -262,7 +262,7 @@ interface ActionChain {
  * batch before it settles, so actions from separate `push()` calls keep
  * their order.
  */
-const actionChains = new WeakMap<C15tGlobalBase, ActionChain>();
+const actionChains = new WeakMap<InthGlobalBase, ActionChain>();
 
 /**
  * Reserve the next place in the API's action chain for a batch of consent
@@ -276,7 +276,7 @@ const actionChains = new WeakMap<C15tGlobalBase, ActionChain>();
  * @returns A function that releases the batch.
  */
 const reserveActions = function reserveActions(
-	api: C15tGlobalBase,
+	api: InthGlobalBase,
 	actions: readonly QueuedCall[]
 ): () => void {
 	let chain = actionChains.get(api);
@@ -318,7 +318,7 @@ const reserveActions = function reserveActions(
  * runs against a disposed client or the one a later `init()` creates.
  * Batches pushed afterwards start a new chain.
  */
-const cancelActions = function cancelActions(api: C15tGlobalBase): void {
+const cancelActions = function cancelActions(api: InthGlobalBase): void {
 	const chain = actionChains.get(api);
 	if (chain) {
 		chain.cancelled = true;
@@ -327,7 +327,7 @@ const cancelActions = function cancelActions(api: C15tGlobalBase): void {
 };
 
 /**
- * Replay the calls a page pushed onto `window.c15t` before the script
+ * Replay the calls a page pushed onto `window.inth` before the script
  * loaded. `config`, `init`, `on` and `onInit` run in place, `subscribe`
  * attaches once the client exists, and consent and UI actions run in
  * queue order once the policy has resolved, after any actions from
@@ -335,7 +335,7 @@ const cancelActions = function cancelActions(api: C15tGlobalBase): void {
  * call that throws is reported and the rest still run.
  */
 const replayQueue = function replayQueue(
-	api: C15tGlobalBase,
+	api: InthGlobalBase,
 	queue: readonly unknown[]
 ): void {
 	const actions: QueuedCall[] = [];
@@ -347,7 +347,7 @@ const replayQueue = function replayQueue(
 		if (typeof method !== 'string') {
 			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 			console.warn(
-				'@inth/sdk: skipped a queued c15t entry that is not [method, ...args].',
+				'@inth/sdk: skipped a queued inth entry that is not [method, ...args].',
 				call
 			);
 			continue;
@@ -364,7 +364,7 @@ const replayQueue = function replayQueue(
 		} else {
 			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 			console.warn(
-				`@inth/sdk: c15t.push(['${method}', ...]) is not supported before the tag loads and was skipped. Call it from c15t.onInit() instead.`
+				`@inth/sdk: inth.push(['${method}', ...]) is not supported before the tag loads and was skipped. Call it from inth.onInit() instead.`
 			);
 		}
 	}
@@ -372,13 +372,13 @@ const replayQueue = function replayQueue(
 };
 
 /**
- * Put the API on `window.c15t`, replaying in order any calls a page queued
+ * Put the API on `window.inth`, replaying in order any calls a page queued
  * on the array that was there before the script loaded. See `replayQueue`
  * for when each kind of call runs.
  *
  * @param api - The API object.
  */
-export const installGlobal = function installGlobal<Api extends C15tGlobalBase>(
+export const installGlobal = function installGlobal<Api extends InthGlobalBase>(
 	api: Api
 ): Api {
 	if (typeof window === 'undefined') {
@@ -444,7 +444,7 @@ export const createGlobalWith = function createGlobalWith(
 	readOptions: (
 		script: Element | null
 	) => ScriptTagClientOptions = readScriptOptions
-): C15tGlobalBase {
+): InthGlobalBase {
 	// `currentScript` points at this bundle only while it is executing.
 	// Manual init may run in another script or an event callback later.
 	// Loaded by the init script, the options are on the init script's tag.
@@ -482,13 +482,13 @@ export const createGlobalWith = function createGlobalWith(
 	const require = function require(): ConsentClient {
 		if (!client) {
 			throw new Error(
-				'@inth/sdk: call c15t.init() first, or wait for c15t.ready().'
+				'@inth/sdk: call c15t.init() first, or wait for inth.ready().'
 			);
 		}
 		return client;
 	};
 
-	const api: C15tGlobalBase = {
+	const api: InthGlobalBase = {
 		acceptAll: () => require().acceptAll(),
 		get client() {
 			return client;
@@ -500,7 +500,7 @@ export const createGlobalWith = function createGlobalWith(
 			if (client) {
 				// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 				console.warn(
-					'@inth/sdk: c15t.config() after init() has no effect; queue it before the tag or pass it to init().'
+					'@inth/sdk: inth.config() after init() has no effect; queue it before the tag or pass it to init().'
 				);
 				return;
 			}
@@ -628,7 +628,7 @@ export const createGlobalWith = function createGlobalWith(
  * @returns The client, or `null` when the page asked to init itself.
  */
 export const autoInit = function autoInit(
-	api: C15tGlobalBase
+	api: InthGlobalBase
 ): ConsentClient | null {
 	if (typeof document === 'undefined') {
 		return null;

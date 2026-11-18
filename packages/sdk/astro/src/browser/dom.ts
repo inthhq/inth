@@ -141,7 +141,7 @@ export const hiddenBanner = function hiddenBanner(
 	overlay: HTMLElement | null
 ): HTMLElement[] {
 	root.hidden = true;
-	root.setAttribute('data-c15t-visible', 'false');
+	root.setAttribute('data-inth-visible', 'false');
 	if (!overlay) {
 		return [root];
 	}

@@ -123,8 +123,8 @@ describe('live vendor probe configs', () => {
 			'/messaging-manifest.json',
 			'/messaging-stable-version.txt',
 			`/${futureVersion}/sdk/index.js`,
-			`/${futureVersion}/sdk/core.html?ada_handle=c15t-live-probe-placeholder`,
-			`/${futureVersion}/sdk/button.html?ada_handle=c15t-live-probe-placeholder`,
+			`/${futureVersion}/sdk/core.html?ada_handle=inth-live-probe-placeholder`,
+			`/${futureVersion}/sdk/button.html?ada_handle=inth-live-probe-placeholder`,
 			`/${futureVersion}/core/index.js`,
 			`/${futureVersion}/core/chunk-future.js`,
 			`/${futureVersion}/core/styles.css`,
@@ -134,10 +134,10 @@ describe('live vendor probe configs', () => {
 		}
 
 		for (const url of [
-			'https://c15t-live-probe-placeholder.ada.support/api/?ada_request_origin=embed',
-			'https://c15t-live-probe-placeholder.eu.ada.support/api/',
-			'https://c15t-live-probe-placeholder.us2.ada.support/api/',
-			'https://rollout.ada.support/c15t-live-probe-placeholder/client.json',
+			'https://inth-live-probe-placeholder.ada.support/api/?ada_request_origin=embed',
+			'https://inth-live-probe-placeholder.eu.ada.support/api/',
+			'https://inth-live-probe-placeholder.us2.ada.support/api/',
+			'https://rollout.ada.support/inth-live-probe-placeholder/client.json',
 			'https://api.ada.support/collect',
 			'https://o38990.ingest.us.sentry.io/api/4510980191027200/envelope/',
 			'https://messaging-assets.ada.support.example.com/collect',
@@ -149,7 +149,7 @@ describe('live vendor probe configs', () => {
 	it('uses an obvious placeholder account for the RB2B reachability probe', () => {
 		const [config] = configsForVendor('rb2b');
 		const loaderPath =
-			'ddwl4m2hdecbv.cloudfront.net/b/C15TFAKERB2BKEY/C15TFAKERB2BKEY.js.gz';
+			'ddwl4m2hdecbv.cloudfront.net/b/INTHFAKERB2BKEY/INTHFAKERB2BKEY.js.gz';
 
 		expect(config?.createScript?.().src).toBe(`https://${loaderPath}`);
 		expect(config?.loaderUrlSubstring).toBe(loaderPath);

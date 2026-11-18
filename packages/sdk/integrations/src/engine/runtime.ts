@@ -617,8 +617,8 @@ const partitionConsentIds = function partitionConsentIds(
 	const allowedConsentIds: string[] = [];
 	const deniedConsentIds: string[] = [];
 
-	for (const [c15tCategory, consentIds] of Object.entries(mapping)) {
-		const isGranted = (consents as Record<string, boolean>)[c15tCategory];
+	for (const [inthCategory, consentIds] of Object.entries(mapping)) {
+		const isGranted = (consents as Record<string, boolean>)[inthCategory];
 		for (const consentId of consentIds) {
 			(isGranted ? allowedConsentIds : deniedConsentIds).push(consentId);
 		}
@@ -689,7 +689,7 @@ const getConsentSignalSteps = function getConsentSignalSteps(
 			// RudderStack's consent() call carries the full allow/deny partition
 			// each time, so the default and update modes share one shape. The
 			// pre-load call is captured by the snippet queue and replayed by the
-			// SDK as its initial consent state. c15t is the CMP, so the provider
+			// SDK as its initial consent state. Inth is the CMP, so the provider
 			// is always 'custom'.
 			const partition = partitionConsentIds(
 				resolvedManifest.consentMapping,

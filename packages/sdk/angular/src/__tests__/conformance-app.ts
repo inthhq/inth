@@ -25,26 +25,26 @@ import {
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 
 import { ConsentManager } from '../lib/core/consent-manager';
-import type { C15tProviderOptions } from '../lib/core/options';
-import { provideC15t } from '../lib/core/provide-c15t';
+import type { InthProviderOptions } from '../lib/core/options';
+import { provideInth } from '../lib/core/provide-inth';
 import { ConsentDialogLink } from '../lib/dialog/consent-dialog-link';
 import type { ConformanceEntry } from './conformance-registry';
 
 /** What the fixture renders inside the provider. */
 export interface FixtureContent {
 	readonly entries: readonly ConformanceEntry[];
-	/** Render a `[c15tConsentDialogLink]` button after the entries. */
+	/** Render a `[inthConsentDialogLink]` button after the entries. */
 	readonly link?: boolean;
 }
 
-const CONTENT = new InjectionToken<FixtureContent>('c15t conformance content');
+const CONTENT = new InjectionToken<FixtureContent>('inth conformance content');
 const ON_CONSENT = new InjectionToken<(consent: ConsentManager) => void>(
-	'c15t conformance consent capture'
+	'inth conformance consent capture'
 );
 
-const ROOT_SELECTOR = 'c15t-conformance-root';
+const ROOT_SELECTOR = 'inth-conformance-root';
 
-/** The fixture: the registered surfaces under `provideC15t()`. */
+/** The fixture: the registered surfaces under `provideInth()`. */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NgComponentOutlet, ConsentDialogLink],
@@ -58,7 +58,7 @@ const ROOT_SELECTOR = 'c15t-conformance-root';
 		@if (content.link) {
 			<button
 				type="button"
-				c15tConsentDialogLink
+				inthConsentDialogLink
 			>
 				Privacy settings
 			</button>
@@ -84,13 +84,13 @@ export interface ClientApp {
  * Boot the fixture in `container`.
  *
  * @param container - Holds the root element, or the server HTML to hydrate.
- * @param options - `provideC15t()` options.
+ * @param options - `provideInth()` options.
  * @param content - What the fixture renders.
  * @param hydrate - Hydrate the server HTML already in `container`.
  */
 export const bootClient = async function bootClient(
 	container: HTMLElement,
-	options: C15tProviderOptions,
+	options: InthProviderOptions,
 	content: FixtureContent,
 	hydrate = false
 ): Promise<ClientApp> {
@@ -114,7 +114,7 @@ export const bootClient = async function bootClient(
 	const appRef = await createApplication({
 		providers: [
 			provideZonelessChangeDetection(),
-			provideC15t(options as Parameters<typeof provideC15t>[0]),
+			provideInth(options as Parameters<typeof provideInth>[0]),
 			{ provide: CONTENT, useValue: content },
 			...(hydrate ? [provideClientHydration()] : []),
 		],
@@ -165,11 +165,11 @@ export interface ServerRender {
 /**
  * Server-render the fixture with `@angular/platform-server`.
  *
- * @param options - `provideC15t()` options.
+ * @param options - `provideInth()` options.
  * @param content - What the fixture renders.
  */
 export const renderServer = async function renderServer(
-	options: C15tProviderOptions,
+	options: InthProviderOptions,
 	content: FixtureContent
 ): Promise<ServerRender> {
 	let consent: ConsentManager | undefined;
@@ -183,7 +183,7 @@ export const renderServer = async function renderServer(
 						provideZonelessChangeDetection(),
 						provideServerRendering(),
 						provideClientHydration(),
-						provideC15t(options as Parameters<typeof provideC15t>[0]),
+						provideInth(options as Parameters<typeof provideInth>[0]),
 						{ provide: CONTENT, useValue: content },
 						{
 							provide: ON_CONSENT,

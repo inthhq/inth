@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a Nuxt app and still turn off one vendor in it, with the vendors option of the c15t Nuxt module and useConsentDraft.
+description: Let visitors allow a category such as marketing in a Nuxt app and still turn off one vendor in it, with the vendors option of the Inth Nuxt module and useConsentDraft.
 group: frameworks
 ---
 
@@ -30,17 +30,17 @@ export const vendors: Vendor[] = [
 ];
 ```
 
-Then register them under the `c15t` key in `app/app.config.ts`:
+Then register them under the `inth` key in `app/app.config.ts`:
 
 {/* example: fragment */}
 
 ```ts title="app/app.config.ts (partial)"
 import { scripts, vendors } from './consent-scripts';
 
-export default defineAppConfig({ c15t: { scripts, vendors } });
+export default defineAppConfig({ inth: { scripts, vendors } });
 ```
 
-Vendors are plain data, so the `c15t` key in `nuxt.config.ts` accepts them too.
+Vendors are plain data, so the `inth` key in `nuxt.config.ts` accepts them too.
 The module combines the arrays from both files.
 
 <import src="../../shared/scripts/vendor-consent.mdx#fields" />

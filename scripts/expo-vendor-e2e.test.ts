@@ -41,7 +41,7 @@ const fakePackage = (directory: string): string => {
 
 describe('Expo vendor journey range', () => {
 	it('pins a packed consumer to the cell and keeps the vendor SDK pins', () => {
-		const directory = mkdtempSync(join(tmpdir(), 'c15t-expo-consumer-'));
+		const directory = mkdtempSync(join(tmpdir(), 'inth-expo-consumer-'));
 		try {
 			const output = join(directory, 'consumer');
 			execFileSync('python3', [
@@ -113,7 +113,7 @@ describe('Expo vendor journey range', () => {
 				.map((field) => `${cell.id} ${field}`)
 		);
 		expect(unexplained.map((cell) => cell.id)).toEqual([]);
-		const directory = mkdtempSync(join(tmpdir(), 'c15t-expo-consumer-'));
+		const directory = mkdtempSync(join(tmpdir(), 'inth-expo-consumer-'));
 		try {
 			const output = join(directory, 'consumer');
 			execFileSync('python3', [
@@ -193,7 +193,7 @@ describe('Expo vendor journey range', () => {
 	});
 
 	it('refuses a cell without Expo instead of building a default', () => {
-		const directory = mkdtempSync(join(tmpdir(), 'c15t-expo-consumer-'));
+		const directory = mkdtempSync(join(tmpdir(), 'inth-expo-consumer-'));
 		try {
 			const result = spawnSync('python3', [
 				prepare,

@@ -3,7 +3,7 @@
  * the server's `render:html` hook through the browser: the HTML starts the
  * request and the Nuxt plugin's runtime adopts it.
  */
-import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
@@ -27,8 +27,8 @@ const nuxt = vi.hoisted(() => ({
 }));
 // Hoisted with the mocks below, which both read it.
 const useRuntimeConfig = vi.hoisted(() => () => ({
-	c15t: { ssr: nuxt.ssr },
-	public: { c15t: { backendURL: '/api/c15t', mode: { type: 'hosted' } } },
+	inth: { ssr: nuxt.ssr },
+	public: { inth: { backendURL: '/api/inth', mode: { type: 'hosted' } } },
 }));
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Nitro supplies this runtime; the test provides the config the server plugin reads.
 vi.mock('nitropack/runtime', () => ({
@@ -39,12 +39,12 @@ vi.mock('nitropack/runtime', () => ({
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The module registers this Nitro virtual; the test provides the app config it returns.
 vi.mock('#@inth/sdk/server-app-config', () => ({
 	useServerAppConfig: () =>
-		nuxt.serverAppConfig ? { c15t: nuxt.appConfig } : undefined,
+		nuxt.serverAppConfig ? { inth: nuxt.appConfig } : undefined,
 }));
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Nuxt supplies this virtual module; the test provides the config the Nuxt plugin reads.
 vi.mock('#imports', () => ({
 	defineNuxtPlugin: (plugin: unknown) => plugin,
-	useAppConfig: () => ({ c15t: nuxt.appConfig }),
+	useAppConfig: () => ({ inth: nuxt.appConfig }),
 	useHead: () => undefined,
 	useRequestEvent: () => undefined,
 	useRequestHeaders: () => ({}),
@@ -133,7 +133,7 @@ const initResponse: InitOutput = {
 };
 const respond = () =>
 	new Response(JSON.stringify(initResponse), {
-		headers: { [C15T_POLICY_CONTRACT_HEADER]: '1' },
+		headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
 	});
 
 /** Run the Nuxt plugin as on an `ssr: false` page, and mount the banner. */
@@ -167,7 +167,7 @@ const initRequests = (fetch: ReturnType<typeof vi.fn>) =>
 	);
 
 beforeEach(() => {
-	delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
+	delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 	nuxt.appConfig = { disableAnimation: true, iframeBlocker: false };
 	nuxt.serverAppConfig = true;
 	nuxt.ssr = true;
@@ -177,7 +177,7 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
 	nuxt.state.clear();
-	Reflect.deleteProperty(window, '__c15tInitialDataPromises');
+	Reflect.deleteProperty(window, '__inthInitialDataPromises');
 	document.body.replaceChildren();
 });
 
@@ -190,12 +190,12 @@ describe('an ssr: false page', () => {
 		expect(initRequests(fetch)).toHaveLength(1);
 		const sent = new URL(String(initRequests(fetch)[0]?.[0]));
 		expect(`${sent.origin}${sent.pathname}`).toBe(
-			`${window.location.origin}/api/c15t/init`
+			`${window.location.origin}/api/inth/init`
 		);
 		// It starts the page's consent journey, which the runtime continues.
 		expect(sent.searchParams.get('journeyScope')).toBe('page');
 		expect(sent.searchParams.get('journey')).toBe(
-			(window as Window & { __c15tJourney?: { id: string } }).__c15tJourney?.id
+			(window as Window & { __inthJourney?: { id: string } }).__inthJourney?.id
 		);
 		const app = await startApp();
 		try {
@@ -270,7 +270,7 @@ describe('which pages get the script', () => {
 	test('every page of an app with ssr: false', async () => {
 		nuxt.ssr = false;
 		expect(await renderHead({ rules: {} })).toContain(
-			'__c15tInitialDataPromises'
+			'__inthInitialDataPromises'
 		);
 	});
 
@@ -282,7 +282,7 @@ describe('which pages get the script', () => {
 	test('no route whose rule turns it off', async () => {
 		expect(
 			await renderHead({
-				rules: { c15t: { initPrefetch: false }, ssr: false },
+				rules: { inth: { initPrefetch: false }, ssr: false },
 			})
 		).toBe(SHELL_HEAD);
 	});
@@ -297,7 +297,7 @@ describe('which pages get the script', () => {
 	test('a shell Nuxt renders on request', async () => {
 		expect(
 			await renderHead({ context: { nuxt: { noSSR: true } }, rules: {} })
-		).toContain('__c15tInitialDataPromises');
+		).toContain('__inthInitialDataPromises');
 	});
 });
 
@@ -305,10 +305,10 @@ describe('the script', () => {
 	test('is the same for every visitor and carries nothing from the request', async () => {
 		const first = await renderHead({
 			context: { nuxt: {} },
-			headers: { cookie: 'c15t=visitor-a', 'x-forwarded-for': '203.0.113.7' },
+			headers: { cookie: 'inth=visitor-a', 'x-forwarded-for': '203.0.113.7' },
 		});
 		const second = await renderHead({
-			headers: { 'accept-language': 'de', cookie: 'c15t=visitor-b' },
+			headers: { 'accept-language': 'de', cookie: 'inth=visitor-b' },
 		});
 		expect(first).toBe(second);
 		expect(first).not.toMatch(/visitor-a|203\.0\.113\.7/u);
@@ -332,11 +332,11 @@ describe('the script', () => {
 });
 
 /** `hosted()` with a same-origin backend: the config that gets a script. */
-const HOSTED = { mode: { type: 'hosted' as const }, projectUrl: '/api/c15t' };
+const HOSTED = { mode: { type: 'hosted' as const }, projectUrl: '/api/inth' };
 /** The same backend in `manifest()` mode. */
 const HOSTED_BACKEND = {
 	mode: { type: 'manifest' as const },
-	projectUrl: '/api/c15t',
+	projectUrl: '/api/inth',
 };
 
 describe('pages whose request the server cannot know get no script', () => {
@@ -369,7 +369,7 @@ describe('pages whose request the server cannot know get no script', () => {
 		['a prefetch already in the config', { ...HOSTED, prefetch: initResponse }],
 		[
 			'a backend URL the browser would resolve against the page',
-			{ mode: { type: 'hosted' }, projectUrl: 'api/c15t' },
+			{ mode: { type: 'hosted' }, projectUrl: 'api/inth' },
 		],
 	])('%s', (_name, config) => {
 		expect(
@@ -391,7 +391,7 @@ describe('pages whose request the server cannot know get no script', () => {
 			})
 		).toContain('"projectUrl":"https://consent.example/"');
 		expect(buildInitPrefetchTag({ config: HOSTED, shell: true })).toContain(
-			'"projectUrl":"/api/c15t"'
+			'"projectUrl":"/api/inth"'
 		);
 	});
 

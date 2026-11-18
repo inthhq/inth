@@ -2,7 +2,7 @@
  * `@inth/vue/testing` — render the banner and the consent flow in tests
  * with no backend.
  *
- * Pass `testing()` as the plugin's `mode`, or as `c15t.mode` in
+ * Pass `testing()` as the plugin's `mode`, or as `inth.mode` in
  * `nuxt.config.ts`. It needs no `projectUrl`. It resolves the recommended
  * policy pack in the browser and sends nothing; set `overrides.country`
  * (and `overrides.region`) to pick the policy:
@@ -21,10 +21,10 @@
  *
  * @example
  * ```ts
- * import { c15tVue } from '@inth/vue/vue-plugin';
+ * import { inthVue } from '@inth/vue/vue-plugin';
  * import { testing } from '@inth/vue/testing';
  *
- * app.use(c15tVue, {
+ * app.use(inthVue, {
  *   overrides: { country: 'DE' },
  *   mode: testing(),
  * });

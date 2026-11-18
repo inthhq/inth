@@ -33,7 +33,7 @@
 	style="width:32rem;"
 >
 	<div
-		style="border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);padding:1rem;"
+		style="border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);padding:1rem;"
 	>
 		<div
 			style={withSwitch

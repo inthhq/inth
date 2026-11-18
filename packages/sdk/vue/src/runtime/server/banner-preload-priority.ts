@@ -21,7 +21,7 @@
  *
  * @internal
  */
-export const QUIET_BANNER_CONTEXT_KEY = 'c15tQuietBanner';
+export const QUIET_BANNER_CONTEXT_KEY = 'inthQuietBanner';
 
 const MODULE_PRELOAD = /<link\b[^>]*\brel="modulepreload"[^>]*>/gu;
 const HREF = /\bhref="(?<href>[^"]*)"/u;

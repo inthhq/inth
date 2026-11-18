@@ -12,7 +12,7 @@
  * import { IABProvider, IABConsentBanner, IABConsentDialog } from '@inth/react/iab';
  *
  * <ConsentProvider
- *   options={{ mode: hosted({ projectUrl: '/api/c15t' }) }}
+ *   options={{ mode: hosted({ projectUrl: '/api/inth' }) }}
  * >
  *   <IABProvider cmpId={28}>
  *     <IABConsentBanner />

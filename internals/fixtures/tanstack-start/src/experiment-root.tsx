@@ -11,9 +11,9 @@ import {
 // oxlint-disable no-use-before-define -- TanStack Router's file-route shape: the component reads its own route's loader data.
 /**
  * `src/routes/__root.tsx` with the banner-shape experiment. `vite.config.ts`
- * swaps it in for `C15T_EXPERIMENT=1`, so the default root stays as it is.
+ * swaps it in for `INTH_EXPERIMENT=1`, so the default root stays as it is.
  *
- * `?experiment=1` runs the experiment and lets c15t pick the arm in the
+ * `?experiment=1` runs the experiment and lets Inth pick the arm in the
  * browser. `&arm=wall` is the arm a flag provider would resolve: the server
  * passes it to `resolveConsent({ experiment })`, which counts it through
  * `/init` and returns the experiment in the state, so `ConsentRoot` needs no
@@ -79,7 +79,7 @@ const RootComponent = () => {
 			experimentSwitch.enabled
 				? {
 						callbacks,
-						// With no server arm, c15t picks one in the browser.
+						// With no server arm, Inth picks one in the browser.
 						experiment: experimentSwitch.arm ? undefined : bannerExperiment,
 					}
 				: undefined,

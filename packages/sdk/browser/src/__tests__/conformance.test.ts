@@ -1,15 +1,15 @@
-import type { TestDriver, MountOptions } from '@c15t/conformance/driver';
+import type { TestDriver, MountOptions } from '@inth/conformance/driver';
 import {
 	IAB_FIXTURE_CMP_ID,
 	IAB_FIXTURE_CMP_VERSION,
 	MINIMAL_GVL,
-} from '@c15t/conformance/fixtures/gvl';
+} from '@inth/conformance/fixtures/gvl';
 import {
 	runA11yConformance,
 	runIabUiConformance,
 	clearBrowserConsentStorage,
-} from '@c15t/conformance/suite';
-import type { SuiteApi } from '@c15t/conformance/suite';
+} from '@inth/conformance/suite';
+import type { SuiteApi } from '@inth/conformance/suite';
 import type { ConsentPresentation, GlobalVendorList } from '@inth/sdk-core';
 import { afterEach, describe, expect, test } from 'vitest';
 

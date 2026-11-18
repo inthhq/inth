@@ -52,13 +52,13 @@ const render = async (
 
 /** Whether the script after the boot data preloads the engine's chunks. */
 const hasEnginePreload = (html: string): boolean =>
-	/<script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script>/u.test(
+	/<script data-inth-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*inth-engine-chunks[^<]*<\/script>/u.test(
 		html
 	);
 
 /** The engine preload that the stored-choice check, run first, can skip. */
 const preloadScript = (html: string): string | undefined =>
-	/<script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>(?<code>[^<]*c15t-engine-chunks[^<]*)<\/script>/u.exec(
+	/<script data-inth-boot[^>]*>[^<]*<\/script><script[^>]*>(?<code>[^<]*inth-engine-chunks[^<]*)<\/script>/u.exec(
 		html
 	)?.groups?.code;
 
@@ -68,7 +68,7 @@ const preloadScript = (html: string): string | undefined =>
  */
 const deferredPreload = (html: string): boolean =>
 	html.includes('g.current=function') &&
-	preloadScript(html)?.includes('__c15tRender') === true;
+	preloadScript(html)?.includes('__inthRender') === true;
 
 /**
  * A visitor whose engine loads at once: no check, so the browser starts
@@ -77,11 +77,11 @@ const deferredPreload = (html: string): boolean =>
 const eagerPreload = (html: string): boolean =>
 	!html.includes('g.current=function') &&
 	preloadScript(html) !== undefined &&
-	!preloadScript(html)?.includes('__c15tRender');
+	!preloadScript(html)?.includes('__inthRender');
 
 test('a choice banner leaves the engine preload out', async () => {
 	const html = await render();
-	expect(html).toContain('data-c15t-boot');
+	expect(html).toContain('data-inth-boot');
 	expect(hasEnginePreload(html)).toBe(false);
 });
 

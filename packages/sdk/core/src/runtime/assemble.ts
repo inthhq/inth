@@ -61,7 +61,7 @@ export interface AssembledRuntime {
 	adoptJourney: (id: string | null | undefined) => void;
 	runtime: ConsentRuntime;
 	/**
-	 * Unmount every module and `window.c15t` and detach callbacks, keeping
+	 * Unmount every module and `window.inth` and detach callbacks, keeping
 	 * the kernel and its records. `start()` mounts them again, then adopts
 	 * the prefetch at the current clock or runs `init()`.
 	 */
@@ -288,7 +288,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 					persistenceHandle = null;
 				});
 			} else {
-				// Persistence removes a `<key>-sid` copy c15t 3.2 left. Without
+				// Persistence removes a `<key>-sid` copy Inth 3.2 left. Without
 				// it, a 3.2 server adapter's copy would stay until it expires.
 				// The key comes from the nested storage options even with a
 				// consent source, which `storageFor` leaves out.

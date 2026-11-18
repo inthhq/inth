@@ -36,7 +36,7 @@ const isLogRocketAppId = function isLogRocketAppId(appId: string): boolean {
  *
  * Loads the browser SDK and initializes it after the loader fires its `load`
  * event. LogRocket does not document a consent opt-out or stop-recording API
- * for the web SDK, so c15t gates the loader on measurement consent and unloads
+ * for the web SDK, so Inth gates the loader on measurement consent and unloads
  * the script element when that consent is revoked.
  */
 export const logRocketManifest = {

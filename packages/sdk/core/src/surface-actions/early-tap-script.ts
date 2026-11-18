@@ -46,10 +46,10 @@ export const EARLY_TAP_NOTIFY_KEY = 'n';
 export const EARLY_TAP_HOLD_PRESSES_KEY = 'b';
 
 /** Window property the inline script and the runtime share. @internal */
-export const EARLY_TAPS_WINDOW_KEY = '__c15tEarlyTaps';
+export const EARLY_TAPS_WINDOW_KEY = '__inthEarlyTaps';
 
 /** Id of the `<style>` that hides the banner after a tap. @internal */
-export const EARLY_TAP_STYLE_ID = 'c15t-early-tap';
+export const EARLY_TAP_STYLE_ID = 'inth-early-tap';
 
 /** The stock banner's root. @internal */
 export const EARLY_TAP_ROOT = '[data-testid="consent-banner-root"]';

@@ -28,7 +28,7 @@ export const scripts: Script[] = [
 		loadMode: 'after-consent',
 	}),
 
-	// Marketing only. c15t defines no `fbq` and loads nothing from Meta until
+	// Marketing only. Inth defines no `fbq` and loads nothing from Meta until
 	// marketing is allowed. Your pixel ID is in Meta Events Manager.
 	metaPixel({ pixelId: '000000000000000' }),
 ];

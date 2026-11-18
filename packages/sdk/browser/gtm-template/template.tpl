@@ -13,16 +13,16 @@ ___INFO___
   "id": "cvt_temp_public_id",
   "version": 1,
   "securityGroups": [],
-  "displayName": "c15t Consent Management",
+  "displayName": "inth Consent Management",
   "categories": [
     "TAG_MANAGEMENT",
     "UTILITY"
   ],
   "brand": {
-    "id": "github.com_c15t",
-    "displayName": "c15t"
+    "id": "github.com_inth",
+    "displayName": "inth"
   },
-  "description": "Load the c15t consent banner and set Google Consent Mode v2 from the visitor's choice. Fire it on the Consent Initialization - All Pages trigger.",
+  "description": "Load the inth consent banner and set Google Consent Mode v2 from the visitor's choice. Fire it on the Consent Initialization - All Pages trigger.",
   "containerContexts": [
     "WEB"
   ]
@@ -35,15 +35,15 @@ ___TEMPLATE_PARAMETERS___
   {
     "type": "CHECKBOX",
     "name": "loadScript",
-    "checkboxText": "Load c15t from this tag",
+    "checkboxText": "Load inth from this tag",
     "simpleValueType": true,
     "defaultValue": true,
-    "help": "Untick this when your page already loads the c15t script tag. The tag then only sends consent to Google's tags."
+    "help": "Untick this when your page already loads the inth script tag. The tag then only sends consent to Google's tags."
   },
   {
     "type": "TEXT",
     "name": "scriptUrl",
-    "displayName": "c15t script URL",
+    "displayName": "inth script URL",
     "simpleValueType": true,
     "valueHint": "https://your-project.inth.app/c15t.js",
     "valueValidators": [
@@ -53,7 +53,7 @@ ___TEMPLATE_PARAMETERS___
       {
         "type": "REGEX",
         "args": [
-          "^https://([a-z0-9-]+\\.inth\\.app/c15t(\\.headless|\\.iab)?|cdn\\.jsdelivr\\.net/npm/@inth/sdk@[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?/dist/c15t(\\.local|\\.offline|\\.headless|\\.iab)?)\\.js$"
+          "^https://([a-z0-9-]+\\.inth\\.app/inth(\\.headless|\\.iab)?|cdn\\.jsdelivr\\.net/npm/@inth/sdk@[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?/dist/inth(\\.local|\\.offline|\\.headless|\\.iab)?)\\.js$"
         ],
         "errorMessage": "Use your Inth project URL with /c15t.js on the end, or a jsDelivr URL for an exact @inth/sdk version, such as 3.1.0, and c15t.js, c15t.local.js, c15t.headless.js or c15t.iab.js."
       }
@@ -94,7 +94,7 @@ ___TEMPLATE_PARAMETERS___
         "type": "EQUALS"
       }
     ],
-    "help": "What c15t asks the visitor about, besides strictly necessary. Tick each purpose your container's tags serve. Untick all to keep the categories your c15t setup already sets.",
+    "help": "What inth asks the visitor about, besides strictly necessary. Tick each purpose your container's tags serve. Untick all to keep the categories your inth setup already sets.",
     "subParams": [
       {
         "type": "CHECKBOX",
@@ -247,7 +247,7 @@ ___TEMPLATE_PARAMETERS___
           }
         ],
         "newRowButtonText": "Add a region",
-        "help": "What Google's tags may do before c15t reports the visitor's permissions. With no rows, every type is denied except security storage, which follows c15t's necessary category. If you add region rows, add one with Region blank for everyone else."
+        "help": "What Google's tags may do before inth reports the visitor's permissions. With no rows, every type is denied except security storage, which follows inth's necessary category. If you add region rows, add one with Region blank for everyone else."
       },
       {
         "type": "TEXT",
@@ -260,7 +260,7 @@ ___TEMPLATE_PARAMETERS___
             "type": "NON_NEGATIVE_NUMBER"
           }
         ],
-        "help": "How long Google's tags wait for c15t before they use the defaults above."
+        "help": "How long Google's tags wait for inth before they use the defaults above."
       },
       {
         "type": "CHECKBOX",
@@ -283,12 +283,12 @@ ___TEMPLATE_PARAMETERS___
 
 ___SANDBOXED_JS_FOR_WEB_TEMPLATE___
 
-// c15t Consent Management for Google Tag Manager.
+// inth Consent Management for Google Tag Manager.
 //
 // Sets the Google Consent Mode v2 default, loads the @inth/sdk script tag
-// build, and turns each c15t permission change into a consent update. It talks
-// to c15t only through the documented `window.c15t` queue, so it works whether
-// this tag or the page loads c15t, and in either order.
+// build, and turns each inth permission change into a consent update. It talks
+// to inth only through the documented `window.inth` queue, so it works whether
+// this tag or the page loads inth, and in either order.
 //
 // Uses setDefaultConsentState and updateConsentState, never
 // gtag('consent', ...), so updates stay in order with the container's events.
@@ -313,7 +313,7 @@ const CONSENT_TYPES = [
   'security_storage'
 ];
 
-// c15t category -> Google consent types. Matches the default mapping of the
+// inth category -> Google consent types. Matches the default mapping of the
 // googleTagManager() helper in @inth/integrations.
 const CONSENT_MAPPING = {
   necessary: ['security_storage'],
@@ -323,7 +323,7 @@ const CONSENT_MAPPING = {
   experience: ['personalization_storage']
 };
 
-// c15t category -> the checkbox that asks about it.
+// inth category -> the checkbox that asks about it.
 const CATEGORY_FIELDS = {
   functionality: 'categoryFunctionality',
   measurement: 'categoryMeasurement',
@@ -336,7 +336,7 @@ const JSDELIVR_PREFIX = 'cdn.jsdelivr.net/npm/@inth/sdk@';
 const DIGITS = '0123456789';
 const PRERELEASE_CHARS =
   DIGITS + 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-';
-// Bundles that install c15t. Add-ons such as c15t.gpp.js wait for one of
+// Bundles that install inth. Add-ons such as c15t.gpp.js wait for one of
 // these, so loading one alone would show nothing and never send an update.
 // Inth serves no offline bundle.
 const INTH_FILES = ['c15t.js', 'c15t.headless.js', 'c15t.iab.js'];
@@ -504,15 +504,15 @@ if (defaultRows.length === 0) {
   }
 }
 
-// 2. Updates from c15t.
+// 2. Updates from inth.
 
-// Before `ready`, c15t has not resolved the visitor's policy yet, so its
+// Before `ready`, inth has not resolved the visitor's policy yet, so its
 // permissions are only the strict fallback. Sending them would end the wait
 // above early.
 const applySnapshot = (snapshot) => {
   const permissions = snapshot && snapshot.effectivePermissions;
   if (!permissions || typeof permissions !== 'object') {
-    log('c15t: a consent event had no permissions; consent was not updated.');
+    log('inth: a consent event had no permissions; consent was not updated.');
     return;
   }
   updateConsentState(toGoogleConsent(permissions));
@@ -522,62 +522,62 @@ const applySnapshot = (snapshot) => {
 };
 
 const onReady = (snapshot) => {
-  templateStorage.setItem('c15tReady', true);
+  templateStorage.setItem('inthReady', true);
   applySnapshot(snapshot);
 };
 
 const onConsent = (snapshot) => {
-  if (templateStorage.getItem('c15tReady') !== true) return;
+  if (templateStorage.getItem('inthReady') !== true) return;
   applySnapshot(snapshot);
 };
 
-// 3. Subscribe once per page and load c15t if asked to.
+// 3. Subscribe once per page and load inth if asked to.
 
-// `window.c15t` is the queue array until the script runs, then the API,
+// `window.inth` is the queue array until the script runs, then the API,
 // whose push() takes the same calls.
-const c15t = createQueue('c15t');
-const loaded = typeof copyFromWindow('c15t.pkg') === 'string';
+const inth = createQueue('inth');
+const loaded = typeof copyFromWindow('inth.pkg') === 'string';
 // Another firing may already be loading the script.
 const inject =
   data.loadScript === true &&
   !loaded &&
-  templateStorage.getItem('c15tLoading') !== true;
+  templateStorage.getItem('inthLoading') !== true;
 const scriptUrl =
   typeof data.scriptUrl === 'string' ? data.scriptUrl.trim() : '';
 const projectUrl =
   typeof data.projectUrl === 'string' ? data.projectUrl.trim() : '';
 
 if (inject && !isAllowedScriptUrl(scriptUrl)) {
-  log('c15t: "c15t script URL" must be an Inth project /c15t.js URL or a ' +
+  log('inth: "inth script URL" must be an Inth project /c15t.js URL or a ' +
       'jsDelivr URL for an exact @inth/sdk version and c15t.js, ' +
       'c15t.local.js, c15t.headless.js or c15t.iab.js. Got: ' + scriptUrl);
   data.gtmOnFailure();
 } else if (inject && projectUrlProblem(scriptUrl, projectUrl) !== '') {
-  log('c15t: ' + projectUrlProblem(scriptUrl, projectUrl));
+  log('inth: ' + projectUrlProblem(scriptUrl, projectUrl));
   data.gtmOnFailure();
 } else {
   if (inject) {
-    // A page that loads c15t only through this tag registers no scripts for
-    // c15t to infer its categories from, so it would ask about none.
+    // A page that loads inth only through this tag registers no scripts for
+    // inth to infer its categories from, so it would ask about none.
     const config = {};
     const categories = readCategories();
     if (projectUrl !== '') config.projectUrl = projectUrl;
     if (categories.length > 0) config.consentCategories = categories;
-    if (config.projectUrl || config.consentCategories) c15t(['config', config]);
+    if (config.projectUrl || config.consentCategories) inth(['config', config]);
   }
   // The queue keeps these through a failed load, so a retry reuses them.
-  if (templateStorage.getItem('c15tSubscribed') !== true) {
-    templateStorage.setItem('c15tSubscribed', true);
-    c15t(['on', 'ready', onReady]);
-    c15t(['on', 'consent', onConsent]);
+  if (templateStorage.getItem('inthSubscribed') !== true) {
+    templateStorage.setItem('inthSubscribed', true);
+    inth(['on', 'ready', onReady]);
+    inth(['on', 'consent', onConsent]);
   }
 
   if (inject) {
-    templateStorage.setItem('c15tLoading', true);
+    templateStorage.setItem('inthLoading', true);
     injectScript(scriptUrl, data.gtmOnSuccess, () => {
       // Let a later firing try again.
-      templateStorage.setItem('c15tLoading', false);
-      log('c15t: could not load ' + scriptUrl);
+      templateStorage.setItem('inthLoading', false);
+      log('inth: could not load ' + scriptUrl);
       data.gtmOnFailure();
     });
   } else {
@@ -624,7 +624,7 @@ ___WEB_PERMISSIONS___
             "listItem": [
               {
                 "type": 1,
-                "string": "https://*.inth.app/c15t*"
+                "string": "https://*.inth.app/inth*"
               },
               {
                 "type": 1,
@@ -661,7 +661,7 @@ ___WEB_PERMISSIONS___
                   {"type": 1, "string": "execute"}
                 ],
                 "mapValue": [
-                  {"type": 1, "string": "c15t"},
+                  {"type": 1, "string": "inth"},
                   {"type": 8, "boolean": true},
                   {"type": 8, "boolean": true},
                   {"type": 8, "boolean": false}
@@ -676,7 +676,7 @@ ___WEB_PERMISSIONS___
                   {"type": 1, "string": "execute"}
                 ],
                 "mapValue": [
-                  {"type": 1, "string": "c15t.pkg"},
+                  {"type": 1, "string": "inth.pkg"},
                   {"type": 8, "boolean": true},
                   {"type": 8, "boolean": false},
                   {"type": 8, "boolean": false}
@@ -1018,11 +1018,11 @@ scenarios:
 
     assertThat(calls[0][0]).isEqualTo('on');
     assertThat(calls.length).isEqualTo(2);
-- name: c15t already on the page is not loaded again
+- name: inth already on the page is not loaded again
   code: |-
     mockObject('templateStorage', freshStorage());
     mock('createQueue', () => () => {});
-    mock('copyFromWindow', (key) => key === 'c15t.pkg' ? '@inth/sdk' : undefined);
+    mock('copyFromWindow', (key) => key === 'inth.pkg' ? '@inth/sdk' : undefined);
 
     runCode({
       loadScript: true,

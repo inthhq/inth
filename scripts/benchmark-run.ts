@@ -65,7 +65,7 @@ const { baseSha, headSha } = resolveBenchmarkRevisions(
 		process.env.BENCHMARK_BASE_REF ||
 		(mode === 'gate' ? 'origin/canary' : 'HEAD^')
 );
-const directory = mkdtempSync(join(tmpdir(), 'c15t-benchmark-'));
+const directory = mkdtempSync(join(tmpdir(), 'inth-benchmark-'));
 const base = join(directory, 'base');
 const report = resolve('.ci-reports', mode);
 rmSync(report, { force: true, recursive: true });
@@ -89,13 +89,13 @@ const env = {
 	BENCH_ITERATIONS: iterations,
 	BENCH_WARMUP_ITERATIONS: '3',
 	[BENCH_BACKEND_LATENCY_ENV]: `${backendLatencyMs}`,
-	C15T_BENCH_ITERATIONS: iterations,
-	C15T_BENCH_WARMUP_ITERATIONS: '3',
+	INTH_BENCH_ITERATIONS: iterations,
+	INTH_BENCH_WARMUP_ITERATIONS: '3',
 	// Microsecond operations need enough iterations per process for JIT
 	// warmup and sampling: a third as many raises their medians, and some
 	// sit close to absolute allowances. Every round runs the full count.
-	C15T_CORE_BENCH_ITERATIONS: '5000',
-	C15T_CORE_BENCH_WARMUP_ITERATIONS: '1000',
+	INTH_CORE_BENCH_ITERATIONS: '5000',
+	INTH_CORE_BENCH_WARMUP_ITERATIONS: '1000',
 	// Both arms measure this shard's share, and the comparison expects only it.
 	// Set from the plan even when empty, so a stray variable cannot shrink a run.
 	[BENCH_ONLY_ENV]: only.join(','),

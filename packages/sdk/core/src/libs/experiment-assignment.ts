@@ -5,7 +5,7 @@
  * experiment never ships it. Storing the arm is passed in rather than
  * imported, so this chunk imports nothing the first load has. The controller hands the kernel a gate that
  * checks the arm against each policy, which releases the held prompt, and
- * remembers a c15t-picked arm under {@link EXPERIMENT_STORAGE_KEY} once the
+ * remembers a inth-picked arm under {@link EXPERIMENT_STORAGE_KEY} once the
  * banner has shown it. Nothing is written for a visitor who is never
  * prompted, and nothing is written for a host arm: the host decides that
  * one again on every visit.
@@ -98,20 +98,20 @@ const warnWhenNothingToChoose = function warnWhenNothingToChoose(
 		}
 		unsubscribe();
 		console.warn(
-			`c15t experiment "${experiment.id}": the banner showed arm "${event.experiment.arm}" under policy "${event.snapshot.policyRule.id}", which asks about no optional category. Accepting or rejecting there records a notice acknowledgement, not a choice, so onChoiceRecorded never fires and the experiment counts impressions only. List the categories your site uses in consentCategories, or pass the scripts that need them as scripts.`
+			`inth experiment "${experiment.id}": the banner showed arm "${event.experiment.arm}" under policy "${event.snapshot.policyRule.id}", which asks about no optional category. Accepting or rejecting there records a notice acknowledgement, not a choice, so onChoiceRecorded never fires and the experiment counts impressions only. List the categories your site uses in consentCategories, or pass the scripts that need them as scripts.`
 		);
 	});
 	return unsubscribe;
 };
 
 /**
- * Check the kernel's arm against each policy and remember a c15t-picked arm.
+ * Check the kernel's arm against each policy and remember a inth-picked arm.
  *
  * Nothing here throws into the page. An arm a policy rejects is not shown
  * under that policy: the gate answers per policy, once, and the visitor
  * sees `control` and is left out of the experiment's records. Setting the
  * gate releases the held prompt. The arm is stored the first time the
- * banner shows it, and only when c15t picked it.
+ * banner shows it, and only when Inth picked it.
  *
  * @param options - Experiment, kernel, host presentation and reporting.
  * @param rememberArm - Stores the arm: `writeStoredExperimentArm`.
@@ -153,7 +153,7 @@ export const createExperimentControllerWith =
 			if (Object.keys(diagnostics).length > 0) {
 				if (experiment.acknowledgeDiagnostics === true) {
 					warn(
-						`c15t experiment "${experiment.id}": running with acknowledged presentation diagnostics under policy "${policyRule.id}".`,
+						`inth experiment "${experiment.id}": running with acknowledged presentation diagnostics under policy "${policyRule.id}".`,
 						diagnostics
 					);
 				} else {
@@ -182,7 +182,7 @@ export const createExperimentControllerWith =
 		// seeing the banner they saw. A host arm is the host's to repeat.
 		let stored = false;
 		const unsubscribe =
-			assignment.assignedBy === 'c15t'
+			assignment.assignedBy === 'inth'
 				? kernel.events.on('surface:shown', (event) => {
 						if (stored || event.surface !== 'banner' || !event.experiment) {
 							return;

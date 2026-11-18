@@ -809,7 +809,7 @@ describe('amazonAdsTag production loader', () => {
 
 	it('preserves an external helper and removes only its own listeners', async () => {
 		const external = document.createElement('script');
-		external.id = 'c15t-script-external-amazon-consent';
+		external.id = 'inth-script-external-amazon-consent';
 		external.src = helperUrl;
 		const externalLoaded = vi.fn();
 		external.addEventListener('load', externalLoaded);

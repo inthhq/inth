@@ -1,20 +1,20 @@
 ---
 title: ConsentWidget
-description: Put c15t's category switches inline on an Angular privacy settings page with c15t-consent-widget, and how its draft, vendors and stale-policy alert behave.
+description: Put inth's category switches inline on an Angular privacy settings page with inth-consent-widget, and how its draft, vendors and stale-policy alert behave.
 group: frameworks
 ---
 
 ## Put preferences on a page
 
-`<c15t-consent-widget>` renders the preference controls inline: one switch
+`<inth-consent-widget>` renders the preference controls inline: one switch
 per category, an expandable description for each, and the save buttons the
-policy allows. It is the same widget `<c15t-consent-dialog>` shows, without
+policy allows. It is the same widget `<inth-consent-dialog>` shows, without
 the dialog around it. Use it for a privacy settings page:
 
 <include src="../../../shared/examples/angular/privacy-page.mdx" />
 
 Add the component to a route. The widget works without
-`<c15t-consent-dialog>`, but keep the dialog rendered in your root component
+`<inth-consent-dialog>`, but keep the dialog rendered in your root component
 if the banner's Customize button should also work.
 
 ## Inputs
@@ -22,16 +22,16 @@ if the banner's Customize button should also work.
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `hideBranding` | `boolean` | `true` | Shows the "Secured by" tag when `false`. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops inth's classes. |
 | `rootClass` | `string` | none | Extra class on the root element. |
 
-The `<c15t-consent-widget>` tag itself has no box (`display: contents`). Its
+The `<inth-consent-widget>` tag itself has no box (`display: contents`). Its
 root is the `div` inside it, so a class or `style` on the tag does not lay
 out the widget; pass layout classes through `rootClass`.
 
 ## Behavior
 
-`<c15t-consent-widget>` renders nothing until a policy resolves and asks for
+`<inth-consent-widget>` renders nothing until a policy resolves and asks for
 consent UI. Then it lists the provider's `consentCategories`, limited to the
 policy's scope, with `necessary` always on and disabled.
 
@@ -61,7 +61,7 @@ recorded under the new one.
 
 ## Style the widget
 
-`<c15t-consent-widget>` reads the `consentWidget`, `consentWidgetAccordion`,
+`<inth-consent-widget>` reads the `consentWidget`, `consentWidgetAccordion`,
 `consentWidgetFooter`, `consentWidgetFooterSubGroup` and `consentWidgetTag`
 theme slots. The root carries `data-testid="consent-widget-root"`, and each
 category row carries `data-testid="consent-widget-accordion-item-<category>"`.

@@ -267,7 +267,7 @@ export const openaiPixel = function openaiPixel({
  * Sends a conversion to every initialized OpenAI pixel.
  *
  * Calls before the queue exists are dropped. Once loaded, the SDK applies
- * c15t's consent signal. Use `window.oaiq('measureSingle', ...)` to target one pixel.
+ * inth's consent signal. Use `window.oaiq('measureSingle', ...)` to target one pixel.
  *
  * @param args - Event name, matching data, and event options.
  * @returns Nothing.

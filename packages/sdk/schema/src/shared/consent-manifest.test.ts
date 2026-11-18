@@ -15,7 +15,7 @@ import {
 } from './policy-rule-presets';
 
 const manifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'translations-test',
 	schemaVersion: 2,
 } satisfies ConsentManifest;

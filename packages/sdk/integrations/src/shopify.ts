@@ -8,7 +8,7 @@ export interface ShopifyConsentPreferences {
 	sale_of_data: boolean;
 }
 
-/** Which c15t category grants each Shopify consent. */
+/** Which Inth category grants each Shopify consent. */
 export type ShopifyConsentCategories = Record<
 	keyof ShopifyConsentPreferences,
 	AllConsentNames
@@ -47,7 +47,7 @@ export interface ShopifyConsentSource {
 
 export interface ShopifyCustomerPrivacyOptions {
 	/**
-	 * Override which c15t category grants each Shopify consent.
+	 * Override which Inth category grants each Shopify consent.
 	 * @default { analytics: 'measurement', marketing: 'marketing', preferences: 'functionality', sale_of_data: 'marketing' }
 	 */
 	categories?: Partial<ShopifyConsentCategories>;
@@ -68,7 +68,7 @@ export interface ShopifyCustomerPrivacyBridge {
 	/**
 	 * Pass the latest consent snapshot. The bridge sends it to Shopify once the
 	 * visitor has made a choice and has no new one to make. Until then, it
-	 * sends something only if Shopify may still hold a grant c15t denies, and
+	 * sends something only if Shopify may still hold a grant Inth denies, and
 	 * then only drops that grant.
 	 */
 	update: (snapshot: ShopifyConsentSnapshot) => void;
@@ -157,7 +157,7 @@ const setTrackingConsent = async (
 };
 
 /**
- * Map c15t's effective permissions to Shopify's consent choices.
+ * Map inth's effective permissions to Shopify's consent choices.
  *
  * @param permissions - Effective permissions from a consent snapshot.
  * @param categories - Category overrides.
@@ -214,7 +214,7 @@ const revocation = (
  * - `send`: the visitor has chosen, including with Reject All.
  *
  * In `revoke` and `shopify-defaults`, the bridge sends something only if
- * Shopify may still hold a grant c15t denies, and then only drops it.
+ * Shopify may still hold a grant Inth denies, and then only drops it.
  */
 const nextStep = (
 	snapshot: ShopifyConsentSnapshot
@@ -232,7 +232,7 @@ const nextStep = (
 };
 
 /**
- * Send c15t consent to Shopify's Customer Privacy API, for Hydrogen
+ * Send Inth consent to Shopify's Customer Privacy API, for Hydrogen
  * storefronts and Liquid themes. It does not load Shopify's scripts.
  *
  * Nothing is sent until the visitor makes a choice, so Shopify never records
@@ -289,11 +289,11 @@ export const createShopifyCustomerPrivacy = (
 			} catch (callbackError) {
 				// Keep retrying and sending newer choices when the callback throws.
 				// oxlint-disable-next-line no-console -- Nowhere else to report it.
-				console.error('[c15t] Shopify onError threw', callbackError);
+				console.error('[inth] Shopify onError threw', callbackError);
 			}
 		}
 		// oxlint-disable-next-line no-console -- Default surface for a failed sync.
-		console.error('[c15t] Shopify Customer Privacy sync failed', error);
+		console.error('[inth] Shopify Customer Privacy sync failed', error);
 	};
 
 	const reportedConsent = (
@@ -307,7 +307,7 @@ export const createShopifyCustomerPrivacy = (
 	};
 
 	// What Shopify may grant: what the bridge sent and what Shopify reports.
-	// Without a report, a choice c15t stored may have granted anything. IAB
+	// Without a report, a choice Inth stored may have granted anything. IAB
 	// consent set through the CMP API leaves `explicitChoice` empty, so the
 	// report matters there.
 	const heldGrants = (
@@ -356,7 +356,7 @@ export const createShopifyCustomerPrivacy = (
 		const visitor = revoking ? reportedConsent(api) : undefined;
 		const consent = revoking ? revocation(heldGrants(visitor), latest) : latest;
 		if (!consent) {
-			// Shopify holds nothing c15t denies, so there is nothing to revoke.
+			// Shopify holds nothing Inth denies, so there is nothing to revoke.
 			release();
 			return;
 		}

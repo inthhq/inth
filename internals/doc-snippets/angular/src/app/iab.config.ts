@@ -1,7 +1,7 @@
 // #region docs:iab-config title="src/app/app.config.ts"
 import { provideZonelessChangeDetection } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
-import { hosted, provideC15t } from '@inth/angular';
+import { hosted, provideInth } from '@inth/angular';
 
 import { scripts } from '../scripts';
 
@@ -13,7 +13,7 @@ const registeredCmpId = 0;
 export const appConfig: ApplicationConfig = {
 	providers: [
 		provideZonelessChangeDetection(),
-		provideC15t({
+		provideInth({
 			// The CMP ID IAB Europe assigned to your company.
 			iab: { cmpId: registeredCmpId },
 			mode: hosted(),

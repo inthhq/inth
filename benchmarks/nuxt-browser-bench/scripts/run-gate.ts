@@ -8,21 +8,21 @@ import { fileURLToPath } from 'node:url';
 import {
 	runConsentGate,
 	spawnGateServer,
-} from '@c15t/benchmarking/consent-gate';
-import type { GateServer } from '@c15t/benchmarking/consent-gate';
-import { baselineServerOutputDir } from '@c15t/benchmarking/nuxt-baseline';
+} from '@inth/benchmarking/consent-gate';
+import type { GateServer } from '@inth/benchmarking/consent-gate';
+import { baselineServerOutputDir } from '@inth/benchmarking/nuxt-baseline';
 
 /**
  * Nuxt consent gate. The `@inth/nuxt` module applies to every page of the
  * full build, so the control page comes from the zero-consent baseline build
- * (C15T_BENCH_BASELINE=1), which omits the module. Both servers run, and a
+ * (INTH_BENCH_BASELINE=1), which omits the module. Both servers run, and a
  * small router in front of them sends the control page and the baseline's
  * `/_nuxt-baseline/` assets to the baseline server and everything else to
  * the full build. The gate proxy forwards to that router.
  */
 const appDir = resolvePath(dirname(fileURLToPath(import.meta.url)), '..');
 const HOST = '127.0.0.1';
-const routerPort = Number(process.env.C15T_GATE_SERVER_PORT ?? '4333');
+const routerPort = Number(process.env.INTH_GATE_SERVER_PORT ?? '4333');
 const fullPort = routerPort + 1;
 const baselinePort = routerPort + 2;
 const baselineEntry = join(baselineServerOutputDir, 'server', 'index.mjs');
@@ -46,18 +46,18 @@ const baselineStale =
 if (baselineStale) {
 	execFileSync('bun', ['run', 'build'], {
 		cwd: appDir,
-		env: { ...process.env, C15T_BENCH_BASELINE: '1' },
+		env: { ...process.env, INTH_BENCH_BASELINE: '1' },
 		stdio: 'inherit',
 	});
 }
 
 const serverEnv = (port: number, backendLatencyMs: number) => ({
-	C15T_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
+	INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 	HOST,
 	NITRO_HOST: HOST,
 	NITRO_PORT: `${port}`,
 	// nuxt.config.ts bakes the fixture manifest URL for the default port.
-	NUXT_PUBLIC_C15T_MODE_MANIFEST_URL: `http://${HOST}:${port}/api/bench-consent/manifest`,
+	NUXT_PUBLIC_INTH_MODE_MANIFEST_URL: `http://${HOST}:${port}/api/bench-consent/manifest`,
 	PORT: `${port}`,
 });
 
@@ -134,7 +134,7 @@ try {
 		],
 		packageName: '@inth/nuxt',
 		paths: { control: '/gate/control', gate: '/gate' },
-		proxyPort: Number(process.env.C15T_GATE_PORT ?? '4433'),
+		proxyPort: Number(process.env.INTH_GATE_PORT ?? '4433'),
 		startServer: startServers,
 		target: 'nuxt',
 	});

@@ -28,7 +28,7 @@ const warnUndeclaredVendor = function warnUndeclaredVendor(
 	}
 	warnedUndeclaredVendors.add(vendorId);
 	console.warn(
-		`[c15t] Vendor "${vendorId}" is not declared, so it reads as not allowed. Add { id: '${vendorId}', category: ... } to the vendors option, or put vendor: '${vendorId}' on the script that loads it.`
+		`[inth] Vendor "${vendorId}" is not declared, so it reads as not allowed. Add { id: '${vendorId}', category: ... } to the vendors option, or put vendor: '${vendorId}' on the script that loads it.`
 	);
 };
 

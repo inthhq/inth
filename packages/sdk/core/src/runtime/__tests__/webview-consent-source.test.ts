@@ -68,7 +68,7 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-test('outside a WebView there is no source, so c15t runs as usual', () => {
+test('outside a WebView there is no source, so inth runs as usual', () => {
 	openWindow();
 	expect(webViewConsentSource()).toBeUndefined();
 });
@@ -265,7 +265,7 @@ test('opening preferences asks the app through its message channel', () => {
 	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState()));
 	webViewConsentSource()?.openPreferences();
 	expect(postMessage).toHaveBeenCalledWith(
-		`{"type":"c15t:open-preferences","key":"${KEY}"}`
+		`{"type":"inth:open-preferences","key":"${KEY}"}`
 	);
 });
 

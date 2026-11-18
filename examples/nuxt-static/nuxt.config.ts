@@ -2,7 +2,7 @@
 import { manifest } from '@inth/nuxt';
 
 export default defineNuxtConfig({
-	c15t: {
+	inth: {
 		// A static host has no server: the browser resolves the policy the
 		// build bundled, and the module adds no consent route.
 		mode: manifest({ resolve: 'browser' }),

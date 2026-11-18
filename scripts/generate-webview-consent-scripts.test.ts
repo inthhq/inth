@@ -31,7 +31,7 @@ describe('generate-webview-consent-scripts', () => {
 	});
 
 	it('refuses a script that a raw string literal would change', () => {
-		const directory = mkdtempSync(join(tmpdir(), 'c15t-webview-'));
+		const directory = mkdtempSync(join(tmpdir(), 'inth-webview-'));
 		writeFileSync(
 			join(directory, 'document-start.js'),
 			`(function (origins, token, initial) { return \`${['$', '{token}'].join('')}\`; })`

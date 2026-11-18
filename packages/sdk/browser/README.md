@@ -2,7 +2,7 @@
   <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fsdk-browser" target="_blank" rel="noopener noreferrer">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="../docs/assets/c15t-banner-readme-dark.png">
-      <img src="../docs/assets/c15t-banner-readme-light.png" alt="c15t: the open standard for cookie banners">
+      <img src="../docs/assets/c15t-banner-readme-light.png" alt="inth: the open standard for cookie banners">
     </picture>
   </a>
 </p>
@@ -12,22 +12,22 @@
 <p>
 <a href="https://github.com/c15t/c15t"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&mode=light" alt="Stars"></picture></a>
 <a href="https://github.com/c15t/c15t/blob/main/LICENSE.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&mode=light" alt="License"></picture></a>
-<a href="https://c15t.link/discord"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&mode=light" alt="Discord"></picture></a>
-<a href="https://skills.sh/c15t/skills/c15t"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline&mode=light" alt="Skills"></picture></a>
+<a href="https://inth.link/discord"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&mode=light" alt="Discord"></picture></a>
+<a href="https://skills.sh/inth/skills/inth"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/skills/inth/skills/inth.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/skills/inth/skills/inth.svg?variant=outline&mode=light" alt="Skills"></picture></a>
 <a href="https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fsdk-browser"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?color=ffc803&labelTextColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&valueColor=000000&mode=dark"><img src="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?color=ffc803&labelTextColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&valueColor=000000&mode=light" alt="Made by Inth"></picture></a>
 </p>
 
 Cookie banner, preference center, and consent-gated scripts for sites without a build step: Webflow, WordPress, Framer, Squarespace, and plain HTML. Configure consent policies for GDPR and other privacy laws, then paste one script tag. Bundled apps can import the same runtime as an ES module.
 
-c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/c15t/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
+Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
 
 ## Key Features
 
-- One script tag from a CDN, configured with data attributes or calls queued on `window.c15t`
+- One script tag from a CDN, configured with data attributes or calls queued on `window.inth`
 - Prebuilt banner and preference dialog in a shadow root, so your site's CSS does not change them
-- Vendor scripts use `<script type="text/plain" data-c15t-category>` and iframes use `data-src` and `data-category`. They load when the resolved policy allows their categories
-- Buttons with `data-c15t-action` and links to `#c15t-preferences` work without code
-- A headless build with the same runtime and `window.c15t` API, for your own banner
+- Vendor scripts use `<script type="text/plain" data-inth-category>` and iframes use `data-src` and `data-category`. They load when the resolved policy allows their categories
+- Buttons with `data-inth-action` and links to `#inth-preferences` work without code
+- A headless build with the same runtime and `window.inth` API, for your own banner
 - DevTools (`c15t.devtools.js`) and IAB GPP (`c15t.gpp.js`) load as a second tag. For IAB TCF 2.4, load `c15t.iab.js` instead of `c15t.js`
 - ES module entry points for bundled apps, which can use the @inth/integrations vendor loaders
 
@@ -59,14 +59,14 @@ npm install @inth/sdk-browser
 ## Usage
 
 1. Add the tag and reload. The banner appears when the visitor's policy asks for one
-2. Change vendor tags to `type="text/plain"` with `data-c15t-category="measurement"` so they load when the resolved policy allows that category
-3. Link to `#c15t-preferences` so visitors can reopen the preference dialog
+2. Change vendor tags to `type="text/plain"` with `data-inth-category="measurement"` so they load when the resolved policy allows that category
+3. Link to `#inth-preferences` so visitors can reopen the preference dialog
 4. For every attribute and method, see the [HTML docs](https://c15t.com/docs/frameworks/html/attributes-and-api)
 
 ```js
-window.c15t = window.c15t || [];
-c15t.push(['on', 'consent', () => {
-  if (c15t.has('measurement')) {
+window.inth = window.inth || [];
+inth.push(['on', 'consent', () => {
+  if (inth.has('measurement')) {
     startAnalytics();
   }
 }]);
@@ -74,7 +74,7 @@ c15t.push(['on', 'consent', () => {
 
 ## Hosting
 
-c15t needs somewhere to keep policies and consent records. Pick one:
+Inth needs somewhere to keep policies and consent records. Pick one:
 
 - **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fsdk-browser)**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
 - **Self-hosted**: Run [`@c15t/backend`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
@@ -91,7 +91,7 @@ See the [documentation](https://c15t.com/docs/frameworks/html/quickstart) for gu
 | File | Use it for |
 | --- | --- |
 | `c15t.js` | Inth or a self-hosted backend. Set `data-project-url`. A self-hosted backend also serves a preconfigured script at `/c15t.js` |
-| `c15t.local.js` | Local mode, for development and tests: choices stay in the browser, with local policy rules, and c15t keeps no server-side record of consent. Before 3.2.0 this file was `c15t.offline.js` |
+| `c15t.local.js` | Local mode, for development and tests: choices stay in the browser, with local policy rules, and Inth keeps no server-side record of consent. Before 3.2.0 this file was `c15t.offline.js` |
 | `c15t.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/manifest` |
 | `c15t.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |
 | `c15t.devtools.js` | A DevTools panel, with a Location tab to try policies by region |
@@ -101,11 +101,11 @@ See the [documentation](https://c15t.com/docs/frameworks/html/quickstart) for gu
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/sdk-browser/AGENTS.md`. It indexes every guide in `node_modules/@inth/sdk-browser/docs/`.
 
-On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the Inth agent skills with `npx skills add inth/skills`.
 
 ## Support
 
-- Join our [Discord community](https://c15t.link/discord)
+- Join our [Discord community](https://inth.link/discord)
 - Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)
 - Visit [inth.com](https://inth.com) and use the chat widget
 - Contact our support team via email [support@inth.com](mailto:support@inth.com)

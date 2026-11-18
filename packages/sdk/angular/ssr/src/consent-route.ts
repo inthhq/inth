@@ -5,7 +5,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  * The route logic lives in `@inth/sdk/server` (`createConsentRouteHandler`),
  * shared with every other adapter. This module mounts it under a path
  * prefix in front of `AngularAppEngine` or `AngularNodeAppEngine`, and lets
- * `provideC15tServer()` reach it in-process.
+ * `provideInthServer()` reach it in-process.
  */
 import {
 	createConsentRouteHandler,
@@ -30,11 +30,11 @@ export interface ConsentRouteOptions {
 	/**
 	 * Where the route is mounted. Requests below it are consent requests.
 	 *
-	 * @default '/api/c15t'
+	 * @default '/api/inth'
 	 */
 	routePrefix?: string;
 	/**
-	 * The c15t backend. The manifest is read from `${projectUrl}/manifest`
+	 * The Inth backend. The manifest is read from `${projectUrl}/manifest`
 	 * unless `manifestUrl` or `snapshot` is set; session reports and the
 	 * proxy go here. Must not name this route.
 	 */
@@ -110,7 +110,7 @@ export interface ConsentRoute {
 	/**
 	 * Fetch that answers this route in-process for a `/`-relative path
 	 * below {@link routePrefix}, and `globalThis.fetch` for anything else.
-	 * `provideC15tServer({ route })` resolves a backend on this route
+	 * `provideInthServer({ route })` resolves a backend on this route
 	 * through it.
 	 */
 	readonly localFetch: ManifestFetch;
@@ -119,7 +119,7 @@ export interface ConsentRoute {
 	 * carries that request's site origin, as `resolveRequestOrigin` reads
 	 * it, and its forwarding headers when the route trusts them, so a
 	 * `/`-relative upstream outside the route resolves on the real site.
-	 * `provideC15tServer({ route })` uses it with Angular's `REQUEST`.
+	 * `provideInthServer({ route })` uses it with Angular's `REQUEST`.
 	 *
 	 * @param request - The request being rendered, or `null` for none.
 	 * @returns The fetch.
@@ -190,7 +190,7 @@ const isAbsolute = (url: string): boolean =>
 	/^[a-z][a-z\d+.-]*:/iu.test(url) || url.startsWith('//');
 
 /** Resolves a relative URL's path, `..` segments included. */
-const RELATIVE_BASE = 'http://c15t.invalid';
+const RELATIVE_BASE = 'http://inth.invalid';
 
 /**
  * The upstream URLs that would send the route's requests back into it.
@@ -227,7 +227,7 @@ const upstreamLoops = function upstreamLoops(
 		}
 		if (!absolute) {
 			throw new TypeError(
-				`${ADAPTER}: \`${name}\` (${url}) is on or beneath the consent route (${routePrefix}), so the route would call itself. Pass the c15t backend's URL.`
+				`${ADAPTER}: \`${name}\` (${url}) is on or beneath the consent route (${routePrefix}), so the route would call itself. Pass the inth backend's URL.`
 			);
 		}
 		origins.push(protocolRelative ? `//${resolved.host}` : resolved.origin);
@@ -248,7 +248,7 @@ const upstreamLoops = function upstreamLoops(
  * import { createConsentRoute } from '@inth/angular/ssr';
  *
  * export const consentRoute = createConsentRoute({
- *   projectUrl: process.env['C15T_BACKEND_URL'],
+ *   projectUrl: process.env['INTH_PROJECT_URL'],
  *   proxy: true,
  * });
  *
@@ -272,7 +272,7 @@ export const createConsentRoute = function createConsentRoute(
 ): ConsentRoute {
 	const routePrefix = normalizeRoutePrefix(
 		ADAPTER,
-		options.routePrefix ?? '/api/c15t'
+		options.routePrefix ?? '/api/inth'
 	);
 	const loops = upstreamLoops(options, routePrefix);
 	const handler = createConsentRouteHandler({
@@ -307,7 +307,7 @@ export const createConsentRoute = function createConsentRoute(
 			// An absolute upstream URL on this site, beneath this route: the
 			// request would come back here.
 			return new Response(
-				`${ADAPTER}: \`projectUrl\` or \`manifestUrl\` points beneath the consent route on this site (${routePrefix}). Pass the c15t backend's URL.`,
+				`${ADAPTER}: \`projectUrl\` or \`manifestUrl\` points beneath the consent route on this site (${routePrefix}). Pass the inth backend's URL.`,
 				{ status: 500 }
 			);
 		}

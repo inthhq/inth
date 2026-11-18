@@ -16,7 +16,7 @@ registers PostHog this way in `src/consent.tsx`:
 Each helper from `@inth/integrations` sets its own category and a stable `id`.
 Remove every other loader for the same vendor, such as a `<script>` tag in
 `index.html` or an SDK you initialize at module level, so the vendor loads
-once and only through c15t. [Integrations](/docs/integrations/overview) lists
+once and only through Inth. [Integrations](/docs/integrations/overview) lists
 every helper, and [building integrations](/docs/integrations/building-integrations)
 covers a vendor without one.
 
@@ -42,7 +42,7 @@ when the visitor's consent already lets a script run.
 
 ## Embeds and other requests
 
-Scripts cover vendor code c15t loads for you. For the rest:
+Scripts cover vendor code Inth loads for you. For the rest:
 
 - [Embeds](/docs/frameworks/react/embeds) keeps iframes out of the page with
   `ConsentGate` or the iframe blocker.

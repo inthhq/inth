@@ -5,8 +5,8 @@
 		--switch-height: 1.25rem;
 		--switch-width: 2rem;
 		--switch-padding: 0.125rem;
-		--switch-duration: var(--c15t-duration-normal);
-		--switch-ease: var(--c15t-easing);
+		--switch-duration: var(--inth-duration-normal);
+		--switch-ease: var(--inth-easing);
 
 		/* Thumb sizes */
 		--switch-thumb-size: 0.75rem;
@@ -16,24 +16,24 @@
 		);
 
 		/* Colors */
-		--switch-background-color: var(--c15t-switch-track);
-		--switch-background-color-dark: var(--c15t-switch-track);
-		--switch-background-color-hover: var(--c15t-surface-hover);
-		--switch-background-color-hover-dark: var(--c15t-surface-hover);
-		--switch-background-color-checked: var(--c15t-switch-track-active);
-		--switch-background-color-checked-dark: var(--c15t-switch-track-active);
-		--switch-background-color-disabled: var(--c15t-border);
-		--switch-background-color-disabled-dark: var(--c15t-border);
-		--switch-thumb-background-color: var(--c15t-switch-thumb);
-		--switch-thumb-background-color-dark: var(--c15t-switch-thumb);
-		--switch-thumb-background-color-disabled: var(--c15t-surface-hover);
-		--switch-thumb-background-color-disabled-dark: var(--c15t-surface-hover);
+		--switch-background-color: var(--inth-switch-track);
+		--switch-background-color-dark: var(--inth-switch-track);
+		--switch-background-color-hover: var(--inth-surface-hover);
+		--switch-background-color-hover-dark: var(--inth-surface-hover);
+		--switch-background-color-checked: var(--inth-switch-track-active);
+		--switch-background-color-checked-dark: var(--inth-switch-track-active);
+		--switch-background-color-disabled: var(--inth-border);
+		--switch-background-color-disabled-dark: var(--inth-border);
+		--switch-thumb-background-color: var(--inth-switch-thumb);
+		--switch-thumb-background-color-dark: var(--inth-switch-thumb);
+		--switch-thumb-background-color-disabled: var(--inth-surface-hover);
+		--switch-thumb-background-color-disabled-dark: var(--inth-surface-hover);
 
 		/* Shadows */
-		--switch-shadow-thumb: 0 0 0 1px var(--c15t-border);
-		--switch-shadow-thumb-dark: 0 0 0 1px var(--c15t-border);
-		--switch-focus-ring: var(--c15t-primary);
-		--switch-focus-ring-dark: var(--c15t-primary);
+		--switch-shadow-thumb: 0 0 0 1px var(--inth-border);
+		--switch-shadow-thumb-dark: 0 0 0 1px var(--inth-border);
+		--switch-focus-ring: var(--inth-primary);
+		--switch-focus-ring-dark: var(--inth-primary);
 		--switch-focus-shadow: 0 0 0 2px var(--switch-focus-ring);
 		--switch-focus-shadow-dark: 0 0 0 2px var(--switch-focus-ring-dark);
 
@@ -71,7 +71,7 @@
 		transition: background-color var(--switch-duration) var(--switch-ease);
 	}
 
-	:global(.c15t-dark) .track {
+	:global(.inth-dark) .track {
 		background-color: var(--switch-background-color-dark);
 	}
 
@@ -80,7 +80,7 @@
 		background-color: var(--switch-background-color-hover);
 	}
 
-	:global(.c15t-dark) .track:hover {
+	:global(.inth-dark) .track:hover {
 		background-color: var(--switch-background-color-hover-dark);
 	}
 
@@ -88,7 +88,7 @@
 		background-color: var(--switch-background-color-hover);
 	}
 
-	:global(.c15t-dark) .track:focus-visible {
+	:global(.inth-dark) .track:focus-visible {
 		background-color: var(--switch-background-color-hover-dark);
 	}
 
@@ -96,7 +96,7 @@
 		background-color: var(--switch-background-color);
 	}
 
-	:global(.c15t-dark) .track:active {
+	:global(.inth-dark) .track:active {
 		background-color: var(--switch-background-color-dark);
 	}
 
@@ -104,7 +104,7 @@
 		background-color: var(--switch-background-color-checked);
 	}
 
-	:global(.c15t-dark) .root[data-state='checked'] .track {
+	:global(.inth-dark) .root[data-state='checked'] .track {
 		background-color: var(--switch-background-color-checked-dark);
 	}
 
@@ -112,7 +112,7 @@
 		background-color: var(--switch-background-color-checked);
 	}
 
-	:global(.c15t-dark) .root[data-state='checked']:hover .track {
+	:global(.inth-dark) .root[data-state='checked']:hover .track {
 		background-color: var(--switch-background-color-checked-dark);
 	}
 
@@ -125,17 +125,17 @@
 		outline: none;
 	}
 
-	:global(.c15t-dark) .root:focus {
+	:global(.inth-dark) .root:focus {
 		outline: none;
 	}
 
 	.track-disabled {
 		background-color: var(--switch-background-color-disabled);
 		opacity: 0.4;
-		box-shadow: inset 0 0 0 1px var(--c15t-border);
+		box-shadow: inset 0 0 0 1px var(--inth-border);
 	}
 
-	:global(.c15t-dark) .track-disabled {
+	:global(.inth-dark) .track-disabled {
 		background-color: var(--switch-background-color-disabled-dark);
 	}
 
@@ -145,7 +145,7 @@
 		box-shadow: none;
 	}
 
-	:global(.c15t-dark) .root[data-state='checked'] .track-disabled {
+	:global(.inth-dark) .root[data-state='checked'] .track-disabled {
 		background-color: var(--switch-background-color-checked-dark);
 	}
 
@@ -179,7 +179,7 @@
 			50% 50% / 100% 100% no-repeat;
 	}
 
-	:global(.c15t-dark) .thumb::before {
+	:global(.inth-dark) .thumb::before {
 		background-color: var(--switch-thumb-background-color-dark);
 	}
 
@@ -194,7 +194,7 @@
 		box-shadow: var(--switch-shadow-thumb);
 	}
 
-	:global(.c15t-dark) .thumb::after {
+	:global(.inth-dark) .thumb::after {
 		box-shadow: var(--switch-shadow-thumb-dark);
 	}
 
@@ -255,7 +255,7 @@
 		outline-offset: 2px;
 	}
 
-	:global(.c15t-dark) .root:focus-visible .track {
+	:global(.inth-dark) .root:focus-visible .track {
 		outline-color: var(--switch-focus-ring-dark);
 	}
 

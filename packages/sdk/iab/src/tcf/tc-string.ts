@@ -91,7 +91,7 @@ let warnedServiceSpecific = false;
  * Resolve the deprecated `isServiceSpecific` option.
  *
  * TCF requires IsServiceSpecific=1: a string with 0 is invalid, and
- * group-specific scope is also encoded as 1. c15t therefore always encodes
+ * group-specific scope is also encoded as 1. Inth therefore always encodes
  * `true` and warns once when a caller still passes `false`.
  *
  * @param value - The configured option.
@@ -104,7 +104,7 @@ export const resolveIsServiceSpecific = function resolveIsServiceSpecific(
 	if (value === false && !warnedServiceSpecific) {
 		warnedServiceSpecific = true;
 		console.warn(
-			'[c15t] `isServiceSpecific: false` is deprecated and ignored. TCF requires IsServiceSpecific=1, so c15t always encodes TC strings as service-specific.'
+			'[inth] `isServiceSpecific: false` is deprecated and ignored. TCF requires IsServiceSpecific=1, so inth always encodes TC strings as service-specific.'
 		);
 	}
 	return true;
@@ -134,7 +134,7 @@ export interface TCStringConfig {
 	publisherCountryCode?: string;
 
 	/**
-	 * Ignored: c15t always encodes IsServiceSpecific=1.
+	 * Ignored: Inth always encodes IsServiceSpecific=1.
 	 *
 	 * @deprecated TCF requires IsServiceSpecific=1, and group-specific scope
 	 * is also encoded as 1. Passing `false` logs a warning once.
@@ -308,7 +308,7 @@ const readPublisherRestrictions = function readPublisherRestrictions(
 ): PublisherRestriction[] {
 	const restrictions = vector.getRestrictions();
 	// The spec allows publisher restrictions only in service-specific
-	// strings. c15t never writes another scope, but a stored string may
+	// strings. Inth never writes another scope, but a stored string may
 	// come from elsewhere.
 	if (restrictions.length > 0 && !isServiceSpecific) {
 		throw new PublisherRestrictionError(
@@ -390,7 +390,7 @@ export interface DecodedTCString {
  * restriction with the reserved type `3`, purpose ID `0` or a vendor range
  * that ends before it starts.
  * @throws {PublisherRestrictionError} When the string carries a
- * restriction c15t does not support: vendor ID `0`, legitimate interest
+ * restriction Inth does not support: vendor ID `0`, legitimate interest
  * required for a purpose that is consent-only under the string's policy
  * version, two types for one vendor and
  * purpose, or any restriction in a string that is not service-specific.

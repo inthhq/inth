@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build your own consent banner and preference form in a Vue app with the c15t composables instead of ConsentRoot.
+description: Build your own consent banner and preference form in a Vue app with the Inth composables instead of ConsentRoot.
 group: frameworks
 ---
 
@@ -16,7 +16,7 @@ stores choices, loads your `scripts` and gates iframes.
 
 ## Install the plugin as usual
 
-Install `c15tVue` exactly as in the [quickstart](/docs/frameworks/vue/quickstart),
+Install `inthVue` exactly as in the [quickstart](/docs/frameworks/vue/quickstart),
 with the Vite plugin and your `scripts`:
 
 <include src="../../shared/examples/vue/headless-main.mdx" />
@@ -29,7 +29,7 @@ form while it is `'manager'`:
 <include src="../../shared/examples/vue/headless-prompt.mdx" />
 
 `useConsentSave()` records Accept all or Reject all. Recording a choice
-satisfies the prompt, so c15t sets `activeUI` to `null` and the banner closes.
+satisfies the prompt, so Inth sets `activeUI` to `null` and the banner closes.
 `useConsentDraft()` holds the preference form. `displayedCategories` lists the
 categories the policy lets the visitor choose, `values` holds each switch, and
 `save()` records them. Preferences stay open after a save, so close them

@@ -1,5 +1,5 @@
 /**
- * Headers every c15t-backend-bound request carries.
+ * Headers every inth-backend-bound request carries.
  *
  * `x-c15t-version` (issue #916) is telemetry: it lets the backend attribute
  * traffic to a client version. It is never used to guess what a client can
@@ -12,10 +12,10 @@
  * version in the same response header so the client can tell a negotiated
  * producer from one that predates the contract.
  *
- * Scope: every c15t-bound request — hosted `/init` + `/subjects`,
+ * Scope: every inth-bound request — hosted `/init` + `/subjects`,
  * manifest-mode `/subjects`, the manifest document fetch, the GVL fetch,
  * and the Next/Nuxt server proxies' upstream manifest calls. The manifest
- * and GVL hosts are c15t/tenant-controlled infrastructure (IAB TCF policy
+ * and GVL hosts are inth/tenant-controlled infrastructure (IAB TCF policy
  * requires CMPs to self-host the GVL rather than hotlink IAB's), so the
  * headers are safe and version-gated manifest serving stays possible.
  *
@@ -23,7 +23,7 @@
  * fetch. A browser on another origin sends them as CORS simple requests,
  * because a header would add an `OPTIONS` preflight to every first visit.
  * On `GET /init` the version and the contract travel as the `v` and
- * `contract` query parameters instead ({@link c15tProtocolParams}); the
+ * `contract` query parameters instead ({@link inthProtocolParams}); the
  * backend reads the parameter first and the header second. The browser's
  * GVL fetch carries neither, because the vendor list host doesn't read
  * them. Other requests keep the headers: the browser's manifest fetch
@@ -38,31 +38,31 @@ import type { InitRequestParams } from '@inth/sdk-schema/types';
 
 import { version } from '../version';
 
-export const C15T_VERSION_HEADER = 'x-c15t-version';
+export const INTH_VERSION_HEADER = 'x-c15t-version';
 
 /** Request header naming the policy contract this client reads. */
-export const C15T_POLICY_CONTRACT_HEADER = POLICY_CONTRACT_HEADER;
+export const INTH_POLICY_CONTRACT_HEADER = POLICY_CONTRACT_HEADER;
 
 /** Header record to spread into backend-bound request headers. */
-export const c15tVersionHeaders: Readonly<Record<string, string>> = {
-	[C15T_VERSION_HEADER]: version,
+export const inthVersionHeaders: Readonly<Record<string, string>> = {
+	[INTH_VERSION_HEADER]: version,
 };
 
 /**
  * Version telemetry plus the policy contract declaration, for every
  * backend-bound request.
  */
-export const c15tProtocolHeaders: Readonly<Record<string, string>> = {
-	...c15tVersionHeaders,
-	[C15T_POLICY_CONTRACT_HEADER]: String(POLICY_CONTRACT_VERSION),
+export const inthProtocolHeaders: Readonly<Record<string, string>> = {
+	...inthVersionHeaders,
+	[INTH_POLICY_CONTRACT_HEADER]: String(POLICY_CONTRACT_VERSION),
 };
 
 /**
  * Version telemetry plus the policy contract declaration, as the query
  * parameters a browser's `GET /init` carries in place of
- * {@link c15tProtocolHeaders}.
+ * {@link inthProtocolHeaders}.
  */
-export const c15tProtocolParams: Readonly<
+export const inthProtocolParams: Readonly<
 	Pick<InitRequestParams, 'version' | 'policyContract'>
 > = {
 	policyContract: POLICY_CONTRACT_VERSION,
@@ -79,7 +79,7 @@ export const c15tProtocolParams: Readonly<
 export const readProducerPolicyContract = function readProducerPolicyContract(
 	headers: Pick<Headers, 'get'> | undefined
 ): number | null | undefined {
-	const value = headers?.get(C15T_POLICY_CONTRACT_HEADER);
+	const value = headers?.get(INTH_POLICY_CONTRACT_HEADER);
 	if (value === null || value === undefined) {
 		return undefined;
 	}

@@ -19,7 +19,7 @@ import ConsentRootFixture from './fixtures/consent-root-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 import { closeSsrWorker, renderRootSsr, warmSsrWorker } from './server-render';
 
-type WindowWithC15t = Window & { c15t?: unknown };
+type WindowWithInth = Window & { inth?: unknown };
 
 const SCRIPT = {
 	category: 'measurement',
@@ -27,7 +27,7 @@ const SCRIPT = {
 	src: 'https://scripts.example.test/measure.js',
 };
 
-const BOOT = 'script[data-c15t-boot]';
+const BOOT = 'script[data-inth-boot]';
 
 let mounted: ReturnType<typeof hydrate> | undefined;
 
@@ -78,12 +78,12 @@ afterEach(() => {
 		}
 	}
 	localStorage.clear();
-	delete (window as WindowWithC15t).c15t;
+	delete (window as WindowWithInth).inth;
 	(
-		window as { __c15tEarlyTaps?: { stop?: () => void } }
-	).__c15tEarlyTaps?.stop?.();
-	delete (window as { __c15tEarlyTaps?: unknown }).__c15tEarlyTaps;
-	(window as { __c15tStarted?: unknown }).__c15tStarted = undefined;
+		window as { __inthEarlyTaps?: { stop?: () => void } }
+	).__inthEarlyTaps?.stop?.();
+	delete (window as { __inthEarlyTaps?: unknown }).__inthEarlyTaps;
+	(window as { __inthStarted?: unknown }).__inthStarted = undefined;
 	vi.restoreAllMocks();
 });
 
@@ -97,7 +97,7 @@ describe('ConsentRoot deferred engine', () => {
 
 		// The engine may wait, so the head preloads neither it nor the loader.
 		expect(server.boot).toMatchObject({ d: 1, s: { activeUI: 'banner' } });
-		expect(server.head).not.toContain('c15t-modulepreload');
+		expect(server.head).not.toContain('inth-modulepreload');
 		// Hydration adopted the server's banner.
 		expect(document.querySelector('[data-testid="consent-banner-root"]')).toBe(
 			server.banner
@@ -105,7 +105,7 @@ describe('ConsentRoot deferred engine', () => {
 		expect(
 			warn.mock.calls.filter(([message]) => /hydrat/iu.test(String(message)))
 		).toEqual([]);
-		expect((window as WindowWithC15t).c15t).toBeUndefined();
+		expect((window as WindowWithInth).inth).toBeUndefined();
 	});
 
 	test('an accept before the engine records the choice and starts the scripts in the tap', async () => {
@@ -116,7 +116,7 @@ describe('ConsentRoot deferred engine', () => {
 		const accept = document.querySelector<HTMLButtonElement>(
 			'[data-testid="consent-banner-accept-button"]'
 		);
-		expect((window as WindowWithC15t).c15t).toBeUndefined();
+		expect((window as WindowWithInth).inth).toBeUndefined();
 
 		accept?.click();
 
@@ -133,11 +133,11 @@ describe('ConsentRoot deferred engine', () => {
 		// One task later the commit chunk stores the record; then the engine
 		// loads and starts from it.
 		await vi.waitFor(() => {
-			expect(document.cookie).toMatch(/(?:^|; )c15t=/u);
+			expect(document.cookie).toMatch(/(?:^|; )inth=/u);
 		});
 		await vi.waitFor(
 			() => {
-				expect((window as WindowWithC15t).c15t).toBeDefined();
+				expect((window as WindowWithInth).inth).toBeDefined();
 			},
 			{ timeout: 5000 }
 		);
@@ -152,12 +152,12 @@ describe('ConsentRoot deferred engine', () => {
 			(target) => {
 				// The browser runs the server's inline script as it parses the
 				// banner; markup set through innerHTML does not, so run it here.
-				const inline = target.querySelector('script[data-c15t-early-tap]');
+				const inline = target.querySelector('script[data-inth-early-tap]');
 				expect(inline).not.toBeNull();
 				// oxlint-disable-next-line no-eval -- The page's own inline script.
 				(0, eval)(inline?.textContent ?? '');
 				expect(
-					(window as { __c15tEarlyTaps?: { taps?: unknown[] } }).__c15tEarlyTaps
+					(window as { __inthEarlyTaps?: { taps?: unknown[] } }).__inthEarlyTaps
 						?.taps
 				).toEqual([]);
 
@@ -183,10 +183,10 @@ describe('ConsentRoot deferred engine', () => {
 			).not.toBeNull();
 		});
 		await vi.waitFor(() => {
-			expect(document.cookie).toMatch(/(?:^|; )c15t=/u);
+			expect(document.cookie).toMatch(/(?:^|; )inth=/u);
 		});
 		// Claimed: the script stopped and holds nothing more.
-		expect((window as { __c15tEarlyTaps?: unknown }).__c15tEarlyTaps).toEqual(
+		expect((window as { __inthEarlyTaps?: unknown }).__inthEarlyTaps).toEqual(
 			{}
 		);
 	});
@@ -199,11 +199,11 @@ describe('ConsentRoot deferred engine', () => {
 
 		expect(server.boot.d).toBeUndefined();
 		expect(server.head).toMatch(
-			/<meta name="c15t-modulepreload" content="engine loader-and-blocker"/u
+			/<meta name="inth-modulepreload" content="engine loader-and-blocker"/u
 		);
 		await vi.waitFor(
 			() => {
-				expect((window as WindowWithC15t).c15t).toBeDefined();
+				expect((window as WindowWithInth).inth).toBeDefined();
 			},
 			{ timeout: 5000 }
 		);

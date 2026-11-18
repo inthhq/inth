@@ -18,9 +18,9 @@ export interface ScriptCountBenchState {
 
 declare global {
 	interface Window {
-		__c15tScriptCountBench?: ScriptCountBenchState;
-		__c15tScriptBench?: ScriptCountBenchState;
-		__c15tGetScriptCountBenchState?: () => ScriptCountBenchState | null;
+		__inthScriptCountBench?: ScriptCountBenchState;
+		__inthScriptBench?: ScriptCountBenchState;
+		__inthGetScriptCountBenchState?: () => ScriptCountBenchState | null;
 	}
 }
 
@@ -96,8 +96,8 @@ export const publishScriptBenchState = function publishScriptBenchState(
 	patch: Partial<Omit<ScriptCountBenchState, 'recordScriptExecution'>>
 ) {
 	Object.assign(state, patch);
-	window.__c15tScriptCountBench = state;
-	window.__c15tScriptBench = state;
+	window.__inthScriptCountBench = state;
+	window.__inthScriptBench = state;
 };
 
 export const listDomIds = function listDomIds(count: number): string[] {

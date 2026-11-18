@@ -58,7 +58,7 @@ const MAX_VENDOR_ID = 65_535;
 
 /**
  * Thrown when a publisher restriction cannot be encoded, or when a TC
- * string carries one c15t does not support.
+ * string carries one Inth does not support.
  *
  * @public
  */
@@ -74,18 +74,18 @@ export interface PublisherRestrictionContext {
 	 */
 	gvl?: GlobalVendorList;
 	/**
-	 * Ignored. c15t always writes service-specific TC strings, because TCF
+	 * Ignored. Inth always writes service-specific TC strings, because TCF
 	 * requires IsServiceSpecific=1, so restrictions are always allowed.
 	 * `decodeTCString` still rejects restrictions in a string that is not
 	 * service-specific.
 	 *
-	 * @deprecated Every TC string c15t writes is service-specific.
+	 * @deprecated Every TC string Inth writes is service-specific.
 	 */
 	isServiceSpecific?: boolean;
 	/**
 	 * TCF policy version of a decoded string. Strings written before policy
 	 * version 4 may require legitimate interest for purposes 3 to 6. Omit it
-	 * when encoding: c15t only writes restrictions valid under the current
+	 * when encoding: Inth only writes restrictions valid under the current
 	 * policy.
 	 */
 	policyVersion?: number;

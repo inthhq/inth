@@ -19,11 +19,11 @@
  *
  * @internal
  */
-export const EARLY_TAPS_KEY = '__c15tEarlyTaps';
+export const EARLY_TAPS_KEY = '__inthEarlyTaps';
 /** @internal */
 export const BANNER_ROOT = '[data-testid="consent-banner-root"]';
 /** @internal */
-export const EARLY_TAP_STYLE_ID = 'c15t-early-tap';
+export const EARLY_TAP_STYLE_ID = 'inth-early-tap';
 /** @internal */
 export const EARLY_TAP_NOTIFY = 'n';
 

@@ -37,7 +37,7 @@ component, and `nuxt-vapor-future` repeats them under the Nuxt 5 preview. The
 `tanstack-start-*` targets build the TanStack Start example
 with one of the alternative root routes in
 `internals/fixtures/tanstack-start/src/rendering`. The `angular` target renders
-on the server with `provideC15tServer()`, taps its banner before hydration,
+on the server with `provideInthServer()`, taps its banner before hydration,
 and runs every journey against `/headless`, which replaces the stock consent
 UI with components built on `HeadlessConsent`. The `vue` target also runs every
 journey against `/headless`, which replaces the stock consent UI with the
@@ -103,7 +103,7 @@ request-header and no-zombie-banner contracts. The Nuxt cases also check
 Nitro route methods, caching and version headers. Next cases also verify the
 backend receives one saved choice, with one init request for hosted SSR and
 zero for manifest SSR. Select hosts with
-`C15T_E2E_APPS=nextjs,nuxt`. `bun run e2e:consent` calls the same suite.
+`INTH_E2E_APPS=nextjs,nuxt`. `bun run e2e:consent` calls the same suite.
 
 These journeys use benchmark hosts because they expose server observations
 that the public examples do not. Example acceptance owns vendor gating and
@@ -125,7 +125,7 @@ regions from `internals/doc-snippets/html` on its branded, Tailwind and
 headless routes, so the HTML journeys test the markup readers copy.
 
 `scripts/example-doc-sources.test.ts` fails when a generated snippet is stale
-or orphaned. It also counts hand-written docs fences that import c15t against
+or orphaned. It also counts hand-written docs fences that import Inth against
 `scripts/hand-written-examples-baseline.json`; that count may only fall. Put
 `{/* example: fragment */}` on the line before a fence that is deliberately a
 partial edit rather than a file, such as one changed prop. When you move or

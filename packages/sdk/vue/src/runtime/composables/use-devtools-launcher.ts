@@ -58,7 +58,7 @@ export const useDevToolsLauncher = function useDevToolsLauncher(
 			? getDevToolsLauncherSnapshot(kernel)
 			: EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT
 	);
-	const claim = Symbol('c15t:devtools-launcher-claim');
+	const claim = Symbol('inth:devtools-launcher-claim');
 	const available = computed(() => snapshot.value.instance !== null);
 
 	if (isBrowser) {

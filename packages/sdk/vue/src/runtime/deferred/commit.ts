@@ -111,7 +111,7 @@ const announce = function announce(
 			);
 		}
 	} catch (error) {
-		console.error('[c15t] A consent callback threw.', error);
+		console.error('[inth] A consent callback threw.', error);
 	}
 };
 

@@ -60,7 +60,7 @@ test('a deferred root loads its engine a second after one failed import', async 
 			<ServerBootData renderId="test-render" />
 		</ConsentProvider>
 	);
-	const bootScript = boot.querySelector('script[data-c15t-boot]');
+	const bootScript = boot.querySelector('script[data-inth-boot]');
 	if (!bootScript) {
 		throw new Error('the server render left no boot data');
 	}
@@ -83,7 +83,7 @@ test('a deferred root loads its engine a second after one failed import', async 
 		// The engine marks its arrival by rendering the boot data's slot.
 		await vi.waitFor(
 			() =>
-				expect(container.querySelector('script[data-c15t-boot]')).not.toBe(
+				expect(container.querySelector('script[data-inth-boot]')).not.toBe(
 					null
 				),
 			{ timeout: 5000 }

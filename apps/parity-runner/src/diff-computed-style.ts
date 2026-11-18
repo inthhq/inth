@@ -7,7 +7,7 @@
  * not a single wrapper — so matched roots that carry a `data-testid` are
  * captured too. The capture runs inside the page (Playwright `evaluate`)
  * because `getComputedStyle` is a browser API; the diff itself runs
- * Node-side via `diffComputedStyleMap` from `@c15t/conformance`.
+ * Node-side via `diffComputedStyleMap` from `@inth/conformance`.
  * Pass `*` as `elementSelector` to compare all descendants by DOM order.
  *
  * Values are canonicalised before they leave this module, because each
@@ -19,12 +19,12 @@
  * disagree on spelling while meaning the same thing. See
  * {@link normalizeCssValue} for what is folded away.
  *
- * The property list is duplicated here (and in `@c15t/conformance`'s
+ * The property list is duplicated here (and in `@inth/conformance`'s
  * `computed-style.ts`) because Playwright can't import ESM into page context.
  * Keep these in sync.
  */
 
-import type { ComputedStyleSnapshot } from '@c15t/conformance';
+import type { ComputedStyleSnapshot } from '@inth/conformance';
 import type { Page } from '@playwright/test';
 
 const DEFAULT_PROPS = [

@@ -179,7 +179,7 @@ export const pirsch = function pirsch(options: PirschOptions): Script {
 		scriptUrl: getPirschScriptUrl(options),
 	});
 
-	// pa.js only runs pirschInit() from a DOMContentLoaded listener, but c15t
+	// pa.js only runs pirschInit() from a DOMContentLoaded listener, but Inth
 	// usually injects the script after that event has already fired (consent
 	// granted post-load), so custom event bindings would never initialize.
 	// Call it ourselves exactly when the native listener can no longer fire.

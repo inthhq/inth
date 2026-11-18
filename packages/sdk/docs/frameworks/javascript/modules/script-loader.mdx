@@ -1,6 +1,6 @@
 ---
 title: Script loader
-description: Reference for the c15t script loader in JavaScript, covering every Script field, lifecycle callbacks, updateScripts, disposal and createScriptLoader for a kernel you own.
+description: Reference for the Inth script loader in JavaScript, covering every Script field, lifecycle callbacks, updateScripts, disposal and createScriptLoader for a kernel you own.
 group: frameworks
 ---
 
@@ -58,13 +58,13 @@ reloads after withdrawal anyway; with `reloadOnConsentRevoked: false`, use
 `onConsentChange` to stop the vendor.
 
 When scripts share an element, each active registration receives its own
-`onLoad` or `onError` callback. A registration that joins after c15t observed
+`onLoad` or `onError` callback. A registration that joins after Inth observed
 completion receives that callback in a microtask, after its consent callback,
 using its current callbacks and consent. Inline scripts share their deferred
-completion too. Removing a registration cancels its pending callback. c15t does
+completion too. Removing a registration cancels its pending callback. Inth does
 not infer completion for elements added outside the loader.
 
-Removing the original loader transfers ownership to a remaining loader. c15t
+Removing the original loader transfers ownership to a remaining loader. Inth
 removes an element it created when the last loader releases it, unless a
 registration that released it by removal or disposal set
 `persistAfterDispose`. That setting does not apply to consent withdrawal.

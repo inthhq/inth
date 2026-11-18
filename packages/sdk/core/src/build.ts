@@ -115,13 +115,13 @@ export type ManifestBuildErrorMode = 'runtime' | 'fail';
 export type ManifestBuildCommand = 'build' | 'dev';
 
 /** Environment variable that overrides `onBuildError` in every framework. */
-export const MANIFEST_BUILD_ERROR_ENV = 'C15T_ON_BUILD_ERROR';
+export const MANIFEST_BUILD_ERROR_ENV = 'INTH_ON_BUILD_ERROR';
 
 const isBuildErrorMode = (value: unknown): value is ManifestBuildErrorMode =>
 	value === 'runtime' || value === 'fail';
 
 /**
- * Decides what a failed manifest fetch does. `C15T_ON_BUILD_ERROR` wins over
+ * Decides what a failed manifest fetch does. `INTH_ON_BUILD_ERROR` wins over
  * `onBuildError`. Without either, the build and dev fall back to runtime
  * fetching with a warning.
  * @param onBuildError - The configured option, if any.
@@ -187,7 +187,7 @@ const parseEnvFile = (source: string): Record<string, string> => {
  * Vite resolves variables: values the framework already loaded, then the
  * process environment, then `.env.[mode].local`, `.env.[mode]`,
  * `.env.local` and `.env` in `root`. An earlier name wins wherever it is
- * set, so `*_C15T_BACKEND_URL` in `.env` beats `*_INTH_PROJECT_URL` in the
+ * set, so `*_INTH_PROJECT_URL` in `.env` beats `*_INTH_PROJECT_URL` in the
  * environment. An empty value counts as unset.
  * @param names - Variable names in order of preference.
  * @param options - Variables the framework loaded, the directory with the
@@ -261,9 +261,9 @@ export const readBuildEnv = (
 };
 
 /**
- * Names backend URL variables for a message: the c15t names, then the Inth
+ * Names backend URL variables for a message: the Inth names, then the Inth
  * ones in parentheses, as in
- * `VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL)`.
+ * `VITE_INTH_PROJECT_URL (or VITE_INTH_PROJECT_URL)`.
  * @param names - Variable names in order of preference.
  * @returns The names joined for a sentence.
  * @internal
@@ -374,7 +374,7 @@ const reportMissingSource = (
  * - When it fails, `onBuildError` decides: `'runtime'` (the default)
  *   warns and returns `undefined` so the server fetches the policy at
  *   runtime, and asks the backend's `/init` when that fails too. `'fail'`
- *   throws. `C15T_ON_BUILD_ERROR` overrides the option.
+ *   throws. `INTH_ON_BUILD_ERROR` overrides the option.
  * - A missing backend URL counts as a failed fetch: `'fail'` throws, the
  *   default warns, and an explicit `'runtime'` skips with a notice.
  * - A framework `skipReason` skips the fetch. So does a relative or
@@ -385,7 +385,7 @@ const reportMissingSource = (
  * @param policy - Command, label, logger, `onBuildError` and skip reason.
  * @returns The deployment's manifest, or `undefined` to fetch at runtime.
  * @throws {Error} When the fetch fails in `'fail'` mode, or `onBuildError`
- * or `C15T_ON_BUILD_ERROR` has an unknown value.
+ * or `INTH_ON_BUILD_ERROR` has an unknown value.
  * @internal
  */
 export const loadManifestForBuild = async (
@@ -478,7 +478,7 @@ export interface ManifestBuildOptions {
 	 * What a failed manifest fetch does. `'runtime'` (the default) logs a
 	 * warning, and the server fetches the policy at runtime, asking the
 	 * backend's `/init` while the manifest is unavailable. `'fail'` stops
-	 * the command. The `C15T_ON_BUILD_ERROR` environment variable
+	 * the command. The `INTH_ON_BUILD_ERROR` environment variable
 	 * overrides this option.
 	 */
 	onBuildError?: ManifestBuildErrorMode;
@@ -579,7 +579,7 @@ export const GENERATED_MODULE_IDS = [
 ] as const;
 
 /** Where non-Vite builds write the snapshot, relative to the app root. */
-export const MANIFEST_CACHE_DIR = 'node_modules/.cache/c15t';
+export const MANIFEST_CACHE_DIR = 'node_modules/.cache/inth';
 
 /**
  * Renders the module behind `@inth/sdk/generated`. With `serverOnly`, it
@@ -605,7 +605,7 @@ export const renderGeneratedModule = (
 			'// The build has no snapshot, so the policy is read at runtime.\nexport const snapshot = undefined;';
 	}
 	return [
-		'// Written by the c15t build integration. Do not edit.',
+		'// Written by the inth build integration. Do not edit.',
 		...(options.serverOnly ? ["import 'server-only';"] : []),
 		`export const projectUrl = ${JSON.stringify(module.projectUrl) ?? 'undefined'};`,
 		snapshot,
@@ -660,7 +660,7 @@ export interface ManifestCacheFiles {
 
 /**
  * Fetches the snapshot under the policy of {@link loadManifestForBuild} and
- * writes it under `node_modules/.cache/c15t/`, for bundlers without virtual
+ * writes it under `node_modules/.cache/inth/`, for bundlers without virtual
  * modules. `manifest.js` holds the snapshot for server bundles.
  * `manifest.browser.js` is for browser bundles: it imports `server-only`, so
  * a bundler that knows the marker (Next.js) fails the build, and its
@@ -805,25 +805,25 @@ export interface ConsentChunkGroup {
  * Every SDK package under `node_modules`, whatever the package manager:
  * `@inth/sdk` and the framework packages, not the CLI.
  */
-const C15T_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
+const INTH_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
 
 /**
- * Puts the c15t modules a page's entry imports statically into one chunk.
- * Rolldown otherwise splits the modules a page shares with c15t's lazy
+ * Puts the Inth modules a page's entry imports statically into one chunk.
+ * Rolldown otherwise splits the modules a page shares with inth's lazy
  * chunks into many small ones, and each costs a request: on a slow mobile
  * connection with a warm cache, a revalidation round trip apiece before the
- * page renders. Only modules c15t ships; their dependencies (React) stay
- * where Rolldown puts them, so a page without c15t loads none of it. One
- * chunk for every entry (`entriesAware` would count c15t's lazy chunks as
+ * page renders. Only modules Inth ships; their dependencies (React) stay
+ * where Rolldown puts them, so a page without Inth loads none of it. One
+ * chunk for every entry (`entriesAware` would count inth's lazy chunks as
  * entries and split it again): an app with several entries that use
- * different parts of c15t loads all of them on each.
+ * different parts of Inth loads all of them on each.
  */
 export const CONSENT_CHUNK_GROUP: ConsentChunkGroup = {
 	entriesAware: false,
 	includeDependenciesRecursively: false,
-	name: 'c15t',
+	name: 'inth',
 	tags: ['$initial'],
-	test: C15T_MODULE,
+	test: INTH_MODULE,
 };
 
 /** Rolldown versions whose groups take `tags` (tested with 1.2). */
@@ -990,7 +990,7 @@ const LOCATION_ADVICE =
 	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `projectUrl`, which asks the hosted backend instead.";
 
 /** Id of the inline script `initPrefetch` adds to `index.html`. */
-const PREFETCH_SCRIPT_ID = 'c15t-initial-data-prefetch';
+const PREFETCH_SCRIPT_ID = 'inth-initial-data-prefetch';
 
 /**
  * Where the `/init` script goes: after `<meta charset>`, which must stay
@@ -1016,8 +1016,8 @@ const VIRTUAL_GENERATED_ID = '\0@inth/sdk/generated';
  * an unread export removable and stops the bundler from folding the value.
  */
 const PLACEHOLDERS = {
-	projectUrl: '__c15t_build_backend_url__',
-	snapshot: '__c15t_build_snapshot__',
+	projectUrl: '__inth_build_backend_url__',
+	snapshot: '__inth_build_snapshot__',
 } as const;
 
 const placeholderExpression = (token: string): string =>
@@ -1048,7 +1048,7 @@ const GENERATED_IMPORTERS = [
  * app. Preview uses the existing build. Without `projectUrl`, the first of
  * `envNames` that is set supplies it; the first `VITE_` variable, when
  * unset or empty, is then set to the URL used, so app code reads the same
- * value. The c15t variables come before the Inth ones.
+ * value. The Inth variables come before the Inth ones.
  *
  * The manifest is fetched only for a bundle that reads `snapshot`, which
  * the hosted backend and a testing value never do. The mode is chosen in app code, so
@@ -1069,7 +1069,7 @@ const GENERATED_IMPORTERS = [
  * `projectUrl` is public and reaches every environment.
  *
  * The plugin keeps the virtual module out of dependency pre-bundling and
- * bundles the c15t packages in server builds, so a c15t package can import
+ * bundles the Inth packages in server builds, so a Inth package can import
  * `@inth/sdk/generated` as app code does.
  *
  * @param options - Backend URL and `onBuildError`.
@@ -1410,7 +1410,7 @@ export const createConsentManifestPlugin = (
 					"// source: 'runtime': the app reads the manifest at runtime.\nexport const snapshot = undefined;";
 			}
 			const lines = [
-				'// Written by the c15t build integration. Do not edit.',
+				'// Written by the inth build integration. Do not edit.',
 				'// The build fills in what the bundle still reads after tree-shaking.',
 				`export const projectUrl = ${
 					projectUrl === undefined
@@ -1422,7 +1422,7 @@ export const createConsentManifestPlugin = (
 			];
 			return lines.join('\n');
 		},
-		name: 'c15t:consent-manifest',
+		name: 'inth:consent-manifest',
 		options: dialogChunks.options,
 		outputOptions: dialogChunks.outputOptions,
 		async renderChunk(code: string) {
@@ -1516,7 +1516,7 @@ export const createConsentManifestPlugin = (
  * testing builds never depend on the backend.
  *
  * A failed fetch stops `vite build` and warns in `vite dev`, where
- * `snapshot` is `undefined`. Set `onBuildError` or `C15T_ON_BUILD_ERROR` to
+ * `snapshot` is `undefined`. Set `onBuildError` or `INTH_ON_BUILD_ERROR` to
  * change that. When the policy depends on the visitor's location, it warns
  * and suggests the hosted backend, since the browser's `manifest()` then still asks
  * the backend's `/init` unless the page passes `inputs` or `geoUrl`. With
@@ -1525,13 +1525,13 @@ export const createConsentManifestPlugin = (
  * app would discard.
  *
  * @param options - Backend URL, `onBuildError` and `source`. `projectUrl`
- * defaults to `VITE_C15T_BACKEND_URL`, then `VITE_INTH_PROJECT_URL`.
+ * defaults to `VITE_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL`.
  * @returns A Vite plugin, compatible with React, Vue, Svelte and Solid builds.
  * @throws {Error} When the fetch fails in `'fail'` mode, stopping Vite.
  * @example
  * ```ts
  * import { consentManifest } from '@inth/sdk/build';
- * // Reads VITE_C15T_BACKEND_URL, for example from `.env`.
+ * // Reads VITE_INTH_PROJECT_URL, for example from `.env`.
  * export default { plugins: [consentManifest()] };
  * ```
  */
@@ -1540,6 +1540,6 @@ export const consentManifest = (
 ): ConsentManifestPlugin =>
 	createConsentManifestPlugin(options, {
 		adviseHostedForLocation: true,
-		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
+		envNames: ['VITE_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
 		label: '@inth/sdk/build',
 	});

@@ -160,13 +160,13 @@ const consentCookie = function consentCookie(subjectId: string): string {
 		subject: { subjectId },
 		version: 3,
 	};
-	return `c15t=${encodeURIComponent(JSON.stringify(envelope))}`;
+	return `inth=${encodeURIComponent(JSON.stringify(envelope))}`;
 };
 
 // A visitor who has not chosen gets nothing stored: the server reads a
 // subject ID only from the consent records a save wrote.
 describe('consentRequestMiddleware: no subject cookie', () => {
-	test('a first visit gets no c15t-sid cookie, and resolveConsent finds no subject', async () => {
+	test('a first visit gets no inth-sid cookie, and resolveConsent finds no subject', async () => {
 		const { request, response } = await run(consentRequestMiddleware(), {
 			cookie: 'theme=dark',
 		});
@@ -450,7 +450,7 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 		return result.response;
 	};
 
-	test.each(['/api/c15t', '/api/consent', '/consent'])(
+	test.each(['/api/inth', '/api/consent', '/consent'])(
 		'the bundled manifest at %s/manifest keeps its headers and gets no cookie',
 		async (prefix) => {
 			const response = await serve(`${prefix}/manifest`, 'manifest');
@@ -460,7 +460,7 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 		}
 	);
 
-	test.each(['/api/c15t', '/api/consent', '/consent'])(
+	test.each(['/api/inth', '/api/consent', '/consent'])(
 		'init at %s/init stays private, no-store with no cookie',
 		async (prefix) => {
 			const response = await serve(`${prefix}/init`, 'init');
@@ -580,7 +580,7 @@ describe('consentRequestMiddleware: a recorded ID with no URI encoding', () => {
 		};
 		const request = new Request('https://app.example.com/pricing', {
 			headers: {
-				cookie: `c15t=${encodeURIComponent(JSON.stringify(envelope))}`,
+				cookie: `inth=${encodeURIComponent(JSON.stringify(envelope))}`,
 			},
 		});
 		let rendered: unknown;

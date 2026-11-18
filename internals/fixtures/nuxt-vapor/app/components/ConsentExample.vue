@@ -7,7 +7,7 @@ import { onUnmounted } from 'vue';
 
 const snapshot = useConsentSnapshot();
 
-// Demo only: the branded theme overrides c15t tokens from
+// Demo only: the branded theme overrides Inth tokens from
 // `consent-example.css`, so the test suite can switch designs in place.
 const setTheme = (theme: string) => {
 	document.documentElement.dataset.consentExampleTheme = theme;
@@ -19,7 +19,7 @@ onUnmounted(() => {
 
 <template>
 	<main class="consent-example">
-		<p>c15t / Nuxt Vapor</p>
+		<p>inth / Nuxt Vapor</p>
 		<h1>Consent example</h1>
 		<p>
 			PostHog waits for measurement permission. X Pixel waits for marketing

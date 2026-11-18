@@ -134,7 +134,7 @@ const warnInitFailure = function warnInitFailure(
 	const cause = (error as { message?: unknown } | null)?.message;
 	const detail = typeof cause === 'string' && cause ? `\n${cause}` : '';
 	console.warn(
-		`[c15t] Backend/manifest init failed. The consent banner is withheld and optional categories stay denied. ${retryMessage}${detail}`
+		`[inth] Backend/manifest init failed. The consent banner is withheld and optional categories stay denied. ${retryMessage}${detail}`
 	);
 };
 
@@ -598,7 +598,7 @@ export const createInitLifecycle = function createInitLifecycle({
 			if (generation !== initGeneration) {
 				return complete(
 					superseded(
-						new Error('c15t: init attempt superseded by a newer init()')
+						new Error('inth: init attempt superseded by a newer init()')
 					)
 				);
 			}
@@ -620,7 +620,7 @@ export const createInitLifecycle = function createInitLifecycle({
 			);
 			if (folded.recordIssues && !isProductionBuild()) {
 				console.warn(
-					'[c15t] Ignored invalid server records on init.',
+					'[inth] Ignored invalid server records on init.',
 					folded.recordIssues
 				);
 			}

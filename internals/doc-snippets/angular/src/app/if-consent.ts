@@ -9,7 +9,7 @@ import { IfConsent } from '@inth/angular';
 	template: `
 		<!-- A category name, or a condition such as { and: [...] }. -->
 		<iframe
-			*c15tIfConsent="'functionality'; else blocked"
+			*inthIfConsent="'functionality'; else blocked"
 			title="Store locations"
 			src="https://www.google.com/maps/embed?pb=..."
 		></iframe>

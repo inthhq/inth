@@ -1,5 +1,5 @@
 /**
- * Resolves a relative backend URL (`/api/c15t`) to an absolute one on the
+ * Resolves a relative backend URL (`/api/inth`) to an absolute one on the
  * server, without letting the visitor choose the host.
  *
  * `x-forwarded-host`, `x-forwarded-proto`, `x-forwarded-ssl` and `forwarded`
@@ -253,8 +253,8 @@ const trimTrailingSlash = function trimTrailingSlash(value: string): string {
  * ```ts
  * import { resolveRequestProjectUrl } from '@inth/sdk-core/server';
  *
- * resolveRequestProjectUrl('/api/c15t', { requestUrl: request.url });
- * // 'https://app.example.com/api/c15t'
+ * resolveRequestProjectUrl('/api/inth', { requestUrl: request.url });
+ * // 'https://app.example.com/api/inth'
  * ```
  */
 export const resolveRequestProjectUrl = function resolveRequestProjectUrl(

@@ -184,7 +184,7 @@ describe('heap contract', () => {
 		const result = updateScripts([script], deniedConsents);
 
 		expect(result.unloaded).toEqual(['heap-contract']);
-		expect(document.getElementById('c15t-script-heap-contract')).toBeNull();
+		expect(document.getElementById('inth-script-heap-contract')).toBeNull();
 	});
 
 	it('keeps live heap.js methods on grant, revoke, grant without a reload', () => {

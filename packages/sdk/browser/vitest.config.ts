@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
@@ -35,14 +35,14 @@ export default mergeConfig(
 			{
 				configureServer(server) {
 					server.middlewares.use((request, response, next) => {
-						if (request.url !== '/__c15t-test__/gated-script-csp') {
+						if (request.url !== '/__inth-test__/gated-script-csp') {
 							next();
 							return;
 						}
 						response.setHeader('Content-Type', 'text/html');
 						response.setHeader(
 							'Content-Security-Policy',
-							"script-src 'nonce-c15t-test-nonce'"
+							"script-src 'nonce-inth-test-nonce'"
 						);
 						response.end(
 							readFileSync(
@@ -59,21 +59,21 @@ export default mergeConfig(
 			{
 				configureServer(server) {
 					server.middlewares.use((request, response, next) => {
-						if (request.url === '/__c15t-test__/injected.js') {
+						if (request.url === '/__inth-test__/injected.js') {
 							response.setHeader('Content-Type', 'text/javascript');
 							response.end(
 								"document.documentElement.dataset.externalInjected = 'true';"
 							);
 							return;
 						}
-						if (request.url !== '/__c15t-test__/strict-dynamic') {
+						if (request.url !== '/__inth-test__/strict-dynamic') {
 							next();
 							return;
 						}
 						response.setHeader('Content-Type', 'text/html');
 						response.setHeader(
 							'Content-Security-Policy',
-							"script-src 'nonce-c15t-test-nonce' 'strict-dynamic'"
+							"script-src 'nonce-inth-test-nonce' 'strict-dynamic'"
 						);
 						response.end(
 							readFileSync(
@@ -91,7 +91,7 @@ export default mergeConfig(
 				configureServer(server) {
 					server.middlewares.use((request, response, next) => {
 						const url = new URL(request.url ?? '/', 'http://fixture');
-						if (url.pathname !== '/__c15t-test__/webview') {
+						if (url.pathname !== '/__inth-test__/webview') {
 							next();
 							return;
 						}
@@ -144,14 +144,14 @@ export default mergeConfig(
 			{
 				configureServer(server) {
 					server.middlewares.use((request, response, next) => {
-						if (!request.url?.startsWith('/__c15t-test__/ui-csp')) {
+						if (!request.url?.startsWith('/__inth-test__/ui-csp')) {
 							next();
 							return;
 						}
 						response.setHeader('Content-Type', 'text/html');
 						response.setHeader(
 							'Content-Security-Policy',
-							"style-src 'nonce-c15t-test-nonce'"
+							"style-src 'nonce-inth-test-nonce'"
 						);
 						response.end(
 							readFileSync(
@@ -165,7 +165,7 @@ export default mergeConfig(
 			{
 				configureServer(server) {
 					server.middlewares.use((request, response, next) => {
-						if (request.url !== '/__c15t-test__/storage-sync') {
+						if (request.url !== '/__inth-test__/storage-sync') {
 							next();
 							return;
 						}
@@ -184,7 +184,7 @@ export default mergeConfig(
 					server.middlewares.use((request, response, next) => {
 						// The query carries fixture flags such as `?hold`.
 						if (
-							request.url?.split('?')[0] !== '/__c15t-test__/subject-conflict'
+							request.url?.split('?')[0] !== '/__inth-test__/subject-conflict'
 						) {
 							next();
 							return;

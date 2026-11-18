@@ -241,7 +241,7 @@ describe('activeUI Transitions E2E Tests', () => {
 	test('banner hidden for returning visitor', async () => {
 		// Pre-set localStorage consent
 		window.localStorage.setItem(
-			'c15t',
+			'inth',
 			JSON.stringify(storedAcceptAllConsent())
 		);
 

@@ -300,7 +300,7 @@
 		if (next) {
 			focusedItem = next;
 			toolbarElement
-				?.querySelector<HTMLElement>(`[data-c15t-trigger-item="${next}"]`)
+				?.querySelector<HTMLElement>(`[data-inth-trigger-item="${next}"]`)
 				?.focus();
 		}
 	};
@@ -422,8 +422,8 @@
 				aria-label="Privacy controls"
 				aria-orientation="horizontal"
 				data-corner={corner}
-				data-c15t-trigger-toolbar="true"
-				data-c15t-trigger="true"
+				data-inth-trigger-toolbar="true"
+				data-inth-trigger="true"
 				data-disable-animation={theme.disableAnimation ? '' : undefined}
 				data-dragging={isDragging || undefined}
 				data-snapping={isSnapping || undefined}
@@ -440,10 +440,10 @@
 							class={devToolsItemStyle.className || ''}
 							style={toStyleAttribute(devToolsItemStyle.style)}
 							tabindex={tabStopItem === item ? 0 : -1}
-							aria-label="c15t DevTools"
+							aria-label="inth DevTools"
 							aria-expanded={launcher.isOpen}
-							data-c15t-trigger-action="devtools"
-							data-c15t-trigger-item="devtools"
+							data-inth-trigger-action="devtools"
+							data-inth-trigger-item="devtools"
 							onclick={handleDevToolsClick}
 							onfocus={() => (focusedItem = item)}
 						>
@@ -467,9 +467,9 @@
 							style={toStyleAttribute(preferencesItemStyle.style)}
 							tabindex={tabStopItem === item ? 0 : -1}
 							aria-label={ariaLabel}
-							data-c15t-rights={consent.snapshot.policyRule.rights.join(' ')}
-							data-c15t-trigger-action="preferences"
-							data-c15t-trigger-item="preferences"
+							data-inth-rights={consent.snapshot.policyRule.rights.join(' ')}
+							data-inth-trigger-action="preferences"
+							data-inth-trigger-item="preferences"
 							onclick={handleClick}
 							onpointerenter={warmDialog}
 							onfocus={() => {
@@ -499,8 +499,8 @@
 				type="button"
 				class={triggerStyle.className || ''}
 				style={buttonStyle}
-				data-c15t-trigger="true"
-				data-c15t-rights={consent.snapshot.policyRule.rights.join(' ')}
+				data-inth-trigger="true"
+				data-inth-rights={consent.snapshot.policyRule.rights.join(' ')}
 				data-disable-animation={theme.disableAnimation ? '' : undefined}
 				aria-label={ariaLabel}
 				onclick={handleClick}

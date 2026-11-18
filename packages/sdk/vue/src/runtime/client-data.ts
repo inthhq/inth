@@ -1,4 +1,4 @@
-import clientManifestSnapshot from '#c15t/client-manifest-snapshot';
+import clientManifestSnapshot from '#inth/client-manifest-snapshot';
 
 import type { NuxtMode } from './nuxt-mode';
 
