@@ -5,12 +5,7 @@
  * @internal
  */
 
-export { Branding, resolveBranding, shouldShowBranding } from './branding';
-export type {
-	BrandingThemeKey,
-	BrandingVariant,
-	ResolvedBranding,
-} from './branding';
+export { Branding, shouldShowBranding } from './branding';
 export { ConsentButton } from './consent-button';
 export type {
 	ConsentButtonAction,
@@ -18,9 +13,9 @@ export type {
 	ConsentButtonSize,
 	ConsentButtonVariant,
 } from './consent-button';
-export { BrandMarkIcon, InthLogo } from './icons';
-export { InlineLegalLinks, selectLegalLinks } from './inline-legal-links';
-export type { LegalLinkEntry, LegalLinkSelection } from './inline-legal-links';
+export { BrandMarkIcon } from './icons';
+export { InlineLegalLinks } from './inline-legal-links';
+export type { LegalLinkSelection } from './inline-legal-links';
 export { PolicyActions } from './policy-actions';
 export type { PolicyActionContext } from './policy-actions';
 export { resolvedTranslations } from './translations';

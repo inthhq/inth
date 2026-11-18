@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { AllConsentNames } from '@inth/sdk/engine';
 	import buttonStyles from '@inth/sdk/ui/styles/components/button';
+	import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { holdIdleDialogWarming, warmDialog } from '../dialog-warming';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 
 	let {
 		action,
@@ -83,12 +83,7 @@
 	const variantClasses = $derived(noStyle ? '' : buttonStyles.button);
 
 	const buttonStyle = $derived(
-		resolveComponentStyles(
-			defaultThemeKey,
-			theme.theme,
-			{ className, noStyle },
-			noStyle
-		)
+		resolveStyles(defaultThemeKey, theme.theme, { className, noStyle }, noStyle)
 	);
 
 	const handleClick = async function handleClick(
@@ -146,7 +141,7 @@
 	data-variant={noStyle ? undefined : variant}
 	data-mode={noStyle ? undefined : mode}
 	data-size={noStyle ? undefined : size}
-	style={toStyleAttribute(buttonStyle.style)}
+	style={toStyleAttributeValue(buttonStyle.style)}
 	{...restProps}
 	onclick={handleClick}
 	onfocus={handleFocus}

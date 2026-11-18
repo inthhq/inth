@@ -14,8 +14,7 @@ import { Branding } from './branding';
 	template: `
 		<a
 			inth-branding
-			variant="banner-tag"
-			data-testid="branding"
+			surface="banner"
 		></a>
 	`,
 })
@@ -54,9 +53,32 @@ afterEach(() => {
 describe('Branding', () => {
 	test('renders the stock attribution link', async () => {
 		const { byTestId } = await boot();
-		const branding = byTestId('branding') as HTMLAnchorElement;
+		const branding = byTestId('consent-banner-branding') as HTMLAnchorElement;
 		expect(branding.getAttribute('href')).toMatch(/^https:\/\/inth\.com/u);
+		expect(branding.getAttribute('target')).toBeNull();
 		expect(branding.dataset.branding).toBe('inth');
-		expect(branding.querySelector('svg title')?.textContent).toBe('inth');
+		expect(branding.dataset.variant).toBe('banner-tag');
+		expect(branding.querySelector('svg')?.getAttribute('aria-hidden')).toBe(
+			'true'
+		);
+		expect(branding.querySelector('[id]')).toBeNull();
+	});
+
+	test('shows the c15t mark for c15t branding', async () => {
+		TestBed.configureTestingModule({
+			providers: [
+				provideInth({
+					...testOptions(),
+					prefetch: { initialBranding: 'c15t' },
+				}),
+			],
+		});
+		const fixture = TestBed.createComponent(Host);
+		await fixture.whenStable();
+		const branding = (fixture.nativeElement as HTMLElement).querySelector(
+			'[data-testid="consent-banner-branding"]'
+		) as HTMLAnchorElement;
+		expect(branding.getAttribute('href')).toMatch(/^https:\/\/c15t\.com/u);
+		expect(branding.textContent).toContain('c15t');
 	});
 });

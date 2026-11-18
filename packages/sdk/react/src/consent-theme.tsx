@@ -6,7 +6,11 @@
  * the default theme stay out of the browser bundle. Rendered from a client
  * component it still works, but ships the generator.
  */
-import { defaultTheme, generateThemeCSS } from '@inth/sdk/ui/theme';
+import {
+	defaultTheme,
+	generateThemeCSS,
+	THEME_STYLE_ELEMENT_ID,
+} from '@inth/sdk/ui/theme';
 
 import type { Theme } from './types/theme';
 
@@ -53,7 +57,7 @@ export const ConsentTheme = ({
 	nonce,
 }: ConsentThemeProps) => (
 	<style
-		id="inth-theme"
+		id={THEME_STYLE_ELEMENT_ID}
 		nonce={nonce}
 		// oxlint-disable-next-line react/no-danger -- generateThemeCSS escapes `<`
 		dangerouslySetInnerHTML={{

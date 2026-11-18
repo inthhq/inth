@@ -90,8 +90,8 @@ describe.each(['ordinary', 'IAB'])('%s script-tag legal links', (variant) => {
 		);
 		expect(links(client)).toEqual(legalURLs);
 		expect(
-			client.ui?.root.querySelector('[data-testid$="-branding"]') !== null
-		).toBe(variant === 'IAB');
+			client.ui?.root.querySelector('[data-testid$="-branding"]')
+		).toBeNull();
 
 		client.openDialog();
 		expect(links(client)).toEqual(legalURLs);
@@ -129,6 +129,13 @@ describe.each(['ordinary', 'IAB'])('%s script-tag legal links', (variant) => {
 			expect(links(client)).toEqual([]);
 		}
 	);
+
+	it('opens links in a new tab with noopener noreferrer', async () => {
+		const client = await start();
+		const link = client.ui?.root.querySelector('[data-testid*="-legal-link-"]');
+		expect(link?.getAttribute('target')).toBe('_blank');
+		expect(link?.getAttribute('rel')).toBe('noopener noreferrer');
+	});
 
 	it('separates the links from the copy and from each other', async () => {
 		const client = await start();

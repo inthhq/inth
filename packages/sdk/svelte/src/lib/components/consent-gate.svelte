@@ -2,13 +2,16 @@
 	import type { AllConsentNames } from '@inth/sdk/engine';
 	import { defaultTranslationConfig } from '@inth/sdk/engine';
 	import styles from '@inth/sdk/ui/styles/components/consent-gate';
-	import { resolveTranslations } from '@inth/sdk/ui/utils';
+	import {
+		resolveStyles,
+		resolveTranslations,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { CONSENT_GATE_SHEETS } from '../surface-styles';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import ConsentButton from './action-button.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 
@@ -80,7 +83,7 @@
 	);
 
 	const placeholderStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentGate',
 			theme.theme,
 			{ baseClassName: styles.placeholder, noStyle },
@@ -88,7 +91,7 @@
 		)
 	);
 	const titleStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentGateTitle',
 			theme.theme,
 			{ baseClassName: styles.title, noStyle },
@@ -99,21 +102,12 @@
 	// itself, but a `style` passed here replaces its style attribute, so the
 	// two slot styles are merged first.
 	const buttonStyle = $derived(
-		resolveComponentStyles(
-			'consentGateButton',
-			theme.theme,
-			{ noStyle },
-			noStyle
-		)
+		resolveStyles('consentGateButton', theme.theme, { noStyle }, noStyle)
 	);
 	const buttonStyleAttribute = $derived(
-		toStyleAttribute({
-			...resolveComponentStyles(
-				'buttonPrimary',
-				theme.theme,
-				{ noStyle },
-				noStyle
-			).style,
+		toStyleAttributeValue({
+			...resolveStyles('buttonPrimary', theme.theme, { noStyle }, noStyle)
+				.style,
 			...buttonStyle.style,
 		})
 	);
@@ -146,12 +140,12 @@
 		/>
 		<div
 			class={placeholderStyle.className || ''}
-			style={toStyleAttribute(placeholderStyle.style)}
+			style={toStyleAttributeValue(placeholderStyle.style)}
 			data-testid="consent-gate-placeholder"
 		>
 			<div
 				class={titleStyle.className || ''}
-				style={toStyleAttribute(titleStyle.style)}
+				style={toStyleAttributeValue(titleStyle.style)}
 				data-testid="consent-gate-title"
 			>
 				{policyBlocked ? policyBlockedMessage : gateTitle}

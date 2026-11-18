@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { AllConsentNames } from '@inth/sdk/engine';
 	import {
+		actionAppearanceFromTheme,
 		defaultTranslationConfig,
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
@@ -8,16 +9,17 @@
 	import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 	import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
-	import { getTextDirection, resolveTranslations } from '@inth/sdk/ui/utils';
+	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+	import {
+		getTextDirection,
+		resolveStyles,
+		resolveTranslations,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { DIALOG_SHEETS } from '../dialog-sheets';
 	import { PreferenceItem, Switch } from '../primitives';
-	import {
-		resolveComponentStyles,
-		resolveConsentActionStyle,
-		toStyleAttribute,
-	} from '../utils';
 	import ConsentButton from './action-button.svelte';
 	import Branding from './branding.svelte';
 	import PolicyActionsRenderer from './policy-actions-renderer.svelte';
@@ -87,7 +89,7 @@
 
 	// Per-element theme key resolution
 	const widgetRootStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentWidget',
 			theme.theme,
 			{ baseClassName: managerStyles.manager, className },
@@ -96,7 +98,7 @@
 	);
 
 	const footerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentWidgetFooter',
 			theme.theme,
 			{ baseClassName: managerStyles.footer, noStyle },
@@ -105,7 +107,7 @@
 	);
 
 	const accordionStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentWidgetAccordion',
 			theme.theme,
 			{ baseClassName: accordionStyles.list, noStyle },
@@ -114,7 +116,7 @@
 	);
 
 	const toggleStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'toggle',
 			theme.theme,
 			{ baseClassName: switchStyles.root, noStyle },
@@ -123,7 +125,7 @@
 	);
 
 	const footerGroupStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentWidgetFooterSubGroup',
 			theme.theme,
 			{ noStyle },
@@ -131,16 +133,9 @@
 		)
 	);
 
-	const themedActions = $derived({
-		accept: resolveConsentActionStyle(theme.theme, 'accept'),
-		customize: resolveConsentActionStyle(theme.theme, 'customize'),
-		dismiss: resolveConsentActionStyle(theme.theme, 'dismiss'),
-		reject: resolveConsentActionStyle(theme.theme, 'reject'),
-		save: resolveConsentActionStyle(theme.theme, 'save'),
-	});
 	const presentation = $derived(
 		resolveConsentPresentation({
-			actionAppearance: themedActions,
+			actionAppearance: actionAppearanceFromTheme(theme.theme),
 			policy: consent.snapshot.policyRule,
 			presentation: consent.state.presentation,
 			surface: 'preferences',
@@ -156,7 +151,7 @@
 	<SurfaceStyles sheets={DIALOG_SHEETS} />
 	<div
 		class={widgetRootStyle.className || ''}
-		style={toStyleAttribute(widgetRootStyle.style)}
+		style={toStyleAttributeValue(widgetRootStyle.style)}
 		dir={textDirection}
 		data-testid="consent-widget-root"
 	>
@@ -170,7 +165,7 @@
 		{/if}
 		<div
 			class={accordionStyle.className || ''}
-			style={toStyleAttribute(accordionStyle.style)}
+			style={toStyleAttributeValue(accordionStyle.style)}
 			data-testid="consent-widget-accordion"
 		>
 			{#each displayedConsents as consentType (consentType.name)}
@@ -249,7 +244,7 @@
 								onclick={() => toggleConsent(consentType.name, !isChecked)}
 								disabled={isDisabled}
 								class={toggleStyle.className || ''}
-								style={toStyleAttribute(toggleStyle.style)}
+								style={toStyleAttributeValue(toggleStyle.style)}
 								data-size={noStyle ? undefined : 'small'}
 								data-testid={`consent-widget-switch-${consentType.name}`}
 							>
@@ -296,9 +291,9 @@
 			{direction}
 			{noStyle}
 			footerClassName={footerStyle.className || ''}
-			footerStyle={toStyleAttribute(footerStyle.style)}
+			footerStyle={toStyleAttributeValue(footerStyle.style)}
 			footerSubGroupClassName={footerGroupStyle.className || ''}
-			footerSubGroupStyle={toStyleAttribute(footerGroupStyle.style)}
+			footerSubGroupStyle={toStyleAttributeValue(footerGroupStyle.style)}
 			footerTestId="consent-widget-footer"
 			footerSubGroupTestId="consent-widget-footer-sub-group"
 		>
@@ -306,9 +301,7 @@
 				{#if action === 'reject'}
 					<ConsentButton
 						action="reject-consent"
-						variant={themedActions.reject.variant ??
-							(isPrimary ? 'primary' : 'neutral')}
-						mode={themedActions.reject.mode ?? 'stroke'}
+						{...resolveActionAppearance(theme.theme, 'reject', isPrimary)}
 						closeConsentBanner
 						closeConsentDialog
 						data-action="reject"
@@ -319,9 +312,7 @@
 				{:else if action === 'accept'}
 					<ConsentButton
 						action="accept-consent"
-						variant={themedActions.accept.variant ??
-							(isPrimary ? 'primary' : 'neutral')}
-						mode={themedActions.accept.mode ?? 'stroke'}
+						{...resolveActionAppearance(theme.theme, 'accept', isPrimary)}
 						closeConsentBanner
 						closeConsentDialog
 						data-action="accept"
@@ -333,9 +324,7 @@
 					<ConsentButton
 						action="custom-consent"
 						disabled={consent.state.draft.isStale}
-						variant={themedActions.save.variant ??
-							(isPrimary ? 'primary' : 'neutral')}
-						mode={themedActions.save.mode ?? 'stroke'}
+						{...resolveActionAppearance(theme.theme, 'save', isPrimary)}
 						closeConsentDialog
 						data-action="save"
 						data-testid="consent-widget-footer-save-button"
@@ -349,9 +338,7 @@
 		<Branding
 			{hideBranding}
 			{noStyle}
-			variant="dialog-tag"
-			themeKey="consentWidgetTag"
-			data-testid="consent-widget-branding"
+			surface="widget"
 		/>
 	</div>
 {/if}

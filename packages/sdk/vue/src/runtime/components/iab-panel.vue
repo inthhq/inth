@@ -878,7 +878,7 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 
 						<ConsentTag
 							v-if="!config.iabDialogHideBranding"
-							context="iab-dialog"
+							surface="iab-dialog"
 						/>
 					</div>
 				</Transition>

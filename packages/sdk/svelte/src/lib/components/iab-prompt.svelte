@@ -8,7 +8,11 @@
 	import buttonStyles from '@inth/sdk/ui/styles/components/button';
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
-	import { getTextDirection } from '@inth/sdk/ui/utils';
+	import {
+		getTextDirection,
+		resolveStyles,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
 
 	import { focusTrap } from '../actions/focus-trap';
 	import { portal } from '../actions/portal';
@@ -17,7 +21,6 @@
 	import { IAB_FIRST_PAINT_SHEETS } from '../iab-first-paint-sheets';
 	import { getIABTranslations } from '../iab-translations';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import Branding from './branding.svelte';
 	import Overlay from './overlay.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
@@ -153,7 +156,7 @@
 
 	// Styling
 	const rootStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBanner',
 			theme.theme,
 			{
@@ -166,7 +169,7 @@
 	);
 
 	const cardStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerCard',
 			theme.theme,
 			{ baseClassName: styles.card, noStyle },
@@ -175,7 +178,7 @@
 	);
 
 	const headerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerHeader',
 			theme.theme,
 			{ baseClassName: styles.header, noStyle },
@@ -184,7 +187,7 @@
 	);
 
 	const footerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerFooter',
 			theme.theme,
 			{ baseClassName: [styles.footer, actionStyles.actionRoot], noStyle },
@@ -229,7 +232,7 @@
 		<div
 			bind:this={visibility.bannerEl}
 			class={finalClassName}
-			style={toStyleAttribute(rootStyle.style)}
+			style={toStyleAttributeValue(rootStyle.style)}
 			dir={textDirection}
 			data-position="bottom-left"
 			data-entry={visibility.lateEntry && !disableAnimation
@@ -243,13 +246,11 @@
 				<Branding
 					{hideBranding}
 					{noStyle}
-					variant="banner-tag"
-					themeKey="iabConsentBannerTag"
-					data-testid="iab-consent-banner-branding"
+					surface="iab-banner"
 				/>
 				<div
 					class={cardStyle.className || ''}
-					style={toStyleAttribute(cardStyle.style)}
+					style={toStyleAttributeValue(cardStyle.style)}
 					data-testid="iab-consent-banner-card"
 					role={shouldTrapFocus ? 'dialog' : 'region'}
 					aria-modal={shouldTrapFocus ? 'true' : undefined}
@@ -259,7 +260,7 @@
 					<!-- Header -->
 					<div
 						class={headerStyle.className || ''}
-						style={toStyleAttribute(headerStyle.style)}
+						style={toStyleAttributeValue(headerStyle.style)}
 						data-testid="iab-consent-banner-header"
 					>
 						<h2 class={noStyle ? '' : styles.title}>{iabT.banner.title}</h2>
@@ -296,7 +297,7 @@
 					<!-- Footer with buttons -->
 					<div
 						class={footerStyle.className || ''}
-						style={toStyleAttribute(footerStyle.style)}
+						style={toStyleAttributeValue(footerStyle.style)}
 						data-testid="iab-consent-banner-footer"
 						data-direction="row"
 						data-split="true"

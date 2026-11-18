@@ -255,7 +255,7 @@ useFocusTrap(bannerCard, () => shouldTrapFocus.value);
 				>
 					<ConsentTag
 						v-if="!config.iabBannerHideBranding"
-						context="iab-banner"
+						surface="iab-banner"
 					/>
 					<div
 						v-bind="

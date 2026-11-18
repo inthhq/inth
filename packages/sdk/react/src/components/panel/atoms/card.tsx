@@ -17,11 +17,7 @@ import { Box } from '~/components/shared/primitives/box';
 import type { BoxProps } from '~/components/shared/primitives/box';
 import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
 import { InlineLegalLinks } from '~/components/shared/primitives/legal-links';
-import { BrandingLink } from '~/components/shared/ui/branding';
-import type {
-	BrandingSlotContext,
-	BrandingVariant,
-} from '~/components/shared/ui/branding';
+import { BrandingTag } from '~/components/shared/ui/branding';
 import { useTheme } from '~/hooks/use-theme';
 import type { ClassNameStyle } from '~/types/theme';
 import { useUIConfig } from '~/ui-config-context';
@@ -208,7 +204,6 @@ ConsentDialogContent.displayName = 'ConsentDialogContent';
  * The footer section of the consent dialog.
  * This contains the branding but can be overidden with a custom footer.
  */
-export const Branding = (props: BrandingProps) => <BrandingLink {...props} />;
 const ConsentDialogFooter = createForwardRef<
 	HTMLDivElement,
 	BoxProps & { hideBranding?: boolean; 'data-testid'?: string }
@@ -226,24 +221,14 @@ const ConsentDialogFooter = createForwardRef<
 		slotKey="manager.footer"
 	>
 		{children ?? (
-			<Branding
-				hideBranding={hideBranding ?? false}
-				variant="dialog-tag"
-				slotContext="dialog"
-				data-testid="consent-dialog-branding"
+			<BrandingTag
+				surface="dialog"
+				hideBranding={hideBranding}
 			/>
 		)}
 	</Box>
 ));
 ConsentDialogFooter.displayName = 'ConsentDialogFooter';
-
-interface BrandingProps {
-	hideBranding: boolean;
-	variant?: BrandingVariant;
-	slotContext?: BrandingSlotContext;
-	className?: string;
-	'data-testid'?: string;
-}
 
 /**
  * A pre-configured privacy settings card.
@@ -289,11 +274,9 @@ const ConsentCustomizationCard = ({
 				useProvider={true}
 			/>
 		</ConsentDialogContent>
-		<Branding
-			hideBranding={hideBranding ?? false}
-			variant="dialog-tag"
-			slotContext="dialog"
-			data-testid="consent-dialog-branding"
+		<BrandingTag
+			surface="dialog"
+			hideBranding={hideBranding}
 		/>
 	</ConsentDialogCard>
 );

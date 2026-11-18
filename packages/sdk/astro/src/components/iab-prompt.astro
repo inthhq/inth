@@ -30,6 +30,7 @@
  * <IABConsentDialog />
  * ```
  */
+import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
 import { applyExperimentAssignment, applyExperimentTheme } from '@inth/sdk/engine';
 import {
 	buildBannerRevealScript,
@@ -117,7 +118,7 @@ const hidden = inth.prerendered && !force;
 
 {
 	themeCSS && (
-		<style is:inline id="inth-theme" nonce={inth.nonce} set:html={themeCSS} />
+		<style is:inline id={THEME_STYLE_ELEMENT_ID} nonce={inth.nonce} set:html={themeCSS} />
 	)
 }
 
@@ -194,14 +195,12 @@ const hidden = inth.prerendered && !force;
 			<div class={model.classes.cardShell}>
 				<Branding
 					branding={snapshot.branding}
-					data-testid="iab-consent-banner-branding"
 					hide={props.hideBranding}
 					hostname={Astro.url.hostname}
 					noStyle={props.noStyle}
 					securedBy={model.copy.securedBy}
+					surface="iab-banner"
 					theme={theme}
-					themeSlot="iabConsentBannerTag"
-					variant="banner-tag"
 				/>
 				<div
 					aria-label={model.copy.title}

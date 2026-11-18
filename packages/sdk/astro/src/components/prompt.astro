@@ -32,6 +32,7 @@
  * <ConsentBanner />
  * ```
  */
+import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
 import { applyExperimentAssignment, applyExperimentTheme } from '@inth/sdk/engine';
 import {
 	buildBannerRevealScript,
@@ -157,7 +158,7 @@ const earlyTaps =
 
 {
 	themeCSS && (
-		<style is:inline id="inth-theme" nonce={nonce} set:html={themeCSS} />
+		<style is:inline id={THEME_STYLE_ELEMENT_ID} nonce={nonce} set:html={themeCSS} />
 	)
 }
 
@@ -248,14 +249,12 @@ const earlyTaps =
 			<div class={model.classes.cardShell}>
 				<Branding
 					branding={snapshot.branding}
-					data-testid="consent-banner-branding"
 					hide={props.hideBranding}
 					hostname={Astro.url.hostname}
 					noStyle={props.noStyle}
 					securedBy={model.copy.securedBy}
+					surface="banner"
 					theme={theme}
-					themeSlot="consentBannerTag"
-					variant="banner-tag"
 				/>
 				<div
 					aria-label={model.copy.title}
@@ -292,14 +291,14 @@ const earlyTaps =
 								 * followed by a space outside it.
 								 */
 								model.legalLinks.length > 0 && (
-									<span>{' '}{model.legalLinks.map((link, index) => (
+									<span>{' '}{model.legalLinks.map((link) => (
 										<span><a
 											class={model.classes.legalLink || undefined}
 											data-testid={`consent-banner-legal-link-${link.key}`}
 											href={link.href}
-											rel="noreferrer"
-											target="_blank"
-										>{link.label}{index < model.legalLinks.length - 1 ? ',' : ''}</a>{index < model.legalLinks.length - 1 ? ' ' : ''}</span>
+											rel={link.rel}
+											target={link.target}
+										>{link.label}{link.separated ? ',' : ''}</a>{link.separated ? ' ' : ''}</span>
 									))}</span>
 								)
 							}

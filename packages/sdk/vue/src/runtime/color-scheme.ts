@@ -30,28 +30,3 @@ export const applyColorScheme = function applyColorScheme(
 	}
 	return setupColorScheme(colorScheme);
 };
-
-/**
- * Inline script that sets `inth-dark` before the first paint.
- *
- * Nuxt renders it in the server HTML's `<head>`. `'light'` needs none,
- * because light is the absence of the class, and unset or `null` leave the
- * class to the site.
- *
- * @param colorScheme - The config's `colorScheme`.
- * @returns Script source, or an empty string when none is needed.
- * @internal
- */
-export const buildColorSchemeScript = function buildColorSchemeScript(
-	colorScheme: ConsentConfig['colorScheme']
-): string {
-	if (colorScheme === 'dark') {
-		return "document.documentElement.classList.add('inth-dark');";
-	}
-	if (colorScheme === 'system') {
-		// `matchMedia` is missing in some embedded webviews, and a throw here
-		// would stop the rest of the document from parsing.
-		return "try{document.documentElement.classList.toggle('inth-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
-	}
-	return '';
-};

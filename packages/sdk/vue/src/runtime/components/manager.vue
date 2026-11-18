@@ -260,7 +260,7 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 						</div>
 						<ConsentTag
 							v-if="!(config.dialogHideBranding ?? config.hideBranding)"
-							context="dialog"
+							surface="dialog"
 						/>
 					</div>
 				</DialogContent>

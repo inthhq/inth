@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import type { ConsentLegalLinkKey } from '@inth/sdk/schema/config';
 import legalStyles from '@inth/sdk/ui/styles/components/legal-links';
+import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 
 import '@inth/sdk/ui/styles/components/legal-links.css';
 import { computed } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '#inth/composables';
+import { useConsentConfig } from '#inth/composables';
+
+import { useSurfaceTranslations } from '../composables/use-surface-translations';
 
 const props = defineProps<{
 	context: 'banner' | 'dialog' | 'manager';
@@ -14,13 +17,22 @@ const props = defineProps<{
 	link: ConsentLegalLinkKey;
 }>();
 
-const init = useConsentInit();
 const config = useConsentConfig();
+const translations = useSurfaceTranslations();
 
-const entry = computed(() => config.value.legalLinks?.[props.link]);
 // A link with no `href`, passed or in the config, renders nothing, as in
 // the other SDKs.
-const href = computed(() => props.href ?? entry.value?.href);
+const entry = computed(() => {
+	const configured = config.value.legalLinks?.[props.link];
+	const href = props.href ?? configured?.href;
+	return href
+		? resolveLegalLinkEntries(
+				{ [props.link]: { ...configured, href } },
+				[props.link],
+				translations.value.bundle?.legalLinks
+			)[0]
+		: undefined;
+});
 
 const testId = computed(() => {
 	const surface =
@@ -31,16 +43,14 @@ const testId = computed(() => {
 
 <template>
 	<a
-		v-if="href"
+		v-if="entry"
 		v-bind="config.components?.link?.[context]"
-		:href="href"
-		:target="entry?.target"
-		:rel="entry?.rel"
+		:href="entry.href"
+		:target="entry.target"
+		:rel="entry.rel"
 		:data-testid="testId"
 		:class="legalStyles.legalLink"
 	>
-		<slot>
-			{{ entry?.label ?? init?.translations?.translations?.legalLinks?.[link] }}
-		</slot>
+		<slot>{{ entry.label }}</slot>
 	</a>
 </template>

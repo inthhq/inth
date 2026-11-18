@@ -5,10 +5,10 @@ import {
 	inject,
 	input,
 } from '@angular/core';
+import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 
 import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style';
-import { resolveComponentStyles, toStyleAttribute } from '../core/slot-styles';
 
 /**
  * The overlay class names, from the caller's own style map. The overlay
@@ -84,7 +84,7 @@ export class Overlay {
 	protected readonly testId = computed(() => TEST_IDS[this.variant()]);
 
 	readonly #style = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			THEME_KEYS[this.variant()],
 			this.#theme.theme(),
 			{ baseClassName: this.styles().overlay },
@@ -110,6 +110,6 @@ export class Overlay {
 
 	/** @internal */
 	protected readonly style = computed(
-		() => toStyleAttribute(this.#style().style) ?? ''
+		() => toStyleAttributeValue(this.#style().style) ?? ''
 	);
 }

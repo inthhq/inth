@@ -49,11 +49,6 @@ export {
 	TRIGGER_SHEETS,
 } from './lib/core/consent-styles';
 export type { SurfaceStyleSheet } from './lib/core/consent-styles';
-export {
-	resolveComponentStyles,
-	resolveConsentActionStyle,
-	toStyleAttribute,
-} from './lib/core/slot-styles';
 export { fallbackTranslations } from './lib/core/translation-defaults';
 export { whenIABReady } from './lib/core/iab-loader';
 export {
@@ -199,7 +194,6 @@ export {
 	InlineLegalLinks as ɵInlineLegalLinks,
 	PolicyActions as ɵPolicyActions,
 	resolvedTranslations as ɵresolvedTranslations,
-	selectLegalLinks as ɵselectLegalLinks,
 	shouldShowBranding as ɵshouldShowBranding,
 } from './lib/shared';
 export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';

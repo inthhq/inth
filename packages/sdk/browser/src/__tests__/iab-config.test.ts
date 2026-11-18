@@ -120,11 +120,17 @@ describe('IAB browser configuration', () => {
 			).toBeNull();
 		}
 	);
-	it('allows hidden dialog branding and keeps the IAB banner branding', async () => {
+	it('keeps the IAB branding by default', async () => {
+		const client = await start({});
+		expect(query(client, 'iab-consent-banner-branding')).not.toBeNull();
+		client.openDialog();
+		expect(query(client, 'iab-consent-dialog-branding')).not.toBeNull();
+	});
+	it('hides the IAB banner and dialog branding, as the other SDKs allow', async () => {
 		const client = await start({
 			ui: { banner: { hideBranding: true }, dialog: { hideBranding: true } },
 		});
-		expect(query(client, 'iab-consent-banner-branding')).not.toBeNull();
+		expect(query(client, 'iab-consent-banner-branding')).toBeNull();
 		client.openDialog();
 		expect(query(client, 'iab-consent-dialog-branding')).toBeNull();
 	});

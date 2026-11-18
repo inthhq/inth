@@ -289,7 +289,7 @@ export class ConsentManager {
 	/** Which consent surface is open. */
 	readonly activeUI: Signal<ActiveUI>;
 	/** Attribution the surfaces show. */
-	readonly branding: Signal<NonNullable<ConsentSnapshot['branding']>>;
+	readonly branding: Signal<ConsentSnapshot['branding']>;
 	/** The draft's displayed categories: `necessary` plus the choice scope. */
 	readonly consentCategories: Signal<AllConsentNames[]>;
 	/** Metadata for {@link ConsentManager.consentCategories}. */
@@ -421,7 +421,7 @@ export class ConsentManager {
 			computed(() => snapshot()[key]);
 
 		this.activeUI = computed(() => (snapshot().activeUI ?? 'none') as ActiveUI);
-		this.branding = computed(() => snapshot().branding ?? 'c15t');
+		this.branding = computed(() => snapshot().branding);
 		// The draft's displayed categories, without loading the draft: the
 		// runtime applies the same display-order rule. Reading the snapshot
 		// recomputes it when the policy changes.

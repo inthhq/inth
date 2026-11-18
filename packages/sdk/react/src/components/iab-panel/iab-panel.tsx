@@ -25,7 +25,7 @@ import { useHeadlessIABConsentUI } from '~/component-hooks/use-headless-iab-cons
 import { useTranslations } from '~/component-hooks/use-translations';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import type { ConsentDialogTriggerProps } from '~/components/panel-trigger';
-import { Branding } from '~/components/panel/atoms/card';
+import { BrandingTag } from '~/components/shared/ui/branding';
 import * as Button from '~/components/shared/ui/button';
 import * as Tabs from '~/components/shared/ui/tabs';
 import { ConsentTrackingContext } from '~/context/consent-tracking-context';
@@ -1012,11 +1012,9 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 							</div>
 						</div>
 
-						<Branding
+						<BrandingTag
+							surface="iab-dialog"
 							hideBranding={hideBranding ?? false}
-							variant="dialog-tag"
-							slotContext="iab-dialog"
-							data-testid="iab-consent-dialog-branding"
 						/>
 					</div>
 				</div>

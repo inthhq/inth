@@ -12,12 +12,12 @@ import {
 } from '@angular/core';
 import type { Signal } from '@angular/core';
 import type { LegalLinks } from '@inth/sdk/engine';
+import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { setupColorScheme } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from './consent-manager';
 import type { DialogPreload } from './dialog-warming';
-import { warnOnUnappliedThemeTokens } from './theme-warning';
 
 /**
  * The provider's theme and UI options, as signals, for the stock surfaces
@@ -102,7 +102,11 @@ export class ConsentTheme {
 
 		if (isDevMode()) {
 			effect(() => {
-				warnOnUnappliedThemeTokens(this.theme(), document);
+				warnOnUnappliedThemeTokens(
+					this.theme(),
+					document,
+					'Put the --inth-* variables, or the CSS from generateThemeCSS(theme), in your stylesheet and drop the tokens from `theme`.'
+				);
 			});
 		}
 	}

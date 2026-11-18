@@ -5,14 +5,22 @@
 		PromptPosition,
 		PromptVariant,
 	} from '@inth/sdk/engine';
-	import { resolveConsentPresentation } from '@inth/sdk/engine';
+	import {
+		actionAppearanceFromTheme,
+		resolveConsentPresentation,
+	} from '@inth/sdk/engine';
 	import type { PolicyRight } from '@inth/sdk/schema/types';
 	import {
 		EARLY_CONSENT_TAP_SCRIPT,
 		replayEarlyConsentTaps,
 	} from '@inth/sdk/surface-actions';
 	import styles from '@inth/sdk/ui/styles/components/consent-banner';
-	import { resolveTranslations } from '@inth/sdk/ui/utils';
+	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+	import {
+		resolveStyles,
+		resolveTranslations,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { onMount } from 'svelte';
 
@@ -34,11 +42,6 @@
 		registeredDefaultTranslations,
 	} from '../translation-defaults';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
-	import {
-		resolveComponentStyles,
-		resolveConsentActionStyle,
-		toStyleAttribute,
-	} from '../utils';
 	import ConsentButton from './action-button.svelte';
 	import Branding from './branding.svelte';
 	import InlineLegalLinks from './inline-legal-links.svelte';
@@ -169,7 +172,7 @@
 
 	// Styling - per-element theme key resolution shared across framework adapters.
 	const rootStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBanner',
 			theme.theme,
 			{
@@ -182,7 +185,7 @@
 	);
 
 	const cardStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerCard',
 			theme.theme,
 			{ baseClassName: styles.card, noStyle },
@@ -191,7 +194,7 @@
 	);
 
 	const headerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerHeader',
 			theme.theme,
 			{ baseClassName: styles.header, noStyle },
@@ -200,7 +203,7 @@
 	);
 
 	const titleStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerTitle',
 			theme.theme,
 			{ baseClassName: styles.title, noStyle },
@@ -209,7 +212,7 @@
 	);
 
 	const descriptionStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerDescription',
 			theme.theme,
 			{ baseClassName: styles.description, noStyle },
@@ -218,7 +221,7 @@
 	);
 
 	const footerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerFooter',
 			theme.theme,
 			{ baseClassName: styles.footer, noStyle },
@@ -227,7 +230,7 @@
 	);
 
 	const footerSubGroupStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerFooterSubGroup',
 			theme.theme,
 			{ noStyle },
@@ -236,7 +239,7 @@
 	);
 
 	const rightsStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerRights',
 			theme.theme,
 			{ baseClassName: styles.rights, noStyle },
@@ -245,7 +248,7 @@
 	);
 
 	const rightLinkStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerRightLink',
 			theme.theme,
 			{ baseClassName: styles.rightLink, noStyle },
@@ -270,17 +273,9 @@
 		}
 		return Array.isArray(primaryButton) ? primaryButton : [primaryButton];
 	});
-	// Button helpers
-	const themedActions = $derived({
-		accept: resolveConsentActionStyle(theme.theme, 'accept'),
-		customize: resolveConsentActionStyle(theme.theme, 'customize'),
-		dismiss: resolveConsentActionStyle(theme.theme, 'dismiss'),
-		reject: resolveConsentActionStyle(theme.theme, 'reject'),
-		save: resolveConsentActionStyle(theme.theme, 'save'),
-	});
 	const presentation = $derived(
 		resolveConsentPresentation({
-			actionAppearance: themedActions,
+			actionAppearance: actionAppearanceFromTheme(theme.theme),
 			override: {
 				blocking,
 				layout,
@@ -394,7 +389,7 @@
 		<div
 			bind:this={visibility.bannerEl}
 			class={finalClassName}
-			style={toStyleAttribute(rootStyle.style)}
+			style={toStyleAttributeValue(rootStyle.style)}
 			dir={textDirection}
 			data-variant={resolvedVariant}
 			data-position={resolvedPosition}
@@ -411,14 +406,12 @@
 				<Branding
 					{hideBranding}
 					{noStyle}
-					variant="banner-tag"
-					themeKey="consentBannerTag"
-					data-testid="consent-banner-branding"
+					surface="banner"
 				/>
 				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 				<div
 					class={cardStyle.className || ''}
-					style={toStyleAttribute(cardStyle.style)}
+					style={toStyleAttributeValue(cardStyle.style)}
 					data-testid="consent-banner-card"
 					tabindex="-1"
 					role={isBlocking ? 'dialog' : 'region'}
@@ -428,19 +421,19 @@
 				>
 					<div
 						class={headerStyle.className || ''}
-						style={toStyleAttribute(headerStyle.style)}
+						style={toStyleAttributeValue(headerStyle.style)}
 						data-testid="consent-banner-header"
 					>
 						<h2
 							class={titleStyle.className || ''}
-							style={toStyleAttribute(titleStyle.style)}
+							style={toStyleAttributeValue(titleStyle.style)}
 							data-testid="consent-banner-title"
 						>
 							{resolvedTitle}
 						</h2>
 						<div
 							class={descriptionStyle.className || ''}
-							style={toStyleAttribute(descriptionStyle.style)}
+							style={toStyleAttributeValue(descriptionStyle.style)}
 							data-context="banner"
 							data-testid="consent-banner-description"
 						>
@@ -458,9 +451,11 @@
 						{direction}
 						{noStyle}
 						footerClassName={footerStyle.className || ''}
-						footerStyle={toStyleAttribute(footerStyle.style)}
+						footerStyle={toStyleAttributeValue(footerStyle.style)}
 						footerSubGroupClassName={footerSubGroupStyle.className || ''}
-						footerSubGroupStyle={toStyleAttribute(footerSubGroupStyle.style)}
+						footerSubGroupStyle={toStyleAttributeValue(
+							footerSubGroupStyle.style
+						)}
 						footerTestId="consent-banner-footer"
 						footerSubGroupTestId="consent-banner-footer-sub-group"
 					>
@@ -468,14 +463,14 @@
 							{#if preferenceControls.length > 0}
 								<div
 									class={rightsStyle.className || ''}
-									style={toStyleAttribute(rightsStyle.style)}
+									style={toStyleAttributeValue(rightsStyle.style)}
 									data-testid="consent-banner-rights"
 								>
 									{#each preferenceControls as right (right)}
 										<button
 											type="button"
 											class={rightLinkStyle.className || ''}
-											style={toStyleAttribute(rightLinkStyle.style)}
+											style={toStyleAttributeValue(rightLinkStyle.style)}
 											data-action="right"
 											data-right={right}
 											data-inth-rights={consent.snapshot.policyRule.rights.join(
@@ -494,9 +489,7 @@
 							{#if action === 'reject'}
 								<ConsentButton
 									action="reject-consent"
-									variant={themedActions.reject.variant ??
-										(isPrimary ? 'primary' : 'neutral')}
-									mode={themedActions.reject.mode ?? 'stroke'}
+									{...resolveActionAppearance(theme.theme, 'reject', isPrimary)}
 									closeConsentBanner
 									data-action="reject"
 									data-testid="consent-banner-reject-button"
@@ -506,9 +499,7 @@
 							{:else if action === 'accept'}
 								<ConsentButton
 									action="accept-consent"
-									variant={themedActions.accept.variant ??
-										(isPrimary ? 'primary' : 'neutral')}
-									mode={themedActions.accept.mode ?? 'stroke'}
+									{...resolveActionAppearance(theme.theme, 'accept', isPrimary)}
 									closeConsentBanner
 									data-action="accept"
 									data-testid="consent-banner-accept-button"
@@ -518,9 +509,11 @@
 							{:else if action === 'dismiss'}
 								<ConsentButton
 									action="dismiss-notice"
-									variant={themedActions.dismiss.variant ??
-										(isPrimary ? 'primary' : 'neutral')}
-									mode={themedActions.dismiss.mode ?? 'stroke'}
+									{...resolveActionAppearance(
+										theme.theme,
+										'dismiss',
+										isPrimary
+									)}
 									data-action="dismiss"
 									data-testid="consent-banner-dismiss-button"
 								>
@@ -529,9 +522,11 @@
 							{:else if action === 'customize'}
 								<ConsentButton
 									action="open-consent-dialog"
-									variant={themedActions.customize.variant ??
-										(isPrimary ? 'primary' : 'neutral')}
-									mode={themedActions.customize.mode ?? 'stroke'}
+									{...resolveActionAppearance(
+										theme.theme,
+										'customize',
+										isPrimary
+									)}
 									data-action="customize"
 									data-testid="consent-banner-customize-button"
 								>

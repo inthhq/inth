@@ -390,7 +390,13 @@ export const createWidget = function createWidget(
 			save: 'consent-widget-footer-save-button',
 		};
 		return renderActionFooter({
-			actions: resolveActions(snapshot, 'preferences', ctx.client.presentation),
+			actions: resolveActions(
+				snapshot,
+				'preferences',
+				ctx.client.presentation,
+				undefined,
+				ctx.client.theme
+			),
 			buttonTestId: (action) => testIds[action],
 			footerClassName: classes.manager.footer,
 			footerSlot: 'consentWidgetFooter',
@@ -418,6 +424,7 @@ export const createWidget = function createWidget(
 			slot,
 			subGroupTestId: 'consent-widget-footer-sub-group',
 			testId: 'consent-widget-footer',
+			theme: ctx.client.theme,
 		});
 	};
 
@@ -464,8 +471,7 @@ export const createWidget = function createWidget(
 				hide: hideBranding,
 				noStyle,
 				securedBy: t.common.securedBy,
-				testId: 'consent-widget-branding',
-				variant: 'dialog-tag',
+				surface: 'widget',
 			}),
 			'consentWidgetTag'
 		);

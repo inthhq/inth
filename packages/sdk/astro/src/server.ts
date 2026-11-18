@@ -51,7 +51,7 @@ import { generateThemeCSS } from '@inth/sdk/ui/theme';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import { assertIABAvailable } from './libs/iab-unavailable';
-import type { InthColorScheme, InthLocals, InthResolvedOptions } from './types';
+import type { InthLocals, InthResolvedOptions } from './types';
 
 /** Input for {@link resolveConsentContext}. */
 export interface ResolveConsentContextOptions {
@@ -478,39 +478,16 @@ export const buildThemeCSS = function buildThemeCSS(
 };
 
 /**
- * Build the first-paint colour-scheme script.
+ * Build the first-paint colour-scheme script: `inth-dark` for `'dark'`, or
+ * from `prefers-color-scheme` for `'system'`. `'light'` and `'none'` need
+ * none.
  *
- * Dark mode is the `inth-dark` class on `<html>`, and the client boot sets
- * it — but that runs after the stylesheet has already painted the
- * server-rendered banner in the light palette. This runs in `<head>`,
- * before the browser has anything to paint, so a system-dark visitor never
- * sees the flash. It is deliberately framework-free and unbundled: a
- * module script would be deferred and lose the race.
- *
- * `'light'` emits nothing. Light is the absence of the class, so there is
- * nothing to do before paint. `'none'` emits nothing either: the site owns
- * the class and sets it itself.
- *
- * @param colorScheme - The resolved colour scheme.
- * @returns Script source, or an empty string when none is needed.
  * @example
  * ```astro
  * <script is:inline set:html={buildColorSchemeScript('system')} />
  * ```
  */
-export const buildColorSchemeScript = function buildColorSchemeScript(
-	colorScheme: InthColorScheme
-): string {
-	if (colorScheme === 'light' || colorScheme === 'none') {
-		return '';
-	}
-	if (colorScheme === 'dark') {
-		return "document.documentElement.classList.add('inth-dark');";
-	}
-	// Wrapped because `matchMedia` is absent in some embedded webviews, and
-	// a throw here would abort the rest of the document's parsing.
-	return "try{document.documentElement.classList.toggle('inth-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
-};
+export { buildColorSchemeScript } from '@inth/sdk/ui/utils/color-scheme';
 
 /**
  * Build the script that shows a prerendered banner at first paint.
@@ -547,15 +524,10 @@ export const buildBannerRevealScript = function buildBannerRevealScript(
 };
 
 export { buildPrefetchScript } from '@inth/sdk/engine';
-export {
-	C15T_MARK_SVG,
-	INTH_LOGO_SVG,
-	resolveBrandingModel,
-} from './banner/branding-model';
+export { resolveBrandingModel } from './banner/branding-model';
 export type {
 	BrandingModel,
 	BrandingModelInput,
-	BrandingVariant,
 } from './banner/branding-model';
 export { iabPromptClassNames, promptClassNames } from './banner/class-names';
 export type {

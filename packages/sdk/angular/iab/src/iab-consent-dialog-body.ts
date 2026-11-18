@@ -15,9 +15,7 @@ import {
 	ConsentTheme,
 	FocusTrap,
 	Portal,
-	resolveComponentStyles,
 	ScrollLock,
-	toStyleAttribute,
 	ɵBranding as Branding,
 	ɵInitialFocus as InitialFocus,
 	ɵNoStyleScope as NoStyleScope,
@@ -41,7 +39,11 @@ import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { buttonVariants } from '@inth/sdk/ui/styles/primitives';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import {
+	getTextDirection,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 
 import { IABFeatureItem } from './iab-feature-item';
 import { ChevronRightIcon, CloseIcon, InfoIcon, LockIcon } from './iab-icons';
@@ -500,9 +502,7 @@ const primaryButtonClass = buttonVariants({
 							<a
 								inth-branding
 								[noStyle]="resolvedNoStyle()"
-								[variant]="'dialog-tag'"
-								[themeKey]="'iabConsentDialogTag'"
-								data-testid="iab-consent-dialog-branding"
+								surface="iab-dialog"
 							></a>
 						}
 					</div>
@@ -581,7 +581,7 @@ export class IABConsentDialogBody {
 
 	/** @internal */
 	protected readonly rootStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialog',
 			this.#theme.theme(),
 			{
@@ -593,7 +593,7 @@ export class IABConsentDialogBody {
 	);
 	/** @internal */
 	protected readonly cardStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogCard',
 			this.#theme.theme(),
 			{
@@ -606,7 +606,7 @@ export class IABConsentDialogBody {
 	);
 	/** @internal */
 	protected readonly headerStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogHeader',
 			this.#theme.theme(),
 			{ baseClassName: styles.header, noStyle: this.resolvedNoStyle() },
@@ -615,7 +615,7 @@ export class IABConsentDialogBody {
 	);
 	/** @internal */
 	protected readonly footerStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogFooter',
 			this.#theme.theme(),
 			{
@@ -716,8 +716,8 @@ export class IABConsentDialogBody {
 	}
 
 	/** @internal */
-	protected toStyle(style: Parameters<typeof toStyleAttribute>[0]) {
-		return toStyleAttribute(style) ?? null;
+	protected toStyle(style: Parameters<typeof toStyleAttributeValue>[0]) {
+		return toStyleAttributeValue(style) ?? null;
 	}
 
 	/** @internal */

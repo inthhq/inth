@@ -1,7 +1,11 @@
 'use client';
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
-import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
+import type {
+	PromptPosition,
+	PromptVariant,
+	SurfacePresentation,
+} from '@inth/sdk/engine';
 /**
  * @packageDocumentation
  * Provides the main consent banner component for privacy consent management.
@@ -9,14 +13,13 @@ import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
  */
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
-import type { SurfacePresentation } from '@inth/sdk/ui/utils';
 import { Fragment } from 'react';
 import type { FC, ReactNode } from 'react';
 
 import { useHeadlessConsentUI } from '~/component-hooks/use-headless-consent-ui';
 import { Box } from '~/components/shared/primitives/box';
 import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
-import { BrandingLink } from '~/components/shared/ui/branding';
+import { BrandingTag } from '~/components/shared/ui/branding';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useIABPolicyGuard } from '~/hooks/use-iab-policy-guard';
 
@@ -362,11 +365,9 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 					baseClassName={styles.cardShell}
 					slotKey="banner.cardShell"
 				>
-					<BrandingLink
+					<BrandingTag
+						surface="banner"
 						hideBranding={hideBranding}
-						variant="banner-tag"
-						slotContext="banner"
-						data-testid="consent-banner-branding"
 					/>
 					<ConsentBannerCard>
 						<ConsentBannerHeader>

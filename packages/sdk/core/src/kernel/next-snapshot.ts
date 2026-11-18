@@ -65,7 +65,7 @@ export interface SnapshotPatch {
 	user?: KernelUser | null;
 	location?: LocationResponse | null;
 	translations?: KernelTranslations | null;
-	branding?: KernelBranding | null;
+	branding?: KernelBranding;
 	hosting?: KernelHosting | null;
 	scriptRegistry?: Readonly<ScriptRegistryWire> | null;
 

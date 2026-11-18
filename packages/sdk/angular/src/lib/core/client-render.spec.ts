@@ -30,8 +30,7 @@ import { provideInth } from './provide-inth';
 	selector: 'test-host',
 	template: `<a
 			inth-branding
-			variant="banner-tag"
-			data-testid="branding"
+			surface="dialog"
 		></a>
 		<inth-consent-banner [disableAnimation]="true" />`,
 })
@@ -73,7 +72,7 @@ describe('client-only first render', () => {
 	test('renders the stock copy before the engine loads', () => {
 		const root = firstRender();
 		expect(
-			root.querySelector('[data-testid="branding"]')?.textContent
+			root.querySelector('[data-testid="consent-dialog-branding"]')?.textContent
 		).toContain('Secured by');
 	});
 

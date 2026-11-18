@@ -12,6 +12,7 @@
 import type { EvaluationPolicy } from '../consent-record/types';
 import { deepFreeze } from '../libs/freeze-data';
 import type { ConsentSnapshot, KernelConfig, KernelOverrides } from '../types';
+import { DEFAULT_BRANDING } from '../types';
 
 /** The provider options a pending snapshot depends on. @internal */
 export interface PendingSnapshotOptions {
@@ -118,7 +119,7 @@ export const pendingBootSnapshot = function pendingBootSnapshot(
 	const detected = options.gpc === true;
 	const snapshot: ConsentSnapshot = {
 		activeUI: 'none',
-		branding: null,
+		branding: DEFAULT_BRANDING,
 		consentCategories,
 		effectivePermissions: {
 			experience: false,

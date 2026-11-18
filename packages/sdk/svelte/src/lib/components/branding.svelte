@@ -1,44 +1,32 @@
 <script lang="ts">
 	import styles from '@inth/sdk/ui/styles/components/branding';
-	import { resolveTranslations } from '@inth/sdk/ui/utils';
+	import {
+		resolveBrandingTag,
+		resolveStyles,
+		resolveTranslations,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
+	import type { BrandingSurface } from '@inth/sdk/ui/utils';
 	import { onMount } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { fallbackTranslations } from '../translation-defaults';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
-	import C15TIconOnly from './icons/c15-t-icon-only.svelte';
-	import InthLogo from './icons/inth-logo.svelte';
-
-	type ResolvedBranding = 'c15t' | 'inth' | 'none';
-	type BrandingVariant = 'footer' | 'dialog-tag' | 'banner-tag';
-	type BrandingThemeKey =
-		| 'consentBannerTag'
-		| 'consentDialogTag'
-		| 'consentWidgetTag'
-		| 'iabConsentBannerTag'
-		| 'iabConsentDialogTag';
+	import BrandMark from './icons/brand-mark.svelte';
 
 	let {
+		surface,
 		hideBranding = false,
 		noStyle: localNoStyle,
-		variant = 'footer',
-		themeKey,
-		class: className,
-		'data-testid': testId,
 	}: {
+		surface: BrandingSurface;
 		hideBranding?: boolean;
 		noStyle?: boolean;
-		variant?: BrandingVariant;
-		themeKey?: BrandingThemeKey;
-		class?: string;
-		'data-testid'?: string;
 	} = $props();
 
 	const consent = getConsentContext();
 	const theme = getThemeContext();
 
 	const noStyle = $derived(localNoStyle ?? theme.noStyle ?? false);
-	const branding = $derived(consent.state.branding);
 	const translations = $derived(
 		resolveTranslations(
 			consent.state.translationConfig,
@@ -46,95 +34,66 @@
 		)
 	);
 
-	const resolveBranding = function resolveBranding(
-		value: string
-	): ResolvedBranding {
-		if (value === 'none') {
-			return 'none';
-		}
-
-		if (value === 'inth' || value === 'consent') {
-			return 'inth';
-		}
-
-		return 'c15t';
-	};
-
-	const resolvedBranding = $derived(resolveBranding(branding));
-	const showBranding = $derived(!hideBranding && resolvedBranding !== 'none');
-	let refHostname = $state('');
+	let hostname = $state('');
 	onMount(() => {
-		refHostname = window.location.hostname;
+		({ hostname } = window.location);
 	});
-	const refParam = $derived(refHostname ? `?ref=${refHostname}` : '');
-	const brandingHref = $derived(
-		resolvedBranding === 'inth'
-			? `https://inth.com${refParam}`
-			: `https://c15t.com${refParam}`
+	const tag = $derived(
+		hideBranding
+			? null
+			: resolveBrandingTag({
+					branding: consent.state.branding,
+					hostname,
+					noStyle,
+					styles,
+					surface,
+				})
 	);
-
-	const baseClassName = $derived(
-		[
-			styles.branding,
-			variant === 'footer' ? '' : styles.brandingTag,
-			variant === 'dialog-tag' ? styles.brandingTagDialog : '',
-			variant === 'banner-tag' ? styles.brandingTagBanner : '',
-		]
-			.filter(Boolean)
-			.join(' ')
-	);
-
-	const brandingStyle = $derived(
-		resolveComponentStyles(
-			themeKey ?? 'consentDialogTag',
-			theme.theme,
-			{
-				baseClassName,
-				className,
-			},
-			noStyle
-		)
+	const rootStyle = $derived(
+		tag
+			? resolveStyles(
+					tag.slot,
+					theme.theme,
+					{ baseClassName: tag.classes.root },
+					noStyle
+				)
+			: undefined
 	);
 </script>
 
-{#if showBranding}
+{#if tag}
 	<!-- No `dir` here: the copy follows the page direction and only the
 	     wordmark below is pinned to LTR. -->
 	<a
-		class={brandingStyle.className || ''}
-		style={toStyleAttribute(brandingStyle.style)}
-		href={brandingHref}
-		data-branding={resolvedBranding}
-		data-variant={variant}
-		data-testid={testId}
+		class={rootStyle?.className || undefined}
+		style={toStyleAttributeValue(rootStyle?.style)}
+		href={tag.href}
+		data-branding={tag.brand}
+		data-variant={tag.variant}
+		data-testid={tag.testId}
 	>
 		<span
-			class={styles.brandingContent || ''}
+			class={tag.classes.content || undefined}
 			data-slot="tag-content"
 		>
-			<span class={styles.brandingCopy || ''}>
-				<span class={styles.brandingText || ''}
+			<span class={tag.classes.copy || undefined}>
+				<span class={tag.classes.text || undefined}
 					>{translations.common.securedBy}</span
 				>
 			</span>
-			{#if resolvedBranding === 'inth'}
-				<span
-					dir="ltr"
-					class={`${styles.brandingWordmark || ''} ${styles.brandingInth || ''}`}
-				>
-					<InthLogo aria-hidden={true} />
-				</span>
-			{:else}
-				<span
-					dir="ltr"
-					class={`${styles.brandingWordmark || ''} ${styles.brandingC15T || ''}`}
-				>
-					<span class={styles.brandingC15TMark || ''}>
-						<C15TIconOnly aria-hidden={true} />
+			<span
+				dir="ltr"
+				class={tag.classes.wordmark || undefined}
+			>
+				{#if tag.brand === 'inth'}
+					<BrandMark mark="inth" />
+				{:else}
+					<span class={tag.classes.mark || undefined}>
+						<BrandMark mark="c15t" />
 					</span>
-					<span class={styles.brandingWordmarkLabel || ''}>c15t</span>
-				</span>
-			{/if}
+					<span class={tag.classes.label || undefined}>c15t</span>
+				{/if}
+			</span>
 		</span>
 	</a>
 {/if}

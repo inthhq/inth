@@ -204,16 +204,17 @@ export const buildIABPrompt = function buildIABPrompt(
 		},
 		[renderHeader(model), footer]
 	);
-	const branding = renderBrandingTag({
-		hide: props.hideBranding,
-		noStyle: props.noStyle,
-		securedBy: model.copy.securedBy,
-		snapshot,
-		styles: slot.classNames.branding,
-		testId: 'iab-consent-banner-branding',
-		theme,
-		themeSlot: 'iabConsentBannerTag',
-	});
+	const branding = renderBrandingTag(
+		{
+			branding: snapshot.branding,
+			hide: props.hideBranding,
+			noStyle: props.noStyle,
+			styles: slot.classNames.branding,
+			surface: 'iab-banner',
+			theme,
+		},
+		model.copy.securedBy
+	);
 	const root = element(
 		'div',
 		{

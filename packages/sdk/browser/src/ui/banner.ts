@@ -87,7 +87,8 @@ export const createBanner = function createBanner(
 			{
 				scrollLock: options.scrollLock,
 				trapFocus: options.trapFocus,
-			}
+			},
+			ctx.client.theme
 		);
 		({ trapFocus, scrollLock } = actions);
 		const { position } = actions;
@@ -165,6 +166,7 @@ export const createBanner = function createBanner(
 					slot,
 					subGroupTestId: 'consent-banner-footer-sub-group',
 					testId: 'consent-banner-footer',
+					theme: ctx.client.theme,
 				})
 			),
 			'consentBannerCard'
@@ -213,8 +215,7 @@ export const createBanner = function createBanner(
 							hide: options.hideBranding ?? false,
 							noStyle,
 							securedBy: t.common.securedBy,
-							testId: 'consent-banner-branding',
-							variant: 'banner-tag',
+							surface: 'banner',
 						}),
 						'consentBannerTag'
 					),

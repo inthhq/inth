@@ -48,6 +48,7 @@ import {
 	saveConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
+import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
 import { setupColorScheme } from '@inth/sdk/ui/utils/color-scheme';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk/ui/utils/dom';
 import { isLateEntry } from '@inth/sdk/ui/utils/late-entry';
@@ -161,7 +162,7 @@ const NONCE_BEARING_SELECTOR = [
 	'script[data-inth-config]',
 	'script[data-inth-boot]',
 	'script[data-inth-inline]',
-	'style#inth-theme',
+	`style#${THEME_STYLE_ELEMENT_ID}`,
 	'style[data-inth-styles="inth-first-paint"]',
 	'style[data-inth-styles="inth-iab-first-paint"]',
 	'script[data-inth-category]',

@@ -119,7 +119,7 @@ export interface ConsentManagerState extends Pick<
 	| 'vendorChoice'
 > {
 	activeUI: ActiveUI;
-	branding: NonNullable<ConsentSnapshot['branding']>;
+	branding: ConsentSnapshot['branding'];
 
 	selectedConsents: Partial<ConsentState>;
 	selectedConsentTypes: Partial<ConsentState>;
@@ -304,7 +304,7 @@ const createConsentState = function createConsentState(
 			return toActiveUI(getSnapshotLocal().activeUI);
 		},
 		get branding() {
-			return getSnapshotLocal().branding ?? 'c15t';
+			return getSnapshotLocal().branding;
 		},
 		// The draft's displayed categories: `necessary` plus the choice scope.
 		get consentCategories(): AllConsentNames[] {

@@ -25,6 +25,7 @@ import '@inth/sdk/ui/styles/components/consent-actions.css';
 import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 
 import '@inth/sdk/ui/styles/components/consent-manager.css';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 import { getTextDirection } from '@inth/sdk/ui/utils/dom';
 import { computed, inject, mergeProps, ref, useId } from 'vue';
 
@@ -213,10 +214,12 @@ const actionClass = function actionClass(): string | undefined {
 	return buttonStyles.button;
 };
 
-const actionVariant = function actionVariant(
-	action: PresentationAction
-): 'primary' | 'neutral' {
-	return primaryActions.value.includes(action) ? 'primary' : 'neutral';
+const actionAppearance = function actionAppearance(action: PresentationAction) {
+	return resolveActionAppearance(
+		config.value.theme,
+		action,
+		primaryActions.value.includes(action)
+	);
 };
 
 const isSplitLayout = computed(() => actionGroups.value.length > 1);
@@ -449,7 +452,7 @@ const onAction = async function onAction(action: PresentationAction) {
 					type="button"
 					v-bind="
 						slotAttrs(
-							actionVariant(action) === 'primary'
+							actionAppearance(action).variant === 'primary'
 								? config.components?.button?.primary
 								: config.components?.button?.secondary,
 							actionClass()
@@ -457,10 +460,10 @@ const onAction = async function onAction(action: PresentationAction) {
 					"
 					:disabled="isStale"
 					:data-action="action"
-					:data-mode="noStyle ? undefined : 'stroke'"
+					:data-mode="noStyle ? undefined : actionAppearance(action).mode"
 					:data-size="noStyle ? undefined : 'small'"
 					:data-testid="ACTION_TEST_IDS[action]"
-					:data-variant="noStyle ? undefined : actionVariant(action)"
+					:data-variant="noStyle ? undefined : actionAppearance(action).variant"
 					@click="onAction(action)"
 				>
 					{{ labels[action] }}
@@ -469,8 +472,7 @@ const onAction = async function onAction(action: PresentationAction) {
 		</div>
 		<ConsentTag
 			v-if="!hideBranding"
-			context="dialog"
-			data-testid="consent-widget-branding"
+			surface="widget"
 		/>
 	</div>
 </template>

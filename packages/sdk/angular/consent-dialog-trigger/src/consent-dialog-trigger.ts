@@ -22,9 +22,7 @@ import {
 	ConsentTheme,
 	holdIdleDialogWarming,
 	Portal,
-	resolveComponentStyles,
 	SURFACE_SCOPES,
-	toStyleAttribute,
 	TRIGGER_SHEETS,
 	warmDialog,
 	ɵBrandMarkIcon as BrandMarkIcon,
@@ -38,6 +36,9 @@ import {
 	createInitialDragState,
 	getPersistedPosition,
 	persistPosition as persistToStorage,
+	resolveBrandMark,
+	resolveStyles,
+	toStyleAttributeValue,
 } from '@inth/sdk/ui/utils';
 import type { CornerPosition, DragState } from '@inth/sdk/ui/utils';
 import {
@@ -52,7 +53,7 @@ import type {
 	DevToolsLauncherTarget,
 } from '@inth/sdk/ui/utils/devtools-launcher';
 
-import { ConsentIcon, DevToolsIcon } from './trigger-icons';
+import { DevToolsIcon } from './trigger-icons';
 
 /** The corner the trigger sits in. */
 export type ConsentDialogTriggerPosition = CornerPosition;
@@ -91,16 +92,15 @@ const joinStyles = function joinStyles(
  */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [BrandMarkIcon, ConsentIcon, DevToolsIcon, NgTemplateOutlet, Portal],
+	imports: [BrandMarkIcon, DevToolsIcon, NgTemplateOutlet, Portal],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
 	selector: 'inth-consent-dialog-trigger',
 	template: `<ng-template #brandingIcon>
-			@if (consent.branding() === 'consent') {
-				<svg inth-consent-icon></svg>
-			} @else {
-				<svg inth-brand-mark-icon></svg>
-			}
+			<svg
+				inth-brand-mark-icon
+				[mark]="brandMark()"
+			></svg>
 		</ng-template>
 		@if (visible()) {
 			<div inthPortal>
@@ -217,6 +217,10 @@ const joinStyles = function joinStyles(
 export class ConsentDialogTrigger {
 	/** @internal */
 	protected readonly consent = inject(ConsentManager);
+	/** @internal */
+	protected readonly brandMark = computed(() =>
+		resolveBrandMark(this.consent.branding())
+	);
 	/** @internal */
 	protected readonly theme = inject(ConsentTheme);
 	readonly #styles = inject(ConsentStyles);
@@ -384,11 +388,17 @@ export class ConsentDialogTrigger {
 	);
 	/** @internal */
 	protected readonly toolbarAttributeStyle = computed(() =>
-		joinStyles(toStyleAttribute(this.toolbarStyle().style), this.#dragStyle())
+		joinStyles(
+			toStyleAttributeValue(this.toolbarStyle().style),
+			this.#dragStyle()
+		)
 	);
 	/** @internal */
 	protected readonly buttonStyle = computed(() =>
-		joinStyles(toStyleAttribute(this.triggerStyle().style), this.#dragStyle())
+		joinStyles(
+			toStyleAttributeValue(this.triggerStyle().style),
+			this.#dragStyle()
+		)
 	);
 
 	constructor() {
@@ -471,7 +481,7 @@ export class ConsentDialogTrigger {
 
 	/** @internal */
 	protected styleOf(style: ClassNameStyle): string | null {
-		return toStyleAttribute(style.style) ?? null;
+		return toStyleAttributeValue(style.style) ?? null;
 	}
 
 	/** @internal */
@@ -627,12 +637,12 @@ export class ConsentDialogTrigger {
 	}
 
 	#resolve(
-		key: Parameters<typeof resolveComponentStyles>[0],
+		key: Parameters<typeof resolveStyles>[0],
 		baseClassName: ClassNameStyle['baseClassName'],
 		className?: string
 	): ClassNameStyle {
 		const noStyle = this.#resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			key,
 			this.theme.theme(),
 			{ baseClassName, className, noStyle },
