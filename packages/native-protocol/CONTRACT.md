@@ -1121,6 +1121,12 @@ The body is built once per action, frozen, and queued before the first send:
 the newer `confirmedAt` winning, and leaves a category the body does not name as
 stored, so an older queued body that arrives after a newer one cannot undo it.
 
+That holds only while `confirmedAt` follows the order of the actions. A category
+receipt takes its time from the device clock, and only an IAB save is moved past the
+previous action time, so after the clock is set back a later decision can carry an
+earlier `confirmedAt` and lose to the receipt it meant to replace. This contract names
+no winner for two receipts of one category with the same `confirmedAt`.
+
 The body never carries `identityToken`. Queued bytes are written to disk and may be
 replayed long after a token expires, so the token goes only on the link request.
 Identity never fails a save: without a valid token the backend stores the save and
