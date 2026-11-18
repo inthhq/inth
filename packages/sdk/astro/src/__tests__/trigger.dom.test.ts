@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ENGINE_TIMEOUT_MS } from '../../../core/src/runtime/priority-images';
+import { ENGINE_TIMEOUT_MS } from '../../../core/src/runtime/page-globals';
 import { scheduleDeferredEngine, takeEarlyTaps } from '../browser/trigger';
 
 let hero: HTMLImageElement;

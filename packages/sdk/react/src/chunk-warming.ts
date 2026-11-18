@@ -16,7 +16,7 @@
  * aggregate exports (no context change, tree-shakes with the aggregate).
  */
 
-import { afterPriorityImages } from '@inth/sdk/runtime/priority-images';
+import { afterPriorityImages } from '@inth/sdk/runtime/page-globals';
 import { useEffect } from 'react';
 
 import { useUIConfig } from './ui-config-context';

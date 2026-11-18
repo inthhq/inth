@@ -3,22 +3,20 @@
  * has to choose. On a slow connection the engine's chunks share bandwidth
  * with the page's largest image; started after it, they no longer delay
  * Largest Contentful Paint (`afterPriorityImages` in
- * `@inth/sdk/runtime/priority-images`).
+ * `@inth/sdk/runtime/page-globals`).
  *
  * @packageDocumentation
  * @internal
  */
 
 import {
+	afterPriorityImages,
 	EARLY_TAP_NOTIFY_KEY,
 	EARLY_TAP_ROOT,
 	earlyTapQueue,
+	ENGINE_TIMEOUT_MS,
 	SERVER_START_FAILED_EVENT,
 } from '@inth/sdk/runtime/page-globals';
-import {
-	afterPriorityImages,
-	ENGINE_TIMEOUT_MS,
-} from '@inth/sdk/runtime/priority-images';
 
 import { pageRender } from './boot';
 import type * as DialogModule from './dialog';

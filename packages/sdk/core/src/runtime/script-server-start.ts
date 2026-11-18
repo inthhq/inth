@@ -42,10 +42,10 @@ import {
 	LOADER_RAN_KEY,
 	newRenderId,
 	PAGE_RENDER_KEY,
+	PRIORITY_IMAGE_SELECTOR,
 	SERVER_START_FAILED_EVENT,
 	STARTED_KEY,
 } from './page-globals';
-import { PRIORITY_IMAGE_SELECTOR } from './priority-images';
 import { createRuntimeKernel } from './runtime-kernel';
 import { storageFor } from './storage-for';
 import type { ConsentRuntimeOptions, RuntimePrefetch } from './types';
@@ -136,7 +136,7 @@ const PRIORITY_IMAGE_WAIT_MS = 3000;
 /**
  * Calls `f` once every `<img fetchpriority="high">` still loading has
  * finished, or after {@link PRIORITY_IMAGE_WAIT_MS}: `afterPriorityImages`
- * in `./priority-images`, except that a page without a priority image
+ * in `./page-globals`, except that a page without a priority image
  * starts at once. Vendor downloads share the connection with the page's
  * LCP image and push it back; request priority doesn't help across
  * origins.

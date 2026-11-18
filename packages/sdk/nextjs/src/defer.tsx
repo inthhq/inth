@@ -21,11 +21,11 @@
  * replays after hydration.
  */
 
-import { EARLY_TAP_ROOT } from '@inth/sdk/runtime/page-globals';
 import {
 	afterPriorityImages,
+	EARLY_TAP_ROOT,
 	ENGINE_TIMEOUT_MS,
-} from '@inth/sdk/runtime/priority-images';
+} from '@inth/sdk/runtime/page-globals';
 import { createElement, lazy, Suspense, useEffect } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 

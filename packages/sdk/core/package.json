@@ -240,11 +240,6 @@
 			"import": "./dist/runtime/page-globals.js",
 			"default": "./dist/runtime/page-globals.js"
 		},
-		"./runtime/priority-images": {
-			"types": "./dist-types/runtime/priority-images.d.ts",
-			"import": "./dist/runtime/priority-images.js",
-			"default": "./dist/runtime/priority-images.js"
-		},
 		"./runtime/storage-for": {
 			"types": "./dist-types/runtime/storage-for.d.ts",
 			"import": "./dist/runtime/storage-for.js",

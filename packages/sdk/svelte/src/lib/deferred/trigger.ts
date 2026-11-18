@@ -3,17 +3,17 @@
  * to choose. On a slow connection the engine's chunks share bandwidth with
  * the page's largest image; started after it, they no longer delay Largest
  * Contentful Paint (`afterPriorityImages` in
- * `@inth/sdk/runtime/priority-images`).
+ * `@inth/sdk/runtime/page-globals`).
  *
  * @packageDocumentation
  * @internal
  */
 
-import { EARLY_TAP_ROOT } from '@inth/sdk/runtime/page-globals';
 import {
 	afterPriorityImages,
+	EARLY_TAP_ROOT,
 	ENGINE_TIMEOUT_MS,
-} from '@inth/sdk/runtime/priority-images';
+} from '@inth/sdk/runtime/page-globals';
 
 /** The stock dialog's root. @internal */
 export const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';

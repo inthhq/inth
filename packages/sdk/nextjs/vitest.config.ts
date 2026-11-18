@@ -187,10 +187,6 @@ export default mergeConfig(
 					__dirname,
 					'../core/src/runtime/page-globals.ts'
 				),
-				'@inth/sdk/runtime/priority-images': resolve(
-					__dirname,
-					'../core/src/runtime/priority-images.ts'
-				),
 				'@inth/sdk/runtime': resolve(__dirname, '../core/src/runtime/index.ts'),
 				'@inth/sdk/engine': resolve(__dirname, '../core/src/index.ts'),
 				'@inth/react/context': resolve(__dirname, '../react/dist/context.js'),

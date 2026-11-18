@@ -15,7 +15,7 @@ import { createKernel } from '../kernel';
 import type { InternalKernel } from '../kernel/internals';
 import { hostExperiment, seedExperiment } from '../libs/experiment';
 import { extractConsentNamesFromCondition } from '../libs/has';
-import { isProductionBuild, warnInDevelopment } from '../libs/is-production';
+import { warnInDevelopment } from '../libs/is-production';
 import { resolveVendors } from '../libs/vendors';
 import type { User } from '../options/user';
 import { disabledPolicyResolution } from '../policy';

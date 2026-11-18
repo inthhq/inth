@@ -3,7 +3,7 @@
  *
  * On a slow connection the engine shares bandwidth with the page's largest
  * image; started after it, it no longer delays Largest Contentful Paint
- * (`afterPriorityImages` in `@inth/sdk/runtime/priority-images`).
+ * (`afterPriorityImages` in `@inth/sdk/runtime/page-globals`).
  *
  * @packageDocumentation
  * @internal
@@ -12,7 +12,7 @@
 import {
 	afterPriorityImages,
 	ENGINE_TIMEOUT_MS,
-} from '@inth/sdk-core/runtime/priority-images';
+} from '@inth/sdk-core/runtime/page-globals';
 
 /**
  * Input anywhere on the page that loads the engine at once. The browser

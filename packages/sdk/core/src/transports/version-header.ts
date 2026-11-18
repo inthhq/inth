@@ -70,19 +70,6 @@ export const inthProtocolParams: Readonly<
 };
 
 /**
- * The policy contract a producer declared on its response, if any.
- *
- * `undefined` means the producer predates the contract (no header). A
- * present but unparseable value is `null`: the producer claims a contract
- * this client cannot even read, which is not the same as claiming none.
- */
-export const readProducerPolicyContract = function readProducerPolicyContract(
-	headers: Pick<Headers, 'get'> | undefined
-): number | null | undefined {
-	return parsePolicyContract(headers?.get(INTH_POLICY_CONTRACT_HEADER));
-};
-
-/**
  * A policy contract header value as {@link readProducerPolicyContract}
  * reads it: `undefined` when absent, `null` when malformed.
  *
@@ -98,4 +85,17 @@ export const parsePolicyContract = function parsePolicyContract(
 	}
 	const trimmed = value.trim();
 	return /^\d+$/u.test(trimmed) ? Number.parseInt(trimmed, 10) : null;
+};
+
+/**
+ * The policy contract a producer declared on its response, if any.
+ *
+ * `undefined` means the producer predates the contract (no header). A
+ * present but unparseable value is `null`: the producer claims a contract
+ * this client cannot even read, which is not the same as claiming none.
+ */
+export const readProducerPolicyContract = function readProducerPolicyContract(
+	headers: Pick<Headers, 'get'> | undefined
+): number | null | undefined {
+	return parsePolicyContract(headers?.get(INTH_POLICY_CONTRACT_HEADER));
 };

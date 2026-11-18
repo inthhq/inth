@@ -3,21 +3,19 @@
  * still has to choose. On a slow connection the engine's chunks share
  * bandwidth with the page's largest image; started after it, they no
  * longer delay Largest Contentful Paint (`afterPriorityImages` in
- * `@inth/sdk/runtime/priority-images`).
+ * `@inth/sdk/runtime/page-globals`).
  *
  * @internal
  */
 
 import {
+	afterPriorityImages,
 	EARLY_TAP_ROOT,
 	EARLY_TAP_STYLE_ID,
 	earlyTapQueue,
+	ENGINE_TIMEOUT_MS,
 } from '@inth/sdk/runtime/page-globals';
 import type { EarlyConsentTap } from '@inth/sdk/runtime/page-globals';
-import {
-	afterPriorityImages,
-	ENGINE_TIMEOUT_MS,
-} from '@inth/sdk/runtime/priority-images';
 
 /**
  * Stops the banner's early-tap script and hands back what it recorded.

@@ -3,21 +3,19 @@
  * visitor who still has to choose. On a slow connection the engine's
  * chunks share bandwidth with the page's largest image; started after it,
  * they no longer delay Largest Contentful Paint (`afterPriorityImages` in
- * `@inth/sdk/runtime/priority-images`).
+ * `@inth/sdk/runtime/page-globals`).
  *
  * @packageDocumentation
  * @internal
  */
 
 import {
+	afterPriorityImages,
 	EARLY_TAP_NOTIFY_KEY,
 	EARLY_TAP_ROOT,
 	earlyTapQueue,
-} from '@inth/sdk/runtime/page-globals';
-import {
-	afterPriorityImages,
 	ENGINE_TIMEOUT_MS,
-} from '@inth/sdk/runtime/priority-images';
+} from '@inth/sdk/runtime/page-globals';
 
 /**
  * Input anywhere on the page that wakes the engine at once. The browser

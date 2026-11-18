@@ -96,10 +96,6 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, '../core/src/runtime/page-globals.ts'),
 	},
 	{
-		find: '@inth/sdk/runtime/priority-images',
-		replacement: resolve(__dirname, '../core/src/runtime/priority-images.ts'),
-	},
-	{
 		find: '@inth/sdk/runtime',
 		replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 	},
