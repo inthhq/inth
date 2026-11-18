@@ -15,14 +15,14 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import { hasStoredConsentRecord } from '../../../libs/journey';
-import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
+import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { ConsentKernel } from '../../../types';
 import { createPersistence } from '../index';
 import { readStoredConsentRecord } from '../record-storage';
 import { clearStoredConsentRecords } from './record-writes';
 
-const SID_KEY = `${STORAGE_KEY_V2}-sid`;
+const SID_KEY = `${C15T_STORAGE_KEY}-sid`;
 const disposers: (() => void)[] = [];
 
 const expire = function expire(name: string): void {

@@ -205,7 +205,7 @@ describe('web storage cleanup', () => {
 			'inth-notice-subject',
 			'inth-notice-cookie-miss',
 			'inth-privacy',
-			'inth-sid',
+			'c15t-sid',
 			'custom',
 			'custom-notice',
 			'custom-notice-subject',

@@ -139,7 +139,7 @@ test('a reload before any save starts with a new ID and stores nothing', async (
 	expect(first.ready.subject?.subjectId).toBe(subjectId);
 	expect(first.ready.explicitChoice).toBeNull();
 	expect(document.cookie).toBe('');
-	expect(localStorage.getItem('inth-sid')).toBeNull();
+	expect(localStorage.getItem('c15t-sid')).toBeNull();
 	clients.splice(0).forEach((client) => client.dispose());
 
 	const reload = await start(load());

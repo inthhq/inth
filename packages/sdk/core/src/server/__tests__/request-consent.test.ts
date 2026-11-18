@@ -204,7 +204,7 @@ describe('request read', () => {
 		'a Node header record with a %s header reads the stored records',
 		(name) => {
 			const headers = {
-				[name]: `inth-sid=sub_other; ${CONSENTED},i.sid:sub_recorded`,
+				[name]: `c15t-sid=sub_other; ${CONSENTED},i.sid:sub_recorded`,
 			};
 			const { state } = readRequestConsent({
 				adapter: '@c15t/test',

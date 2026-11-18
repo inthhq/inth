@@ -665,7 +665,7 @@ describe('withConsentProps', () => {
 		).resolves.toEqual({ notFound: true });
 	});
 
-	test('a first visit gets no inth-sid cookie, and the state carries no subject', async () => {
+	test('a first visit gets no c15t-sid cookie, and the state carries no subject', async () => {
 		const page = createPageContext({ cookie: 'theme=dark' });
 		page.responseHeaders.set('set-cookie', 'session=1; Path=/');
 		const result = await withConsentProps(undefined, {})(page.context);

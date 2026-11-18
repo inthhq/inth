@@ -166,7 +166,7 @@ const consentCookie = function consentCookie(subjectId: string): string {
 // A visitor who has not chosen gets nothing stored: the server reads a
 // subject ID only from the consent records a save wrote.
 describe('consentRequestMiddleware: no subject cookie', () => {
-	test('a first visit gets no inth-sid cookie, and resolveConsent finds no subject', async () => {
+	test('a first visit gets no c15t-sid cookie, and resolveConsent finds no subject', async () => {
 		const { request, response } = await run(consentRequestMiddleware(), {
 			cookie: 'theme=dark',
 		});

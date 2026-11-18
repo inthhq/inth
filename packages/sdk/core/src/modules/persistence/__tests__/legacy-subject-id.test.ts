@@ -2,8 +2,9 @@
  * @vitest-environment jsdom
  * @vitest-environment-options {"url":"https://a.app.example.com/pricing"}
  *
- * c15t 3.2 stored the subject ID in `<key>-sid` before any choice, under
- * whichever cookie scope its server adapter or browser runtime used. Startup
+ * c15t 3.2 stored the subject ID in `<key>-sid` before any choice, `c15t-sid`
+ * under its default key, under whichever cookie scope its server adapter or
+ * browser runtime used. Startup
  * and `clear()` remove every copy, whatever the current configuration. A
  * visitor whose stored records carry no ID keeps the one 3.2 gave them.
  */
@@ -31,10 +32,10 @@ import {
 const SCOPES = ['', '; domain=app.example.com', '; domain=.example.com'];
 
 /** The `<key>-sid` cookies this page sends, at any scope. */
-const sidCookies = (key = 'inth-sid'): string[] =>
+const sidCookies = (key = 'c15t-sid'): string[] =>
 	document.cookie.split('; ').filter((pair) => pair.startsWith(`${key}=`));
 
-const plant = function plant(key = 'inth-sid'): void {
+const plant = function plant(key = 'c15t-sid'): void {
 	for (const [index, scope] of SCOPES.entries()) {
 		document.cookie = `${key}=sub_copy${index}; path=/${scope}`;
 	}
@@ -43,7 +44,7 @@ const plant = function plant(key = 'inth-sid'): void {
 };
 
 afterEach(() => {
-	for (const key of ['inth-sid', 'custom-sid', 'inth-epoch']) {
+	for (const key of ['c15t-sid', 'custom-sid', 'inth-epoch']) {
 		for (const scope of SCOPES) {
 			document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${scope}`;
 		}
@@ -78,10 +79,11 @@ const plantRecordWithoutId = function plantRecordWithoutId(): number {
 };
 
 test.each<[string, StorageConfig | undefined, string]>([
-	['the default configuration', undefined, 'inth-sid'],
-	['crossSubdomain', { crossSubdomain: true }, 'inth-sid'],
-	['a defaultDomain', { defaultDomain: 'app.example.com' }, 'inth-sid'],
+	['the default configuration', undefined, 'c15t-sid'],
+	['crossSubdomain', { crossSubdomain: true }, 'c15t-sid'],
+	['a defaultDomain', { defaultDomain: 'app.example.com' }, 'c15t-sid'],
 	['a storage key of its own', { storageKey: 'custom' }, 'custom-sid'],
+	["c15t's storage key", { storageKey: 'c15t' }, 'c15t-sid'],
 ])('startup with %s removes every scope a 3.2 copy used', (_, config, key) => {
 	plant(key);
 	const { handle, kernel } = boot(config);
@@ -101,17 +103,17 @@ test('clear() removes every scope a copy written after startup used', () => {
 	handle.clear();
 
 	expect(sidCookies()).toEqual([]);
-	expect(localStorage.getItem('inth-sid')).toBeNull();
+	expect(localStorage.getItem('c15t-sid')).toBeNull();
 	handle.dispose();
 });
 
 // Records an older version wrote carry no ID. 3.2 gave such a visitor the
-// ID in `inth-sid`; dropping it would give them a new ID on every load
+// ID in `c15t-sid`; dropping it would give them a new ID on every load
 // until their next save.
 test('records stored without an ID take the 3.2 ID before its copy goes, and keep it', async () => {
 	const now = plantRecordWithoutId();
-	document.cookie = 'inth-sid=sub_legacy; path=/';
-	localStorage.setItem('inth-sid', 'sub_legacy');
+	document.cookie = 'c15t-sid=sub_legacy; path=/';
+	localStorage.setItem('c15t-sid', 'sub_legacy');
 	const identify = vi.fn<NonNullable<KernelTransport['identify']>>();
 	identify.mockResolvedValue();
 
@@ -165,12 +167,12 @@ test('a first visit links nothing before the first save', async () => {
 // must leave the 3.2 copy for the handle that adopts it.
 test('a handle that keeps its subject leaves the 3.2 copy for the one that adopts it', () => {
 	plantRecordWithoutId();
-	document.cookie = 'inth-sid=sub_legacy; path=/';
+	document.cookie = 'c15t-sid=sub_legacy; path=/';
 	const throwaway = createConsentKernel({
 		initialPolicyResolution: matchedResolution(optInRule()),
 	});
 	createPersistence({ keepSubject: true, kernel: throwaway }).dispose();
-	expect(sidCookies()).toEqual(['inth-sid=sub_legacy']);
+	expect(sidCookies()).toEqual(['c15t-sid=sub_legacy']);
 
 	const { handle, kernel } = boot();
 	expect(kernel.getSnapshot().subject?.subjectId).toBe('sub_legacy');
@@ -181,7 +183,7 @@ test('a handle that keeps its subject leaves the 3.2 copy for the one that adopt
 // records land. A page that unloads before the write code loads keeps it.
 test('the 3.2 copy stays until the records carry its ID, through a reload before the write code lands', async () => {
 	const now = plantRecordWithoutId();
-	document.cookie = 'inth-sid=sub_legacy; path=/';
+	document.cookie = 'c15t-sid=sub_legacy; path=/';
 	let open: () => void = () => undefined;
 	const gate = new Promise<void>((resolve) => {
 		open = resolve;
@@ -200,7 +202,7 @@ test('the 3.2 copy stays until the records carry its ID, through a reload before
 	const first = mount();
 	expect(first.kernel.getSnapshot().subject?.subjectId).toBe('sub_legacy');
 	await Promise.resolve();
-	expect(sidCookies()).toEqual(['inth-sid=sub_legacy']);
+	expect(sidCookies()).toEqual(['c15t-sid=sub_legacy']);
 	expect(readStoredConsentRecord(undefined, now).selected?.subject).toBeNull();
 	first.handle.dispose();
 	// A new page: nothing the unloaded one queued survives it.
@@ -223,7 +225,7 @@ test('the 3.2 copy stays until the records carry its ID, through a reload before
 // subject. The copy still waits for the records.
 test('a remount before the adopted ID is written keeps the 3.2 copy until the records carry it', async () => {
 	const now = plantRecordWithoutId();
-	document.cookie = 'inth-sid=sub_legacy; path=/';
+	document.cookie = 'c15t-sid=sub_legacy; path=/';
 	let open: () => void = () => undefined;
 	const gate = new Promise<void>((resolve) => {
 		open = resolve;
@@ -244,7 +246,7 @@ test('a remount before the adopted ID is written keeps the 3.2 copy until the re
 	first.handle.dispose();
 	const second = mount();
 	await Promise.resolve();
-	expect(sidCookies()).toEqual(['inth-sid=sub_legacy']);
+	expect(sidCookies()).toEqual(['c15t-sid=sub_legacy']);
 
 	open();
 	await held.load();

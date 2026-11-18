@@ -29,7 +29,7 @@ beforeEach(() => {
 	localStorage.clear();
 	clearStoredConsentRecords();
 	// A clear keeps its epoch and the subject ID; start every test without.
-	for (const key of ['inth-epoch', 'inth-sid']) {
+	for (const key of ['inth-epoch', 'c15t-sid']) {
 		document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 	}
 	vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -235,7 +235,7 @@ test('a server-seeded start reads the subject from localStorage when cookies can
 	void kernel.commands.save({ measurement: false });
 	vi.advanceTimersByTime(0);
 	handle.dispose();
-	for (const key of ['inth-sid']) {
+	for (const key of ['c15t-sid']) {
 		document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 		localStorage.removeItem(key);
 	}
@@ -264,9 +264,9 @@ test('focus keeps a used subject ID when cookies cannot be read', async () => {
 	await kernel.commands.save({ measurement: false });
 	vi.advanceTimersByTime(0);
 	const own = kernel.getSnapshot().subject?.subjectId;
-	// An `inth-sid` copy an older c15t runtime in another tab wrote is not
+	// An `c15t-sid` copy an older c15t runtime in another tab wrote is not
 	// read.
-	localStorage.setItem('inth-sid', 'sub_other_tab');
+	localStorage.setItem('c15t-sid', 'sub_other_tab');
 	vi.spyOn(document, 'cookie', 'get').mockImplementation(() => {
 		throw new DOMException('Cookies blocked', 'SecurityError');
 	});
@@ -438,7 +438,7 @@ test.each([
 		other.set.subjectId('sub_next');
 		await settleAll();
 		otherHandle.dispose();
-		for (const key of ['inth-notice', 'inth-vendors', 'inth-sid']) {
+		for (const key of ['inth-notice', 'inth-vendors', 'c15t-sid']) {
 			window.dispatchEvent(new StorageEvent('storage', { key }));
 		}
 		window.dispatchEvent(new Event('focus'));

@@ -426,8 +426,8 @@ describe('vendor-only subject through a server render', () => {
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([
 			'meta-pixel',
 		]);
-		expect(cookieValue('inth-sid')).toBeNull();
-		expect(localStorage.getItem('inth-sid')).toBeNull();
+		expect(cookieValue('c15t-sid')).toBeNull();
+		expect(localStorage.getItem('c15t-sid')).toBeNull();
 		seeded.handle.dispose();
 		seeded.kernel.dispose();
 	});
@@ -482,7 +482,7 @@ describe('vendor-only subject through a server render', () => {
 		);
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([]);
 		expect(serverRender().initialRecords?.subject?.subjectId).toBe(local);
-		expect(cookieValue('inth-sid')).toBeNull();
+		expect(cookieValue('c15t-sid')).toBeNull();
 		seeded.handle.dispose();
 		seeded.kernel.dispose();
 	});

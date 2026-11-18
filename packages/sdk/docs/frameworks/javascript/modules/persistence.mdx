@@ -43,9 +43,9 @@ starts.
   reaches storage when the records are rewritten with it. If the page
   unloads before the write code loads, they keep the old ID.
 
-Inth 3.2 stored the ID in a `inth-sid` cookie and localStorage key on the
-first page load, before any choice. Inth now removes that copy when the
-module starts. It keeps the copy's ID only for a visitor whose stored
+c15t 3.2 stored the ID in a `c15t-sid` cookie and localStorage key on the
+first page load, before any choice, or in `<storageKey>-sid` with a custom
+`storageKey`. Inth removes that copy when the module starts. It keeps the copy's ID only for a visitor whose stored
 records carry none, such as a notice acknowledgement an older version
 stored: those records take the ID, and the copy goes once they are
 written.

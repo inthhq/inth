@@ -1,6 +1,6 @@
 /**
  * `inthProxy` forwards normalized consent headers and stores nothing about a
- * visitor who has not chosen yet: no `inth-sid` cookie, and the render reads
+ * visitor who has not chosen yet: no `c15t-sid` cookie, and the render reads
  * the request's own cookies.
  */
 import { NextRequest } from 'next/server.js';
@@ -21,7 +21,7 @@ describe('inthProxy', () => {
 			request({ 'cf-ipcountry': 'DE', cookie: 'theme=dark', 'sec-gpc': '1' })
 		);
 		expect(response.headers.get('set-cookie')).toBeNull();
-		expect(response.cookies.get('inth-sid')).toBeUndefined();
+		expect(response.cookies.get('c15t-sid')).toBeUndefined();
 		expect(renderedCookie(response)).toBe('theme=dark');
 		expect(response.headers.get('x-middleware-request-x-c15t-country')).toBe(
 			'DE'
@@ -34,6 +34,6 @@ describe('inthProxy', () => {
 			cookie: true,
 		});
 		expect(response.cookies.get('inth-country')?.value).toBe('DE');
-		expect(response.cookies.get('inth-sid')).toBeUndefined();
+		expect(response.cookies.get('c15t-sid')).toBeUndefined();
 	});
 });

@@ -36,7 +36,7 @@ beforeEach(() => {
 	// A clear keeps its epoch and the subject ID; start every test without
 	// either.
 	document.cookie = `${STORAGE_KEY_V2}-epoch=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-	document.cookie = `${STORAGE_KEY_V2}-sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+	document.cookie = `${C15T_STORAGE_KEY}-sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 });
 
 afterEach(() => {

@@ -14,7 +14,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
 import { deleteCookie, setCookie } from '../../../libs/cookie';
-import { STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
+import {
+	C15T_STORAGE_KEY,
+	STORAGE_KEY,
+	STORAGE_KEY_V2,
+} from '../../../libs/storage-keys';
 import { createPersistence } from '../index';
 import { readStoredConsentRecord } from '../record-storage';
 import { clearStoredConsentRecords } from './record-writes';
@@ -56,7 +60,7 @@ beforeEach(() => {
 	vi.setSystemTime(NOW);
 	localStorage.clear();
 	clearStoredConsentRecords();
-	deleteCookie(`${STORAGE_KEY_V2}-sid`);
+	deleteCookie(`${C15T_STORAGE_KEY}-sid`);
 	deleteCookie(`${STORAGE_KEY_V2}-epoch`);
 	document.cookie = '';
 });
@@ -169,7 +173,7 @@ describe('persistence: a clear keeps the subject ID in memory only', () => {
 		handle.dispose();
 
 		expect(readLocalStorage()).toBeNull();
-		expect(localStorage.getItem(`${STORAGE_KEY_V2}-sid`)).toBeNull();
+		expect(localStorage.getItem(`${C15T_STORAGE_KEY}-sid`)).toBeNull();
 		const reloaded = createConsentKernel({ now: NOW });
 		createPersistence({ kernel: reloaded }).dispose();
 		expect(reloaded.getSnapshot().explicitChoice).toBeNull();

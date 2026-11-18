@@ -21,6 +21,7 @@ import {
 import { createKernel as createConsentKernel } from '../../../kernel';
 import type { InternalKernel } from '../../../kernel/internals';
 import {
+	C15T_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	STORAGE_KEY_V2,
 } from '../../../libs/storage-keys';
@@ -144,7 +145,7 @@ afterEach(() => {
 // First in the file: several tests below leave a handle mounted, and the
 // focus events here would reach them.
 describe('queued records land under the subject the last handle holds', () => {
-	const sidKey = `${STORAGE_KEY_V2}-sid`;
+	const sidKey = `${C15T_STORAGE_KEY}-sid`;
 	const expireSid = () => {
 		document.cookie = `${sidKey}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 	};

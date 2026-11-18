@@ -55,12 +55,6 @@ export interface StorageKeyFamily {
 	 */
 	cookieMiss: string;
 	/**
-	 * Where c15t 3.2 stored the visitor's subject ID before any choice.
-	 * Nothing writes or reads it now; startup and `clear()` remove a copy
-	 * an earlier version left.
-	 */
-	subject: string;
-	/**
 	 * Where v3 alphas stored standing GPC directives. Nothing writes or
 	 * reads it now; `clear()` removes it.
 	 */
@@ -70,13 +64,20 @@ export interface StorageKeyFamily {
 /** The storage keys one configuration resolves to. */
 export interface ResolvedStorageKeys extends StorageKeyFamily {
 	/**
+	 * Where c15t 3.2 stored the visitor's subject ID before any choice:
+	 * `c15t-sid` under the default key, which c15t's own default was, else
+	 * `<storageKey>-sid`. Nothing writes it now; startup and `clear()`
+	 * remove a copy c15t left.
+	 */
+	subject: string;
+	/**
 	 * Families another or an earlier store wrote, in the order they are
 	 * read: c15t's under the default key, then the pre-1.8 consent key. The
 	 * consent record, the notice dismissal and the vendor denials each fall
 	 * back to them only while the configured family holds no valid one.
 	 * Nothing writes them. `clear()` removes them with the configured
 	 * family, and the configured family's clear epoch voids decisions in
-	 * any written back later. Their `epoch` and `subject` are never read.
+	 * any written back later. Their `epoch` is never read.
 	 */
 	legacy: StorageKeyFamily[];
 }
@@ -90,7 +91,6 @@ const familyOf = function familyOf(consent: string): StorageKeyFamily {
 		noticeCookieMiss: `${consent}-notice-cookie-miss`,
 		noticeSubject: `${consent}-notice-subject`,
 		privacy: `${consent}-privacy`,
-		subject: `${consent}-sid`,
 		vendors: `${consent}-vendors`,
 	};
 };
@@ -109,7 +109,11 @@ export const resolveStorageKeys = function resolveStorageKeys(
 		...(consent === STORAGE_KEY_V2 ? [C15T_STORAGE_KEY] : []),
 		...(consent === STORAGE_KEY ? [] : [STORAGE_KEY]),
 	];
-	return { ...familyOf(consent), legacy: legacy.map(familyOf) };
+	return {
+		...familyOf(consent),
+		legacy: legacy.map(familyOf),
+		subject: `${consent === STORAGE_KEY_V2 ? C15T_STORAGE_KEY : consent}-sid`,
+	};
 };
 
 /**
@@ -121,7 +125,7 @@ export const resolveStorageKeys = function resolveStorageKeys(
 export const storageKeyFamilies = function storageKeyFamilies(
 	keys: ResolvedStorageKeys
 ): StorageKeyFamily[] {
-	const { legacy, ...configured } = keys;
+	const { legacy, subject: _subject, ...configured } = keys;
 	return [configured, ...legacy];
 };
 
@@ -134,10 +138,10 @@ export const storageKeyFamilies = function storageKeyFamilies(
 export const ownedStorageKeys = function ownedStorageKeys(
 	config?: StorageConfig
 ): string[] {
+	const keys = resolveStorageKeys(config);
 	return [
-		...storageKeyFamilies(resolveStorageKeys(config)).flatMap((family) =>
-			Object.values(family)
-		),
+		...storageKeyFamilies(keys).flatMap((family) => Object.values(family)),
+		keys.subject,
 		PENDING_SAVES_STORAGE_KEY,
 		SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 		EXPERIMENT_STORAGE_KEY,
