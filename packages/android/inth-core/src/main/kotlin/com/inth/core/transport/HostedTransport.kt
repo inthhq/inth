@@ -89,12 +89,7 @@ class HostedTransport(
 		)
 		return when (val outcome = send(request)) {
 			is TransportOutcome.Success -> SaveOutcome.Delivered(subjectIdOf(outcome))
-			is TransportOutcome.HttpFailure -> SaveOutcome.Rejected(
-				status = outcome.status,
-				code = outcome.code,
-				requestId = outcome.requestId,
-				message = outcome.message,
-			)
+			is TransportOutcome.HttpFailure -> SaveOutcome.Rejected(outcome)
 			is TransportOutcome.NetworkFailure -> SaveOutcome.Unavailable(outcome.message)
 		}
 	}
@@ -157,7 +152,7 @@ class HostedTransport(
 			status = response.status,
 			code = error.string("code"),
 			requestId = root.string("requestId") ?: response.header(InthProtocol.REQUEST_ID_HEADER)?.takeIf { it.isNotBlank() },
-			message = error.string("message") ?: raw.ifEmpty { "HTTP ${response.status}" },
+			message = error.string("message") ?: raw.ifEmpty { null },
 		)
 	}
 

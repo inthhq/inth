@@ -2039,7 +2039,7 @@ class ConsentCore @InthInternalApi constructor(
 
 	/** A save outcome for an error event: status, backend code and request id for a refusal. */
 	private fun describe(outcome: SaveOutcome): String = when (outcome) {
-		is SaveOutcome.Rejected -> outcome.describe()
+		is SaveOutcome.Rejected -> outcome.failure.describe()
 		is SaveOutcome.Unavailable -> outcome.message
 		is SaveOutcome.Delivered -> "delivered"
 	}

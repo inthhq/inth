@@ -60,9 +60,8 @@ object StrictPolicyReader {
 	/**
 	 * Read [element], the raw `policyResolution` member of an `/init` body.
 	 *
-	 * Every `/v1` answer uses the current policy contract, so there is nothing to
-	 * negotiate: a `200` without a resolution, or with one this build cannot parse, is
-	 * contract rule 5.
+	 * A `200` without a resolution, or with one this build cannot parse, is contract
+	 * rule 5.
 	 *
 	 * @param element the raw wire value, or `null` when the member was absent.
 	 */

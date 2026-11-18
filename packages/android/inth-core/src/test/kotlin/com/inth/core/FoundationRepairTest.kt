@@ -4,6 +4,7 @@ import com.inth.core.model.*
 import com.inth.core.spi.*
 import com.inth.core.store.*
 import com.inth.core.transport.*
+import com.inth.core.transport.TransportOutcome.HttpFailure
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.json.*
@@ -38,7 +39,7 @@ class FoundationRepairTest {
 
 	@Test
 	fun `repeated refused withdrawals leave room for later actions`() {
-		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Rejected(400))
+		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Rejected(HttpFailure(400)))
 		val store = InthStore(InMemoryKeyValueStore()); val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 		core.bootstrap()
 		repeat(64) {

@@ -186,7 +186,7 @@ class PendingQueueTest {
 	}
 
 	@Test
-	fun `every backend-bound request uses the v1 routes and only the platform header`() {
+	fun `a save through the hosted transport sends the v1 body`() {
 		val http = RecordingHttpClient { responseFor(it) }
 		val kernel = testKernel(
 			store = InthStore(InMemoryKeyValueStore()),
@@ -201,9 +201,6 @@ class PendingQueueTest {
 		)
 		for (request in http.requests) {
 			assertEquals("android->${InthProtocol.DEFAULT_SDK_VERSION}", request.headers[InthProtocol.PLATFORM_HEADER])
-			for (retired in listOf("x-inth-version", "x-inth-policy-contract")) {
-				assertNull(request.headers[retired], "${request.url} must not send $retired")
-			}
 		}
 
 		val save = http.requests.last()

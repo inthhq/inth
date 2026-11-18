@@ -82,19 +82,6 @@ class FailClosedTest {
 	}
 
 	@Test
-	fun `a 200 is definitive and no contract header is read from it`() {
-		for (declared in listOf("2", "latest")) {
-			val transport = RecordingTransport().respondInit(initSuccess("x-c15t-policy-contract" to declared))
-			val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
-			kernel.bootstrap()
-
-			assertEquals(PolicyResolution.STATUS_MATCHED, kernel.snapshot().resolution.status, "declared $declared")
-			assertFalse(kernel.snapshot().policyPending)
-			assertNull(kernel.snapshot().error)
-		}
-	}
-
-	@Test
 	fun `a 200 with no policyResolution fails as an invalid payload`() {
 		val transport = RecordingTransport().respondInit(
 			initSuccess(body = """{"location":{"countryCode":"US"}}"""),

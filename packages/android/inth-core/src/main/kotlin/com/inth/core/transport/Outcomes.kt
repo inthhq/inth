@@ -20,16 +20,21 @@ sealed class TransportOutcome {
 	 *
 	 * Read from the `/v1` error body `{ "error": { "code", "message" }, "requestId" }`.
 	 * [requestId] falls back to the `x-request-id` header and [message] to the raw body
-	 * text when the body is not that shape.
+	 * text when the body is not that shape. [message] is `null` for an empty body.
 	 */
 	data class HttpFailure(
 		val status: Int,
 		val code: String? = null,
 		val requestId: String? = null,
-		val message: String = "HTTP $status",
+		val message: String? = null,
 	) : TransportOutcome() {
-		/** The status, code and request id in one line, for an error event. */
-		fun describe(): String = describeHttpFailure(status, code, requestId, message)
+		/** `HTTP 409 identity_conflict (request req_1): message`, leaving out what is unknown. */
+		fun describe(): String = buildString {
+			append("HTTP ").append(status)
+			code?.let { append(' ').append(it) }
+			requestId?.let { append(" (request ").append(it).append(')') }
+			message?.takeIf { it.isNotBlank() }?.let { append(": ").append(it) }
+		}
 	}
 
 	/** No usable answer: no connectivity, DNS, TLS, or a crashed client. */
@@ -47,15 +52,7 @@ sealed class SaveOutcome {
 	data class Delivered(val subjectId: String? = null) : SaveOutcome()
 
 	/** The backend answered a non-2xx status; the payload stays queued unless it is permanent. */
-	data class Rejected(
-		val status: Int,
-		val code: String? = null,
-		val requestId: String? = null,
-		val message: String = "HTTP $status",
-	) : SaveOutcome() {
-		/** The status, code and request id in one line, for an error event. */
-		fun describe(): String = describeHttpFailure(status, code, requestId, message)
-	}
+	data class Rejected(val failure: TransportOutcome.HttpFailure) : SaveOutcome()
 
 	/** Unreachable; the payload stays queued for the next launch or foreground. */
 	data class Unavailable(val message: String) : SaveOutcome()
@@ -73,13 +70,12 @@ sealed class SaveOutcome {
 	 * nothing else, so a credential that comes back later cannot rescue bytes the producer
 	 * already refused on its own terms.
 	 *
-	 * The Swift core's `InthError.isPermanentlyRejected` answers the same question over a
-	 * different type, and the two sets have to stay the same set: an entry must not expire
-	 * on one platform and queue forever on the other.
+	 * `transport/cases.json` pins the set for this core and the Swift one, so an entry
+	 * cannot expire on one platform and queue forever on the other.
 	 */
 	val isPermanentlyRejected: Boolean
 		get() = when (this) {
-			is Rejected -> status in 400..499 && status != 408 && status != 425 && status != 429
+			is Rejected -> failure.status.let { it in 400..499 && it != 408 && it != 425 && it != 429 }
 			is Delivered,
 			is Unavailable,
 			-> false
@@ -97,12 +93,3 @@ sealed class LinkOutcome {
 	/** Nothing answered. A link is not queued, so the host calls `identify` again. */
 	data class Unavailable(val message: String) : LinkOutcome()
 }
-
-/** `HTTP 409 identity_conflict (request req_1): message`, leaving out what is unknown. */
-internal fun describeHttpFailure(status: Int, code: String?, requestId: String?, message: String): String =
-	buildString {
-		append("HTTP ").append(status)
-		code?.let { append(' ').append(it) }
-		requestId?.let { append(" (request ").append(it).append(')') }
-		if (message.isNotBlank() && message != "HTTP $status") append(": ").append(message)
-	}

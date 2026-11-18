@@ -147,8 +147,8 @@ object InthAndroid {
 	 *
 	 * Refuses `dryRun` unless the app is debuggable. With [enforceProjectUrl], checks
 	 * `backendUrl` and returns the config carrying its normal form, so the transport and
-	 * the bundled-policy binding read the same string. `property` defaults to
-	 * [applicationId], and either is lowercased.
+	 * the bundled-policy binding read the same string. A blank `property` defaults to
+	 * [applicationId]; the core lowercases whichever it sends.
 	 */
 	internal fun checkedConfig(
 		config: NativeConfig,
@@ -157,8 +157,7 @@ object InthAndroid {
 		applicationId: String? = null,
 	): NativeConfig {
 		check(!config.dryRun || debuggable) { DRY_RUN_IN_RELEASE }
-		val property = (config.property?.trim()?.takeIf { it.isNotEmpty() } ?: applicationId)?.lowercase()
-		val withProperty = config.copy(property = property)
+		val withProperty = config.copy(property = config.property?.takeIf { it.isNotBlank() } ?: applicationId)
 		if (!enforceProjectUrl) return withProperty
 		return withProperty.copy(backendUrl = InthProjectUrl.normalize(config.backendUrl, relaxed = config.dryRun))
 	}
