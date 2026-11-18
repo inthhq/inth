@@ -159,6 +159,8 @@ public final class InthReactNativeModule: RCTEventEmitter {
         resolve: @escaping RCTPromiseResolveBlock,
         reject: @escaping RCTPromiseRejectBlock
     ) {
+        // A failed link reports later, as an error event, so follow the core it runs on.
+        followCore()
         switch handler.identify(externalId: externalId, identityToken: identityToken) {
         case .success:
             resolve(nil)
