@@ -133,11 +133,7 @@ describe('Next.js build-time manifest', () => {
 		const server = join(root, CACHE, 'manifest.js');
 		const browser = join(root, CACHE, 'manifest.browser.js');
 		// Every other package's generated entry re-exports @inth/sdk/generated.
-		const specifiers = [
-			'@inth/nextjs/generated-manifest',
-			'@inth/nextjs/generated',
-			'@inth/sdk/generated',
-		];
+		const specifiers = ['@inth/nextjs/generated', '@inth/sdk/generated'];
 
 		const turbopackAlias = config.turbopack?.resolveAlias ?? {};
 		expect(turbopackAlias.existing).toBe('./existing.js');

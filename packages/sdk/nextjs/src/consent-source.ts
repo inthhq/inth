@@ -1,8 +1,8 @@
+import userConfig from '@inth/nextjs/user-config';
 import {
 	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
-} from '@inth/nextjs/generated-manifest';
-import userConfig from '@inth/nextjs/user-config';
+} from '@inth/sdk/generated';
 /**
  * Where the server helpers resolve consent from, read from
  * `inth.config.ts` and the build-time snapshot.

@@ -42,10 +42,6 @@ export default mergeConfig(
 				// The browser build; the node project overrides it with the
 				// server's, which imports the engine statically.
 				'#engine-now': resolve(__dirname, './src/engine-now-browser.ts'),
-				'@inth/nextjs/generated-manifest': resolve(
-					__dirname,
-					'./src/generated-manifest.ts'
-				),
 				'@inth/nextjs/user-config': resolve(__dirname, './src/user-config.ts'),
 				'@inth/sdk/modes': resolve(__dirname, '../core/src/modes.ts'),
 				'@inth/sdk/testing': resolve(__dirname, '../core/src/testing.ts'),

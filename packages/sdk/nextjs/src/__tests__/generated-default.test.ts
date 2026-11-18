@@ -1,6 +1,6 @@
 import { manifest } from '@inth/sdk/modes';
 /**
- * With `withConsentManifest` aliasing `@inth/nextjs/generated-manifest` to
+ * With `withConsentManifest` aliasing `@inth/sdk/generated` to
  * the snapshot, the route and `resolveConsent` read it without the app
  * passing `snapshot`.
  */
@@ -13,7 +13,7 @@ import { resolveConsent } from '../server';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the generated snapshot. The mock is that alias; the helpers under test are real.
-vi.mock('@inth/nextjs/generated-manifest', async () => ({
+vi.mock('@inth/sdk/generated', async () => ({
 	projectUrl: 'https://consent.example.com',
 	snapshot: (await import('./manifest-fixture')).MANIFEST_FIXTURE,
 }));

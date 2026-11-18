@@ -38,15 +38,11 @@ export type ConsentNextConfig =
 	  ) => NextConfig | Promise<NextConfig>);
 
 /**
- * The specifiers aliased to the written snapshot: the one the server
- * helpers import, and `@inth/nextjs/generated` (or `@inth/sdk/generated`)
- * for app code. The packages' own modules there export `undefined`.
+ * The specifiers aliased to the written snapshot: `@inth/sdk/generated`,
+ * which the server helpers import, and `@inth/nextjs/generated` for app
+ * code. The packages' own modules there export `undefined`.
  */
-const GENERATED_SPECIFIERS = [
-	'@inth/nextjs/generated-manifest',
-	'@inth/nextjs/generated',
-	GENERATED_MODULE_ID,
-];
+const GENERATED_SPECIFIERS = ['@inth/nextjs/generated', GENERATED_MODULE_ID];
 
 /** The specifier the package imports the app's `inth.config.ts` through. */
 const USER_CONFIG_SPECIFIER = '@inth/nextjs/user-config';
