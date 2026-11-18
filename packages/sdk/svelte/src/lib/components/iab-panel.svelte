@@ -11,7 +11,12 @@
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import { buttonVariants } from '@inth/sdk/ui/styles/primitives';
-	import { getTextDirection, resolveTranslations } from '@inth/sdk/ui/utils';
+	import {
+		getTextDirection,
+		resolveStyles,
+		resolveTranslations,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
 
 	import { focusTrap } from '../actions/focus-trap';
 	import { portal } from '../actions/portal';
@@ -22,7 +27,6 @@
 	import { resolveIABDialogDisplayModel } from '../iab-types';
 	import type { VendorId } from '../iab-types';
 	import { Tabs } from '../primitives';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import Branding from './branding.svelte';
 	import IABFeatureItem from './iab-feature-item.svelte';
 	import IABPurposeItem from './iab-purpose-item.svelte';
@@ -71,7 +75,7 @@
 
 	// Per-part theme slots, as on the stock consent dialog.
 	const rootStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialog',
 			theme.theme,
 			{ baseClassName: [styles.root, styles.dialogVisible], noStyle },
@@ -79,7 +83,7 @@
 		)
 	);
 	const cardStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogCard',
 			theme.theme,
 			{
@@ -91,7 +95,7 @@
 		)
 	);
 	const headerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogHeader',
 			theme.theme,
 			{ baseClassName: styles.header, noStyle },
@@ -99,7 +103,7 @@
 		)
 	);
 	const footerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogFooter',
 			theme.theme,
 			{ baseClassName: [styles.footer, actionStyles.actionRoot], noStyle },
@@ -318,7 +322,7 @@
 		{/if}
 		<div
 			class={rootStyle.className || ''}
-			style={toStyleAttribute(rootStyle.style)}
+			style={toStyleAttributeValue(rootStyle.style)}
 			data-testid="iab-consent-dialog-root"
 			dir={textDirection}
 		>
@@ -326,7 +330,7 @@
 			     1em, which the card sets for itself. -->
 			<div
 				class={cardStyle.className || ''}
-				style={toStyleAttribute(cardStyle.style)}
+				style={toStyleAttributeValue(cardStyle.style)}
 				data-testid="iab-consent-dialog-card"
 				role="dialog"
 				aria-modal={preferences.blocking ? 'true' : undefined}
@@ -343,7 +347,7 @@
 				<!-- Header -->
 				<div
 					class={headerStyle.className || ''}
-					style={toStyleAttribute(headerStyle.style)}
+					style={toStyleAttributeValue(headerStyle.style)}
 				>
 					<div class={noStyle ? '' : styles.headerContent || ''}>
 						<h2 class={noStyle ? '' : styles.title || ''}>
@@ -610,7 +614,7 @@
 				<!-- Footer -->
 				<div
 					class={footerStyle.className || ''}
-					style={toStyleAttribute(footerStyle.style)}
+					style={toStyleAttributeValue(footerStyle.style)}
 					data-direction="row"
 					data-split
 				>
@@ -655,9 +659,7 @@
 				<Branding
 					{hideBranding}
 					{noStyle}
-					variant="dialog-tag"
-					themeKey="iabConsentDialogTag"
-					data-testid="iab-consent-dialog-branding"
+					surface="iab-dialog"
 				/>
 			</div>
 		</div>

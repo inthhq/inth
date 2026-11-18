@@ -98,7 +98,7 @@ describe('ConsentDialogLink', () => {
 				document.querySelector('[data-testid="consent-dialog-branding"]')
 			).toHaveAttribute(
 				'href',
-				`https://c15t.com?ref=${window.location.hostname}`
+				`https://inth.com?ref=${window.location.hostname}`
 			);
 		});
 	});

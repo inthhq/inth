@@ -26,9 +26,10 @@ test('legal links read as a list after the description, as in React', async () =
 		return found as HTMLElement;
 	});
 
-	// Ordinary spaces, which collapse into one gap.
+	// Ordinary spaces, which collapse into one gap, and the links in the
+	// order the banner lists them.
 	expect(description.textContent).not.toContain(' ');
 	expect(description.textContent?.replace(/\s+/gu, ' ').trim()).toBe(
-		'Copy. Cookies, Privacy'
+		'Copy. Privacy, Cookies'
 	);
 });

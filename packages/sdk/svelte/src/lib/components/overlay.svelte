@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
+
 	import { getThemeContext } from '../context.svelte';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 
 	/**
 	 * The overlay class names from the caller's own style map. The overlay
@@ -67,7 +68,7 @@
 	});
 
 	const themeStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			themeKey,
 			theme.theme,
 			{ baseClassName: styles.overlay },
@@ -84,7 +85,7 @@
 
 <div
 	class={className}
-	style={toStyleAttribute(themeStyle.style)}
+	style={toStyleAttributeValue(themeStyle.style)}
 	data-entry={lateEntry ? 'late' : undefined}
 	data-testid={testId}
 	aria-hidden="true"

@@ -1,7 +1,10 @@
 <script lang="ts">
 	import type { LegalLinks as LegalLinksType } from '@inth/sdk/engine';
 	import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
-	import { resolveTranslations } from '@inth/sdk/ui/utils';
+	import {
+		resolveLegalLinkEntries,
+		resolveTranslations,
+	} from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { fallbackTranslations } from '../translation-defaults';
@@ -19,40 +22,19 @@
 	const consent = getConsentContext();
 	const theme = getThemeContext();
 
-	const noStyle = $derived(theme.noStyle ?? false);
-
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			fallbackTranslations(consent.state.translationConfig)
-		)
+	const linkClassName = $derived(
+		theme.noStyle ? undefined : legalLinkStyles.legalLink || undefined
 	);
 
-	const filteredLinks = $derived.by(() => {
-		if (links === undefined || links === null) {
-			return null;
-		}
-		const allLinks = consent.state.legalLinks;
-		if (!allLinks) {
-			return null;
-		}
-		const entries = Object.entries(allLinks).filter(([key]) =>
-			links.includes(key as keyof LegalLinksType)
-		);
-		return entries.length > 0
-			? (Object.fromEntries(entries) as LegalLinksType)
-			: null;
-	});
-
-	const linkClassName = $derived(noStyle ? '' : legalLinkStyles.legalLink);
-
-	const linkEntries = $derived(
-		filteredLinks
-			? (Object.entries(filteredLinks) as [
-					keyof LegalLinksType,
-					LegalLinksType[keyof LegalLinksType],
-				][])
-			: []
+	const entries = $derived(
+		resolveLegalLinkEntries(
+			consent.state.legalLinks,
+			links,
+			resolveTranslations(
+				consent.state.translationConfig,
+				fallbackTranslations(consent.state.translationConfig)
+			).legalLinks
+		)
 	);
 </script>
 
@@ -61,31 +43,24 @@
 	`InlineLegalLinks`. Plain spaces collapse into one; a non-breaking space
 	would not, and widened the gaps.
 -->
-{#if linkEntries.length > 0}
+{#if entries.length > 0}
 	<span>
 		{' '}
-		{#each linkEntries as [type, link], index (type)}
-			{#if link}
-				<span>
-					<a
-						href={link.href}
-						target={link.target || '_blank'}
-						rel={link.rel ||
-							(link.target === '_blank' ? 'noopener noreferrer' : undefined)}
-						class={linkClassName || undefined}
-						data-testid={testIdPrefix ? `${testIdPrefix}-${type}` : undefined}
-					>
-						{link.label ??
-							(translations.legalLinks as Record<string, string>)?.[
-								type as string
-							] ??
-							type}{index < linkEntries.length - 1 ? ',' : ''}
-					</a>
-					{#if index < linkEntries.length - 1}
-						{' '}
-					{/if}
-				</span>
-			{/if}
+		{#each entries as link (link.key)}
+			<span>
+				<a
+					href={link.href}
+					target={link.target}
+					rel={link.rel}
+					class={linkClassName}
+					data-testid={testIdPrefix ? `${testIdPrefix}-${link.key}` : undefined}
+				>
+					{link.label}{link.separated ? ',' : ''}
+				</a>
+				{#if link.separated}
+					{' '}
+				{/if}
+			</span>
 		{/each}
 	</span>
 {/if}

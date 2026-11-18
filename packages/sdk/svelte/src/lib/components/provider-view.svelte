@@ -27,8 +27,9 @@
 		ConsentProviderRuntime,
 		ConsentRuntime,
 	} from '@inth/sdk/runtime/provider';
+	import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
 	import { setupColorScheme } from '@inth/sdk/ui/utils';
-	import { BROWSER } from 'esm-env';
+	import { BROWSER, DEV } from 'esm-env';
 	import type { Snippet } from 'svelte';
 	import { onDestroy, onMount, untrack } from 'svelte';
 
@@ -38,7 +39,6 @@
 	import { runtimeOptionsFor } from '../provider-options';
 	import type { ProviderOptionsInput } from '../provider-options';
 	import { startOnServer } from '../server-script-start';
-	import { warnOnUnappliedThemeTokens } from '../theme-warning';
 
 	interface ProviderViewProps {
 		children?: Snippet;
@@ -398,7 +398,13 @@
 
 	// Development only. Tokens need `generateThemeCSS` output in the page.
 	$effect(() => {
-		warnOnUnappliedThemeTokens(userTheme);
+		if (DEV) {
+			warnOnUnappliedThemeTokens(
+				userTheme,
+				document,
+				'Put the --inth-* variables, or the CSS from generateThemeCSS(theme), in your stylesheet and drop the tokens from `theme`. See https://c15t.com/docs/frameworks/sveltekit/quickstart'
+			);
+		}
 	});
 
 	setThemeContext({

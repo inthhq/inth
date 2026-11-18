@@ -5,6 +5,9 @@
 		createInitialDragState,
 		getPersistedPosition,
 		persistPosition as persistToStorage,
+		resolveBrandMark,
+		resolveStyles,
+		toStyleAttributeValue,
 	} from '@inth/sdk/ui/utils';
 	import type { CornerPosition, DragState } from '@inth/sdk/ui/utils';
 	import {
@@ -24,9 +27,7 @@
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { holdIdleDialogWarming, warmDialog } from '../dialog-warming';
 	import { TRIGGER_SHEETS } from '../surface-styles';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
-	import C15TIconOnly from './icons/c15-t-icon-only.svelte';
-	import ConsentIconOnly from './icons/consent-icon-only.svelte';
+	import BrandMark from './icons/brand-mark.svelte';
 	import DevToolsIcon from './icons/dev-tools-icon.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 
@@ -76,7 +77,7 @@
 		}
 	});
 
-	const branding = $derived(consent.state.branding);
+	const brandMark = $derived(resolveBrandMark(consent.state.branding));
 	// Nothing to manage without a resolved policy.
 	const visible = $derived(
 		consent.state.hasConsentPreferences &&
@@ -317,7 +318,7 @@
 	};
 
 	const triggerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTrigger',
 			theme.theme,
 			{
@@ -335,7 +336,7 @@
 		)
 	);
 	const iconStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerIcon',
 			theme.theme,
 			{ baseClassName: styles.icon, noStyle },
@@ -343,7 +344,7 @@
 		)
 	);
 	const toolbarStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerToolbar',
 			theme.theme,
 			{
@@ -359,7 +360,7 @@
 		)
 	);
 	const preferencesItemStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerToolbarItem',
 			theme.theme,
 			{
@@ -371,7 +372,7 @@
 		)
 	);
 	const devToolsItemStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerToolbarItem',
 			theme.theme,
 			{ baseClassName: [styles.toolbarItem, sizeClassMap[size]], noStyle },
@@ -379,7 +380,7 @@
 		)
 	);
 	const toolbarIconStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerToolbarIcon',
 			theme.theme,
 			{ baseClassName: styles.toolbarIcon, noStyle },
@@ -387,23 +388,19 @@
 		)
 	);
 	const toolbarAttributeStyle = $derived(
-		[toStyleAttribute(toolbarStyle.style), dragStyle]
+		[toStyleAttributeValue(toolbarStyle.style), dragStyle]
 			.filter(Boolean)
 			.join(';') || undefined
 	);
 	const buttonStyle = $derived(
-		[toStyleAttribute(triggerStyle.style), dragStyle]
+		[toStyleAttributeValue(triggerStyle.style), dragStyle]
 			.filter(Boolean)
 			.join(';') || undefined
 	);
 </script>
 
 {#snippet brandingIcon()}
-	{#if branding === 'consent'}
-		<ConsentIconOnly />
-	{:else}
-		<C15TIconOnly />
-	{/if}
+	<BrandMark mark={brandMark} />
 {/snippet}
 
 {#if visible}
@@ -438,7 +435,7 @@
 						<button
 							type="button"
 							class={devToolsItemStyle.className || ''}
-							style={toStyleAttribute(devToolsItemStyle.style)}
+							style={toStyleAttributeValue(devToolsItemStyle.style)}
 							tabindex={tabStopItem === item ? 0 : -1}
 							aria-label="inth DevTools"
 							aria-expanded={launcher.isOpen}
@@ -449,12 +446,12 @@
 						>
 							<span
 								class={toolbarIconStyle.className || ''}
-								style={toStyleAttribute(toolbarIconStyle.style)}
+								style={toStyleAttributeValue(toolbarIconStyle.style)}
 								aria-hidden="true"
 							>
 								<span
 									class={iconStyle.className || ''}
-									style={toStyleAttribute(iconStyle.style)}
+									style={toStyleAttributeValue(iconStyle.style)}
 								>
 									<DevToolsIcon />
 								</span>
@@ -464,7 +461,7 @@
 						<button
 							type="button"
 							class={preferencesItemStyle.className || ''}
-							style={toStyleAttribute(preferencesItemStyle.style)}
+							style={toStyleAttributeValue(preferencesItemStyle.style)}
 							tabindex={tabStopItem === item ? 0 : -1}
 							aria-label={ariaLabel}
 							data-inth-rights={consent.snapshot.policyRule.rights.join(' ')}
@@ -480,12 +477,12 @@
 						>
 							<span
 								class={toolbarIconStyle.className || ''}
-								style={toStyleAttribute(toolbarIconStyle.style)}
+								style={toStyleAttributeValue(toolbarIconStyle.style)}
 								aria-hidden="true"
 							>
 								<span
 									class={iconStyle.className || ''}
-									style={toStyleAttribute(iconStyle.style)}
+									style={toStyleAttributeValue(iconStyle.style)}
 								>
 									{@render brandingIcon()}
 								</span>
@@ -514,7 +511,7 @@
 			>
 				<span
 					class={iconStyle.className || ''}
-					style={toStyleAttribute(iconStyle.style)}
+					style={toStyleAttributeValue(iconStyle.style)}
 					aria-hidden="true"
 				>
 					{@render brandingIcon()}
