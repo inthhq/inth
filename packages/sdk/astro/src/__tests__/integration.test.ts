@@ -126,10 +126,10 @@ const runDone = async function runDone(
 };
 
 describe('createOwnEntryResolver', () => {
-	it('resolves an entry point to a file, for sites that cannot see @inth/astro', () => {
-		// Under pnpm, a site that installed `inth` has no `@inth/astro` at its
-		// root, so Astro could not resolve the bare specifier from there.
-		const path = resolveOwnEntry('@inth/astro/middleware');
+	it('resolves a dependency entry point to a file, for sites that cannot see it', () => {
+		// Under pnpm, a site that installed `@inth/astro` has no `@inth/sdk` at
+		// its root, so Astro could not resolve the bare specifier from there.
+		const path = resolveOwnEntry('@inth/sdk/ui/styles.css');
 		expect(isAbsolute(path)).toBe(true);
 		expect(existsSync(path)).toBe(true);
 	});

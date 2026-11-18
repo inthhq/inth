@@ -154,7 +154,7 @@ describe('consentManifest()', () => {
 		const { optimizeDeps } = consentManifest().config();
 
 		expect(optimizeDeps.exclude).toEqual(
-			expect.arrayContaining(['@inth/sdk/generated', '@inth/vue', 'inth'])
+			expect.arrayContaining(['@inth/sdk/generated', '@inth/vue'])
 		);
 	});
 });

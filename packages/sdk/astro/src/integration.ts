@@ -59,10 +59,9 @@ export type EntryResolver = (specifier: string) => string;
  * Create a resolver for this package's own entry points.
  *
  * Astro and Vite resolve what the integration hands them from the site's
- * root. A site that installed the `inth` package rather than `@inth/astro`
- * cannot see `@inth/astro` from there under a strict package manager such
- * as pnpm, so a bare specifier would fail to resolve. A file path always
- * does. `createRequire` resolves the package's own exports on every Node
+ * root. Under a strict package manager such as pnpm, a site sees only its
+ * direct dependencies, not `@inth/sdk`, which this package depends on, so a
+ * bare specifier would fail to resolve. A file path always does. `createRequire` resolves the package's own exports on every Node
  * version Astro supports. It is loaded here, from the async setup hook,
  * rather than imported at the top: the package root re-exports the
  * integration, and browser code importing it must not pull in a Node

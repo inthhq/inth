@@ -50,11 +50,7 @@ const providedPackages: Record<Framework, string[]> = {
 	],
 };
 
-const isInthSpecifier = (spec: string): boolean =>
-	spec === 'c15t' ||
-	spec.startsWith('inth/') ||
-	spec.startsWith('@inth/') ||
-	spec.startsWith('@inth/');
+const isInthSpecifier = (spec: string): boolean => spec.startsWith('@inth/');
 
 const packageName = (spec: string): string => {
 	const parts = spec.split('/');

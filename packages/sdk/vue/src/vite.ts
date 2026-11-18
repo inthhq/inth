@@ -17,7 +17,7 @@ export type {
  * Packages that ship `.vue` files. Vite's dependency pre-bundling cannot
  * load them, so they stay out of it.
  */
-const VUE_SOURCE_PACKAGES = ['@inth/vue', 'inth'];
+const VUE_SOURCE_PACKAGES = ['@inth/vue'];
 
 /** What {@link consentManifest} returns: one Vite plugin. */
 export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
