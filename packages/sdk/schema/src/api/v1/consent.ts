@@ -53,7 +53,7 @@ const optionalQueryString = (description: string) =>
 export const v1ConsentInitQuerySchema = v.object({
 	country: optionalQueryString('Country override, ISO 3166-1 alpha-2.'),
 	experiment: optionalQueryString(
-		'Banner-experiment arm as `<id>:<arm>`, while no choice is stored.'
+		'Banner-experiment arm as `<id>=<arm>`, while no choice is stored.'
 	),
 	gpc: v.optional(
 		v.pipe(
