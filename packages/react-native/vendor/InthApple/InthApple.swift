@@ -67,7 +67,9 @@ public struct InthAppleConfiguration: Sendable {
     /// debug build it also lets `backendURL` be any `https` URL or `http` on a loopback host.
     public var dryRun: Bool
     public let storage: Storage
-    public var domain: String?
+    /// The `property` each consent record names: the app's bundle identifier unless
+    /// set here. Sent lowercase.
+    public var property: String?
     public var consentCategories: [ConsentCategory]?
     public var vendors: [Int]?
     public var overrides: ConsentOverrides
@@ -91,7 +93,7 @@ public struct InthAppleConfiguration: Sendable {
 
     /// The host reported as `x-inth-platform: <platform>-><version>` on hosted
     /// requests. `apple` for a Swift app; the React Native bridge sets `rn`, so the
-    /// backend can tell the two apart now that `x-inth-version` carries no prefix.
+    /// backend can tell the two apart.
     public var platform = "apple"
 
     /// Keychain is the default store.
@@ -99,7 +101,7 @@ public struct InthAppleConfiguration: Sendable {
         backendURL: String,
         dryRun: Bool = false,
         storage: Storage = .keychain(),
-        domain: String? = nil,
+        property: String? = nil,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
         overrides: ConsentOverrides = .default(),
@@ -113,7 +115,7 @@ public struct InthAppleConfiguration: Sendable {
         self.backendURL = backendURL
         self.dryRun = dryRun
         self.storage = storage
-        self.domain = domain
+        self.property = property
         self.consentCategories = consentCategories
         self.vendors = vendors
         self.overrides = overrides
@@ -127,8 +129,8 @@ public struct InthAppleConfiguration: Sendable {
 
     /// The checked project URL in its normal form: `https://<host>`, no trailing slash.
     ///
-    /// The same string reaches the transport, the bundled policy binding and the
-    /// save body `domain`.
+    /// The same string reaches the transport and the bundled policy binding. The save
+    /// body's `property` is not derived from it: see ``resolvedProperty``.
     /// - Throws: ``InthAppleInstallationError/dryRunInReleaseBuild`` for `dryRun` in a
     ///   release build, or ``InthAppleInstallationError/invalidBackendURL(_:)``.
     public func normalizedBackendURL() throws -> URL {
@@ -140,12 +142,19 @@ public struct InthAppleConfiguration: Sendable {
         }
     }
 
+    /// The save body's `property`: the configured value, otherwise the main bundle's
+    /// identifier, lowercased. `nil` only for a process with neither, such as a test
+    /// runner, where the transport falls back to the project URL's host.
+    public var resolvedProperty: String? {
+        (property ?? Bundle.main.bundleIdentifier)?.lowercased()
+    }
+
     /// Build the hosted transport for the checked project URL. Internal API.
     @_spi(InthInternal) public func makeTransport(
         client: any HTTPTransport = URLSession.shared
     ) throws -> any InthTransport {
         HostedTransport(
-            baseURL: try normalizedBackendURL(), domain: domain,
+            baseURL: try normalizedBackendURL(), property: resolvedProperty,
             extraHeaders: ["x-inth-platform": "\(platform)->\(InthApple.version)"],
             client: client
         )

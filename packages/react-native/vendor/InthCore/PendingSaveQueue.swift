@@ -2,10 +2,10 @@ import Foundation
 
 /// One save that has not reached the backend yet.
 ///
-/// `body` is the serialized `POST /subjects` body, not a re-encodable model. That
-/// is the point: a queued action is replayed as the exact bytes the subject
-/// produced, so a policy that changes while the entry waits has nothing to
-/// rewrite, and the backend derives the same consent id from the same `givenAt`.
+/// `body` is the serialized `POST /v1/consent/records` body, not a re-encodable
+/// model. That is the point: a queued action is replayed as the exact bytes the
+/// subject produced, idempotency key included, so a policy that changes while the
+/// entry waits has nothing to rewrite and the backend records the action once.
 struct PendingSaveEntry: Sendable, Codable, Equatable {
     /// Stable identity so a successful delivery removes its own entry and nothing
     /// else, even if the queue changed while the request was in flight.
@@ -29,22 +29,25 @@ enum ConsentDelivery {
     /// Compare frozen delivery ownership, never the currently signed-in account.
     static func sameOwner(_ left: Data, _ right: Data) -> Bool {
         guard let a = InthJSON.parse(left), let b = InthJSON.parse(right),
-            a["subjectId"]?.stringValue != nil, a["domain"]?.stringValue != nil
+            a["subjectId"]?.stringValue != nil, a["property"]?.stringValue != nil
         else { return false }
-        return ["subjectId", "externalSubjectId", "domain"].allSatisfy {
+        return ["subjectId", "externalId", "property"].allSatisfy {
             a[$0]?.stringValue == b[$0]?.stringValue
         }
     }
 
+    /// A body whose complete answer grants no optional category, and which either is a
+    /// reject-all or confirmed at least one denial. `necessary` is implied by `answer`.
     static func isWithdrawal(_ body: Data) -> Bool {
         guard let wire = InthJSON.parse(body),
-            let consents = wire["preferences"]?.objectValue, consents["necessary"]?.boolValue == true,
-            ["functionality", "measurement", "experience", "marketing"].allSatisfy({ consents[$0]?.boolValue != true })
+            let answer = wire["answer"]?["categories"]?.objectValue,
+            ["functionality", "measurement", "experience", "marketing"].allSatisfy({ answer[$0]?["value"]?.boolValue != true })
         else { return false }
         if let ac = wire["addtlConsent"]?.stringValue, !ac.hasPrefix("2~~dv.") { return false }
         guard let encoded = wire["tcString"]?.stringValue else {
+            let confirmed = wire["confirmed"]?.arrayValue?.compactMap(\.stringValue) ?? []
             return wire["consentAction"]?.stringValue == "necessary"
-                || wire["choice"]?["categories"]?.objectValue.map { !$0.isEmpty && $0.values.allSatisfy { $0["value"]?.boolValue == false } } == true
+                || !confirmed.isEmpty && confirmed.allSatisfy { answer[$0]?["value"]?.boolValue == false }
         }
         guard case let .decoded(tc) = TcStringWireReader.read(encoded) else { return false }
         var vectors = [tc.purposeConsents, tc.purposeLegitimateInterests, tc.vendorConsents,
@@ -292,7 +295,7 @@ final class PendingSaveQueue: @unchecked Sendable {
     ///     decision that has just stopped being owed.
     func replay(
         using transport: any InthTransport,
-        onResult: ((PendingSaveEntry, Result<Void, InthError>) -> Void)? = nil,
+        onResult: ((PendingSaveEntry, Result<String?, InthError>) -> Void)? = nil,
         onDrop: ((PendingSaveEntry, InthError, FailedAttempt) -> Void)? = nil
     ) async -> ReplayReport {
         await replay(using: transport, shouldDeliver: { _ in true }, onResult: onResult, onDrop: onDrop)
@@ -301,7 +304,7 @@ final class PendingSaveQueue: @unchecked Sendable {
     func replay(
         using transport: any InthTransport,
         shouldDeliver: (PendingSaveEntry) -> Bool,
-        onResult: ((PendingSaveEntry, Result<Void, InthError>) -> Void)? = nil,
+        onResult: ((PendingSaveEntry, Result<String?, InthError>) -> Void)? = nil,
         onDrop: ((PendingSaveEntry, InthError, FailedAttempt) -> Void)? = nil
     ) async -> ReplayReport {
         let pending = entries()

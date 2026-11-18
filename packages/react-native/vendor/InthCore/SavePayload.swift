@@ -188,6 +188,9 @@ public struct DecisionInputs: Sendable, Codable, Equatable {
 /// replay cannot drift from what the subject chose, and a policy that changes in
 /// the meantime has nothing to rewrite.
 public struct SavePayload: Sendable, Codable, Equatable {
+    /// A lowercase UUID made once for this action. It is frozen into the body, so
+    /// every replay sends the same key and the backend records the action once.
+    public let idempotencyKey: String
     public let subjectId: String
     public let subject: ConsentSubject
     public let choice: ExplicitChoice
@@ -206,6 +209,7 @@ public struct SavePayload: Sendable, Codable, Equatable {
     public let addtlConsent: String?
 
     public init(
+        idempotencyKey: String,
         subjectId: String,
         subject: ConsentSubject,
         choice: ExplicitChoice,
@@ -221,6 +225,7 @@ public struct SavePayload: Sendable, Codable, Equatable {
         givenAt: Int64,
         tcString: String? = nil, addtlConsent: String? = nil
     ) {
+        self.idempotencyKey = idempotencyKey
         self.subjectId = subjectId
         self.subject = subject
         self.choice = choice
@@ -239,37 +244,40 @@ public struct SavePayload: Sendable, Codable, Equatable {
     }
 }
 
-/// Builds the `POST /subjects` body, field for field as `@inth/sdk-core` builds it.
+/// Builds the `POST /v1/consent/records` body, field for field as the save-body
+/// fixtures in `packages/native-protocol` pin it.
 ///
-/// Two representations of the same act travel together on purpose. `preferences`
-/// is the complete explicit map after the act, which is what a backend records;
-/// `choice` carries only what this act confirmed, with the confirmation time and
-/// policy basis the kernel already captured. The effective permissions are not
-/// either of them: a GPC mask can deny a category the subject granted, and sending
-/// the masked value would rewrite what they chose.
-enum SubjectPostBodyBuilder {
+/// `answer` is the subject's complete answer after the act: every receipt the payload's
+/// choice holds, each with the time and policy basis the kernel already captured.
+/// `confirmed` names the categories this act confirmed. The effective permissions are
+/// neither: a GPC mask can deny a category the subject granted, and sending the masked
+/// value would rewrite what they chose.
+///
+/// The body never carries an identity token. Queued bytes are written to disk and may
+/// be replayed long after a token expires.
+enum ConsentRecordBodyBuilder {
     /// Serialize a payload into request bytes. The result is deterministic, so the
     /// bytes queued before a request are comparable to the bytes sent after it.
-    static func body(for payload: SavePayload, domain: String) throws -> Data {
-        try InthJSON.encode(wire(for: payload, domain: domain))
+    static func body(for payload: SavePayload, property: String) throws -> Data {
+        try InthJSON.encode(wire(for: payload, property: property))
     }
 
-    static func wire(for payload: SavePayload, domain: String) -> JSONValue {
+    static func wire(for payload: SavePayload, property: String) -> JSONValue {
         var fields: [String: JSONValue] = [
+            "answer": .object(["categories": .object(receipts(payload.choice.categories))]),
+            "confirmed": .array(confirmed(for: payload).map { .string($0) }),
             "consentAction": .string(payload.consentAction.rawValue),
-            "domain": .string(domain),
             "givenAt": .integer(payload.confirmed.actionAt),
-            "preferences": .object(
-                ConsentState.preferences(from: payload.choice).mapValues { .bool($0) }
-            ),
+            "idempotencyKey": .string(payload.idempotencyKey),
+            "model": .string(payload.model.rawValue),
+            "property": .string(property),
             "subjectId": .string(payload.subjectId),
-            "type": .string("cookie_banner"),
+            "uiSource": .string(payload.uiSource.rawValue),
         ]
 
-        // Omitted rather than null throughout: the 2.x reader treats an absent key
-        // as "leave it alone" and a null as "clear it".
+        // Omitted rather than null throughout: an absent key leaves the field alone.
         if let externalId = payload.user?.externalId {
-            fields["externalSubjectId"] = .string(externalId)
+            fields["externalId"] = .string(externalId)
         }
         if let identityProvider = payload.user?.identityProvider {
             fields["identityProvider"] = .string(identityProvider)
@@ -279,13 +287,8 @@ enum SubjectPostBodyBuilder {
                 "userProperties": .object(properties.mapValues { .string($0) }),
             ])
         }
-        fields["model"] = .string(payload.model.rawValue)
         if let token = payload.policySnapshotToken {
             fields["policySnapshotToken"] = .string(token)
-        }
-        fields["uiSource"] = .string(payload.uiSource.rawValue)
-        if let choice = choiceWire(for: payload) {
-            fields["choice"] = choice
         }
         if let tcString = payload.tcString {
             fields["tcString"] = .string(tcString)
@@ -325,17 +328,21 @@ enum SubjectPostBodyBuilder {
         ]
     }
 
-    /// Receipts for exactly the categories this act confirmed, read out of the
-    /// complete choice so the time and basis are the kernel's and not restamped
-    /// here. An act that confirmed nothing, such as the acknowledgement of a prompt
-    /// with no category to decide, sends an empty receipt rather than none:
-    /// `buildConfirmedChoiceWire` does the same, because a backend reads a body
-    /// without `choice` as a 2.x submission and stamps receipts from `preferences`.
-    private static func choiceWire(for payload: SavePayload) -> JSONValue? {
-        var categories: [String: JSONValue] = [:]
-        for category in OptionalConsentCategory.ordered {
-            guard payload.confirmed.categories[category] != nil else { continue }
-            guard let decision = payload.choice.categories[category] else { continue }
+    /// The categories this act confirmed that hold a receipt, in the canonical order
+    /// functionality, experience, measurement, marketing, so every entry is a key of
+    /// `answer.categories`. An acknowledgement confirms none.
+    private static func confirmed(for payload: SavePayload) -> [String] {
+        OptionalConsentCategory.ordered
+            .filter { payload.confirmed.categories[$0] != nil && payload.choice.categories[$0] != nil }
+            .map(\.rawValue)
+    }
+
+    /// Receipts in the 3.x shape `{ value, confirmedAt, basis }`, keyed by category.
+    private static func receipts(
+        _ categories: [OptionalConsentCategory: CategoryDecision]
+    ) -> [String: JSONValue] {
+        var wire: [String: JSONValue] = [:]
+        for (category, decision) in categories {
             let basis: JSONValue
             switch decision.basis {
             case let .choiceV1(fingerprint):
@@ -350,12 +357,12 @@ enum SubjectPostBodyBuilder {
                 }
                 basis = .object(legacy)
             }
-            categories[category.rawValue] = .object([
+            wire[category.rawValue] = .object([
                 "basis": basis,
                 "confirmedAt": .integer(decision.confirmedAt),
                 "value": .bool(decision.value),
             ])
         }
-        return .object(["categories": .object(categories), "version": .integer(3)])
+        return wire
     }
 }

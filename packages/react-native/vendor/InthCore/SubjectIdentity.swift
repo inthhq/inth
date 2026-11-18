@@ -7,17 +7,17 @@ public enum SubjectIdentityError: Error, Equatable, Sendable {
     case malformed(String)
 }
 
-/// A stored subject id the producer refuses.
+/// A stored subject id this build cannot use.
 ///
 /// Kept as its own value rather than folded into a boolean because the reason is what a
-/// host has to say out loud: an install written by a build that minted the legacy UUID
-/// shape is a different explanation to a user than a store someone tampered with.
+/// host has to say out loud: an install written by a prerelease build that minted the
+/// UUIDv4 shape is a different explanation to a user than a store someone tampered with.
 struct UnusableSubjectId: Sendable, Equatable {
     /// The stored value, verbatim. It is echoed in diagnostics and never adopted.
     let id: String
-    /// Whether `id` is the lowercase UUID v4 shape this SDK minted before ``SubjectId``
-    /// existed. That shape is the prerelease population `packages/native-protocol/CONTRACT.md` names;
-    /// anything else is not a format this SDK ever wrote.
+    /// Whether `id` is the lowercase UUIDv4 shape an early prerelease of this SDK
+    /// minted. That shape is the prerelease population `packages/native-protocol/CONTRACT.md`
+    /// names; anything else is not a format this SDK ever wrote.
     let legacyShape: Bool
 }
 
@@ -35,28 +35,32 @@ struct SubjectIdentityRead: Sendable, Equatable {
     let unusable: UnusableSubjectId?
     /// Why a missing or undecodable identity had to be minted.
     var replacementReason: String? = nil
+    /// Ids this subject had before a response named its canonical id. Queued bodies and
+    /// the stored decision may still carry one, and they belong to the same subject.
+    var previousIds: [String] = []
 }
 
 /// The Inth subject identifier.
 ///
-/// A `sub_` id minted by ``SubjectId``, owned by Inth, stored in the same protected
-/// storage as the consent records. It is never derived from IDFV, ADID, or any other
+/// A lowercase UUIDv7 minted by ``SubjectId``, or a c15t `sub_` id read back from
+/// storage until a response names the canonical UUID. Owned by Inth and stored in the
+/// same protected storage as the consent records. It is never derived from IDFV, ADID, or any other
 /// persistent hardware identifier, and it is never read from one: the whole point of a
 /// generated id is that a subject who clears storage starts fresh, which is what the
 /// web SDK does when its storage is cleared.
 public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
-    /// The id as it goes on the wire: `sub_<base58>`, and nothing else.
+    /// The id as it goes on the wire: a UUIDv7, or a c15t `sub_` id.
     public let id: String
 
     /// Generate a new subject id.
     public static func generate() -> SubjectIdentity {
-        // Minted through ``SubjectId`` rather than minted here, because the format is
-        // the one the backend validates and the web SDK produces the same id from the
-        // same clock and entropy. A UUID here is rejected by `POST /subjects`.
+        // Minted through ``SubjectId`` rather than here, because the layout is pinned
+        // by `subject-id/uuidv7.json` and the Kotlin core mints the same ids from the
+        // same clock and entropy.
         SubjectIdentity(unchecked: SubjectId.generate())
     }
 
-    /// Adopt a stored id, rejecting anything the producer would refuse.
+    /// Adopt a stored id, rejecting anything the `read` rule calls unusable.
     public init(id: String) throws {
         guard SubjectIdentity.isValid(id) else {
             throw SubjectIdentityError.malformed(id)
@@ -70,10 +74,10 @@ public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
 
     /// Read the subject id, generating and persisting one when nothing usable is stored.
     ///
-    /// The read is the other half of the format rule. `packages/native-protocol/CONTRACT.md` says an id the
-    /// producer will not accept is an identity this build cannot use, and says what such
-    /// an identity is worth: nothing, indistinguishable from a fresh launch. So a stored
-    /// id that fails the producer's pattern is dropped and reported in
+    /// The read follows the `read` cases in `subject-id/uuidv7.json`: a UUIDv7 or a c15t
+    /// `sub_` id is adopted, and anything else is an identity this build cannot use,
+    /// worth nothing and indistinguishable from a fresh launch. So a stored id that is
+    /// neither is dropped and reported in
     /// ``SubjectIdentityRead/unusable``, which is how the caller learns that the records
     /// keyed to it have to go with it.
     ///
@@ -101,7 +105,10 @@ public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
                 )
             )
         }
-        return SubjectIdentityRead(identity: SubjectIdentity(unchecked: stored.id), unusable: nil)
+        return SubjectIdentityRead(
+            identity: SubjectIdentity(unchecked: stored.id), unusable: nil,
+            previousIds: stored.previousIds ?? []
+        )
     }
 
     /// Mint and persist the id a launch with no usable identity answers with.
@@ -114,28 +121,54 @@ public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
         return identity
     }
 
+    /// Replace the stored id with the canonical one a `/v1` response named.
+    ///
+    /// Only a UUIDv7 is adopted: `packages/native-protocol/CONTRACT.md`, "Adopting the
+    /// canonical id", ignores any other value. The replaced id is kept beside the new one,
+    /// because queued bodies stay frozen with it and the backend maps it to the same
+    /// subject. Returns `nil` when there is nothing to change or the write did not land,
+    /// so the caller keeps the identity it has.
+    static func adoptCanonical(
+        _ canonical: String,
+        replacing current: SubjectIdentity,
+        previousIds: [String],
+        in store: any ConsentStore,
+        key: String = StorageKey.subject
+    ) -> (identity: SubjectIdentity, previousIds: [String])? {
+        guard SubjectId.isUUIDv7(canonical), canonical != current.id else { return nil }
+        let next = SubjectIdentity(unchecked: canonical)
+        var kept = previousIds.filter { $0 != current.id && $0 != canonical }
+        kept.append(current.id)
+        // A subject changes id once in practice, from a c15t id to its UUID. The bound
+        // only keeps a misbehaving backend from growing the slot.
+        kept = Array(kept.suffix(Self.maxPreviousIds))
+        guard store.encode(StoredSubject(id: next.id, previousIds: kept), for: key) else { return nil }
+        return (next, kept)
+    }
+
+    static let maxPreviousIds = 4
+
     /// Wire form carried on the snapshot.
     func snapshot(externalId: String?) -> SubjectSnapshot {
         SubjectSnapshot(id: id, externalId: externalId)
     }
 
-    /// Whether `candidate` is an identity this build can use: the `sub_` format the
-    /// producer validates and nothing else.
+    /// Whether `candidate` is an identity this build can use: a UUIDv7 or a c15t `sub_`
+    /// id, and nothing else.
     ///
-    /// This is the adoption rule, so it stays equal to the backend's pattern. The legacy
-    /// UUID shape is deliberately absent: recognising it is ``isLegacyUUIDv4(_:)``, and
-    /// recognising it never means adopting it.
+    /// This is the adoption rule. The prerelease UUIDv4 shape is deliberately absent:
+    /// recognising it is ``isLegacyUUIDv4(_:)``, and recognising it never means
+    /// adopting it.
     static func isValid(_ candidate: String) -> Bool {
         SubjectId.isValid(candidate)
     }
 
-    /// Whether `candidate` is the shape of the ids this type minted before ``SubjectId``
-    /// existed, which is a diagnosis and not an adoption.
+    /// Whether `candidate` is the UUIDv4 shape an early prerelease of this type minted,
+    /// which is a diagnosis and not an adoption.
     ///
     /// IDFV and ADID are also UUIDs, but they are uppercase and this matches lowercase
     /// only, which is the form this type was the only writer of. Nothing may use this to
-    /// decide whether to trust a stored id: ``isValid(_:)`` is the only gate, because the
-    /// producer rejects every one of these ids and a decision keyed to one is not evidence.
+    /// decide whether to trust a stored id: ``isValid(_:)`` is the only gate.
     static func isLegacyUUIDv4(_ candidate: String) -> Bool {
         let lowered = Array(candidate)
         let expectedHyphens = [8, 13, 18, 23]
@@ -153,5 +186,6 @@ public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
 
     private struct StoredSubject: Codable {
         let id: String
+        var previousIds: [String]? = nil
     }
 }
