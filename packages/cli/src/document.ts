@@ -23,10 +23,6 @@ export interface DocumentHash {
 
 type AddBytes = (bytes: Uint8Array) => void;
 
-/**
- * Parse the arguments after `inth document`. This also takes --help, --json
- * and --non-interactive, which the main parser would otherwise consume.
- */
 export const parseDocumentArguments = (
   result: CliArguments,
   args: string[]
@@ -139,6 +135,7 @@ export const hashDocument = async (
   path: string,
   signal: AbortSignal
 ): Promise<DocumentHash> => {
+  signal.throwIfAborted();
   const hash = createHash("sha256");
   let bytes = 0;
   const add: AddBytes = (input) => {

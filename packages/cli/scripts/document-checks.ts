@@ -8,8 +8,15 @@ import { z } from "zod";
 
 const EMPTY =
   "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-const TEST =
-  "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+// CRLF text, then bytes that are not UTF-8 and span more than one 64 KiB read.
+const text = new TextEncoder().encode("Privacy policy\r\nVersion 2\r\n");
+const FIXTURE = new Uint8Array(text.length + 70_000);
+FIXTURE.set(text);
+for (let index = 0; index < 70_000; index += 1) {
+  FIXTURE[text.length + index] = index % 251;
+}
+const FIXTURE_HASH =
+  "sha256:263db960f76e2c1e34a9774ef85730cd7eba491e9b8141de87d4f5f2b5d32f86";
 
 const resultSchema = z.object({
   data: z.object({
@@ -28,39 +35,34 @@ const errorSchema = z.object({
 export const verifyDocumentHash = async (binary: string): Promise<void> => {
   const parent = await mkdtemp(path.join(os.tmpdir(), "inth-document-"));
   try {
-    const hash = (args: string[], input?: string) =>
+    const hash = (args: string[], input?: Uint8Array) =>
       spawnSync(binary, ["document", "hash", ...args], {
         encoding: "utf-8",
         input,
         timeout: 10_000,
       });
-    const files = {
-      empty: "",
-      test: "test",
-    };
-    await Promise.all(
-      Object.entries(files).map(([name, contents]) =>
-        writeFile(path.join(parent, name), contents)
-      )
-    );
+    await Promise.all([
+      writeFile(path.join(parent, "empty"), ""),
+      writeFile(path.join(parent, "fixture"), FIXTURE),
+    ]);
 
     const empty = hash([path.join(parent, "empty")]);
     assert.equal(empty.status, 0, empty.stderr);
     assert.equal(empty.stdout, `${EMPTY}\n`);
 
-    const test = hash([path.join(parent, "test"), "--json"]);
-    assert.equal(test.status, 0, test.stdout);
-    assert.deepEqual(resultSchema.parse(JSON.parse(test.stdout)).data, {
-      bytes: 4,
-      hash: TEST,
-      path: path.join(parent, "test"),
+    const file = hash([path.join(parent, "fixture"), "--json"]);
+    assert.equal(file.status, 0, file.stdout);
+    assert.deepEqual(resultSchema.parse(JSON.parse(file.stdout)).data, {
+      bytes: 70_027,
+      hash: FIXTURE_HASH,
+      path: path.join(parent, "fixture"),
     });
 
-    const piped = hash(["-", "--json"], "test");
+    const piped = hash(["-", "--json"], FIXTURE);
     assert.equal(piped.status, 0, piped.stdout);
     assert.deepEqual(resultSchema.parse(JSON.parse(piped.stdout)).data, {
-      bytes: 4,
-      hash: TEST,
+      bytes: 70_027,
+      hash: FIXTURE_HASH,
       path: null,
     });
 

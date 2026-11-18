@@ -1087,13 +1087,13 @@ export const COMMAND_METADATA: CommandMetadata[] = [
       "Print the hash that identifies a version of a legal document, such as a privacy policy or terms of service",
     effects: [
       "Hashes the exact bytes of the published file with SHA-256 and prints sha256: followed by lowercase hex. Line endings, whitespace and encoding are not normalized, so CRLF and LF copies of the same text hash differently.",
-      "Reads the named regular file, or stdin when the path is -. Needs no sign-in, makes no network request and never prompts.",
+      "Reads the named regular file, or stdin when the path is -. Needs no sign-in, never prompts and sends nothing from the document.",
       "With --json, data holds path (null for stdin), bytes and hash.",
     ],
     examples: [
       "inth document hash privacy-policy.md",
       "inth document hash terms.html --json",
-      "curl -fsSL https://example.com/privacy | inth document hash -",
+      "inth document hash - < privacy-policy.md",
     ],
     options: [
       option("json", "boolean", "Print the result as JSON"),

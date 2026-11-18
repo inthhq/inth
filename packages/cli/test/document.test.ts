@@ -10,11 +10,18 @@ import { hashDocument } from "../src/document.ts";
 
 const EMPTY =
   "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-const TEST =
-  "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+// CRLF text, then bytes that are not UTF-8 and span more than one 64 KiB read.
+const text = new TextEncoder().encode("Privacy policy\r\nVersion 2\r\n");
+const FIXTURE = new Uint8Array(text.length + 70_000);
+FIXTURE.set(text);
+for (let index = 0; index < 70_000; index += 1) {
+  FIXTURE[text.length + index] = index % 251;
+}
+const FIXTURE_HASH =
+  "sha256:263db960f76e2c1e34a9774ef85730cd7eba491e9b8141de87d4f5f2b5d32f86";
 
 const directories: string[] = [];
-const file = (name: string, contents: string): string => {
+const file = (name: string, contents: string | Uint8Array): string => {
   const directory = mkdtempSync(join(tmpdir(), "inth-document-"));
   directories.push(directory);
   const path = join(directory, name);
@@ -37,19 +44,13 @@ describe("hashDocument", () => {
     expect(await hash(file("empty.md", ""))).toBe(EMPTY);
   });
 
-  it("hashes the four bytes test", async () => {
-    const path = file("test.txt", "test");
+  it("hashes every byte as given, across reads", async () => {
+    const path = file("policy.bin", FIXTURE);
     expect(await hashDocument(path, new AbortController().signal)).toEqual({
-      bytes: 4,
-      hash: TEST,
+      bytes: 70_027,
+      hash: FIXTURE_HASH,
       path,
     });
-  });
-
-  it("hashes CRLF and LF copies of the same text differently", async () => {
-    const lf = await hash(file("lf.md", "Privacy policy\nVersion 2\n"));
-    const crlf = await hash(file("crlf.md", "Privacy policy\r\nVersion 2\r\n"));
-    expect(crlf).not.toBe(lf);
   });
 
   it("fails with a usage error naming a missing file", async () => {

@@ -105,7 +105,7 @@ JSON mode does not imply approval or make commands read-only. `switch` and `link
 
 ## Legal document hashes
 
-`inth document hash <path|-> --json` returns `data.hash`, the hash Inth uses to identify a published version of a legal document, with `data.bytes` and `data.path`, which is null for stdin. The hash covers the exact bytes with no line-ending, whitespace or encoding normalization, so hash the file as published. It needs no sign-in or network and never prompts. A missing or non-regular file fails with `usage_error`.
+`inth document hash <path|-> --json` returns `data.hash`, the hash Inth uses to identify a published version of a legal document, with `data.bytes` and `data.path`, which is null for stdin. The hash covers the exact bytes with no line-ending, whitespace or encoding normalization, so hash the file as published. It needs no sign-in, never prompts and sends nothing from the document. A missing or non-regular file fails with `usage_error`.
 
 ## Feedback
 

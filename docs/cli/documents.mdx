@@ -3,7 +3,7 @@ title: Hash a legal document with the Inth CLI
 description: Run inth document hash to print the SHA-256 hash that identifies a published version of a privacy policy or terms of service.
 ---
 
-Inth records which version of a privacy policy or terms of service each person accepted, and identifies each version by a hash of the document. `inth document hash` prints that hash for a file. It needs no sign-in, makes no network request and never prompts.
+Inth records which version of a privacy policy or terms of service each person accepted, and identifies each version by a hash of the document. `inth document hash` prints that hash for a file. It needs no sign-in, never prompts and sends nothing from the document.
 
 ## How do I hash a document?
 
@@ -17,11 +17,13 @@ The command prints one line:
 sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
 ```
 
-To hash stdin, pass `-` as the path. For example, to hash the policy your site serves:
+To hash the policy your site serves, download it first, so a failed download stops before hashing:
 
 ```sh
-curl -fsSL https://example.com/privacy | inth document hash -
+curl -fsSL -o privacy.html https://example.com/privacy && inth document hash privacy.html
 ```
+
+To hash stdin, pass `-` as the path.
 
 ## How is the hash computed?
 
