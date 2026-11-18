@@ -295,6 +295,9 @@ describe('documents', () => {
 		['a date', '2026-11-18', true],
 		['a date and time with a zone', '2026-11-18T00:00:00+01:00', true],
 		['a date and time without a zone', '2026-11-18T00:00:00', false],
+		['a leap day', '2028-02-29', true],
+		['February 29 in a common year', '2026-02-29', false],
+		['a day past the month', '2026-02-31T00:00:00.000Z', false],
 	])('takes %s as the effective date on publish', (_label, date, valid) => {
 		expect(
 			v.is(v1DocumentPublishInputSchema, {

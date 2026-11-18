@@ -6,7 +6,7 @@ import {
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordQuerySchema,
 } from '@inth/sdk-schema/v1';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { isUuidV7 } from '../../../libs/subject-uuid';
 import {
@@ -212,6 +212,23 @@ describe('save: POST /v1/consent/records', () => {
 		await transportWith(fetch, 'www.example.com.').save(savePayload());
 
 		expect(bodyAt(calls, 0).property).toBe('www.example.com');
+	});
+
+	test('names an IPv6 page localhost', async () => {
+		vi.stubGlobal('window', { location: { hostname: '[::1]' } });
+		try {
+			const { calls, fetch } = stubFetch(() =>
+				json(200, { recordId: RECORD, subjectId: SUBJECT })
+			);
+
+			await createV1RecordTransport({ fetch, projectUrl: PROJECT_URL }).save(
+				savePayload()
+			);
+
+			expect(bodyAt(calls, 0).property).toBe('localhost');
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 
 	test.each(['www.example.com..', 'https://example.com', '[::1]'])(

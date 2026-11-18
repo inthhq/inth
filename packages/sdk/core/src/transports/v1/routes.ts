@@ -82,7 +82,8 @@ export const toProperty = (host: string): string | undefined => {
 
 /**
  * The property a consent belongs to: the explicit option, else the page's
- * host name, else the project URL's host name, else `localhost`.
+ * host name, else the project URL's host name, else `localhost`. A page
+ * host name that is not a property, such as an IPv6 address, is `localhost`.
  *
  * @throws {TypeError} When the explicit option is not a host name or app ID.
  */
@@ -101,9 +102,8 @@ export const resolveProperty = function resolveProperty(
 	}
 	const hostname =
 		typeof window === 'undefined' ? undefined : window.location?.hostname;
-	const fromPage = hostname ? toProperty(hostname) : undefined;
-	if (fromPage) {
-		return fromPage;
+	if (hostname) {
+		return toProperty(hostname) ?? 'localhost';
 	}
 	try {
 		return toProperty(new URL(projectUrl).hostname) ?? 'localhost';

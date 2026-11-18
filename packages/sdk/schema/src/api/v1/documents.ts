@@ -57,9 +57,20 @@ const effectiveDateSchema = v.pipe(
 	v.examples(['2026-11-18T00:00:00.000Z'])
 );
 
+/** Whether the date `value` starts with is a day on the calendar. */
+const isCalendarDay = function isCalendarDay(value: string): boolean {
+	const year = Number(value.slice(0, 4));
+	const month = Number(value.slice(5, 7)) - 1;
+	const day = Number(value.slice(8, 10));
+	const date = new Date(0);
+	date.setUTCFullYear(year, month, day);
+	return date.getUTCMonth() === month && date.getUTCDate() === day;
+};
+
 /** A publish may name the day alone; the answers carry a date and time. */
 const publishEffectiveDateSchema = v.pipe(
 	v.union([v.pipe(v.string(), v.isoDate()), effectiveDateSchema]),
+	v.check(isCalendarDay, 'Effective date must be a day on the calendar'),
 	v.description(
 		'ISO 8601 date, or date and time with a zone, the version takes effect.'
 	),
