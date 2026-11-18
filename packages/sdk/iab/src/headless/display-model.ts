@@ -3,9 +3,9 @@
  *
  * {@link processGVLForDialog} answers "what is in the GVL"; this answers
  * "what does a surface put on screen, in what order, under which test-id".
- * Every adapter — React, Svelte, Vue and the Astro server render — reads
- * the rows from here instead of deriving its own, which is what keeps the
- * four preference centres listing the same purposes the same number of
+ * Every adapter (React, Svelte, Vue, Angular and the browser renderer)
+ * reads the rows from here instead of deriving its own, which is what keeps
+ * the preference centres listing the same purposes the same number of
  * times.
  *
  * Three lists come out of it, matching the three places the preference
@@ -148,7 +148,6 @@ export interface HeadlessIABDialogDisplayModel {
 	data: HeadlessIABDialogData;
 }
 
-/** Test-id prefix per row kind. */
 const TEST_ID_PREFIX: Record<HeadlessIABDisplayRowKind, string> = {
 	feature: 'feature-item',
 	purpose: 'purpose-item',
@@ -160,7 +159,6 @@ const TEST_ID_PREFIX: Record<HeadlessIABDisplayRowKind, string> = {
 /**
  * The `data-testid` for one row.
  *
- * @param kind - The row kind.
  * @param id - The GVL id within that kind.
  * @returns A test-id unique across the surface.
  * @example
@@ -181,7 +179,6 @@ export const iabDisplayTestId = function iabDisplayTestId(
  * have their own ID space, so a provider never merges with a vendor.
  *
  * @param purposes - The purposes of one row, or every purpose of a stack.
- * @returns The partner count to show for those purposes.
  * @example
  * ```ts
  * countIABPartners(stack.purposes);
@@ -238,11 +235,8 @@ const toRow = function toRow(
  * Resolve the rows every IAB preference centre renders.
  *
  * Pure — no framework reactivity, no DOM. Each adapter wraps it in its own
- * memo (`useMemo`, `$derived`, `computed`) or, on the Astro server path,
- * calls it once per render.
+ * memo (`useMemo`, `$derived`, `computed`) or calls it once per render.
  *
- * @param iab - IAB state carrying the GVL and any custom vendors.
- * @returns The ordered rows, the Features standard text and the tab counts.
  * @example
  * ```ts
  * const model = resolveIABDialogDisplayModel(iabState);

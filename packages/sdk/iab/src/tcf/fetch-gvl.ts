@@ -1,8 +1,6 @@
 /**
- * GVL (Global Vendor List) Fetcher
- *
- * Fetches the IAB TCF Global Vendor List from the inth.com endpoint.
- * Relies on HTTP Cache-Control headers for caching.
+ * Fetches the IAB TCF Global Vendor List. Caching is left to the endpoint's
+ * HTTP Cache-Control headers.
  *
  * @packageDocumentation
  */
@@ -25,59 +23,19 @@ import { DEFAULT_GVL_ENDPOINT } from '@inth/sdk-schema/types';
  */
 const MAX_GVL_QUERY_VENDOR_IDS = 500;
 
-/**
- * In-flight request promises for deduplication, keyed by request parameters.
- * When multiple components request the GVL simultaneously with the same
- * parameters, they share the same promise to avoid duplicate network calls.
- */
+/** In-flight requests keyed by request parameters, shared by concurrent callers. */
 const inflightRequests = new Map<string, Promise<GlobalVendorList | null>>();
 
-/**
- * Mock GVL data for testing.
- * When set, fetchGVL will return this instead of making a network request.
- * @internal
- */
 let mockGVLData: GlobalVendorList | null | undefined = undefined;
 
 /**
- * Fetches the Global Vendor List from the GVL endpoint.
- *
- * Features:
- * - Accepts optional vendor IDs to filter the response (smaller payload)
- * - In-flight request deduplication (multiple callers share the same promise)
- * - Relies on HTTP Cache-Control headers for caching
- * - Returns null for 204 responses (non-IAB regions)
- *
- * @param vendorIds - Optional array of vendor IDs to include (filters response)
- * @param options - Fetch options
- * @returns The Global Vendor List, or null if 204 (non-IAB region)
- *
- * @example
- * ```typescript
- * // Fetch full GVL
- * const gvl = await fetchGVL();
- *
- * // Fetch filtered GVL with specific vendors
- * const filteredGvl = await fetchGVL([1, 2, 10, 755]);
- *
- * // Check for non-IAB region
- * if (gvl === null) {
- *   console.log('User is in a non-IAB region');
- * }
- * ```
- *
- * @public
- */
-/**
- * Narrow a vendor list to a publisher allowlist.
+ * Narrow a vendor list to a publisher allowlist. An empty allowlist keeps
+ * every vendor.
  *
  * The GVL endpoint applies `vendorIds` server-side; a list that arrived by
  * another route (server-resolved state) is narrowed here so both paths
  * disclose the same vendors.
  *
- * @param gvl - The full vendor list.
- * @param vendorIds - Vendor IDs to keep. An empty list keeps every vendor.
- * @returns The same list with `vendors` limited to the allowlist.
  * @public
  */
 export const narrowGVLToVendors = function narrowGVLToVendors(
@@ -97,11 +55,29 @@ export const narrowGVLToVendors = function narrowGVLToVendors(
 	return { ...gvl, vendors };
 };
 
+/**
+ * Fetches the Global Vendor List from the GVL endpoint (default
+ * `https://gvl.inth.app`).
+ *
+ * `vendorIds` filters the response server-side. Concurrent calls with the
+ * same parameters share one request. Resolves to `null` when the endpoint
+ * answers 204, which means IAB does not apply in the visitor's region.
+ *
+ * @example
+ * ```typescript
+ * const gvl = await fetchGVL([1, 2, 10, 755]);
+ * if (gvl === null) {
+ *   // Non-IAB region.
+ * }
+ * ```
+ *
+ * @public
+ */
 export const fetchGVL = function fetchGVL(
 	vendorIds?: number[],
 	options: { endpoint?: string; headers?: HeadersInit; format?: 'init' } = {}
 ): Promise<GlobalVendorList | null> {
-	// Check for window-level mock GVL first (for testing in browser mode)
+	// Browser-mode tests set the mock on window.
 	const windowMockGVL =
 		typeof window === 'undefined'
 			? undefined
@@ -112,25 +88,21 @@ export const fetchGVL = function fetchGVL(
 		return Promise.resolve(windowMockGVL);
 	}
 
-	// If module-level mock GVL is set, return it immediately (for testing)
 	if (mockGVLData !== undefined) {
 		return Promise.resolve(mockGVLData);
 	}
 
 	const { endpoint = DEFAULT_GVL_ENDPOINT, headers } = options;
 
-	// Create a stable key for the request based on sorted vendorIds and headers
 	const sortedVendorIds = vendorIds ? [...vendorIds].sort((a, b) => a - b) : [];
 	const headersKey = headers ? JSON.stringify(headers) : '';
 	const cacheKey = `${endpoint}|${sortedVendorIds.join(',')}|${headersKey}|${options.format ?? 'gvl'}`;
 
-	// Return in-flight request if one exists for these parameters (deduplication)
 	const existingRequest = inflightRequests.get(cacheKey);
 	if (existingRequest) {
 		return existingRequest;
 	}
 
-	// Build URL with vendor IDs filter
 	const url = new URL(
 		endpoint,
 		typeof window === 'undefined' ? undefined : window.location.href
@@ -142,14 +114,13 @@ export const fetchGVL = function fetchGVL(
 		url.searchParams.set('vendorIds', sortedVendorIds.join(','));
 	}
 
-	// Create and store the in-flight promise
 	const promise = (async () => {
 		try {
 			const response = await fetch(url.toString(), {
 				headers,
 			});
 
-			// 204 means non-IAB region - no GVL needed
+			// 204 means a non-IAB region.
 			if (response.status === 204) {
 				return null;
 			}
@@ -172,7 +143,7 @@ export const fetchGVL = function fetchGVL(
 				return null;
 			}
 
-			// Validate the response has required fields. tcfPolicyVersion belongs
+			// tcfPolicyVersion belongs
 			// in this list even though no caller reads it: the TC String derives its
 			// TcfPolicyVersion from the vendor list rather than from config, so a
 			// list carrying no usable version would encode a string that a reader
@@ -189,7 +160,6 @@ export const fetchGVL = function fetchGVL(
 
 			return gvl;
 		} finally {
-			// Clear in-flight request when done (success or error)
 			inflightRequests.delete(cacheKey);
 		}
 	})();
@@ -200,8 +170,7 @@ export const fetchGVL = function fetchGVL(
 };
 
 /**
- * Clears the in-flight requests and the mock GVL.
- * Primarily used for testing.
+ * Clears the in-flight requests and the mock GVL. Meant for tests.
  *
  * @public
  */
@@ -211,10 +180,9 @@ export const clearGVLCache = function clearGVLCache(): void {
 };
 
 /**
- * Sets mock GVL data for testing.
- * When set, fetchGVL will return this instead of making a network request.
+ * Makes `fetchGVL` return `gvl` without a request, for tests. `null` acts as
+ * a 204 response; `undefined` clears the mock.
  *
- * @param gvl - The mock GVL to return, null for 204 response, undefined to clear
  * @internal
  */
 export const setMockGVL = function setMockGVL(

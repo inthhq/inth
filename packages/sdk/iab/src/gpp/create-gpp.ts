@@ -109,7 +109,6 @@ const assertGPPCmpId = function assertGPPCmpId(value: number): number {
 const isPromptVisible = (snapshot: ConsentSnapshot): boolean =>
 	snapshot.activeUI === 'banner' || snapshot.activeUI === 'dialog';
 
-/** The confirmed TC String, or `''` while none is held. */
 const heldTCString = (snapshot: ConsentSnapshot): string =>
 	snapshot.iab?.authority?.tcString ?? '';
 
@@ -331,14 +330,12 @@ export const createGPPRuntime = function createGPPRuntime(
  * consent banner or dialog is open, while an `iab` rule has no confirmed
  * TC String, and while a new TC String is decoded.
  *
- * @param options - Kernel, CMP ID and US signalling options.
- * @returns A handle with the current GPP string and `dispose`.
  * @throws {Error} When `cmpId` is neither 1 nor a registered CMP ID, or when
  * another CMP that has already loaded owns `__gpp`.
  *
  * @example
  * ```ts
- * import { createGPP } from '@inth/sdk-iab/gpp';
+ * import { createGPP } from '@inth/sdk/iab/gpp';
  *
  * const gpp = createGPP({ kernel: runtime.kernel });
  * // later

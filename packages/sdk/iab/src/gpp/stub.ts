@@ -51,8 +51,6 @@ const SECTION_QUERIES = new Set(['hasSection', 'getSection', 'getField']);
 /**
  * Creates a stub `__gpp`.
  *
- * @returns A function that follows the GPP stub contract.
- *
  * @internal
  */
 export const createGPPStub = function createGPPStub(): GPPApi {
@@ -216,7 +214,7 @@ const addLocatorFrame = function addLocatorFrame(): void {
  *
  * @example
  * ```ts
- * import { initializeGPPStub } from '@inth/sdk-iab/gpp';
+ * import { initializeGPPStub } from '@inth/sdk/iab/gpp';
  *
  * initializeGPPStub();
  * ```

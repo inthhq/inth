@@ -35,11 +35,9 @@ export {
  *
  * Every provider in `choices` was shown to the visitor, so it is disclosed.
  * It is consented when its switch is on and the TC string consents to every
- * purpose in {@link AD_TECH_PROVIDER_PURPOSES}.
+ * purpose in {@link AD_TECH_PROVIDER_PURPOSES}. Returns `undefined` when no
+ * provider was shown.
  *
- * @param choices - Provider switches keyed by provider ID, one per shown provider.
- * @param purposeConsents - Purpose consents encoded in the TC string.
- * @returns The AC string, or `undefined` when no provider was shown.
  * @internal
  */
 export const additionalConsentFor = function additionalConsentFor(
@@ -67,11 +65,9 @@ const inflight = new Map<string, Promise<AdTechProvider[]>>();
  * Fetches names and privacy policy links for Google ad tech providers.
  *
  * Providers Google no longer lists are left out: the AC string may only
- * carry IDs from Google's current file.
+ * carry IDs from Google's current file. `endpoint` defaults to
+ * {@link AD_TECH_PROVIDERS_URL}.
  *
- * @param providerIds - Google ATP IDs the publisher works with.
- * @param endpoint - Provider list URL. Defaults to {@link AD_TECH_PROVIDERS_URL}.
- * @returns The listed providers, sorted by ID.
  * @throws {Error} When the request fails or the response has no provider map.
  */
 export const fetchAdTechProviders = function fetchAdTechProviders(

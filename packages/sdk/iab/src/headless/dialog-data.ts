@@ -3,8 +3,7 @@
  *
  * Processes GVL data into UI-ready structures for the consent dialog.
  * This keeps the O(purposes x vendors) derivation out of framework
- * components and makes the same result consumable by React, Vue, Svelte,
- * Solid, and Astro wrappers.
+ * components and gives every framework wrapper the same result.
  *
  * @packageDocumentation
  */
@@ -51,11 +50,9 @@ type GvlVendor = GlobalVendorList['vendors'][number];
  * A vendor from the Global Vendor List as the dialog renders it.
  *
  * @param vendorId - The vendor's key in `gvl.vendors`.
- * @param vendor - The GVL entry.
  * @param language - The UI language, which picks the vendor's privacy links.
  * @param purposeId - The purpose the vendor is listed under, which sets
  * `usesLegitimateInterest`.
- * @returns The vendor row.
  */
 export const mapGvlVendor = function mapGvlVendor(
 	vendorId: string | number,
@@ -102,10 +99,8 @@ export const mapGvlVendor = function mapGvlVendor(
  * interest purposes keep only those TCF permits, so the dialog never
  * offers an objection on a consent-only purpose.
  *
- * @param vendor - The custom vendor.
  * @param purposeId - The purpose the vendor is listed under, which sets
  * `usesLegitimateInterest`.
- * @returns The vendor row.
  */
 export const mapCustomVendor = function mapCustomVendor(
 	vendor: NonIABVendor,
@@ -368,8 +363,7 @@ const groupPurposesIntoStacks = function groupPurposesIntoStacks(
  * Processes GVL data into a format suitable for the consent dialog UI.
  *
  * @param iab - IAB state with GVL, optional custom vendors, and the UI
- * language that picks each vendor's privacy links
- * @returns Processed GVL data for rendering
+ * language that picks each vendor's privacy links.
  */
 export const processGVLForDialog = function processGVLForDialog(
 	iab: HeadlessIABStateInput | null

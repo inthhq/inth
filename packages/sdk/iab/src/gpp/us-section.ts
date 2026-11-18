@@ -119,10 +119,7 @@ const callsForUSSection = (rule: USSectionSnapshot['policyRule']): boolean =>
  * approach, a US visitor whose region is unknown, or whose state has no
  * section Inth encodes, gets what `fallback` names.
  *
- * @param snapshot - Consent snapshot.
- * @param approach - State sections or the national section.
  * @param fallback - Section for an unresolved state. Default: `'usnat'`.
- * @returns The section definition, or `null` when none applies.
  */
 export const resolveUSSectionDefinition = function resolveUSSectionDefinition(
 	snapshot: Pick<USSectionSnapshot, 'location' | 'overrides' | 'policyRule'>,
@@ -154,11 +151,6 @@ export const resolveUSSectionDefinition = function resolveUSSectionDefinition(
  * opt-out; the sharing or processing notice is given when the rule has the
  * `disclosure` right. Sensitive data and known-child consents are reported
  * as not applicable: Inth has no category for them.
- *
- * @param definition - The section to fill.
- * @param snapshot - Consent snapshot.
- * @param options - Opt-out categories and MSPA mode.
- * @returns Core values and the GPC flag.
  */
 export const resolveUSSectionValues = function resolveUSSectionValues(
 	definition: USSectionDefinition,

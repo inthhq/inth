@@ -23,14 +23,7 @@ export const MIN_CMP_ID = 2;
  */
 export const MAX_CMP_ID = 4_095;
 
-/**
- * True when `value` can be encoded as the CMP ID of a TC String.
- *
- * @param value - Candidate CMP ID, typically from user configuration.
- * @returns Whether the value is a encodable CMP ID.
- *
- * @internal
- */
+/** @internal */
 export const isValidCmpId = function isValidCmpId(
 	value: unknown
 ): value is number {
@@ -42,14 +35,7 @@ export const isValidCmpId = function isValidCmpId(
 	);
 };
 
-/**
- * Builds the error thrown when a CMP ID cannot be used.
- *
- * @param value - The rejected value, for the message.
- * @returns An error naming the accepted range and where to register.
- *
- * @internal
- */
+/** @internal */
 export const createCmpIdError = function createCmpIdError(
 	value: unknown
 ): Error {
@@ -63,15 +49,7 @@ export const createCmpIdError = function createCmpIdError(
 	);
 };
 
-/**
- * Returns a usable CMP ID or throws before any TC String is encoded.
- *
- * @param value - Candidate CMP ID.
- * @returns The validated CMP ID.
- * @throws {Error} When the value is not an encodable CMP ID.
- *
- * @internal
- */
+/** @internal */
 export const assertValidCmpId = function assertValidCmpId(
 	value: unknown
 ): number {

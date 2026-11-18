@@ -19,7 +19,6 @@ type Vendor = GlobalVendorList['vendors'][number];
 const without = (list: readonly number[], purposeId: number): number[] =>
 	list.filter((id) => id !== purposeId);
 
-/** Appends a purpose once, even if the list already declares it. */
 const including = (list: readonly number[], purposeId: number): number[] =>
 	list.includes(purposeId) ? [...list] : [...list, purposeId];
 
@@ -78,8 +77,6 @@ const restrictVendor = function restrictVendor(
  *
  * Vendors missing from the list are ignored. The input is not modified.
  *
- * @param gvl - The Global Vendor List.
- * @param restrictions - Publisher restrictions, if any.
  * @returns `gvl` itself when nothing applies, otherwise a restricted copy.
  *
  * @example
@@ -134,8 +131,6 @@ export interface IntroducedLegitimateInterest {
  * preference controls show these as allowed while the draft has no value,
  * and saving encodes them as allowed. An objection in the draft wins.
  *
- * @param gvl - The Global Vendor List.
- * @param restrictions - Publisher restrictions, if any.
  * @returns Purpose and vendor IDs, each sorted and listed once.
  *
  * @public

@@ -1,14 +1,3 @@
-/**
- * Tests for @inth/sdk/iab — the IAB TCF module.
- *
- * Verifies:
- * - createIAB seeds the kernel's iab slice (cmpId, customVendors).
- * - setVendorConsent / setPurposeConsent route through kernel.set.iab.
- * - setPurposeConsent also propagates to Inth categories.
- * - acceptAll / rejectAll flip every vendor + purpose.
- * - dispose cleans up the CMP API + kernel subscription.
- */
-
 import type { GlobalVendorList } from '@inth/sdk-core';
 import { createConsentKernel } from '@inth/sdk-core';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -184,8 +173,6 @@ describe('createIAB: mutations', () => {
 		const kernel = createConsentKernel();
 		const iab = createIAB({ cmpId: 28, gvl: MOCK_GVL, kernel });
 
-		// `marketing` requires purposes 2+3+4 all true. Flip them in
-		// sequence and verify marketing flips on the last.
 		iab.setPurposeConsent(2, true);
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 		iab.setPurposeConsent(3, true);
@@ -210,7 +197,6 @@ describe('createIAB: mutations', () => {
 		expect(snap.iab?.purposeConsents[3]).toBe(true);
 		// No vendor declares the special feature, so it is never shown.
 		expect(snap.iab?.specialFeatureOptIns[1]).toBe(false);
-		// Inth categories should follow.
 		expect(snap.effectivePermissions.marketing).toBe(false);
 		expect(snap.explicitChoice).toBeNull();
 

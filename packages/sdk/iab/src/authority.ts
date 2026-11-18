@@ -238,7 +238,6 @@ export interface AuthorityCheck {
 	restrictionsChanged: boolean;
 }
 
-/** Whether a receipt map grants an ID as its own property. */
 const grants = (map: Record<string, boolean>, id: string): boolean =>
 	map[id] === true && Object.hasOwn(map, id);
 
