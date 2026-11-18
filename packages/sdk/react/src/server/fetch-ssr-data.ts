@@ -5,14 +5,6 @@ import { fetchRequestInit, resolveRequestProjectUrl } from '@inth/sdk/server';
 
 import type { FetchSSRDataOptions } from './types';
 
-/** Headers that mark a prefetch or prerender rather than a page view. */
-const SPECULATION_HEADERS = [
-	'purpose',
-	'sec-purpose',
-	'next-router-prefetch',
-	'x-middleware-prefetch',
-] as const;
-
 /** What the request told the backend, from the headers `/init` was sent. */
 const buildRequestContext = function buildRequestContext(
 	projectUrl: string,
