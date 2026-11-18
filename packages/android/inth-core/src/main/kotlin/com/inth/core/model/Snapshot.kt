@@ -220,9 +220,9 @@ data class KernelError(
  * is the choice-prompt fingerprint the choice was made against, so a policy
  * change invalidates it instead of silently reusing an old grant.
  *
- * [confirmedAt] holds the time of each category an earlier action confirmed and this
- * one kept. Every other category was confirmed at [actionAt]. Kept categories share
- * [fingerprint], because a commit keeps earlier values only under the same one.
+ * [confirmedAt] holds the time of each category an earlier action confirmed under the
+ * same [fingerprint] and this one kept. Every other category was confirmed at
+ * [actionAt].
  */
 @Serializable
 data class ExplicitChoice(
