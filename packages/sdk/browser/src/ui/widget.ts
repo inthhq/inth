@@ -1,6 +1,5 @@
 import {
 	consentTypes,
-	deniedVendorIds,
 	resolveCategoryTitle,
 	resolveVendorListCopy,
 	vendorsListedUnder,
@@ -322,14 +321,7 @@ export const createWidget = function createWidget(
 			onToggle: toggleVendor,
 			openCards: openVendorCards,
 			slot,
-			vendors:
-				snapshot.model === 'iab'
-					? []
-					: vendorsListedUnder(
-							snapshot.vendors?.declared ?? [],
-							name,
-							deniedVendorIds(snapshot)
-						),
+			vendors: vendorsListedUnder(snapshot, name),
 		});
 		const content = buildContent(copy, ids, noStyle, vendorList);
 		const item = h(

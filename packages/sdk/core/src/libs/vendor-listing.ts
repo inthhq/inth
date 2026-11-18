@@ -7,7 +7,8 @@
  * here.
  */
 import type { AllConsentNames } from '../consent/consent-types';
-import type { ResolvedVendor } from '../types';
+import { deniedVendorIds } from '../modules/vendor-denial';
+import type { ConsentSnapshot, ResolvedVendor } from '../types';
 import type { HasCondition } from './has';
 import { extractConsentNamesFromCondition } from './has';
 
@@ -73,19 +74,26 @@ export const listedVendors = function listedVendors(
  * vendor under `{ not: 'marketing' }` gates on marketing but cannot sit in
  * the marketing row, since turning the category on would switch it off.
  * Every framework's preference center uses this one filter so their rows
- * agree.
+ * agree. Under an `iab` policy the TC string decides and no vendor row is
+ * listed.
  *
+ * @param snapshot - The snapshot's policy model, declared vendors and
+ * vendor denials.
  * @param category - The category row being rendered.
- * @param denied - Vendor denials honored by the kernel's gates.
  * @returns The vendors to list, in declared order.
  * @public
  */
 export const vendorsListedUnder = function vendorsListedUnder(
-	declared: readonly ResolvedVendor[],
-	category: AllConsentNames,
-	denied?: ReadonlySet<string> | null
+	snapshot: Pick<ConsentSnapshot, 'model' | 'vendorChoice' | 'vendors'>,
+	category: AllConsentNames
 ): ResolvedVendor[] {
-	return listedVendors(declared, denied).filter((vendor) =>
+	if (snapshot.model === 'iab') {
+		return [];
+	}
+	return listedVendors(
+		snapshot.vendors?.declared ?? [],
+		deniedVendorIds(snapshot)
+	).filter((vendor) =>
 		extractConsentNamesFromCondition(vendor.category).includes(category)
 	);
 };

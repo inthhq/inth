@@ -17,7 +17,6 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../kernel';
 import { vendorsListedUnder } from '../../libs/vendors';
-import { deniedVendorIds } from '../../modules/has';
 import type {
 	ConsentKernel,
 	KernelConfig,
@@ -204,11 +203,7 @@ describe('staging', () => {
 		);
 		const snapshot = kernel.getSnapshot();
 		expect(
-			vendorsListedUnder(
-				snapshot.vendors?.declared ?? [],
-				'marketing',
-				deniedVendorIds(snapshot)
-			).map((entry) => entry.id)
+			vendorsListedUnder(snapshot, 'marketing').map((entry) => entry.id)
 		).toEqual(['meta-pixel']);
 		const draft = createPreferenceDraft(kernel);
 		draft.setVendor('meta-pixel', true);

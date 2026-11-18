@@ -3,7 +3,6 @@ import {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 	consentTypes as defaultConsentTypes,
-	deniedVendorIds,
 	has as evaluateHas,
 	resolveConsentPresentation,
 	vendorsListedUnder,
@@ -314,14 +313,7 @@ const createConsentState = function createConsentState(
 			return displayedConsentTypes(controller.consentCategories);
 		},
 		getDisplayedVendors(category: AllConsentNames) {
-			const snapshot = getSnapshotLocal();
-			return snapshot.model === 'iab'
-				? []
-				: vendorsListedUnder(
-						snapshot.vendors?.declared ?? [],
-						category,
-						deniedVendorIds(snapshot)
-					);
+			return vendorsListedUnder(getSnapshotLocal(), category);
 		},
 		has(condition: HasCondition<AllConsentNames>) {
 			const snapshot = getSnapshotLocal();

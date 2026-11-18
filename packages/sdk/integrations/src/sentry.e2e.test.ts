@@ -399,9 +399,10 @@ describe('Sentry adapter through the kernel and script loader', () => {
 			],
 		});
 		disposers.push(() => runtime.dispose());
-		const declared = runtime.kernel.getSnapshot().vendors?.declared ?? [];
 		expect(
-			vendorsListedUnder(declared, 'necessary').map(({ name }) => name)
+			vendorsListedUnder(runtime.kernel.getSnapshot(), 'necessary').map(
+				({ name }) => name
+			)
 		).toContain(sentryManifest.vendorDetails.name);
 	});
 

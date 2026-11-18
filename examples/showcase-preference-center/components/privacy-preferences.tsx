@@ -4,18 +4,13 @@ import {
 	ConsentWidget,
 	useConsentDraft,
 	useConsents,
-	useDeclaredVendors,
 	useExplicitChoice,
 	useHasConsentUI,
 	useModel,
 	useTranslations,
 } from '@inth/nextjs';
-import type {
-	AllConsentNames,
-	CategoryDecision,
-	ResolvedVendor,
-} from '@inth/nextjs';
-import { vendorsListedUnder } from '@inth/nextjs/engine';
+import type { AllConsentNames, CategoryDecision } from '@inth/nextjs';
+import { useVendorsListedUnder } from '@inth/nextjs/headless';
 
 const formatTime = (epochMs: number) =>
 	new Intl.DateTimeFormat(undefined, {
@@ -27,7 +22,6 @@ interface CategoryRowProps {
 	category: AllConsentNames;
 	title: string;
 	description: string | undefined;
-	vendors: readonly ResolvedVendor[];
 	/** The switch position: what Save records. */
 	staged: boolean;
 	/** The permission scripts follow right now. */
@@ -41,12 +35,12 @@ const CategoryRow = ({
 	category,
 	title,
 	description,
-	vendors,
 	staged,
 	live,
 	decision,
 	onChange,
 }: CategoryRowProps) => {
+	const vendors = useVendorsListedUnder(category);
 	const titleId = `category-${category}`;
 	const required = category === 'necessary';
 	const pending = !required && staged !== (decision?.value ?? live);
@@ -138,7 +132,6 @@ const PreferenceForm = () => {
 	const choice = useExplicitChoice();
 	// What scripts follow right now.
 	const permissions = useConsents();
-	const declaredVendors = useDeclaredVendors();
 	const { consentTypes } = useTranslations();
 
 	const decisions = Object.values(choice?.categories ?? {});
@@ -177,7 +170,6 @@ const PreferenceForm = () => {
 						category={category}
 						title={consentTypes[category]?.title ?? category}
 						description={consentTypes[category]?.description}
-						vendors={vendorsListedUnder(declaredVendors, category)}
 						staged={draft.values[category]}
 						live={permissions[category]}
 						decision={

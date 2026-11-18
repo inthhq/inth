@@ -12,7 +12,7 @@ import type { CONSENT_CATEGORY } from '@inth/sdk/consent-record';
  * runner sees identical DOM.
  */
 import type { PresentationAction } from '@inth/sdk/engine';
-import { deniedVendorIds, vendorsListedUnder } from '@inth/sdk/engine';
+import { vendorsListedUnder } from '@inth/sdk/engine';
 import {
 	resolveActionLabels,
 	resolveCategoryTitle,
@@ -130,15 +130,8 @@ const categories = draftCategories;
 
 /** Vendors to list under each category; none under an `iab` policy. */
 const snapshot = useConsentSnapshot();
-const declaredVendors = computed(() =>
-	snapshot.value.model === 'iab' ? [] : (snapshot.value.vendors?.declared ?? [])
-);
 const displayedVendors = function displayedVendors(category: CONSENT_CATEGORY) {
-	return vendorsListedUnder(
-		declaredVendors.value,
-		category,
-		deniedVendorIds(snapshot.value)
-	);
+	return vendorsListedUnder(snapshot.value, category);
 };
 
 /** Single-open accordion state (opening one category closes the rest). */

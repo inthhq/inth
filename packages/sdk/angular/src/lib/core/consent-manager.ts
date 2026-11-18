@@ -50,7 +50,6 @@ import {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 	consentTypes as defaultConsentTypes,
-	deniedVendorIds,
 	has as evaluateHas,
 	hasGlobalPrivacyControlSignal,
 	IABUnavailableError,
@@ -588,14 +587,7 @@ export class ConsentManager {
 	 * @returns The vendors to list, in declared order.
 	 */
 	getDisplayedVendors(category: AllConsentNames): ResolvedVendor[] {
-		const snapshot = this.#snapshot();
-		return snapshot.model === 'iab'
-			? []
-			: vendorsListedUnder(
-					snapshot.vendors?.declared ?? [],
-					category,
-					deniedVendorIds(snapshot)
-				);
+		return vendorsListedUnder(this.#snapshot(), category);
 	}
 
 	/**
