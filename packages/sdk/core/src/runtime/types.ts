@@ -466,7 +466,7 @@ export interface ConsentRuntimeOptions {
 	 * minor release.
 	 * @default false
 	 */
-	experimentalInthScriptRegistry?: boolean;
+	experimentalScriptRegistry?: boolean;
 	/**
 	 * Reload the page after an accept, reject or save turns off a category or
 	 * vendor that was granted, or after a `consentSource` withdraws one.

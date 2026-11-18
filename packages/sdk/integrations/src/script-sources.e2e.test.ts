@@ -342,7 +342,7 @@ describe('scriptLoader.sources with integrations', () => {
 		};
 		const runtime = createConsentRuntime({
 			enabled: false,
-			experimentalInthScriptRegistry: true,
+			experimentalScriptRegistry: true,
 			mode: custom({ init: () => Promise.resolve({}) }),
 			persistence: false,
 			// The init a server resolved from the manifest.
@@ -431,7 +431,7 @@ describe('scriptLoader.sources with integrations', () => {
 	it('keeps a page that pins Plausible to its own proxy on that proxy', async () => {
 		const runtime = createConsentRuntime({
 			enabled: false,
-			experimentalInthScriptRegistry: true,
+			experimentalScriptRegistry: true,
 			mode: custom({ init: () => Promise.resolve({}) }),
 			persistence: false,
 			prefetch: {

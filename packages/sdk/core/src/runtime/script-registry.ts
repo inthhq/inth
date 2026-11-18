@@ -3,7 +3,7 @@ import type { ConsentRuntimeOptions } from './types';
 
 /**
  * How the script loader reads the Inth script registry's sources, or
- * `undefined` when `experimentalInthScriptRegistry` is off or there is no
+ * `undefined` when `experimentalScriptRegistry` is off or there is no
  * document to load scripts into.
  *
  * @param options - The runtime's options.
@@ -13,10 +13,10 @@ import type { ConsentRuntimeOptions } from './types';
  * @internal
  */
 export const scriptRegistry = function scriptRegistry(
-	options: Pick<ConsentRuntimeOptions, 'experimentalInthScriptRegistry'>,
+	options: Pick<ConsentRuntimeOptions, 'experimentalScriptRegistry'>,
 	callsInit: boolean
 ): ScriptLoaderOptions['registry'] {
-	return options.experimentalInthScriptRegistry === true &&
+	return options.experimentalScriptRegistry === true &&
 		typeof document !== 'undefined'
 		? { waitForInit: callsInit }
 		: undefined;

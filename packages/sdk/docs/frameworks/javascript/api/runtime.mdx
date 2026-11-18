@@ -45,7 +45,7 @@ Only `mode` is required.
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. |
 | `nonce` | `string` | none | CSP nonce the script loader puts on every `<script>` it creates. A script's own `nonce` wins. |
 | `scriptLoader` | `{ onDebug?, sources? }` | none | `onDebug` receives every script loader lifecycle event. `sources` loads a script from another URL, keyed by script `id`, such as a vetted copy on your own host: `{ posthog: { src, integrity, attributes? } }`. Only the URL changes; an integration's setup, attributes and callbacks still run. `integrity` also sets `crossorigin="anonymous"`; an `integrity` with no hash a browser can parse keeps the script from loading, because the browser would run it unchecked. `attributes` sets `data-*` attributes on the tag that the script does not set itself, and removes those set to `null`. A script with its own `integrity` keeps it, and keeps its own URL when the entry lists a different hash. Fields c15t does not know are ignored. Read when the script loader starts. |
-| `experimentalInthScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. The framework packages do not pass it through yet. |
+| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. The framework packages do not pass it through yet. |
 | `iab` | IAB options or `false` | none | CMP settings. Needs `createIAB`. |
 | `createIAB` | `createIAB` from `@inth/sdk/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
 | `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. c15t then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow a c15t mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
@@ -55,7 +55,7 @@ Only `mode` is required.
 
 ## Inth script registry (experimental)
 
-With `experimentalInthScriptRegistry: true`, the runtime loads integrations by
+With `experimentalScriptRegistry: true`, the runtime loads integrations by
 the `scriptRegistry.sources` list that the project's consent manifest carries.
 Every `/init` resolved from that manifest copies `scriptRegistry`, whether the
 server, the browser or the backend resolves it, so the list costs no extra

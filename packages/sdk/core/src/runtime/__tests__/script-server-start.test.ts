@@ -175,7 +175,7 @@ describe('serverScriptStart', () => {
 			scriptLoader?: ConsentRuntimeOptions['scriptLoader']
 		) =>
 			serverScriptStart({
-				experimentalInthScriptRegistry: true,
+				experimentalScriptRegistry: true,
 				mode,
 				prefetch: {
 					...prefetchFor({ marketing: true }),
@@ -240,7 +240,7 @@ describe('serverScriptStart', () => {
 	test('leaves an integration to the client when the prefetch has not resolved init', () => {
 		expect(
 			serverScriptStart({
-				experimentalInthScriptRegistry: true,
+				experimentalScriptRegistry: true,
 				mode,
 				prefetch: {
 					...prefetchFor({ marketing: true }),
@@ -254,7 +254,7 @@ describe('serverScriptStart', () => {
 	test('starts an integration from its own URL when the prefetch carries no registry list', () => {
 		run(
 			serverScriptStart({
-				experimentalInthScriptRegistry: true,
+				experimentalScriptRegistry: true,
 				mode,
 				prefetch: prefetchFor({ marketing: true }),
 				scripts: [{ ...pixel, integration: 'pixel' }],

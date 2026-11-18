@@ -441,7 +441,7 @@ describe('scriptLoader.sources', () => {
 	});
 });
 
-describe('experimentalInthScriptRegistry', () => {
+describe('experimentalScriptRegistry', () => {
 	const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
 	const HASH_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
 	const HASH_INTEGRITY =
@@ -476,7 +476,7 @@ describe('experimentalInthScriptRegistry', () => {
 		}
 	) => {
 		const runtime = createConsentRuntime({
-			experimentalInthScriptRegistry: true,
+			experimentalScriptRegistry: true,
 			persistence: false,
 			...options,
 		});
@@ -631,7 +631,7 @@ describe('experimentalInthScriptRegistry', () => {
 		const stream = Promise.withResolvers<RuntimePrefetch>();
 		const runtime = createConsentProviderRuntime(
 			{
-				experimentalInthScriptRegistry: true,
+				experimentalScriptRegistry: true,
 				mode: initMode(init),
 				persistence: false,
 				prefetch: stream.promise,
@@ -1183,7 +1183,7 @@ describe('experimentalInthScriptRegistry', () => {
 
 	test('leaves scripts alone when off, even when init lists them', () => {
 		const runtime = startWith({
-			experimentalInthScriptRegistry: false,
+			experimentalScriptRegistry: false,
 			mode,
 			prefetch: {
 				initialPolicyPending: false,
@@ -1203,7 +1203,7 @@ describe('experimentalInthScriptRegistry', () => {
 	test('loads from the vendor URL for scripts a provider passes after init failed', async () => {
 		const init = vi.fn(() => Promise.reject(new TypeError('offline')));
 		const options: ConsentProviderRuntimeOptions = {
-			experimentalInthScriptRegistry: true,
+			experimentalScriptRegistry: true,
 			mode: initMode(init),
 			persistence: false,
 		};
@@ -1227,7 +1227,7 @@ describe('experimentalInthScriptRegistry', () => {
 
 	test('applies to scripts a provider passes after it started', async () => {
 		const options: ConsentProviderRuntimeOptions = {
-			experimentalInthScriptRegistry: true,
+			experimentalScriptRegistry: true,
 			mode: listed({ vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } }),
 			persistence: false,
 		};

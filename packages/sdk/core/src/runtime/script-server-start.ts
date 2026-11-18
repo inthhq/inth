@@ -307,7 +307,7 @@ const serverStartCandidates = function serverStartCandidates(
 	const { prefetch } = options;
 	const { scripts } = createScriptSourceResolver(
 		options.scriptLoader?.sources,
-		options.experimentalInthScriptRegistry
+		options.experimentalScriptRegistry
 			? () =>
 					readScriptRegistry({
 						policyPending:

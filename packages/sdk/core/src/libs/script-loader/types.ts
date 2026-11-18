@@ -409,7 +409,7 @@ export interface Script {
 	/**
 	 * The `@inth/integrations` integration that built this script, by its
 	 * vendor slug. Every helper in that package sets it. With
-	 * `experimentalInthScriptRegistry`, a script that has it and a `src`
+	 * `experimentalScriptRegistry`, a script that has it and a `src`
 	 * loads from the source the backend's script registry lists for its
 	 * `id`, and from its own URL when the registry lists none.
 	 */
