@@ -124,15 +124,6 @@ export const readDurationMs = function readDurationMs(
 	return value.endsWith('ms') ? parsed : parsed * 1000;
 };
 
-/** Whether the visitor asked for reduced motion. */
-export const prefersReducedMotion = function prefersReducedMotion(): boolean {
-	return (
-		typeof window !== 'undefined' &&
-		typeof window.matchMedia === 'function' &&
-		window.matchMedia('(prefers-reduced-motion: reduce)').matches
-	);
-};
-
 /**
  * Whether the browser applies `@starting-style`.
  *

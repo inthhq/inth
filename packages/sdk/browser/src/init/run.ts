@@ -42,6 +42,7 @@ import {
 	isRunnableNow,
 	startPlainScripts,
 } from '@inth/sdk-core/surface-actions/plain-scripts';
+import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { mergeClientOptions, readPageOptions } from '../auto-init';
 import { activateGatedScripts } from '../gated-scripts';
@@ -53,7 +54,6 @@ import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from '../page-actions';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { createBanner } from '../ui/banner';
 import type { BannerSurface } from '../ui/banner';
-import { prefersReducedMotion } from '../ui/dom';
 import { shareLocks } from '../ui/locks';
 import { createUIRoot } from '../ui/root';
 import { version } from '../version';

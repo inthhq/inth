@@ -29,7 +29,11 @@
 	} from '@inth/sdk/runtime/provider';
 	import { iabSurfaceActions } from '@inth/sdk/surface-state';
 	import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
-	import { setupColorScheme } from '@inth/sdk/ui/utils';
+	import {
+		prefersReducedMotion,
+		setupColorScheme,
+		subscribeReducedMotion,
+	} from '@inth/sdk/ui/utils';
 	import { BROWSER, DEV } from 'esm-env';
 	import type { Snippet } from 'svelte';
 	import { onDestroy, onMount, untrack } from 'svelte';
@@ -356,20 +360,13 @@
 		}
 	});
 
-	let prefersReducedMotion = $state(false);
+	let reducedMotion = $state(false);
 
 	onMount(() => {
-		if (typeof window === 'undefined' || !window.matchMedia) {
-			return;
-		}
-		const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-		prefersReducedMotion = mediaQuery.matches;
-
-		const handler = (event: MediaQueryListEvent) => {
-			prefersReducedMotion = event.matches;
-		};
-		mediaQuery.addEventListener('change', handler);
-		return () => mediaQuery.removeEventListener('change', handler);
+		reducedMotion = prefersReducedMotion();
+		return subscribeReducedMotion((reduced) => {
+			reducedMotion = reduced;
+		});
 	});
 
 	// The arm's theme overrides ride on the host theme, so the injected
@@ -394,7 +391,7 @@
 			return options.colorScheme;
 		},
 		get disableAnimation() {
-			return options.disableAnimation ?? prefersReducedMotion;
+			return options.disableAnimation ?? reducedMotion;
 		},
 		get legalLinks() {
 			return options.legalLinks;

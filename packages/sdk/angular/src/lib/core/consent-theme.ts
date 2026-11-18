@@ -14,7 +14,11 @@ import type { Signal } from '@angular/core';
 import type { LegalLinks } from '@inth/sdk/engine';
 import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
-import { setupColorScheme } from '@inth/sdk/ui/utils';
+import {
+	prefersReducedMotion,
+	setupColorScheme,
+	subscribeReducedMotion,
+} from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from './consent-manager';
 import type { DialogPreload } from './dialog-warming';
@@ -81,16 +85,12 @@ export class ConsentTheme {
 		}
 		const document = inject(DOCUMENT);
 		const destroyRef = inject(DestroyRef);
-		const view = document.defaultView;
-		if (view?.matchMedia) {
-			const query = view.matchMedia('(prefers-reduced-motion: reduce)');
-			this.#prefersReducedMotion.set(query.matches);
-			const handler = (event: MediaQueryListEvent) => {
-				this.#prefersReducedMotion.set(event.matches);
-			};
-			query.addEventListener('change', handler);
-			destroyRef.onDestroy(() => query.removeEventListener('change', handler));
-		}
+		this.#prefersReducedMotion.set(prefersReducedMotion());
+		destroyRef.onDestroy(
+			subscribeReducedMotion((reduced) =>
+				this.#prefersReducedMotion.set(reduced)
+			)
+		);
 
 		effect((onCleanup) => {
 			const scheme = this.colorScheme();

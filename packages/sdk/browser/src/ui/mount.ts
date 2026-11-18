@@ -1,6 +1,7 @@
 import { applyExperimentTheme } from '@inth/sdk-core';
 import { generateThemeCSS } from '@inth/sdk-ui/theme';
 import type { Theme } from '@inth/sdk-ui/theme';
+import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { stylesheet } from '../generated/styles';
 import { takeInitUI } from '../init/adopt';
@@ -12,7 +13,7 @@ import type {
 } from '../types';
 import { createBanner } from './banner';
 import { createDialog } from './dialog-surface';
-import { h, prefersReducedMotion } from './dom';
+import { h } from './dom';
 import { applyColorScheme, createStyle, createUIRoot } from './root';
 import type { UIRoot } from './root';
 import { createSlotApplier } from './slots';

@@ -17,12 +17,12 @@
  */
 
 import type { ConsentSnapshot } from '@inth/sdk-core';
+import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { stylesheet } from '../generated/dialog-styles';
 import type { InthGlobalBase } from '../global-base';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { createDialog } from '../ui/dialog';
-import { prefersReducedMotion } from '../ui/dom';
 import { createStyle } from '../ui/root';
 import type { Surface } from '../ui/surface';
 import type { InitUI } from './boot';
