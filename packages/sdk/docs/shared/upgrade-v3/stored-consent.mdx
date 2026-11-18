@@ -1,8 +1,8 @@
 ## Keep visitors' existing choices
 
-v3 uses the same `inth` cookie and storage key as v2 and reads v2 records. It
-does not rewrite them on page load; the next accept, reject or save writes a
-v3 record.
+Inth stores consent under `inth`, and under that default key it also reads
+the records c15t v2 wrote under `c15t`. It does not rewrite them on page
+load; the next accept, reject or save writes a v3 record.
 
 A v2 denial keeps restricting its category. A v2 grant keeps applying until
 the policy's validity period runs out, and then Inth asks again. If the rule

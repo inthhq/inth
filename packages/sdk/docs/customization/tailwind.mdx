@@ -18,7 +18,7 @@ Tailwind CSS 3 has no cascade layers. It treats `@layer components` as its own
 directive and fails the build on a stylesheet that uses it without a matching
 `@tailwind components`. Inth's Tailwind 3 PostCSS plugin removes the layer
 wrappers from Inth's stylesheets before Tailwind 3 runs. Inth's rules then
-win by specificity, as they did in Inth v2, so a utility on an Inth part needs
+win by specificity, as they did in c15t v2, so a utility on an Inth part needs
 Tailwind's important modifier, such as `!p-2`. The plugin cannot reach the
 `<style>` elements Inth renders itself, so on Tailwind 3 you turn those off
 with `styles: false` and import the stylesheet instead. The Astro integration

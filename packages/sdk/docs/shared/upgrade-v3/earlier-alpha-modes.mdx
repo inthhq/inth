@@ -3,7 +3,7 @@
 | `hosted({ url })` | `hosted({ backendURL })`, or the framework's backend URL variable |
 | `createManifestTransport({ manifest })` | `createManifestTransport({ snapshot })` |
 | `assertDecisionInputs` defaulting to `false` on `hosted()` | It now defaults to `true` whenever `initURL` is set. Pass `false` to turn it off. |
-| `hostedModes` from `inth/runtime/provider` | `readHostedMode(mode)` |
+| `hostedModes` from `c15t/runtime/provider` | `readHostedMode(mode)` |
 | `buildManifest: true` in Astro and Nuxt | `onBuildError: 'fail'`, the default for production builds. `buildManifest: false` is `manifest({ source: 'runtime' })`. |
-| A generated `inth-manifest.ts` and its `.gitignore` entry | `import { snapshot } from 'inth/generated'`. Most apps no longer import it at all. |
+| A generated `c15t-manifest.ts` and its `.gitignore` entry | `snapshot` from your framework package's `/generated` entry, such as `@inth/react/generated`. Most apps no longer import it at all. |
 | The build options `outputFile`, `exportName`, `importSource` and `rootDir` | Removed. The snapshot is a virtual module, or a file under `node_modules/.cache/inth/` in Next.js. |

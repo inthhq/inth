@@ -3,7 +3,7 @@
 | v2 | v3 |
 | --- | --- |
 | `translations` | `i18n` |
-| `backendURL`, `mode: 'hosted'` | `mode: hosted({ backendURL })` from `inth/react` on `ConsentProvider`. Next.js `ConsentRoot`: `NEXT_PUBLIC_INTH_PROJECT_URL` and `inth.config.ts`. |
+| `backendURL`, `mode: 'hosted'` | `mode: hosted({ backendURL })` from `@inth/react` on `ConsentProvider`. Next.js `ConsentRoot`: `NEXT_PUBLIC_INTH_PROJECT_URL` and `inth.config.ts`. |
 | `ssrData` (Next.js) | `ConsentRoot` with `state` from `resolveConsent()` |
 | `iframeBlockerConfig` | `iframeBlocker`, or `false` to turn it off |
 | `Frame`, `FrameRoot`, `FrameTitle`, `FrameButton`, `FrameProps` | `ConsentGate` and its parts. The `Frame` names still work as deprecated aliases and log a one-time warning outside production. |
@@ -11,23 +11,23 @@
 | `FrameTranslations` | `ConsentGateTranslations`. `FrameTranslations` still works as a deprecated alias. |
 | `--frame-*` CSS variables | `--consent-gate-*`, with the same suffixes, such as `--consent-gate-placeholder-background-color`. The old names no longer apply. |
 | `YouTubeEmbed`, `GoogleMap` | Removed. Wrap your own embed in `ConsentGate`. |
-| `useConsentScript()` | Removed. Register the script in `scripts` with a `@c15t/integrations` helper. |
+| `useConsentScript()` | Removed. Register the script in `scripts` with an `@inth/integrations` helper. |
 | `useSSRStatus()` | Removed |
 | `ConsentButton` | Removed. Use the `ConsentBanner` and `ConsentWidget` buttons, or call `useHeadlessConsentUI()` from your own button. |
-| `@c15t/react/cookie-banner` | `inth/react/consent-banner` |
+| `@c15t/react/cookie-banner` | `@inth/react/consent-banner` |
 | `retryConfig` | Removed |
 | `store`, including `namespace`, `debug`, `initialConsentCategories` and `initialTranslationConfig` | Removed. Use the top-level `consentCategories` and `i18n` options. Debug information is on `window.__inthDebug`. |
-| `window.inthStore` | `window.__inthDebug` |
+| `window.c15tStore` | `window.__inthDebug` |
 | `iab: iab({ ... })` | `IABProvider`. See [Move IAB setup](#move-iab-setup-to-iabprovider). |
 
 The `consent-provider-options` codemod renames `ConsentManagerProvider` and
 its option and prop types, turns `mode: 'hosted'` and `backendURL` into
 `hosted()`, and renames `iframeBlockerConfig`. It leaves offline and custom
-modes with a `TODO(inth v3)` comment. v2 still accepted the deprecated
+modes with a `TODO(c15t v3)` comment. v2 still accepted the deprecated
 `translations` option; rename it to `i18n` by hand.
 
 ```bash
-inth inth codemods consent-provider-options --dry-run --json
+inth c15t codemods consent-provider-options --dry-run --json
 ```
 
 `ConsentBanner`, `ConsentDialog`, `ConsentDialogLink`, `ConsentDialogTrigger`
@@ -41,21 +41,21 @@ moved a stored choice when the storage key changed. Remount the provider to
 change storage. Reading a vendor that nothing declares, through `vendors`, a
 script or the backend, returns `false`.
 
-Some names left the root `inth/react` entry:
+Some names that v2 exported from its root entry moved:
 
 | v2 import from the root | v3 import |
 | --- | --- |
-| `useHeadlessConsentUI`, `useConsentDialogTrigger`, `useColorScheme`, `useFocusTrap` and the translation helpers | `inth/react/headless` |
-| Flat banner parts such as `ConsentBannerCard` and `ConsentBannerAcceptButton` | `ConsentBanner.Card`, `ConsentBanner.AcceptButton` and the other compound parts, or the same names from `inth/react/components/consent-banner` |
-| `TriggerRoot`, `TriggerButton`, `TriggerIcon`, `TriggerText`, `useTriggerContext`, `useDraggable` | `inth/react/consent-dialog-trigger` |
-| Token types such as `ColorTokens` and `TypographyTokens` | `inth/react/types`. `Theme` stays on the root. |
-| `configureConsentManager`, `policyPackPresets`, `ConsentStoreState`, `ConsentManagerInterface` | Removed. Use `policyRulePresets` from `inth`. |
+| `useHeadlessConsentUI`, `useConsentDialogTrigger`, `useColorScheme`, `useFocusTrap` and the translation helpers | `@inth/react/headless` |
+| Flat banner parts such as `ConsentBannerCard` and `ConsentBannerAcceptButton` | `ConsentBanner.Card`, `ConsentBanner.AcceptButton` and the other compound parts, or the same names from `@inth/react/components/consent-banner` |
+| `TriggerRoot`, `TriggerButton`, `TriggerIcon`, `TriggerText`, `useTriggerContext`, `useDraggable` | `@inth/react/consent-dialog-trigger` |
+| Token types such as `ColorTokens` and `TypographyTokens` | `@inth/react/types`. `Theme` stays on the root. |
+| `configureConsentManager`, `policyPackPresets`, `ConsentStoreState`, `ConsentManagerInterface` | Removed. Use `policyRulePresets` from `@inth/react`. |
 
 The `root-exports-to-subpaths` codemod moves these imports to their new
-entries and marks removed names with a `TODO(inth v3)` comment:
+entries and marks removed names with a `TODO(c15t v3)` comment:
 
 ```bash
-inth inth codemods root-exports-to-subpaths --dry-run --json
+inth c15t codemods root-exports-to-subpaths --dry-run --json
 ```
 
 `ConsentGate` changes one behavior from `Frame`. When its category is granted,

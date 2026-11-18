@@ -1,38 +1,41 @@
 ---
 title: Upgrade from v2
-description: Upgrade a JavaScript app from the Inth v2 store and getOrCreateConsentRuntime to v3. Covers @c15t/browser, createConsentRuntime, the consent kernel, moved exports, callbacks, policies and stored consent.
+description: Upgrade a JavaScript app from the c15t v2 store and getOrCreateConsentRuntime to Inth v3. Covers @inth/sdk, createConsentRuntime, the consent kernel, moved exports, callbacks, policies and stored consent.
 group: frameworks
 ---
 
 <Prompt title="Upgrade this JavaScript app to Inth v3" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
-  Upgrade this JavaScript app from the Inth v2 store to Inth v3.
+  Upgrade this JavaScript app from the c15t v2 store to Inth v3.
 
   Read https://v3.c15t.com/docs/frameworks/javascript/upgrade-v3.md first and follow it in order. Do not guess v3 APIs from memory.
 
-  1. Find every use of the `inth` package and `@c15t/scripts`: `getOrCreateConsentRuntime`, `configureConsentManager`, `consentStore`, cookie helpers, script loader and iframe blocker functions.
-  2. Decide which v3 entry fits. Use `@c15t/browser` if the app wants the stock banner, `createConsentRuntime` from `inth/runtime` if it renders its own UI, and `createConsentKernel` only if it mounts each module itself. Tell me which one you picked and why.
-  3. Install `inth`, or `@c15t/browser` for the stock banner, plus `@c15t/integrations` if the app uses vendor helpers and `@c15t/dev-tools` if it uses dev tools.
-  4. Install the Inth CLI with `npm install -g @inth/cli` if `inth` is missing, then run `inth inth codemods scripts-to-integrations consent-provider-options policy-packs-to-policy-rules callbacks-to-v3 --dry-run --json`. Review the output, then run the same command without `--dry-run`. The codemods leave a `TODO(inth v3)` comment wherever they need you to finish a change.
-  5. If you picked `createConsentRuntime`, call `runtime.start()` after creating it. Replace each store call with its v3 equivalent from the guide's mapping table.
-  6. Update callbacks and policy presets as the guide describes.
-  7. Keep the existing backend URL. If the app runs its own Inth backend, stop and tell me, because it has to be upgraded in the same release with https://v3.c15t.com/docs/self-host/upgrade-v3.md.
-  8. Run the typecheck and build, and resolve every `TODO(inth v3)` comment.
+  1. Find every use of the `c15t` package and `@c15t/scripts`: `getOrCreateConsentRuntime`, `configureConsentManager`, `consentStore`, cookie helpers, script loader and iframe blocker functions.
+  2. Decide which v3 entry fits. Use `init()` from `@inth/sdk` if the app wants the stock banner, `createConsentRuntime` from `@inth/sdk/runtime` if it renders its own UI, and `createConsentKernel` only if it mounts each module itself. Tell me which one you picked and why.
+  3. Install `@inth/sdk`, plus `@inth/integrations` if the app uses vendor helpers. Dev tools are in `@inth/sdk/devtools`.
+  4. Install the Inth CLI with `npm install -g @inth/cli` if `inth` is missing, then run `inth c15t codemods scripts-to-integrations consent-provider-options policy-packs-to-policy-rules callbacks-to-v3 --dry-run --json`. Review the output, then run the same command without `--dry-run`. The codemods leave a `TODO(c15t v3)` comment wherever they need you to finish a change.
+  5. The codemods write c15t v3 paths. Point `c15t` imports at `@inth/sdk/engine`, `c15t/runtime` at `@inth/sdk/runtime` and `@c15t/integrations` at `@inth/integrations`, then remove the c15t packages.
+  6. If you picked `createConsentRuntime`, call `runtime.start()` after creating it. Replace each store call with its v3 equivalent from the guide's mapping table.
+  7. Update callbacks and policy presets as the guide describes.
+  8. Keep the existing backend URL. If the app runs its own c15t backend, stop and tell me, because it has to be upgraded in the same release with https://v3.c15t.com/docs/self-host/upgrade-v3.md.
+  9. Run the typecheck and build, and resolve every `TODO(c15t v3)` comment.
 
   When you finish, list the files you changed, anything you could not migrate, and how you checked that vendor requests still wait for consent.
 </Prompt>
 
 ## Before you start
 
-If you run your own Inth backend, upgrade it in the same release. A v3 client
+If you run your own c15t backend, upgrade it in the same release. A v3 client
 can't read a v2 backend. See
 [Upgrade a self-hosted backend](/docs/self-host/upgrade-v3).
 Inth-hosted backends need no change.
 
 Install the [Inth CLI](/docs/cli/overview#install-the-inth-cli) to run the
-codemods through `inth inth codemods`.
+codemods through `inth c15t codemods`. The codemods come from c15t, so they
+write c15t v3 paths such as `c15t` and `c15t/runtime`. After a run, point
+them at `@inth/sdk/engine` and `@inth/sdk/runtime`.
 
 Every v3 package ships ESM only. If a CommonJS file in your app calls
-`require()` on an Inth package, convert it to ESM.
+`require()` on a c15t or Inth package, convert it to ESM.
 
 ## Pick a replacement
 
@@ -42,17 +45,17 @@ to do.
 
 | You want | Use |
 | --- | --- |
-| The stock banner and dialog | `@c15t/browser`. Call `init()` from a bundled app, or add the script tag to a site without a build step. See the [quickstart](/docs/frameworks/javascript/quickstart). |
-| Your own UI, with persistence, the script loader and the blockers wired for you | `createConsentRuntime()` from `inth/runtime`, then `runtime.start()`. See [headless](/docs/frameworks/javascript/headless). |
-| The engine alone, mounting each module yourself | `createConsentKernel()` from `inth`. See the [kernel API](/docs/frameworks/javascript/api/kernel). |
+| The stock banner and dialog | `@inth/sdk`. Call `init()` from a bundled app, or add the script tag to a site without a build step. See the [quickstart](/docs/frameworks/javascript/quickstart). |
+| Your own UI, with persistence, the script loader and the blockers wired for you | `createConsentRuntime()` from `@inth/sdk/runtime`, then `runtime.start()`. See [headless](/docs/frameworks/javascript/headless). |
+| The engine alone, mounting each module yourself | `createConsentKernel()` from `@inth/sdk/engine`. See the [kernel API](/docs/frameworks/javascript/api/kernel). |
 
-Install `inth` for the runtime or the kernel:
+Install `@inth/sdk`:
 
-<CommandTabs command="inth" mode="install" />
+<CommandTabs command="@inth/sdk" mode="install" />
 
 The runtime takes the same kind of options v2 did. `mode` and `backendURL`
 become one transport, such as `hosted({ backendURL })` or `local({ policyRules })`,
-exported from `inth`. `translations` becomes `i18n`, and
+exported from `@inth/sdk/engine`. `translations` becomes `i18n`, and
 `iframeBlockerConfig` becomes `iframeBlocker`. See the
 [runtime reference](/docs/frameworks/javascript/api/runtime) for every option.
 
@@ -62,9 +65,9 @@ blockers. Until then nothing is gated.
 
 The `consent-provider-options` codemod rewrites `mode`, `backendURL` and
 `iframeBlockerConfig` in the object you pass to `getOrCreateConsentRuntime()`
-and adds the `hosted` import from `inth`. It leaves an offline mode with a
-`TODO(inth v3)` comment. Rename the call to
-`createConsentRuntime()` from `inth/runtime` yourself.
+and adds the `hosted` import from `c15t`. It leaves an offline mode with a
+`TODO(c15t v3)` comment. Rename the call to
+`createConsentRuntime()` from `@inth/sdk/runtime` yourself.
 
 ## Replace store calls
 
@@ -82,7 +85,7 @@ The runtime exposes the kernel as `runtime.kernel`. Read state from
 | `hasConsented()` | `kernel.getSnapshot().explicitChoice !== null` |
 | `saveConsents('all')` | `kernel.commands.save('all')` |
 | `saveConsents('necessary')` | `kernel.commands.save('none')` |
-| `selectedConsents`, `setSelectedConsent(name, value)` | `createPreferenceDraft(kernel)` from `inth/preference-draft`, then `draft.getState()` and `draft.set(name, value)` |
+| `selectedConsents`, `setSelectedConsent(name, value)` | `createPreferenceDraft(kernel)` from `@inth/sdk/preference-draft`, then `draft.getState()` and `draft.set(name, value)` |
 | `saveConsents('custom')` | `draft.save()` on that preference draft |
 | `setConsent(name, value)` | `kernel.commands.save({ [name]: value })` |
 | `activeUI`, `setActiveUI(ui)` | `kernel.getSnapshot().activeUI`, `kernel.set.activeUI(ui)` |
@@ -98,13 +101,13 @@ choice, so don't treat a `true` permission as a recorded grant. See
 
 ## Update moved exports
 
-| v2 export from `inth` | v3 |
+| v2 export from `c15t` | v3 |
 | --- | --- |
-| `getCookie`, `setCookie`, `deleteCookie`, `getConsentFromStorage`, `saveConsentToStorage`, `deleteConsentFromStorage` | Removed. `createPersistence()` from `inth/modules/persistence` owns storage. |
-| `loadScripts`, `unloadScripts`, `updateScripts`, `isScriptLoaded`, `getLoadedScriptIds` | Removed. Pass `scripts` to `createConsentRuntime()`, which mounts the loader on `start()`. To run a loader yourself, `createScriptLoader({ kernel, scripts })` from `inth/modules/script-loader` returns `updateScripts(next)`, `getLoadedScriptIds()` and `dispose()`. Use `getLoadedScriptIds().includes(id)` for `isScriptLoaded(id)`. |
-| `createIframeBlocker` | `inth/modules/iframe-blocker` |
-| `getEffectivePolicy`, `filterConsentCategoriesByPolicy` and the other policy helpers | `resolveConsentPresentation()` from `inth` and the helpers in `inth/surface-actions` |
-| `InthClient`, `OfflineClient`, `CustomClient`, `API_ENDPOINTS` | Transports: `hosted()`, `local()` and `custom()` from `inth` |
+| `getCookie`, `setCookie`, `deleteCookie`, `getConsentFromStorage`, `saveConsentToStorage`, `deleteConsentFromStorage` | Removed. `createPersistence()` from `@inth/sdk/modules/persistence` owns storage. |
+| `loadScripts`, `unloadScripts`, `updateScripts`, `isScriptLoaded`, `getLoadedScriptIds` | Removed. Pass `scripts` to `createConsentRuntime()`, which mounts the loader on `start()`. To run a loader yourself, `createScriptLoader({ kernel, scripts })` from `@inth/sdk/modules/script-loader` returns `updateScripts(next)`, `getLoadedScriptIds()` and `dispose()`. Use `getLoadedScriptIds().includes(id)` for `isScriptLoaded(id)`. |
+| `createIframeBlocker` | `@inth/sdk/modules/iframe-blocker` |
+| `getEffectivePolicy`, `filterConsentCategoriesByPolicy` and the other policy helpers | `resolveConsentPresentation()` from `@inth/sdk/engine` and the helpers in `@inth/sdk/surface-actions` |
+| `C15tClient`, `OfflineClient`, `CustomClient`, `API_ENDPOINTS` | Transports: `hosted()`, `local()` and `custom()` from `@inth/sdk/engine` |
 | `policyPackPresets` | `policyRulePresets` |
 | `configureConsentManager`, `createConsentManagerStore`, `clearConsentRuntimeCache` | Removed |
 
@@ -120,9 +123,9 @@ choice, so don't treat a `true` permission as a recorded grant. See
 
 ## Update dev tools
 
-Dev tools no longer depend on React. Upgrade `@c15t/dev-tools` to
-`@c15t/dev-tools` with the rest of Inth, then call
-`createDevTools({ kernel })` with your runtime's kernel. See
+Dev tools no longer depend on React. Replace `@c15t/dev-tools` with
+`@inth/sdk/devtools`, then call `createDevTools({ kernel })` with your
+runtime's kernel. See
 [dev tools](/docs/frameworks/javascript/dev-tools).
 
 <include src="../../shared/upgrade-v3/earlier-alpha-intro.mdx" />
@@ -137,7 +140,7 @@ Modes and build integrations:
 
 | Removed | Use instead |
 | --- | --- |
-| `init({ backendURL })` | `init({ mode: hosted() })`, or `init({ mode: manifest() })` with `consentManifest()` from `inth/build` |
+| `init({ backendURL })` | `init({ mode: hosted() })`, or `init({ mode: manifest() })` with `consentManifest()` from `@inth/sdk/build` |
 | `init({ mode: 'hosted' })`, `'manifest'`, `'offline'` | `init({ mode: hosted() })`, `manifest()`, `local()`. Names work only in the script-tag builds. |
 | `init({ manifest, manifestURL })` | `init({ mode: manifest({ snapshot, manifestURL }) })` |
 | `init({ policyRules: ['europeOptIn'] })` | `init({ mode: local({ policyRules: [policyRulePresets.europeOptIn()] }) })` |
