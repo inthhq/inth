@@ -11,8 +11,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
  * Suffixes that may exist under both prefixes because one name is read as a
  * fallback for the other, or because the two are separate code identifiers.
  * `*_INTH_PROJECT_URL` and its fallback `*_C15T_BACKEND_URL` need no entry:
- * their suffixes differ, and a stray `INTH_BACKEND_URL` or `C15T_PROJECT_URL`
- * still fails.
+ * their suffixes differ, so only a stray spelling of either one fails.
  */
 const allowedBothPrefixes: Record<string, string> = {
 	ON_BUILD_ERROR:
