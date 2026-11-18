@@ -39,7 +39,7 @@ export interface ConsentModuleOptions {
 	 */
 	onBuildError?: 'fail' | 'runtime';
 	/**
-	 * Add a Inth tab to Nuxt DevTools in development. The tab embeds Inth
+	 * Add an Inth tab to Nuxt DevTools in development. The tab embeds Inth
 	 * DevTools for the app's consent kernel. @default true
 	 */
 	devtools?: boolean;
@@ -55,14 +55,13 @@ export interface ConsentModuleOptions {
 	 * `nonce` option. Set `false` when your Content Security Policy cannot
 	 * allow it. To turn it off for some routes only, set
 	 * `routeRules: { '/path': { inth: { initPrefetch: false } } }`, for
-	 * example where a client plugin changes inth's config for that route.
+	 * example where a client plugin changes Inth's config for that route.
 	 *
 	 * @default true
 	 */
 	initPrefetch?: boolean;
 }
 
-/** Options accepted by the Nuxt module. */
 export type ModuleOptions = Partial<InthNuxtConfig> & ConsentModuleOptions;
 
 /**
@@ -77,7 +76,7 @@ export type ModuleOptions = Partial<InthNuxtConfig> & ConsentModuleOptions;
  * ```ts
  * // app/app.config.ts
  * export default defineAppConfig({
- * 	Inth: {
+ * 	inth: {
  * 		networkBlocker: {
  * 			rules: [{ category: 'measurement', domain: 'tracker.example' }],
  * 			onRequestBlocked: (info) => console.info('Blocked', info.url),

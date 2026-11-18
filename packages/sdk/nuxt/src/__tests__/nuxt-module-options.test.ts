@@ -146,7 +146,6 @@ const evaluateModule = async function evaluateModule(
 	return snapshot;
 };
 
-/** The module's Nitro virtual for the consent route's snapshot, evaluated. */
 const importManifestSnapshot = function importManifestSnapshot(
 	nuxt: Nuxt
 ): Promise<unknown> {
@@ -156,7 +155,6 @@ const importManifestSnapshot = function importManifestSnapshot(
 	return evaluateModule(virtual['#inth/manifest-snapshot']?.());
 };
 
-/** A snapshot template the module registered, evaluated. */
 const importTemplate = function importTemplate(
 	nuxt: Nuxt,
 	id: string
@@ -169,14 +167,12 @@ const importTemplate = function importTemplate(
 	return evaluateModule(template?.getContents());
 };
 
-/** The module's template for the server render's snapshot, evaluated. */
 const importServerManifestSnapshot = function importServerManifestSnapshot(
 	nuxt: Nuxt
 ): Promise<unknown> {
 	return importTemplate(nuxt, '#@inth/sdk/server-manifest-snapshot');
 };
 
-/** The module's template for the browser's snapshot, evaluated. */
 const importClientManifestSnapshot = function importClientManifestSnapshot(
 	nuxt: Nuxt
 ): Promise<unknown> {

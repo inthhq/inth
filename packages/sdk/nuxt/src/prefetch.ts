@@ -22,7 +22,7 @@ export interface ClientManifestChunk {
 /**
  * Inth chunks a page may need before its first banner paints, so Nuxt keeps
  * prefetching them: the experiment controller. Matched against the end of
- * the source path, inside a Inth package. The IAB banner and the browser
+ * the source path, inside an Inth package. The IAB banner and the browser
  * resolver keep their hints only when the build uses them; see
  * {@link IAB_FIRST_BANNER_SOURCES} and {@link BROWSER_RESOLVER_SOURCE}.
  */
@@ -64,8 +64,6 @@ export interface ConsentPrefetchOptions {
 /**
  * Whether a file belongs to an SDK package (`@inth/*` other than the CLI), read from
  * the nearest `package.json` that names a package.
- *
- * @returns A check that caches each directory it reads.
  * @internal
  */
 export const createPackageCheck = function createPackageCheck(): (
@@ -116,9 +114,7 @@ export const createPackageCheck = function createPackageCheck(): (
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a Inth package; reads
- * the nearest `package.json` by default.
- * @param options - Build facts; see {@link ConsentPrefetchOptions}.
+ * @param isConsentFile - Reads the nearest `package.json` by default.
  * @internal
  */
 export const stopPrefetchingConsentChunks =
@@ -145,8 +141,6 @@ export const stopPrefetchingConsentChunks =
 				deferred.add(key);
 			}
 		}
-		// Every chunk something else loads, statically or on demand, keeps its
-		// hint: the entry, pages, components and the Inth chunks kept above.
 		const reached = new Set<string>();
 		const visit = (key: string): void => {
 			if (reached.has(key)) {
@@ -186,7 +180,6 @@ export const stopPrefetchingConsentChunks =
 		}
 	};
 
-/** List a Inth dynamic chunk among every entry's imports. */
 const preloadWithEntry = function preloadWithEntry(
 	manifest: Record<string, ClientManifestChunk>,
 	srcDir: string,
@@ -230,7 +223,6 @@ const BANNER_SOURCE = '/dist/runtime/components/prompt.vue';
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a Inth package.
  * @internal
  */
 export const preloadConsentBanner = function preloadConsentBanner(
@@ -250,7 +242,6 @@ export const preloadConsentBanner = function preloadConsentBanner(
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a Inth package.
  * @internal
  */
 export const preloadBrowserResolver = function preloadBrowserResolver(
@@ -289,8 +280,6 @@ export const DEFERRED_ENGINE_MANIFEST_KEY = 'inth:deferred-engine';
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a Inth package.
- * @param ssr - Nuxt's `ssr` option.
  * @internal
  */
 export const preloadDeferredEngine = function preloadDeferredEngine(
@@ -370,7 +359,7 @@ const SCRIPT_FILE = /\.m?js$/u;
  * returning one, mostly never sees it. The engine stays at its priority,
  * since the plugin awaits it before the app mounts. A chunk the app needs
  * (one the entry, a page or a component outside Inth imports) keeps its
- * priority too, as does one a Inth chunk the page may need before its first
+ * priority too, as does one an Inth chunk the page may need before its first
  * banner imports: the experiment controller, the IAB banner when the build
  * turns IAB on, and the browser resolver when the mode uses it (the chunks
  * {@link stopPrefetchingConsentChunks} keeps hinting), and the components
@@ -379,10 +368,7 @@ const SCRIPT_FILE = /\.m?js$/u;
  *
  * Call it after every other edit of the manifest.
  *
- * @param manifest - Nuxt's client manifest.
  * @param srcDir - The directory manifest sources are relative to.
- * @param isConsentFile - Whether a file belongs to a Inth package.
- * @param options - Build facts; see {@link ConsentPrefetchOptions}.
  * @returns The files, relative to the build assets directory, as the
  * manifest names them. Empty when the build has no stock banner chunk, or
  * every page preloads it with the entry (`ssr: false`).
@@ -464,7 +450,7 @@ export const bannerOnlyFiles = function bannerOnlyFiles(
  * browser would fetch it only after parsing the entry. The entry loads
  * first anyway, so the edge only ever repeated a preload.
  *
- * @param manifest - Nuxt's client manifest, edited in place.
+ * Edits the manifest in place.
  * @internal
  */
 export const breakEntryImportCycles = function breakEntryImportCycles(

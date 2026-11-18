@@ -1,4 +1,4 @@
-// Type test for the options a Nuxt app passes to Inth. `check-types:nuxt`
+// Type test for the options a Nuxt app passes to Inth. `check-types`
 // checks it through the playground, where Nuxt applies the module's type
 // augmentations the same way it does in an application.
 import type { BlockedRequestInfo } from '@inth/sdk/modules/network-blocker';
