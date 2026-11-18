@@ -79,7 +79,7 @@ final class SaveDeliveryTests: XCTestCase {
 
     /// The device state this was filed for, in one test.
     ///
-    /// A backend that answers `400 INPUT_VALIDATION_FAILED` has read the bytes and
+    /// A backend that answers `400 invalid_request` has read the bytes and
     /// refused them, and the queue replays those same bytes, so the answer is
     /// permanent. It used to be emitted, dropped, and repeated on every launch for a
     /// week while the caller held `committed`.

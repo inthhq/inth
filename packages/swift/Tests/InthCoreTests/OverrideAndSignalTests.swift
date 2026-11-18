@@ -225,8 +225,9 @@ final class OverrideAndSignalTests: XCTestCase {
             gpc: true
         )
         let payload = SavePayload(
-            subjectId: "sub_4ZrjtNN3QTDfdH8RQdZEAE8ohrCk",
-            subject: ConsentSubject(subjectId: "sub_4ZrjtNN3QTDfdH8RQdZEAE8ohrCk", externalId: nil, identityProvider: nil),
+            idempotencyKey: "019c1c38-a400-7100-8000-000000000103",
+            subjectId: "019c1c38-a400-7100-8000-000000000002",
+            subject: ConsentSubject(subjectId: "019c1c38-a400-7100-8000-000000000002", externalId: nil, identityProvider: nil),
             choice: .empty,
             confirmed: ConfirmedCoverage(categories: [:], actionAt: 1),
             consents: ConsentState(),
@@ -245,7 +246,7 @@ final class OverrideAndSignalTests: XCTestCase {
         XCTAssertEqual(encoded?["decisionInputs"]?["gpc"]?.boolValue, true)
         XCTAssertNil(
             InthJSON.parse(
-                try SubjectPostBodyBuilder.body(for: payload, domain: "app.example.com")
+                try ConsentRecordBodyBuilder.body(for: payload, property: "com.example.app")
             )?["gpc"],
             "the token is the stronger claim, so the flat assertion stays off the wire"
         )

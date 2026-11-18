@@ -11,30 +11,27 @@ import Foundation
 struct StubHTTP: HTTPTransport {
     let body: Data
     func send(_ request: HTTPRequest) async throws -> HTTPResponse {
-        HTTPResponse(
-            status: 200,
-            headers: ["x-inth-policy-contract": "1"],
-            body: body
-        )
+        HTTPResponse(status: 200, body: body)
     }
 }
 
 /// Fails every delivery, which is the case the 50 ms commit budget is about.
 struct DeadTransport: InthTransport {
-    let domain: String = "consent.example.com"
+    let property: String = "com.example.app"
     func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
         .failure(.offline)
     }
 
-    func sendSave(_ body: Data) async -> Result<Void, InthError> {
+    func sendSave(_ body: Data) async -> Result<String?, InthError> {
         .failure(.offline)
     }
 
-    func patchIdentity(
+    func linkSubject(
         subjectId: String,
         externalId: String,
-        identityProvider: String?
-    ) async -> Result<Void, InthError> {
+        identityProvider: String?,
+        identityToken: String
+    ) async -> Result<String?, InthError> {
         .failure(.offline)
     }
 }

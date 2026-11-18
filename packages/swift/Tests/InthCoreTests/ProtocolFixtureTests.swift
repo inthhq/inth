@@ -48,15 +48,9 @@ final class ProtocolFixtureTests: XCTestCase {
             let sha256: String
         }
 
-        struct Header: Decodable {
-            let name: String
-            let value: String
-        }
-
         let clock: Int64
         let count: Int
         let fixtures: [Entry]
-        let policyContractHeader: Header
         let protocolVersion: Int
     }
 
@@ -84,16 +78,6 @@ final class ProtocolFixtureTests: XCTestCase {
             index.protocolVersion,
             Inth.protocolVersion,
             "index.json is protocol \(index.protocolVersion); this build speaks \(Inth.protocolVersion). Rebuild or regenerate, do not compare across versions."
-        )
-        XCTAssertEqual(
-            index.policyContractHeader.name,
-            Inth.policyContractHeader,
-            "the fixture index declares a different contract header than this build sends"
-        )
-        XCTAssertEqual(
-            index.policyContractHeader.value,
-            Inth.protocolHeaders[Inth.policyContractHeader],
-            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(Inth.protocolHeaders[Inth.policyContractHeader] ?? "nothing")"
         )
         for entry in index.fixtures {
             XCTAssertEqual(
@@ -229,8 +213,8 @@ final class ProtocolFixtureTests: XCTestCase {
     /// woken. The second one is the half a revision cannot prove. A core that bumps
     /// the counter and never tells the observers has produced exactly the trace the
     /// kernel produced, while the React Native pump -- which reads `onChange`, not
-    /// the event hub -- never hears that anything changed, which is the
-    /// unsupported-contract bug this fixture was written to keep fixed.
+    /// the event hub -- never hears that anything changed, which is the error-write
+    /// bug this fixture was written to keep fixed.
     ///
     /// The observer attaches after bootstrap has settled, because hydration and
     /// bootstrap are mutations in some cores and not in others. That is also why the
@@ -520,8 +504,8 @@ final class ProtocolFixtureTests: XCTestCase {
             "method": .string(request.method.rawValue),
             "path": .string(request.url.path),
         ])
-        // `x-inth-version` is platform telemetry and the contract says the fixtures
-        // deliberately do not pin it, so extra header keys are not a difference.
+        // `headers` is empty on purpose: a `/v1` request pins no header, and telemetry
+        // headers such as `accept` are not compared, so extra keys are not a difference.
         record(
             for: entry,
             path: "expected.request",
@@ -742,15 +726,26 @@ final class ProtocolFixtureTests: XCTestCase {
             user = try decode(KernelUser.self, value, entry)
         }
         let clock = TestClock(now)
+        // A save-body fixture supplies the action's idempotency key and the property, so
+        // the body it pins is deterministic. Other kinds make no save that is compared.
+        let idempotencyKey = input["idempotencyKey"]?.stringValue
+        let property = input["property"]?.stringValue ?? "com.example.app"
         return CoreConfig(
             store: store,
-            transport: http.map { Fixture.transport($0) },
+            transport: http.map {
+                HostedTransport(
+                    baseURL: URL(string: "https://consent.example.com")!,
+                    property: property,
+                    client: $0
+                )
+            },
             consentCategories: try declaredCategories(entry: entry, input: input),
             overrides: overrides,
             user: user,
             gpc: detectedFromFixture,
             now: clock.reading,
-            initRetry: .disabled
+            initRetry: .disabled,
+            makeIdempotencyKey: idempotencyKey.map { key in { key } }
         )
     }
 
@@ -1143,10 +1138,8 @@ final class ProtocolFixtureTests: XCTestCase {
 
     /// Turn a fixture `transport` into the response a transport double serves.
     ///
-    /// Status and headers go through untouched, because the contract declaration is
-    /// the thing under test in the revision trace: a body served under a contract
-    /// this build does not speak is not evidence, and a runner that normalised the
-    /// header away would hide that.
+    /// Status and headers go through untouched, so a core that started reading a
+    /// header again would be reading what the fixture served.
     private static func initResponse(
         from transport: JSONValue,
         entry: Index.Entry

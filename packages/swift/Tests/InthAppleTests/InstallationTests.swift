@@ -106,7 +106,7 @@ final class InstallationTests: XCTestCase {
             XCTAssertTrue(core.isBootstrapped)
             await core.waitUntilIdle()
             let requestURL = try XCTUnwrap(http.requests.first?.url)
-            let expected = try XCTUnwrap(URL(string: backend + "/init"))
+            let expected = try XCTUnwrap(URL(string: backend + "/v1/consent/init"))
             XCTAssertEqual(requestURL.scheme, expected.scheme)
             XCTAssertEqual(requestURL.host, expected.host)
             XCTAssertEqual(requestURL.port, expected.port)
@@ -156,7 +156,7 @@ final class InstallationTests: XCTestCase {
         }
     }
 
-    func testTheNormalFormReachesTheTransportTheDomainAndTheBundledPolicy() throws {
+    func testTheNormalFormReachesTheTransportAndTheBundledPolicy() throws {
         let configured = InthAppleConfiguration(
             backendURL: " Acme.Inth.App/ ", storage: .memory,
             bundledPolicy: BundledPolicyResource(data: Data(), endpoint: "https://Acme.Inth.App/"),
@@ -167,10 +167,19 @@ final class InstallationTests: XCTestCase {
         let hosted = try XCTUnwrap(core.transport as? HostedTransport)
         XCTAssertEqual(hosted.baseURL.absoluteString, "https://acme.inth.app")
         XCTAssertEqual(hosted.policyEndpoint?.absoluteString, "https://acme.inth.app")
-        XCTAssertEqual(hosted.domain, "acme.inth.app")
+        XCTAssertEqual(
+            hosted.property, Bundle.main.bundleIdentifier?.lowercased() ?? "acme.inth.app",
+            "the property is the bundle identifier, not the project host")
         XCTAssertEqual(core.bundledPolicy?.endpoint, "https://acme.inth.app")
         XCTAssertNil(core.policy, "a bundled manifest and an in-code policy do not mix")
         XCTAssertFalse(core.dryRun)
+    }
+
+    func testAConfiguredPropertyIsSentLowercase() throws {
+        let configured = InthAppleConfiguration(
+            backendURL: "https://acme.inth.app", storage: .memory, property: "Com.Example.App")
+        let hosted = try XCTUnwrap(try configured.makeTransport() as? HostedTransport)
+        XCTAssertEqual(hosted.property, "com.example.app")
     }
 
     func testDryRunIsRefusedInAReleaseBuildOnBothDoors() throws {
@@ -352,11 +361,15 @@ final class InstallationTests: XCTestCase {
         let native = try configured.makeTransport(client: http)
         _ = await native.performInit(InitContext(overrides: try JSONDecoder().decode(KernelOverridesWire.self, from: Data("{}".utf8)), user: nil, subjectId: "subject"))
         _ = await native.sendSave(Data("{}".utf8))
-        _ = await native.patchIdentity(subjectId: "subject", externalId: "external", identityProvider: nil)
+        _ = await native.linkSubject(
+            subjectId: "subject", externalId: "external", identityProvider: nil, identityToken: "token")
         XCTAssertEqual(http.requests.count, 3)
-        XCTAssertEqual(http.requests.first?.url, URL(string: "https://acme.inth.app/init"))
+        XCTAssertEqual(http.requests.map(\.url.path), [
+            "/v1/consent/init", "/v1/consent/records", "/v1/subjects/subject/link",
+        ])
         for request in http.requests {
-            XCTAssertEqual(request.headers[Inth.versionHeader], Inth.version)
+            XCTAssertNil(request.headers["x-inth-version"])
+            XCTAssertNil(request.headers["x-inth-policy-contract"])
             XCTAssertEqual(request.headers["x-inth-platform"], "apple->\(InthApple.version)")
             XCTAssertFalse(request.headers.values.contains { $0.hasPrefix("rn->") })
         }

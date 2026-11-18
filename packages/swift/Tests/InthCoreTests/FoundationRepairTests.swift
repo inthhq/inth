@@ -151,7 +151,7 @@ final class FoundationRepairTests: XCTestCase {
         XCTAssertNil(loggedOut.iabConsent())
     }
 
-    func testFrozenOwnersAndDomainsDoNotCoalesceAtCapacity() async throws {
+    func testFrozenOwnersAndPropertiesDoNotCoalesceAtCapacity() async throws {
         let vector = try IABCommitTests().fixture()
         let store = InMemoryStore()
         let http = StubHTTP()
@@ -162,15 +162,15 @@ final class FoundationRepairTests: XCTestCase {
         let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
         let original = try XCTUnwrap(envelope.pendingSaves?.last?.body)
         let queue = PendingSaveQueue(store: store, now: { vector.now })
-        func body(_ owner: Int, _ domain: Int, subject: String? = nil, marker: String = "") throws -> Data {
+        func body(_ owner: Int, _ property: Int, subject: String? = nil, marker: String = "") throws -> Data {
             var fields = try XCTUnwrap(InthJSON.parse(original)?.objectValue)
-            fields["externalSubjectId"] = .string("u\(owner)")
-            fields["domain"] = .string("d\(domain).example.test")
+            fields["externalId"] = .string("u\(owner)")
+            fields["property"] = .string("d\(property).example.test")
             fields["givenAt"] = .number(Double(vector.now + Int64(marker.count)))
             if let subject { fields["subjectId"] = .string(subject) }
             return try InthJSON.encode(JSONValue.object(fields))
         }
-        // Replace initial anonymous body, then fill with distinct owner/domain pairs.
+        // Replace initial anonymous body, then fill with distinct owner/property pairs.
         queue.clear()
         var bodies: [Data] = []
         for i in 0 ..< 20 {

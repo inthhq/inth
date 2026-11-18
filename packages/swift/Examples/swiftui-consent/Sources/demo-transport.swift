@@ -4,7 +4,7 @@ import Foundation
 /// Local sample policy. Saves stay queued; this transport never claims remote delivery.
 /// Transports are internal API, used here so the demo runs with no backend.
 struct DemoTransport: InthTransport {
-    let domain = "swiftui-consent-demo"
+    let property = "swiftui-consent-demo"
     var unavailable = false
 
     func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
@@ -17,8 +17,10 @@ struct DemoTransport: InthTransport {
         }
     }
 
-    func sendSave(_ body: Data) async -> Result<Void, InthError> { .failure(.offline) }
-    func patchIdentity(subjectId: String, externalId: String, identityProvider: String?) async -> Result<Void, InthError> {
+    func sendSave(_ body: Data) async -> Result<String?, InthError> { .failure(.offline) }
+    func linkSubject(
+        subjectId: String, externalId: String, identityProvider: String?, identityToken: String
+    ) async -> Result<String?, InthError> {
         .failure(.offline)
     }
 

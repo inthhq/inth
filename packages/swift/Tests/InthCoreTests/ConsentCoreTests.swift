@@ -154,7 +154,7 @@ final class ConsentCoreTests: XCTestCase {
         let unsupported = PolicyFailureReason.unsupportedContract.rawValue
         let invalid = PolicyFailureReason.invalidPayload.rawValue
         let cases: [(String, JSONValue, String)] = [
-            ("a contract this build does not speak", .object([
+            ("a policy wire version this build does not read", .object([
                 "version": .integer(2),
                 "status": .string("matched"),
                 "policy": .null,
@@ -250,7 +250,9 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertTrue(core.snapshot().policyPending, "a refused save changes nothing")
     }
 
-    func testUnsupportedContractFromTheBackendIsReportedAndStaysDenyAll() async {
+    func testAContractDeclarationOnTheResponseIsNotRead() async {
+        // `/v1` has no negotiation: a 200 is a definitive answer whatever header rides
+        // on it, and the body alone decides what the core reads.
         http.initResponse = HTTPResponse(
             status: 200,
             headers: ["x-inth-policy-contract": "9"],
@@ -263,14 +265,9 @@ final class ConsentCoreTests: XCTestCase {
             clock: clock
         ))
 
-        XCTAssertTrue(core.snapshot().policyPending)
-        XCTAssertEqual(core.snapshot().effectivePermissions, .necessaryOnly)
-        XCTAssertEqual(core.snapshot().error?.code, "unsupported-contract")
-        XCTAssertEqual(
-            http.recordedInitRequests.count,
-            1,
-            "an unsupported contract will not be retried"
-        )
+        XCTAssertFalse(core.snapshot().policyPending)
+        XCTAssertTrue(core.snapshot().ready)
+        XCTAssertNil(core.snapshot().error)
     }
 
     func testMissingPolicyResolutionFailsClosedButAServedNoMatchDoesNot() async {
@@ -371,14 +368,15 @@ final class ConsentCoreTests: XCTestCase {
         let body = try? XCTUnwrap(InthJSON.parse(firstAttempt ?? Data())?.objectValue)
         XCTAssertEqual(body?["givenAt"]?.intValue, actionAt)
         XCTAssertEqual(body?["consentAction"]?.stringValue, "custom")
-        XCTAssertEqual(body?["domain"]?.stringValue, "app.example.com")
-        XCTAssertEqual(body?["type"]?.stringValue, "cookie_banner")
-        XCTAssertEqual(body?["preferences"]?["necessary"]?.boolValue, true)
-        XCTAssertEqual(body?["preferences"]?["marketing"]?.boolValue, true)
+        XCTAssertEqual(body?["property"]?.stringValue, "com.example.app")
+        XCTAssertNil(body?["type"])
+        XCTAssertNil(body?["preferences"])
+        XCTAssertEqual(body?["answer"]?["categories"]?["marketing"]?["value"]?.boolValue, true)
         XCTAssertEqual(body?["model"]?.stringValue, "opt-out")
         XCTAssertNil(body?["tcString"], "no IAB module, so no TC string")
-        let categories = try? XCTUnwrap(body?["choice"]?["categories"]?.objectValue)
+        let categories = try? XCTUnwrap(body?["answer"]?["categories"]?.objectValue)
         XCTAssertEqual(categories.map { Set($0.keys) }, ["marketing", "measurement"])
+        XCTAssertEqual(body?["confirmed"], .array([.string("measurement"), .string("marketing")]))
 
         http.setSavesFail(false)
         core.flushPending()
@@ -416,7 +414,7 @@ final class ConsentCoreTests: XCTestCase {
         let originalToken = queuedJSON?["policySnapshotToken"]?.stringValue
         let originalModel = queuedJSON?["model"]?.stringValue
         let originalGivenAt = queuedJSON?["givenAt"]?.intValue
-        let originalBasis = queuedJSON?["choice"]?["categories"]?["marketing"]?["basis"]?["fingerprint"]?
+        let originalBasis = queuedJSON?["answer"]?["categories"]?["marketing"]?["basis"]?["fingerprint"]?
             .stringValue
         XCTAssertEqual(originalToken, "token-1", "the token binds the write to a policy revision")
         XCTAssertNil(queuedJSON?["policyId"], "a tokenless write is the only one that asserts inputs")
@@ -463,7 +461,7 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertEqual(replayedJSON?["model"]?.stringValue, originalModel)
         XCTAssertEqual(replayedJSON?["givenAt"]?.intValue, originalGivenAt)
         XCTAssertEqual(
-            replayedJSON?["choice"]?["categories"]?["marketing"]?["basis"]?["fingerprint"]?
+            replayedJSON?["answer"]?["categories"]?["marketing"]?["basis"]?["fingerprint"]?
                 .stringValue,
             originalBasis,
             "the receipts still vouch for the policy the choice was made under"
@@ -529,7 +527,7 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertNotEqual(generated, replaced)
     }
 
-    func testEveryBackendRequestCarriesTheVersionAndContractHeaders() async {
+    func testEveryBackendRequestUsesTheV1RoutesWithoutVersionHeaders() async {
         http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution(
             policy: Fixture.rule(model: "opt-out", rights: optOutRights)
         ))
@@ -539,7 +537,7 @@ final class ConsentCoreTests: XCTestCase {
             transport: Fixture.transport(http),
             clock: clock
         ))
-        core.identify(KernelUser(externalId: "user-42", identityProvider: "clerk"))
+        core.identify(KernelUser(externalId: "user-42", identityProvider: "clerk"), identityToken: "token")
         core.save(.all)
         await core.waitUntilIdle()
 
@@ -548,15 +546,14 @@ final class ConsentCoreTests: XCTestCase {
             + http.recordedIdentityRequests
         XCTAssertGreaterThanOrEqual(requests.count, 3)
         for request in requests {
-            XCTAssertEqual(request.headers[Inth.versionHeader], Inth.version)
-            XCTAssertEqual(
-                request.headers[Inth.policyContractHeader],
-                String(inthPolicyContractVersion)
-            )
+            XCTAssertNil(request.headers["x-c15t-version"])
+            XCTAssertNil(request.headers["x-c15t-policy-contract"])
+            XCTAssertEqual(request.headers["accept"], "application/json")
         }
-        XCTAssertEqual(http.recordedInitRequests.first?.url.path, "/init")
-        XCTAssertEqual(http.recordedSaveRequests.first?.url.path, "/subjects")
-        XCTAssertEqual(http.recordedIdentityRequests.first?.url.path, "/subjects/\(subjectID ?? "")")
+        XCTAssertEqual(http.recordedInitRequests.first?.url.path, "/v1/consent/init")
+        XCTAssertEqual(http.recordedSaveRequests.first?.url.path, "/v1/consent/records")
+        XCTAssertEqual(http.recordedIdentityRequests.first?.url.path, "/v1/subjects/\(subjectID ?? "")/link")
+        XCTAssertEqual(http.recordedIdentityRequests.first?.method, .post)
     }
 
     // MARK: Model defaults
@@ -757,7 +754,7 @@ final class ConsentCoreTests: XCTestCase {
         // the payload the backend stores keeps what the subject said.
         XCTAssertEqual(core.snapshot().explicitChoice?.categories[.marketing]?.value, true)
         let body = http.recordedSaveRequests.last?.body ?? Data()
-        XCTAssertEqual(InthJSON.parse(body)?["preferences"]?["marketing"]?.boolValue, true)
+        XCTAssertEqual(InthJSON.parse(body)?["answer"]?["categories"]?["marketing"]?["value"]?.boolValue, true)
     }
 
     /// A notice rule belongs to an opt-out policy: `POLICY_MODEL_PROMPTS` in

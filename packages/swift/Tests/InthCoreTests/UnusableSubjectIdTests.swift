@@ -82,7 +82,7 @@ final class UnusableSubjectIdTests: XCTestCase {
         XCTAssertEqual(log.count("subject-id-unusable"), 1, "once per launch, not once per read")
         let message = try XCTUnwrap(log.error(withCode: "subject-id-unusable")?.message)
         XCTAssertTrue(message.contains(Self.legacyId), "the message must name the id it refused: \(message)")
-        for fragment in ["^sub_", "asks for", "consent again", "no decision for it"] {
+        for fragment in ["UUIDv7", "c15t sub_", "asks for", "consent again"] {
             XCTAssertTrue(message.contains(fragment), "the message must carry \"\(fragment)\": \(message)")
         }
 

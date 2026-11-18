@@ -238,7 +238,7 @@ final class BundledPolicyTests: XCTestCase {
             await expired.waitUntilIdle()
             let withdrawal = try XCTUnwrap(queue.entries().last)
             let frozen = try XCTUnwrap(InthJSON.parse(withdrawal.body))
-            XCTAssertEqual(frozen["preferences"]?["measurement"]?.boolValue, false, name)
+            XCTAssertEqual(frozen["answer"]?["categories"]?["measurement"]?["value"]?.boolValue, false, name)
             XCTAssertNotEqual(grant.body, withdrawal.body)
             XCTAssertEqual(withdrawal.actionAt, clock.now)
             XCTAssertFalse(expired.isAllowed(.measurement), name)
@@ -248,7 +248,7 @@ final class BundledPolicyTests: XCTestCase {
             var online: [String: JSONValue] = ["policyResolution": selected.response.policyResolution!]
             online["gvl"] = body["disclosures"]?["gvl"]?["data"]
             online["adTechProviders"] = body["disclosures"]?["atp"]?["providers"]
-            http.initResponse = HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: try XCTUnwrap(InthJSON.encode(JSONValue.object(online))))
+            http.initResponse = HTTPResponse(status: 200, body: try XCTUnwrap(InthJSON.encode(JSONValue.object(online))))
             restored.refresh()
             await restored.waitUntilIdle()
             XCTAssertNil(restored.bundledPolicyInfo)
