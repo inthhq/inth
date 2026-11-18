@@ -5,6 +5,7 @@ import {
 	AD_TECH_PROVIDERS_URL,
 	normalizeAdTechProviderIds,
 } from './ad-tech-provider';
+import { DEFAULT_GVL_ENDPOINT } from './constants';
 import type { brandingValues, hostingValues } from './constants';
 import { createDeterministicFingerprintSync } from './policy-fingerprint';
 import {
@@ -405,8 +406,6 @@ export interface ConsentManifestConfig {
 	/** Version label of `vendors`, for display and audit only. */
 	readonly vendorListVersion?: string;
 }
-
-const DEFAULT_GVL_ENDPOINT = 'https://gvl.inth.app';
 
 const buildGvlReference = function buildGvlReference(
 	config: ConsentManifestConfig

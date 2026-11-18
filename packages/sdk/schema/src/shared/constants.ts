@@ -11,3 +11,6 @@ export const brandingValues = ['c15t', 'inth', 'consent', 'none'] as const;
  * This is a runtime-safe constant that can be imported without Valibot
  */
 export const hostingValues = ['inth', 'self-hosted'] as const;
+
+/** Where the browser CMP and the manifest load the IAB Global Vendor List. */
+export const DEFAULT_GVL_ENDPOINT = 'https://gvl.inth.app';

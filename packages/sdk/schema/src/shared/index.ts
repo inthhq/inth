@@ -64,7 +64,10 @@ export {
 	type InitRequestParams,
 } from './init-request-params';
 // Export constants separately for runtime-safe usage
-export { brandingValues as brandingValuesConst } from './constants';
+export {
+	brandingValues as brandingValuesConst,
+	DEFAULT_GVL_ENDPOINT,
+} from './constants';
 export {
 	buildConsentId,
 	type ConsentSubmissionIdentity,
@@ -106,6 +109,7 @@ export {
 	gvlVendorUrlSchema,
 } from './gvl';
 export {
+	ADDITIONAL_CONSENT_V2_PATTERN,
 	AD_TECH_PROVIDER_FETCH_TIMEOUT_MS,
 	AD_TECH_PROVIDER_PURPOSES,
 	AD_TECH_PROVIDERS_URL,
@@ -117,6 +121,22 @@ export {
 	normalizeAdTechProviderIds,
 	parseAdTechProviderList,
 } from './ad-tech-provider';
+export { IAB_STORAGE_KEYS } from './iab-storage-keys';
+export {
+	CONSENT_ONLY_PURPOSES,
+	permittedLegitimateInterestPurposes,
+} from './tcf-purposes';
+export {
+	DEFAULT_IP_HEADERS_LIST,
+	getIpAddress,
+	type IpAddressConfig,
+	maskIpAddress,
+} from './client-ip';
+export {
+	type ForwardedElement,
+	forwardedNodeAddress,
+	parseForwarded,
+} from './forwarded';
 export {
 	type NonIABVendor,
 	type NonIABVendorConsent,
