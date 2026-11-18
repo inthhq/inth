@@ -206,8 +206,12 @@ describe('TanStack Start client chunks', () => {
 		// adds 66 bytes upstream (19,243 to 19,309). The plain-script checks
 		// also leave an `integration` script to the loader, which the script
 		// registry may move to another URL or hold: 34 bytes (19,336 to
-		// 19,370).
-		expect(brotli).toBeLessThanOrEqual(19_370);
+		// 19,370). Reading c15t's stored records as a fallback brings the
+		// storage-key families and the IAB storage keys, and the window keys
+		// and priority-image wait every adapter now shares from core's
+		// page-globals sit in a file of their own: 1,477 bytes (19,370 to
+		// 20,847).
+		expect(brotli).toBeLessThanOrEqual(20_847);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
