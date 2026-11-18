@@ -37,9 +37,18 @@ import type {
 	ConsentProviderRuntime,
 	ConsentRuntimeUpdate,
 } from '@inth/sdk/runtime/provider';
+import { createStandInKernel } from '@inth/sdk/runtime/stand-in-kernel';
+import { storageFor } from '@inth/sdk/runtime/storage-for';
+import type * as CommitModule from '@inth/sdk/surface-actions/early-commit';
+import type {
+	CompleteCommitInput,
+	CompleteCommitResult,
+	DeferredCommitted,
+} from '@inth/sdk/surface-actions/early-commit';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
+	pendingIsInert,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
@@ -47,13 +56,6 @@ import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
 import type { ProviderOptionsInput } from '../provider-options';
 import type { ConsentRootBoot } from './boot';
-import type * as CommitModule from './commit';
-import type {
-	CompleteCommitInput,
-	CompleteCommitResult,
-	DeferredCommitted,
-} from './commit';
-import { createStandInKernel, pendingIsInert } from './stand-in';
 import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './trigger';
 
 /** The engine as the deferred runtime takes it over. @internal */
@@ -96,7 +98,7 @@ const DIALOG_SHOWN_MS = 3000;
 
 let commitModule: Promise<typeof CommitModule> | undefined;
 const loadCommitModule = async (): Promise<typeof CommitModule> => {
-	commitModule ??= import('./commit');
+	commitModule ??= import('@inth/sdk/surface-actions/early-commit');
 	try {
 		return await commitModule;
 	} catch (error) {
@@ -149,9 +151,6 @@ export const createDeferredRuntime = function createDeferredRuntime(
 	const { boot } = options;
 	const defer = boot.d === 1;
 	let requestEngine: () => void = () => undefined;
-	const requested = new Promise<void>((resolve) => {
-		requestEngine = resolve;
-	});
 	const hooks: {
 		early?: (
 			name: string,
@@ -182,7 +181,7 @@ export const createDeferredRuntime = function createDeferredRuntime(
 	let ahead: { clearEpoch: boolean; subjectId: string } | undefined;
 	const readAhead = () => {
 		ahead ??= {
-			clearEpoch: hasStoredClearEpoch(options.options().storageConfig),
+			clearEpoch: hasStoredClearEpoch(storageFor(options.options())),
 			subjectId: generateSubjectId(),
 		};
 		return ahead;
@@ -197,16 +196,17 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		}
 	};
 
-	const ready = (async (): Promise<ConsentProviderRuntime | undefined> => {
-		await requested;
-		let create: EngineFactory;
-		try {
-			create = await options.loadEngine();
-		} catch (error) {
-			// The page keeps the stand-in.
-			console.error('[inth] The consent engine failed to load.', error);
-			return undefined;
-		}
+	let settleReady: (runtime: ConsentProviderRuntime | undefined) => void = () =>
+		undefined;
+	/** Settles with the first load attempt. */
+	const ready = new Promise<ConsentProviderRuntime | undefined>((resolve) => {
+		settleReady = resolve;
+	});
+	/** The load in flight. A failed one clears, so the next request retries. */
+	let loading: Promise<ConsentProviderRuntime | undefined> | undefined;
+
+	const buildEngine = async (): Promise<ConsentProviderRuntime | undefined> => {
+		const create = await options.loadEngine();
 		// A commit started while the chunk loaded: the engine starts from it.
 		await commitsSettled();
 		if (!active) {
@@ -235,7 +235,51 @@ export const createDeferredRuntime = function createDeferredRuntime(
 			});
 		}
 		return runtime;
-	})();
+	};
+
+	/**
+	 * An attempt that never rejects. A failure leaves the page on the
+	 * stand-in until something asks for the engine again, and rejects the
+	 * commands waiting for it so their surface shows again.
+	 */
+	const attachEngine = async (): Promise<
+		ConsentProviderRuntime | undefined
+	> => {
+		try {
+			return await buildEngine();
+		} catch (error) {
+			console.error('[inth] The consent engine failed to load.', error);
+			if (handle.attached()) {
+				return engine?.runtime;
+			}
+			const built = engine;
+			engine = undefined;
+			try {
+				built?.runtime.dispose();
+			} catch {
+				// Half built: nothing more to undo.
+			}
+			loading = undefined;
+			handle.fail(error);
+			return undefined;
+		}
+	};
+
+	const loadEngine = (): Promise<ConsentProviderRuntime | undefined> => {
+		if (engine) {
+			return Promise.resolve(engine.runtime);
+		}
+		if (!loading) {
+			const attempt = attachEngine();
+			loading = attempt;
+			// oxlint-disable-next-line promise/prefer-await-to-then -- `attachEngine` never rejects.
+			void attempt.then(settleReady);
+		}
+		return loading;
+	};
+	requestEngine = () => {
+		void loadEngine();
+	};
 
 	const later = function later<Result>(
 		run: (runtime: ConsentProviderRuntime) => Result
@@ -243,9 +287,8 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		if (engine) {
 			return Promise.resolve(run(engine.runtime)) as Promise<Awaited<Result>>;
 		}
-		requestEngine();
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Runs once attached.
-		return ready.then((runtime) =>
+		return loadEngine().then((runtime) =>
 			runtime ? run(runtime) : undefined
 		) as Promise<Awaited<Result> | undefined>;
 	};

@@ -341,15 +341,16 @@ const createSession = function createSession<EngineModule>(
 			resolve();
 		};
 	});
-	// Filled below, once the commit path is defined.
+	// Filled below, once the commit path and the engine load are defined.
 	const hooks: { early?: DeferredKernelOptions['early'] } = {};
+	let requestEngine: () => void = () => start();
 	let claimed = false;
 	const handle = createDeferredKernel({
 		consentCategories: options.consentCategories,
 		early: (name, args, onEngine) => hooks.early?.(name, args, onEngine),
 		localSurfaces: Boolean(commitConfig),
 		presentation: options.presentation,
-		requestEngine: () => start(),
+		requestEngine: () => requestEngine(),
 		serverSnapshot: boot.s,
 		settled:
 			isPromiseLike(prefetch) && options.streamBanner !== false
@@ -535,10 +536,21 @@ const createSession = function createSession<EngineModule>(
 					return loaded;
 				})()
 			);
+			// Commands waiting for the engine reject, so a surface an answer
+			// hid shows again; the next one asks for a new attempt.
+			// oxlint-disable-next-line promise/prefer-await-to-then -- Settles the waiting commands.
+			engineLoad.catch(handle.fail);
 		}
 		return engineLoad;
 	};
 	engine();
+	requestEngine = () => {
+		start();
+		const load = engine();
+		if (load.status === 'rejected') {
+			handle.fail(load.reason);
+		}
+	};
 
 	const loadCommit = recordOnce(importCommit);
 	/** Starts `load` in the next task: a tap's own task stays short. */

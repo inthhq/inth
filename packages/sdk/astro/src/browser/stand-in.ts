@@ -2,17 +2,15 @@
  * The runtime a preference dialog renders against when the shell opens it
  * before the consent engine has loaded.
  *
- * Reads come from the snapshot the shell holds: the one the server
- * rendered the banner from, or the choice the shell committed since. The
- * active surface is the stand-in's own, so the dialog opens and closes
- * without the engine. Everything else waits for it: a setter is queued and
- * replayed, a command (a save from the dialog) asks for the engine and
- * runs there. Once the engine attaches, every read and call goes to its
- * runtime, and listeners hear the switch. The objects stay the same, so
- * the island that took them at mount keeps working.
+ * Its kernel is core's stand-in (`createStandInKernel`) over the snapshot
+ * the shell holds: the one the server rendered the banner from, or the
+ * choice the shell committed since. The active surface is the stand-in's
+ * own, so the dialog opens and closes without the engine. Runtime methods
+ * wait for the engine the same way. Once the engine attaches, every read
+ * and call goes to its runtime, and listeners hear the switch. The objects
+ * stay the same, so the island that took them at mount keeps working.
  *
- * Loaded beside the dialog's chunks, never on first load. The same idea as
- * `@inth/svelte`'s and `@inth/vue`'s deferred stand-in kernels.
+ * Loaded beside the dialog's chunks, never on first load.
  *
  * @internal
  */
@@ -20,12 +18,11 @@
 import { allConsentNames } from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
-	ConsentKernel,
 	ConsentSnapshot,
 	KernelActiveUI,
-	KernelEvent,
 } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
+import { createStandInKernel } from '@inth/sdk/runtime/stand-in-kernel';
 
 /** @internal */
 export interface DialogStandInOptions {
@@ -55,34 +52,11 @@ export interface DialogStandIn {
 type AnyFunction = (...args: unknown[]) => unknown;
 
 /**
- * Setters that queue without loading the engine: what the island's
+ * Runtime methods that queue without loading the engine: what the island's
  * provider sets as it mounts. The shell stands in only while nothing
  * optional is granted, so they change nothing until the engine loads.
  */
-const QUIET: ReadonlySet<string> = new Set([
-	'registerConsentCategories',
-	'setConsentCategories',
-]);
-
-/** An object whose every property is a function made by `make`, cached. */
-const functionTable = function functionTable<Table extends object>(
-	make: (name: string) => AnyFunction
-): Table {
-	const cache = new Map<string, AnyFunction>();
-	return new Proxy({} as Table, {
-		get(_target, key) {
-			if (typeof key !== 'string') {
-				return undefined;
-			}
-			let value = cache.get(key);
-			if (!value) {
-				value = make(key);
-				cache.set(key, value);
-			}
-			return value;
-		},
-	});
-};
+const QUIET: ReadonlySet<string> = new Set(['setConsentCategories']);
 
 /**
  * Creates the stand-in runtime.
@@ -92,55 +66,23 @@ const functionTable = function functionTable<Table extends object>(
  * @returns The stand-in.
  * @internal
  */
-// oxlint-disable-next-line max-lines-per-function, max-statements -- One kernel stand-in and the runtime around it.
 export const createDialogStandIn = function createDialogStandIn(
 	options: DialogStandInOptions
 ): DialogStandIn {
 	let engine: ConsentRuntime | null = null;
-	const listeners = new Set<(snapshot: ConsentSnapshot) => void>();
 	const runtimeListeners = new Set<() => void>();
 	const queued: ((runtime: ConsentRuntime) => void)[] = [];
-	const events = new Set<{
-		type: string;
-		listener: (event: KernelEvent) => void;
-		stop?: () => void;
-	}>();
-	const unsubscribes: (() => void)[] = [];
+	let stopRuntime: (() => void) | undefined;
 
-	// The surface the dialog shows, over the shell's snapshot.
-	let shown: KernelActiveUI | undefined;
-	let shownFrom: ConsentSnapshot | undefined;
-	let shownSnapshot: ConsentSnapshot | undefined;
-	const read = (): ConsentSnapshot => {
-		if (engine) {
-			return engine.kernel.getSnapshot();
-		}
-		const snapshot = options.read();
-		if (shown === undefined || snapshot.activeUI === shown) {
-			return snapshot;
-		}
-		if (shownFrom !== snapshot) {
-			shownFrom = snapshot;
-			shownSnapshot = Object.freeze({ ...snapshot, activeUI: shown });
-		}
-		return shownSnapshot as ConsentSnapshot;
-	};
-	let last = read();
-	const notify = (): void => {
-		const snapshot = read();
-		if (snapshot === last) {
-			return;
-		}
-		last = snapshot;
-		for (const listener of [...listeners]) {
-			listener(snapshot);
-		}
-	};
-	const notifyRuntime = (): void => {
-		for (const listener of [...runtimeListeners]) {
-			listener();
-		}
-	};
+	const handle = createStandInKernel({
+		onSurface: options.onSurface,
+		requestEngine: () => {
+			// oxlint-disable-next-line promise/prefer-await-to-then -- The shell attaches before it resolves.
+			options.requestEngine().catch(handle.fail);
+		},
+		snapshot: options.read(),
+	});
+	const { kernel } = handle;
 
 	/** Runs `run` on the engine's runtime, loading it first. */
 	const later = async function later<Result>(
@@ -149,90 +91,6 @@ export const createDialogStandIn = function createDialogStandIn(
 		const runtime = engine ?? (await options.requestEngine());
 		return await run(runtime);
 	};
-
-	const set = functionTable<ConsentKernel['set']>((name) => (...args) => {
-		const call = (runtime: ConsentRuntime) =>
-			(runtime.kernel.set as unknown as Record<string, AnyFunction>)[name]?.(
-				...args
-			);
-		if (engine) {
-			return call(engine);
-		}
-		if (name === 'activeUI') {
-			shown = args[0] as KernelActiveUI;
-			notify();
-			options.onSurface(read().activeUI);
-			return undefined;
-		}
-		queued.push(call);
-		if (!QUIET.has(name)) {
-			void later(() => undefined);
-		}
-		return undefined;
-	});
-
-	const commands = functionTable<ConsentKernel['commands']>(
-		(name) =>
-			(...args) =>
-				later((runtime) =>
-					(runtime.kernel.commands as unknown as Record<string, AnyFunction>)[
-						name
-					]?.(...args)
-				)
-	);
-
-	const stub: ConsentKernel = {
-		commands,
-		dispose: () => undefined,
-		events: {
-			on(type, listener) {
-				if (engine) {
-					return engine.kernel.events.on(type, listener);
-				}
-				const entry = {
-					listener: listener as (event: KernelEvent) => void,
-					type: type as string,
-				} as {
-					type: string;
-					listener: (event: KernelEvent) => void;
-					stop?: () => void;
-				};
-				events.add(entry);
-				return () => {
-					events.delete(entry);
-					entry.stop?.();
-				};
-			},
-		},
-		getRecordsGeneration: () => 0,
-		getServerSnapshot: () => options.read(),
-		getSnapshot: read,
-		refresh: () => read(),
-		set,
-		subscribe(listener) {
-			listeners.add(listener);
-			return () => {
-				listeners.delete(listener);
-			};
-		},
-	};
-
-	const kernel = new Proxy(stub, {
-		get(target, key) {
-			// Subscribers and commands stay on the stand-in, which forwards.
-			const name = key as keyof ConsentKernel;
-			if (
-				name === 'subscribe' ||
-				name === 'getSnapshot' ||
-				name === 'getServerSnapshot' ||
-				name === 'commands' ||
-				name === 'events'
-			) {
-				return target[name];
-			}
-			return (engine?.kernel ?? target)[name];
-		},
-	});
 
 	/** A runtime method: the engine's once attached, else queued. */
 	const forward =
@@ -258,7 +116,7 @@ export const createDialogStandIn = function createDialogStandIn(
 			}
 			// `necessary` and the choice scope in display order: the rule
 			// core's runtime applies.
-			const snapshot = read();
+			const snapshot = kernel.getSnapshot();
 			const scope: readonly string[] =
 				snapshot.evaluationPolicy?.choiceScope ?? snapshot.policyRule.scope;
 			return allConsentNames.filter(
@@ -296,44 +154,31 @@ export const createDialogStandIn = function createDialogStandIn(
 		},
 	} as unknown as ConsentRuntime;
 
+	const notifyRuntime = (): void => {
+		for (const listener of [...runtimeListeners]) {
+			listener();
+		}
+	};
+
 	return {
 		attach(next) {
 			if (engine) {
 				return;
 			}
 			engine = next;
-			unsubscribes.push(
-				next.kernel.subscribe(notify),
-				next.subscribe(notifyRuntime)
-			);
+			stopRuntime = next.subscribe(notifyRuntime);
 			for (const call of queued.splice(0)) {
 				call(next);
 			}
-			for (const entry of events) {
-				entry.stop = next.kernel.events.on(
-					entry.type as KernelEvent['type'],
-					entry.listener as never
-				);
-			}
-			if (shown !== undefined && next.kernel.getSnapshot().activeUI !== shown) {
-				next.kernel.set.activeUI(shown);
-			}
-			shown = undefined;
-			notify();
+			handle.attach(next.kernel);
 			notifyRuntime();
 		},
 		changed() {
-			if (engine) {
-				return;
-			}
-			shown = undefined;
-			notify();
+			handle.commit(options.read(), []);
 		},
 		dispose() {
-			for (const unsubscribe of unsubscribes.splice(0)) {
-				unsubscribe();
-			}
-			listeners.clear();
+			stopRuntime?.();
+			handle.dispose();
 			runtimeListeners.clear();
 		},
 		runtime,

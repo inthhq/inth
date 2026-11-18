@@ -167,14 +167,16 @@ const deferredModules = [
 
 describe('TanStack Start client chunks', () => {
 	test.each([
-		['root-route', 11],
+		['root-route', 12],
 		['provider-route', 22],
 	])(
 		'a %s loads at most %i files first',
 		async (route, bound) => {
 			// The route, the app entry, and the small modules the deferred
 			// shell shares with lazy chunks (the engine, the commit path, the
-			// stock surfaces) and with the other route. The provider route
+			// stock surfaces) and with the other route. The commit path no
+			// longer loads the shell's file, so the instant commit it shares
+			// with the shell is a file of its own. The provider route
 			// also builds the banner's snapshot from the inline prefetch
 			// before its engine loads, so it loads the policy and copy code.
 			const { files } = await routeFirstLoad(route);
@@ -214,8 +216,12 @@ describe('TanStack Start client chunks', () => {
 		// surface root attribute 6 (20,890). Revocation cleanup's list of
 		// owned keys, with the IAB storage keys it brought, and that c15t
 		// key now live with the code that reads them, not in the first-load
-		// storage keys: 266 fewer (20,624).
-		expect(brotli).toBeLessThanOrEqual(20_624);
+		// storage keys: 266 fewer (20,624). Core's stand-in kernel, which every
+		// deferred root now shares and which rejects a save waiting for an
+		// engine chunk that failed, replaces React's own copy. Core's build
+		// keeps its local names, which an app's minifier shortens, and the
+		// instant commit sits in a file of its own: 1,184 bytes (21,808).
+		expect(brotli).toBeLessThanOrEqual(21_808);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

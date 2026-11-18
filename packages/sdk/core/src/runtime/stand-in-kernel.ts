@@ -1,15 +1,13 @@
 /**
- * The kernel the Nuxt plugin provides before the consent engine has loaded.
+ * The kernel a deferred root renders in the browser before the consent
+ * engine has loaded.
  *
  * Reads come from the snapshot the server rendered with. Setters queue and
  * replay on the engine's kernel once it attaches; commands ask for the
- * engine and resolve with its result. Once attached, every property read
- * goes to the engine's kernel, and subscribers hear about the switch. The
- * object stays the same throughout, so a component or script loader that
- * took it at setup keeps working.
- *
- * Modelled on `@inth/react`'s deferred stand-in; Vue has no context value
- * identity to protect, so it carries no services.
+ * engine and resolve with its result, or reject when it fails to load.
+ * Once attached, every property read goes to the engine's kernel, and
+ * subscribers hear about the switch. The object stays the same throughout,
+ * so a component or script loader that took it at setup keeps working.
  *
  * @packageDocumentation
  * @internal
@@ -20,13 +18,22 @@ import type {
 	ConsentSnapshot,
 	KernelActiveUI,
 	KernelEvent,
-} from '@inth/sdk/engine';
+} from '../types';
 
 /** @internal */
-export interface StandInOptions {
-	/** The snapshot the server rendered the page from. */
+export interface StandInKernelOptions {
+	/** The snapshot reads return until the engine attaches. */
 	snapshot: ConsentSnapshot;
-	/** Starts loading the engine, if it is not loading yet. */
+	/**
+	 * The snapshot the server rendered the page from, when it differs from
+	 * `snapshot`: a surface that hydrates late must match that HTML.
+	 */
+	serverSnapshot?: ConsentSnapshot;
+	/**
+	 * Starts loading the engine, if it is not loading yet. A load that
+	 * fails must call the handle's `fail`, or the commands waiting for it
+	 * never settle.
+	 */
 	requestEngine: () => void;
 	/**
 	 * Runs a command called before the engine attached without waiting for
@@ -38,28 +45,49 @@ export interface StandInOptions {
 		args: unknown[],
 		engine: () => Promise<unknown>
 	) => Promise<unknown> | undefined;
+	/**
+	 * `set.activeUI` before the engine shows the surface at once, without
+	 * loading the engine. `true` by default; `false` queues it for the
+	 * engine like any other setter.
+	 */
+	localSurfaces?: boolean;
+	/** Hears a surface `set.activeUI` showed before the engine. */
+	onSurface?: (activeUI: KernelActiveUI) => void;
 }
 
 /** @internal */
-export interface StandInHandle {
-	/** The kernel to provide. Stable for the app's lifetime. */
+export interface StandInKernelHandle {
+	/** The kernel to render. Stable for the runtime's lifetime. */
 	readonly kernel: ConsentKernel;
 	/** Resolves when the engine first attaches. */
 	readonly ready: Promise<void>;
 	readonly attached: () => boolean;
 	/** The engine's kernel, once attached. */
 	readonly engine: () => ConsentKernel | undefined;
-	/** Route the kernel to the engine's. */
+	/** Route the kernel to the engine's. Call again when it changes. */
 	attach: (engine: ConsentKernel) => void;
+	/**
+	 * The engine failed to load: commands waiting for it reject, so an
+	 * answer that hid the banner shows it again. The next command asks for
+	 * the engine again.
+	 */
+	fail: (error: unknown) => void;
 	/**
 	 * Take a choice recorded without the engine: reads return `snapshot`
 	 * and listeners hear it, then `events` go to the stand-in's event
-	 * listeners. Refused (`false`) once the engine has attached.
+	 * listeners. The snapshot already committed is not announced again.
+	 * Refused (`false`) once the engine has attached.
 	 */
 	commit: (
 		snapshot: ConsentSnapshot,
 		events: readonly KernelEvent[]
 	) => boolean;
+	/**
+	 * Replace the snapshot reads return until the engine attaches, as when a
+	 * client-rendered root learns the policy from a prefetched `/init`.
+	 * Ignored once attached.
+	 */
+	setSnapshot: (snapshot: ConsentSnapshot) => void;
 	/** Setter calls waiting for the engine, in order. */
 	readonly pending: () => readonly { name: string; args: unknown[] }[];
 	/** Stops forwarding the engine's notifications. */
@@ -102,24 +130,52 @@ const functionTable = function functionTable<Table extends object>(
 	});
 };
 
+/** The same frozen copy of `snapshot` with `activeUI`, while the input holds. */
+const withActiveUI = function withActiveUI() {
+	let from: ConsentSnapshot | undefined;
+	let copy: ConsentSnapshot | undefined;
+	return (snapshot: ConsentSnapshot, activeUI: KernelActiveUI) => {
+		if (from !== snapshot || copy?.activeUI !== activeUI) {
+			from = snapshot;
+			copy = Object.freeze({ ...snapshot, activeUI });
+		}
+		return copy;
+	};
+};
+
 /**
  * Creates the stand-in kernel.
  *
- * `set.activeUI` before the engine shows the surface at once, without
- * loading the engine: the plugin's root renders the dialog against the
- * stand-in. The engine takes the surface over when it attaches.
- *
  * @internal
  */
+// oxlint-disable-next-line max-lines-per-function, max-statements -- One kernel and its engine handover.
 export const createStandInKernel = function createStandInKernel(
-	options: StandInOptions
-): StandInHandle {
+	options: StandInKernelOptions
+): StandInKernelHandle {
+	const serverSnapshot = options.serverSnapshot ?? options.snapshot;
+	let base = options.snapshot;
 	let engine: ConsentKernel | null = null;
 	let resolveReady: () => void = () => undefined;
 	const ready = new Promise<void>((resolve) => {
 		resolveReady = resolve;
 	});
 	const listeners = new Set<(snapshot: ConsentSnapshot) => void>();
+	/** Commands waiting for the engine, settled by `attach` or `fail`. */
+	const waiting = new Set<{
+		resolve: () => void;
+		reject: (error: unknown) => void;
+	}>();
+	const settleWaiting = (error?: unknown): void => {
+		const settled = [...waiting];
+		waiting.clear();
+		for (const waiter of settled) {
+			if (error === undefined) {
+				waiter.resolve();
+			} else {
+				waiter.reject(error);
+			}
+		}
+	};
 	const queued: ((kernel: ConsentKernel) => void)[] = [];
 	const pending: { name: string; args: unknown[] }[] = [];
 	const eventListeners = new Set<{
@@ -128,39 +184,26 @@ export const createStandInKernel = function createStandInKernel(
 	}>();
 	let committed: ConsentSnapshot | null = null;
 	// A surface shown before the engine, over the snapshot reads return.
+	// The same object for the same input, as `useSyncExternalStore` compares.
 	let shown: KernelActiveUI | undefined;
-	let shownFrom: ConsentSnapshot | undefined;
-	let shownSnapshot: ConsentSnapshot | undefined;
-	const withShown = (snapshot: ConsentSnapshot): ConsentSnapshot => {
-		if (shown === undefined || snapshot.activeUI === shown) {
-			return snapshot;
-		}
-		if (shownFrom !== snapshot) {
-			shownFrom = snapshot;
-			shownSnapshot = Object.freeze({ ...snapshot, activeUI: shown });
-		}
-		return shownSnapshot as ConsentSnapshot;
-	};
+	const showing = withActiveUI();
+	const withShown = (snapshot: ConsentSnapshot): ConsentSnapshot =>
+		shown === undefined || snapshot.activeUI === shown
+			? snapshot
+			: showing(snapshot, shown);
 	let unsubscribeEngine: (() => void) | undefined;
 	// Answers called before the engine attached, still running. While any
-	// is, a snapshot that still shows the banner reads as dismissed.
+	// is, a snapshot that still shows the banner reads as dismissed: the
+	// tap hid it, and the engine has not applied the choice yet.
 	let answering = 0;
-	let dismissedFrom: ConsentSnapshot | undefined;
-	let dismissedSnapshot: ConsentSnapshot | undefined;
-	const dismissed = (snapshot: ConsentSnapshot): ConsentSnapshot => {
-		if (answering === 0 || snapshot.activeUI !== 'banner') {
-			return snapshot;
-		}
-		if (dismissedFrom !== snapshot) {
-			dismissedFrom = snapshot;
-			dismissedSnapshot = Object.freeze({ ...snapshot, activeUI: 'none' });
-		}
-		return dismissedSnapshot as ConsentSnapshot;
-	};
+	const dismissing = withActiveUI();
+	const dismissed = (snapshot: ConsentSnapshot): ConsentSnapshot =>
+		answering === 0 || snapshot.activeUI !== 'banner'
+			? snapshot
+			: dismissing(snapshot, 'none');
+	const beforeEngine = (): ConsentSnapshot => withShown(committed ?? base);
 	const read = (): ConsentSnapshot =>
-		dismissed(
-			engine ? engine.getSnapshot() : withShown(committed ?? options.snapshot)
-		);
+		dismissed(engine ? engine.getSnapshot() : beforeEngine());
 	let last = read();
 	const notify = (): void => {
 		const snapshot = read();
@@ -173,14 +216,17 @@ export const createStandInKernel = function createStandInKernel(
 		}
 	};
 
-	const later = function later<Result>(
+	const later = async function later<Result>(
 		run: (attached: ConsentKernel) => Result
 	): Promise<Awaited<Result>> {
-		options.requestEngine();
-		// oxlint-disable-next-line promise/prefer-await-to-then -- Runs after `attach`, which resolves `ready`.
-		return ready.then(() => run(engine as ConsentKernel)) as Promise<
-			Awaited<Result>
-		>;
+		if (!engine) {
+			const attached = new Promise<void>((resolve, reject) => {
+				waiting.add({ reject, resolve });
+			});
+			options.requestEngine();
+			await attached;
+		}
+		return (await run(engine as ConsentKernel)) as Awaited<Result>;
 	};
 
 	const set = functionTable<ConsentKernel['set']>((name) => (...args) => {
@@ -189,9 +235,10 @@ export const createStandInKernel = function createStandInKernel(
 		if (engine) {
 			return call(engine);
 		}
-		if (name === 'activeUI') {
+		if (name === 'activeUI' && options.localSurfaces !== false) {
 			shown = args[0] as KernelActiveUI;
 			notify();
+			options.onSurface?.(read().activeUI);
 			return undefined;
 		}
 		queued.push(call);
@@ -258,9 +305,9 @@ export const createStandInKernel = function createStandInKernel(
 			},
 		},
 		getRecordsGeneration: () => 0,
-		getServerSnapshot: () => options.snapshot,
+		getServerSnapshot: () => serverSnapshot,
 		getSnapshot: read,
-		refresh: () => withShown(committed ?? options.snapshot),
+		refresh: beforeEngine,
 		set,
 		subscribe(listener) {
 			listeners.add(listener);
@@ -273,8 +320,8 @@ export const createStandInKernel = function createStandInKernel(
 	const kernel = new Proxy(stub, {
 		get(target, key) {
 			// Subscribers stay on the stand-in, which forwards the engine's
-			// notifications. The server snapshot stays the one the server
-			// rendered with: a surface that hydrates late must match that HTML.
+			// notifications, so they survive the engine swapping kernels.
+			// The server snapshot stays the one the server rendered with.
 			const name = key as keyof ConsentKernel;
 			if (
 				name === 'subscribe' ||
@@ -290,23 +337,28 @@ export const createStandInKernel = function createStandInKernel(
 
 	return {
 		attach(next) {
-			if (engine) {
+			if (engine === next) {
 				return;
 			}
+			const first = !engine;
 			engine = next;
+			unsubscribeEngine?.();
 			unsubscribeEngine = next.subscribe(notify);
-			eventListeners.clear();
-			pending.length = 0;
-			for (const call of queued.splice(0)) {
-				call(next);
-			}
-			if (shown !== undefined) {
-				if (next.getSnapshot().activeUI !== shown) {
-					next.set.activeUI(shown);
+			if (first) {
+				eventListeners.clear();
+				pending.length = 0;
+				for (const call of queued.splice(0)) {
+					call(next);
 				}
-				shown = undefined;
+				if (shown !== undefined) {
+					if (next.getSnapshot().activeUI !== shown) {
+						next.set.activeUI(shown);
+					}
+					shown = undefined;
+				}
+				resolveReady();
+				settleWaiting();
 			}
-			resolveReady();
 			notify();
 		},
 		attached: () => engine !== null,
@@ -314,10 +366,12 @@ export const createStandInKernel = function createStandInKernel(
 			if (engine) {
 				return false;
 			}
-			committed = snapshot;
-			// The commit's snapshot carries the surface a choice leaves.
-			shown = undefined;
-			notify();
+			if (snapshot !== committed) {
+				committed = snapshot;
+				// The commit's snapshot carries the surface a choice leaves.
+				shown = undefined;
+				notify();
+			}
 			for (const event of events) {
 				for (const entry of [...eventListeners]) {
 					if (entry.type === event.type) {
@@ -330,32 +384,24 @@ export const createStandInKernel = function createStandInKernel(
 		dispose() {
 			unsubscribeEngine?.();
 			listeners.clear();
+			if (!engine) {
+				settleWaiting(new Error('The consent runtime was disposed.'));
+			}
 		},
 		engine: () => engine ?? undefined,
+		fail(error) {
+			if (!engine) {
+				settleWaiting(error ?? new Error('The consent engine failed to load.'));
+			}
+		},
 		kernel,
 		pending: () => pending,
 		ready,
+		setSnapshot(next) {
+			if (!engine && next !== base) {
+				base = next;
+				notify();
+			}
+		},
 	};
-};
-
-/**
- * Whether setters queued for the engine leave the snapshot as a commit
- * reads it: only category registrations the snapshot already holds.
- *
- * @internal
- */
-export const pendingIsInert = function pendingIsInert(
-	handle: Pick<StandInHandle, 'kernel' | 'pending'>
-): boolean {
-	const categories = handle.kernel.getSnapshot().consentCategories;
-	return handle
-		.pending()
-		.every(
-			({ args, name }) =>
-				name === 'registerConsentCategories' &&
-				Array.isArray(args[0]) &&
-				(args[0] as string[]).every((category) =>
-					categories?.includes(category as never)
-				)
-		);
 };

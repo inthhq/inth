@@ -193,6 +193,14 @@ export default mergeConfig(
 						__dirname,
 						'../core/src/runtime/page-globals.ts'
 					),
+					'@inth/sdk/runtime/stand-in-kernel': resolve(
+						__dirname,
+						'../core/src/runtime/stand-in-kernel.ts'
+					),
+					'@inth/sdk/runtime/storage-for': resolve(
+						__dirname,
+						'../core/src/runtime/storage-for.ts'
+					),
 				},
 				{
 					'@inth/sdk/runtime': resolve(

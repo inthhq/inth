@@ -279,6 +279,11 @@
 			"import": "./lib/core/dist/runtime/page-globals.js",
 			"default": "./lib/core/dist/runtime/page-globals.js"
 		},
+		"./runtime/stand-in-kernel": {
+			"types": "./lib/core/dist-types/runtime/stand-in-kernel.d.ts",
+			"import": "./lib/core/dist/runtime/stand-in-kernel.js",
+			"default": "./lib/core/dist/runtime/stand-in-kernel.js"
+		},
 		"./runtime/storage-for": {
 			"types": "./lib/core/dist-types/runtime/storage-for.d.ts",
 			"import": "./lib/core/dist/runtime/storage-for.js",

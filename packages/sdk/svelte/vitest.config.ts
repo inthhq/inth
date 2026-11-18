@@ -96,6 +96,14 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, '../core/src/runtime/page-globals.ts'),
 	},
 	{
+		find: '@inth/sdk/runtime/stand-in-kernel',
+		replacement: resolve(__dirname, '../core/src/runtime/stand-in-kernel.ts'),
+	},
+	{
+		find: '@inth/sdk/runtime/storage-for',
+		replacement: resolve(__dirname, '../core/src/runtime/storage-for.ts'),
+	},
+	{
 		find: '@inth/sdk/runtime',
 		replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 	},

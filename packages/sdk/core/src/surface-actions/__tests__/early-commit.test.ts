@@ -19,8 +19,10 @@ import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/r
 import { readStoredRecords } from '../../modules/persistence/hydrate';
 import { EARLY_TAPS_WINDOW_KEY } from '../../runtime/page-globals';
 import type { EarlyConsentTapQueue } from '../../runtime/page-globals';
+import { createStandInKernel } from '../../runtime/stand-in-kernel';
 import type { KernelConfig, KernelEvent, SavePayload } from '../../types';
 import {
+	completeCommit,
 	hasStoredClearEpoch,
 	planEarlyCommit,
 	storeEarlyCommit,
@@ -255,4 +257,35 @@ test('the early-tap script tells a deferred root about each tap', () => {
 		'customize',
 	]);
 	queue?.stop?.();
+});
+
+describe('completeCommit', () => {
+	test('stores the record where persistence keeps it, as the engine reads it', async () => {
+		const handle = createStandInKernel({
+			requestEngine: () => undefined,
+			snapshot: createKernel(config(), {
+				outboxStore: createMemoryOutboxStore(),
+			}).getSnapshot(),
+		});
+		const storageConfig = { storageKey: 'site-consent' };
+		const done = await completeCommit({
+			actionAt: TAP_AT,
+			choice: 'all',
+			config: {
+				// The raw option the engine ignores when persistence names one.
+				persistence: { storageConfig },
+				storageConfig: { storageKey: 'ignored' },
+			},
+			handle,
+			instant: null,
+		});
+		expect(done?.result.ok).toBe(true);
+		expect(readStoredRecords(storageConfig, CLOCK).records.choice).toEqual(
+			done?.committed.records.choice
+		);
+		expect(localStorage.getItem('ignored')).toBeNull();
+		expect(handle.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+	});
 });

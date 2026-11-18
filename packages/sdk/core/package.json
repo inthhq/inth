@@ -240,6 +240,11 @@
 			"import": "./dist/runtime/page-globals.js",
 			"default": "./dist/runtime/page-globals.js"
 		},
+		"./runtime/stand-in-kernel": {
+			"types": "./dist-types/runtime/stand-in-kernel.d.ts",
+			"import": "./dist/runtime/stand-in-kernel.js",
+			"default": "./dist/runtime/stand-in-kernel.js"
+		},
 		"./runtime/storage-for": {
 			"types": "./dist-types/runtime/storage-for.d.ts",
 			"import": "./dist/runtime/storage-for.js",

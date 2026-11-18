@@ -34,11 +34,19 @@ import {
 	earlyTapQueue,
 } from '@inth/sdk/runtime/page-globals';
 import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
+import { createStandInKernel } from '@inth/sdk/runtime/stand-in-kernel';
+import { storageFor } from '@inth/sdk/runtime/storage-for';
 import type { ConsentActiveUI } from '@inth/sdk/schema/config';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
+import type {
+	CompleteCommitInput,
+	CompleteCommitResult,
+	DeferredCommitted,
+} from '@inth/sdk/surface-actions/early-commit';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
+	pendingIsInert,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
@@ -63,13 +71,7 @@ import type {
 } from '../kernel';
 import { withRegisteredScripts } from '../registered-scripts';
 import type { RegisteredScripts } from '../registered-scripts';
-import type {
-	CompleteCommitInput,
-	CompleteCommitResult,
-	DeferredCommitted,
-} from './commit';
 import { removePlainScripts } from './scripts';
-import { createStandInKernel, pendingIsInert } from './stand-in';
 import { scheduleDeferredEngine } from './trigger';
 
 /** Builds the engine's context, from a commit made before it, if any. @internal */
@@ -105,7 +107,8 @@ const BANNER_LEAVE_MS = 10_000;
 const loadCompleteCommit = async (
 	input: CompleteCommitInput
 ): Promise<CompleteCommitResult | null> => {
-	const { completeCommit } = await import('./commit');
+	const { completeCommit } =
+		await import('@inth/sdk/surface-actions/early-commit');
 	return completeCommit(input);
 };
 
@@ -126,9 +129,6 @@ export const createDeferredContext = function createDeferredContext(
 	options: DeferredContextOptions
 ): VueConsentKernelContext {
 	let requestEngine: () => void = () => undefined;
-	const requested = new Promise<void>((resolve) => {
-		requestEngine = resolve;
-	});
 	/** Scripts components registered before the engine (`registerScripts`). */
 	const registered = new Map<symbol, readonly Script[]>();
 	const configWithScripts = (): RuntimeConsentConfig =>
@@ -170,7 +170,7 @@ export const createDeferredContext = function createDeferredContext(
 	let ahead: { clearEpoch: boolean; subjectId: string } | undefined;
 	const readAhead = () => {
 		ahead ??= {
-			clearEpoch: hasStoredClearEpoch(options.config().storageConfig),
+			clearEpoch: hasStoredClearEpoch(storageFor(options.config())),
 			subjectId: generateSubjectId(),
 		};
 		return ahead;
@@ -187,16 +187,10 @@ export const createDeferredContext = function createDeferredContext(
 
 	/** The engine's handle for each set registered before it attached. */
 	const handovers = new Map<symbol, RegisteredScripts>();
-	const engineReady = (async () => {
-		await requested;
-		let create: DeferredEngineFactory;
-		try {
-			create = await options.loadEngine();
-		} catch (error) {
-			// The page keeps the stand-in.
-			console.error('[inth] The consent engine failed to load.', error);
-			return undefined;
-		}
+	const buildEngine = async (): Promise<
+		VueConsentKernelContext | undefined
+	> => {
+		const create = await options.loadEngine();
 		// A commit started while the chunk loaded: the engine starts from it.
 		await commitsSettled();
 		if (!active) {
@@ -221,7 +215,38 @@ export const createDeferredContext = function createDeferredContext(
 		fallback?.(context);
 		fallback = undefined;
 		return context;
-	})();
+	};
+
+	/** The load in flight. A failed one clears, so the next request retries. */
+	let loading: Promise<VueConsentKernelContext | undefined> | undefined;
+	/**
+	 * Loads the engine once; never rejects. A failure leaves the page on the
+	 * stand-in until something asks for the engine again, and rejects the
+	 * commands waiting for it so their surface shows again.
+	 */
+	const loadEngine = (): Promise<VueConsentKernelContext | undefined> => {
+		if (engine) {
+			return Promise.resolve(engine);
+		}
+		loading ??= (async () => {
+			try {
+				return await buildEngine();
+			} catch (error) {
+				console.error('[inth] The consent engine failed to load.', error);
+				if (handle.attached()) {
+					return engine;
+				}
+				engine = undefined;
+				loading = undefined;
+				handle.fail(error);
+				return undefined;
+			}
+		})();
+		return loading;
+	};
+	requestEngine = () => {
+		void loadEngine();
+	};
 
 	const activeUI = computed<ConsentActiveUI>({
 		get: () => toVueActiveUI(snapshot.value.activeUI),
@@ -491,9 +516,8 @@ export const createDeferredContext = function createDeferredContext(
 				engine.clearRecords();
 				return;
 			}
-			requestEngine();
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Runs once attached.
-			void engineReady.then((attached) => attached?.clearRecords());
+			void loadEngine().then((attached) => attached?.clearRecords());
 		},
 		dispose() {
 			active = false;
@@ -580,18 +604,16 @@ export const createDeferredContext = function createDeferredContext(
 				engine.setLanguage(language);
 				return;
 			}
-			requestEngine();
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Runs once attached.
-			void engineReady.then((attached) => attached?.setLanguage(language));
+			void loadEngine().then((attached) => attached?.setLanguage(language));
 		},
 		setOverrides(overrides) {
 			if (engine) {
 				engine.setOverrides(overrides);
 				return;
 			}
-			requestEngine();
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Runs once attached.
-			void engineReady.then((attached) => attached?.setOverrides(overrides));
+			void loadEngine().then((attached) => attached?.setOverrides(overrides));
 		},
 		snapshot,
 		start() {

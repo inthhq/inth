@@ -1,3 +1,8 @@
+import { completeCommit } from '@inth/sdk/surface-actions/early-commit';
+import type {
+	CompleteCommitInput,
+	CompleteCommitResult,
+} from '@inth/sdk/surface-actions/early-commit';
 /**
  * The deferred runtime's commit path (`lib/deferred/runtime.ts`) when the
  * commit chunk cannot finish a choice the stand-in already shows: the
@@ -8,11 +13,6 @@ import type { MockInstance } from 'vitest';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import type { ConsentRootBoot } from '../lib/deferred/boot';
-import { completeCommit } from '../lib/deferred/commit';
-import type {
-	CompleteCommitInput,
-	CompleteCommitResult,
-} from '../lib/deferred/commit';
 import { createRootEngine } from '../lib/deferred/engine';
 import { createDeferredRuntime } from '../lib/deferred/runtime';
 import type { EngineFactory } from '../lib/deferred/runtime';
@@ -72,6 +72,8 @@ const createHarness = (input: {
 	completeCommit?: (
 		input: CompleteCommitInput
 	) => Promise<CompleteCommitResult | null>;
+	/** The first engine chunk request fails. */
+	failFirstLoad?: boolean;
 }) => {
 	const prefetch = policyFixture();
 	const providerOptions: ProviderOptionsInput = {
@@ -108,6 +110,9 @@ const createHarness = (input: {
 			};
 		};
 	});
+	if (input.failFirstLoad) {
+		loadEngine.mockRejectedValueOnce(new Error('The engine chunk failed.'));
+	}
 	const runtime = createDeferredRuntime({
 		boot,
 		completeCommit: input.completeCommit,
@@ -232,4 +237,25 @@ test('a choice the commit chunk declines after the stand-in shows it is recorded
 	// Exactly once: not again from a second path after the engine attached.
 	expect(transportSave).toHaveBeenCalledTimes(1);
 	expect(onChoiceRecorded).toHaveBeenCalledTimes(1);
+});
+
+test('a save waiting for an engine that fails to load rejects, and the next save loads it again', async () => {
+	const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+	const harness = createHarness({
+		completeCommit: () => Promise.resolve(null),
+		failFirstLoad: true,
+	});
+	harness.release();
+
+	const first = harness.runtime.kernel.commands.save('all', {
+		uiSource: 'banner',
+	});
+	await expect(first).rejects.toThrow('The engine chunk failed.');
+
+	const second = harness.runtime.kernel.commands.save('all', {
+		uiSource: 'banner',
+	});
+	await expect(second).resolves.toMatchObject({ ok: true });
+	expect(harness.loadEngine).toHaveBeenCalledTimes(2);
+	logged.mockRestore();
 });

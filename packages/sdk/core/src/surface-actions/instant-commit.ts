@@ -376,3 +376,26 @@ export const planInstantCommit = function planInstantCommit(
 		subjectId: subject.subjectId,
 	};
 };
+
+/**
+ * Whether setters queued for the engine leave the snapshot as a commit
+ * reads it: only category registrations the snapshot already holds.
+ *
+ * @internal
+ */
+export const pendingIsInert = function pendingIsInert(handle: {
+	readonly kernel: { getSnapshot: () => ConsentSnapshot };
+	readonly pending: () => readonly { name: string; args: unknown[] }[];
+}): boolean {
+	const categories = handle.kernel.getSnapshot().consentCategories;
+	return handle
+		.pending()
+		.every(
+			({ args, name }) =>
+				name === 'registerConsentCategories' &&
+				Array.isArray(args[0]) &&
+				(args[0] as string[]).every((category) =>
+					categories?.includes(category as never)
+				)
+		);
+};

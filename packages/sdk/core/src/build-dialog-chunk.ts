@@ -18,11 +18,12 @@ const DIALOG_ROOT =
 	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]dialog\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]manager\.vue)$/u;
 
 /**
- * What an accept or reject before the engine loads: the commit chunk of
- * React's and Vue's deferred roots and core's script loader.
+ * What an accept or reject before the engine loads: React's deferred
+ * root's commit chunk, the core commit Vue's loads, and core's script
+ * loader.
  */
 const TAP_ROOT =
-	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]commit|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]commit|(?:sdk[\\/]lib[\\/])?core[\\/]dist[\\/]modules[\\/]script-loader[\\/]index)\.js$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]commit|(?:sdk[\\/]lib[\\/])?core[\\/]dist[\\/](?:surface-actions[\\/]early-commit|modules[\\/]script-loader[\\/]index))\.js$/u;
 
 /**
  * The consent engine each deferred root loads after the page: React's

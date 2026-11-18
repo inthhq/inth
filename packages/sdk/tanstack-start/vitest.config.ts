@@ -41,9 +41,17 @@ const alias = {
 		__dirname,
 		'../core/src/modules/window-debug/index.ts'
 	),
+	'@inth/sdk/runtime/storage-for': resolve(
+		__dirname,
+		'../core/src/runtime/storage-for.ts'
+	),
 	'@inth/sdk/runtime/deferred-boot': resolve(
 		__dirname,
 		'../core/src/runtime/deferred-boot.ts'
+	),
+	'@inth/sdk/runtime/stand-in-kernel': resolve(
+		__dirname,
+		'../core/src/runtime/stand-in-kernel.ts'
 	),
 	'@inth/sdk/runtime/deferred-snapshot': resolve(
 		__dirname,

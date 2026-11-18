@@ -97,6 +97,10 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, '../core/src/runtime/deferred-boot.ts'),
 	},
 	{
+		find: '@inth/sdk/runtime/stand-in-kernel',
+		replacement: resolve(__dirname, '../core/src/runtime/stand-in-kernel.ts'),
+	},
+	{
 		find: '@inth/sdk/runtime/save-preload',
 		replacement: resolve(__dirname, '../core/src/runtime/save-preload.ts'),
 	},

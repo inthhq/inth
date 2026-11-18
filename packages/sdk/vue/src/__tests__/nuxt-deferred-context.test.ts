@@ -12,6 +12,8 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
+import type { CompleteCommitInput } from '@inth/sdk/surface-actions/early-commit';
+import { completeCommit } from '@inth/sdk/surface-actions/early-commit';
 import { translations } from '@inth/sdk/translations/en';
 import { mount } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -23,8 +25,6 @@ import { useEventDispatcher } from '../runtime/composables/event-dispatcher';
 import type { EventDispatcher } from '../runtime/composables/event-dispatcher';
 import { useConsentLanguage } from '../runtime/composables/language';
 import { useScriptLoader } from '../runtime/composables/script-loader';
-import type { CompleteCommitInput } from '../runtime/deferred/commit';
-import { completeCommit } from '../runtime/deferred/commit';
 import { createDeferredContext } from '../runtime/deferred/shell';
 import type { DeferredEngineFactory } from '../runtime/deferred/shell';
 import type {
@@ -738,4 +738,28 @@ describe('useScriptLoader before the engine', () => {
 		expect(harness.loadEngine).toHaveBeenCalledOnce();
 		wrapper.unmount();
 	});
+});
+
+test('a command waiting for an engine that fails to load rejects, and the next one loads it again', async () => {
+	const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+	const harness = createHarness();
+	harness.loadEngine.mockRejectedValueOnce(
+		new Error('The engine chunk failed.')
+	);
+	harness.releaseEngine();
+	harness.context.start();
+
+	// A vendor choice only the engine records.
+	const first = harness.context.kernel.commands.save('all', {
+		vendors: {},
+	} as never);
+	await expect(first).rejects.toThrow('The engine chunk failed.');
+	expect(harness.context.snapshot.value.activeUI).toBe('banner');
+
+	const second = harness.context.kernel.commands.save('all', {
+		vendors: {},
+	} as never);
+	await expect(second).resolves.toMatchObject({ ok: true });
+	expect(harness.loadEngine).toHaveBeenCalledTimes(2);
+	logged.mockRestore();
 });

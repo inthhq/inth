@@ -36,10 +36,18 @@ import type {
 	ConsentProviderRuntime,
 	ConsentRuntimeUpdate,
 } from '@inth/sdk/runtime/provider';
+import { createStandInKernel } from '@inth/sdk/runtime/stand-in-kernel';
 import { storageFor } from '@inth/sdk/runtime/storage-for';
+import type * as CommitModule from '@inth/sdk/surface-actions/early-commit';
+import type {
+	CompleteCommitInput,
+	CompleteCommitResult,
+	DeferredCommitted,
+} from '@inth/sdk/surface-actions/early-commit';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
+	pendingIsInert,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
@@ -53,13 +61,6 @@ import {
 
 import type { InthResolvedOptions } from '../options';
 import type { ConsentBoot } from './boot';
-import type * as CommitModule from './commit';
-import type {
-	CompleteCommitInput,
-	CompleteCommitResult,
-	DeferredCommitted,
-} from './commit';
-import { createStandInKernel, pendingIsInert } from './stand-in';
 import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './trigger';
 
 /** The engine as the deferred runtime takes it over. @internal */
@@ -129,7 +130,7 @@ const DIALOG_SHOWN_MS = 3000;
 let commitModule: Promise<typeof CommitModule> | undefined;
 /** Loads the commit chunk once; a failed load is retried next time. */
 const loadCommitModule = async (): Promise<typeof CommitModule> => {
-	commitModule ??= import('./commit');
+	commitModule ??= import('@inth/sdk/surface-actions/early-commit');
 	try {
 		return await commitModule;
 	} catch (error) {

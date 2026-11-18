@@ -17,6 +17,7 @@ import {
 	generateSubjectId,
 	hasStoredClearEpoch,
 	isShortCase,
+	pendingIsInert,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
@@ -27,28 +28,6 @@ import type { DeferredKernelHandle } from './deferred-kernel';
 import { claimDeferredScripts, deferredScripts } from './registry';
 
 export { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
-
-/**
- * Whether setters queued for the engine leave the snapshot as a commit
- * reads it: only category registrations the snapshot already holds.
- *
- * @internal
- */
-export const pendingIsInert = function pendingIsInert(
-	handle: DeferredKernelHandle
-): boolean {
-	const categories = handle.kernel.getSnapshot().consentCategories;
-	return handle
-		.pending()
-		.every(
-			({ args, name }) =>
-				name === 'registerConsentCategories' &&
-				Array.isArray(args[0]) &&
-				(args[0] as string[]).every((category) =>
-					categories?.includes(category as never)
-				)
-		);
-};
 
 /**
  * What an instant commit reads from storage and the clock, read ahead of

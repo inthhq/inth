@@ -14,11 +14,11 @@ import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
 } from '@inth/sdk/runtime/provider';
+import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 import { createHostedTransport } from '@inth/sdk/transports';
 
 import { provideModeTransports } from '../modes';
 import { createOwnedRuntime } from '../owned-runtime';
-import type { DeferredCommitted } from './commit';
 
 export { preloadSavePath } from '@inth/sdk/runtime/save-preload';
 
