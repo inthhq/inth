@@ -124,6 +124,15 @@ describe('POST /v1/consent/records', () => {
 		expect(result.success).toBe(false);
 	});
 
+	it('rejects a fractional givenAt', () => {
+		expect(
+			v.safeParse(v1ConsentRecordInputSchema, {
+				...contractRecord,
+				givenAt: 1_763_467_200_000.5,
+			}).success
+		).toBe(false);
+	});
+
 	it('rejects a body without an idempotency key', () => {
 		const { idempotencyKey: _key, ...rest } = contractRecord;
 		expect(v.safeParse(v1ConsentRecordInputSchema, rest).success).toBe(false);

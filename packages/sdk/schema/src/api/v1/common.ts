@@ -87,10 +87,11 @@ export const v1IdentityTokenSchema = v.pipe(
 	v.description('Identity token signed by your server, proving externalId.')
 );
 
-/** Epoch milliseconds inside the range `Date` can represent. */
+/** Epoch milliseconds, from 1970 to the latest time `Date` can represent. */
 export const v1EpochMillisecondsSchema = v.pipe(
 	v.number(),
-	v.minValue(-8_640_000_000_000_000),
+	v.integer(),
+	v.minValue(0),
 	v.maxValue(8_640_000_000_000_000),
 	v.description('Epoch milliseconds.'),
 	v.examples([1_763_467_200_000])
