@@ -1,5 +1,5 @@
 /**
- * In-process stand-in for the Inth backend.
+ * In-process stand-in for the c15t backend.
  *
  * @remarks
  * Every fixture app mounts these handlers under `/api/inth` so the suite can

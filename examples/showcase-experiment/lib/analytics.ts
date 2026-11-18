@@ -10,7 +10,7 @@
  * A tool that only loads after consent never sees the impressions of the
  * visitors who declined, and every arm's opt-in rate drifts towards 100%.
  * Send these events somewhere that receives them either way, such as your
- * own endpoint, or compare arms on the counts the Inth backend keeps.
+ * own endpoint, or compare arms on the counts the c15t backend keeps.
  */
 export const track = (
 	event: string,

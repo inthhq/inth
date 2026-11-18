@@ -348,7 +348,7 @@ test('documentation links, includes and metadata are valid', async () => {
 		if (violation.severity !== 'error') {
 			return false;
 		}
-		// The self-host section and most CLI pages left with the Inth backend
+		// The self-host section and most CLI pages left with the c15t backend
 		// and CLI (commit ba2162401), and about 60 pages still link to them.
 		// The SDK docs rewrite removes or repoints those links; delete this
 		// exception with it. Links to any other missing route still fail,

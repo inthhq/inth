@@ -9,7 +9,7 @@
  *
  * `/consent-example` is the HTML quickstart page. Its tag loads
  * `c15t.js` from a `https://your-project.inth.app` placeholder, exactly as a
- * reader copies it. A Inth backend serves that file with its own URL built
+ * reader copies it. A c15t backend serves that file with its own URL built
  * in. This server swaps the tag for the local build with `INTH_PROJECT_URL`
  * as `data-project-url`, and any other placeholder or CDN prefix for the same,
  * so the page runs the code the docs show against this checkout.
