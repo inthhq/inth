@@ -1042,7 +1042,7 @@ export const createConsentClient = function createConsentClient(
 				: null,
 		identify: (externalId: string, identityToken?: string) =>
 			// Both arguments, always: see `identify` in `specs/NativeInth.ts`.
-			afterMutation(nativeModule.identify(externalId, identityToken)),
+			afterMutation(nativeModule.identify(externalId, identityToken ?? null)),
 		isAllowed: (category: AllConsentNames) =>
 			isCategoryAllowed(currentSnapshot(), category),
 		isReady: () => isSnapshotReady(currentSnapshot()),
