@@ -63,8 +63,6 @@ export class Tabs {
 
 	/**
 	 * Select a tab, unless the tabs are disabled.
-	 *
-	 * @param value - The tab's value.
 	 */
 	select(value: string): void {
 		if (!this.disabled()) {
@@ -125,9 +123,7 @@ export class TabsTrigger {
 	/** @internal */
 	protected readonly root = inject(Tabs);
 	readonly #list = inject(TabsList, { optional: true });
-	/** The tab's value. */
 	readonly value = input.required<string>();
-	/** The button's `type`. */
 	readonly type = input<'button' | 'submit' | 'reset'>('button');
 
 	/** Whether this tab is selected. */
@@ -190,7 +186,6 @@ export class TabsTrigger {
 })
 export class TabsContent {
 	readonly #root = inject(Tabs);
-	/** The tab's value. */
 	readonly value = input.required<string>();
 
 	/** Whether this panel's tab is selected. */

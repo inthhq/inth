@@ -49,9 +49,6 @@ export class IABConsentDialogHarness extends ComponentHarness {
 
 	/**
 	 * A predicate for a dialog that matches `options`.
-	 *
-	 * @param options - Title and selector filters.
-	 * @returns A predicate to pass to a loader.
 	 */
 	static with(
 		options: IABConsentDialogHarnessFilters = {}
@@ -80,7 +77,6 @@ export class IABConsentDialogHarness extends ComponentHarness {
 		return this.locatorForOptional(`button[data-action="${action}"]`)();
 	}
 
-	/** The dialog's title. */
 	async getTitle(): Promise<string> {
 		return (await this.#title()).text();
 	}
@@ -105,8 +101,6 @@ export class IABConsentDialogHarness extends ComponentHarness {
 
 	/**
 	 * Show a tab.
-	 *
-	 * @param tab - `purposes` or `vendors`.
 	 */
 	async selectTab(tab: IABConsentDialogTab): Promise<void> {
 		const trigger = await this.locatorFor(`[role="tab"][value="${tab}"]`)();

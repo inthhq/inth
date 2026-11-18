@@ -25,12 +25,8 @@ export interface ConsentBannerHarnessFilters extends BaseHarnessFilters {
  * the consent runtime has started and chosen the banner before the first
  * query.
  *
- * The banner animates out over 200ms after a choice. Set
- * `disableAnimation: true` in the test's `provideInth()` options so it
- * leaves the page as soon as the choice is recorded.
- *
  * The action methods click the stock buttons. A banner that replaces them
- * with a `inthConsentBannerAction` template keeps working if your buttons
+ * with an `inthConsentBannerAction` template keeps working if your buttons
  * set `data-action` to the action's id.
  *
  * @example
@@ -51,9 +47,6 @@ export class ConsentBannerHarness extends ComponentHarness {
 
 	/**
 	 * A predicate for a banner that matches `options`.
-	 *
-	 * @param options - Title, prompt and selector filters.
-	 * @returns A predicate to pass to a loader.
 	 */
 	static with(
 		options: ConsentBannerHarnessFilters = {}

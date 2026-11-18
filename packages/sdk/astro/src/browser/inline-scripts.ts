@@ -58,7 +58,6 @@ export const ACTIVATED_ATTRIBUTE = 'data-inth-activated';
  *
  * @param element - The inert tag.
  * @param nonce - The page's CSP nonce.
- * @returns Whether the tag may be activated.
  */
 const isTrusted = function isTrusted(
 	element: HTMLScriptElement,
@@ -127,7 +126,6 @@ const activate = function activate(
  * Safe to call repeatedly — activated scripts are stamped and skipped, so
  * re-running it after a ClientRouter navigation only picks up new tags.
  *
- * @param snapshot - The current kernel snapshot.
  * @param root - Where to scan. Defaults to the whole document.
  * @param nonce - The page's CSP nonce. When set, only tags carrying it are
  * activated; the others are marked `untrusted` and skipped.

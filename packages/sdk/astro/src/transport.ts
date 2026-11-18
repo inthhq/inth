@@ -91,7 +91,6 @@ export const testingTransport: ResolveTransport = ({ mode }) =>
  * through `${routePrefix}/init`, and `manifest({ resolve: 'browser' })`
  * loads the browser resolver with `import()`.
  *
- * @param options - The resolved integration options.
  * @returns A transport factory for `createConsentKernel`.
  * @throws {Error} When the mode needs a backend URL and none is set.
  * @internal

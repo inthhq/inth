@@ -252,7 +252,6 @@ export const buildIABPrompt = function buildIABPrompt(
 /**
  * Render the IAB banner into the spot `<IABConsentBanner />` left for it.
  *
- * @param snapshot - The current snapshot.
  * @param options - The site options the banner reads.
  * @returns `true` when a banner was inserted. `false` when there is no
  * spot, or the snapshot's policy or vendor list does not call for one yet.

@@ -56,11 +56,9 @@ import {
 	selector: '[inthSwitch]',
 })
 export class Switch implements ControlValueAccessor {
-	/** Whether the switch is on. */
 	readonly checked = model(false);
 	/** Whether the switch ignores input. */
 	readonly disabled = input(false);
-	/** The button's `type`. */
 	readonly type = input<'button' | 'submit' | 'reset'>('button');
 
 	readonly #formDisabled = signal(false);

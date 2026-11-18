@@ -156,7 +156,7 @@ let pageNonce: string | undefined;
 
 /**
  * The elements Inth renders with the page's nonce, and the gated tags it
- * activates with it. Nothing else on an incoming page is inth's to change.
+ * activates with it. Nothing else on an incoming page is Inth's to change.
  */
 const NONCE_BEARING_SELECTOR = [
 	'script[data-inth-config]',
@@ -175,14 +175,14 @@ const NONCE_BEARING_SELECTOR = [
  * nonce while the browser keeps enforcing the first response's policy.
  * Its Inth styles and scripts would be blocked, and its gated tags would
  * fail the nonce check in {@link activateGatedScripts}. The server issued
- * both nonces, so inth's own elements and the gated tags carrying the
+ * both nonces, so Inth's own elements and the gated tags carrying the
  * incoming one are given the live one.
  *
  * The incoming nonce is read from the page's config scripts, which an
  * HTML-injection hole on that page could also write. A planted config
- * script ahead of inth's would otherwise name the attacker's nonce, and
+ * script ahead of Inth's would otherwise name the attacker's nonce, and
  * the attacker's own elements would be handed the live one. So every config
- * script on the page has to agree, and only inth's elements and gated tags
+ * script on the page has to agree, and only Inth's elements and gated tags
  * are rewritten: an arbitrary `<script nonce>` never is. A page whose only
  * config script is planted, because Inth rendered none, is not covered.
  *
@@ -195,7 +195,7 @@ const adoptPageNonce = function adoptPageNonce(incoming: Document): void {
 	const nonces = new Set(configScripts(incoming).map(nonceOf));
 	if (nonces.size > 1) {
 		console.warn(
-			'@inth/astro: the next page has config scripts with different CSP nonces, so inth did not move it onto the live nonce. Look for markup injected into that page.'
+			'@inth/astro: the next page has config scripts with different CSP nonces, so Inth did not move it onto the live nonce. Look for markup injected into that page.'
 		);
 		return;
 	}
@@ -231,8 +231,6 @@ const adoptPageNonce = function adoptPageNonce(incoming: Document): void {
  *
  * `'none'` drops any previous listener and stops there: the site owns the
  * class, so whatever it has put on `<html>` stays.
- *
- * @param colorScheme - The resolved colour scheme.
  */
 const applyColorScheme = function applyColorScheme(
 	colorScheme: InthResolvedOptions['colorScheme']
@@ -294,8 +292,6 @@ const dialogAdoption = new WeakMap<
  * for a policy that arrives a moment later. Waiting here lets `openDialog()`
  * calls made on page load (a `#inth-preferences` link, a storybook, a host
  * script) decide against the settled answer instead of the pending one.
- *
- * @param kernel - The runtime's kernel.
  */
 const whenPolicySettled = function whenPolicySettled(
 	kernel: ConsentKernel
@@ -321,8 +317,6 @@ const whenPolicySettled = function whenPolicySettled(
  * With nothing to manage the controls stay hidden: before a rule resolves,
  * and under a `none` rule that owes no rights. They appear on their own once
  * a later init supplies a rule that does.
- *
- * @param snapshot - The current kernel snapshot.
  */
 export const syncSurfaceVisibility = function syncSurfaceVisibility(
 	snapshot: ConsentSnapshot
@@ -345,8 +339,6 @@ export const syncSurfaceVisibility = function syncSurfaceVisibility(
  * the entering class is present, so `disableAnimation` still turns it off.
  * A banner the server resolved as blocking (`data-blocking="true"`) also
  * locks scroll and traps focus in its card while it is shown.
- *
- * @param snapshot - The current kernel snapshot.
  */
 export const syncBannerVisibility = function syncBannerVisibility(
 	snapshot: ConsentSnapshot
@@ -585,7 +577,6 @@ const FIRST_PAINT_SELECTOR = 'style[data-inth-styles="inth-first-paint"]';
  * where the banner may show, so on a returning visitor's page the dialog,
  * which builds on their tokens and button rules, brings them along.
  *
- * @param options - The resolved options.
  * @param nonce - The page's CSP nonce.
  */
 const ensureFirstPaintStyles = async function ensureFirstPaintStyles(
@@ -1051,9 +1042,6 @@ const runPromptRender = async function runPromptRender(
  * hosted or manifest mode, or a server render whose init failed — and the
  * IAB banner also when there was no vendor list yet. Each renderer is its
  * own chunk, so a page that never needs one never downloads it.
- *
- * @param client - The page's consent client.
- * @param snapshot - The current kernel snapshot.
  */
 const ensurePromptRendered = function ensurePromptRendered(
 	client: AstroConsentClient,
@@ -1115,7 +1103,6 @@ const attach = function attach(client: AstroConsentClient): void {
  * @param extension - Non-serializable additions from `clientEntrypoint`.
  * @param handoff - From the shell: takes over its place on `window`, with
  * any choice it recorded.
- * @returns The page-level consent client.
  * @throws {Error} Outside the browser.
  */
 export const boot = function boot(

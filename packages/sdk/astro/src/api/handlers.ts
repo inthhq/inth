@@ -61,7 +61,6 @@ export const waitUntilFromLocals = function waitUntilFromLocals(
 
 /** Options accepted by the route handler factory. */
 export interface ConsentRouteHandlerOptions {
-	/** The resolved integration options. */
 	options: InthResolvedOptions;
 	/** Override fetch, mainly for tests. */
 	fetch?: ManifestFetch;
@@ -146,7 +145,6 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	/**
 	 * `GET ${routePrefix}/init` — a resolved `InitOutput`, never cached.
 	 *
-	 * @param request - The incoming request.
 	 * @param lifetime - The route's `{ locals }`, so detached work can be
 	 * registered with the adapter's `waitUntil`.
 	 */
@@ -164,7 +162,6 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	/**
 	 * `GET ${routePrefix}/manifest` — the manifest, with its own cache headers.
 	 *
-	 * @param request - The incoming request.
 	 * @param lifetime - The route's `{ locals }`, so a background manifest
 	 * refresh can be registered with the adapter's `waitUntil`.
 	 */
@@ -182,7 +179,6 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	 * The catch-all route: `init` or `manifest` by the path below the
 	 * route, and 404 for anything else under the prefix.
 	 *
-	 * @param request - The incoming request.
 	 * @param lifetime - The route's `{ locals, path }`.
 	 */
 	const GET = function GET(

@@ -57,9 +57,7 @@ const variants = preferenceItemVariants();
 	selector: '[inthPreferenceItem]',
 })
 export class PreferenceItem {
-	/** Whether the content is shown. */
 	readonly open = model(false);
-	/** Whether the trigger is ignored. */
 	readonly disabled = input(false);
 	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
@@ -195,7 +193,6 @@ export class PreferenceItemControl extends PreferenceItemPart {
 	selector: '[inthPreferenceItemTrigger]',
 })
 export class PreferenceItemTrigger extends PreferenceItemPart {
-	/** The button's `type`. */
 	readonly type = input<'button' | 'submit' | 'reset'>('button');
 	/** @internal */
 	protected readonly slot = PREFERENCE_ITEM_SLOTS.trigger;
@@ -210,7 +207,7 @@ export class PreferenceItemTrigger extends PreferenceItemPart {
 }
 
 /**
- * Marks the `<ng-template>` a `inth-preference-item-content` creates only from
+ * Marks the `<ng-template>` an `inth-preference-item-content` creates only from
  * the item's first open, for content too heavy to build up front.
  *
  * A marker, not any `TemplateRef` child: control flow such as `@if` is a

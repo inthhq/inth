@@ -56,9 +56,7 @@ export interface InlineCodeHashes {
  * entries a `clientEntrypoint` adds, which the config never sees; see
  * {@link buildAstroCsp} for how the browser reports those.
  *
- * @param options - The resolved integration options.
  * @param algorithm - The digest Astro's CSP is configured with.
- * @returns Script and style hashes.
  */
 export const buildInlineCodeHashes = async function buildInlineCodeHashes(
 	options: InthResolvedOptions,
@@ -86,7 +84,7 @@ export const buildInlineCodeHashes = async function buildInlineCodeHashes(
 	const themes = [options.theme, ...armThemes];
 	const styles = [
 		// The first-paint rules the components inline, unless the page
-		// links inth's stylesheet instead.
+		// links Inth's stylesheet instead.
 		options.inlineStyles === false ? '' : INLINE_STYLES_CSS,
 		options.inlineStyles && isIABConfigured(options.iab)
 			? INLINE_IAB_STYLES_CSS
@@ -154,7 +152,7 @@ const readSiteScriptHashes = function readSiteScriptHashes(
 
 /** What the integration does with Astro's CSP turned on. */
 export interface AstroCspSetup {
-	/** The `updateConfig()` argument that allows inth's inline code. */
+	/** The `updateConfig()` argument that allows Inth's inline code. */
 	update: Record<string, unknown>;
 	/**
 	 * What the browser checks `clientEntrypoint` inline scripts against.
@@ -165,7 +163,7 @@ export interface AstroCspSetup {
 }
 
 /**
- * Allow inth's inline code under Astro's CSP.
+ * Allow Inth's inline code under Astro's CSP.
  *
  * The algorithm is always set: a site that enabled CSP with `csp: true`
  * gets Astro's defaults filled in before integrations run, and an object
@@ -178,7 +176,6 @@ export interface AstroCspSetup {
  * hash of any the policy lacks.
  *
  * @param config - The Astro config `astro:config:setup` receives.
- * @param options - The resolved integration options.
  * @returns The config update and the browser's copy of the script hashes,
  * or `undefined` without CSP.
  */

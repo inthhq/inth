@@ -139,7 +139,6 @@ const nonceOf = function nonceOf(element: Element | null): string | undefined {
  * them. Without a `nonce`, new elements take the nonce of an earlier Inth
  * sheet, else of a page script.
  *
- * @param document - The document to insert into.
  * @param sheets - The surface's sheets, in cascade order.
  * @param nonce - CSP nonce for the new `<style>` elements.
  * @param scope - The elements of the surface asking, which a deferred sheet

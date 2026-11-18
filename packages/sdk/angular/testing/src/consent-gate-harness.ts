@@ -22,7 +22,7 @@ export type ConsentGateHarnessFilters = BaseHarnessFilters;
  * harness waits for that frame before it reads the gate.
  *
  * The built-in placeholder shows while the category is denied. A gate
- * with a `inthConsentGatePlaceholder` template renders your markup
+ * with an `inthConsentGatePlaceholder` template renders your markup
  * instead, and `isPlaceholderShown()` reports `false` for it: check your
  * own markup with `getText()` or a harness of your own.
  *
@@ -39,12 +39,7 @@ export class ConsentGateHarness extends ContentContainerComponentHarness {
 	/** Matches the gate's host element, which stays where you put it. */
 	static hostSelector = 'inth-consent-gate';
 
-	/**
-	 * A predicate for a gate that matches `options`.
-	 *
-	 * @param options - Selector and ancestor filters.
-	 * @returns A predicate to pass to a loader.
-	 */
+	/** A predicate for a gate that matches `options`. */
 	static with(
 		options: ConsentGateHarnessFilters = {}
 	): HarnessPredicate<ConsentGateHarness> {

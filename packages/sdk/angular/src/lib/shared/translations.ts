@@ -10,8 +10,6 @@ import type { ConsentManager } from '../core/consent-manager';
  * The page's copy for the active language, completed with the English
  * defaults.
  *
- * @param consent - The consent manager.
- * @returns A signal of the resolved translations.
  * @internal
  */
 export const resolvedTranslations = function resolvedTranslations(

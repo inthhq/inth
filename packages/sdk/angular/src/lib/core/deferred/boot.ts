@@ -35,7 +35,6 @@ export const INTH_BOOT = makeStateKey<ConsentBoot>('inth-boot');
  *
  * @param boot - The boot read from `TransferState`.
  * @param gvl - The server state's `initialIab.gvl`.
- * @returns The boot to render from.
  * @internal
  */
 export const restoreBoot = function restoreBoot(

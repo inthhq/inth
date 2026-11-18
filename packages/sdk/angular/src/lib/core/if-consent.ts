@@ -81,10 +81,6 @@ export class IfConsent {
 
 	/**
 	 * Narrows the template context for the type checker.
-	 *
-	 * @param _directive - The directive.
-	 * @param context - The template context.
-	 * @returns `true`.
 	 */
 	static ngTemplateContextGuard(
 		_directive: IfConsent,

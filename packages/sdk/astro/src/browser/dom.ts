@@ -11,11 +11,6 @@ type Attributes = Record<string, string | undefined>;
 
 /**
  * Create an element, skipping undefined attributes.
- *
- * @param tag - The tag name.
- * @param attributes - Attributes to set.
- * @param children - Child nodes or text.
- * @returns The element.
  */
 export const element = function element(
 	tag: string,
@@ -109,7 +104,6 @@ export const renderBrandingTag = function renderBrandingTag(
  * Hide a freshly built banner until `syncBannerVisibility` decides, the
  * same as a prerendered server banner, with its overlay in front of it.
  *
- * @param root - The banner root.
  * @param overlay - The backdrop, for blocking banners.
  * @returns The nodes to insert, in document order.
  */

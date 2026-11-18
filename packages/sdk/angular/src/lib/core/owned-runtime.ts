@@ -30,7 +30,6 @@ import type {
  * disposes it with the application.
  *
  * @param options - `runtimeOptionsFor` the provider's options.
- * @returns The runtime.
  * @internal
  */
 export const createOwnedRuntime = function createOwnedRuntime(

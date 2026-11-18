@@ -27,11 +27,9 @@ export type ConsentDialogKind = 'preferences' | 'iab';
 export interface ConsentDialogContext {
 	/** The page-level runtime that owns the kernel. */
 	runtime: ConsentRuntime;
-	/** The resolved integration options. */
 	options: InthResolvedOptions;
 	/** The element the surface mounts into. */
 	target: HTMLElement;
-	/** Which dialog to show. */
 	kind: ConsentDialogKind;
 	/**
 	 * Which IAB preference-centre tab to open on. Ignored by the
@@ -80,8 +78,6 @@ export const registerDialogSurface = function registerDialogSurface(
 /**
  * The registered surface loader for an adapter.
  *
- * @param name - The adapter name.
- * @returns The loader.
  * @throws {Error} When no surface has been registered for that adapter.
  */
 export const requireDialogSurface = function requireDialogSurface(
@@ -170,8 +166,6 @@ export const resetDialogRegistriesForTest =
  * The import is dynamic so a page that never opens a dialog never
  * downloads the framework behind it.
  *
- * @param name - The adapter name.
- * @returns The adapter.
  * @throws {Error} When no adapter is registered under that name.
  */
 export const loadDialogAdapter = async function loadDialogAdapter(

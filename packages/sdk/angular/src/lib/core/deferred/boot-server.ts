@@ -91,9 +91,7 @@ const canDeferAnswered = function canDeferAnswered(
  * the first-load chunk or the server starts (`canDeferAnswered`).
  *
  * @param snapshot - The snapshot the server rendered with.
- * @param options - The provider's options.
  * @param now - The clock. Defaults to `Date.now()`.
- * @returns `true` when the engine may wait.
  * @internal
  */
 export const canDeferEngine = function canDeferEngine(
@@ -151,8 +149,6 @@ export const canDeferEngine = function canDeferEngine(
  * unchanged. The IAB copy is left out unless the app configured IAB.
  *
  * @param snapshot - The snapshot the server rendered with.
- * @param withIAB - Whether to keep the IAB copy.
- * @returns The snapshot with a complete bundle.
  * @internal
  */
 export const withCompleteTranslations = function withCompleteTranslations(

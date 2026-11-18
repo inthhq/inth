@@ -84,8 +84,6 @@ export interface ClientApp {
  * Boot the fixture in `container`.
  *
  * @param container - Holds the root element, or the server HTML to hydrate.
- * @param options - `provideInth()` options.
- * @param content - What the fixture renders.
  * @param hydrate - Hydrate the server HTML already in `container`.
  */
 export const bootClient = async function bootClient(
@@ -164,9 +162,6 @@ export interface ServerRender {
 
 /**
  * Server-render the fixture with `@angular/platform-server`.
- *
- * @param options - `provideInth()` options.
- * @param content - What the fixture renders.
  */
 export const renderServer = async function renderServer(
 	options: InthProviderOptions,

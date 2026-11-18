@@ -69,7 +69,7 @@ export interface ClassMapPlugin {
 }
 
 /**
- * Create the plugin. Only add it when the integration delivers inth's
+ * Create the plugin. Only add it when the integration delivers Inth's
  * styles: with `styles: false` the islands' own CSS is all a site has.
  *
  * @param options - Which stylesheets the integration injects.

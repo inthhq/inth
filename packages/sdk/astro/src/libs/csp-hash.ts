@@ -24,7 +24,6 @@ const PREFIXES = {
  * Hash one inline element's text the way a browser checks it.
  *
  * @param content - The element's exact text content.
- * @param algorithm - The digest to use.
  * @returns The hash source, such as `sha256-…`.
  */
 export const hashSource = async function hashSource(

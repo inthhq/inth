@@ -42,9 +42,6 @@ export class ConsentDialogHarness extends ComponentHarness {
 
 	/**
 	 * A predicate for a dialog that matches `options`.
-	 *
-	 * @param options - Title and selector filters.
-	 * @returns A predicate to pass to a loader.
 	 */
 	static with(
 		options: ConsentDialogHarnessFilters = {}
@@ -62,7 +59,6 @@ export class ConsentDialogHarness extends ComponentHarness {
 		'[data-testid="consent-dialog-description"]'
 	);
 
-	/** The dialog's title. */
 	async getTitle(): Promise<string> {
 		return (await this.#title()).text();
 	}

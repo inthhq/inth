@@ -21,7 +21,6 @@ import { ConsentManager } from '../core/consent-manager';
  * dialog itself. The same target a focus trap's `first-tabbable` uses, so
  * a trap never moves it a second time.
  *
- * @param node - The dialog element.
  * @internal
  */
 export const focusInitially = function focusInitially(node: HTMLElement): void {

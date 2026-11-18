@@ -33,10 +33,7 @@ const startSurface = async function startSurface(
  * Download everything a dialog needs, in parallel, and resolve with the
  * adapter once the adapter and the stylesheets are in.
  *
- * @param ui - The configured adapter.
- * @param kind - Which dialog.
  * @param nonce - The page's CSP nonce, for the stylesheet links.
- * @returns The adapter.
  * @throws {Error} When the adapter is not registered or fails to load.
  */
 export const loadDialog = async function loadDialog(
@@ -56,10 +53,6 @@ export const loadDialog = async function loadDialog(
 /**
  * Download a dialog without mounting it, including whatever the adapter's
  * own `preload()` adds.
- *
- * @param ui - The configured adapter.
- * @param kind - Which dialog.
- * @param nonce - The page's CSP nonce.
  */
 export const preloadDialogChunks = async function preloadDialogChunks(
 	ui: InthUIAdapterName,

@@ -15,10 +15,8 @@ export interface SlotBinding {
  * classes of that part. Slot classes stay when the component's `noStyle`
  * already dropped the stock ones, as `resolveStyles` in `@inth/sdk/ui` does.
  *
- * @param theme - The integration's `theme`.
  * @param key - The slot key, such as `consentBannerCard`.
  * @param stockClass - The part's stock classes, empty with `noStyle`.
- * @returns The part's `class` and `style`.
  */
 export const resolveSlotBinding = function resolveSlotBinding(
 	theme: Theme | undefined,

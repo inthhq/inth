@@ -227,7 +227,7 @@ export class ConsentDialogPanel {
 	 * `disableAnimation`, which follows `prefers-reduced-motion`.
 	 */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
-	/** Hide the "Secured by c15t" attribution. */
+	/** Hide the "Secured by" attribution. */
 	readonly hideBranding = input(false);
 	/** Which of the provider's legal links follow the description. */
 	readonly legalLinks = input<ConsentDialogLegalLinks | undefined>(undefined);
@@ -411,14 +411,6 @@ export class ConsentDialogPanel {
 		}
 	}
 
-	/**
-	 * With `open` set, Escape is a close request: `openChange` emits
-	 * `false`, so `[(open)]` hears it even when the consent state already
-	 * left the dialog, and the consent manager closes the surface. The
-	 * dialog itself stays until the parent sets `open` to `false`.
-	 *
-	 * @internal
-	 */
 	/**
 	 * An action in the dialog closed the surface: a parent that owns `open`
 	 * hears it, so the next render does not open the dialog again.

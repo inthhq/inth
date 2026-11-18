@@ -206,7 +206,7 @@ export class ConsentGate {
 	 * `isVendorAllowed(vendor)`.
 	 */
 	readonly vendor = input<string | undefined>(undefined);
-	/** Drop inth's classes from the built-in placeholder. Defaults to the provider's `noStyle`. */
+	/** Drop Inth's classes from the built-in placeholder. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
 
 	/** @internal */

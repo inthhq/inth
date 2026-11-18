@@ -52,7 +52,6 @@ const matchesPrefix = function matchesPrefix(
  * resolves consent — a request that never returns. Nothing on those routes
  * renders consent UI, so there is nothing to lose by skipping them.
  *
- * @param options - The resolved integration options.
  * @returns Path prefixes to skip.
  */
 const resolveSkipPaths = function resolveSkipPaths(
@@ -81,9 +80,7 @@ const resolveSkipPaths = function resolveSkipPaths(
  * anything listed in `middleware.skip` — those run `next()` with
  * `Astro.locals.inth` left unset.
  *
- * @param options - The resolved integration options.
  * @param middlewareOptions - Test seams.
- * @returns An Astro middleware handler.
  */
 export const createConsentMiddleware = function createConsentMiddleware(
 	options: InthResolvedOptions,

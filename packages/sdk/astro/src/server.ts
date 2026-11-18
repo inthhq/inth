@@ -55,7 +55,6 @@ import type { InthLocals, InthResolvedOptions } from './types';
 
 /** Input for {@link resolveConsentContext}. */
 export interface ResolveConsentContextOptions {
-	/** The incoming request headers. */
 	headers: Headers;
 	/**
 	 * The absolute request URL. Used to resolve a relative `projectUrl` or
@@ -129,7 +128,6 @@ const readTranslationOverrides = function readTranslationOverrides(
 /**
  * Resolve the language the surfaces should render in.
  *
- * @param options - Integration options.
  * @param inputs - Request inputs from the geo/language headers.
  * @returns The kernel translations for this request.
  */
@@ -248,7 +246,6 @@ const withResolvedGvl = async function withResolvedGvl(input: {
  * Kernel construction is pure — no DOM, no network, no storage — so this is
  * safe to run per request.
  *
- * @param config - The resolved kernel configuration.
  * @returns The snapshot, including derived `activeUI` and policy UI hints.
  */
 export const snapshotFromConfig = function snapshotFromConfig(
@@ -415,7 +412,6 @@ export const resolveConsentContext = async function resolveConsentContext(
  * policy that allows inline scripts only by hash or nonce still lets the
  * payload through, even though it changes per visitor.
  *
- * @param config - The resolved kernel configuration.
  * @returns JSON safe to place inside a `<script>` element.
  * @example
  * ```astro
@@ -447,7 +443,6 @@ export const buildConfigJSON = function buildConfigJSON(
  * browser runtime reads it from there for the scripts and stylesheets it
  * adds.
  *
- * @param config - The resolved kernel configuration.
  * @returns JavaScript safe for inline `<script>` injection.
  */
 export const buildConfigScript = function buildConfigScript(
@@ -464,7 +459,6 @@ export const buildConfigScript = function buildConfigScript(
  * once, next to the config script. Dark tokens follow the `inth-dark`
  * class the colour-scheme script sets.
  *
- * @param theme - The integration's theme option.
  * @returns CSS for a `<style>` element, or an empty string without a theme.
  * @example
  * ```astro
@@ -500,7 +494,6 @@ export { buildColorSchemeScript } from '@inth/sdk/ui/utils/color-scheme';
  * Anyone with a stored record keeps waiting for the runtime, which
  * validates it.
  *
- * @param storageConfig - The integration's storage configuration.
  * @param testId - The banner's `data-testid` prefix.
  * @returns JavaScript safe for inline `<script>` injection.
  * @example

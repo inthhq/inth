@@ -46,7 +46,6 @@ export const loadGPP: GPPModuleLoader = () => import('@inth/sdk/iab/gpp');
  * Mirrors the runtime's own check, so the provider only wires the loader
  * for apps that will mount a CMP.
  *
- * @param iab - The `iab` option.
  * @returns `true` when the runtime would mount the TCF addon.
  * @internal
  */

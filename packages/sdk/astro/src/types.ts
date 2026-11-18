@@ -311,7 +311,7 @@ export interface InthAstroOptions {
 	ui?: InthUIAdapterName;
 
 	/**
-	 * Deliver inth's styles. `<ConsentScript />`, or the banner on a layout
+	 * Deliver Inth's styles. `<ConsentScript />`, or the banner on a layout
 	 * without it, inlines the first-paint rules into the HTML, so no
 	 * stylesheet link holds back the page's first paint. The client links
 	 * the dialog's rules before mounting it. With
@@ -494,7 +494,7 @@ export interface InthResolvedOptions extends Omit<
 	/**
 	 * Whether the components inline the first-paint rules and the client
 	 * links the dialog's when it opens. `false` with `styles: false`, and on
-	 * a Tailwind CSS 3 site, whose PostCSS build has to process inth's rules:
+	 * a Tailwind CSS 3 site, whose PostCSS build has to process Inth's rules:
 	 * the integration then adds `@inth/astro/styles.css` to every page.
 	 */
 	inlineStyles: boolean;
@@ -514,7 +514,7 @@ export interface InthResolvedOptions extends Omit<
 export interface InthBrowserCsp {
 	/** The digest the policy's hashes use. */
 	algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512';
-	/** Every script hash the policy allows: inth's and the site's own. */
+	/** Every script hash the policy allows: Inth's and the site's own. */
 	scriptHashes: string[];
 }
 
@@ -577,8 +577,8 @@ export interface InthLocals {
 	/**
 	 * Content Security Policy nonce for this request.
 	 *
-	 * inth's middleware leaves it unset. Set it from your own middleware,
-	 * which runs after inth's, when your policy allows inline code by nonce
+	 * Inth's middleware leaves it unset. Set it from your own middleware,
+	 * which runs after Inth's, when your policy allows inline code by nonce
 	 * instead of `'unsafe-inline'`. Every inline `<script>` and `<style>`
 	 * the Inth components render carries it, and the browser runtime puts
 	 * it on the scripts it loads, the gated inline scripts it activates and

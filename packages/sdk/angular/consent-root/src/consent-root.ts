@@ -46,7 +46,7 @@ export class ConsentRoot {
 	/** Which of the provider's legal links both surfaces show. */
 	readonly legalLinks = input<LegalLinkSelection | undefined>(undefined);
 	/**
-	 * Render a `<inth-consent-dialog-trigger>` with the dialog. Pass an
+	 * Render an `<inth-consent-dialog-trigger>` with the dialog. Pass an
 	 * object to set the trigger's inputs.
 	 */
 	readonly showTrigger = input<boolean | ConsentDialogTriggerOptions>(false);

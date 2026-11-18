@@ -46,7 +46,7 @@ export interface IABPromptProps {
 	disableAnimation?: boolean;
 	/** Extra class on the banner root. */
 	class?: string;
-	/** Drop the "Secured by c15t" tag. */
+	/** Drop the "Secured by" tag. */
 	hideBranding?: boolean;
 	/** Paint the backdrop that goes with the banner's `aria-modal`. */
 	scrollLock?: boolean;
@@ -294,7 +294,6 @@ const resolveIABButton = function resolveIABButton(
  * Resolve the IAB banner's copy, summary, buttons and class names.
  *
  * @param input - The snapshot, the component props and the site options.
- * @returns The IAB banner model.
  */
 export const resolveIABPromptModel = function resolveIABPromptModel(
 	input: IABPromptModelInput

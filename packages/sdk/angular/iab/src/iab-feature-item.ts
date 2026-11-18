@@ -164,7 +164,6 @@ import type { IABTranslations } from './iab-translations';
 	`,
 })
 export class IABFeatureItem {
-	/** The feature. */
 	readonly feature = input.required<ProcessedFeature>();
 	/** The row's `data-testid`, from the shared display model. */
 	readonly testId = input<string | undefined>(undefined);

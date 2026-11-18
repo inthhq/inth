@@ -97,7 +97,7 @@ export class ConsentDialog {
 	 * `disableAnimation`, which follows `prefers-reduced-motion`.
 	 */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
-	/** Hide the "Secured by c15t" attribution. */
+	/** Hide the "Secured by" attribution. */
 	readonly hideBranding = input(false);
 	/** Which of the provider's legal links follow the description. */
 	readonly legalLinks = input<ConsentDialogLegalLinks | undefined>(undefined);

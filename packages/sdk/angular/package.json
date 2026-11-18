@@ -1,7 +1,7 @@
 {
 	"name": "@inth/angular",
 	"version": "3.2.0-canary.0",
-	"description": "Angular cookie consent banner for inth, with a consent dialog and preference center. Standalone components, signals and zoneless change detection.",
+	"description": "Angular cookie consent banner for Inth, with a consent dialog and preference center. Standalone components, signals and zoneless change detection.",
 	"keywords": [
 		"angular",
 		"angular-cookie-consent",

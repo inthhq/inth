@@ -172,7 +172,6 @@ const renderLegalLinks = function renderLegalLinks(
 /**
  * Build the banner for a snapshot, without inserting it.
  *
- * @param snapshot - The resolved snapshot.
  * @param slot - The props and class names `<ConsentBanner />` left.
  * @param options - The site options the banner reads.
  * @returns The overlay (blocking banners only) followed by the banner root.
@@ -300,7 +299,6 @@ export const buildPrompt = function buildPrompt(
 /**
  * Render the banner into the first spot `<ConsentBanner />` left for it.
  *
- * @param snapshot - The resolved snapshot.
  * @param options - The site options the banner reads.
  * @returns `true` when a banner was inserted.
  */

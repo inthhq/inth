@@ -154,7 +154,6 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 	`,
 })
 export class IABStackItem {
-	/** The stack. */
 	readonly stack = input.required<IABStackRow>();
 	/** Consent per purpose. */
 	readonly consents = input<Readonly<Record<number, boolean>>>({});

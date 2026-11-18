@@ -51,8 +51,6 @@ export class Accordion {
 	/**
 	 * Registers an item's `disabled`, so the root skips it too.
 	 *
-	 * @param itemValue - The item's `value`.
-	 * @param disabled - The item's `disabled` input.
 	 * @returns Removes the registration.
 	 * @internal
 	 */
@@ -65,11 +63,7 @@ export class Accordion {
 		};
 	}
 
-	/**
-	 * Open or close one item, unless that item is disabled.
-	 *
-	 * @param itemValue - The item's `value`.
-	 */
+	/** Open or close one item, unless that item is disabled. */
 	toggleItem(itemValue: string): void {
 		if (this.#disabled.get(itemValue)?.()) {
 			return;

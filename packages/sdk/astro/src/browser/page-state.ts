@@ -18,7 +18,7 @@ export const COLOR_SCHEME_KEY = '__inthAstroColorScheme';
 /** Set once the delegated banner listener is installed. */
 export const ACTIONS_KEY = '__inthAstroActions';
 
-/** `window` with inth's slots. */
+/** `window` with Inth's slots. */
 export type ClientWindow = Window &
 	typeof globalThis & {
 		[GLOBAL_KEY]?: AstroConsentClient;
@@ -36,7 +36,6 @@ export const getWindow = function getWindow(): ClientWindow | undefined {
  * The scripts that carry the boot payload: the config data block, or a
  * page's own `buildConfigScript()` script, which has no marker.
  *
- * @param root - The document to read.
  * @returns The config scripts, in document order.
  */
 export const configScripts = function configScripts(
