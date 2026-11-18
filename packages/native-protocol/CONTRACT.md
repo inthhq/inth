@@ -1106,7 +1106,7 @@ The body is built once per action, frozen, and queued before the first send:
     policyId, fingerprint, country, region, language, gpc
                        the decision-input assertion, only when there is no token, by
                        the same rule as before
-    tcString, addtlConsent, vendorChoice   for an IAB save
+    tcString, addtlConsent   for an IAB save, which carries its vendor choices in `tcString`
     metadata           `{ userProperties }` when the identified user has properties
     externalId, identityProvider   when the subject is identified
     answer             `{ categories: { <category>: receipt } }`: every receipt the
