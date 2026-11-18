@@ -643,13 +643,25 @@ describe('protocol fixtures', () => {
 				path: string;
 			};
 			expect(request.method).toBe('POST');
-			expect(request.path).toBe('/subjects');
-			expect(request.body.type).toBe('cookie_banner');
-			expect(request.body.domain).toBe(fixture.input.domain);
+			expect(request.path).toBe('/v1/consent/records');
+			expect(request.body.property).toBe(fixture.input.property);
+			expect(request.body.idempotencyKey).toBe(fixture.input.idempotencyKey);
 			expect(request.body.givenAt).toBe(fixture.input.actionAt);
+			// The 3.x names are gone from a /v1 body, not sent beside the new ones.
+			for (const retired of ['type', 'domain', 'preferences', 'choice']) {
+				expect(retired in request.body).toBe(false);
+			}
+			// Every confirmed category has a receipt in the answer.
+			const answer = request.body.answer as {
+				categories: Record<string, unknown>;
+			};
+			for (const category of request.body.confirmed as string[]) {
+				expect(answer.categories[category]).toBeDefined();
+			}
 			// IAB is out of scope, so the key must stay absent, not null.
 			expect('tcString' in request.body).toBe(false);
 			const payload = fixture.expected.savePayload as Record<string, unknown>;
+			expect(payload.idempotencyKey).toBe(fixture.input.idempotencyKey);
 			expect(payload.givenAt).toBe(fixture.input.actionAt);
 			expect(payload.tcString).toBeNull();
 			const before = fixture.expected.snapshotBefore as { revision: number };
