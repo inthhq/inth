@@ -43,6 +43,7 @@ import { StackItem } from './atoms/stack-item';
 import { VendorList } from './atoms/vendor-list';
 import { useIABDisplayModel } from './hooks/use-display-model';
 import type { VendorId } from './types';
+import { useExitTransition } from './use-exit-transition';
 import { useIABTranslations } from './use-iab-translations';
 
 const DEFAULT_MODELS: InthCoreTypes.Model[] = ['iab'];
@@ -176,7 +177,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 	);
 	const [specialPurposesExpanded, setSpecialPurposesExpanded] = useState(false);
 	const [isMounted, setIsMounted] = useState(false);
-	const [isVisible, setIsVisible] = useState(false);
 
 	const sheetsReady = useSurfaceSheetsReady(IAB_DIALOG_SHEETS, localNoStyle);
 	const isOpen =
@@ -191,6 +191,7 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		scrollLock: resolvedScrollLock,
 		trapFocus: policyDialog.blocking,
 	});
+	const isVisible = useExitTransition(isOpen, config.disableAnimation);
 
 	const {
 		consentRows,
@@ -291,23 +292,6 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		const frame = requestAnimationFrame(() => setIsMounted(true));
 		return () => cancelAnimationFrame(frame);
 	}, []);
-
-	useEffect(() => {
-		if (isOpen) {
-			const frame = requestAnimationFrame(() => setIsVisible(true));
-			return () => cancelAnimationFrame(frame);
-		}
-
-		if (config.disableAnimation) {
-			const frame = requestAnimationFrame(() => setIsVisible(false));
-			return () => cancelAnimationFrame(frame);
-		}
-
-		const timer = setTimeout(() => {
-			setIsVisible(false);
-		}, 150);
-		return () => clearTimeout(timer);
-	}, [isOpen, config.disableAnimation]);
 
 	// A caller-supplied `initialTab` outranks the provider's remembered tab
 	// on the first open — that is what makes a "N partners" deep link land

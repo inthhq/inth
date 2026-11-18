@@ -1,13 +1,15 @@
 'use client';
 
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
-import { forwardRef as createForwardRef, useEffect, useState } from 'react';
+import { forwardRef as createForwardRef } from 'react';
 import type { HTMLAttributes } from 'react';
 
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/ui-config-context';
 import { cnExt as cn } from '~/utils/cn';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
+
+import { useExitTransition } from '../use-exit-transition';
 
 interface OverlayProps extends HTMLAttributes<HTMLDivElement> {
 	noStyle?: boolean;
@@ -23,30 +25,7 @@ const IABConsentDialogOverlay = createForwardRef<HTMLDivElement, OverlayProps>(
 		} = useTheme();
 		const { components } = useUIConfig();
 
-		const [isVisible, setIsVisible] = useState(false);
-
-		useEffect(() => {
-			if (isOpen) {
-				const frame = requestAnimationFrame(() => setIsVisible(true));
-				return () => cancelAnimationFrame(frame);
-			}
-
-			if (disableAnimation) {
-				const frame = requestAnimationFrame(() => setIsVisible(false));
-				return () => cancelAnimationFrame(frame);
-			}
-
-			const animationDurationMs = Number.parseInt(
-				getComputedStyle(document.documentElement).getPropertyValue(
-					'--iab-cd-animation-duration'
-				) || '150',
-				10
-			);
-			const timer = setTimeout(() => {
-				setIsVisible(false);
-			}, animationDurationMs);
-			return () => clearTimeout(timer);
-		}, [isOpen, disableAnimation]);
+		const isVisible = useExitTransition(isOpen, disableAnimation);
 
 		const theme = mergeSlotProps(components?.['iab-dialog']?.overlay, {
 			baseClassName: styles.overlay,

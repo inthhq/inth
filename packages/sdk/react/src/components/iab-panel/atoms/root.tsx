@@ -4,7 +4,7 @@ import type * as InthCoreTypes from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { FC, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -24,6 +24,7 @@ import {
 	SurfaceStyles,
 	useSurfaceSheetsReady,
 } from '../../shared/surface-styles';
+import { useExitTransition } from '../use-exit-transition';
 import { IABConsentDialogOverlay } from './overlay';
 
 const DEFAULT_MODELS: InthCoreTypes.Model[] = ['iab'];
@@ -80,7 +81,6 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 	const textDirection = useTextDirection(language);
 
 	const isMounted = useIsHydrated();
-	const [isVisible, setIsVisible] = useState(false);
 
 	const sheetsReady = useSurfaceSheetsReady(IAB_DIALOG_SHEETS, noStyle);
 	const isOpen =
@@ -88,6 +88,7 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 		model !== null &&
 		models.includes(model) &&
 		(open ?? activeUI === 'dialog');
+	const isVisible = useExitTransition(isOpen, disableAnimation);
 	const resolvedScrollLock = policyDialog.blocking;
 
 	const contextValue = useMemo(
@@ -109,21 +110,6 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 
 		return onDialogDismiss(document.documentElement, () => setActiveUI('none'));
 	}, [isOpen, setActiveUI]);
-
-	useEffect(() => {
-		if (isOpen) {
-			const frame = requestAnimationFrame(() => setIsVisible(true));
-			return () => cancelAnimationFrame(frame);
-		}
-		if (disableAnimation) {
-			const frame = requestAnimationFrame(() => setIsVisible(false));
-			return () => cancelAnimationFrame(frame);
-		}
-		const timer = setTimeout(() => {
-			setIsVisible(false);
-		}, 150);
-		return () => clearTimeout(timer);
-	}, [isOpen, disableAnimation]);
 
 	const themedStyle = mergeSlotProps(components?.['iab-dialog']?.root, {
 		baseClassName: cn(
