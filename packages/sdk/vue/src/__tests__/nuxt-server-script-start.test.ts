@@ -30,6 +30,8 @@ const pixel: Script = {
 const nuxt = vi.hoisted(() => ({
 	appConfig: {} as Record<string, unknown>,
 	heads: [] as unknown[],
+	// What the module puts in `runtimeConfig.public.c15t` besides `mode`.
+	publicConfig: {} as Record<string, unknown>,
 	response: undefined as unknown,
 	state: new Map<string, ShallowRef<unknown>>(),
 }));
@@ -57,7 +59,7 @@ vi.mock('#imports', async () => {
 		useRequestHeaders: () => ({ 'x-vercel-ip-country': 'US' }),
 		useRequestURL: () => new URL('https://app.example/'),
 		useRuntimeConfig: () => ({
-			public: { c15t: { mode: { type: 'hosted' } } },
+			public: { c15t: { mode: { type: 'hosted' }, ...nuxt.publicConfig } },
 		}),
 		useState: (key: string, init: () => unknown) => {
 			if (!nuxt.state.has(key)) {
@@ -75,13 +77,17 @@ type NuxtPlugin = (app: {
 	vueApp: App;
 }) => Promise<void>;
 
-const initFor = (rule: PolicyRule): InitOutput => ({
+const initFor = (
+	rule: PolicyRule,
+	extra: Partial<InitOutput> = {}
+): InitOutput => ({
 	branding: 'c15t',
 	location: { countryCode: 'US', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({ countryCode: 'US', regionCode: null, rules: [rule] })
 	),
 	translations: { language: 'en', translations },
+	...extra,
 });
 
 /** A US-style policy: marketing runs until the visitor opts out. */
@@ -103,9 +109,10 @@ const Probe = defineComponent({
 /** The bodyClose scripts the server render put in the head. */
 const renderStartScripts = async function renderStartScripts(
 	rule: PolicyRule,
-	payload: { prerenderedAt?: number } = {}
+	payload: { prerenderedAt?: number } = {},
+	init: Partial<InitOutput> = {}
 ) {
-	nuxt.response = initFor(rule);
+	nuxt.response = initFor(rule, init);
 	const { default: plugin } = await vi.importActual<{ default: NuxtPlugin }>(
 		'../runtime/plugin.nuxt'
 	);
@@ -150,6 +157,7 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 	nuxt.appConfig = {};
 	nuxt.heads = [];
+	nuxt.publicConfig = {};
 	nuxt.state.clear();
 });
 
@@ -174,4 +182,33 @@ test('starts nothing when the app turns the server start off', async () => {
 	nuxt.appConfig = { scriptLoader: { serverStart: false } };
 
 	expect(await renderStartScripts(optOut)).toEqual([]);
+});
+
+test('starts an integration from the registry source init lists with experimentalScriptRegistry', async () => {
+	const registrySrc = 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js';
+	const listed = {
+		scriptRegistry: {
+			sources: { pixel: { integrity: 'sha384-registry', src: registrySrc } },
+		},
+	};
+	nuxt.appConfig = { scripts: [{ ...pixel, integration: 'pixel' }] };
+	// The URL and attributes the start inserts the pixel's tag with.
+	const started = async () => {
+		const [start] = await renderStartScripts(optOut, {}, listed);
+		nuxt.heads = [];
+		return {
+			...(/i\("pixel",(?<src>"[^"]+")(?:,\{"attributes":(?<attributes>\{[^}]*\}))?/u.exec(
+				start?.innerHTML ?? ''
+			)?.groups ?? {}),
+		};
+	};
+
+	nuxt.publicConfig = { experimentalScriptRegistry: true };
+	expect(await started()).toEqual({
+		attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
+		src: JSON.stringify(registrySrc),
+	});
+
+	nuxt.publicConfig = {};
+	expect((await started()).src).toBe(JSON.stringify(pixel.src));
 });

@@ -362,6 +362,7 @@ const toRuntimeOptions = function toRuntimeOptions(
 		consentCategories: config.consentCategories,
 		consentSource: config.consentSource,
 		experiment: config.experiment,
+		experimentalScriptRegistry: config.experimentalScriptRegistry,
 		gpp: config.gpp,
 		// IAB is opt-in: without `iab` no CMP mounts, and an `iab` policy
 		// throws (see `createVueConsentKernelContext`).
