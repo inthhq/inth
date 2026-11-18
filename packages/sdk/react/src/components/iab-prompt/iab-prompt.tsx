@@ -6,11 +6,11 @@ import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import type { FC } from 'react';
 
 import { warmDialogChunk } from '~/chunk-warming';
-import { useHeadlessIABConsentUI } from '~/component-hooks/use-headless-iab-consent-ui';
 import { Box } from '~/components/shared/primitives/box';
 import { BrandingTag } from '~/components/shared/ui/branding';
 import * as Button from '~/components/shared/ui/button';
 import { useComponentConfig } from '~/hooks/use-component-config';
+import { useHeadlessIABConsentUI } from '~/hooks/use-headless-iab-consent-ui';
 import { useIABConsentManager } from '~/hooks/use-iab-manager';
 import { useUIConfig } from '~/ui-config-context';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
@@ -130,21 +130,9 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 		trapFocus: policyBanner.blocking,
 	});
 
-	const handleAcceptAll = async () => {
-		try {
-			await performBannerAction('accept');
-		} catch {
-			// Keep the banner available so a failed list load or save can be retried.
-		}
-	};
+	const handleAcceptAll = () => performBannerAction('accept');
 
-	const handleRejectAll = async () => {
-		try {
-			await performBannerAction('reject');
-		} catch {
-			// Keep the banner available so a failed list load or save can be retried.
-		}
-	};
+	const handleRejectAll = () => performBannerAction('reject');
 
 	const handleCustomize = () => {
 		void performBannerAction('customize');

@@ -783,12 +783,12 @@ export class IABConsentDialogBody {
 		if (!state) {
 			return;
 		}
-		try {
-			await saveIABConsentSurface(this.#consent.kernel(), () => state.save());
-			// The save closed the surface: a parent that owns `open` hears it.
+		const { ok } = await saveIABConsentSurface(this.#consent.kernel(), () =>
+			state.save()
+		);
+		// The save closed the surface: a parent that owns `open` hears it.
+		if (ok) {
 			this.openChange.emit(false);
-		} catch {
-			// Keep the prompt available so a later action can retry the failed load/save.
 		}
 	}
 

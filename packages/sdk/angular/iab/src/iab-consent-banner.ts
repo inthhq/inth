@@ -445,10 +445,6 @@ export class IABConsentBanner {
 		if (!state) {
 			return;
 		}
-		try {
-			await saveIABConsentSurface(this.#consent.kernel(), () => state.save());
-		} catch {
-			// Keep the prompt available so a later action can retry the failed load/save.
-		}
+		await saveIABConsentSurface(this.#consent.kernel(), () => state.save());
 	}
 }
