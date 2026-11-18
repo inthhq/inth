@@ -1366,6 +1366,11 @@ ignored. So a c15t id is sent until the first response that names the subject, a
 the canonical UUID after that. Queued bodies keep the id they were frozen with; the
 backend maps it.
 
+A core adopts the id only while the stored id is the one the request was sent with.
+An answer that arrives after the stored subject changed, for example after recovery
+installed another subject while the request was in flight, leaves the new subject as
+it is, and the id it names is neither adopted nor kept as a previous id.
+
 The ids a core replaced stay the same subject on the device. The identity slot keeps
 the few most recent ones, and every check that compares a subject id (a queued body's
 owner, a stored IAB decision, the envelope against the identity slot) accepts them as
