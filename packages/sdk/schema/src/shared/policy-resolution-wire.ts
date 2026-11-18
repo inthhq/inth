@@ -603,7 +603,6 @@ const readWire = function readWire(input: unknown): PolicyResolution {
  * ({@link collectResolvedPolicyRuleIssues}). Never throws; needs no valibot.
  *
  * @param input - The raw `policyResolution` field from `/init`.
- * @returns A {@link PolicyResolution}.
  */
 export const readPolicyResolutionWire = function readPolicyResolutionWire(
 	input: unknown

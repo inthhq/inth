@@ -37,9 +37,6 @@ export const getSubjectInputSchema = v.object({
 	),
 });
 
-/**
- * GET /subject/:id query params schema.
- */
 export const getSubjectQuerySchema = v.object({
 	/** Filter by consent type(s), comma-separated */
 	type: v.optional(
@@ -53,9 +50,6 @@ export const getSubjectQuerySchema = v.object({
 	),
 });
 
-/**
- * GET /subject/:id path params schema.
- */
 export const getSubjectParamsSchema = v.object({
 	id: v.pipe(
 		subjectIdSchema,
@@ -64,9 +58,6 @@ export const getSubjectParamsSchema = v.object({
 	),
 });
 
-/**
- * Consent item in GET /subject/:id response
- */
 export const consentItemSchema = v.object({
 	/**
 	 * v3 receipts this submission confirmed, exactly as the client sent them.
@@ -90,8 +81,6 @@ export const consentItemSchema = v.object({
 });
 
 /**
- * GET /subject/:id output schema
- *
  * A non-strict object on purpose: parsing drops keys it does not declare.
  * Backends from 3.0.0-alpha.0 to alpha.3 also return `privacyDirectives`,
  * which v3 no longer reads, and a newer client must still accept that
@@ -123,9 +112,6 @@ export const getSubjectOutputSchema = v.object({
 	subjectVendorChoice: v.optional(v.nullable(vendorChoiceWireSchema)),
 });
 
-/**
- * Error schemas for GET /subject/:id
- */
 export const getSubjectErrorSchemas = {
 	inputValidationFailed: v.object({
 		fieldErrors: v.record(v.string(), v.array(v.string())),
@@ -136,7 +122,6 @@ export const getSubjectErrorSchemas = {
 	}),
 };
 
-// Type exports
 export type GetSubjectInput = v.InferOutput<typeof getSubjectInputSchema>;
 export type GetSubjectQuery = v.InferOutput<typeof getSubjectQuerySchema>;
 export type GetSubjectParams = v.InferOutput<typeof getSubjectParamsSchema>;

@@ -20,7 +20,6 @@ const decodeKey = function decodeKey(raw: string): string {
  *
  * @param url - The request URL, possibly empty.
  * @param params - The parameters. Nothing changes when empty.
- * @returns The URL with the parameters.
  * @internal
  */
 export const appendSearchParams = function appendSearchParams(

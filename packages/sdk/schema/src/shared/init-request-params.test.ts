@@ -49,7 +49,7 @@ describe('init query parameters', () => {
 
 	it('replaces a parameter the URL already carries, so it appears once', () => {
 		// The names are generic; an app's own init route may already use one.
-		// inth's value wins, and the app's other parameters keep their order
+		// Inth's value wins, and the app's other parameters keep their order
 		// and encoding.
 		const url = appendInitParams(
 			'/api/consent/init?country=US&site=a%20b&v=1&tag=x#top',

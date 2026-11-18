@@ -1,9 +1,3 @@
-/**
- * The policy wire contract's version and the header that declares it.
- *
- * @packageDocumentation
- */
-
 /** Version of the policy wire contract this package produces and reads. */
 export const POLICY_CONTRACT_VERSION = 1;
 

@@ -25,9 +25,9 @@ const QUEBEC_CONSENT_SOURCE =
 	'https://www.cai.gouv.qc.ca/uploads/pdfs/CAI_Criteres_Validite_Consentement.pdf';
 
 const SHARED_ASSUMPTIONS = [
-	'365-day choice and notice validity are independent inth product defaults, not legal requirements.',
+	'365-day choice and notice validity are independent Inth product defaults, not legal requirements.',
 	'A refusal in the requested scope suppresses automatic choice prompts, including after policy changes or grant expiry. New, changed or expired opt-in purposes remain denied until the user opens preferences and grants them.',
-	'Equivalent default prominence for accept and reject is a inth product invariant.',
+	'Equivalent default prominence for accept and reject is an Inth product invariant.',
 	'The controller owns processing facts, legal basis, copy and legal review; this preset is starter configuration.',
 ];
 
@@ -63,7 +63,7 @@ const europeRule = function europeRule(mode: EuropePolicyRuleMode): PolicyRule {
 			[ICO_SOURCE, EDPB_SOURCE, GIBRALTAR_SOURCE],
 			isIab
 				? [
-						'IAB TCF 2.4 under TCF Policies v5.0.b. TC strings are service-specific: inth stores them per site and browser and does not sync them across devices.',
+						'IAB TCF 2.4 under TCF Policies v5.0.b. TC strings are service-specific: Inth stores them per site and browser and does not sync them across devices.',
 						'Covers consent-requiring processing in the EEA, UK and Gibraltar, including separately geocoded EU territories. National analytics exemptions need separate scoped configurations.',
 						'Used as the geo fallback so an unknown location gets the strictest configured behavior.',
 					]
@@ -448,7 +448,7 @@ export interface PolicyRulePresets {
  *
  * @example
  * ```ts
- * import { policyRulePresets } from '@inth/sdk-schema';
+ * import { policyRulePresets } from '@inth/sdk/schema';
  *
  * const rules = [
  *   policyRulePresets.europeOptIn(),
@@ -542,7 +542,7 @@ export const policyRulePresets: PolicyRulePresets = {
 			],
 			[
 				'DPDP commencement is phased, with full enforceability announced for 13 May 2027. This preset is an opt-in product default now, not a claim that every DPDP duty is already in force.',
-				'Using inth does not make a deployment a registered Consent Manager under the DPDP Act.',
+				'Using Inth does not make a deployment a registered Consent Manager under the DPDP Act.',
 			]
 		),
 	indonesiaOptIn: () =>
@@ -791,7 +791,7 @@ export interface RecommendedPolicyRulesOptions {
  *
  * @example
  * ```ts
- * import { recommendedPolicyRules } from '@inth/sdk-schema';
+ * import { recommendedPolicyRules } from '@inth/sdk/schema';
  *
  * const rules = recommendedPolicyRules({ iab: true });
  * ```

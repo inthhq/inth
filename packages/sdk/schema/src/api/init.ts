@@ -96,17 +96,11 @@ export const translationsSchema = v.object({
 	rights: rightsTranslationsSchema,
 });
 
-/**
- * Location schema for init output
- */
 export const locationSchema = v.object({
 	countryCode: v.nullable(v.string()),
 	regionCode: v.nullable(v.string()),
 });
 
-/**
- * Output schema for init endpoint
- */
 export const initOutputSchema = v.object({
 	/**
 	 * Google Additional Consent providers: ad tech outside the IAB GVL, with
@@ -158,7 +152,7 @@ export const initOutputSchema = v.object({
 		})
 	),
 	/**
-	 * Who runs the backend that answered: `inth` for inth's hosted platform,
+	 * Who runs the backend that answered: `inth` for Inth's hosted platform,
 	 * `self-hosted` for any other `@c15t/backend`. Informational only: it is
 	 * not signed, so a backend can report either value. Absent from backends
 	 * that predate the field and from transports with no backend.
