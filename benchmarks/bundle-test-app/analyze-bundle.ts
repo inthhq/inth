@@ -163,9 +163,9 @@ const analyzeRouteSizes = async function analyzeRouteSizes() {
 				return sizes.reduce((sum, size) => sum + size.brotli, 0);
 			};
 			routes.push({
-				inthAddition: 0,
 				cssBrotli: await brotliTotal(styles),
 				cssGzip: cssTotal,
+				inthAddition: 0,
 				jsBrotli: await brotliTotal(scripts),
 				jsGzip: jsTotal,
 				route: routeName,

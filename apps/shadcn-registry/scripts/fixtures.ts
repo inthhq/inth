@@ -539,9 +539,9 @@ const { values: args } = parseArgs({
 	options: {
 		base: { multiple: true, type: 'string' },
 		browser: { default: false, type: 'boolean' },
-		inth: { type: 'string' },
 		framework: { multiple: true, type: 'string' },
 		fresh: { default: false, type: 'boolean' },
+		inth: { type: 'string' },
 	},
 });
 

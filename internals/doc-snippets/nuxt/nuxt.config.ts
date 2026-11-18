@@ -4,6 +4,7 @@
  * auto-imported components and composables.
  */
 export default defineNuxtConfig({
+	compatibilityDate: '2026-07-04',
 	// oxlint-disable-next-line sort-keys -- Each docs region stays contiguous.
 	inth: {
 		projectUrl: 'https://your-project.inth.app',
@@ -17,7 +18,6 @@ export default defineNuxtConfig({
 		iab: {},
 		// #endregion docs:iab-opt-in
 	},
-	compatibilityDate: '2026-07-04',
 	modules: ['@inth/nuxt'],
 	typescript: { strict: true },
 });

@@ -108,8 +108,8 @@ try {
 				cwd,
 				env: {
 					...process.env,
-					INTH_BENCH_MANIFEST_URL: 'http://127.0.0.1:4325/manifest',
 					HOST: '127.0.0.1',
+					INTH_BENCH_MANIFEST_URL: 'http://127.0.0.1:4325/manifest',
 					NUXT_PUBLIC_INTH_PROJECT_URL: 'http://127.0.0.1:4325',
 					PORT: String(port),
 				},

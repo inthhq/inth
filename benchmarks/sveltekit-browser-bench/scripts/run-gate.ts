@@ -26,8 +26,8 @@ try {
 				command: ['node', 'build/index.js'],
 				cwd: appDir,
 				env: {
-					INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 					HOST: host,
+					INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 					// The browser talks to the gate proxy, so adapter-node resolves
 					// the relative manifest URL and checks request origins against it.
 					ORIGIN: `http://${host}:${proxyPort}`,

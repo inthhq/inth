@@ -365,11 +365,11 @@ describe('init route', () => {
 		mocks.useRuntimeConfig.mockReturnValue({
 			public: {
 				inth: {
-					projectUrl: 'https://consent.example.com',
 					mode: {
 						manifestUrl: 'https://cdn.example.com/manifest.json',
 						type: 'manifest',
 					},
+					projectUrl: 'https://consent.example.com',
 				},
 			},
 		});

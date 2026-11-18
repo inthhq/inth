@@ -85,9 +85,9 @@ const startServers = async function startServers(
 			command: ['node', 'dist/gate/server/server.mjs'],
 			cwd: appDir,
 			env: {
-				INTH_PROJECT_URL: `http://${host}:${gatePort}/api/bench-consent`,
-				INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 				HOST: host,
+				INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
+				INTH_PROJECT_URL: `http://${host}:${gatePort}/api/bench-consent`,
 				PORT: `${gatePort}`,
 			},
 			origin: `http://${host}:${gatePort}`,

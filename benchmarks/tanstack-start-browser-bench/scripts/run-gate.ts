@@ -24,9 +24,9 @@ try {
 				command: ['node', join(appDir, 'scripts', 'serve.mjs')],
 				cwd: appDir,
 				env: {
-					INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 					DIST_DIR: 'dist',
 					HOST: '127.0.0.1',
+					INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 					PORT: `${port}`,
 				},
 				origin: `http://127.0.0.1:${port}`,

@@ -59,11 +59,11 @@ if (process.env.INTH_NUXT_MANIFEST === 'client') {
 }
 
 export default defineNuxtConfig({
-	inth,
 	compatibilityDate: '2026-07-04',
 	css: ['~/consent-example.css'],
 	devtools: { enabled: true },
 	extends: [staticOutput ? './config/static' : './config/server'],
+	inth,
 	// `vite preview` serves `/consent-example` from `consent-example.html`.
 	nitro: staticOutput ? { prerender: { autoSubfolderIndex: false } } : {},
 	routeRules: staticOutput

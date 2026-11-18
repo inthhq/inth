@@ -221,8 +221,8 @@ export const exampleEnvironment = function exampleEnvironment(
 	const values: NodeJS.ProcessEnv = {
 		...process.env,
 		ASTRO_TELEMETRY_DISABLED: '1',
-		INTH_PROJECT_URL: projectUrl,
 		HOST: '127.0.0.1',
+		INTH_PROJECT_URL: projectUrl,
 		NEXT_TELEMETRY_DISABLED: '1',
 		NITRO_HOST: '127.0.0.1',
 		NITRO_PORT: String(port),

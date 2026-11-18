@@ -18,6 +18,9 @@ import { manifest } from '@inth/nuxt';
 const future = process.env.INTH_NUXT_FUTURE === '1';
 
 export default defineNuxtConfig({
+	compatibilityDate: '2026-10-05',
+	css: ['~/consent-example.css'],
+	devtools: { enabled: true },
 	inth: {
 		// Read at runtime, so the acceptance suite's backend outage reaches
 		// the server render.
@@ -27,9 +30,6 @@ export default defineNuxtConfig({
 			process.env.NUXT_PUBLIC_INTH_PROJECT_URL ??
 			'https://your-project.inth.app',
 	},
-	compatibilityDate: '2026-10-05',
-	css: ['~/consent-example.css'],
-	devtools: { enabled: true },
 	...(future && {
 		experimental: { early404: true, prerenderErrorPages: true },
 		future: { compatibilityVersion: 5 },

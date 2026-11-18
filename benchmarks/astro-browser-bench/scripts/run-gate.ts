@@ -182,8 +182,8 @@ const startAstro = function startAstro(
 		command: ['node', join(builds[build].outDir, 'server', 'entry.mjs')],
 		cwd: appDir,
 		env: {
-			INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 			HOST,
+			INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 			PORT: `${serverPort}`,
 		},
 		origin: `http://${HOST}:${serverPort}`,

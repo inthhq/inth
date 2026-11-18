@@ -52,8 +52,8 @@ if (baselineStale) {
 }
 
 const serverEnv = (port: number, backendLatencyMs: number) => ({
-	INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 	HOST,
+	INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 	NITRO_HOST: HOST,
 	NITRO_PORT: `${port}`,
 	// nuxt.config.ts bakes the fixture manifest URL for the default port.

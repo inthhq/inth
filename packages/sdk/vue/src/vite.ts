@@ -69,10 +69,10 @@ export const consentManifest = (
 	options: ConsentManifestPluginOptions = {}
 ): VueConsentManifestPlugin => {
 	const plugin = createConsentManifestPlugin(options, {
-		packages: ['@inth/vue'],
 		adviseHostedForLocation: true,
 		envNames: [VITE_PROJECT_URL_ENV],
 		label: '@inth/vue/vite',
+		packages: ['@inth/vue'],
 	});
 	return {
 		...plugin,

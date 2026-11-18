@@ -178,8 +178,8 @@ export const waitForConsentRuntime = async function waitForConsentRuntime(
 	page: Page
 ): Promise<void> {
 	await page.waitForFunction(() => {
-		const page = window as { __inthDebug?: unknown; inth?: unknown };
-		return [page.__inthDebug, page.inth].some(
+		const globals = window as { __inthDebug?: unknown; inth?: unknown };
+		return [globals.__inthDebug, globals.inth].some(
 			(value) =>
 				typeof value === 'object' && value !== null && !Array.isArray(value)
 		);

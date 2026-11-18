@@ -1,4 +1,6 @@
 export default defineNuxtConfig({
+	compatibilityDate: '2026-07-04',
+	css: ['~/assets/site.css', '~/assets/consent.css'],
 	inth: {
 		// The banner and dialog link to the shop's privacy policy. The label
 		// comes from the project's translations.
@@ -46,7 +48,5 @@ export default defineNuxtConfig({
 			radius: { lg: '6px', md: '4px', sm: '3px' },
 		},
 	},
-	compatibilityDate: '2026-07-04',
-	css: ['~/assets/site.css', '~/assets/consent.css'],
 	modules: ['@inth/nuxt'],
 });
