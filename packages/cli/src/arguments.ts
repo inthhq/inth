@@ -42,7 +42,6 @@ export interface CliArguments {
   c15tCodemods?: CodemodOptions;
   // Set for `inth mobile setup`, which runs without sign-in.
   mobile?: MobileSetupArguments;
-  // Set for `inth document hash`, which runs without sign-in.
   document?: DocumentHashArguments;
 }
 

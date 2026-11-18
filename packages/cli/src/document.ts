@@ -9,7 +9,6 @@ import { terminalText } from "./organizations.ts";
 export const DOCUMENT_HASH_USAGE =
   "Usage: inth document hash <path|-> [--json]";
 
-/** Arguments for `inth document hash`, which runs without sign-in. */
 export interface DocumentHashArguments {
   /** A file path, or "-" for stdin. */
   path: string;
@@ -19,18 +18,14 @@ export interface DocumentHash {
   /** The path given, or null for stdin. */
   path: string | null;
   bytes: number;
-  /** `sha256:` and the lowercase hex SHA-256 of the exact bytes. */
   hash: string;
 }
 
+type AddBytes = (bytes: Uint8Array) => void;
+
 /**
- * Parse the arguments after `inth document`, including the shared flags the
- * main parser would otherwise consume.
- * @param result The arguments parsed so far; receives the action, --help,
- * --json and --non-interactive.
- * @param args The arguments after `document`.
- * @returns The hash arguments.
- * @throws {CliError} usage_error for an unknown action or option.
+ * Parse the arguments after `inth document`. This also takes --help, --json
+ * and --non-interactive, which the main parser would otherwise consume.
  */
 export const parseDocumentArguments = (
   result: CliArguments,
@@ -68,34 +63,27 @@ export const parseDocumentArguments = (
   return { path };
 };
 
-const errorMessage = (error: Error | null): string => error?.message ?? "";
-
-const readFailure = (path: string, message: string): CliError => {
-  const name = terminalText(path);
-  if (message.startsWith("ENOENT")) {
-    return new CliError("usage_error", `File not found: ${name}`);
+const accessFile = <T>(path: string, access: () => T): T => {
+  try {
+    return access();
+  } catch (error) {
+    const name = terminalText(path);
+    const message = error instanceof Error ? error.message : "";
+    if (message.startsWith("ENOENT")) {
+      throw new CliError("usage_error", `File not found: ${name}`);
+    }
+    if (message.startsWith("EACCES") || message.startsWith("EPERM")) {
+      throw new CliError("usage_error", `Permission denied: ${name}`);
+    }
+    throw new CliError("usage_error", `Cannot read ${name}.`);
   }
-  if (message.startsWith("EACCES") || message.startsWith("EPERM")) {
-    return new CliError("usage_error", `Permission denied: ${name}`);
-  }
-  return new CliError("usage_error", `Cannot read ${name}.`);
 };
 
-const hashFile = async (
-  path: string,
-  signal: AbortSignal
-): Promise<DocumentHash> => {
-  let descriptor: number;
-  try {
-    // Nonblocking, so a FIFO named as the document cannot hang the open.
-    // eslint-disable-next-line no-bitwise -- Keep flags inline for Scriptc.
-    descriptor = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
-  } catch (error) {
-    throw readFailure(
-      path,
-      errorMessage(error instanceof Error ? error : null)
-    );
-  }
+const readFile = async (path: string, add: AddBytes): Promise<void> => {
+  const descriptor = accessFile(path, () =>
+    // eslint-disable-next-line no-bitwise -- Keep flags inline for Scriptc and refuse a FIFO without blocking.
+    openSync(path, constants.O_RDONLY | constants.O_NONBLOCK)
+  );
   try {
     if (!fstatSync(descriptor).isFile()) {
       throw new CliError(
@@ -103,30 +91,18 @@ const hashFile = async (
         `${terminalText(path)} is not a regular file. Name a file, or - for stdin.`
       );
     }
-    const hash = createHash("sha256");
     const buffer = new Uint8Array(65_536);
-    let bytes = 0;
     for (;;) {
-      signal.throwIfAborted();
-      let count: number;
-      try {
-        count = readSync(descriptor, buffer, 0, buffer.byteLength, null);
-      } catch (error) {
-        throw readFailure(
-          path,
-          errorMessage(error instanceof Error ? error : null)
-        );
-      }
+      const count = accessFile(path, () =>
+        readSync(descriptor, buffer, 0, buffer.byteLength, null)
+      );
       if (!count) {
-        break;
+        return;
       }
-      bytes += count;
-      hash.update(buffer.subarray(0, count));
-      // Let signals interrupt a long read in both runtime adapters.
+      add(buffer.subarray(0, count));
       // eslint-disable-next-line no-await-in-loop -- Yield between bounded reads so cancellation can interrupt large files.
       await setTimeout(0);
     }
-    return { bytes, hash: `sha256:${hash.digest("hex")}`, path };
   } finally {
     closeSync(descriptor);
   }
@@ -136,7 +112,7 @@ const stopStdin = (): void => {
   process.stdin.destroy();
 };
 
-const hashStdin = async (signal: AbortSignal): Promise<DocumentHash> => {
+const readStdin = async (add: AddBytes, signal: AbortSignal): Promise<void> => {
   if (process.stdin.isTTY) {
     throw new CliError(
       "usage_error",
@@ -144,34 +120,38 @@ const hashStdin = async (signal: AbortSignal): Promise<DocumentHash> => {
     );
   }
   signal.addEventListener("abort", stopStdin, { once: true });
-  const hash = createHash("sha256");
-  let bytes = 0;
   try {
-    for await (const chunk of process.stdin) {
-      signal.throwIfAborted();
+    for await (const input of process.stdin) {
       // SAFETY: Node and Scriptc yield byte buffers from stdin without setEncoding.
-      const input = chunk as Uint8Array;
-      bytes += input.byteLength;
-      hash.update(input);
+      add(input as Uint8Array);
     }
-    signal.throwIfAborted();
   } finally {
     signal.removeEventListener("abort", stopStdin);
   }
-  return { bytes, hash: `sha256:${hash.digest("hex")}`, path: null };
 };
 
 /**
- * Hash a published legal document the way Inth records its version: the
- * SHA-256 of the file's exact bytes, with no line-ending, whitespace or
- * encoding normalization.
- * @param path A file path, or "-" for stdin.
- * @param signal Cancels a long read.
- * @returns The path, byte count and `sha256:`-prefixed lowercase hex hash.
- * @throws {CliError} usage_error when the file is missing or unreadable.
+ * Hash a published legal document the way Inth records its version:
+ * `sha256:` and the lowercase hex SHA-256 of the exact bytes, with no
+ * line-ending, whitespace or encoding normalization.
  */
-export const hashDocument = (
+export const hashDocument = async (
   path: string,
   signal: AbortSignal
-): Promise<DocumentHash> =>
-  path === "-" ? hashStdin(signal) : hashFile(path, signal);
+): Promise<DocumentHash> => {
+  const hash = createHash("sha256");
+  let bytes = 0;
+  const add: AddBytes = (input) => {
+    signal.throwIfAborted();
+    bytes += input.byteLength;
+    hash.update(input);
+  };
+  const stdin = path === "-";
+  await (stdin ? readStdin(add, signal) : readFile(path, add));
+  signal.throwIfAborted();
+  return {
+    bytes,
+    hash: `sha256:${hash.digest("hex")}`,
+    path: stdin ? null : path,
+  };
+};

@@ -25,7 +25,6 @@ const errorSchema = z.object({
   ok: z.literal(false),
 });
 
-// `inth document hash` reads only the file or stdin and needs no sign-in.
 export const verifyDocumentHash = async (binary: string): Promise<void> => {
   const parent = await mkdtemp(path.join(os.tmpdir(), "inth-document-"));
   try {
@@ -36,15 +35,14 @@ export const verifyDocumentHash = async (binary: string): Promise<void> => {
         timeout: 10_000,
       });
     const files = {
-      crlf: "Terms of service\r\nVersion 3\r\n",
       empty: "",
-      lf: "Terms of service\nVersion 3\n",
       test: "test",
     };
-    for (const [name, contents] of Object.entries(files)) {
-      // eslint-disable-next-line no-await-in-loop -- A handful of tiny fixtures.
-      await writeFile(path.join(parent, name), contents);
-    }
+    await Promise.all(
+      Object.entries(files).map(([name, contents]) =>
+        writeFile(path.join(parent, name), contents)
+      )
+    );
 
     const empty = hash([path.join(parent, "empty")]);
     assert.equal(empty.status, 0, empty.stderr);
@@ -65,12 +63,6 @@ export const verifyDocumentHash = async (binary: string): Promise<void> => {
       hash: TEST,
       path: null,
     });
-
-    const lf = hash([path.join(parent, "lf")]);
-    const crlf = hash([path.join(parent, "crlf")]);
-    assert.equal(lf.status, 0, lf.stderr);
-    assert.equal(crlf.status, 0, crlf.stderr);
-    assert.notEqual(lf.stdout, crlf.stdout);
 
     const missing = hash([path.join(parent, "missing"), "--json"]);
     assert.equal(missing.status, 1);

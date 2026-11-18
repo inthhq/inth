@@ -49,8 +49,6 @@ describe("hashDocument", () => {
   it("hashes CRLF and LF copies of the same text differently", async () => {
     const lf = await hash(file("lf.md", "Privacy policy\nVersion 2\n"));
     const crlf = await hash(file("crlf.md", "Privacy policy\r\nVersion 2\r\n"));
-    expect(lf).toMatch(/^sha256:[0-9a-f]{64}$/u);
-    expect(crlf).toMatch(/^sha256:[0-9a-f]{64}$/u);
     expect(crlf).not.toBe(lf);
   });
 

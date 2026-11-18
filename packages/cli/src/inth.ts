@@ -270,7 +270,6 @@ const runLocalCommand = async (options: CliArguments): Promise<boolean> => {
     );
     return true;
   }
-  // Hashing reads only the named file or stdin, so it needs no sign-in.
   if (options.document) {
     diagnosticStep("document_hash");
     const result = await hashDocument(options.document.path, controller.signal);

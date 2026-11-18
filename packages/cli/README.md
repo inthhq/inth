@@ -238,14 +238,13 @@ The official installer's telemetry attributes c15t installs to [c15t on skills.s
 
 ## Legal document hashes
 
-Inth records which version of a privacy policy or terms of service a person accepted, and identifies each published version by a hash. `inth document hash` prints that hash: the SHA-256 of the file's exact bytes in lowercase hex, after `sha256:`. Line endings, whitespace and encoding are not normalized, so hash the file you publish. Pass `-` to read stdin. The command needs no sign-in or network.
+`inth document hash <path>` prints the hash Inth uses to identify a published version of a privacy policy or terms of service. The hash is `sha256:` and the SHA-256 of the file's exact bytes, so hash the file you publish. Pass `-` to read stdin and `--json` for `path`, `bytes` and `hash`. It needs no sign-in or network.
 
 ```sh
-inth document hash privacy-policy.md
-curl -fsSL https://example.com/privacy | inth document hash - --json
+curl -fsSL https://example.com/privacy | inth document hash -
 ```
 
-With `--json`, `data` holds `path` (null for stdin), `bytes` and `hash`. A missing or non-regular file fails with `usage_error`. See [Hash a legal document](https://github.com/inthhq/inth/blob/main/docs/cli/documents.mdx).
+See [Hash a legal document](https://github.com/inthhq/inth/blob/main/docs/cli/documents.mdx).
 
 ## Inth MCP
 
