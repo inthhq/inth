@@ -56,7 +56,7 @@ describe('@inth/sdk/iab TC string encode/decode', () => {
 				persistence,
 			});
 			localStorage.setItem('euconsent-v2', 'existing');
-			localStorage.setItem('inth-iab-authority-v1', 'existing');
+			localStorage.setItem('c15t-iab-authority-v1', 'existing');
 			document.cookie = 'euconsent-v2=existing; path=/';
 			try {
 				iab.acceptAll();
@@ -68,7 +68,7 @@ describe('@inth/sdk/iab TC string encode/decode', () => {
 				);
 				const stored = persistence === false ? 'existing' : tcString;
 				expect(localStorage.getItem('euconsent-v2')).toBe(stored);
-				const authority = localStorage.getItem('inth-iab-authority-v1');
+				const authority = localStorage.getItem('c15t-iab-authority-v1');
 				const authorityString =
 					persistence === false
 						? authority
@@ -78,7 +78,7 @@ describe('@inth/sdk/iab TC string encode/decode', () => {
 			} finally {
 				iab.dispose();
 				localStorage.removeItem('euconsent-v2');
-				localStorage.removeItem('inth-iab-authority-v1');
+				localStorage.removeItem('c15t-iab-authority-v1');
 				kernel.dispose();
 				document.cookie = 'euconsent-v2=; Max-Age=0; path=/';
 			}

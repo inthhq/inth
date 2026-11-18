@@ -10,14 +10,14 @@ test('clearing removes the IAB addon records, the AC string included', () => {
 		localStorage.setItem(key, 'value');
 		document.cookie = `${key}=value; Path=/`;
 	}
-	localStorage.setItem('inth-iab-authority-v1', 'receipt');
+	localStorage.setItem('c15t-iab-authority-v1', 'receipt');
 
 	clearStoredConsentRecords();
 
 	for (const key of [
 		'euconsent-v2',
 		'addtl_consent',
-		'inth-iab-authority-v1',
+		'c15t-iab-authority-v1',
 	]) {
 		expect(localStorage.getItem(key)).toBeNull();
 	}

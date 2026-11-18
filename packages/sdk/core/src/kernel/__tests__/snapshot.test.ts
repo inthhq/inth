@@ -53,7 +53,7 @@ describe('buildInitialSnapshot', () => {
 		expect(snap.revision).toBe(0);
 		expect(Object.isFrozen(snap)).toBe(true);
 		expect(snap.resolution).toEqual({ policy: null, status: 'unconfigured' });
-		expect(snap.policyRule.id).toBe('inth_safe_fallback');
+		expect(snap.policyRule.id).toBe('c15t_safe_fallback');
 		expect(snap.model).toBe('opt-in');
 		expect(snap.effectivePermissions).toEqual(DEFAULT_CONSENTS);
 		expect(snap.effectivePermissions).toBe(snap.effectivePermissions);
@@ -141,7 +141,7 @@ describe('buildInitialSnapshot', () => {
 		const snap = buildInitialSnapshot(config);
 		expect(snap.resolution.status).toBe('unconfigured');
 		expect(snap.effectivePermissions.marketing).toBe(false);
-		expect(snap.policyRule.id).toBe('inth_safe_fallback');
+		expect(snap.policyRule.id).toBe('c15t_safe_fallback');
 	});
 
 	test('a provisional policy hides the first layer', () => {

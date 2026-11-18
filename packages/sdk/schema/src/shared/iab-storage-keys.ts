@@ -11,7 +11,7 @@ export const IAB_STORAGE_KEYS = {
 	 * parameter Google defines for the same value.
 	 */
 	additionalConsent: 'addtl_consent',
-	authority: 'inth-iab-authority-v1',
+	authority: 'c15t-iab-authority-v1',
 	/** TC string, under the name the TCF spec gives the cookie. */
 	tcString: 'euconsent-v2',
 } as const;
