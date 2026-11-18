@@ -57,9 +57,11 @@ type NullDiff<A, B, Path extends string, Depth extends unknown[]> = [
 ] extends [A]
 	? [null] extends [B]
 		? Diff<Exclude<A, null>, Exclude<B, null>, Path, Depth>
-		: `${Path}: nullable in SDK only`
+		: `${Path}: nullable in SDK only` | Diff<Exclude<A, null>, B, Path, Depth>
 	: [null] extends [B]
-		? `${Path}: nullable in document only`
+		?
+				| `${Path}: nullable in document only`
+				| Diff<A, Exclude<B, null>, Path, Depth>
 		: Diff<A, B, Path, Depth>;
 
 type OptionalKeys<T> = {

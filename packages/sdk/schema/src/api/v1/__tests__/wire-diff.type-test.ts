@@ -34,6 +34,13 @@ export type Cases = [
 	>,
 	Expect<
 		Equal<
+			WireDiff<{ a: string }, { a: number | null }, 'nullable and typed'>,
+			| 'nullable and typed.a: nullable in document only'
+			| 'nullable and typed.a: types differ'
+		>
+	>,
+	Expect<
+		Equal<
 			WireDiff<{ a: string[] }, { a: number[] }, 'items'>,
 			'items.a[]: types differ'
 		>
