@@ -357,6 +357,32 @@ describe('IAB vendor list', () => {
 		expect(registered?.querySelectorAll('a[target="_blank"]')).toHaveLength(0);
 	});
 
+	test('a custom vendor offers no objection on a consent-only purpose and rounds its max age up', async () => {
+		const { fixture, root } = await mount(IABVendorList, {
+			customVendors: [
+				{
+					cookieMaxAgeSeconds: 3600,
+					id: 'custom-li',
+					legIntPurposes: [1],
+					name: 'Custom LI',
+					privacyPolicyUrl: 'https://example.test/privacy',
+					purposes: [],
+				},
+			],
+			iabT,
+			vendorObjection: true,
+		});
+		const row = root.querySelector('[id$="-vendor-custom-li"]');
+		row
+			?.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
+			?.click();
+		await fixture.whenStable();
+		// TCF Policies Appendix A: purpose 1 allows consent only.
+		expect(row?.querySelector('button[aria-pressed]')).toBeNull();
+		// An hour is not "0d".
+		expect(row?.textContent).toContain('Max Age: 1d');
+	});
+
 	test('search filters the vendors and reports the count', async () => {
 		const { fixture, root } = await mount(IABVendorList, {
 			iabT,

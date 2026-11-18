@@ -38,7 +38,10 @@ import {
 } from '@inth/angular/primitives';
 import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
 import { createPreferenceDraft } from '@inth/sdk/preference-draft';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import {
+	resolveCategoryTitle,
+	resolveConsentPresentation,
+} from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
@@ -48,12 +51,6 @@ import { ConsentVendorList } from './consent-vendor-list';
 import { DIALOG_SHEETS } from './dialog-sheets';
 
 type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
-
-const formatConsentName = function formatConsentName(name: string): string {
-	return name
-		.replace(/_/gu, ' ')
-		.replace(/\b\w/gu, (c: string) => c.toUpperCase());
-};
 
 /**
  * The widget's root element and everything in it. The host is the root
@@ -422,10 +419,7 @@ export class ConsentWidgetRoot {
 
 	/** @internal */
 	protected titleOf(type: ConsentType): string {
-		return (
-			this.translations().consentTypes[type.name]?.title ??
-			formatConsentName(type.name)
-		);
+		return resolveCategoryTitle(this.translations(), type.name);
 	}
 
 	/** @internal */

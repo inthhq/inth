@@ -89,7 +89,7 @@ import type {
 						[persistPosition]="trigger.persistPosition ?? true"
 						[showWhen]="trigger.showWhen ?? 'always'"
 						[size]="trigger.size ?? 'md'"
-						[label]="trigger.label ?? 'Open privacy settings'"
+						[label]="trigger.label"
 						[noStyle]="trigger.noStyle ?? resolvedNoStyle()"
 						[rootClass]="trigger.rootClass"
 						(triggerClick)="openFromTrigger($event)"

@@ -28,9 +28,9 @@ after the dialog's deferred code loads. A separate
 | --- | --- | --- | --- |
 | `defaultPosition` | `'bottom-right'`, `'bottom-left'`, `'top-right'` or `'top-left'` | `'bottom-right'` | The corner it starts in. |
 | `persistPosition` | `boolean` | `true` | Remembers the corner a visitor drags it to, in local storage. |
-| `showWhen` | `'always'` or `'never'` | `'always'` | `'never'` hides it. |
+| `showWhen` | `'always'`, `'after-consent'` or `'never'` | `'always'` | `'after-consent'` hides it until the visitor has answered the prompt. `'never'` hides it. |
 | `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
-| `label` | `string` | `'Open privacy settings'` | Accessible name. Translate it yourself; it does not come from `i18n`. |
+| `label` | `string` | The `trigger.label` translation, "Open privacy settings" in English | Accessible name. |
 | `noStyle` | `boolean` | `false` | Drops inth's classes, including the fixed positioning. It does not follow the provider's `noStyle`. |
 | `rootClass` | `string` | none | Extra class on the button. |
 | `(triggerClick)` | `MouseEvent` | | Emits before the dialog opens. Call `$event.preventDefault()` to keep it closed. |

@@ -1,6 +1,7 @@
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import {
 	afterNextRender,
+	afterRenderEffect,
 	ChangeDetectionStrategy,
 	Component,
 	computed,
@@ -29,17 +30,28 @@ import {
 	warmDialog,
 	ɵBrandMarkIcon as BrandMarkIcon,
 	ɵNoStyleScope as NoStyleScope,
+	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
+import { resolveTriggerLabels } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
 import {
 	calculateCornerFromDrag,
 	createInitialDragState,
 	getPersistedPosition,
+	isTriggerVisible,
+	nextToolbarItem,
+	onSnapEnd,
 	persistPosition as persistToStorage,
+	toolbarOrder,
 } from '@inth/sdk/ui/utils';
-import type { CornerPosition, DragState } from '@inth/sdk/ui/utils';
+import type {
+	CornerPosition,
+	DragState,
+	TriggerToolbarItem,
+} from '@inth/sdk/ui/utils';
 import {
 	claimDevToolsLauncher,
 	EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT,
@@ -57,17 +69,13 @@ import { ConsentIcon, DevToolsIcon } from './trigger-icons';
 /** The corner the trigger sits in. */
 export type ConsentDialogTriggerPosition = CornerPosition;
 
-/** When the trigger shows. */
-export type ConsentDialogTriggerVisibility = 'always' | 'never';
+export type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 
 /** The trigger's size. */
 export type ConsentDialogTriggerSize = 'sm' | 'md' | 'lg';
 
-type ToolbarItem = 'devtools' | 'preferences';
-
 /** Moves under this many pixels count as a click, not a drag. */
 const DRAG_THRESHOLD_PX = 5;
-const SNAP_DURATION_MS = 300;
 
 const joinStyles = function joinStyles(
 	...parts: (string | undefined)[]
@@ -112,7 +120,7 @@ const joinStyles = function joinStyles(
 						role="toolbar"
 						tabindex="-1"
 						dir="ltr"
-						aria-label="Privacy controls"
+						[attr.aria-label]="labels().toolbarLabel"
 						aria-orientation="horizontal"
 						[attr.data-corner]="corner()"
 						data-inth-trigger-toolbar="true"
@@ -133,7 +141,7 @@ const joinStyles = function joinStyles(
 									[class]="devToolsItemStyle().className || ''"
 									[attr.style]="styleOf(devToolsItemStyle())"
 									[attr.tabindex]="tabStopItem() === item ? 0 : -1"
-									aria-label="inth DevTools"
+									[attr.aria-label]="labels().devToolsLabel"
 									[attr.aria-expanded]="launcher().isOpen"
 									data-inth-trigger-action="devtools"
 									data-inth-trigger-item="devtools"
@@ -159,7 +167,7 @@ const joinStyles = function joinStyles(
 									[class]="preferencesItemStyle().className || ''"
 									[attr.style]="styleOf(preferencesItemStyle())"
 									[attr.tabindex]="tabStopItem() === item ? 0 : -1"
-									[attr.aria-label]="label()"
+									[attr.aria-label]="resolvedLabel()"
 									[attr.data-inth-rights]="rights()"
 									data-inth-trigger-action="preferences"
 									data-inth-trigger-item="preferences"
@@ -186,13 +194,14 @@ const joinStyles = function joinStyles(
 					</div>
 				} @else {
 					<button
+						#button
 						type="button"
 						[class]="triggerStyle().className || ''"
 						[attr.style]="buttonStyle()"
 						data-inth-trigger="true"
 						[attr.data-inth-rights]="rights()"
 						[attr.data-disable-animation]="theme.disableAnimation() ? '' : null"
-						[attr.aria-label]="label()"
+						[attr.aria-label]="resolvedLabel()"
 						(click)="openDialog($event)"
 						(pointerdown)="startDrag($event)"
 						(pointermove)="drag($event)"
@@ -226,12 +235,18 @@ export class ConsentDialogTrigger {
 		input<ConsentDialogTriggerPosition>('bottom-right');
 	/** Remember the corner the visitor dragged it to, in local storage. */
 	readonly persistPosition = input(true);
-	/** `'never'` hides the trigger. */
+	/**
+	 * `'always'` shows the trigger whenever the dialog is closed,
+	 * `'after-consent'` once no prompt is owed, and `'never'` hides it.
+	 */
 	readonly showWhen = input<ConsentDialogTriggerVisibility>('always');
 	/** The trigger's size. */
 	readonly size = input<ConsentDialogTriggerSize>('md');
-	/** The button's accessible name. */
-	readonly label = input('Open privacy settings');
+	/**
+	 * The button's accessible name. Defaults to the `trigger.label`
+	 * translation.
+	 */
+	readonly label = input<string | undefined>(undefined);
 	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** Extra class for the button. */
@@ -267,12 +282,24 @@ export class ConsentDialogTrigger {
 		this.consent.snapshot().policyRule.rights.join(' ')
 	);
 
-	/** Nothing to manage without a resolved policy. @internal */
-	protected readonly visible = computed(
-		() =>
-			this.consent.hasConsentPreferences() &&
-			this.showWhen() !== 'never' &&
-			this.consent.snapshot().activeUI !== 'dialog'
+	readonly #translations = resolvedTranslations(this.consent);
+	/** @internal */
+	protected readonly labels = computed(() =>
+		resolveTriggerLabels(this.#translations())
+	);
+	/** @internal */
+	protected readonly resolvedLabel = computed(
+		() => this.label() ?? this.labels().label
+	);
+
+	/** @internal */
+	protected readonly visible = computed(() =>
+		isTriggerVisible({
+			dialogOpen: this.consent.snapshot().activeUI === 'dialog',
+			hasConsentPreferences: this.consent.hasConsentPreferences(),
+			promptOwed: this.consent.promptRequirement().kind !== 'none',
+			showWhen: this.showWhen(),
+		})
 	);
 
 	readonly #launcherClaim = Symbol('ConsentDialogTrigger');
@@ -291,20 +318,16 @@ export class ConsentDialogTrigger {
 	});
 
 	private readonly toolbar = viewChild<ElementRef<HTMLDivElement>>('toolbar');
+	private readonly button = viewChild<ElementRef<HTMLButtonElement>>('button');
 
-	// Preferences sits in the corner; DevTools, a development aid, sits
-	// farthest from it.
 	/** @internal */
-	protected readonly toolbarItems = computed<ToolbarItem[]>(() => {
-		if (!this.#devTools()) {
-			return ['preferences'];
-		}
-		return this.corner().endsWith('left')
-			? ['preferences', 'devtools']
-			: ['devtools', 'preferences'];
-	});
+	protected readonly toolbarItems = computed<readonly TriggerToolbarItem[]>(
+		() => (this.#devTools() ? toolbarOrder(this.corner()) : ['preferences'])
+	);
 	/** @internal */
-	protected readonly focusedItem = signal<ToolbarItem | undefined>(undefined);
+	protected readonly focusedItem = signal<TriggerToolbarItem | undefined>(
+		undefined
+	);
 	/** @internal */
 	protected readonly tabStopItem = computed(() => {
 		const focused = this.focusedItem();
@@ -448,6 +471,24 @@ export class ConsentDialogTrigger {
 			}
 		});
 
+		// Ends the snap once the new corner's transition has run.
+		afterRenderEffect((onCleanup) => {
+			if (!this.isSnapping()) {
+				return;
+			}
+			const element =
+				this.toolbar()?.nativeElement ?? this.button()?.nativeElement;
+			if (!element) {
+				this.isSnapping.set(false);
+				return;
+			}
+			onCleanup(
+				onSnapEnd(element, () => {
+					this.isSnapping.set(false);
+				})
+			);
+		});
+
 		// Keep the docked panel beside the toolbar as it changes corner or
 		// size. Skip mid-drag; the drop re-runs this.
 		effect((onCleanup) => {
@@ -535,9 +576,6 @@ export class ConsentDialogTrigger {
 			});
 			if (next !== corner) {
 				this.isSnapping.set(true);
-				setTimeout(() => {
-					this.isSnapping.set(false);
-				}, SNAP_DURATION_MS);
 				this.corner.set(next);
 				if (this.persistPosition()) {
 					persistToStorage(next);
@@ -566,35 +604,21 @@ export class ConsentDialogTrigger {
 
 	/** @internal */
 	protected moveToolbarFocus(event: KeyboardEvent): void {
-		const items = this.toolbarItems();
-		const current = this.tabStopItem();
-		const index = current ? items.indexOf(current) : 0;
-		let next: ToolbarItem | undefined;
-		switch (event.key) {
-			case 'ArrowRight':
-				next = items[(index + 1) % items.length];
-				break;
-			case 'ArrowLeft':
-				next = items[(index - 1 + items.length) % items.length];
-				break;
-			case 'Home':
-				[next] = items;
-				break;
-			case 'End':
-				next = items.at(-1);
-				break;
-			default:
-				return;
+		const next = nextToolbarItem(
+			this.toolbarItems(),
+			this.tabStopItem(),
+			event.key
+		);
+		if (!next) {
+			return;
 		}
 		event.preventDefault();
-		if (next) {
-			this.focusedItem.set(next);
-			this.toolbar()
-				?.nativeElement.querySelector<HTMLElement>(
-					`[data-inth-trigger-item="${next}"]`
-				)
-				?.focus();
-		}
+		this.focusedItem.set(next);
+		this.toolbar()
+			?.nativeElement.querySelector<HTMLElement>(
+				`[data-inth-trigger-item="${next}"]`
+			)
+			?.focus();
 	}
 
 	/** @internal */

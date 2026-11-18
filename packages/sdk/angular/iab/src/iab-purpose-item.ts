@@ -24,6 +24,11 @@ import {
 	SwitchThumb,
 } from '@inth/angular/primitives';
 import { countIABPartners } from '@inth/sdk/iab/headless';
+import type {
+	HeadlessIABVendorId,
+	ProcessedPurpose,
+} from '@inth/sdk/iab/headless';
+import type { IABTranslations } from '@inth/sdk/translations';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
@@ -33,12 +38,10 @@ import {
 	LegitimateInterestIcon,
 	LockIcon,
 } from './iab-icons';
-import type { IABTranslations } from './iab-translations';
-import type { ProcessedPurpose, VendorId } from './iab-types';
 
 /** A vendor's choice, as the IAB rows emit it. */
 export interface IABVendorChoice {
-	readonly vendorId: VendorId;
+	readonly vendorId: HeadlessIABVendorId;
 	readonly value: boolean;
 }
 
@@ -578,7 +581,7 @@ export class IABPurposeItem {
 	/** A vendor's consent switch changed. */
 	readonly vendorToggle = output<IABVendorChoice>();
 	/** A vendor name was clicked: show it on the vendors tab. */
-	readonly vendorClick = output<VendorId>();
+	readonly vendorClick = output<HeadlessIABVendorId>();
 	/** A vendor's objection changed. `value` is whether LI is allowed. */
 	readonly vendorLegitimateInterestToggle = output<IABVendorChoice>();
 	/** The purpose's objection changed. `value` is whether LI is allowed. */
@@ -667,12 +670,12 @@ export class IABPurposeItem {
 	}
 
 	/** @internal */
-	protected vendorConsent(vendorId: VendorId): boolean {
+	protected vendorConsent(vendorId: HeadlessIABVendorId): boolean {
 		return this.vendorConsents()[String(vendorId)] ?? false;
 	}
 
 	/** @internal */
-	protected vendorLegitimateInterest(vendorId: VendorId): boolean {
+	protected vendorLegitimateInterest(vendorId: HeadlessIABVendorId): boolean {
 		return this.vendorLegitimateInterests()[String(vendorId)] ?? true;
 	}
 
