@@ -7,7 +7,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	installHeadProbe,
 	loadScripts,
@@ -70,8 +70,8 @@ describe('Wisepops loader contract', () => {
 		const append = installHeadProbe(() => undefined);
 		const scripts = [wisepops({ siteId: 'inthfake' })];
 
-		loadScripts(scripts, deniedConsents);
-		updateScripts(scripts, { ...deniedConsents, measurement: true });
+		loadScripts(scripts, ALL_DENIED);
+		updateScripts(scripts, { ...ALL_DENIED, measurement: true });
 		expect(append).not.toHaveBeenCalled();
 		expect(window.wisepops).toBeUndefined();
 		// oxlint-disable-next-line unicorn/no-document-cookie -- Checks that denied setup leaves cookies unchanged.
@@ -122,7 +122,7 @@ describe('Wisepops loader contract', () => {
 		const snippet = window.wisepops;
 		element.dispatchEvent(new Event('load'));
 
-		const result = updateScripts(scripts, deniedConsents);
+		const result = updateScripts(scripts, ALL_DENIED);
 
 		expect(result.unloaded).toEqual(['wisepops']);
 		expect(element.isConnected).toBe(false);
@@ -138,7 +138,7 @@ describe('Wisepops loader contract', () => {
 		const scripts = [wisepops({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const revoked = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		revoked.dispatchEvent(new Event('load'));
 		expect(calls).toEqual([['options', { defaultConsent: 'denied' }]]);
 	});
@@ -147,7 +147,7 @@ describe('Wisepops loader contract', () => {
 		const scripts = [wisepops({ category: 'experience', siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents, { nonce: 'provider-nonce' });
 		expect(window.wisepops).toBeUndefined();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader().nonce).toBe('provider-nonce');
 	});
 

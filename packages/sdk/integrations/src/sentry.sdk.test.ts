@@ -11,7 +11,7 @@ import * as sentry11 from 'sentry-browser-v11';
 import * as sentry11Min from 'sentry-browser-v11-min';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { deniedConsents, grantedMeasurementConsents } from './e2e-test-utils';
+import { ALL_DENIED, grantedMeasurementConsents } from './e2e-test-utils';
 import { sentry } from './vendors/analytics/sentry';
 import type {
 	SentryClient,
@@ -87,7 +87,7 @@ afterEach(async () => {
 const mountSdk = async (
 	sdk: BrowserSdk,
 	options: Partial<SentrySdkOptions> & { afterInit?: () => void } = {},
-	consents: ConsentState = deniedConsents
+	consents: ConsentState = ALL_DENIED
 ) => {
 	const { afterInit, initOptions, ...scriptOptions } = options;
 	sdk.setUser(null);
@@ -257,7 +257,7 @@ describe.each(sdkVersions)(
 				])
 			);
 
-			await kernel.commands.save(deniedConsents);
+			await kernel.commands.save(ALL_DENIED);
 			sdk.captureEvent({ message: 'after-withdrawal' });
 			await sdk.flush();
 			const withdrawn = eventPayloads(envelopes).find(
@@ -287,7 +287,7 @@ describe.each(sdkVersions)(
 					},
 					replay: { category: 'functionality', load },
 				},
-				{ ...deniedConsents, functionality: true }
+				{ ...ALL_DENIED, functionality: true }
 			);
 			await vi.advanceTimersByTimeAsync(3000);
 			expect(load).not.toHaveBeenCalled();
@@ -307,7 +307,7 @@ describe.each(sdkVersions)(
 			expect(recording).toBeDefined();
 			expect(JSON.stringify(recording)).toContain('email=visitor@example.test');
 
-			await kernel.commands.save({ ...deniedConsents, functionality: true });
+			await kernel.commands.save({ ...ALL_DENIED, functionality: true });
 			await vi.advanceTimersByTimeAsync(0);
 			expect(sdk.getReplay()?.getRecordingMode()).toBeUndefined();
 			sdk.getReplay()?.start();

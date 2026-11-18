@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -51,7 +51,7 @@ describe('googleTagManager contract', () => {
 					id: 'google-tag-manager-contract',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		const win = window as TestWindow;
@@ -79,7 +79,7 @@ describe('googleTagManager contract', () => {
 			requests.push(node.src);
 		});
 
-		loadScripts([googleTagManager({ id: 'GTM-DEFAULT' })], deniedConsents);
+		loadScripts([googleTagManager({ id: 'GTM-DEFAULT' })], ALL_DENIED);
 
 		expect(requests).toEqual([
 			'https://www.googletagmanager.com/gtm.js?id=GTM-DEFAULT',
@@ -113,8 +113,8 @@ describe('googleTagManager loadMode after-consent', () => {
 			googleTagManager({ id: 'GTM-GATED', loadMode: 'after-consent' }),
 		];
 
-		loadScripts(scripts, deniedConsents);
-		updateScripts(scripts, { ...deniedConsents, functionality: true });
+		loadScripts(scripts, ALL_DENIED);
+		updateScripts(scripts, { ...ALL_DENIED, functionality: true });
 
 		const win = window as TestWindow;
 		expect(requests).toEqual([]);
@@ -128,7 +128,7 @@ describe('googleTagManager loadMode after-consent', () => {
 			googleTagManager({ id: 'GTM-GATED', loadMode: 'after-consent' }),
 		];
 
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		updateScripts(scripts, {
 			...grantedMarketingConsents,
@@ -195,7 +195,7 @@ describe('googleTagManager loadMode after-consent', () => {
 
 		loadScripts(scripts, grantedMeasurementConsents);
 		const element = document.head.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 
 		const win = window as TestWindow;
 		expect(element?.isConnected).toBe(true);

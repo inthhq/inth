@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -140,7 +140,7 @@ describe('rudderstack contract', () => {
 					id: 'rudderstack-contract',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		expect(appended).toBe(false);

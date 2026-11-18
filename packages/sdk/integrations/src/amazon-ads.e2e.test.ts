@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
@@ -24,7 +24,7 @@ describe('Amazon Ads core loader consent contract', () => {
 		const scripts = [
 			amazonAdsTag({ tagId: '00000000-0000-0000-0000-000000000000' }),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of ['amzn', 'amznConsent']) {
@@ -44,7 +44,7 @@ describe('Amazon Ads core loader consent contract', () => {
 		];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);

@@ -4,14 +4,14 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
 } from './e2e-test-utils';
 import { appcues } from './vendors/functional/appcues';
 
-const granted = { ...deniedConsents, experience: true };
+const granted = { ...ALL_DENIED, experience: true };
 
 describe('Appcues consent lifecycle through core', () => {
 	registerVendorContractCleanup();
@@ -36,9 +36,9 @@ describe('Appcues consent lifecycle through core', () => {
 				settings: { enableURLDetection: false },
 			}),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, {
-			...deniedConsents,
+			...ALL_DENIED,
 			functionality: true,
 			marketing: true,
 			measurement: true,
@@ -60,7 +60,7 @@ describe('Appcues consent lifecycle through core', () => {
 		updateScripts(scripts, granted);
 		expect(onReady).toHaveBeenCalledOnce();
 		expect(document.querySelectorAll('script')).toHaveLength(1);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(window.Appcues.reset).toHaveBeenCalledOnce();
 		expect(element?.isConnected).toBe(false);
 		updateScripts(scripts, granted);
@@ -111,7 +111,7 @@ describe('Appcues consent lifecycle through core', () => {
 		loadScripts(scripts, granted);
 		const element = document.querySelector('script');
 		expect(element?.src).toBe('https://fast.eu.appcues.com/123.js');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		element?.dispatchEvent(new Event('load'));
 		expect(element?.isConnected).toBe(false);
 		expect(window.Appcues).toBeUndefined();
@@ -150,7 +150,7 @@ describe('Appcues consent lifecycle through core', () => {
 		expect(nextVisitor).not.toHaveBeenCalled();
 		const reset = vi.fn();
 		window.Appcues = { reset };
-		updateScripts(nextScripts, deniedConsents);
+		updateScripts(nextScripts, ALL_DENIED);
 		expect(reset).toHaveBeenCalledOnce();
 	});
 
@@ -160,14 +160,14 @@ describe('Appcues consent lifecycle through core', () => {
 		const oldScripts = [appcues({ accountId: '123', onReady: oldReady })];
 		loadScripts(oldScripts, granted);
 		const oldElement = document.querySelector('script');
-		updateScripts(oldScripts, deniedConsents);
+		updateScripts(oldScripts, ALL_DENIED);
 		const currentReady = vi.fn(() =>
 			window.Appcues?.identify?.('current-visitor')
 		);
 		const currentScripts = [
 			appcues({ accountId: '123', onReady: currentReady }),
 		];
-		updateScripts(currentScripts, deniedConsents);
+		updateScripts(currentScripts, ALL_DENIED);
 		updateScripts(currentScripts, granted);
 		window.Appcues = { identify };
 		oldElement?.dispatchEvent(new Event('load'));
@@ -185,7 +185,7 @@ describe('Appcues consent lifecycle through core', () => {
 		loadScripts(scripts, granted);
 		document.querySelector('script')?.dispatchEvent(new Event('error'));
 		expect(onReady).not.toHaveBeenCalled();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, granted);
 		document.querySelector('script')?.dispatchEvent(new Event('load'));
 		expect(onReady).not.toHaveBeenCalled();
@@ -234,7 +234,7 @@ describe('Appcues consent lifecycle through core', () => {
 		});
 		try {
 			const revokedElement = document.querySelector('script');
-			await kernel.commands.save(deniedConsents);
+			await kernel.commands.save(ALL_DENIED);
 			window.Appcues = { identify, reset };
 			revokedElement?.dispatchEvent(new Event('load'));
 			expect(onReady).not.toHaveBeenCalled();
@@ -244,7 +244,7 @@ describe('Appcues consent lifecycle through core', () => {
 			currentElement?.dispatchEvent(new Event('load'));
 			currentElement?.dispatchEvent(new Event('load'));
 			expect(identify).toHaveBeenCalledExactlyOnceWith('current-visitor');
-			await kernel.commands.save(deniedConsents);
+			await kernel.commands.save(ALL_DENIED);
 			expect(reset).toHaveBeenCalledOnce();
 			revokedElement?.dispatchEvent(new Event('load'));
 			currentElement?.dispatchEvent(new Event('load'));

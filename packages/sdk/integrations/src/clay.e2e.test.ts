@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
@@ -22,7 +22,7 @@ describe('Clay core loader consent contract', () => {
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
 		const scripts = [clay({ siteId: 'inthfake' })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of ['Claydar', '__RADAR_TRACKERS__']) {
@@ -42,7 +42,7 @@ describe('Clay core loader consent contract', () => {
 		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);
@@ -91,7 +91,7 @@ describe('Clay consent forwarding', () => {
 				grants += 1;
 			},
 		});
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(denials).toBe(1);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(grants).toBe(1);
@@ -99,7 +99,7 @@ describe('Clay consent forwarding', () => {
 	it('does not grant a loader that finishes after revocation', () => {
 		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const queue: unknown[] = [];
 		Reflect.set(window, 'Claydar', queue);
 		document.querySelector('script')?.dispatchEvent(new Event('load'));
@@ -116,7 +116,7 @@ describe('Clay pending tracker consent', () => {
 		const queue: unknown[] = [];
 		Reflect.set(window, 'Claydar', queue);
 		document.querySelector('script')?.dispatchEvent(new Event('load'));
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(queue).toEqual([['giveCookieConsent'], ['denyCookieConsent']]);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(queue).toEqual([

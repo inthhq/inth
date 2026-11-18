@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -15,8 +15,8 @@ const GLOBALS = [
 	'mktoMunchkin',
 	'mktoMunchkinFunction',
 ] as const;
-const granted = { ...deniedConsents, marketing: true };
-const unrelated = { ...deniedConsents, measurement: true };
+const granted = { ...ALL_DENIED, marketing: true };
+const unrelated = { ...ALL_DENIED, measurement: true };
 const getLoader = (): HTMLScriptElement => {
 	const loader = document.querySelector<HTMLScriptElement>('script[src]');
 	if (!loader) {
@@ -45,7 +45,7 @@ describe('Marketo Munchkin consent loader', () => {
 		const cookies = document.cookie;
 		const local = { ...localStorage };
 		const session = { ...sessionStorage };
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, unrelated);
 		expect(document.querySelector('script[src]')).toBeNull();
 		for (const name of GLOBALS) {
@@ -61,7 +61,7 @@ describe('Marketo Munchkin consent loader', () => {
 		expect(first.src).toBe('https://munchkin.marketo.net/munchkin.js');
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(first.isConnected).toBe(false);
 		updateScripts(scripts, granted);
 		expect(getLoader()).not.toBe(first);
@@ -73,7 +73,7 @@ describe('Marketo Munchkin consent loader', () => {
 		];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 	});
 });
@@ -95,7 +95,7 @@ describe('Marketo SDK initialization', () => {
 		window.Munchkin = { init };
 		const revoked = getLoader();
 		expect(init).not.toHaveBeenCalled();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		revoked.dispatchEvent(new Event('load'));
 		expect(init).not.toHaveBeenCalled();
 		updateScripts(scripts, granted);

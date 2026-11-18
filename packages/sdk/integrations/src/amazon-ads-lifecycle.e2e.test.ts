@@ -4,7 +4,7 @@ import type { Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { deniedConsents, grantedMarketingConsents } from './e2e-test-utils';
+import { ALL_DENIED, grantedMarketingConsents } from './e2e-test-utils';
 import { amazonAdsTag } from './vendors/ads-and-pixels/amazon-ads';
 import type {
 	AmazonAdsConsent,
@@ -118,9 +118,9 @@ describe('amazonAdsTag production loader', () => {
 		);
 		await second.kernel.commands.save(grantedMarketingConsents);
 		consent.mockClear();
-		await first.kernel.commands.save(deniedConsents);
+		await first.kernel.commands.save(ALL_DENIED);
 		expect(consent).not.toHaveBeenCalled();
-		await second.kernel.commands.save(deniedConsents);
+		await second.kernel.commands.save(ALL_DENIED);
 		await first.kernel.commands.save(grantedMarketingConsents);
 		expect(consent.mock.calls.map(([value]) => value.enableAdStorage)).toEqual([
 			false,
@@ -154,7 +154,7 @@ describe('amazonAdsTag production loader', () => {
 		const second = mount(
 			amazonAdsTag({ countryCode: 'DE', region: 'EU', tagId })
 		);
-		await second.kernel.commands.save(deniedConsents);
+		await second.kernel.commands.save(ALL_DENIED);
 		consent.mockClear();
 		first.loader.dispose();
 		expect(consent).toHaveBeenCalledExactlyOnceWith({
@@ -197,8 +197,8 @@ describe('amazonAdsTag production loader', () => {
 		const beforeCookies = document.cookie;
 		const { kernel, loader } = mount(script);
 
-		await kernel.commands.save(deniedConsents);
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save(ALL_DENIED);
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 
 		expect(script.alwaysLoad).not.toBe(true);
 		expect(script.src).toBe(mainUrl);
@@ -311,7 +311,7 @@ describe('amazonAdsTag production loader', () => {
 		const queue = window.amzn;
 		expect(commands()).toEqual([]);
 
-		await kernel.commands.save(deniedConsents);
+		await kernel.commands.save(ALL_DENIED);
 		const consent = vi.fn();
 		window.amznConsent = consent;
 		helper.dispatchEvent(new Event('load'));
@@ -340,7 +340,7 @@ describe('amazonAdsTag production loader', () => {
 		const { kernel } = mount(amazonAdsTag({ countryCode: 'JP', tagId }));
 		await kernel.commands.save(grantedMarketingConsents);
 		const helper = findScript(helperUrl);
-		await kernel.commands.save(deniedConsents);
+		await kernel.commands.save(ALL_DENIED);
 		await kernel.commands.save(grantedMarketingConsents);
 		const consent = vi.fn();
 		window.amznConsent = consent;
@@ -365,7 +365,7 @@ describe('amazonAdsTag production loader', () => {
 		main.dispatchEvent(new Event('load'));
 		expect(commands()).toEqual(expectedCommands());
 		window.amzn?.('trackEvent', 'ApplicationQueuedEvent', {});
-		await kernel.commands.save(deniedConsents);
+		await kernel.commands.save(ALL_DENIED);
 		expect(commands()).toEqual([['trackEvent', 'ApplicationQueuedEvent', {}]]);
 
 		await kernel.commands.save(grantedMarketingConsents);
@@ -399,7 +399,7 @@ describe('amazonAdsTag production loader', () => {
 			...grantedMarketingConsents,
 			measurement: true,
 		});
-		await kernel.commands.save(deniedConsents);
+		await kernel.commands.save(ALL_DENIED);
 		await kernel.commands.save(grantedMarketingConsents);
 
 		expect(initialized).toEqual(expectedCommands());
@@ -433,7 +433,7 @@ describe('amazonAdsTag production loader', () => {
 		findScript(mainUrl).dispatchEvent(new Event('error'));
 		expect(failed).toHaveBeenCalledOnce();
 		expect(failed.mock.calls[0]?.[0].error).toBeInstanceOf(Error);
-		await kernel.commands.save(deniedConsents);
+		await kernel.commands.save(ALL_DENIED);
 		await kernel.commands.save(grantedMarketingConsents);
 		expect(commands()).toEqual([]);
 		expect(document.scripts).toHaveLength(2);
@@ -612,7 +612,7 @@ describe('amazonAdsTag production loader', () => {
 		expect(helper.isConnected).toBe(true);
 		equivalent.loader.dispose();
 		expect(helper.isConnected).toBe(true);
-		await last.kernel.commands.save(deniedConsents);
+		await last.kernel.commands.save(ALL_DENIED);
 		const consent = vi.fn();
 		window.amznConsent = consent;
 		helper.dispatchEvent(new Event('load'));
@@ -648,7 +648,7 @@ describe('amazonAdsTag production loader', () => {
 		]);
 		expect(consent).not.toHaveBeenCalled();
 		expect(permission).toBe(true);
-		await kernel.commands.save(deniedConsents);
+		await kernel.commands.save(ALL_DENIED);
 		expect(consent).toHaveBeenLastCalledWith({
 			countryCode: 'DE',
 			enableAdStorage: false,
@@ -674,7 +674,7 @@ describe('amazonAdsTag production loader', () => {
 			original?.(info);
 			if (armed && info.hasConsent) {
 				armed = false;
-				void kernel.commands.save(deniedConsents);
+				void kernel.commands.save(ALL_DENIED);
 				loader.updateScripts([
 					amazonAdsTag({ countryCode: 'DE', region: 'EU', tagId }),
 				]);
@@ -708,10 +708,10 @@ describe('amazonAdsTag production loader', () => {
 				category: 'measurement',
 			} satisfies Script;
 			const { kernel, loader } = mount(script);
-			await kernel.commands.save({ ...deniedConsents, measurement: true });
+			await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 			findScript(mainUrl).dispatchEvent(new Event('load'));
 			await kernel.commands.save({
-				...deniedConsents,
+				...ALL_DENIED,
 				marketing: !measurement,
 				measurement,
 			});
@@ -733,7 +733,7 @@ describe('amazonAdsTag production loader', () => {
 			...amazonAdsTag({ countryCode: 'DE', tagId }),
 			category: 'measurement',
 		});
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		findScript(mainUrl).dispatchEvent(new Event('load'));
 		consent.mockClear();
 		loader.updateScripts([
@@ -899,7 +899,7 @@ describe('amazonAdsTag production loader', () => {
 		const { kernel } = mount(script);
 		await kernel.commands.save(grantedMarketingConsents);
 		expect(document.scripts).toHaveLength(0);
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		const consent = vi.fn();
 		window.amznConsent = consent;
 		findScript(customHelper).dispatchEvent(new Event('load'));

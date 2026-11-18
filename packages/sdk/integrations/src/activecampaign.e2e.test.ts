@@ -4,7 +4,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -34,8 +34,8 @@ afterEach(() => {
 });
 
 const GLOBALS = ['pgo', 'prismGlobalObjectAlias'];
-const granted = { ...deniedConsents, marketing: true };
-const unrelated = { ...deniedConsents, measurement: true };
+const granted = { ...ALL_DENIED, marketing: true };
+const unrelated = { ...ALL_DENIED, measurement: true };
 const getLoader = (): HTMLScriptElement => {
 	const loader = document.querySelector<HTMLScriptElement>('script[src]');
 	if (!loader) {
@@ -58,7 +58,7 @@ describe('ActiveCampaign consent loader', () => {
 		const cookies = document.cookie;
 		const local = { ...localStorage };
 		const session = { ...sessionStorage };
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, unrelated);
 		expect(document.querySelector('script[src]')).toBeNull();
 		for (const name of GLOBALS) {
@@ -76,7 +76,7 @@ describe('ActiveCampaign consent loader', () => {
 		);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(first.isConnected).toBe(true);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
@@ -88,7 +88,7 @@ describe('ActiveCampaign consent loader', () => {
 		];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 	});
 });
@@ -122,7 +122,7 @@ describe('ActiveCampaign tracking lifecycle', () => {
 		]);
 		updateScripts(scripts, granted);
 		expect(pgo).toHaveBeenCalledTimes(2);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		await Promise.resolve();
 		expect(pgo.mock.calls.at(-1)).toEqual(['process', 'allowTracking']);
 		updateScripts(scripts, granted);
@@ -141,7 +141,7 @@ describe('ActiveCampaign tracking lifecycle', () => {
 		];
 		loadScripts(scripts, granted);
 		const loader = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const pgo = vi.fn();
 		window.pgo = pgo;
 		loader.dispatchEvent(new Event('load'));
@@ -163,7 +163,7 @@ describe('ActiveCampaign helper recreation', () => {
 		const pgo = vi.fn();
 		window.pgo = pgo;
 		getLoader().dispatchEvent(new Event('load'));
-		updateScripts([create()], deniedConsents);
+		updateScripts([create()], ALL_DENIED);
 		await Promise.resolve();
 		updateScripts([create()], granted);
 		await Promise.resolve();
@@ -524,7 +524,7 @@ describe('ActiveCampaign registration ownership', () => {
 		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const denied = createConsentKernel();
 		const allowed = createConsentKernel();
-		await denied.commands.save(deniedConsents);
+		await denied.commands.save(ALL_DENIED);
 		await allowed.commands.save(granted);
 		const first = createScriptLoader({
 			kernel: denied,
@@ -596,7 +596,7 @@ describe('ActiveCampaign registration ownership', () => {
 	it('starts the remaining granted owner after an initial denied owner is disposed', async () => {
 		const first = createConsentKernel();
 		const second = createConsentKernel();
-		await first.commands.save(deniedConsents);
+		await first.commands.save(ALL_DENIED);
 		await second.commands.save(granted);
 		const create = () => activeCampaignTracking({ accountId: '123456' });
 		const firstLoader = createScriptLoader({
@@ -626,8 +626,8 @@ describe('ActiveCampaign registration ownership', () => {
 	it('requires all registrations to consent and retains a settled denial', async () => {
 		const first = createConsentKernel();
 		const second = createConsentKernel();
-		await first.commands.save(deniedConsents);
-		await second.commands.save(deniedConsents);
+		await first.commands.save(ALL_DENIED);
+		await second.commands.save(ALL_DENIED);
 		const create = () => activeCampaignTracking({ accountId: '123456' });
 		const firstLoader = createScriptLoader({
 			kernel: first,
@@ -646,7 +646,7 @@ describe('ActiveCampaign registration ownership', () => {
 			window.pgo = pgo;
 			loader.dispatchEvent(new Event('load'));
 			expect(pgo.mock.calls).toEqual([['process', 'allowTracking']]);
-			await second.commands.save(deniedConsents);
+			await second.commands.save(ALL_DENIED);
 			await Promise.resolve();
 			expect(pgo.mock.calls.at(-1)).toEqual(['process', 'allowTracking']);
 			secondLoader.dispose();

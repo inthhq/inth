@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -10,8 +10,8 @@ import {
 import { pendo } from './vendors/analytics/pendo';
 
 const GLOBALS = ['pendo'];
-const granted = { ...deniedConsents, measurement: true };
-const unrelated = { ...deniedConsents, marketing: true };
+const granted = { ...ALL_DENIED, measurement: true };
+const unrelated = { ...ALL_DENIED, marketing: true };
 const getLoader = (): HTMLScriptElement => {
 	const loader = document.querySelector<HTMLScriptElement>('script[src]');
 	if (!loader) {
@@ -40,7 +40,7 @@ describe('Pendo consent loader', () => {
 		const cookies = document.cookie;
 		const local = { ...localStorage };
 		const session = { ...sessionStorage };
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, unrelated);
 		expect(document.querySelector('script[src]')).toBeNull();
 		for (const name of GLOBALS) {
@@ -58,7 +58,7 @@ describe('Pendo consent loader', () => {
 		);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(first.isConnected).toBe(true);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
@@ -68,7 +68,7 @@ describe('Pendo consent loader', () => {
 		const scripts = [pendo({ apiKey: 'YOUR_API_KEY', category: 'experience' })];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 	});
 });
@@ -84,7 +84,7 @@ describe('Pendo event lifecycle', () => {
 		loadScripts(scripts, granted);
 		getLoader().dispatchEvent(new Event('load'));
 		await Promise.resolve();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(error).toHaveBeenCalledTimes(2);
 		expect(error).toHaveBeenCalledWith(
 			'pendo: loader did not install the Pendo API'
@@ -117,7 +117,7 @@ describe('Pendo event lifecycle', () => {
 			disableCookies: true,
 			visitor: { id: 'visitor' },
 		});
-		updateScripts([create()], deniedConsents);
+		updateScripts([create()], ALL_DENIED);
 		expect(runtime.stopSendingEvents).toHaveBeenCalledTimes(1);
 		updateScripts([create()], granted);
 		await Promise.resolve();
@@ -132,7 +132,7 @@ describe('Pendo event lifecycle', () => {
 		const scripts = [pendo({ apiKey: 'late-key' })];
 		loadScripts(scripts, granted);
 		const loader = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const runtime = {
 			initialize: vi.fn(),
 			startSendingEvents: vi.fn(),
@@ -154,14 +154,14 @@ describe('Pendo event lifecycle', () => {
 		const loader = getLoader();
 		const runtime = {
 			initialize: vi.fn(() => {
-				updateScripts(scripts, deniedConsents);
+				updateScripts(scripts, ALL_DENIED);
 			}),
 			startSendingEvents: vi.fn(),
 			stopSendingEvents: vi.fn(),
 		};
 		window.pendo = runtime;
 		loader.dispatchEvent(new Event('load'));
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		await Promise.resolve();
 		expect(runtime.initialize).not.toHaveBeenCalled();
 		updateScripts(scripts, granted);

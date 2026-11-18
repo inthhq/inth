@@ -89,12 +89,7 @@ export type PolicyChoiceAction = Exclude<PolicyPromptAction, 'dismiss'>;
 export type PolicyRight = 'disclosure' | 'preferences' | 'opt-out';
 
 /** Every category the runtime knows about, including `necessary`. */
-export type PolicyConsentCategory =
-	| 'necessary'
-	| 'functionality'
-	| 'experience'
-	| 'measurement'
-	| 'marketing';
+export type PolicyConsentCategory = (typeof POLICY_CONSENT_CATEGORIES)[number];
 
 /** Categories a subject can decide on. `necessary` is never a choice. */
 export type PolicyOptionalCategory = Exclude<

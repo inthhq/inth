@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -76,9 +76,9 @@ describe('HubSpot core loader consent contract', () => {
 
 	it('creates no HubSpot globals or elements before marketing consent', () => {
 		const scripts = [hubspot({ chat: true, portalId: '53' })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
-		updateScripts(scripts, { ...deniedConsents, functionality: true });
+		updateScripts(scripts, { ...ALL_DENIED, functionality: true });
 		updateScripts(scripts, {
 			...grantedMeasurementConsents,
 			functionality: true,
@@ -151,12 +151,12 @@ describe('HubSpot core loader consent contract', () => {
 				window._hsp = commands;
 			}
 			const original = document.getElementById('hs-script-loader');
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			expect(commands).toEqual([
 				['revokeCookieConsent'],
 				['setHubSpotConsent', deniedHubSpotConsent],
 			]);
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			expect(
 				commands.filter(([name]) => name === 'revokeCookieConsent')
 			).toHaveLength(1);
@@ -166,7 +166,7 @@ describe('HubSpot core loader consent contract', () => {
 				'setHubSpotConsent',
 				{ advertisement: true, analytics: false, functionality: false },
 			]);
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			expect(commands.slice(-2)).toEqual([
 				['revokeCookieConsent'],
 				['setHubSpotConsent', deniedHubSpotConsent],
@@ -212,10 +212,10 @@ describe('HubSpot core loader consent contract', () => {
 
 	it('keeps necessary and experience separate from HubSpot consent fields', () => {
 		const scripts = [hubspot({ category: 'necessary', portalId: '53' })];
-		loadScripts(scripts, { ...deniedConsents, experience: true });
+		loadScripts(scripts, { ...ALL_DENIED, experience: true });
 		const push = vi.fn();
 		window._hsp = { push };
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(push).toHaveBeenCalledExactlyOnceWith([
 			'setHubSpotConsent',
 			deniedHubSpotConsent,
@@ -227,7 +227,7 @@ describe('HubSpot core loader consent contract', () => {
 		const scripts = [hubspot({ portalId: '53' })];
 		loadScripts(scripts, allConsents);
 		const original = document.getElementById('hs-script-loader');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(original?.isConnected).toBe(true);
 		original?.dispatchEvent(new Event('load'));
 		updateScripts(scripts, allConsents);
@@ -262,7 +262,7 @@ describe('HubSpot core loader consent contract', () => {
 			'setHubSpotConsent',
 			{ advertisement: true, analytics: false, functionality: false },
 		]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 		expect(document.getElementById('hs-script-loader')).toBe(existing);
@@ -282,7 +282,7 @@ describe('HubSpot core loader consent contract', () => {
 			const originalMarkup = existing.outerHTML;
 			const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const scripts = [hubspot({ portalId: '53' })];
-			loadScripts(scripts, deniedConsents);
+			loadScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, grantedMeasurementConsents);
 			expect(warning).not.toHaveBeenCalled();
 			expect(window._hsp).toBeUndefined();
@@ -294,7 +294,7 @@ describe('HubSpot core loader consent contract', () => {
 				'hubspot: #hs-script-loader belongs to a non-script element. HubSpot will not load; remove or rename the conflicting ID and reload.'
 			);
 			updateScripts(scripts, grantedMarketingConsents);
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, grantedMarketingConsents);
 			clearAllScripts();
 			loadScripts([hubspot({ portalId: '53' })], grantedMarketingConsents);
@@ -445,7 +445,7 @@ describe('HubSpot core loader consent contract', () => {
 						allConsents
 					);
 					if (initiallyDenied) {
-						await kernel.commands.save(deniedConsents);
+						await kernel.commands.save(ALL_DENIED);
 					}
 					loader = createScriptLoader({ kernel, scripts: [script] });
 					expect(api.listeners.size).toBe(1);

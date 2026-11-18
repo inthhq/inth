@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -43,7 +43,7 @@ describe('LiveIntent production core loader contract', () => {
 		const scripts = [
 			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
-		expect(loadScripts(scripts, deniedConsents)).toEqual([]);
+		expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
 		expect(updateScripts(scripts, grantedMeasurementConsents).loaded).toEqual(
 			[]
 		);
@@ -94,12 +94,12 @@ describe('LiveIntent production core loader contract', () => {
 		const scripts = [
 			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(queue).toEqual([prior]);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(window.liQ).toBe(queue);
 		expect(queue).toEqual([prior, conversion]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(window.liQ).toBe(queue);
 		expect(queue).toEqual([prior, conversion]);
@@ -112,13 +112,13 @@ describe('LiveIntent production core loader contract', () => {
 		const scripts = [
 			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(push).not.toHaveBeenCalled();
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(window.liQ).toBe(runtime);
 		expect(push).toHaveBeenCalledExactlyOnceWith(conversion);
 		expect(push.mock.contexts).toEqual([runtime]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(push).toHaveBeenCalledExactlyOnceWith(conversion);
 	});
@@ -137,7 +137,7 @@ describe('LiveIntent production core loader contract', () => {
 			if (completion === 'before revoke') {
 				element?.dispatchEvent(new Event('load'));
 			}
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			expect(element?.isConnected).toBe(true);
 			expect(window.liQ).toBe(queue);
 			expect(queue).toEqual([conversion]);
@@ -166,7 +166,7 @@ describe('LiveIntent production core loader contract', () => {
 		const hub: unknown[] = [];
 		const runtimeWindow: Window & { liQHub?: unknown[] } = window;
 		runtimeWindow.liQHub = hub;
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		element?.dispatchEvent(new Event('load'));
 		updateScripts([liveIntentTag(options)], grantedMarketingConsents);
 		expect(window.liQ).toBe(runtime);

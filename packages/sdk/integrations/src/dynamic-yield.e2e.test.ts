@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
@@ -16,7 +16,7 @@ import {
 } from './e2e-test-utils';
 import { dynamicYield } from './vendors/functional/dynamic-yield';
 
-const grantedConsents = { ...deniedConsents, experience: true };
+const grantedConsents = { ...ALL_DENIED, experience: true };
 
 const loader = function loader(name: 'dynamic' | 'static'): HTMLScriptElement {
 	const element = document.head.querySelector<HTMLScriptElement>(
@@ -92,7 +92,7 @@ describe('Dynamic Yield real-core loader contract', () => {
 					`${secondBase}/api_dynamic.js`,
 					`${secondBase}/api_static.js`,
 				]);
-				await secondKernel.commands.save(deniedConsents);
+				await secondKernel.commands.save(ALL_DENIED);
 				expect(window.DY?.userActiveConsent).toEqual({ accepted: false });
 				expect(document.head.querySelector('script')).toBeNull();
 			} finally {
@@ -115,7 +115,7 @@ describe('Dynamic Yield real-core loader contract', () => {
 			const firstKernel = createConsentKernel();
 			const secondKernel = createConsentKernel();
 			await firstKernel.commands.save(grantedConsents);
-			await secondKernel.commands.save({ ...deniedConsents, marketing: true });
+			await secondKernel.commands.save({ ...ALL_DENIED, marketing: true });
 			const first = createScriptLoader({
 				kernel: firstKernel,
 				scripts: [dynamicYield({ sectionId: '1234567' })],
@@ -144,13 +144,13 @@ describe('Dynamic Yield real-core loader contract', () => {
 						vendors: { 'dynamic-yield': false },
 					});
 				} else {
-					await firstKernel.commands.save(deniedConsents);
+					await firstKernel.commands.save(ALL_DENIED);
 				}
 				expect(window.DY?.userActiveConsent).toEqual({ accepted: true });
 				expect(Array.from(document.head.querySelectorAll('script'))).toEqual(
 					secondElements
 				);
-				await secondKernel.commands.save(deniedConsents);
+				await secondKernel.commands.save(ALL_DENIED);
 				expect(window.DY?.userActiveConsent).toEqual({ accepted: false });
 				expect(document.head.querySelector('script')).toBeNull();
 				await firstKernel.commands.save(grantedConsents, {
@@ -177,8 +177,8 @@ describe('Dynamic Yield real-core loader contract', () => {
 		const beforeSession = { ...sessionStorage };
 		const fetch = vi.fn();
 		vi.stubGlobal('fetch', fetch);
-		loadScripts(scripts, deniedConsents);
-		updateScripts(scripts, { ...deniedConsents, marketing: true });
+		loadScripts(scripts, ALL_DENIED);
+		updateScripts(scripts, { ...ALL_DENIED, marketing: true });
 		clearAllScripts();
 		expect(window.DY).toBeUndefined();
 		expect(document.head.querySelector('script')).toBeNull();
@@ -204,7 +204,7 @@ describe('Dynamic Yield real-core loader contract', () => {
 				sectionId: '1234567',
 			}),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedConsents);
 		expect(requests).toEqual([
 			'https://cdn-eu.dynamicyield.com/api/1234567/api_dynamic.js',
@@ -233,7 +233,7 @@ describe('Dynamic Yield real-core loader contract', () => {
 			get: () => consent,
 			set: changed,
 		});
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(changed).toHaveBeenCalledExactlyOnceWith({ accepted: false });
 		expect(document.head.querySelector('script')).toBeNull();
 	});
@@ -242,7 +242,7 @@ describe('Dynamic Yield real-core loader contract', () => {
 		const scripts = [dynamicYield({ sectionId: '1234567' })];
 		loadScripts(scripts, grantedConsents);
 		const revoked = loader('dynamic');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		revoked.dispatchEvent(new Event('load'));
 		expect(document.head.querySelector('script')).toBeNull();
 		expect(window.DY?.userActiveConsent).toEqual({ accepted: false });
@@ -261,7 +261,7 @@ describe('Dynamic Yield real-core loader contract', () => {
 		];
 		loadScripts(scripts, grantedConsents);
 		expect(window.DY).toBeUndefined();
-		updateScripts(scripts, { ...deniedConsents, marketing: true });
+		updateScripts(scripts, { ...ALL_DENIED, marketing: true });
 		expect(loader('dynamic')).toBeTruthy();
 	});
 

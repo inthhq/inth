@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -21,7 +21,7 @@ interface GorgiasWindow extends Window {
 }
 
 const gorgiasWindow = window as GorgiasWindow;
-const grantedConsents = { ...deniedConsents, functionality: true };
+const grantedConsents = { ...ALL_DENIED, functionality: true };
 
 const getLoader = function getLoader(): HTMLScriptElement {
 	const element = document.body.querySelector('script');
@@ -57,7 +57,7 @@ describe('Gorgias Chat loader contract', () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
 		const xhrSpy = vi.spyOn(XMLHttpRequest.prototype, 'open');
 		const scripts = [gorgiasChat({ appKey: 'key' })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(document.body.querySelector('script')).toBeNull();
 		expect(window.GorgiasChat).toBeUndefined();
 		expect(gorgiasWindow.gorgiasChat).toBeUndefined();
@@ -79,7 +79,7 @@ describe('Gorgias Chat loader contract', () => {
 		'does not load for unrelated %s consent',
 		(category) => {
 			const scripts = [gorgiasChat({ appKey: 'key' })];
-			loadScripts(scripts, { ...deniedConsents, [category]: true });
+			loadScripts(scripts, { ...ALL_DENIED, [category]: true });
 			expect(document.querySelector('script')).toBeNull();
 			expect(window.GorgiasChat).toBeUndefined();
 			expect(gorgiasWindow.gorgiasChat).toBeUndefined();
@@ -183,7 +183,7 @@ describe('Gorgias Chat loader contract', () => {
 		const element = getLoader();
 		element.dispatchEvent(new Event('load'));
 		expect(api.init).toHaveBeenCalledOnce();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(element.isConnected).toBe(false);
 		resolveInit?.();
 		await promise;
@@ -196,7 +196,7 @@ describe('Gorgias Chat loader contract', () => {
 		const scripts = [gorgiasChat({ appKey: 'key' })];
 		loadScripts(scripts, grantedConsents);
 		const previous = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const api = {
 			disableSegment: vi.fn(),
 			init: vi.fn(() => Promise.resolve()),
@@ -228,7 +228,7 @@ describe('Gorgias Chat loader contract', () => {
 		window.GorgiasChat = previousApi;
 		const previous = getLoader();
 		previous.dispatchEvent(new Event('load'));
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedConsents);
 
 		let resolveCurrent: (() => void) | undefined;
@@ -260,7 +260,7 @@ describe('Gorgias Chat loader contract', () => {
 		];
 		loadScripts(scripts, grantedConsents);
 		expect(document.body.querySelector('script')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, marketing: true });
+		updateScripts(scripts, { ...ALL_DENIED, marketing: true });
 		const api = {
 			disableSegment: vi.fn(),
 			init: vi.fn(() => Promise.resolve()),
@@ -281,7 +281,7 @@ describe('Gorgias Chat loader contract', () => {
 		};
 		window.GorgiasChat = api;
 		window.dispatchEvent(new Event('gorgias-widget-loaded'));
-		updateScripts(scripts, { ...deniedConsents, measurement: true });
+		updateScripts(scripts, { ...ALL_DENIED, measurement: true });
 		expect(api.disableSegment).toHaveBeenCalledOnce();
 		expect(document.body.querySelector('script')).toBeNull();
 	});

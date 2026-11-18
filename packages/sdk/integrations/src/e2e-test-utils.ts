@@ -9,6 +9,8 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 import { afterEach, vi } from 'vitest';
 
+import { ALL_DENIED } from './engine/vendor-consent';
+
 export interface GoogleTagDataState {
 	ics: {
 		usedDefault: boolean;
@@ -254,21 +256,15 @@ export const clearAllScripts = function clearAllScripts(): void {
 	kernel = createConsentKernel();
 };
 
-export const deniedConsents = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
+export { ALL_DENIED };
 
 export const grantedMeasurementConsents = {
-	...deniedConsents,
+	...ALL_DENIED,
 	measurement: true,
 };
 
 export const grantedMarketingConsents = {
-	...deniedConsents,
+	...ALL_DENIED,
 	marketing: true,
 };
 
@@ -303,12 +299,6 @@ export const installHeadProbe = function installHeadProbe(
 	onAppend: (script: HTMLScriptElement, win: TestWindow) => void
 ) {
 	return installAppendProbe(document.head, onAppend);
-};
-
-export const installBodyProbe = function installBodyProbe(
-	onAppend: (script: HTMLScriptElement, win: TestWindow) => void
-) {
-	return installAppendProbe(document.body, onAppend);
 };
 
 export const resetVendorGlobals = function resetVendorGlobals() {

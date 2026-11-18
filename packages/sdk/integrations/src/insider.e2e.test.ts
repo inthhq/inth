@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -125,7 +125,7 @@ describe('Insider loader contract', () => {
 		};
 		const scripts = [insiderTag(options)];
 
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 
 		expect(append).not.toHaveBeenCalled();
@@ -239,7 +239,7 @@ describe('Insider loader contract', () => {
 		loadScripts(scripts, grantedMarketingConsents);
 		const runtime = installSdkModel();
 		runtime.push.mockClear();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(runtime.push.mock.calls).toEqual([
 			[{ type: 'user', value: { gdpr_optin: false } }],
 			[{ type: 'other' }],
@@ -301,7 +301,7 @@ describe('Insider loader contract', () => {
 			}
 		});
 		const scripts = [insiderTag({ ...account, pageType })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 
 		expect(beforeAppend).toEqual([
@@ -326,7 +326,7 @@ describe('Insider loader contract', () => {
 		const runtime = { push };
 		window.InsiderQueue = runtime;
 
-		const result = updateScripts(scripts, deniedConsents);
+		const result = updateScripts(scripts, ALL_DENIED);
 
 		expect(result.unloaded).toEqual(['insider']);
 		expect(getLoader()).toBeNull();
@@ -375,8 +375,8 @@ describe('Insider loader contract', () => {
 			});
 			expect(runtime.pageViews).toEqual(initialViews);
 
-			updateScripts(scripts, deniedConsents);
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
+			updateScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, grantedMeasurementConsents);
 
 			expect(runtime.pageViews).toEqual([
@@ -394,7 +394,7 @@ describe('Insider loader contract', () => {
 		const scripts = [insiderTag({ ...account, pageType: purchasePage })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const stale = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(stale?.isConnected).toBe(false);
 		expect(window.InsiderQueue).toEqual([
 			{ type: 'user', value: { gdpr_optin: true } },
@@ -419,7 +419,7 @@ describe('Insider loader contract', () => {
 		loadScripts(scripts, grantedMarketingConsents);
 		getLoader()?.dispatchEvent(new Event('load'));
 		const runtime = installSdkModel();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(runtime.pageViews).toEqual([
 			{ gdprOptin: true, page: purchasePage },
@@ -433,7 +433,7 @@ describe('Insider loader contract', () => {
 		loadScripts(scripts, grantedMarketingConsents);
 		const stale = getLoader();
 		const queue = window.InsiderQueue;
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(stale?.isConnected).toBe(false);
 		expect(window.InsiderQueue).toBe(queue);
 		const deniedQueue = structuredClone(window.InsiderQueue);
@@ -463,10 +463,10 @@ describe('Insider loader contract', () => {
 	it('does not recreate the queue on a denied fresh page', () => {
 		const scripts = [insiderTag(account)];
 		loadScripts(scripts, grantedMarketingConsents);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		clearAllScripts();
 		delete window.InsiderQueue;
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(window.InsiderQueue).toBeUndefined();
 		expect(getLoader()).toBeNull();
 	});
@@ -476,7 +476,7 @@ describe('Insider loader contract', () => {
 		loadScripts(scripts, grantedMarketingConsents);
 		expect(getLoader()).toBeNull();
 		expect(window.InsiderQueue).toBeUndefined();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).not.toBeNull();
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(getLoader()).toBeNull();

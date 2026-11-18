@@ -1,3 +1,5 @@
+import type { PolicyConsentCategory } from '@inth/sdk/schema/types';
+
 /**
  * High-level product area for a built-in script integration.
  *
@@ -12,19 +14,6 @@ export type IntegrationCategory =
 	| 'tag-manager';
 
 /**
- * Consent bucket that a built-in integration maps to by default.
- *
- * These values mirror inth's consent categories without importing core types, so
- * the registry stays safe to consume from docs and CLI code.
- */
-export type IntegrationConsentCategory =
-	| 'necessary'
-	| 'functionality'
-	| 'experience'
-	| 'measurement'
-	| 'marketing';
-
-/**
  * Consent condition a built-in integration requires by default.
  *
  * Usually a single category. Vendors whose one script serves several purposes
@@ -32,7 +21,7 @@ export type IntegrationConsentCategory =
  * The shape mirrors `HasCondition` from `@inth/sdk/engine`.
  */
 export type IntegrationConsentCondition =
-	| IntegrationConsentCategory
+	| PolicyConsentCategory
 	| { readonly and: readonly IntegrationConsentCondition[] }
 	| { readonly or: readonly IntegrationConsentCondition[] }
 	| { readonly not: IntegrationConsentCondition };
