@@ -744,8 +744,22 @@ describe('mountConsentUI', () => {
 		expect(link.textContent).toBe('Privacy Policy');
 	});
 
-	it('shows the trigger once nothing else is open', async () => {
+	it('shows the trigger beside the banner, and hides it over the dialog', async () => {
 		const { root, client } = await mount({ trigger: true });
+
+		const trigger = query(root, 'consent-dialog-trigger');
+		expect(client.getSnapshot().activeUI).toBe('banner');
+		expect(trigger.hidden).toBe(false);
+
+		trigger.click();
+		expect(client.getSnapshot().activeUI).toBe('dialog');
+		expect(trigger.hidden).toBe(true);
+	});
+
+	it('waits for the answer with after-consent', async () => {
+		const { root, client } = await mount({
+			trigger: { showWhen: 'after-consent' },
+		});
 
 		const trigger = query(root, 'consent-dialog-trigger');
 		expect(trigger.hidden).toBe(true);
@@ -753,8 +767,28 @@ describe('mountConsentUI', () => {
 		await client.acceptAll();
 
 		expect(trigger.hidden).toBe(false);
-		trigger.click();
-		expect(client.getSnapshot().activeUI).toBe('dialog');
+	});
+
+	it('hides the trigger under a policy that leaves nothing to manage', async () => {
+		const { root } = await mount({ trigger: true }, { policy: ['worldNone'] });
+
+		expect(query(root, 'consent-dialog-trigger').hidden).toBe(true);
+	});
+
+	it('names the trigger from the trigger translations', async () => {
+		const { root } = await mount(
+			{ trigger: true },
+			{
+				i18n: {
+					locale: 'en',
+					messages: { en: { trigger: { label: 'Cookie settings' } } },
+				},
+			}
+		);
+
+		expect(
+			query(root, 'consent-dialog-trigger').getAttribute('aria-label')
+		).toBe('Cookie settings');
 	});
 
 	it('renders into the light DOM with a stylesheet owned by the mount', async () => {

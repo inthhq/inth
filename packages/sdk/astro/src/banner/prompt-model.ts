@@ -10,7 +10,10 @@
 
 import {
 	defaultTranslationConfig,
+	resolveActionLabels,
 	resolveConsentPresentation,
+	resolvePreferenceControlLabels,
+	resolvePromptCopy,
 } from '@inth/sdk/engine';
 import type {
 	ConsentPresentation,
@@ -160,83 +163,50 @@ export const joinClasses = function joinClasses(
 type TranslationBundle = Partial<Translations>;
 
 /**
- * Button and rights labels, props first, then the bundle, then English.
+ * Button and rights labels: props first, then core's copy order.
  *
  * @param bundle - The snapshot's translations.
- * @param fallback - The English translations.
  * @param props - The component props.
  * @returns Labels keyed by action and by right.
  */
 const resolveLabels = function resolveLabels(
-	bundle: TranslationBundle,
-	fallback: TranslationBundle,
+	bundle: TranslationBundle | undefined,
 	props: PromptProps
 ): { actions: Record<string, string>; rights: Record<string, string> } {
+	const actions = resolveActionLabels(bundle);
 	return {
 		actions: {
-			accept: firstOf(
-				props.acceptButtonText,
-				bundle.common?.acceptAll,
-				fallback.common?.acceptAll
-			),
-			customize: firstOf(
-				props.customizeButtonText,
-				bundle.common?.customize,
-				fallback.common?.customize
-			),
-			// Acknowledgement leaves category choices and permissions unchanged.
-			dismiss: firstOf(
-				props.dismissButtonText,
-				bundle.common?.acknowledge,
-				bundle.common?.dismiss,
-				fallback.common?.acknowledge
-			),
-			reject: firstOf(
-				props.rejectButtonText,
-				bundle.common?.rejectAll,
-				fallback.common?.rejectAll
-			),
+			...actions,
+			accept: props.acceptButtonText ?? actions.accept,
+			customize: props.customizeButtonText ?? actions.customize,
+			dismiss: props.dismissButtonText ?? actions.dismiss,
+			reject: props.rejectButtonText ?? actions.reject,
 		},
-		rights: {
-			'opt-out': firstOf(bundle.rights?.optOut, fallback.rights?.optOut),
-			preferences: firstOf(
-				bundle.rights?.preferences,
-				fallback.rights?.preferences
-			),
-		},
+		rights: resolvePreferenceControlLabels(bundle),
 	};
 };
 
 /**
- * Heading and body copy. A notice prompt explains and points at the
- * opt-out; it never asks, so it has copy of its own.
+ * Heading and body copy: props first, then core's copy order. A notice
+ * prompt explains and points at the opt-out, so it has copy of its own.
  *
  * @param bundle - The snapshot's translations.
  * @param fallback - The English translations.
  * @param props - The component props.
- * @param notice - Whether the policy prompts with a notice.
+ * @param snapshot - The snapshot, for its policy prompt.
  * @returns The banner copy.
  */
 const resolveCopy = function resolveCopy(
-	bundle: TranslationBundle,
+	bundle: TranslationBundle | undefined,
 	fallback: TranslationBundle,
 	props: PromptProps,
-	notice: boolean
+	snapshot: ConsentSnapshot
 ): PromptModel['copy'] {
-	const banner = bundle.cookieBanner;
-	const english = fallback.cookieBanner;
+	const copy = resolvePromptCopy(bundle, snapshot.policyRule.prompt);
 	return {
-		description: notice
-			? firstOf(
-					props.description,
-					banner?.noticeDescription,
-					english?.noticeDescription
-				)
-			: firstOf(props.description, banner?.description, english?.description),
-		securedBy: firstOf(bundle.common?.securedBy, fallback.common?.securedBy),
-		title: notice
-			? firstOf(props.title, banner?.noticeTitle, english?.noticeTitle)
-			: firstOf(props.title, banner?.title, english?.title),
+		description: props.description ?? copy.description,
+		securedBy: firstOf(bundle?.common?.securedBy, fallback.common?.securedBy),
+		title: props.title ?? copy.title,
 	};
 };
 
@@ -368,9 +338,10 @@ export const resolvePromptModel = function resolvePromptModel(
 	const { snapshot, props } = input;
 	const fallback = defaultTranslationConfig.translations
 		.en as TranslationBundle;
-	const bundle = (snapshot.translations?.translations ??
-		fallback) as TranslationBundle;
-	const labels = resolveLabels(bundle, fallback, props);
+	const bundle = snapshot.translations?.translations as
+		| TranslationBundle
+		| undefined;
+	const labels = resolveLabels(bundle, props);
 	const textDirection = getTextDirection(snapshot.translations?.language);
 
 	// Same policy-driven action resolution the Svelte and React banners use,
@@ -438,12 +409,7 @@ export const resolvePromptModel = function resolvePromptModel(
 		),
 		blocking,
 		...classesAndStyles,
-		copy: resolveCopy(
-			bundle,
-			fallback,
-			props,
-			snapshot.policyRule.prompt === 'notice'
-		),
+		copy: resolveCopy(bundle, fallback, props, snapshot),
 		direction,
 		language: snapshot.translations?.language,
 		legalLinks: (props.legalLinks ?? [])
@@ -455,7 +421,7 @@ export const resolvePromptModel = function resolvePromptModel(
 				// for its type, as the React, Vue and Svelte banners do.
 				label: firstOf(
 					input.legalLinks?.[key]?.label,
-					bundle.legalLinks?.[key],
+					bundle?.legalLinks?.[key],
 					fallback.legalLinks?.[key],
 					key
 				),

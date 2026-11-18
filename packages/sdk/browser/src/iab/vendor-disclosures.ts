@@ -3,61 +3,43 @@ import type {
 	GlobalVendorList,
 	NonIABVendor,
 } from '@inth/sdk-core';
+import {
+	formatVendorMaxAge,
+	mapCustomVendor,
+	mapGvlVendor,
+} from '@inth/sdk-iab/headless';
+import type { HeadlessIABProcessedVendor } from '@inth/sdk-iab/headless';
 
 import type { SurfaceCopy } from '../ui/copy';
 import { h } from '../ui/dom';
 
-type GVLVendor = GlobalVendorList['vendors'][number] & {
-	dataDeclaration?: number[];
-};
-type Vendor = GVLVendor | NonIABVendor;
+type Vendor = GlobalVendorList['vendors'][number] | NonIABVendor;
 type NamedItems = Record<number, { name: string; description?: string }>;
-
-/** The GVL sends a vendor's data category ids as `dataDeclaration`. */
-const dataCategoryIds = (vendor: Vendor): number[] =>
-	('dataDeclaration' in vendor ? vendor.dataDeclaration : undefined) ??
-	vendor.dataCategories ??
-	[];
 
 const duration = (value: number | null | undefined): number | undefined =>
 	typeof value === 'number' && Number.isFinite(value) && value >= 0
 		? value
 		: undefined;
 
-const safeUrl = (value: string | undefined): string | undefined => {
-	if (!value) {
-		return undefined;
-	}
-	try {
-		const url = new URL(value);
-		return url.protocol === 'https:' || url.protocol === 'http:'
-			? url.href
-			: undefined;
-	} catch {
-		return undefined;
-	}
-};
-
 const createStorageDisclosures = (
-	vendor: Vendor,
+	row: HeadlessIABProcessedVendor,
 	copy: SurfaceCopy,
 	standardRetention: number | undefined
 ): DocumentFragment => {
 	const content = document.createDocumentFragment();
 	const t = copy.t.iab.preferenceCenter.vendorList;
-	if (vendor.usesCookies) {
+	if (row.usesCookies) {
 		content.append(h('p', {}, t.usesCookies));
 	}
-	const seconds = duration(vendor.cookieMaxAgeSeconds);
-	if (seconds !== undefined) {
-		const age = t.maxAge.replace('{days}', String(Math.ceil(seconds / 86400)));
-		const refreshes =
-			'cookieRefresh' in vendor && vendor.cookieRefresh
-				? t.maxAgeRefreshes
-				: undefined;
-		content.append(h('p', {}, refreshes ? `${age} ${refreshes}` : age));
+	const maxAge = formatVendorMaxAge(
+		row.cookieMaxAgeSeconds,
+		row.cookieRefresh,
+		t
+	);
+	if (maxAge) {
+		content.append(h('p', {}, maxAge));
 	}
-	if (vendor.usesNonCookieAccess) {
+	if (row.usesNonCookieAccess) {
 		content.append(h('p', {}, t.nonCookieAccess));
 	}
 	if (standardRetention !== undefined) {
@@ -69,55 +51,25 @@ const createStorageDisclosures = (
 };
 
 const createPolicyLinks = (
-	vendor: Vendor,
+	row: HeadlessIABProcessedVendor,
 	copy: SurfaceCopy
 ): DocumentFragment => {
 	const content = document.createDocumentFragment();
 	const t = copy.t.iab.preferenceCenter.vendorList;
-	const appendLink = (href: string | undefined, label: string): void => {
-		const safe = safeUrl(href);
-		if (safe) {
+	const appendLink = (href: string | null | undefined, label: string): void => {
+		if (href) {
 			content.append(
 				h(
 					'p',
 					{},
-					h(
-						'a',
-						{ href: safe, rel: 'noopener noreferrer', target: '_blank' },
-						label
-					)
+					h('a', { href, rel: 'noopener noreferrer', target: '_blank' }, label)
 				)
 			);
 		}
 	};
-	if ('privacyPolicyUrl' in vendor) {
-		appendLink(vendor.privacyPolicyUrl, t.privacyPolicy);
-	} else {
-		const language = (copy.language ?? 'en').toLowerCase();
-		const [languageBase] = language.split('-');
-		const urls = [...(vendor.urls ?? [])].sort((left, right) => {
-			const rank = (lang: string): number => {
-				if (lang.toLowerCase() === language) {
-					return 0;
-				}
-				if (lang.toLowerCase() === languageBase) {
-					return 1;
-				}
-				return lang.toLowerCase() === 'en' ? 2 : 3;
-			};
-			return rank(left.langId) - rank(right.langId);
-		});
-		appendLink(
-			urls.map((url) => safeUrl(url.privacy)).find(Boolean),
-			t.privacyPolicy
-		);
-		appendLink(
-			urls.map((url) => safeUrl(url.legIntClaim)).find(Boolean),
-			t.legitimateInterest
-		);
-		appendLink(vendor.deviceStorageDisclosureUrl, t.storageDisclosure);
-	}
-
+	appendLink(row.policyUrl, t.privacyPolicy);
+	appendLink(row.legitimateInterestUrl, t.legitimateInterest);
+	appendLink(row.deviceStorageDisclosureUrl, t.storageDisclosure);
 	return content;
 };
 
@@ -129,10 +81,10 @@ const createPolicyLinks = (
 const appendFeaturesStandardText = (
 	content: DocumentFragment,
 	snapshot: ConsentSnapshot,
-	vendor: Vendor,
+	row: HeadlessIABProcessedVendor,
 	copy: SurfaceCopy
 ): void => {
-	if (!vendor.features?.length) {
+	if (!row.features.length) {
 		return;
 	}
 	content.append(
@@ -163,14 +115,15 @@ export const createVendorDisclosures = (
 	const content = document.createDocumentFragment();
 	const t = copy.t.iab.preferenceCenter.vendorList;
 	const gvl = snapshot.iab?.gvl;
+	const custom = 'privacyPolicyUrl' in vendor;
+	const row = custom
+		? mapCustomVendor(vendor)
+		: mapGvlVendor(vendor.id, vendor, copy.language);
 	const standardRetention = duration(
-		'privacyPolicyUrl' in vendor
-			? vendor.dataRetentionDays
-			: vendor.dataRetention?.stdRetention
+		custom ? vendor.dataRetentionDays : row.dataRetention?.stdRetention
 	);
-	const retention =
-		'dataRetention' in vendor ? vendor.dataRetention : undefined;
-	content.append(createPolicyLinks(vendor, copy));
+	const retention = row.dataRetention;
+	content.append(createPolicyLinks(row, copy));
 
 	const appendGroup = (
 		title: string,
@@ -212,33 +165,29 @@ export const createVendorDisclosures = (
 	};
 	appendGroup(
 		t.purposes,
-		vendor.purposes,
+		row.purposes,
 		gvl?.purposes,
 		retention?.purposes,
 		standardRetention
 	);
 	appendGroup(
 		t.legitimateInterest,
-		vendor.legIntPurposes ?? [],
+		row.legIntPurposes,
 		gvl?.purposes,
 		retention?.purposes,
 		standardRetention
 	);
 	appendGroup(
 		t.specialPurposes,
-		'specialPurposes' in vendor ? vendor.specialPurposes : [],
+		row.specialPurposes,
 		gvl?.specialPurposes,
 		retention?.specialPurposes,
 		standardRetention
 	);
-	appendGroup(t.features, vendor.features ?? [], gvl?.features);
-	appendFeaturesStandardText(content, snapshot, vendor, copy);
-	appendGroup(
-		t.specialFeatures,
-		vendor.specialFeatures ?? [],
-		gvl?.specialFeatures
-	);
-	appendGroup(t.dataCategories, dataCategoryIds(vendor), gvl?.dataCategories);
-	content.append(createStorageDisclosures(vendor, copy, standardRetention));
+	appendGroup(t.features, row.features, gvl?.features);
+	appendFeaturesStandardText(content, snapshot, row, copy);
+	appendGroup(t.specialFeatures, row.specialFeatures, gvl?.specialFeatures);
+	appendGroup(t.dataCategories, row.dataDeclaration ?? [], gvl?.dataCategories);
+	content.append(createStorageDisclosures(row, copy, standardRetention));
 	return content;
 };

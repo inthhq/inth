@@ -1,6 +1,7 @@
 import {
 	consentTypes,
 	deniedVendorIds,
+	resolveCategoryTitle,
 	vendorsListedUnder,
 } from '@inth/sdk-core';
 import type {
@@ -14,7 +15,7 @@ import type { CompleteTranslations } from '@inth/sdk-translations';
 import { classes } from '../generated/styles';
 import { renderActionFooter, resolveActions } from './actions';
 import { renderBranding } from './branding';
-import { formatCategoryName, resolveCopy } from './copy';
+import { resolveCopy } from './copy';
 import { cx, h, svg } from './dom';
 import type { SurfaceContext } from './surface';
 import { createVendorList } from './vendor-list';
@@ -67,7 +68,7 @@ const resolveRowCopy = function resolveRowCopy(
 		description: t.consentTypes[name]?.description ?? type?.description ?? '',
 		disabled: type?.disabled ?? false,
 		name,
-		title: t.consentTypes[name]?.title ?? formatCategoryName(name),
+		title: resolveCategoryTitle(t, name),
 	};
 };
 
@@ -373,15 +374,8 @@ export const createWidget = function createWidget(
 
 	const buildFooter = function buildFooter(
 		snapshot: ConsentSnapshot,
-		t: CompleteTranslations
+		labels: Record<PresentationAction, string>
 	): HTMLElement {
-		const labels: Record<PresentationAction, string> = {
-			accept: t.common.acceptAll,
-			customize: t.common.customize,
-			dismiss: t.common.acknowledge,
-			reject: t.common.rejectAll,
-			save: t.common.save,
-		};
 		const testIds: Record<PresentationAction, string> = {
 			accept: 'consent-widget-footer-accept-all-button',
 			customize: 'consent-widget-footer-customize-button',
@@ -422,7 +416,7 @@ export const createWidget = function createWidget(
 	};
 
 	const rebuild = function rebuild(snapshot: ConsentSnapshot): void {
-		const { t, dir } = resolveCopy(snapshot);
+		const { t, dir, actions } = resolveCopy(snapshot);
 		const categories = draft.getState().displayedCategories;
 		element.replaceChildren();
 		element.setAttribute('dir', dir);
@@ -456,7 +450,7 @@ export const createWidget = function createWidget(
 		for (const row of rows) {
 			list.append(row.item);
 		}
-		element.append(review, list, buildFooter(snapshot, t));
+		element.append(review, list, buildFooter(snapshot, actions));
 		patchAll();
 		const branding = slot(
 			renderBranding({
