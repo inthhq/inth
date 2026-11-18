@@ -103,7 +103,6 @@ import {
 } from './consent-route';
 import type { ConsentRouteFetchGvl } from './consent-route';
 import { fetchServerGvl } from './gvl-cache';
-import { IN_PROCESS_ORIGIN, toPathFetch } from './in-process';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,

@@ -94,7 +94,6 @@ import type {
 	ConsentProxyOptions,
 } from './consent-proxy';
 import { fetchServerGvl } from './gvl-cache';
-import { IN_PROCESS_ORIGIN, toPathFetch } from './in-process';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
