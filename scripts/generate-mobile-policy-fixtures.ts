@@ -26,7 +26,6 @@ const FIXTURE_DIR = 'packages/native-protocol/bundled-policy';
 
 const now = Date.parse('2026-10-29T00:00:00Z');
 const endpoint = 'https://mobile-fixture.example.test';
-/** The fixture files by name, as the generator writes them. */
 export const mobilePolicyFixtures =
 	async function mobilePolicyFixtures(): Promise<Record<string, string>> {
 		const fallback = {

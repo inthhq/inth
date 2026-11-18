@@ -264,7 +264,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 				'the site is plain HTML, a CMS, a page builder or a static site generator, a bundled app without a UI framework, or code that uses the headless engine and `createConsentRuntime`',
 		},
 		summary:
-			'inth for plain HTML sites from one script tag, and for bundled JavaScript apps with the stock UI: data attributes, the window.inth API, customization, script and iframe gating, IAB and integrations.',
+			'Inth for plain HTML sites from one script tag, and for bundled JavaScript apps with the stock UI: data attributes, the window.inth API, customization, script and iframe gating, IAB and integrations.',
 	},
 ];
 

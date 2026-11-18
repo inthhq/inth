@@ -116,7 +116,7 @@ const verifyIosDeploymentTargets = function verifyIosDeploymentTargets(
 		!properties['ios.deploymentTarget']
 	) {
 		throw new Error(
-			`${id}: generated iOS target is below inth's 16.4 minimum.`
+			`${id}: generated iOS target is below Inth's 16.4 minimum.`
 		);
 	}
 	const appTargets: unknown = JSON.parse(

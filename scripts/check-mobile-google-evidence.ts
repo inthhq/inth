@@ -1045,8 +1045,6 @@ export const runEvidenceCLI = async function runEvidenceCLI(
 };
 
 /**
- * Read all of stdin as text.
- *
  * Opening `/dev/stdin` fails with ENXIO on Linux when stdin is a socket, which
  * is what Node's `spawnSync({ input })` provides. Reading the stream works for
  * pipes, sockets and files alike.

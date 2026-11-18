@@ -12,7 +12,7 @@ const INTH_UI_STYLESHEET = 'packages/sdk/ui/dist/styles.css';
  *
  * - Tailwind 4: Inth rules live in `@layer components`; bare utilities
  *   (`bg-blue-600`) are layered after them and win without !important.
- *   `components` stays above preflight's `base` even when inth's stylesheet
+ *   `components` stays above preflight's `base` even when Inth's stylesheet
  *   loads before Tailwind's.
  * - Tailwind 3: no cascade layers exist (tw3 unwraps `@layer components`
  *   into plain rules), so Inth base selectors win over bare utilities by
@@ -97,7 +97,7 @@ const waitForServer = async function waitForServer(url, timeoutMs = 20_000) {
 				return;
 			}
 		} catch {
-			// The optional generated file may not exist.
+			// The server is not listening yet.
 		}
 
 		// oxlint-disable-next-line no-await-in-loop -- Preserve sequential execution and callback compatibility.
@@ -248,7 +248,7 @@ const verifyBanner = async function verifyBanner(page, app) {
 /**
  * Loads `@inth/sdk/ui/styles.css` as its own stylesheet at the top of `<head>`,
  * ahead of the app's Tailwind 4 CSS, the way Astro's `page-ssr` injection
- * orders them. Cascade layers rank by first mention, so unless inth's sheet
+ * orders them. Cascade layers rank by first mention, so unless Inth's sheet
  * declares Tailwind's full layer order, `components` ranks below `base` and
  * preflight zeroes the banner's padding and borders.
  */
@@ -285,7 +285,7 @@ const verifyBannerLoadedBeforeTailwind =
 			);
 			if (!firstStylesheet.endsWith(stylesheetPath)) {
 				throw new Error(
-					`${app.label} inth-first: expected inth's stylesheet to load first, received ${firstStylesheet}`
+					`${app.label} inth-first: expected Inth's stylesheet to load first, received ${firstStylesheet}`
 				);
 			}
 
