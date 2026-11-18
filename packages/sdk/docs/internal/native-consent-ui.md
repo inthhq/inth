@@ -17,7 +17,7 @@ the current policy contract when native contract and version headers are present
 verified live hosted receipts. No credential or substitute customer binding is included.
 
 The apps live in `examples/native/consent-demo`. The iOS app also accepts build
-settings `INTH_PROJECT_URL` and `INTH_PRIVACY_POLICY_URL`. Android currently takes
+settings `C15T_BACKEND_URL` and `C15T_PRIVACY_POLICY_URL`. Android currently takes
 both URLs through its connection screen. These public configuration values do
 not replace backend policy authoring.
 
@@ -309,14 +309,14 @@ components only styles the fake-core demo surfaces and does not reach the native
 screens.
 
 The demo apps carry a sample brand, `PantryBrand`, behind the debug fixture
-switch `INTH_FIXTURE_THEME=brand` (an iOS launch environment value, an Android
+switch `C15T_FIXTURE_THEME=brand` (an iOS launch environment value, an Android
 intent extra). It changes the accent, decision fill, radius, headline face, mark
 and copy, and the UI tests check that Accept and Reject stay the same size under
 it.
 
 ## Deterministic app tests
 
-Only debug builds accept `INTH_FIXTURE_SCENARIO`. iOS uses a launch environment
+Only debug builds accept `C15T_FIXTURE_SCENARIO`. iOS uses a launch environment
 value; Android uses an intent extra. The current scenarios are
 `fresh-online`, `fresh-online-iab`, `fresh-online-notice`, `fresh-offline-none`
 and `gpc-on`. The in-process fixture supplies `/init` protocol responses to the real
@@ -325,15 +325,15 @@ native core. It deliberately refuses save delivery and writes the latest
 request body to `last-save.json`. This is a controlled protocol peer, not proof
 of a successful hosted receipt.
 
-`INTH_FIXTURE_THEME=brand` applies the sample brand theme described under Appearance.
-`INTH_FIXTURE_IDENTITY=generic` points the app mark at a missing asset to show the drawn
-initial tile; `INTH_FIXTURE_IDENTITY=hidden` starts the page at the headline.
-`INTH_FIXTURE_RESET=1` clears only the selected scenario's test storage.
-`INTH_FIXTURE_OFFLINE=1` fails init while retaining that storage.
-`INTH_FIXTURE_FAIL_NEXT_WRITE=1` arms a durable decision-write refusal after initial
+`C15T_FIXTURE_THEME=brand` applies the sample brand theme described under Appearance.
+`C15T_FIXTURE_IDENTITY=generic` points the app mark at a missing asset to show the drawn
+initial tile; `C15T_FIXTURE_IDENTITY=hidden` starts the page at the headline.
+`C15T_FIXTURE_RESET=1` clears only the selected scenario's test storage.
+`C15T_FIXTURE_OFFLINE=1` fails init while retaining that storage.
+`C15T_FIXTURE_FAIL_NEXT_WRITE=1` arms a durable decision-write refusal after initial
 hydration. On Apple platforms, policy-only startup refreshes do not consume
 this test fault. Android uses Boolean extras for these switches. iOS debug fixtures also accept
-`INTH_FIXTURE_APPEARANCE=dark` for reproducible native theme captures. Normal app launches
+`C15T_FIXTURE_APPEARANCE=dark` for reproducible native theme captures. Normal app launches
 do not select fixtures or reset state.
 
 XCUITest lives in `ios/UITests/consent-journey-tests.swift`. Run it with the
@@ -352,7 +352,7 @@ For the HTTP receipt journey, start the reviewed
 on free loopback port 3000. Use a fresh backend per platform. Android also needs
 `adb -s <owned-serial> reverse tcp:3000 tcp:3000`. The dedicated iOS
 `ProtocolReceiptTests` and Android `realControlsDeliverNativeReceipts` test select
-`INTH_FIXTURE_BACKEND=http://localhost:3000/api/self-host` explicitly. This override
+`C15T_FIXTURE_BACKEND=http://localhost:3000/api/self-host` explicitly. This override
 is accepted only in debug fixture builds and only for exact loopback hosts. Each
 host declares the four optional categories before loading the permissive policy.
 The tests tap the real Reject all control and compare the core's recorded category
@@ -441,8 +441,8 @@ resumes and one final event afterward. The journey also checks repeated requests
 obsolete close, backgrounding, Android recreation, notice pass-through and durable
 notice acknowledgement. The runner preserves XCTest/JUnit
 reports, recordings, screenshots and backend/native observations, including
-failed runs. Set `INTH_APP_E2E_PORT` to a free host port and
-`INTH_APP_E2E_OUT` to a new evidence directory. Android reverses device port
+failed runs. Set `C15T_APP_E2E_PORT` to a free host port and
+`C15T_APP_E2E_OUT` to a new evidence directory. Android reverses device port
 3000 only on the device the runner creates. This proves controlled local
 protocol delivery, not hosted receipt acceptance.
 

@@ -7,7 +7,7 @@ packages:
     path: ../../../../packages/swift
   # Real vendor SDKs for the vendor journey (run-vendor-e2e.sh). The demo app links
   # them; the Inth Swift packages never do. They stay idle unless a Debug launch
-  # passes INTH_VENDOR_BASE. Pinned exactly so a vendor release cannot change the proof.
+  # passes C15T_VENDOR_BASE. Pinned exactly so a vendor release cannot change the proof.
   PostHog:
     url: https://github.com/PostHog/posthog-ios
     exactVersion: 3.93.1
@@ -71,8 +71,8 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: Consent demo
-        INFOPLIST_KEY_InthBackendURL: $(INTH_PROJECT_URL)
-        INFOPLIST_KEY_InthPrivacyPolicyURL: $(INTH_PRIVACY_POLICY_URL)
+        INFOPLIST_KEY_InthBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_InthPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
   InthUIKitDemo:
     type: application
     platform: iOS
@@ -122,8 +122,8 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: Consent UIKit demo
-        INFOPLIST_KEY_InthBackendURL: $(INTH_PROJECT_URL)
-        INFOPLIST_KEY_InthPrivacyPolicyURL: $(INTH_PRIVACY_POLICY_URL)
+        INFOPLIST_KEY_InthBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_InthPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
   InthUIKitDemoUITests:
     type: bundle.ui-testing
     platform: iOS

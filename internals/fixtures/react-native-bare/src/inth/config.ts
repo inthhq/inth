@@ -1,7 +1,7 @@
 /**
  * Build-time configuration for the fixture.
  *
- * Each `process.env.INTH_*` read below has to stay a literal property access:
+ * Each `process.env.C15T_*` read below has to stay a literal property access:
  * the plugin in `babel.config.js` rewrites exactly that shape, and a computed
  * `process.env[name]` would survive into the bundle and read an empty object on
  * device. `.env` is loaded by the same plugin before Metro transforms anything.
@@ -46,7 +46,7 @@ export interface FixtureConfig {
 const EXAMPLE_INTH_BACKEND = 'https://example-inth.inth.app/';
 
 export const config: FixtureConfig = {
-	forceFakeNative: readFlag(process.env.INTH_FAKE_NATIVE) ?? false,
-	projectUrl: text(process.env.INTH_PROJECT_URL, EXAMPLE_INTH_BACKEND),
-	sampleIntervalMs: asNumber(process.env.INTH_SAMPLE_INTERVAL_MS, 1000),
+	forceFakeNative: readFlag(process.env.C15T_FAKE_NATIVE) ?? false,
+	projectUrl: text(process.env.C15T_BACKEND_URL, EXAMPLE_INTH_BACKEND),
+	sampleIntervalMs: asNumber(process.env.C15T_SAMPLE_INTERVAL_MS, 1000),
 };

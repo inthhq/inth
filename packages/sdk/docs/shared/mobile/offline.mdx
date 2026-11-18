@@ -170,7 +170,7 @@ Prebuild runs `c15t mobile-manifest` and embeds the result in both native
 projects. Prebuild cannot see which variant comes next, so it treats every
 build as release except `expo run:*` with no variant or configuration, or with
 one whose name contains `debug`. `expo run:ios --configuration Production`
-is release. Set `INTH_MANIFEST_BUILD=debug` to say otherwise. When a
+is release. Set `C15T_MANIFEST_BUILD=debug` to say otherwise. When a
 debug prebuild cannot reach the backend, it also removes a manifest an earlier
 prebuild embedded, unless `allowStaleManifest` is on. Top-level `vendors` also
 narrows the GVL in the bundled manifest.

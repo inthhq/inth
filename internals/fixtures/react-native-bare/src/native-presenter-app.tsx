@@ -20,15 +20,15 @@ import { useE2eVendorProbe } from './vendors/e2e-vendor-probe';
 const privacyPolicyUrl = 'https://c15t.com/privacy';
 const outcomes: ConsentPresenterOutcome[] = [];
 const presentations: ConsentPresenterSession[] = [];
-const endpoint = process.env.INTH_E2E_URL || 'http://localhost:3000';
+const endpoint = process.env.C15T_E2E_URL || 'http://localhost:3000';
 const vendorProbeSettings = {
-	enabled: process.env.INTH_APP_E2E === '1',
+	enabled: process.env.C15T_APP_E2E === '1',
 	endpoint,
 	// Android sets the emulator's host alias; Mixpanel refuses loopback hosts there.
-	mixpanelEndpoint: process.env.INTH_E2E_MIXPANEL_URL || endpoint,
+	mixpanelEndpoint: process.env.C15T_E2E_MIXPANEL_URL || endpoint,
 };
 
-if (process.env.INTH_APP_E2E === '1') {
+if (process.env.C15T_APP_E2E === '1') {
 	// Activity recreation remounts the React root. Observe the whole JS runtime.
 	onConsentPresenterOutcome((outcome) => outcomes.push(outcome));
 }
@@ -42,7 +42,7 @@ const requestPresentation = async (
 			? presentPreferences(privacyPolicyUrl)
 			: presentConsentPrompt(privacyPolicyUrl));
 		presentations.push(presentation);
-		if (process.env.INTH_APP_E2E === '1') {
+		if (process.env.C15T_APP_E2E === '1') {
 			await fetch(`${endpoint}/e2e/js-block`, {
 				body: JSON.stringify({ presentations }),
 				method: 'POST',
@@ -96,7 +96,7 @@ export const NativePresenterApp = () => {
 		// pauses JavaScript timers, and the probe shows what an app that tracks at
 		// launch sends before any decision.
 		if (
-			process.env.INTH_APP_E2E_SCENARIO === 'adapter' ||
+			process.env.C15T_APP_E2E_SCENARIO === 'adapter' ||
 			!vendors.startupSettled ||
 			status.policyPending ||
 			status.promptRequirement.kind === 'none'
@@ -156,7 +156,7 @@ export const NativePresenterApp = () => {
 		});
 	};
 	useEffect(() => {
-		if (process.env.INTH_APP_E2E !== '1') {
+		if (process.env.C15T_APP_E2E !== '1') {
 			return;
 		}
 		const timer = setInterval(() => {
@@ -182,7 +182,7 @@ export const NativePresenterApp = () => {
 					void requestPresentation(false, setError);
 				}}
 			/>
-			{process.env.INTH_APP_E2E === '1' ? (
+			{process.env.C15T_APP_E2E === '1' ? (
 				<View style={{ gap: 16 }}>
 					<Button
 						testID="fixture.vendor-probe"

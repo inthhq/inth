@@ -5,7 +5,7 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "${APP_DIR}/../../.." && pwd)"
 PLATFORM="${1:?Usage: app-e2e.sh ios|android}"
 RUN_ID="$(date +%Y%m%d-%H%M%S)-$$"
-OUT="${INTH_APP_E2E_OUT:-${APP_DIR}/.artifacts/app-e2e/${PLATFORM}-${RUN_ID}}"
+OUT="${C15T_APP_E2E_OUT:-${APP_DIR}/.artifacts/app-e2e/${PLATFORM}-${RUN_ID}}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 [[ ! -e "${OUT}/backend-ready" && ! -e "${OUT}/result.json" ]] || { echo "Use a fresh evidence directory: ${OUT}" >&2; exit 2; }
@@ -13,11 +13,11 @@ OUT="$(cd "${OUT}" && pwd)"
 TASK_TMP="$(mktemp -d /tmp/inth-app-e2e.XXXXXX)"
 export TMPDIR="${TASK_TMP}/"
 printf '%s\n' "${TASK_TMP}" > "${OUT}/temporary-directory.txt"
-export INTH_APP_E2E=1 INTH_FAKE_NATIVE=0
-export INTH_APP_E2E_SCENARIO="${INTH_APP_E2E_SCENARIO:-category}"
-printf '%s\n' "${INTH_APP_E2E_SCENARIO}" > "${OUT}/scenario.txt"
-BACKEND_PORT="${INTH_APP_E2E_PORT:-39873}"
-export INTH_E2E_URL="http://localhost:${BACKEND_PORT}"
+export C15T_APP_E2E=1 C15T_FAKE_NATIVE=0
+export C15T_APP_E2E_SCENARIO="${C15T_APP_E2E_SCENARIO:-category}"
+printf '%s\n' "${C15T_APP_E2E_SCENARIO}" > "${OUT}/scenario.txt"
+BACKEND_PORT="${C15T_APP_E2E_PORT:-39873}"
+export C15T_E2E_URL="http://localhost:${BACKEND_PORT}"
 BACKEND_PID=""; VIDEO_PID=""; LOG_PID=""; FIREBASE_LOG_PID=""; DEVICE=""; EMULATOR_PID=""; AVD_NAME=""
 
 cleanup() {
@@ -82,7 +82,7 @@ PYVIDEO
     [[ -z "${AVD_NAME}" ]] || "${AVDMANAGER}" delete avd --name "${AVD_NAME}"
   fi
   [[ -z "${BACKEND_PID}" ]] || { kill "${BACKEND_PID}"; wait "${BACKEND_PID}"; }
-  if [[ "${result}" == 0 && "${INTH_APP_E2E_SCENARIO}" == expiry ]]; then
+  if [[ "${result}" == 0 && "${C15T_APP_E2E_SCENARIO}" == expiry ]]; then
     python3 "${APP_DIR}/scripts/verify-expiry.py" "${OUT}" > "${OUT}/expiry-verification.log" 2>&1 || result=1
   fi
   # The journey records each vendor step; Firebase is checked against its own log.
@@ -97,7 +97,7 @@ PYVIDEO
 trap cleanup EXIT
 
 # Binding fails on an occupied test port. Never reuse an unknown backend.
-python3 "${APP_DIR}/scripts/e2e-backend.py" --out "${OUT}" --port "${BACKEND_PORT}" --scenario "${INTH_APP_E2E_SCENARIO:-category}" > "${OUT}/backend.log" 2>&1 &
+python3 "${APP_DIR}/scripts/e2e-backend.py" --out "${OUT}" --port "${BACKEND_PORT}" --scenario "${C15T_APP_E2E_SCENARIO:-category}" > "${OUT}/backend.log" 2>&1 &
 BACKEND_PID=$!
 for attempt in {1..40}; do
   kill -0 "${BACKEND_PID}" || { cat "${OUT}/backend.log"; exit 1; }
@@ -114,13 +114,13 @@ git diff --binary > "${OUT}/source.patch"
 bun --version > "${OUT}/bun-version.txt"
 bun turbo run build --filter=@inth/react-native --filter=@inth/sdk-schema > "${OUT}/dependencies.log" 2>&1
 
-[[ "${PLATFORM}" != android ]] || export INTH_E2E_URL=http://localhost:3000
+[[ "${PLATFORM}" != android ]] || export C15T_E2E_URL=http://localhost:3000
 mkdir -p "${OUT}/policy-assets"
-INTH_E2E_BINDING="${INTH_E2E_URL}" INTH_E2E_FETCH="http://localhost:${BACKEND_PORT}" bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/inth-policy.json"
+C15T_E2E_BINDING="${C15T_E2E_URL}" C15T_E2E_FETCH="http://localhost:${BACKEND_PORT}" bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/inth-policy.json"
 if [[ "${PLATFORM}" == ios ]]; then
   bun run --cwd "${APP_DIR}" pod-install > "${OUT}/pods.log" 2>&1
-  RUNTIME="${INTH_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; print(next(r["identifier"] for r in json.load(sys.stdin)["runtimes"] if r["isAvailable"] and r["name"].startswith("iOS")))')}"
-  DEVICE="$(xcrun simctl create "inth-app-e2e-${RUN_ID}" "${INTH_IOS_DEVICE:-iPhone 17 Pro}" "${RUNTIME}")"
+  RUNTIME="${C15T_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; print(next(r["identifier"] for r in json.load(sys.stdin)["runtimes"] if r["isAvailable"] and r["name"].startswith("iOS")))')}"
+  DEVICE="$(xcrun simctl create "inth-app-e2e-${RUN_ID}" "${C15T_IOS_DEVICE:-iPhone 17 Pro}" "${RUNTIME}")"
   printf '%s\n' "${DEVICE}" > "${OUT}/device-id.txt"
   xcodebuild -version > "${OUT}/toolchain.txt"
   printf '%s\n' "${RUNTIME}" > "${OUT}/device-version.txt"
@@ -131,26 +131,26 @@ if [[ "${PLATFORM}" == ios ]]; then
   EXTRA_PACKAGER_ARGS=--reset-cache xcodebuild build-for-testing \
     -workspace "${APP_DIR}/ios/InthBare.xcworkspace" -scheme InthBare \
     -configuration Release -destination "platform=iOS Simulator,id=${DEVICE}" \
-    -derivedDataPath "${INTH_APP_E2E_DERIVED:-${OUT}/derived}" \
+    -derivedDataPath "${C15T_APP_E2E_DERIVED:-${OUT}/derived}" \
     CODE_SIGNING_ALLOWED=YES CODE_SIGNING_FOR_SIMULATOR=YES CODE_SIGN_IDENTITY=- \
     ONLY_ACTIVE_ARCH=YES > "${OUT}/build.log" 2>&1
   # Override the built test artifact, never the reference app's checked-in config.
-  APP_PLIST="${INTH_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products/Release-iphonesimulator/InthBare.app/Info.plist"
-  /usr/libexec/PlistBuddy -c "Set :com.inth.backend.url ${INTH_E2E_URL}/api/self-host" "${APP_PLIST}"
-  /usr/libexec/PlistBuddy -c "Add :InthAppE2EURL string ${INTH_E2E_URL}" "${APP_PLIST}"
+  APP_PLIST="${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products/Release-iphonesimulator/InthBare.app/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :com.inth.backend.url ${C15T_E2E_URL}/api/self-host" "${APP_PLIST}"
+  /usr/libexec/PlistBuddy -c "Add :InthAppE2EURL string ${C15T_E2E_URL}" "${APP_PLIST}"
   /usr/libexec/PlistBuddy -c "Set :com.inth.reactnative.AutoBootstrap false" "${APP_PLIST}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :com.inth.reactnative.AutoBootstrap bool false" "${APP_PLIST}"
   cp "${OUT}/policy-assets/inth-policy.json" "${APP_PLIST%/Info.plist}/inth-policy.json"
   # Keep the simulator Keychain entitlement after changing the test-only endpoint.
   codesign --force --sign - --preserve-metadata=identifier,entitlements "${APP_PLIST%/Info.plist}" > "${OUT}/signing.log" 2>&1
-  python3 - "${INTH_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products" "${INTH_E2E_URL}" <<'PYRUN'
+  python3 - "${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products" "${C15T_E2E_URL}" <<'PYRUN'
 import pathlib,plistlib,sys
 for path in pathlib.Path(sys.argv[1]).glob('*.xctestrun'):
  data=plistlib.loads(path.read_bytes())
  def update(value):
   if isinstance(value,dict):
    if 'TestBundlePath' in value:
-    value.setdefault('EnvironmentVariables',{})['INTH_E2E_URL']=sys.argv[2]
-    value['EnvironmentVariables']['INTH_APP_E2E_SCENARIO']=__import__('os').environ['INTH_APP_E2E_SCENARIO']
+    value.setdefault('EnvironmentVariables',{})['C15T_E2E_URL']=sys.argv[2]
+    value['EnvironmentVariables']['C15T_APP_E2E_SCENARIO']=__import__('os').environ['C15T_APP_E2E_SCENARIO']
    for child in list(value.values()): update(child)
   elif isinstance(value,list):
    for child in value: update(child)
@@ -163,10 +163,10 @@ PYRUN
   LOG_PID=$!
   xcrun simctl io "${DEVICE}" recordVideo --codec=h264 "${OUT}/journey.mp4" > "${OUT}/video.log" 2>&1 &
   VIDEO_PID=$!
-  XCTESTRUN="$(find "${INTH_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products" -maxdepth 1 -name '*.xctestrun' -print -quit)"
+  XCTESTRUN="$(find "${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products" -maxdepth 1 -name '*.xctestrun' -print -quit)"
   xcodebuild test-without-building \
     -xctestrun "${XCTESTRUN}" -destination "platform=iOS Simulator,id=${DEVICE}" \
-    -derivedDataPath "${INTH_APP_E2E_DERIVED:-${OUT}/derived}" \
+    -derivedDataPath "${C15T_APP_E2E_DERIVED:-${OUT}/derived}" \
     -resultBundlePath "${OUT}/journey.xcresult" -parallel-testing-enabled NO \
     -maximum-concurrent-test-simulator-destinations 1 \
     -collect-test-diagnostics never \
@@ -176,7 +176,7 @@ elif [[ "${PLATFORM}" == android ]]; then
   export ANDROID_HOME="${ANDROID_HOME:-${HOME}/Library/Android/sdk}"
   ADB="${ANDROID_HOME}/platform-tools/adb"
   AVDMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
-  IMAGE="${INTH_ANDROID_IMAGE:-system-images;android-36;google_apis;arm64-v8a}"
+  IMAGE="${C15T_ANDROID_IMAGE:-system-images;android-36;google_apis;arm64-v8a}"
   AVD_NAME="inth-app-e2e-${RUN_ID}"
   echo no | "${AVDMANAGER}" create avd --name "${AVD_NAME}" --package "${IMAGE}" --device pixel_6 > "${OUT}/avd.log" 2>&1
   PORT="$(python3 -c 'import socket
@@ -206,14 +206,14 @@ for p in list(range(5554, 5580, 2)) + [5582, 5584]:
   "${ADB}" -s "${DEVICE}" shell input keyevent 82
   "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
   # JS/instrumentation keep a stable device endpoint; only this owned emulator is reversed.
-  export INTH_E2E_URL=http://localhost:3000
+  export C15T_E2E_URL=http://localhost:3000
   # Mixpanel's Android SDK sends nothing to a host that resolves to loopback, so it
   # reaches the same backend through the emulator's alias for the host machine.
-  export INTH_E2E_MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
+  export C15T_E2E_MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
   export C15T_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
   sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
     :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
-  ARCH="${INTH_ANDROID_ARCH:-arm64-v8a}"
+  ARCH="${C15T_ANDROID_ARCH:-arm64-v8a}"
   rm -rf "${APP_DIR}/android/e2e/build/outputs/androidTest-results"
   sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" --refresh-dependencies :app:assembleRelease :e2e:assembleRelease \
     -Pinth.appE2e=true -Pinth.policyAssets="${OUT}/policy-assets" -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
@@ -243,7 +243,7 @@ SHVIDEO
   "${ADB}" -s "${DEVICE}" install -r "${APP_DIR}/android/e2e/build/outputs/apk/release/e2e-release.apk" >> "${OUT}/install.log" 2>&1
   instrument_exit=0
   "${ADB}" -s "${DEVICE}" shell am instrument -w -r \
-    -e scenario "${INTH_APP_E2E_SCENARIO}" -e class com.inth.bare.e2e.ConsentJourney \
+    -e scenario "${C15T_APP_E2E_SCENARIO}" -e class com.inth.bare.e2e.ConsentJourney \
     com.inth.bare.e2e/androidx.test.runner.AndroidJUnitRunner > "${OUT}/test.log" 2>&1 || instrument_exit=$?
   python3 "${APP_DIR}/scripts/android-instrumentation-result.py" "${OUT}/test.log" "${OUT}/junit/TEST-consent-journey.xml"
   [[ "${instrument_exit}" == 0 ]] || exit "${instrument_exit}"

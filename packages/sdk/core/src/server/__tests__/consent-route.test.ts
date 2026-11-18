@@ -284,7 +284,7 @@ describe('upstream source', () => {
 
 	test('throws without a configured URL, whatever the environment says', async () => {
 		vi.stubEnv('INTH_PROJECT_URL', BACKEND);
-		vi.stubEnv('INTH_MANIFEST_URL', `${BACKEND}/manifest`);
+		vi.stubEnv('C15T_BACKEND_URL', BACKEND);
 		const handle = route({ projectUrl: undefined });
 		await expect(handle(request('/api/inth/init'))).rejects.toThrow(
 			'@c15t/test: pass projectUrl or manifestUrl.'

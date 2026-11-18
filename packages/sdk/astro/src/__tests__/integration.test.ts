@@ -584,7 +584,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('keeps an empty projectUrl, which means this origin', () => {
-		vi.stubEnv('INTH_PROJECT_URL', 'https://consent.example.com');
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://consent.example.com');
 		try {
 			expect(
 				resolveOptions({
@@ -600,8 +600,8 @@ describe('resolveOptions', () => {
 	it('rejects an empty projectUrl with no manifest to fetch', () => {
 		// `''` saves on this origin, but `${projectUrl}/manifest` needs a real
 		// URL, and the environment's backend URL does not replace it.
-		vi.stubEnv('INTH_PROJECT_URL', 'https://consent.example.com');
-		vi.stubEnv('INTH_MANIFEST_URL', '');
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://consent.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://consent.example.com');
 		try {
 			expect(() =>
 				resolveOptions({ mode: manifestMode(), projectUrl: '' })
@@ -621,7 +621,8 @@ describe('resolveOptions', () => {
 	});
 
 	it('does not take the manifest for an empty projectUrl from the environment', () => {
-		vi.stubEnv('INTH_MANIFEST_URL', 'https://consent.example.com/manifest');
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://consent.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://consent.example.com');
 		try {
 			expect(() =>
 				resolveOptions({ mode: manifestMode(), projectUrl: '' })

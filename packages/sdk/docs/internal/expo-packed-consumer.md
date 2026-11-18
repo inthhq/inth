@@ -39,17 +39,17 @@ are exact because `expo install` picks the newest patch at run time, which the
 three-day release-age gate in `bunfig.toml` can refuse. The helper also
 copies the bare fixture's vendor code that the E2E host imports.
 `internals/fixtures/expo-dev/scripts/vendor-e2e.sh` does all of this when
-`INTH_EXPO_CELL` is set.
+`C15T_EXPO_CELL` is set.
 
 In that consumer directory:
 
 ```sh
 bun install --ignore-scripts
-INTH_LOCAL_PODS=false EXPO_PUBLIC_INTH_FAKE_NATIVE=false \
+C15T_LOCAL_PODS=false EXPO_PUBLIC_C15T_FAKE_NATIVE=false \
   bun x expo prebuild --platform android --clean --no-install
 ```
 
-`INTH_LOCAL_PODS=false` disables the fixture's separate local Apple-core override.
+`C15T_LOCAL_PODS=false` disables the fixture's separate local Apple-core override.
 The packed SDK carries the shared Swift core, Apple installer and SwiftUI
 presenter sources. Build the generated iOS workspace to verify CocoaPods
 compilation; record runtime acceptance separately.
