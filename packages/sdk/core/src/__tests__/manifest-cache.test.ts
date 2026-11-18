@@ -36,6 +36,7 @@ import type {
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
 import * as server from '../server';
+import { stripIdentityForCleartext } from '../server/consent-proxy';
 import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
@@ -936,6 +937,24 @@ describe('credential-scoped keys without WebCrypto', () => {
 });
 
 describe('fetchCachedManifest: custom identity headers over cleartext', () => {
+	test('sends every header the consent proxy forwards over http, sec-fetch-site included', async () => {
+		const fetchMock = createFetchMock(() =>
+			manifestResponse({ 'cache-control': 'public, s-maxage=60' })
+		);
+		const forwarded = stripIdentityForCleartext(
+			{ cookie: 'inth=abc', 'sec-fetch-site': 'same-origin' },
+			'http://backend.example/manifest'
+		);
+		expect(forwarded).toEqual({ 'sec-fetch-site': 'same-origin' });
+		await fetchCachedManifest({
+			cache: createManifestCache(),
+			fetch: fetchMock,
+			headers: forwarded,
+			sourceUrl: 'http://backend.example/manifest',
+		});
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
 	test('refuses a caller-supplied header such as x-api-key over remote http', async () => {
 		const fetchMock = createFetchMock(() =>
 			manifestResponse({ 'cache-control': 'public, s-maxage=60' })

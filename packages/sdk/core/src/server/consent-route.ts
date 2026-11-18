@@ -50,6 +50,7 @@ import type {
 	SessionJourney,
 } from '@inth/sdk-schema/types';
 
+import { markResponsePrivate } from '../libs/identity-headers';
 import {
 	fetchCachedManifest,
 	getManifestAge,
@@ -814,9 +815,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			// The in-process cache is partitioned by these credentials; a shared
 			// cache in front of this route is keyed by URL only, so it must not
 			// reuse a credentialed manifest for the next visitor.
-			headers.set('cache-control', 'private, no-store');
-			headers.delete('etag');
-			headers.delete('last-modified');
+			markResponsePrivate(headers);
 			return new Response(JSON.stringify(cached.manifest), { headers });
 		}
 		// Downstream caches count the remaining lifetime, not a fresh TTL.

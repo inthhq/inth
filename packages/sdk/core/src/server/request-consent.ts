@@ -59,6 +59,7 @@ import { experimentArmRef } from '../libs/experiment';
 import type { ExperimentState, ServerExperiment } from '../libs/experiment';
 import { failedResponseError } from '../libs/failed-response';
 import { readHeader, toHeaders } from '../libs/headers';
+import { isCleartextRemoteURL } from '../libs/identity-headers';
 import { createJourneyId } from '../libs/journey';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
 import {
@@ -92,7 +93,6 @@ import type { KernelConfig } from '../types';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
-	isCleartextRemoteURL,
 	stripIdentityForCleartext,
 } from './consent-proxy';
 import {

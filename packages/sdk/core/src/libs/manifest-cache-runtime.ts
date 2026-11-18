@@ -1,6 +1,5 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
-import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 
 import { inthProtocolHeaders } from '../transports/version-header';
 import { boundedSet, mapFor } from './bounded-map';
@@ -10,6 +9,11 @@ import {
 	readUpstreamAge,
 } from './cache-directive';
 import { failedResponseError } from './failed-response';
+import {
+	identityHeaderOf,
+	isCleartextRemoteURL,
+	PUBLIC_REQUEST_HEADERS,
+} from './identity-headers';
 import { trimSlash } from './url';
 
 export { parseCacheDirectiveSeconds } from './cache-directive';
@@ -647,43 +651,21 @@ export interface FetchCachedManifestOptions {
 	onBackgroundRevalidate?: (revalidation: Promise<void>) => void;
 }
 
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
-const CREDENTIAL_HEADERS = new Set([
-	'authorization',
-	'cookie',
-	'proxy-authorization',
-]);
-
 /**
- * Request headers that carry no visitor identity: the browser negotiation
- * headers, the consent resolver inputs, and this client's version headers.
- * Anything else a host forwards (an API key, a tenant selector) is treated
- * as a credential for transport purposes.
+ * Request headers that carry no visitor identity: the public browser
+ * headers and this client's protocol headers. Anything else a host
+ * forwards (an API key, a tenant selector) is treated as a credential for
+ * transport purposes.
  */
-const PUBLIC_MANIFEST_HEADERS = new Set([
-	'accept',
-	'accept-language',
-	'content-type',
-	'if-none-match',
-	'origin',
-	'referer',
-	'sec-gpc',
-	'user-agent',
-	...CONSENT_REQUEST_HEADER_NAMES,
+const PUBLIC_MANIFEST_HEADERS: ReadonlySet<string> = new Set([
+	...PUBLIC_REQUEST_HEADERS,
 	...Object.keys(inthProtocolHeaders),
 ]);
 
-const findIdentityHeader = function findIdentityHeader(
+const findIdentityHeader = (
 	headers: Record<string, string> | undefined
-): string | undefined {
-	if (!headers) {
-		return undefined;
-	}
-	return Object.keys(headers).find((name) => {
-		const lower = name.toLowerCase();
-		return CREDENTIAL_HEADERS.has(lower) || !PUBLIC_MANIFEST_HEADERS.has(lower);
-	});
-};
+): string | undefined =>
+	identityHeaderOf(Object.keys(headers ?? {}), PUBLIC_MANIFEST_HEADERS);
 
 /** Refuses to send credentials in clear text to anything but loopback. */
 const assertCredentialTransport = function assertCredentialTransport(
@@ -691,18 +673,9 @@ const assertCredentialTransport = function assertCredentialTransport(
 	headers: Record<string, string> | undefined
 ): void {
 	const identityHeader = findIdentityHeader(headers);
-	if (!identityHeader) {
-		return;
-	}
-	let url: URL;
-	try {
-		url = new URL(requestUrl);
-	} catch {
-		return;
-	}
-	if (url.protocol === 'http:' && !LOOPBACK_HOSTS.has(url.hostname)) {
+	if (identityHeader && isCleartextRemoteURL(requestUrl)) {
 		throw new Error(
-			`inth manifest cache: refusing to send credentials over http to ${url.host} (${identityHeader}). Use https, or a loopback host for local development.`
+			`inth manifest cache: refusing to send credentials over http to ${new URL(requestUrl).host} (${identityHeader}). Use https, or a loopback host for local development.`
 		);
 	}
 };
