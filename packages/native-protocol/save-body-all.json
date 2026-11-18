@@ -46,10 +46,10 @@
 					}
 				},
 				"confirmed": [
-					"experience",
 					"functionality",
-					"marketing",
-					"measurement"
+					"experience",
+					"measurement",
+					"marketing"
 				],
 				"idempotencyKey": "019c1c38-a400-7100-8000-000000000101",
 				"property": "com.example.app"

@@ -232,7 +232,7 @@
 			"id": "save-body-all",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "74e40c3af1e8c00d3e5fa9c8c92c2d95e727ff60197b20bf4aca59e8ad48b31d"
+			"sha256": "d430cb28efb0e8182dff0f8dd32a9b06e3c7820fcdbfa2894bf9e41527723e8a"
 		},
 		{
 			"bytes": 13651,
@@ -240,7 +240,7 @@
 			"id": "save-body-necessary",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "bd6af9d51e7586d79ecbe329e9fcd35795b80330e2f9c7e5238c2cb85bfc0973"
+			"sha256": "89e403b267110ed8cba5b46536dad72054be88937cc05d5c0c73df6ba54a180c"
 		},
 		{
 			"bytes": 12141,
@@ -248,7 +248,7 @@
 			"id": "save-body-explicit-partial",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "82a50ce3063c76e33425d901f67a93dd5a9b50aadfb33c6fc75f20a583cc47a9"
+			"sha256": "2f045bc578fe5022bcdba770ce531c9d0d6210d97a7aa86f098fe2a1caca6d73"
 		},
 		{
 			"bytes": 13613,
@@ -256,7 +256,7 @@
 			"id": "save-body-ccpa-gpc",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "da3ccf59ff126f5f68542d556e34620b34c7863585a341ba23e1836f85ddd519"
+			"sha256": "4baa7f7f6340f18723cd7f3c0e70dfb204594d9c85cd504340537218152451a2"
 		},
 		{
 			"bytes": 11513,

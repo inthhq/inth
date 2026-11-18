@@ -1106,15 +1106,28 @@ The body is built once per action, frozen, and queued before the first send:
     answer             `{ categories: { <category>: receipt } }`: every receipt the
                        subject holds after the action, in the 3.x receipt shape
                        `{ value, confirmedAt, basis }`. `necessary` is left out.
-    confirmed          the categories this action confirmed, sorted. Every entry is a
-                       key of `answer.categories`; it is empty for an acknowledgement.
+    confirmed          the categories this action confirmed, in the order
+                       functionality, experience, measurement, marketing. Every entry
+                       is a key of `answer.categories`; it is empty for an
+                       acknowledgement.
+
+`answer` has no `version` field. The backend merges it per category, the receipt with
+the newer `confirmedAt` winning, and leaves a category the body does not name as
+stored, so an older queued body that arrives after a newer one cannot undo it.
 
 The body never carries `identityToken`. Queued bytes are written to disk and may be
 replayed long after a token expires, so the token goes only on the link request.
-Without a token the backend stores the save and leaves the `externalId` link off.
+Identity never fails a save: without a valid token the backend stores the save and
+leaves the `externalId` link off.
 
-A `200` is the 3.x save result with the canonical `subjectId`; a core reads that one
-field (see "Subject identity") and ignores the rest.
+A `200` is `{ "subjectId", "recordId", "link"? }`. A core adopts `subjectId` (see
+"Subject identity"). `link` is present when the body named an `externalId`; since a
+device sends no token it is `{ "stored": false, "reason": "unverified" }`, and
+`{ "stored": false, "reason": "invalid_token" }` is possible too. Neither is an error:
+the save is delivered and leaves the queue. `recordId` is not read.
+
+A refused request records nothing under its `idempotencyKey`, so a resend of the same
+bytes after a refusal is a new request, not a duplicate.
 
 ### Errors
 

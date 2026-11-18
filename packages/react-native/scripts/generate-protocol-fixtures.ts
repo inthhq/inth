@@ -1169,6 +1169,14 @@ const nativeSavePayload = function nativeSavePayload(
 	return { ...rest, idempotencyKey };
 };
 
+/** The order `confirmed` lists categories in: the web kernel's canonical order. */
+const CANONICAL_OPTIONAL_CATEGORIES = [
+	'functionality',
+	'experience',
+	'measurement',
+	'marketing',
+] as const;
+
 /**
  * The `POST /v1/consent/records` body for one native save payload.
  *
@@ -1180,8 +1188,8 @@ const nativeSavePayload = function nativeSavePayload(
  * - added: `idempotencyKey`, `property`, `answer`, `confirmed`, `externalId`.
  *
  * `answer` is every receipt the subject holds after the action, in the 3.x receipt
- * shape. `confirmed` lists the categories this action confirmed, sorted, and every
- * entry is a key of `answer.categories`. The decision-input assertion is not added:
+ * shape. `confirmed` lists the categories this action confirmed, in the canonical
+ * order the web transport uses, and every entry is a key of `answer.categories`. The decision-input assertion is not added:
  * every save-body scenario carries a policy snapshot token, which makes it absent.
  */
 const buildConsentRecordBody = function buildConsentRecordBody(
@@ -1198,9 +1206,11 @@ const buildConsentRecordBody = function buildConsentRecordBody(
 		...unchanged
 	} = buildSubjectPostBody(payload as SavePayload, { domain: property });
 	const categories = payload.choice.categories as Record<string, unknown>;
-	const confirmed = Object.keys(payload.confirmed.categories)
-		.filter((category) => categories[category] !== undefined)
-		.sort();
+	const confirmed = CANONICAL_OPTIONAL_CATEGORIES.filter(
+		(category) =>
+			Object.hasOwn(payload.confirmed.categories, category) &&
+			categories[category] !== undefined
+	);
 	const body: Record<string, unknown> = {
 		...unchanged,
 		answer: { categories: { ...categories } },
