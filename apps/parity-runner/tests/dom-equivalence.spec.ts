@@ -151,10 +151,7 @@ test('branding content wrappers and hidden icon metadata preserve rendered geome
 	await page.setContent(
 		fixture(
 			content
-				.replace(
-					'<svg ',
-					'<svg class="inth-icon" aria-labelledby="icon-label" '
-				)
+				.replace('<svg ', '<svg aria-labelledby="icon-label" ')
 				.replace('<path ', '<title id="icon-label">Logo</title><path ')
 		)
 	);

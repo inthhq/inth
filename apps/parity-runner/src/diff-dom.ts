@@ -334,8 +334,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		const hiddenSvgMetadata = (element: Element, attribute: Attr): boolean =>
 			element.tagName.toLowerCase() === 'svg' &&
 			Boolean(element.closest('[aria-hidden="true"]')) &&
-			(attribute.name === 'aria-labelledby' ||
-				(attribute.name === 'class' && attribute.value === 'c15t-icon'));
+			attribute.name === 'aria-labelledby';
 
 		const needsSwitchSize = (element: Element): boolean =>
 			element.getAttribute('role') === 'switch' &&
