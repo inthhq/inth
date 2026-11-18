@@ -80,11 +80,11 @@ class DryRunTest {
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val core = testKernel(TEST_CONFIG, InthStore(InMemoryKeyValueStore()), transport = transport)
 		core.bootstrap()
+		val subject = assertNotNull(core.snapshot().subject).id
 		core.identify(KernelUser(externalId = "user-1"))
 		assertTrue(transport.linkRequests.isEmpty(), "no token, no request")
 		core.identify(KernelUser(externalId = "user-1"), identityToken = "token-1")
 		core.logout()
-		val subject = assertNotNull(core.snapshot().subject).id
 		assertEquals(listOf(Triple(subject, "user-1", "token-1")), transport.linkRequests, "logout sends nothing")
 	}
 
