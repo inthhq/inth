@@ -12,11 +12,6 @@ import type { BoxProps } from '../../shared/primitives/box';
 
 /**
  * Footer component for consent management actions.
- *
- * @remarks
- * - Contains primary action buttons
- * - Supports customization through theme
- * - Maintains consistent layout
  */
 export const ConsentWidgetFooter = createForwardRef<
 	HTMLDivElement,

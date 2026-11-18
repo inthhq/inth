@@ -94,7 +94,6 @@ interface VendorListProps {
 	customVendors?: NonIABVendor[];
 	/** Legitimate interest state - true means user has NOT objected (allowed) */
 	vendorLegitimateInterests?: Record<string, boolean>;
-	/** Handler for legitimate interest objection toggle */
 	onVendorLegitimateInterestToggle?: (
 		vendorId: VendorId,
 		value: boolean
@@ -103,7 +102,6 @@ interface VendorListProps {
 	adTechProviders?: AdTechProvider[];
 	/** Consent switches for those providers, keyed by provider ID. */
 	adTechProviderConsents?: Record<string, boolean>;
-	/** Handler for an ad tech provider consent switch. */
 	onAdTechProviderToggle?: (providerId: number, value: boolean) => void;
 }
 
@@ -209,7 +207,6 @@ export const VendorList: FC<VendorListProps> = ({
 				)
 			: vendors.filter((v) => String(v.id) === String(selectedVendorId));
 
-	// Separate IAB and custom vendors for display
 	const filteredIABVendors = filteredVendors.filter((v) => !v.isCustom);
 	const filteredCustomVendors = filteredVendors.filter((v) => v.isCustom);
 	const filteredAdTechProviders = filterAdTechProviders(

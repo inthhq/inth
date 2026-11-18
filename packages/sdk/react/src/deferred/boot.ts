@@ -321,7 +321,6 @@ export interface LiveRootInputs {
 	options?: object;
 }
 
-/** `value` without the `display`-only fields. */
 const withoutDisplay = (
 	value: Readonly<Record<string, unknown>> | undefined,
 	display: readonly string[]
@@ -335,24 +334,6 @@ const withoutDisplay = (
 	return kept;
 };
 
-/**
- * A key for a root's live options: every root prop and option except the
- * display-only ones ({@link DISPLAY_ONLY_ROOT_PROPS},
- * {@link DISPLAY_ONLY_OPTIONS}), with `state` by identity. A deferred
- * shell given a different key than at mount (`live` on
- * `DeferredConsentShell`) loads the engine at once. Every value is
- * serialized with sorted keys; a callback counts only by being there, so
- * an inline callback rebuilt each render keeps the key while adding or
- * removing one changes it (the shell reads the latest callbacks at a tap).
- * A `callbackOnly` predicate counts by identity, as the loader remounts a
- * script given a new one.
- * A value that cannot be serialized gives a new key each time, which loads
- * the engine.
- *
- * @param root - The root's merged props.
- * @returns The key.
- * @internal
- */
 /**
  * An id per object or function, so a new or removed `state`, or a new
  * `callbackOnly` predicate, changes the key.
@@ -375,6 +356,23 @@ const identityOf = (value: unknown): unknown => {
 	return id;
 };
 
+/**
+ * A key for a root's live options: every root prop and option except the
+ * display-only ones ({@link DISPLAY_ONLY_ROOT_PROPS},
+ * {@link DISPLAY_ONLY_OPTIONS}), with `state` by identity. A deferred
+ * shell given a different key than at mount (`live` on
+ * `DeferredConsentShell`) loads the engine at once. Every value is
+ * serialized with sorted keys; a callback counts only by being there, so
+ * an inline callback rebuilt each render keeps the key while adding or
+ * removing one changes it (the shell reads the latest callbacks at a tap).
+ * A `callbackOnly` predicate counts by identity, as the loader remounts a
+ * script given a new one.
+ * A value that cannot be serialized gives a new key each time, which loads
+ * the engine.
+ *
+ * @param root - The root's merged props.
+ * @internal
+ */
 export const liveRootKey = function liveRootKey(root: LiveRootInputs): string {
 	const { options, state, ...rest } = root as LiveRootInputs &
 		Record<string, unknown>;

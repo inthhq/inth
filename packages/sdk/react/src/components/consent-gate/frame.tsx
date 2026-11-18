@@ -19,9 +19,6 @@ const warned = new Set<string>();
 /**
  * Warn once per name, outside production, that a `Frame` name is
  * deprecated.
- *
- * @param name - The deprecated name.
- * @param replacement - The `ConsentGate` name to use instead.
  */
 const warnDeprecated = function warnDeprecated(
 	name: string,

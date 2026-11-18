@@ -1,12 +1,5 @@
 'use client';
 
-/**
- * Standalone configurable toolbar for resurfacing consent preferences alongside
- * app-owned controls.
- *
- * @packageDocumentation
- */
-
 import { isTriggerVisible } from '@inth/sdk/ui/utils/trigger-utils';
 import type { ReactNode } from 'react';
 

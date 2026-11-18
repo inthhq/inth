@@ -3,20 +3,10 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { FC, ReactNode } from 'react';
 
-/**
- * Props for the AnimatedCollapse component.
- * @public
- */
+/** @public */
 export interface AnimatedCollapseProps {
-	/**
-	 * Whether the content is expanded (visible) or collapsed (hidden).
-	 */
 	isOpen: boolean;
 
-	/**
-	 * The content to show/hide with animation.
-	 * Content is always rendered to allow accurate height measurement.
-	 */
 	children: ReactNode;
 
 	/**
@@ -31,14 +21,12 @@ export interface AnimatedCollapseProps {
 	 */
 	easing?: string;
 
-	/**
-	 * Optional className for the wrapper element.
-	 */
+	/** Class for the wrapper element. */
 	className?: string;
 }
 
 /**
- * AnimatedCollapse - Smooth height animation for collapsible content.
+ * Animates the height of collapsible content, then unmounts it once closed.
  *
  * @remarks
  * Uses a two-layer wrapper pattern:
@@ -70,12 +58,9 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 	const contentRef = useRef<HTMLDivElement>(null);
 	const animationRef = useRef<number | null>(null);
 
-	// Track if content should be rendered (for mounting/unmounting after animation)
-	// Start as true only if isOpen is true
 	const [shouldRender, setShouldRender] = useState(isOpen);
 	const [isAnimating, setIsAnimating] = useState(false);
 
-	// State for controlling the animation
 	const [state, setState] = useState<{
 		height: number | 'auto';
 		overflow: 'hidden' | 'visible';
@@ -93,7 +78,6 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 		let transitionFrame: number | null = null;
 		let removeTransitionEnd: (() => void) | null = null;
 
-		// Check for reduced motion preference
 		const prefersReducedMotion = window.matchMedia(
 			'(prefers-reduced-motion: reduce)'
 		).matches;
@@ -115,18 +99,16 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 			};
 		}
 
-		// Cancel any pending animation frame
 		if (animationRef.current !== null) {
 			cancelAnimationFrame(animationRef.current);
 		}
 
 		if (isOpen) {
-			// Opening: render content first, then animate
 			setupFrame = requestAnimationFrame(() => {
 				setShouldRender(true);
 				setIsAnimating(true);
 
-				// Wait for content to render before measuring
+				// Measure in the next frame, once the content has rendered.
 				animationRef.current = requestAnimationFrame(() => {
 					const measuredContent = contentRef.current;
 					if (!measuredContent) {
@@ -136,14 +118,12 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 
 					const naturalHeight = measuredContent.scrollHeight;
 
-					// Start from 0
 					setState({
 						height: 0,
 						overflow: 'hidden',
 						transition: 'none',
 					});
 
-					// Animate to natural height
 					transitionFrame = requestAnimationFrame(() => {
 						setState({
 							height: naturalHeight,
@@ -151,7 +131,7 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 							transition: `height ${duration}ms ${easing}`,
 						});
 
-						// After animation, set to auto
+						// Back to auto so later content changes resize the wrapper.
 						const handleTransitionEnd = (e: TransitionEvent) => {
 							if (e.propertyName !== 'height') {
 								return;
@@ -179,7 +159,6 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 				});
 			});
 		} else {
-			// Closing: animate first, then unmount content
 			if (!wrapper || !content) {
 				setupFrame = requestAnimationFrame(() => {
 					setShouldRender(false);
@@ -206,9 +185,9 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 					transition: 'none',
 				});
 
-				// Animate to 0
 				animationRef.current = requestAnimationFrame(() => {
-					// Force reflow
+					// Force a reflow so the browser starts the transition from the
+					// measured height.
 					void wrapper.offsetHeight;
 
 					setState({
@@ -217,7 +196,6 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 						transition: `height ${duration}ms ${easing}`,
 					});
 
-					// After animation completes, unmount content
 					const handleTransitionEnd = (e: TransitionEvent) => {
 						if (e.propertyName !== 'height') {
 							return;
@@ -249,7 +227,6 @@ export const AnimatedCollapse: FC<AnimatedCollapseProps> = ({
 		};
 	}, [isOpen, duration, easing]);
 
-	// Don't render anything when closed and not animating
 	if (!isOpen && !shouldRender && !isAnimating) {
 		return null;
 	}

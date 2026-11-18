@@ -467,7 +467,7 @@ describe('watchStoredChoice', () => {
 /**
  * Leaves what a server render with id `id` leaves in the test's document:
  * boot data carrying the id, and the page object its inline scripts write.
- * inth's modules run in the test's window, so that is where they look.
+ * Inth's modules run in the test's window, so that is where they look.
  */
 const leavePageRender = (
 	pageObject: Record<string, unknown>,

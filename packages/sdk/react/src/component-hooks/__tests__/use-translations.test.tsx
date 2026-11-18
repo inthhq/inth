@@ -123,11 +123,9 @@ describe('useTranslations', () => {
 			setTimeout(resolve, 10);
 		});
 
-		// Custom translations should override defaults
 		expect(result.current.cookieBanner.title).toBe('Custom Cookie Settings');
 		expect(result.current.cookieBanner.description).toBe('Custom Description');
 
-		// Other translations should fall back to defaults
 		expect(result.current.consentManagerDialog.title).toBe('Privacy Settings');
 		expect(result.current.common.acceptAll).toBe('Accept All');
 		expect(result.current.common.rejectAll).toBe('Reject All');
@@ -149,7 +147,6 @@ describe('useTranslations', () => {
 			setTimeout(resolve, 10);
 		});
 
-		// Should fall back to English translations
 		expect(result.current.cookieBanner.title).toBe('We value your privacy');
 		expect(result.current.consentManagerDialog.title).toBe('Privacy Settings');
 		expect(result.current.common.acceptAll).toBe('Accept All');

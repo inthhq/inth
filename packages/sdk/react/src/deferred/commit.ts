@@ -177,7 +177,6 @@ const planAndCommit = function planAndCommit(
  * clear epoch is stored, or once the engine has attached; the engine then
  * records the tap.
  *
- * @param input - The root's stand-in, the tap and the root's options.
  * @returns What the engine needs to take over, or `null`.
  * @internal
  */

@@ -48,11 +48,9 @@ type RelevantHeaders = Partial<Record<ForwardedHeader, string>>;
  * - Standard headers (accept-language, user-agent, x-forwarded-for)
  * - Prefetch headers (purpose, sec-purpose, next-router-prefetch, x-middleware-prefetch)
  *
- * @param headersList - The Headers object from the incoming request
  * @param options - `trustForwardedHeaders` also copies `forwarded`,
  * `x-forwarded-host` and `x-forwarded-proto`, which any client can send.
  * Leave it off unless a proxy you control sets them and drops incoming ones.
- * @returns An object containing the relevant headers for consent management
  *
  * @internal
  */

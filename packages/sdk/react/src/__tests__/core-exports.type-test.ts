@@ -26,6 +26,6 @@ void policyRules;
 	projectUrl: '/api/inth',
 }) satisfies ConsentProviderOptions;
 
-// @ts-expect-error Only inth's categories are category names.
+// @ts-expect-error Only Inth's categories are category names.
 const unknownCategory: AllConsentNames = 'advertising';
 void unknownCategory;

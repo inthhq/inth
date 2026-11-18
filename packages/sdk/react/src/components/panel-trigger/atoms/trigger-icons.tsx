@@ -9,10 +9,6 @@ interface IconProps {
 	titleId?: string;
 }
 
-/**
- * Fingerprint icon for privacy/consent contexts.
- * A generic icon representing user identity and privacy.
- */
 export const FingerprintIcon = ({
 	title = 'Privacy',
 	titleId = 'fingerprint-icon',
@@ -42,10 +38,6 @@ export const FingerprintIcon = ({
 	</svg>
 );
 
-/**
- * Settings/gear icon for preference contexts.
- * A generic icon representing configuration and settings.
- */
 export const SettingsIcon = ({
 	title = 'Settings',
 	titleId = 'settings-icon',

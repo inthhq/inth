@@ -20,7 +20,6 @@ export const STATIC_BANNER_ATTR = 'data-inth-static-banner';
  * Whether the page shows a static banner now: its inline script revealed
  * it, whether or not a tap has hidden it since.
  *
- * @returns `true` when one is on the page and not `hidden`.
  * @internal
  */
 export const isStaticBannerShown = function isStaticBannerShown(): boolean {

@@ -1,9 +1,3 @@
-/**
- * IAB Consent Dialog Vendors Tab Unit Tests
- *
- * Tests for the vendors tab in IAB Consent Dialog.
- */
-
 import { evaluateConsent } from '@inth/sdk/engine';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { useContext, useEffect } from 'react';
@@ -30,7 +24,6 @@ const getDefined = <Value,>(
 	return value;
 };
 
-// Mock localStorage
 const localStorageMock = (() => {
 	let store: Record<string, string> = {};
 	return {

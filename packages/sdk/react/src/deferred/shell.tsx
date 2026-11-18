@@ -3,7 +3,7 @@
 /**
  * A consent root whose engine loads after the page.
  *
- * The page under it hydrates at once. Until the engine loads, inth's hooks
+ * The page under it hydrates at once. Until the engine loads, Inth's hooks
  * read the snapshots the server rendered with, and their actions ask for
  * the engine and run on it when it attaches (see `deferred-kernel.ts`).
  * The stock banner keeps its server HTML until then; its inline script
@@ -603,7 +603,6 @@ const createSession = function createSession<EngineModule>(
 		}
 	};
 
-	/** Takes the early-tap script's queue, so nothing replays the tap. */
 	/**
 	 * Keeps the banner hidden by the root rather than by the early-tap
 	 * script: a replay with no tap would show it again.
@@ -686,7 +685,6 @@ const createSession = function createSession<EngineModule>(
 		});
 	}
 
-	/** Whether a choice can go through the commit path now. */
 	const canCommit = (): boolean =>
 		Boolean(commitConfig) &&
 		!routing &&
@@ -768,7 +766,6 @@ const createSession = function createSession<EngineModule>(
 				void handle.kernel.commands.save(choice, { actionAt, uiSource });
 			}
 		})();
-		// The rest of the engine loads once the choice is in.
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Never rejects.
 		void commitSettled.then(start);
 		if (instant) {
@@ -1046,7 +1043,7 @@ const AfterHydration = ({ children }: { children: ReactNode }): ReactNode =>
 		: null;
 
 /**
- * Renders `children` with inth's contexts filled from the server's
+ * Renders `children` with Inth's contexts filled from the server's
  * snapshots, and the engine after them once it loads.
  *
  * @internal

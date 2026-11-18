@@ -35,8 +35,6 @@ export const markIABProviderLoaded = function markIABProviderLoaded(): void {
 /**
  * The error the standard surfaces throw for an `iab` policy without
  * `<IABProvider>`.
- *
- * @returns A fresh {@link IABUnavailableError}.
  * @internal
  */
 export const missingIABProviderError =

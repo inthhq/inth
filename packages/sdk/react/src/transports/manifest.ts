@@ -1,8 +1,4 @@
 import { projectUrl as builtProjectUrl, snapshot } from '@inth/sdk/generated';
-/**
- * Manifest mode for the React provider: core's browser resolver, with the
- * policy and backend URL the build integration downloaded as defaults.
- */
 import {
 	manifest as browserManifest,
 	withBuildDefaults,

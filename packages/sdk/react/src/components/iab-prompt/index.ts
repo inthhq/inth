@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * Enhanced IABConsentBanner component with compound components attached.
- *
- * @remarks
- * This is the main export that provides access to all IABConsentBanner components.
- * It follows the compound components pattern, allowing for flexible composition
- * of the banner's parts.
- */
-
 import type { FC } from 'react';
 
 import {
@@ -25,10 +16,6 @@ import { IABConsentBannerTitle } from './atoms/title';
 import { IABConsentBanner as IABConsentBannerComponent } from './iab-prompt';
 import type { IABConsentBannerProps } from './iab-prompt';
 
-/**
- * This interface extends the base IABConsentBanner component with additional sub-components
- * that can be used to compose the banner's structure.
- */
 export interface IABConsentBannerCompoundComponent extends FC<IABConsentBannerProps> {
 	Root: typeof IABConsentBannerRoot;
 	Card: typeof IABConsentBannerCard;
@@ -43,16 +30,6 @@ export interface IABConsentBannerCompoundComponent extends FC<IABConsentBannerPr
 
 /**
  * IAB TCF 2.4 compliant cookie consent banner component.
- *
- * @remarks
- * This component serves as the main entry point for rendering an IAB-compliant consent banner.
- * It provides a structured layout with required IAB TCF elements.
- *
- * Key features:
- * - IAB TCF 2.4 compliant
- * - Fully accessible by default
- * - Customizable appearance
- * - Compound component pattern support
  *
  * @example
  * Simple usage with default settings:
@@ -96,10 +73,8 @@ const IABConsentBanner = Object.assign(IABConsentBannerComponent, {
 	Title: IABConsentBannerTitle,
 }) as IABConsentBannerCompoundComponent;
 
-// Export the main component as both default and named export
 export default IABConsentBanner;
 
-// Export individual components for direct usage
 export {
 	IABConsentBannerButtonGroup,
 	IABConsentBannerFooterSpacer,

@@ -1,9 +1,3 @@
-/**
- * Tests for the useFocusTrap hook.
- *
- * @packageDocumentation
- */
-
 import { useRef, useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -22,7 +16,6 @@ const getDefined = <Value,>(
 };
 
 describe('useFocusTrap', () => {
-	// Component that uses the focus trap hook
 	const TestComponent = ({
 		shouldTrap = true,
 		onKeyDown,
@@ -60,7 +53,6 @@ describe('useFocusTrap', () => {
 		);
 	};
 
-	// Component with toggle for testing dynamic trap behavior
 	const ToggleTrapComponent = () => {
 		const [trapEnabled, setTrapEnabled] = useState(false);
 		const containerRef = useRef<HTMLDivElement>(null);
@@ -130,13 +122,11 @@ describe('useFocusTrap', () => {
 
 	describe('Focus Trap Behavior', () => {
 		test('should not throw when container ref is null', () => {
-			// Component that uses null ref
 			const NullRefComponent = () => {
 				useFocusTrap(true, null);
 				return <div>No ref</div>;
 			};
 
-			// Should not throw
 			expect(() => render(<NullRefComponent />)).not.toThrow();
 		});
 
@@ -167,7 +157,6 @@ describe('useFocusTrap', () => {
 
 			const toggle = document.querySelector('[data-testid="toggle"]');
 
-			// Toggle on
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -176,7 +165,6 @@ describe('useFocusTrap', () => {
 				{ timeout: 3000 }
 			);
 
-			// Toggle off
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -219,7 +207,6 @@ describe('useFocusTrap', () => {
 
 	describe('Cleanup', () => {
 		test('should handle dynamic trap state changes', async () => {
-			// Test cleanup behavior via ToggleTrapComponent
 			render(<ToggleTrapComponent />);
 
 			await vi.waitFor(
@@ -232,7 +219,6 @@ describe('useFocusTrap', () => {
 
 			const toggle = document.querySelector('[data-testid="toggle"]');
 
-			// Enable trap
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -241,7 +227,6 @@ describe('useFocusTrap', () => {
 				{ timeout: 3000 }
 			);
 
-			// Disable trap (should cleanup)
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -250,7 +235,6 @@ describe('useFocusTrap', () => {
 				{ timeout: 3000 }
 			);
 
-			// Re-enable trap (should work without issues)
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {

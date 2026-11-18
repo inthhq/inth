@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Text component for the ConsentDialogTrigger compound component.
- *
- * @packageDocumentation
- */
-
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import type { ReactNode } from 'react';
 
@@ -13,15 +7,9 @@ import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/ui-config-context';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-/**
- * Props for the Text component.
- */
 export interface TriggerTextProps {
 	children: ReactNode;
 
-	/**
-	 * Additional CSS class names.
-	 */
 	className?: string;
 
 	/**

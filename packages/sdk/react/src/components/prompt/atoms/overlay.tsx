@@ -1,8 +1,3 @@
-/**
- * @packageDocumentation
- * Provides the overlay backdrop component for the ConsentBanner.
- */
-
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
 import { forwardRef as createForwardRef, isValidElement } from 'react';
 import type { HTMLAttributes } from 'react';
@@ -43,14 +38,8 @@ interface OverlayProps extends HTMLAttributes<HTMLDivElement> {
  * Overlay component that provides a backdrop for the ConsentBanner content.
  *
  * @remarks
- * This component handles:
- * - Rendering a semi-transparent backdrop
- * - Fade in/out animations (when animations are enabled)
- * - Proper z-indexing for modal behavior
- * - Theme-based styling
- *
- * The overlay visibility is controlled by the `activeUI` state from ConsentBanner context,
- * and its animation behavior is controlled by the `disableAnimation` flag.
+ * Renders only while the banner shows with scroll lock on, and locks page
+ * scroll while it does.
  *
  * @public
  */
@@ -67,14 +56,12 @@ const ConsentBannerOverlay = createForwardRef<HTMLDivElement, OverlayProps>(
 		const showBanner = activeUI === 'banner';
 		const theme = mergeSlotProps(components?.banner?.overlay, {
 			baseClassName: styles.overlay,
-			// Always pass custom className
 			className,
 			noStyle: contextNoStyle || noStyle,
 			style,
 			...props,
 		});
 
-		// Animations are handled with CSS classes
 		const shouldApplyAnimation =
 			!(contextNoStyle || noStyle) && !disableAnimation;
 
@@ -84,7 +71,6 @@ const ConsentBannerOverlay = createForwardRef<HTMLDivElement, OverlayProps>(
 			? `${styles.overlayVisible} ${styles.overlayEntering}`
 			: undefined;
 
-		// Combine theme className with animation class if needed
 		const finalClassName = cn(theme.className, animationClass);
 
 		useScrollLock(!!(showBanner && scrollLock));

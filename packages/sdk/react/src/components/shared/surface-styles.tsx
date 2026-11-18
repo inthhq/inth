@@ -130,7 +130,7 @@ export const preloadSurfaceSheets = async function preloadSurfaceSheets(
  */
 const HOISTS_STYLES = Number.parseInt(version, 10) >= 19;
 
-/** Groups inth's `<style>` elements in `<head>`, in the order they render. */
+/** Groups Inth's `<style>` elements in `<head>`, in the order they render. */
 const PRECEDENCE = 'inth';
 
 const useStylesDisabled = function useStylesDisabled(
@@ -190,7 +190,6 @@ export const useSurfaceSheetsReady = function useSurfaceSheetsReady(
  *
  * @param props.sheets - The stylesheets, in cascade order.
  * @param props.noStyle - The surface's own `noStyle` prop.
- * @returns The `<style>` elements, or `null`.
  * @internal
  */
 export const SurfaceStyles = ({
@@ -234,7 +233,7 @@ export const SurfaceStyles = ({
 				key={sheet.id}
 				data-inth-styles={sheet.id}
 				nonce={nonce}
-				// oxlint-disable-next-line react/no-danger -- inth's own build-time CSS.
+				// oxlint-disable-next-line react/no-danger -- Inth's own build-time CSS.
 				dangerouslySetInnerHTML={{ __html: css }}
 			/>
 		);

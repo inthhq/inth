@@ -4,12 +4,6 @@ import {
 	MINIMAL_GVL,
 	runConformanceSuite,
 } from '@inth/conformance';
-/**
- * React conformance entry point.
- *
- * This driver targets the kernel adapter: `ConsentProvider` plus the
- * useSyncExternalStore-backed selector hooks.
- */
 import type {
 	MountableComponent,
 	MountOptions,

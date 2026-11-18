@@ -24,7 +24,6 @@ export const ConsentWidget = ({
 }: ConsentWidgetProps) => {
 	const [openItem, setOpenItem] = useState('');
 
-	// Get global theme context
 	const globalTheme = useTheme();
 
 	const mergedProps = {

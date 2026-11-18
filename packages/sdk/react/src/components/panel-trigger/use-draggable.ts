@@ -1,13 +1,5 @@
 'use client';
 
-/**
- * React hook for drag-to-corner functionality.
- *
- * Wraps the framework-agnostic utilities from @inth/sdk/ui with React state management.
- *
- * @packageDocumentation
- */
-
 import {
 	calculateCornerFromDrag,
 	createInitialDragState,
@@ -21,9 +13,6 @@ import type {
 } from '@inth/sdk/ui/utils/trigger-utils';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/**
- * Options for the useDraggable hook.
- */
 export interface UseDraggableOptions {
 	/**
 	 * Default corner position.
@@ -37,20 +26,12 @@ export interface UseDraggableOptions {
 	 */
 	persistPosition?: boolean;
 
-	/**
-	 * Callback when position changes.
-	 */
 	onPositionChange?: (position: CornerPosition) => void;
 }
 
-/**
- * Return type for the useDraggable hook.
- */
 export interface UseDraggableReturn {
-	/** Current corner position */
 	corner: CornerPosition;
 
-	/** Whether currently dragging */
 	isDragging: boolean;
 
 	/** Whether transitioning to a new corner (for animation) */
@@ -73,9 +54,6 @@ export interface UseDraggableReturn {
 
 /**
  * Hook for making an element draggable between viewport corners.
- *
- * @param options - Configuration options
- * @returns Object with corner position, drag state, event handlers, and styles
  *
  * @example
  * ```tsx
@@ -106,7 +84,6 @@ export const useDraggable = function useDraggable(
 		onPositionChange,
 	} = options;
 
-	// Initialize corner from persisted position or default
 	const [corner, setCorner] = useState<CornerPosition>(() => {
 		if (persistPosition && typeof window !== 'undefined') {
 			const persisted = getPersistedPosition();
@@ -128,7 +105,6 @@ export const useDraggable = function useDraggable(
 	// Track drag start time for velocity calculation
 	const dragStartTimeRef = useRef<number>(0);
 
-	// Update corner and optionally persist
 	const updateCorner = useCallback(
 		(newCorner: CornerPosition) => {
 			setCorner(newCorner);
@@ -140,7 +116,6 @@ export const useDraggable = function useDraggable(
 		[persistPosition, onPositionChange]
 	);
 
-	// Handle pointer down - start tracking
 	const handlePointerDown = useCallback((e: React.PointerEvent) => {
 		// Only handle primary button (left click / single touch)
 		if (e.button !== 0) {
@@ -165,14 +140,12 @@ export const useDraggable = function useDraggable(
 		setIsSnapping(false);
 	}, []);
 
-	// Handle pointer move - update position
 	const handlePointerMove = useCallback((e: React.PointerEvent) => {
 		setDragState((prev: DragState) => {
 			if (!prev.isDragging) {
 				return prev;
 			}
 
-			// Check if we've moved enough to be considered a drag
 			const dx = Math.abs(e.clientX - prev.startX);
 			const dy = Math.abs(e.clientY - prev.startY);
 			if (dx > 5 || dy > 5) {
@@ -187,7 +160,6 @@ export const useDraggable = function useDraggable(
 		});
 	}, []);
 
-	// Handle pointer up - snap based on drag direction
 	const handlePointerUp = useCallback(
 		(e: React.PointerEvent) => {
 			if (elementRef.current) {
@@ -199,24 +171,20 @@ export const useDraggable = function useDraggable(
 					return prev;
 				}
 
-				// Only snap if we actually dragged
 				if (hasDraggedRef.current) {
-					// Calculate drag direction and velocity
 					const dragX = e.clientX - prev.startX;
 					const dragY = e.clientY - prev.startY;
 					const dragDuration = Date.now() - dragStartTimeRef.current;
 
-					// Calculate velocity (pixels per millisecond)
+					// Pixels per millisecond.
 					const velocityX = dragDuration > 0 ? dragX / dragDuration : 0;
 					const velocityY = dragDuration > 0 ? dragY / dragDuration : 0;
 
-					// Get new corner based on drag direction and velocity
 					const newCorner = calculateCornerFromDrag(corner, dragX, dragY, {
 						velocityX,
 						velocityY,
 					});
 
-					// Only animate if actually changing corners
 					if (newCorner !== corner) {
 						setIsSnapping(true);
 						updateCorner(newCorner);
@@ -229,7 +197,6 @@ export const useDraggable = function useDraggable(
 		[corner, updateCorner]
 	);
 
-	// Drop the snapping class once the snap transition has run.
 	useEffect(() => {
 		const element = snapElementRef.current;
 		if (!(isSnapping && element)) {
@@ -238,7 +205,6 @@ export const useDraggable = function useDraggable(
 		return onSnapEnd(element, () => setIsSnapping(false));
 	}, [isSnapping]);
 
-	// Handle pointer cancel
 	const handlePointerCancel = useCallback((e: React.PointerEvent) => {
 		if (elementRef.current) {
 			elementRef.current.releasePointerCapture(e.pointerId);
@@ -246,7 +212,6 @@ export const useDraggable = function useDraggable(
 		setDragState(createInitialDragState());
 	}, []);
 
-	// Calculate transform style for drag offset
 	const dragStyle: React.CSSProperties = dragState.isDragging
 		? {
 				transform: `translate(${dragState.currentX - dragState.startX}px, ${dragState.currentY - dragState.startY}px)`,
@@ -254,7 +219,6 @@ export const useDraggable = function useDraggable(
 			}
 		: {};
 
-	// Function to check if the last interaction was a drag
 	const wasDragged = useCallback(() => hasDraggedRef.current, []);
 
 	return {

@@ -147,7 +147,6 @@ const functionTable = function functionTable<Table extends object>(
 /**
  * Creates the stand-in kernel and the services that go with it.
  *
- * @param options - Server snapshots and the engine trigger.
  * @returns The handle the root renders and attaches the engine to.
  * @internal
  */
@@ -218,7 +217,6 @@ export const createDeferredKernel = function createDeferredKernel(
 		return dismissedSnapshot as ConsentSnapshot;
 	};
 
-	/** What the kernel's snapshot reads return. */
 	const currentSnapshot = (): ConsentSnapshot =>
 		dismissed(
 			engine

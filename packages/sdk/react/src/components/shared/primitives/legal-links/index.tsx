@@ -32,9 +32,6 @@ const useLegalLinkTranslations = function useLegalLinkTranslations():
 	return kernelTranslations?.translations?.legalLinks;
 };
 
-/**
- * Props for the InlineLegalLinks component.
- */
 export interface InlineLegalLinksProps {
 	/**
 	 * Controls which legal links to display.
@@ -111,7 +108,4 @@ export const InlineLegalLinks = ({
 	);
 };
 
-/**
- * Valid link slot contexts for inline legal links.
- */
 type LegalLinksContext = 'banner' | 'dialog' | 'manager';

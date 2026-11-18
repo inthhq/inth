@@ -155,7 +155,7 @@ const pixel = (id: string): Script => ({
 });
 
 /**
- * Whether `id` was inserted. inth's modules run in the test's window, so
+ * Whether `id` was inserted. Inth's modules run in the test's window, so
  * that is the document they insert into.
  */
 const started = (id: string): boolean =>
@@ -164,7 +164,7 @@ const started = (id: string): boolean =>
 /**
  * Leaves what a server render with id `id` leaves in the test's document:
  * boot data carrying the id, and the page object its inline scripts write.
- * inth's modules run in the test's window, so that is where they look.
+ * Inth's modules run in the test's window, so that is where they look.
  */
 const leavePageRender = (
 	pageObject: Record<string, unknown>,
@@ -622,7 +622,6 @@ test('root scripts started before the engine leave with the root, or when it dro
 	await tick(100);
 	expect(started('root-pixel')).toBe(true);
 	expect(started('kept-pixel')).toBe(true);
-	// The root drops one of its scripts.
 	await act(() => {
 		store.scripts = [pixel('kept-pixel')];
 		for (const listener of store.listeners) {
@@ -632,7 +631,6 @@ test('root scripts started before the engine leave with the root, or when it dro
 	await tick(20);
 	expect(started('root-pixel')).toBe(false);
 	expect(started('kept-pixel')).toBe(true);
-	// And the root goes.
 	await hydrated.unmount();
 	expect(started('kept-pixel')).toBe(false);
 });

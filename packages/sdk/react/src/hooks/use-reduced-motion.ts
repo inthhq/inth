@@ -23,16 +23,8 @@ const getServerSnapshot = () => false;
 /**
  * Hook to detect if the user prefers reduced motion.
  *
- * @remarks
- * Reads the `prefers-reduced-motion: reduce` media query and updates
- * reactively when the user's preference changes. This is useful for
- * automatically disabling animations for users who have enabled
- * reduced motion in their operating system settings.
- *
  * The hook returns `false` during SSR to avoid hydration mismatches,
  * then updates to the actual preference on the client.
- *
- * @returns `true` if the user prefers reduced motion, `false` otherwise
  *
  * @example
  * ```tsx

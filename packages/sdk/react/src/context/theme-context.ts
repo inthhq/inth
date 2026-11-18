@@ -11,8 +11,6 @@ import type { Theme } from '~/types/theme';
  * Provides type-safe theme customization options for components.
  * Supports both token-based (v2) and key-based (v1) themes.
  *
- * @typeParam T - The theme configuration type for the component
- *
  * @public
  */
 export interface ThemeContextValue {
@@ -59,11 +57,6 @@ export interface ThemeContextValue {
 
 /**
  * Context for providing theme values to components.
- *
- * @remarks
- * Combines consent management state with theme configuration.
- * Must be provided by a parent Theme.Root component.
- * Supports TypeScript generic themes for type safety.
  *
  * @public
  */

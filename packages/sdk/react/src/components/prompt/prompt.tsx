@@ -6,11 +6,6 @@ import type {
 	PromptVariant,
 	SurfacePresentation,
 } from '@inth/sdk/engine';
-/**
- * @packageDocumentation
- * Provides the main consent banner component for privacy consent management.
- * Implements an accessible, customizable banner following GDPR requirements.
- */
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
 import { Fragment } from 'react';
@@ -64,30 +59,23 @@ export type ConsentBannerLayout = (
 /**
  * Props for configuring and customizing the ConsentBanner component.
  *
- * @remarks
- * Provides comprehensive customization options for the consent banner's appearance
- * and behavior while maintaining compliance with privacy regulations.
- *
  * @public
  */
 export interface ConsentBannerProps {
 	/**
 	 * When true, removes all default styling from the component
-	 * @remarks Useful for implementing completely custom designs
 	 * @default false
 	 */
 	noStyle?: boolean;
 
 	/**
 	 * Content to display as the banner's title
-	 * @remarks Supports string or ReactNode for rich content
 	 * @default undefined
 	 */
 	title?: ReactNode;
 
 	/**
 	 * Content to display as the banner's description
-	 * @remarks Supports string or ReactNode for rich content
 	 * @default undefined
 	 */
 	description?: ReactNode;
@@ -108,7 +96,6 @@ export interface ConsentBannerProps {
 
 	/**
 	 * Content to display on the accept button
-	 * @remarks Primary action for accepting consent preferences
 	 * @default undefined
 	 */
 	acceptButtonText?: ReactNode;
@@ -128,14 +115,12 @@ export interface ConsentBannerProps {
 
 	/**
 	 * When true, the consent banner will trap focus
-	 * @remarks Useful for implementing a consent banner that traps focus
 	 * @deprecated Use `blocking` to control focus, scroll and backdrop together.
 	 */
 	trapFocus?: boolean;
 
 	/**
 	 * When true, disables the entrance/exit animations
-	 * @remarks Useful for environments where animations are not desired
 	 * @default false
 	 */
 	disableAnimation?: boolean;
@@ -270,7 +255,6 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 
 	const resolvedScrollLock = banner.scrollLock;
 
-	// Merge local props with global theme context
 	const config = useComponentConfig({
 		disableAnimation: localDisableAnimation,
 		noStyle: localNoStyle,
@@ -434,14 +418,3 @@ export const ConsentBanner: FC<ConsentBannerProps> = (props) => (
 		<ConsentBannerContent {...props} />
 	</StreamedConsentSurface>
 );
-
-/**
- * Component type definition for the ConsentBanner with its compound components.
- *
- * @remarks
- * This interface extends the base ConsentBanner component with additional sub-components
- * that can be used to compose the banner's structure. Each component is designed to be
- * fully accessible and customizable while maintaining compliance with privacy regulations.
- *
- * @public
- */

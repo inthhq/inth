@@ -32,8 +32,6 @@ export { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
  * Whether setters queued for the engine leave the snapshot as a commit
  * reads it: only category registrations the snapshot already holds.
  *
- * @param handle - The root's stand-in.
- * @returns `true` when a commit may read the stand-in's snapshot.
  * @internal
  */
 export const pendingIsInert = function pendingIsInert(
@@ -69,8 +67,6 @@ export interface InstantCommitAhead {
 /**
  * Reads what {@link commitInstantly} needs from storage, ahead of a tap.
  *
- * @param config - The root's commit options.
- * @returns The values to pass to `commitInstantly`.
  * @internal
  */
 export const readAheadOfTap = function readAheadOfTap(
@@ -86,9 +82,7 @@ export const readAheadOfTap = function readAheadOfTap(
  * Whether a tap now would commit instantly, as far as can be told before
  * the tap: a press on the banner then needs no preloads.
  *
- * @param handle - The root's stand-in.
  * @param ahead - From {@link readAheadOfTap}.
- * @returns `true` when {@link commitInstantly} would apply.
  * @internal
  */
 export const canCommitInstantly = function canCommitInstantly(
@@ -111,8 +105,6 @@ export const canCommitInstantly = function canCommitInstantly(
  * and changes nothing otherwise; the commit chunk or the engine records
  * it then. The caller must check the engine has not attached.
  *
- * @param handle - The root's stand-in.
- * @param config - The root's commit options.
  * @param choice - What `commands.save` was called with.
  * @param actionAt - Epoch milliseconds of the tap.
  * @param ahead - From {@link readAheadOfTap}; read now when absent.

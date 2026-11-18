@@ -1,11 +1,6 @@
 'use client';
 
 import brandingStyles from '@inth/sdk/ui/styles/components/branding';
-/**
- * @packageDocumentation
- * A collection of components for building privacy consent management dialogs.
- * Built with accessibility and customization in mind, following GDPR and other privacy regulation requirements.
- */
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { forwardRef as createForwardRef, isValidElement } from 'react';
 import type { ReactNode, Ref } from 'react';
@@ -29,7 +24,6 @@ import { mergeSlotProps } from '~/utils/merge-slot-props';
  * @public
  */
 type ConsentDialogCardProps = {
-	/** The content to be rendered inside the consent dialog card */
 	children?: ReactNode;
 } & ClassNameStyle;
 
@@ -55,9 +49,7 @@ ConsentDialogCard.displayName = 'ConsentDialogCard';
  * Should contain the ConsentDialogHeaderTitle and optionally ConsentDialogHeaderDescription.
  *
  * @remarks
- * - Provides semantic structure for accessibility
  * - Should be the first child of ConsentDialogCard
- * - Styled according to the theme configuration
  */
 const ConsentDialogHeader = createForwardRef<
 	HTMLDivElement,
@@ -80,9 +72,7 @@ ConsentDialogHeader.displayName = 'ConsentDialogHeader';
  * Displays the main heading of the consent management interface.
  *
  * @remarks
- * - Uses proper heading semantics for accessibility
  * - Should be used within ConsentDialogHeader
- * - Supports theme customization
  * - Renders an `h2`; with `asChild` the child element takes its place
  */
 const ConsentDialogHeaderTitle = createForwardRef<
@@ -116,8 +106,6 @@ ConsentDialogHeaderTitle.displayName = 'ConsentDialogHeaderTitle';
  *
  * @remarks
  * - Should be used after ConsentDialogHeaderTitle
- * - Supports theme customization
- * - Important for explaining privacy choices to users
  * - Can include legal links inline with the description
  */
 const ConsentDialogHeaderDescription = createForwardRef<
@@ -181,8 +169,6 @@ ConsentDialogHeaderDescription.displayName = 'ConsentDialogHeaderDescription';
  *
  * @remarks
  * - Typically contains ConsentWidget
- * - Supports custom content and styling
- * - Handles user interactions with privacy settings
  */
 const ConsentDialogContent = createForwardRef<
 	HTMLDivElement,
@@ -202,7 +188,7 @@ ConsentDialogContent.displayName = 'ConsentDialogContent';
 
 /**
  * The footer section of the consent dialog.
- * This contains the branding but can be overidden with a custom footer.
+ * This contains the branding but can be overridden with a custom footer.
  */
 const ConsentDialogFooter = createForwardRef<
 	HTMLDivElement,
@@ -234,24 +220,14 @@ ConsentDialogFooter.displayName = 'ConsentDialogFooter';
  * A pre-configured privacy settings card.
  * Combines all consent dialog components with default content for privacy customization.
  *
- * @param {Object} props - Component props
- * @param {boolean} [props.noStyle] - When true, removes default styling
- * @param {LegalLink[]} [props.legalLinks] - Legal document links to display in footer
- * @param {boolean} [props.hideBranding] - Whether to hide the branding in the footer
- *
  * @example
  * ```tsx
  * <ConsentCustomizationCard
  *   noStyle={false}
- *   legalLinks={[{label: "Privacy Policy", href: "/privacy"}]}
+ *   legalLinks={['privacyPolicy']}
  *   hideBranding={false}
  * />
  * ```
- *
- * @remarks
- * - Provides a complete privacy settings interface
- * - Includes consent type management
- * - Built-in accessibility features
  */
 const ConsentCustomizationCard = ({
 	noStyle,

@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * ConsentDialogTrigger compound component.
- *
- * A draggable floating button that opens the consent dialog.
- * Supports drag-to-corner positioning and configurable icons.
- *
- * @packageDocumentation
- */
-
 import { createElement, useEffect, useMemo, useState } from 'react';
 import type { ComponentProps, FC, ReactNode } from 'react';
 
@@ -178,9 +169,6 @@ const ConsentDialogTriggerComponent = ({
 
 ConsentDialogTriggerComponent.displayName = 'ConsentDialogTrigger';
 
-/**
- * Compound component interface for ConsentDialogTrigger.
- */
 export interface ConsentDialogTriggerCompound extends FC<ConsentDialogTriggerProps> {
 	/** Root component - provides context and handles portal rendering */
 	Root: typeof TriggerRoot;
@@ -230,7 +218,6 @@ export type {
 	TriggerRootProps,
 	TriggerTextProps,
 };
-// Re-export atom components for direct imports
 export {
 	TriggerButton,
 	TriggerIcon,

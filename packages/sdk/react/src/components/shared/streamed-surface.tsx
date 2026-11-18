@@ -70,7 +70,6 @@ const StreamedScope = ({
 	);
 };
 
-/** Props for {@link StreamedConsentSurface}. */
 export interface StreamedConsentSurfaceProps {
 	/** The surface. Its consent hooks must run inside this component. */
 	children: ReactNode;
@@ -91,7 +90,6 @@ export interface StreamedConsentSurfaceProps {
  * Call the hooks in a component inside it. Hooks called above it read the
  * snapshot from before consent resolved, which has no banner.
  *
- * @param props - The surface to stream.
  * @returns The children, in a Suspense boundary while consent streams.
  * @example
  * ```tsx

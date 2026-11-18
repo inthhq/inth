@@ -1,9 +1,3 @@
-/**
- * IAB Consent Dialog Unit Tests
- *
- * Tests for IAB Consent Dialog component display and behavior.
- */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -14,7 +8,6 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { testing } from '../../../testing';
 import { IABConsentDialog } from '../iab-panel';
 
-// Mock localStorage
 const localStorageMock = (() => {
 	let store: Record<string, string> = {};
 	return {
@@ -35,7 +28,6 @@ Object.defineProperty(window, 'localStorage', {
 	value: localStorageMock,
 });
 
-// Mock fetch for GVL
 const mockGVL = {
 	features: {
 		1: {
@@ -225,7 +217,6 @@ const defaultIABOptions: ConsentProviderOptions = {
 describe('IAB Consent Dialog Unit Tests', () => {
 	beforeEach(() => {
 		window.localStorage.clear();
-		// Clear cookies
 		const cookies = document.cookie.split(';');
 		for (const cookie of cookies) {
 			const name = cookie.split('=')[0]?.trim();

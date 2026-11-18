@@ -1,9 +1,3 @@
-/**
- * Tests for the useScrollLock hook.
- *
- * @packageDocumentation
- */
-
 import { useState } from 'react';
 import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -22,7 +16,6 @@ const getDefined = <Value,>(
 };
 
 describe('useScrollLock', () => {
-	// Component that uses the scroll lock hook
 	const TestComponent = ({ shouldLock = true }: { shouldLock?: boolean }) => {
 		useScrollLock(shouldLock);
 
@@ -33,7 +26,6 @@ describe('useScrollLock', () => {
 		);
 	};
 
-	// Component with toggle for testing dynamic lock behavior
 	const ToggleLockComponent = () => {
 		const [locked, setLocked] = useState(false);
 		useScrollLock(locked);
@@ -101,7 +93,6 @@ describe('useScrollLock', () => {
 
 			const toggle = document.querySelector('[data-testid="toggle"]');
 
-			// Toggle on
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -110,7 +101,6 @@ describe('useScrollLock', () => {
 				{ timeout: 3000 }
 			);
 
-			// Toggle off
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -123,7 +113,6 @@ describe('useScrollLock', () => {
 
 	describe('Cleanup', () => {
 		test('should handle dynamic lock state changes', async () => {
-			// Test cleanup behavior via ToggleLockComponent
 			render(<ToggleLockComponent />);
 
 			await vi.waitFor(
@@ -136,7 +125,6 @@ describe('useScrollLock', () => {
 
 			const toggle = document.querySelector('[data-testid="toggle"]');
 
-			// Enable lock
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -145,7 +133,6 @@ describe('useScrollLock', () => {
 				{ timeout: 3000 }
 			);
 
-			// Disable lock (should cleanup)
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -154,7 +141,6 @@ describe('useScrollLock', () => {
 				{ timeout: 3000 }
 			);
 
-			// Re-enable lock (should work without issues)
 			await userEvent.click(getDefined(toggle));
 			await vi.waitFor(
 				() => {
@@ -407,7 +393,6 @@ describe('useScrollLock', () => {
 				{ timeout: 3000 }
 			);
 
-			// Remove one instance
 			const toggle = document.querySelector('[data-testid="toggle"]');
 			await userEvent.click(getDefined(toggle));
 

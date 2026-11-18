@@ -124,8 +124,6 @@ export const learnEngineChunks = function learnEngineChunks<Value>(
 		}
 		learn();
 	};
-	// Records on the side, once the import succeeded; the caller gets
-	// `loading` itself.
 	void record();
 	return loading;
 };

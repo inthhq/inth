@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * Enhanced ConsentDialog component with compound components attached.
- *
- * @remarks
- * This is the main export that provides access to all ConsentDialog components.
- * It follows the compound components pattern, allowing for flexible composition
- * of the dialog's parts.
- */
-
 import type { FC } from 'react';
 
 import {
@@ -32,12 +23,6 @@ import type { ConsentDialogProps } from './panel';
 
 export type { ConsentDialogProps };
 
-/**
- * This interface extends the base ConsentDialog component with additional sub-components
- * that can be used to compose the dialog's structure. Each component is designed to be
- * fully accessible and customizable while maintaining compliance with privacy regulations.
- *
- */
 export interface ConsentDialogCompoundComponent extends FC<ConsentDialogProps> {
 	Card: typeof Card;
 	Header: typeof Header;
@@ -59,13 +44,7 @@ export interface ConsentDialogCompoundComponent extends FC<ConsentDialogProps> {
  * A modal dialog component for detailed privacy consent management.
  *
  * @remarks
- * Key features:
- * - Provides an accessible modal interface for consent customization
- * - Implements smooth enter/exit animations
- * - Manages proper focus handling
- * - Supports theme customization through provider tokens and slots
- * - Handles client-side portal rendering
- * - Exposes compound primitives for advanced markup changes
+ * Renders into `document.body` through a portal, after hydration.
  *
  * @example
  * Basic usage:
@@ -134,7 +113,6 @@ const ConsentDialog = Object.assign(ConsentDialogComponent, {
 	Root,
 }) as ConsentDialogCompoundComponent;
 
-// Export the main component as both default and named export
 export default ConsentDialog;
 
 // Export individual components for backward compatibility

@@ -25,8 +25,6 @@ export interface ConsentLabels {
  * a custom UI can label any resolved action without its own map. Keys the
  * active language leaves out use English.
  *
- * @returns Labels keyed by action and by preference control.
- *
  * @example
  * ```tsx
  * const { banner, performBannerAction } = useHeadlessConsentUI();

@@ -1,12 +1,3 @@
-/**
- * E2E tests for the `models` prop on consent components.
- *
- * Verifies that components only render when the current consent model
- * matches their `models` prop (default or explicitly set).
- *
- * @packageDocumentation
- */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -24,7 +15,6 @@ import { ConsentBanner } from '~/components/prompt';
 
 import { testing } from '../../testing';
 
-// Mock localStorage
 const localStorageMock = (() => {
 	let store: Record<string, string> = {};
 	return {
@@ -238,7 +228,6 @@ describe('models Prop E2E Tests', () => {
 				</ConsentProvider>
 			);
 
-			// Standard banner should render
 			await vi.waitFor(
 				() => {
 					const banner = document.querySelector(
@@ -249,7 +238,6 @@ describe('models Prop E2E Tests', () => {
 				{ timeout: 3000 }
 			);
 
-			// IAB banner should NOT render
 			const iabBanner = document.querySelector(
 				'[data-testid="iab-consent-banner-card"]'
 			);

@@ -62,8 +62,6 @@ export const DEFAULT_POLICY_BLOCKED_MESSAGE =
  * parts read their default text from here, so the hook and the parts
  * always agree.
  *
- * @param translations - The active translation bundle.
- * @param category - The gated category.
  * @returns The category title, placeholder title, button label and
  * policy-blocked message.
  * @internal
@@ -112,7 +110,6 @@ export const resolveConsentGateCopy = function resolveConsentGateCopy(
  *
  * @param category - The consent category the content needs, such as
  * `'marketing'`.
- * @returns The gate state, the translated copy and `requestConsent`.
  * @throws {Error} When called outside a `ConsentProvider`.
  *
  * @example

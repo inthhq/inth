@@ -1,9 +1,3 @@
-/**
- * IAB Events E2E Tests
- *
- * Browser-based tests for IAB TCF event system compliance.
- */
-
 import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -89,7 +83,6 @@ describe('IAB Events E2E Tests', () => {
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
 			await waitForCMP();
 
-			// Set up listener to capture events
 			const tcfapi = (window as { __tcfapi?: TcfApiTestFunction }).__tcfapi;
 			if (tcfapi) {
 				tcfapi('addEventListener', 2, (data: { eventStatus: string }) => {
@@ -97,7 +90,6 @@ describe('IAB Events E2E Tests', () => {
 				});
 			}
 
-			// Wait for events
 			await vi.waitFor(
 				() => {
 					if (events.length === 0) {
@@ -125,7 +117,6 @@ describe('IAB Events E2E Tests', () => {
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
 			await waitForCMP();
 
-			// Set up listener
 			const tcfapi = (window as { __tcfapi?: TcfApiTestFunction }).__tcfapi;
 			if (tcfapi) {
 				tcfapi('addEventListener', 2, (data: { eventStatus: string }) => {
@@ -133,7 +124,6 @@ describe('IAB Events E2E Tests', () => {
 				});
 			}
 
-			// Perform user action
 			const acceptButton = document.querySelector(
 				'[data-testid="iab-consent-banner-accept-button"]'
 			);
@@ -141,7 +131,6 @@ describe('IAB Events E2E Tests', () => {
 				await userEvent.click(acceptButton);
 			}
 
-			// Wait for useractioncomplete event
 			await vi.waitFor(
 				() => {
 					if (!events.includes('useractioncomplete')) {
@@ -257,7 +246,6 @@ describe('IAB Events E2E Tests', () => {
 			expect(event2.listenerId).toBeDefined();
 			expect(event3.listenerId).toBeDefined();
 
-			// All should be unique
 			const ids = [event1.listenerId, event2.listenerId, event3.listenerId];
 			const uniqueIds = new Set(ids);
 			expect(uniqueIds.size).toBe(3);
@@ -329,7 +317,6 @@ describe('IAB Events E2E Tests', () => {
 				});
 			}
 
-			// Wait for initial events
 			await vi.waitFor(
 				() => {
 					if (
@@ -343,7 +330,6 @@ describe('IAB Events E2E Tests', () => {
 				{ timeout: 500 }
 			);
 
-			// All should have received at least one event
 			expect(listener1Events.length).toBeGreaterThan(0);
 			expect(listener2Events.length).toBeGreaterThan(0);
 			expect(listener3Events.length).toBeGreaterThan(0);
@@ -380,7 +366,6 @@ describe('IAB Events E2E Tests', () => {
 				{ timeout: 500 }
 			);
 
-			// Check required fields
 			expect(receivedData).toHaveProperty('eventStatus');
 			expect(receivedData).toHaveProperty('listenerId');
 			expect(receivedData).toHaveProperty('gdprApplies');
