@@ -106,7 +106,7 @@ for a working `app.config.ts`. The plugin accepts:
 | `iab` | Optional IAB TCF CMP identity and publisher settings. See [Turn on IAB TCF](#turn-on-iab-tcf). |
 | `gpp` | Optional IAB GPP string and `IABGPP_*` keys. See [IAB GPP](/docs/frameworks/react-native/gpp). |
 | `policyResource` | Build-exported policy JSON, relative to the Expo project. |
-| `bundleManifest` | Fetch the manifest at prebuild with `inth mobile-manifest` and bundle it. Replaces `policyResource`. See [bundle the manifest at build time](/docs/guides/mobile-offline#bundle-the-manifest-at-build-time). |
+| `bundleManifest` | Fetch the manifest at prebuild with `c15t mobile-manifest` and bundle it. Replaces `policyResource`. See [bundle the manifest at build time](/docs/guides/mobile-offline#bundle-the-manifest-at-build-time). |
 | `policy` | Policy rules in source control, as `{ rules: [...] }` in the backend's `PolicyRule` names. The device resolves them and never calls `/init`. It cannot be combined with `policyResource`, `bundleManifest` or `iab`. See [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code). |
 | `androidMavenRepository` | Build-time native artifact repository and credential environment-variable names. |
 | `autoBootstrap` | Whether native launch installs the engine. Defaults to true. Set false when your native app installs it. |

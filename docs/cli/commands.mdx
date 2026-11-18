@@ -49,11 +49,11 @@ inth project list --limit 20 --cursor '<nextCursor>'
 inth region list
 inth project create --name Website --region '<region-id>' \
   --branding inth --trusted-origins '["example.com", "*.example.com"]'
-inth project update prj_123 --name 'Marketing site' --branding inth
+inth project update prj_123 --name 'Marketing site' --branding c15t
 inth project update prj_123 --data '{"description":null}'
 ```
 
-Replace the example IDs with IDs returned by the API. Project writes accept `--branding inth|inth|none` and a JSON array for `--trusted-origins`. Use `--data '<JSON object>'` or `--data-file <path|->` instead of individual body options for nested fields or explicit null values.
+Replace the example IDs with IDs returned by the API. Project writes accept `--branding inth|c15t|none` and a JSON array for `--trusted-origins`. Use `--data '<JSON object>'` or `--data-file <path|->` instead of individual body options for nested fields or explicit null values.
 
 An empty `consent.trustedOrigins` array allows requests from every origin. Use an explicit list to restrict origins.
 
@@ -308,19 +308,19 @@ Keep the `clientAttachmentId` printed to stderr, or supply your own UUID. An exp
 
 These commands require a person's approved connection. Chat uploads and discards need `agents.write`; discovery and downloads need `agents.read`. Support upload, finalize and discard need an explicitly scoped agent connection with `support.write`. Ordinary browser login does not request that permission. Existing API scope, role, ownership, rollout and operational controls remain authoritative. Organization API keys cannot gain these capabilities.
 
-## How do I set up Inth in my app?
+## How do I set up c15t in my app?
 
-Run `inth inth` from your app directory to choose an Inth project and set up Inth v3. Agent setup is recommended. The agent can adapt the integration to your app, move existing tracking behind consent, and verify the result in a browser. The picker selects agent setup first when an agent is installed. Otherwise, it selects a setup prompt to paste into your agent.
+Run `inth c15t` from your app directory to choose an Inth project and set up c15t v3. Agent setup is recommended. The agent can adapt the integration to your app, move existing tracking behind consent, and verify the result in a browser. The picker selects agent setup first when an agent is installed. Otherwise, it selects a setup prompt to paste into your agent.
 
 ```sh
-inth inth
-inth inth --codex --project Website --organization org_123
-inth inth prompt --project Website --organization org_123 --json
-inth inth scaffold --project Website --organization org_123 --dry-run --json
-inth inth scaffold --project Website --organization org_123 --yes
+inth c15t
+inth c15t --codex --project Website --organization org_123
+inth c15t prompt --project Website --organization org_123 --json
+inth c15t scaffold --project Website --organization org_123 --dry-run --json
+inth c15t scaffold --project Website --organization org_123 --yes
 ```
 
-Scaffold detects the framework from `package.json`. Use `--framework` to choose it explicitly, and `inth inth --help` to list supported frameworks. It writes the framework's quickstart files and installs its Inth packages from the stable v3 release line with the app's package manager. Next.js and React use `inth@3`; the HTML script tag needs no package installation. Existing generated files must match, or setup stops without overwriting them. An existing `.env` stays intact; the next steps identify backend URL assignments to add or replace by hand. For an existing app with custom entry points or config, use an agent to adapt the integration.
+Scaffold detects the framework from `package.json`. Use `--framework` to choose it explicitly, and `inth c15t --help` to list supported frameworks. It writes the framework's quickstart files and installs its c15t packages from the stable v3 release line with the app's package manager. Next.js and React use `c15t@3`; the HTML script tag needs no package installation. Existing generated files must match, or setup stops without overwriting them. An existing `.env` stays intact; the next steps identify backend URL assignments to add or replace by hand. For an existing app with custom entry points or config, use an agent to adapt the integration.
 
 Static HTML sites can scaffold without `package.json`. An existing `index.html` selects the HTML target, or use `--framework html` to create one. Existing pages stay intact, with instructions for adding only the missing script or preferences link. JSON plans expose file paths and existence flags.
 
@@ -330,7 +330,7 @@ Next.js quickstart entry points do not import an app stylesheet or require an `@
 
 For Next.js Pages Router, scaffold reads a literal `pageExtensions` list from your config and uses its suffixes for existing entries and new consent API routes. Use agent setup for computed extension lists or page formats other than JavaScript and TypeScript.
 
-Nuxt scaffolding uses the root `app.vue` for Nuxt 3 and `app/app.vue` for Nuxt 4. It also supports a literal `srcDir` inside the app. Scaffold preserves existing app components and config filenames, and gives instructions to add the consent components and `inth/vue` module. Use agent setup for a computed source directory.
+Nuxt scaffolding uses the root `app.vue` for Nuxt 3 and `app/app.vue` for Nuxt 4. It also supports a literal `srcDir` inside the app. Scaffold preserves existing app components and config filenames, and gives instructions to add the consent components and `c15t/vue` module. Use agent setup for a computed source directory.
 
 SvelteKit scaffolding requires stable SvelteKit 2.63+ or 3.x to match `@c15t/svelte@3`. Setup checks the installed Kit version first, then simple exact, caret, or tilde versions in `package.json` when Kit is not installed. If the range cannot be checked, install dependencies and retry. Upgrade and install older apps before scaffolding, or use agent setup to plan the upgrade. Setup preserves your existing Svelte config and package manifest.
 
@@ -340,20 +340,20 @@ To create a hosted project, pass `--name Website --region <region-id>` instead o
 
 Agent flags include `--codex`, `--claude`, `--cursor`, `--grok`, and `--fx`. The agent must be installed on your path, and agent sessions run in the terminal on macOS and Linux. Use `prompt --json` to export public setup inputs for another agent. Scaffold and prompt accept `--json`; interactive agent sessions do not.
 
-## How do I migrate a hosted Inth app from v2 to v3?
+## How do I migrate a hosted c15t app from v2 to v3?
 
-Run `inth inth codemods` from your app directory. Each codemod rewrites one part of the v2 API. It needs no sign-in or Inth project, and changes only files in your app.
+Run `inth c15t codemods` from your app directory. Each codemod rewrites one part of the v2 API. It needs no sign-in or Inth project, and changes only files in your app.
 
 ```sh
-inth inth codemods --list
-inth inth codemods packages-to-inth consent-provider-options --dry-run
-inth inth codemods packages-to-inth consent-provider-options root-exports-to-subpaths
-inth inth codemods css-variables-to-v3 --json
+inth c15t codemods --list
+inth c15t codemods packages-to-c15t consent-provider-options --dry-run
+inth c15t codemods packages-to-c15t consent-provider-options root-exports-to-subpaths
+inth c15t codemods css-variables-to-v3 --json
 ```
 
-`--list` shows each codemod and whether it applies to the Inth version in `package.json`. Named codemods run in the order `--list` shows. `--dry-run` reports the changes without writing files. With `--json`, the result goes to stdout and progress lines go to stderr.
+`--list` shows each codemod and whether it applies to the c15t version in `package.json`. Named codemods run in the order `--list` shows. `--dry-run` reports the changes without writing files. With `--json`, the result goes to stdout and progress lines go to stderr.
 
-The codemods are ported from `@c15t/cli@3.1.0` and cover hosted apps. Where an app uses offline or custom mode, they leave that code unchanged and add a `TODO(inth v3)` comment. Other changes that need a decision also get a `TODO(inth v3)` comment. Search for it after a run. To migrate offline mode, a self-hosted backend, or `@c15t/node-sdk`, use the codemods in `@c15t/cli`.
+The codemods are ported from `@c15t/cli@3.1.0` and cover hosted apps. Where an app uses offline or custom mode, they leave that code unchanged and add a `TODO(c15t v3)` comment. Other changes that need a decision also get a `TODO(c15t v3)` comment. Search for it after a run. To migrate offline mode, a self-hosted backend, or `@c15t/node-sdk`, use the codemods in `@c15t/cli`.
 
 ## How do I start a Code Audit scan?
 
