@@ -1,11 +1,13 @@
 /**
- * Framework-agnostic utilities for the PreferenceCenterTrigger component.
- *
- * These utilities handle corner position calculations, drag state management,
- * and position persistence - all without any framework-specific dependencies.
+ * Framework-agnostic behavior of the floating trigger that reopens
+ * preferences: when it shows, which corner it sits in, how a drag picks
+ * the next corner, the toolbar's item order and keyboard focus, and the
+ * end of the snap animation.
  *
  * @packageDocumentation
  */
+
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk-schema/config';
 
 /**
  * Corner position options for the trigger button.
@@ -203,44 +205,6 @@ export const calculateCornerFromDrag = function calculateCornerFromDrag(
 };
 
 /**
- * Gets CSS position properties for placing an element at a corner.
- *
- * @param corner - The corner to position at
- * @param offset - Distance from viewport edges in pixels
- * @returns Object with CSS position properties (top/bottom and left/right)
- *
- * @example
- * ```typescript
- * const styles = getCornerStyles('bottom-right', 16);
- * // Returns: { bottom: '16px', right: '16px' }
- * ```
- */
-export const getCornerStyles = function getCornerStyles(
-	corner: CornerPosition,
-	offset = 16
-): Record<string, string | undefined> {
-	const styles: Record<string, string | undefined> = {};
-
-	if (corner.includes('bottom')) {
-		styles.bottom = `${offset}px`;
-		styles.top = undefined;
-	} else {
-		styles.top = `${offset}px`;
-		styles.bottom = undefined;
-	}
-
-	if (corner.includes('right')) {
-		styles.right = `${offset}px`;
-		styles.left = undefined;
-	} else {
-		styles.left = `${offset}px`;
-		styles.right = undefined;
-	}
-
-	return styles;
-};
-
-/**
  * Persists the trigger position to localStorage.
  *
  * @param corner - The corner position to persist
@@ -308,29 +272,172 @@ export const createInitialDragState =
 		};
 	};
 
+/** What decides whether the trigger is on screen. */
+export interface TriggerVisibilityState {
+	/** The `showWhen` option. */
+	showWhen: ConsentDialogTriggerVisibility;
+	/** Whether a preferences control has somewhere to go. */
+	hasConsentPreferences: boolean;
+	/** Whether the preference dialog is open. */
+	dialogOpen: boolean;
+	/** Whether the policy still owes a prompt: a choice or a notice. */
+	promptOwed: boolean;
+}
+
 /**
- * Calculates the transform offset during a drag operation.
+ * Whether the trigger renders.
  *
- * @param dragState - The current drag state
- * @returns Object with x and y pixel offsets for CSS transform
+ * @remarks
+ * Hidden with no resolved policy to manage, while the dialog it opens is
+ * open, and for `never`. `after-consent` also waits until no prompt is
+ * owed: a choice saved or a notice dismissed. Otherwise the trigger stays
+ * on screen beside an open banner.
+ *
+ * @param state - The trigger's option and the consent state.
+ * @returns `true` when the trigger should be on screen.
  *
  * @example
- * ```typescript
- * const offset = calculateDragOffset(dragState);
- * // Use in style: transform: translate(${offset.x}px, ${offset.y}px)
+ * ```ts
+ * isTriggerVisible({
+ *   showWhen: 'after-consent',
+ *   hasConsentPreferences: true,
+ *   dialogOpen: false,
+ *   promptOwed: true,
+ * }); // false
  * ```
  */
-export const calculateDragOffset = function calculateDragOffset(
-	dragState: DragState
-): {
-	x: number;
-	y: number;
-} {
-	if (!dragState.isDragging) {
-		return { x: 0, y: 0 };
+export const isTriggerVisible = function isTriggerVisible(
+	state: TriggerVisibilityState
+): boolean {
+	if (
+		!state.hasConsentPreferences ||
+		state.dialogOpen ||
+		state.showWhen === 'never'
+	) {
+		return false;
 	}
-	return {
-		x: dragState.currentX - dragState.startX,
-		y: dragState.currentY - dragState.startY,
+	return state.showWhen === 'always' || !state.promptOwed;
+};
+
+/** An item of the trigger toolbar. */
+export type TriggerToolbarItem = 'preferences' | 'devtools';
+
+/**
+ * The toolbar's items from left to right in a corner. Preferences sits in
+ * the corner; DevTools, a development aid, sits farthest from it.
+ *
+ * @param corner - The corner the toolbar sits in.
+ * @returns The two items in visual order.
+ */
+export const toolbarOrder = function toolbarOrder(
+	corner: CornerPosition
+): readonly [TriggerToolbarItem, TriggerToolbarItem] {
+	return corner.endsWith('left')
+		? ['preferences', 'devtools']
+		: ['devtools', 'preferences'];
+};
+
+/**
+ * The toolbar item a key moves focus to, for a roving tab stop. Arrow
+ * keys along `orientation` step and wrap; Home and End jump to the ends.
+ *
+ * @param items - The focusable items in visual order.
+ * @param current - The item that has the tab stop.
+ * @param key - `KeyboardEvent.key`.
+ * @param orientation - The toolbar's direction.
+ * @returns The item to focus, or `undefined` for a key the toolbar ignores.
+ *
+ * @example
+ * ```ts
+ * nextToolbarItem(['devtools', 'preferences'], 'preferences', 'ArrowRight');
+ * // 'devtools'
+ * ```
+ */
+export const nextToolbarItem = function nextToolbarItem<Item>(
+	items: readonly Item[],
+	current: Item | undefined,
+	key: string,
+	orientation: 'horizontal' | 'vertical' = 'horizontal'
+): Item | undefined {
+	if (items.length === 0) {
+		return undefined;
+	}
+	const index = current === undefined ? -1 : items.indexOf(current);
+	const vertical = orientation === 'vertical';
+	if (key === 'Home') {
+		return items[0];
+	}
+	if (key === 'End') {
+		return items.at(-1);
+	}
+	if (key === (vertical ? 'ArrowDown' : 'ArrowRight')) {
+		return items[(index + 1) % items.length];
+	}
+	if (key === (vertical ? 'ArrowUp' : 'ArrowLeft')) {
+		return items[(Math.max(index, 0) - 1 + items.length) % items.length];
+	}
+	return undefined;
+};
+
+/** Longest `transition-duration` plus `transition-delay` on `element`, in ms. */
+const longestTransition = function longestTransition(element: Element): number {
+	const style = getComputedStyle(element);
+	const toMs = (value: string | undefined): number[] =>
+		(value ?? '').split(',').map((part) => {
+			const trimmed = part.trim();
+			const amount = Number.parseFloat(trimmed);
+			if (!Number.isFinite(amount)) {
+				return 0;
+			}
+			return trimmed.endsWith('ms') ? amount : amount * 1000;
+		});
+	const durations = toMs(style.transitionDuration);
+	const delays = toMs(style.transitionDelay);
+	return Math.max(
+		0,
+		...durations.map((duration, index) => duration + (delays[index] ?? 0))
+	);
+};
+
+/**
+ * Calls `done` once the trigger's snap to a corner has finished.
+ *
+ * @remarks
+ * Call it after the snapping class and the new corner are on the element.
+ * It waits for the element's own `transitionend`, so a theme that changes
+ * `--cdt-snap-duration` changes the wait too. When no transition runs
+ * (`disableAnimation`, reduced motion, or no stylesheet), no event fires;
+ * a timer set from the computed transition time ends the wait instead.
+ *
+ * @param element - The trigger or toolbar element.
+ * @param done - Called once, when the snap has finished.
+ * @returns A function that cancels the wait without calling `done`.
+ */
+export const onSnapEnd = function onSnapEnd(
+	element: HTMLElement,
+	done: () => void
+): () => void {
+	const listeners = new AbortController();
+	const longest = longestTransition(element);
+	// A little past the transition's end, for a snap that moved nothing.
+	const timer = setTimeout(
+		() => {
+			listeners.abort();
+			done();
+		},
+		longest > 0 ? longest + 50 : 0
+	);
+	const cancel = (): void => {
+		clearTimeout(timer);
+		listeners.abort();
 	};
+	const onEnd = (event: Event): void => {
+		if (event.target === element) {
+			cancel();
+			done();
+		}
+	};
+	element.addEventListener('transitionend', onEnd, listeners);
+	element.addEventListener('transitioncancel', onEnd, listeners);
+	return cancel;
 };

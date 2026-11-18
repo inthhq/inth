@@ -4,10 +4,10 @@
 	"private": true,
 	"description": "Framework-agnostic UI primitives, CSS and theme tokens behind the inth React, Vue, Svelte and Astro components.",
 	"keywords": [
-		"inth",
 		"design-system",
 		"framework-agnostic",
 		"headless-ui",
+		"inth",
 		"primitives",
 		"tailwind",
 		"ui"
@@ -282,6 +282,7 @@
 	},
 	"dependencies": {
 		"@inth/sdk-core": "workspace:*",
+		"@inth/sdk-schema": "workspace:*",
 		"@inth/sdk-translations": "workspace:*"
 	},
 	"devDependencies": {

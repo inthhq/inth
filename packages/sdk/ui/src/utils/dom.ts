@@ -265,7 +265,7 @@ export const setupScrollLock = function setupScrollLock() {
  * node would silently no-op and drop keyboard users at `<body>`. Matching by
  * `id`, then by `data-testid`, re-targets the remounted opener instead.
  */
-const findFocusRestoreEquivalent = function findFocusRestoreEquivalent(
+export const findFocusRestoreEquivalent = function findFocusRestoreEquivalent(
 	element: HTMLElement
 ): HTMLElement | null {
 	if (element.id) {
