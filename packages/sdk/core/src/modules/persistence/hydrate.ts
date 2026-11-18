@@ -3,8 +3,9 @@
  *
  * Synchronous and read-only: the storage read never migrates, mirrors,
  * renews or deletes anything. The first structurally valid consent
- * candidate wins (cookie, configured localStorage, legacy localStorage),
- * the notice dismissal and vendor denials are read with the same `now`,
+ * candidate wins (cookie, then localStorage, under the configured key and
+ * then each legacy family), the notice dismissal and vendor denials are
+ * read with the same `now`,
  * and everything is applied through `kernel.hydrate()`, which
  * validates again and never emits a choice event.
  */

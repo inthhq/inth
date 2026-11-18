@@ -12,13 +12,12 @@ import { pathToFileURL } from 'node:url';
 
 import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 
-import { storedAnswerKeys } from './libs/journey';
 import {
 	buildStaticBannerScript,
 	STATIC_BANNER_ATTR,
 	staticBannerCopyHash,
 } from './libs/static-banner';
-import { STORAGE_KEY_V2 } from './libs/storage-keys';
+import { storedChoiceNames } from './libs/storage-keys';
 import { resolveManifestInit } from './transports/manifest-cache';
 
 /** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
@@ -221,16 +220,12 @@ const packInputs = function packInputs(
 };
 
 /**
- * Cookie and localStorage names holding a choice or a notice dismissal: what
- * the client-rendered provider reads to load the engine at once instead of
- * showing a banner.
+ * Names holding a choice or a notice dismissal: what the client-rendered
+ * provider reads to load the engine at once instead of showing a banner.
  */
-const storedKeys = function storedKeys(storageKey: string) {
-	const keys = storedAnswerKeys(storageKey);
-	return {
-		cookies: [...keys.cookies, keys.notice],
-		local: [...keys.local, keys.notice],
-	};
+const storedNames = function storedNames(storageKey: string | undefined) {
+	const names = storedChoiceNames({ storageKey });
+	return [...names.choice, ...names.notice];
 };
 
 /** The static banner for a page: markup and reveal script. */
@@ -280,7 +275,7 @@ export const renderStaticBannerHtml = function renderStaticBannerHtml(
 				language: init.translations.language,
 				policy,
 			},
-			storedKeys(options.storageKey || STORAGE_KEY_V2)
+			storedNames(options.storageKey)
 		);
 		// The early-tap script inside records a tap; the attribute marks
 		// the element the app's banner replaces.

@@ -7,11 +7,8 @@ import { parseJourneyId, parseJourneyScope } from '@inth/sdk-schema/types';
 import type { ConsentJourneyScope } from '@inth/sdk-schema/types';
 
 import type { KernelJourney } from '../types';
-import {
-	JOURNEY_STORAGE_KEY,
-	STORAGE_KEY,
-	STORAGE_KEY_V2,
-} from './storage-keys';
+import { readCookieValueFromHeader } from './cookie/operations';
+import { JOURNEY_STORAGE_KEY, storedChoiceNames } from './storage-keys';
 
 /**
  * Whether and how long a runtime keeps a consent journey id.
@@ -199,29 +196,9 @@ export const claimEarlyJourney = function claimEarlyJourney(options: {
 };
 
 /**
- * Where a choice is stored, as cookie names and localStorage keys (with the
- * legacy one) for `storageKey`, and the key a notice dismissal uses for both.
- *
- * @param storageKey - The consent storage key.
- * @returns The choice's cookie names and localStorage keys, and the notice key.
- * @internal
- */
-export const storedAnswerKeys = function storedAnswerKeys(storageKey: string): {
-	cookies: string[];
-	local: string[];
-	notice: string;
-} {
-	return {
-		cookies: [storageKey],
-		local: [storageKey, ...(storageKey === STORAGE_KEY ? [] : [STORAGE_KEY])],
-		notice: `${storageKey}-notice`,
-	};
-};
-
-/**
  * Whether a consent choice, or with `notice` a notice dismissal too, is
- * stored under `storageKey`, without decoding it. The inline prefetch script
- * runs the same check.
+ * stored under `storageKey` or a legacy family it falls back to, without
+ * decoding it. Inline scripts run the same test (`STORED_NAMES_CHECK`).
  *
  * The journey's stored flag counts a dismissal. The experiment arm does not:
  * the runtime sends an arm until the visitor makes a choice.
@@ -232,33 +209,25 @@ export const storedAnswerKeys = function storedAnswerKeys(storageKey: string): {
  * @internal
  */
 export const hasStoredConsentRecord = function hasStoredConsentRecord(
-	storageKey: string = STORAGE_KEY_V2,
+	storageKey?: string,
 	notice = true
 ): boolean {
 	if (typeof document === 'undefined') {
 		return false;
 	}
-	const keys = storedAnswerKeys(storageKey);
-	const cookies = notice ? [...keys.cookies, keys.notice] : keys.cookies;
-	const local = notice ? [...keys.local, keys.notice] : keys.local;
+	const stored = storedChoiceNames({ storageKey });
+	const names = notice ? [...stored.choice, ...stored.notice] : stored.choice;
+	let cookies: string | undefined;
 	try {
-		if (
-			document.cookie
-				.split('; ')
-				.some((pair) =>
-					cookies.some(
-						(name) =>
-							pair.startsWith(`${name}=`) && pair.length > name.length + 1
-					)
-				)
-		) {
-			return true;
-		}
+		cookies = document.cookie;
 	} catch {
 		// Cookies blocked; localStorage may still answer.
 	}
+	if (names.some((name) => Boolean(readCookieValueFromHeader(cookies, name)))) {
+		return true;
+	}
 	try {
-		return local.some((key) => window.localStorage.getItem(key) !== null);
+		return names.some((name) => window.localStorage.getItem(name) !== null);
 	} catch {
 		return false;
 	}

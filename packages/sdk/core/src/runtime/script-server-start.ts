@@ -16,6 +16,7 @@
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
 import type { Script } from '../libs/script-loader/types';
+import { STORED_NAMES_CHECK } from '../libs/storage-keys';
 import {
 	deniedVendorIds,
 	evaluateConsent,
@@ -211,9 +212,11 @@ const seedOf = function seedOf(snapshot: ConsentSnapshot): {
  * and vendor records. It also skips for a clear at or after the earliest
  * seeded decision, and for a record it can't read, such as an older
  * format: the loader then decides from the stored state, as it would
- * without this script. A record under the legacy key skips too, unless
- * the server read a decision from the consent cookie: the client falls
- * back to the legacy record when the configured one doesn't decode.
+ * without this script. A consent record under a legacy family skips too,
+ * unless the server read a decision from the configured consent cookie:
+ * the client falls back to legacy records when the configured one doesn't
+ * decode. So does a legacy vendor record while the configured family holds
+ * none.
  *
  * Two things change the state without a stored record: the browser's
  * Global Privacy Control signal, when the server didn't see one and no
@@ -248,7 +251,8 @@ const newerStoredDecision = function newerStoredDecision(
 	};
 	// `z()` is true when the stored state differs. `c(name)` reads a
 	// cookie, unwrapping one URI-encoding layer as the client does; `l(key)`
-	// reads localStorage. `d` tests one decision against the seed, `p` the
+	// reads localStorage, `H(names)` whether any of them holds a record.
+	// `d` tests one decision against the seed, `p` the
 	// fields of a compact record, `o` a parsed JSON one. `p` is also true
 	// for a field the client's decoder rejects: a field without a value,
 	// a repeated one, a malformed decision, or one outside `F`, the other
@@ -265,7 +269,7 @@ const newerStoredDecision = function newerStoredDecision(
 	// it when it denies a vendor the server's list (`Y`) allows: the client
 	// adds those denials to the cookie's (`readStoredVendorChoice`). `D` is
 	// the time the server's decisions can next change.
-	return `var D=${inlineJSON(snapshot.nextDeadline)},S=${inlineJSON(seed.categories)},V=${seed.vendorsAt},Y=${inlineJSON(seed.vendorsDenied)},M=${inlineJSON(seed.earliest)},N=${inlineJSON(names)},F=${inlineJSON(fields)},K=${inlineJSON({ consent: keys.consent, epoch: keys.epoch, legacyConsent: keys.legacyConsent, vendors: keys.vendors })},z=function(){${gpcCheck}if(D!==null&&!(Date.now()<D))return true;var c=function(n){try{for(var a=document.cookie.split(/;\\s*/),j=0;j<a.length;j++){var m=a[j].indexOf('=');if(a[j].slice(0,m)===n){var v=a[j].slice(m+1);if(v.indexOf('v=')&&v.indexOf('%')>=0)try{v=decodeURIComponent(v)}catch(x){}return v}}}catch(x){}return null},l=function(n){try{return localStorage.getItem(n)}catch(x){return null}},d=function(n,v,t){var s=S[n],o=!s||!(t<=s[1]);return v!==true?o||t===s[1]&&s[0]:${anyNewer}&&o},e=function(t){return M!==null&&!(+t<M)},o=function(v,f){try{v=JSON.parse(v)}catch(x){return true}return!v||typeof v!=='object'||f(v)},p=function(v,h,f){if(v===null||v==='')return false;v=v.split('&');if(v[0]!==h)return true;for(var u=[],j=1;j<v.length;j++){var m=v[j].indexOf('='),k=v[j].slice(0,m);if(m<1||u.indexOf(k)>=0||f(k,v[j].slice(m+1)))return true;u.push(k)}return false},r=function(v,f){return v!==null&&v!==''&&o(v,f)},x=function(v){try{return!decodeURIComponent(v)}catch(y){return true}},a=c(K.consent),b=l(K.consent),B=0,I=-1,T,g;if(p(a,'v=3',function(k,v){if(k==='e')return e(v);if(k==='b'){B=v.split('|').length;return!/^(c[^|]+|l[^|]*)(\\|(c[^|]+|l[^|]*))*$/.test(v)||x(v)}if(N.hasOwnProperty(k)){if(!/^[01]\\.\\d+\\.\\d+$/.test(v))return true;v=v.split('.');if(+v[2]>I)I=+v[2];return!(+v[1]<=Date.now())||d(N[k],v[0]==='1',+v[1])}return F.c.indexOf(k)<0||x(v)})||I>=B||r(b,function(v){if(v.version!==3||v.epoch&&e(v.epoch))return true;for(g in v.categories||{})if(v.categories[g]&&d(g,v.categories[g].value,+v.categories[g].confirmedAt))return true})||!(a&&M!==null)&&K.legacyConsent&&l(K.legacyConsent))return true;if((a=c(K.vendors),T=0,p(a,'v=1',function(k,v){if(k==='t'){T=1;return!/^\\d+$/.test(v)||!(+v<=V)||!(+v<=Date.now())}if(k==='d'){if(v==='')return false;for(var u=v.split('|'),j=0,h=[],y;j<u.length;j++){try{y=decodeURIComponent(u[j])}catch(e){return true}if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(y)||h.indexOf(y)>=0)return true;h.push(y)}return false}return F.v.indexOf(k)<0||x(v)})||a!==null&&a!==''&&!T)||r(l(K.vendors),function(v){if(v.version!==1||!(+v.confirmedAt<=V))return true;if(+v.confirmedAt===V){if(!Array.isArray(v.denied))return true;for(g=0;g<v.denied.length;g++)if(Y.indexOf(v.denied[g])<0)return true}}))return true;a=[c(K.epoch),l(K.epoch)];for(g=0;g<2;g++)if(a[g]&&e(a[g]))return true;return false};if(z())return;`;
+	return `var D=${inlineJSON(snapshot.nextDeadline)},S=${inlineJSON(seed.categories)},V=${seed.vendorsAt},Y=${inlineJSON(seed.vendorsDenied)},M=${inlineJSON(seed.earliest)},N=${inlineJSON(names)},F=${inlineJSON(fields)},K=${inlineJSON({ consent: keys.consent, epoch: keys.epoch, legacy: keys.legacy.map((family) => family.consent), legacyVendors: keys.legacy.map((family) => family.vendors), vendors: keys.vendors })},H=${STORED_NAMES_CHECK},z=function(){${gpcCheck}if(D!==null&&!(Date.now()<D))return true;var c=function(n){try{for(var a=document.cookie.split(/;\\s*/),j=0;j<a.length;j++){var m=a[j].indexOf('=');if(a[j].slice(0,m)===n){var v=a[j].slice(m+1);if(v.indexOf('v=')&&v.indexOf('%')>=0)try{v=decodeURIComponent(v)}catch(x){}return v}}}catch(x){}return null},l=function(n){try{return localStorage.getItem(n)}catch(x){return null}},d=function(n,v,t){var s=S[n],o=!s||!(t<=s[1]);return v!==true?o||t===s[1]&&s[0]:${anyNewer}&&o},e=function(t){return M!==null&&!(+t<M)},o=function(v,f){try{v=JSON.parse(v)}catch(x){return true}return!v||typeof v!=='object'||f(v)},p=function(v,h,f){if(v===null||v==='')return false;v=v.split('&');if(v[0]!==h)return true;for(var u=[],j=1;j<v.length;j++){var m=v[j].indexOf('='),k=v[j].slice(0,m);if(m<1||u.indexOf(k)>=0||f(k,v[j].slice(m+1)))return true;u.push(k)}return false},r=function(v,f){return v!==null&&v!==''&&o(v,f)},x=function(v){try{return!decodeURIComponent(v)}catch(y){return true}},a=c(K.consent),b=l(K.consent),B=0,I=-1,T,g;if(p(a,'v=3',function(k,v){if(k==='e')return e(v);if(k==='b'){B=v.split('|').length;return!/^(c[^|]+|l[^|]*)(\\|(c[^|]+|l[^|]*))*$/.test(v)||x(v)}if(N.hasOwnProperty(k)){if(!/^[01]\\.\\d+\\.\\d+$/.test(v))return true;v=v.split('.');if(+v[2]>I)I=+v[2];return!(+v[1]<=Date.now())||d(N[k],v[0]==='1',+v[1])}return F.c.indexOf(k)<0||x(v)})||I>=B||r(b,function(v){if(v.version!==3||v.epoch&&e(v.epoch))return true;for(g in v.categories||{})if(v.categories[g]&&d(g,v.categories[g].value,+v.categories[g].confirmedAt))return true})||!(a&&M!==null)&&H(K.legacy))return true;if((a=c(K.vendors),T=0,p(a,'v=1',function(k,v){if(k==='t'){T=1;return!/^\\d+$/.test(v)||!(+v<=V)||!(+v<=Date.now())}if(k==='d'){if(v==='')return false;for(var u=v.split('|'),j=0,h=[],y;j<u.length;j++){try{y=decodeURIComponent(u[j])}catch(e){return true}if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(y)||h.indexOf(y)>=0)return true;h.push(y)}return false}return F.v.indexOf(k)<0||x(v)})||a!==null&&a!==''&&!T)||r(l(K.vendors),function(v){if(v.version!==1||!(+v.confirmedAt<=V))return true;if(+v.confirmedAt===V){if(!Array.isArray(v.denied))return true;for(g=0;g<v.denied.length;g++)if(Y.indexOf(v.denied[g])<0)return true}})||!(a||l(K.vendors))&&H(K.legacyVendors))return true;a=[c(K.epoch),l(K.epoch)];for(g=0;g<2;g++)if(a[g]&&e(a[g]))return true;return false};if(z())return;`;
 };
 
 /** The loader's element identity for `script`. */

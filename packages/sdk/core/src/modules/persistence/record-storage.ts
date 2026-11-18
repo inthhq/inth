@@ -11,12 +11,15 @@
  *
  * - Read-only. No migration, mirroring, deletion, callback or
  *   `Date.now()` on any read path. Callers pass `now`.
- * - Candidates are inspected in a fixed order: cookie, localStorage under
- *   the configured key, localStorage under the legacy key. The first
- *   structurally valid candidate wins. Structural validity is the only
- *   selection criterion: a semantically expired but well-formed cookie
- *   still wins over a fresher localStorage record, so a stale local copy
- *   can never resurrect authority the cookie no longer carries.
+ * - Candidates are inspected in a fixed order: the cookie and localStorage
+ *   under the configured key, then the same under each legacy family
+ *   (`ResolvedStorageKeys.legacy`). The first family with a structurally
+ *   valid candidate wins, and within it the cookie. Structural validity is
+ *   the only selection criterion: a semantically expired but well-formed
+ *   cookie still wins over a fresher localStorage record, so a stale local
+ *   copy can never resurrect authority the cookie no longer carries. The
+ *   notice dismissal and vendor denials fall back across families the same
+ *   way.
  * - Encoding provenance is kept. A v2 compact cookie omitted `false`, so
  *   the legacy normalizer restores `false` for the known legacy universe
  *   only for that encoding; a v2 JSON record keeps absent keys absent.
@@ -45,7 +48,11 @@ import {
 	stringToFlat,
 } from '../../libs/cookie';
 import type { StorageConfig } from '../../libs/cookie';
-import { resolveStorageKeys } from '../../libs/storage-keys';
+import {
+	resolveStorageKeys,
+	storageKeyFamilies,
+} from '../../libs/storage-keys';
+import type { StorageKeyFamily } from '../../libs/storage-keys';
 import { choiceSinceEpoch } from './epoch';
 import {
 	decodeClearEpoch,
@@ -73,10 +80,14 @@ export type { ResolvedStorageKeys } from '../../libs/storage-keys';
 
 export type { LegacyRecordEncoding as StoredRecordEncoding };
 
-/** Where a candidate was read from, in selection order. */
+/**
+ * Where a candidate was read from: the configured family's cookie or
+ * localStorage, or a legacy family's.
+ */
 export type StoredRecordSource =
 	| 'cookie'
 	| 'local-storage'
+	| 'legacy-cookie'
 	| 'legacy-local-storage';
 
 /** Which record format a parsed candidate turned out to be. */
@@ -279,9 +290,9 @@ const recognizeCookieForm = function recognizeCookieForm(
  */
 export const parseRawCookieCandidate = function parseRawCookieCandidate(
 	rawValue: string | null | undefined,
-	key: string
+	key: string,
+	source: 'cookie' | 'legacy-cookie' = 'cookie'
 ): RawStoredCandidate {
-	const source: StoredRecordSource = 'cookie';
 	if (rawValue === null || rawValue === undefined || rawValue === '') {
 		return { key, source, status: 'absent' };
 	}
@@ -384,40 +395,39 @@ export const readRawStoredConsentCandidates =
 		config?: StorageConfig,
 		onUnavailable?: () => void
 	): RawStoredCandidate[] {
-		const keys = resolveStorageKeys(config);
-		const candidates: RawStoredCandidate[] = [
-			parseRawCookieCandidate(
-				getRawCookieValue(keys.consent, onUnavailable),
-				keys.consent
-			),
-			parseLocalStorageCandidate('local-storage', keys.consent, onUnavailable),
-		];
-		if (keys.legacyConsent) {
-			candidates.push(
+		return storageKeyFamilies(resolveStorageKeys(config)).flatMap(
+			({ consent }, index) => [
+				parseRawCookieCandidate(
+					getRawCookieValue(consent, onUnavailable),
+					consent,
+					index === 0 ? 'cookie' : 'legacy-cookie'
+				),
 				parseLocalStorageCandidate(
-					'legacy-local-storage',
-					keys.legacyConsent,
+					index === 0 ? 'local-storage' : 'legacy-local-storage',
+					consent,
 					onUnavailable
-				)
-			);
-		}
-		return candidates;
+				),
+			]
+		);
 	};
 
 /**
- * Reads the single cookie candidate from a request `Cookie` header. The
- * server counterpart of {@link readRawStoredConsentCandidates}; there is
- * no localStorage to fall back to.
+ * Reads the cookie candidates from a request `Cookie` header. The server
+ * counterpart of {@link readRawStoredConsentCandidates}; there is no
+ * localStorage to fall back to.
  */
-export const readRawStoredConsentCandidateFromCookieHeader =
-	function readRawStoredConsentCandidateFromCookieHeader(
+export const readRawStoredConsentCandidatesFromCookieHeader =
+	function readRawStoredConsentCandidatesFromCookieHeader(
 		cookieHeader: string | undefined,
 		config?: StorageConfig
-	): RawStoredCandidate {
-		const keys = resolveStorageKeys(config);
-		return parseRawCookieCandidate(
-			readCookieValueFromHeader(cookieHeader, keys.consent),
-			keys.consent
+	): RawStoredCandidate[] {
+		return storageKeyFamilies(resolveStorageKeys(config)).map(
+			({ consent }, index) =>
+				parseRawCookieCandidate(
+					readCookieValueFromHeader(cookieHeader, consent),
+					consent,
+					index === 0 ? 'cookie' : 'legacy-cookie'
+				)
 		);
 	};
 
@@ -631,48 +641,60 @@ const withNewerLocalDenials = function withNewerLocalDenials(
 };
 
 /**
- * Decodes candidates and selects one. The cookie wins over the configured
- * localStorage key, with the local copy's newer denials applied (see
- * {@link withNewerLocalDenials}); the configured localStorage record is
- * used alone only when the cookie holds no valid one, and the legacy key
- * only when neither does. Semantic freshness is not consulted here; that
- * belongs to the evaluator with the same `now`. `localIsNewer` is the
- * evidence that the local copy's identity is the newer one (see
- * {@link readStoredConsentRecord}).
+ * Decodes candidates and selects one from the first key, in read order,
+ * with a valid one. Under that key the cookie wins over localStorage,
+ * with the local copy's newer denials applied (see
+ * {@link withNewerLocalDenials}); the localStorage record is used alone
+ * only when the cookie holds no valid one. Semantic freshness is not
+ * consulted here; that belongs to the evaluator with the same `now`.
+ * `localIsNewer` tells, for a key, whether the local copy's identity is
+ * the newer one (see {@link readStoredConsentRecord}).
  */
 export const selectStoredConsent = function selectStoredConsent(
 	rawCandidates: readonly RawStoredCandidate[],
 	now: number,
-	localIsNewer = false
+	localIsNewer: (key: string) => boolean = () => false
 ): StoredConsentSelection {
 	const candidates: StoredConsentCandidate[] = [];
-	const valid = new Map<StoredRecordSource, DecodedStoredConsent>();
+	const valid = new Map<
+		string,
+		{ cookie?: DecodedStoredConsent; local?: DecodedStoredConsent }
+	>();
 	for (const raw of rawCandidates) {
 		const candidate = decodeStoredConsentCandidate(raw, now);
 		candidates.push(candidate);
-		if (candidate.status === 'valid' && !valid.has(candidate.source)) {
-			valid.set(candidate.source, candidate.record);
+		if (candidate.status === 'valid') {
+			const stored = valid.get(raw.key) ?? {};
+			valid.set(raw.key, stored);
+			if (raw.source.endsWith('cookie')) {
+				stored.cookie ??= candidate.record;
+			} else {
+				stored.local ??= candidate.record;
+			}
 		}
 	}
-	const cookie = valid.get('cookie');
-	const local = valid.get('local-storage');
-	let selected: DecodedStoredConsent | null = null;
-	if (cookie && local) {
-		selected = withNewerLocalDenials(cookie, local, localIsNewer);
-	} else {
-		selected = cookie ?? local ?? valid.get('legacy-local-storage') ?? null;
+	const [first] = valid;
+	if (!first) {
+		return { candidates, selected: null };
 	}
-	return { candidates, selected };
+	const [key, { cookie, local }] = first;
+	return {
+		candidates,
+		selected:
+			cookie && local
+				? withNewerLocalDenials(cookie, local, localIsNewer(key))
+				: (cookie ?? local ?? null),
+	};
 };
 
 /**
- * Browser read of the cookie, the configured localStorage key and the
- * legacy localStorage key. The cookie wins, with newer denials from the
- * configured localStorage copy applied (see {@link selectStoredConsent}),
- * and the full candidate report is returned for diagnostics. A server
- * render reads the cookie alone, so the two agree except when the browser
- * dropped a cookie write that carried a denial, where the browser is the
- * stricter of the two. Never writes.
+ * Browser read of the cookie and localStorage under the configured key,
+ * then under each legacy family. The cookie wins, with newer denials from
+ * the localStorage copy under the same key applied (see
+ * {@link selectStoredConsent}), and the full candidate report is returned
+ * for diagnostics. A server render reads the cookies alone, so the two
+ * agree except when the browser dropped a cookie write that carried a
+ * denial, where the browser is the stricter of the two. Never writes.
  *
  * The local copy's subject counts as newer only while the marker a
  * dropped cookie write leaves (`<key>-cookie-miss`, see
@@ -685,18 +707,25 @@ export const readStoredConsentRecord = function readStoredConsentRecord(
 	now: number,
 	onUnavailable?: () => void
 ): StoredConsentSelection {
-	const keys = resolveStorageKeys(config);
-	const miss = readLocalStorageText(keys.cookieMiss);
+	const misses = new Map(
+		storageKeyFamilies(resolveStorageKeys(config)).map((family) => [
+			family.consent,
+			family.cookieMiss,
+		])
+	);
 	return selectStoredConsent(
 		readRawStoredConsentCandidates(config, onUnavailable),
 		now,
-		miss !== null && miss === (getRawCookieValue(keys.consent) ?? '')
+		(key) => {
+			const miss = readLocalStorageText(misses.get(key) ?? '');
+			return miss !== null && miss === (getRawCookieValue(key) ?? '');
+		}
 	);
 };
 
 /**
  * Server read from a request `Cookie` header. Same decoding as the
- * browser cookie candidate, so SSR and hydration agree on the record.
+ * browser cookie candidates, so SSR and hydration agree on the record.
  */
 export const readStoredConsentRecordFromCookieHeader =
 	function readStoredConsentRecordFromCookieHeader(
@@ -705,10 +734,30 @@ export const readStoredConsentRecordFromCookieHeader =
 		now: number
 	): StoredConsentSelection {
 		return selectStoredConsent(
-			[readRawStoredConsentCandidateFromCookieHeader(cookieHeader, config)],
+			readRawStoredConsentCandidatesFromCookieHeader(cookieHeader, config),
 			now
 		);
 	};
+
+/**
+ * The first valid result of `read` across the families `config` reads,
+ * configured family first; else the first stored but invalid one, so a
+ * caller can report it; else `null`.
+ */
+const firstValidAcrossFamilies = function firstValidAcrossFamilies<RecordType>(
+	config: StorageConfig | undefined,
+	read: (family: StorageKeyFamily) => DecodeResult<RecordType> | null
+): DecodeResult<RecordType> | null {
+	let first: DecodeResult<RecordType> | null = null;
+	for (const family of storageKeyFamilies(resolveStorageKeys(config))) {
+		const result = read(family);
+		if (result?.ok) {
+			return result;
+		}
+		first ??= result;
+	}
+	return first;
+};
 
 // ---------------------------------------------------------------------------
 // Auxiliary records: notice dismissal
@@ -788,18 +837,16 @@ const noticeWithSubjectCookie = function noticeWithSubjectCookie(
 };
 
 /**
- * Reads the local notice dismissal from its cookie projection and its
+ * Reads one family's notice dismissal from its cookie projection and its
  * localStorage copy. When both are valid the newer dismissal wins, the
- * cookie on a tie; otherwise the valid one is used. `null` when nothing is
- * stored; an invalid record is reported, not silently treated as absent,
- * so callers can log it while still deriving `missing`.
+ * cookie on a tie; otherwise the valid one is used. An invalid record is
+ * reported, not silently treated as absent.
  */
-export const readStoredNoticeDismissal = function readStoredNoticeDismissal(
-	config: StorageConfig | undefined,
+const readNoticeDismissalOf = function readNoticeDismissalOf(
+	keys: StorageKeyFamily,
 	now: number,
 	onUnavailable?: () => void
 ): DecodeResult<StoredNoticeDismissal> | null {
-	const keys = resolveStorageKeys(config);
 	const fromCookie = noticeWithSubjectCookie(
 		readCompactCookie(getRawCookieValue(keys.notice, onUnavailable), (text) =>
 			decodeNoticeDismissalCompact(text, now)
@@ -842,6 +889,22 @@ export const readStoredNoticeDismissal = function readStoredNoticeDismissal(
 	return fromLocal ?? fromCookie;
 };
 
+/**
+ * Reads the local notice dismissal (see `readNoticeDismissalOf`). A legacy
+ * family is read only while the families before it hold no valid
+ * dismissal. `null` when nothing is stored; an invalid record is reported
+ * so callers can log it while still deriving `missing`.
+ */
+export const readStoredNoticeDismissal = function readStoredNoticeDismissal(
+	config: StorageConfig | undefined,
+	now: number,
+	onUnavailable?: () => void
+): DecodeResult<StoredNoticeDismissal> | null {
+	return firstValidAcrossFamilies(config, (keys) =>
+		readNoticeDismissalOf(keys, now, onUnavailable)
+	);
+};
+
 /** Server read of the notice cookie projection from a `Cookie` header. */
 export const readStoredNoticeDismissalFromCookieHeader =
 	function readStoredNoticeDismissalFromCookieHeader(
@@ -849,14 +912,15 @@ export const readStoredNoticeDismissalFromCookieHeader =
 		config: StorageConfig | undefined,
 		now: number
 	): DecodeResult<StoredNoticeDismissal> | null {
-		const keys = resolveStorageKeys(config);
-		return noticeWithSubjectCookie(
-			readCompactCookie(
-				readCookieValueFromHeader(cookieHeader, keys.notice),
-				(text) => decodeNoticeDismissalCompact(text, now)
-			),
-			readCookieValueFromHeader(cookieHeader, keys.noticeSubject),
-			now
+		return firstValidAcrossFamilies(config, (keys) =>
+			noticeWithSubjectCookie(
+				readCompactCookie(
+					readCookieValueFromHeader(cookieHeader, keys.notice),
+					(text) => decodeNoticeDismissalCompact(text, now)
+				),
+				readCookieValueFromHeader(cookieHeader, keys.noticeSubject),
+				now
+			)
 		);
 	};
 
@@ -930,7 +994,8 @@ export const readStoredClearEpochFromCookieHeader =
  * cleared and reads as absent, so its denials never merge into a list
  * recorded after the clear. `epoch` defaults to the stored clear epoch; a
  * caller that also knows the consent envelope's epoch passes the later of
- * the two. `null` when nothing is stored.
+ * the two. A legacy family is read only while the families before it hold
+ * no valid list. `null` when nothing is stored.
  */
 export const readStoredVendorChoice = function readStoredVendorChoice(
 	config: StorageConfig | undefined,
@@ -938,36 +1003,38 @@ export const readStoredVendorChoice = function readStoredVendorChoice(
 	onUnavailable?: () => void,
 	epoch: number = readStoredClearEpoch(config, now)
 ): DecodeResult<StoredVendorChoice> | null {
-	const keys = resolveStorageKeys(config);
 	const sinceEpoch = (
 		read: DecodeResult<StoredVendorChoice> | null
 	): DecodeResult<StoredVendorChoice> | null =>
 		read?.ok && read.record.confirmedAt < epoch ? null : read;
-	const fromCookie = sinceEpoch(
-		readCompactCookie(getRawCookieValue(keys.vendors, onUnavailable), (text) =>
-			decodeVendorChoiceCompact(text, now)
-		)
-	);
-	const fromLocal = sinceEpoch(
-		readLocalJson(
-			keys.vendors,
-			(value) => decodeVendorChoice(value, now),
-			onUnavailable
-		)
-	);
-	if (fromCookie?.ok && fromLocal?.ok) {
-		if (fromLocal.record.confirmedAt < fromCookie.record.confirmedAt) {
+	return firstValidAcrossFamilies(config, (keys) => {
+		const fromCookie = sinceEpoch(
+			readCompactCookie(
+				getRawCookieValue(keys.vendors, onUnavailable),
+				(text) => decodeVendorChoiceCompact(text, now)
+			)
+		);
+		const fromLocal = sinceEpoch(
+			readLocalJson(
+				keys.vendors,
+				(value) => decodeVendorChoice(value, now),
+				onUnavailable
+			)
+		);
+		if (fromCookie?.ok && fromLocal?.ok) {
+			if (fromLocal.record.confirmedAt < fromCookie.record.confirmedAt) {
+				return fromCookie;
+			}
+			const denied = [
+				...new Set([...fromCookie.record.denied, ...fromLocal.record.denied]),
+			].sort();
+			return { ok: true, record: { ...fromLocal.record, denied } };
+		}
+		if (fromCookie?.ok) {
 			return fromCookie;
 		}
-		const denied = [
-			...new Set([...fromCookie.record.denied, ...fromLocal.record.denied]),
-		].sort();
-		return { ok: true, record: { ...fromLocal.record, denied } };
-	}
-	if (fromCookie?.ok) {
-		return fromCookie;
-	}
-	return fromLocal ?? fromCookie;
+		return fromLocal ?? fromCookie;
+	});
 };
 
 /** Server read of the vendor cookie projection from a `Cookie` header. */
@@ -977,9 +1044,10 @@ export const readStoredVendorChoiceFromCookieHeader =
 		config: StorageConfig | undefined,
 		now: number
 	): DecodeResult<StoredVendorChoice> | null {
-		const keys = resolveStorageKeys(config);
-		return readCompactCookie(
-			readCookieValueFromHeader(cookieHeader, keys.vendors),
-			(text) => decodeVendorChoiceCompact(text, now)
+		return firstValidAcrossFamilies(config, (keys) =>
+			readCompactCookie(
+				readCookieValueFromHeader(cookieHeader, keys.vendors),
+				(text) => decodeVendorChoiceCompact(text, now)
+			)
 		);
 	};

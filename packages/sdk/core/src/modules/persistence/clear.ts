@@ -12,6 +12,7 @@
 import type { CookieOptions } from '../../libs/cookie';
 import { deleteCookie, writeCookie } from '../../libs/cookie';
 import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
+import { IAB_STORAGE_KEYS, storageKeyFamilies } from '../../libs/storage-keys';
 import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec';
 import { readStoredClearEpoch, resolveStorageKeys } from './record-storage';
 import type { StorageConfig } from './types';
@@ -27,12 +28,12 @@ const removeLocalStorageKey = function removeLocalStorageKey(
 };
 
 /**
- * Removes explicit choices (configured and legacy keys, cookie and
- * localStorage), the notice dismissal and the vendor denials with their
- * cookie projections, the legacy `<key>-privacy` record an alpha may have
- * left, the `<key>-sid` subject ID Inth 3.2 stored before any choice, and
- * the IAB records. Cookie deletion uses the same domain handling
- * as writes so a cross-subdomain cookie is actually removed.
+ * Removes, for the configured family and every legacy family it reads,
+ * the explicit choice, the notice dismissal and the vendor denials with
+ * their cookie projections and the `<key>-privacy` record an alpha may
+ * have left; then the `<key>-sid` subject ID c15t 3.2 stored before any
+ * choice, and the IAB records. Cookie deletion uses the same domain
+ * handling as writes so a cross-subdomain cookie is actually removed.
  *
  * Queued backend replays and subject reassignments are the kernel's save
  * outbox: the kernel drops them on the `records:cleared` event that follows
@@ -47,35 +48,33 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 	if (typeof document === 'undefined') {
 		return;
 	}
-	const keys = resolveStorageKeys(config);
-	// v3 alphas stored standing GPC directives under `<key>-privacy`. GPC is
-	// a live signal now and never persisted, but clearing still deletes what
-	// an alpha left behind.
-	const both = [
-		keys.consent,
-		keys.legacyConsent,
-		keys.notice,
-		keys.noticeSubject,
-		`${keys.consent}-privacy`,
-		keys.vendors,
-	];
+	const families = storageKeyFamilies(resolveStorageKeys(config));
+	const both = families.flatMap((family) => [
+		family.consent,
+		family.notice,
+		family.noticeSubject,
+		family.privacy,
+		family.vendors,
+	]);
 	// localStorage first, then the cookies.
-	for (const key of [...both, keys.cookieMiss, keys.noticeCookieMiss]) {
-		if (key) {
-			removeLocalStorageKey(key);
-		}
+	for (const key of [
+		...both,
+		...families.flatMap((family) => [
+			family.cookieMiss,
+			family.noticeCookieMiss,
+		]),
+	]) {
+		removeLocalStorageKey(key);
 	}
 	for (const key of both) {
-		if (key) {
-			deleteCookie(key, cookie, config);
-		}
+		deleteCookie(key, cookie, config);
 	}
 	removeLegacySubjectId(config, cookie);
 	// Addon bytes must be removed even when the addon is not mounted.
-	removeLocalStorageKey('inth-iab-authority-v1');
-	removeLocalStorageKey('euconsent-v2');
-	deleteCookie('euconsent-v2', cookie, config);
-	deleteCookie('euconsent-v2');
+	removeLocalStorageKey(IAB_STORAGE_KEYS.authority);
+	removeLocalStorageKey(IAB_STORAGE_KEYS.tcString);
+	deleteCookie(IAB_STORAGE_KEYS.tcString, cookie, config);
+	deleteCookie(IAB_STORAGE_KEYS.tcString);
 };
 
 /**

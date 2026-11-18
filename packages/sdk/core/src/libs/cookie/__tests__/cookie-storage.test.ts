@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-	deleteConsentFromStorage,
-	deleteCookie,
-	getCookie,
-	getRootDomain,
-	setCookie,
-} from '..';
-import { STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
+import { deleteCookie, getCookie, getRootDomain, setCookie } from '..';
 
 describe('Cookie Storage', () => {
 	beforeEach(() => {
@@ -107,50 +100,6 @@ describe('Cookie Storage', () => {
 
 		it('should handle deleting non-existent cookie', () => {
 			expect(() => deleteCookie('non-existent')).not.toThrow();
-		});
-	});
-	describe('deleteConsentFromStorage', () => {
-		it('should delete both legacy and new storage keys', () => {
-			const consentData = {
-				consentInfo: { time: Date.now() },
-				consents: { necessary: true },
-			};
-
-			// Set both legacy and new keys
-			window.localStorage.setItem(STORAGE_KEY, JSON.stringify(consentData));
-			window.localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(consentData));
-			setCookie(STORAGE_KEY, consentData);
-			setCookie(STORAGE_KEY_V2, consentData);
-
-			// Delete
-			deleteConsentFromStorage();
-
-			// Verify both are deleted
-			expect(window.localStorage.getItem(STORAGE_KEY_V2)).toBeNull();
-			expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
-			const newCookie = getCookie(STORAGE_KEY_V2);
-			const legacyCookie = getCookie(STORAGE_KEY);
-			expect(newCookie === null || newCookie === '').toBe(true);
-			expect(legacyCookie === null || legacyCookie === '').toBe(true);
-		});
-
-		it('should handle errors gracefully', () => {
-			const consoleWarnSpy = vi
-				.spyOn(console, 'warn')
-				.mockImplementation(() => {});
-
-			// Mock localStorage to throw an error
-			const originalRemoveItem = window.localStorage.removeItem;
-			window.localStorage.removeItem = vi.fn(() => {
-				throw new Error('Storage access denied');
-			});
-
-			// Should not throw
-			expect(() => deleteConsentFromStorage()).not.toThrow();
-
-			// Restore
-			window.localStorage.removeItem = originalRemoveItem;
-			consoleWarnSpy.mockRestore();
 		});
 	});
 

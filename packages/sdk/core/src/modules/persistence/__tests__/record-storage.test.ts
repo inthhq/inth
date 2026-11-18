@@ -9,16 +9,27 @@ import { makePolicy } from '../../../consent-record/__tests__/fixtures';
 import { evaluateConsentRecord } from '../../../consent-record/evaluate';
 import type { ChoiceBasis } from '../../../consent-record/types';
 import { setCookie } from '../../../libs/cookie';
-import { STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
+import {
+	C15T_STORAGE_KEY,
+	STORAGE_KEY,
+	STORAGE_KEY_V2,
+} from '../../../libs/storage-keys';
 import type { StoredConsentEnvelope } from '../record-codec';
+import type { DecodedStoredConsent } from '../record-storage';
 import {
 	readRawStoredConsentCandidates,
 	readStoredConsentRecord,
 	readStoredConsentRecordFromCookieHeader,
 	readStoredNoticeDismissal,
+	readStoredNoticeDismissalFromCookieHeader,
+	readStoredVendorChoiceFromCookieHeader,
 	resolveStorageKeys,
 } from '../record-storage';
-import { encodeStoredConsentEnvelopeCompact } from '../writer/encode';
+import {
+	encodeNoticeDismissalCompact,
+	encodeStoredConsentEnvelopeCompact,
+	encodeVendorChoiceCompact,
+} from '../writer/encode';
 import {
 	clearStoredConsentRecords,
 	writeStoredConsentEnvelope,
@@ -84,7 +95,18 @@ describe('raw candidate reading', () => {
 		).toEqual([
 			['cookie', 'parsed'],
 			['local-storage', 'parsed'],
+			['legacy-cookie', 'absent'],
+			['legacy-local-storage', 'absent'],
+			['legacy-cookie', 'absent'],
 			['legacy-local-storage', 'unparseable'],
+		]);
+		expect(candidates.map((candidate) => candidate.key)).toEqual([
+			STORAGE_KEY_V2,
+			STORAGE_KEY_V2,
+			C15T_STORAGE_KEY,
+			C15T_STORAGE_KEY,
+			STORAGE_KEY,
+			STORAGE_KEY,
 		]);
 		const [cookie, local] = candidates;
 		expect(cookie?.status === 'parsed' && cookie.encoding).toBe('compact');
@@ -444,13 +466,27 @@ describe('raw candidate reading', () => {
 			consent: 'custom-key',
 			cookieMiss: 'custom-key-cookie-miss',
 			epoch: 'custom-key-epoch',
-			legacyConsent: STORAGE_KEY,
+			legacy: [expect.objectContaining({ consent: STORAGE_KEY })],
 			notice: 'custom-key-notice',
 			noticeCookieMiss: 'custom-key-notice-cookie-miss',
 			noticeSubject: 'custom-key-notice-subject',
+			privacy: 'custom-key-privacy',
 			subject: 'custom-key-sid',
 			vendors: 'custom-key-vendors',
 		});
+	});
+
+	it('falls back to c15t only under the default key', () => {
+		const legacyOf = (storageKey?: string) =>
+			resolveStorageKeys({ storageKey }).legacy.map((family) => family.consent);
+
+		expect(legacyOf()).toEqual([C15T_STORAGE_KEY, STORAGE_KEY]);
+		expect(legacyOf(STORAGE_KEY_V2)).toEqual([C15T_STORAGE_KEY, STORAGE_KEY]);
+		expect(legacyOf('custom-key')).toEqual([STORAGE_KEY]);
+		// A site sharing records with a c15t site reads and writes them as
+		// c15t does.
+		expect(legacyOf(C15T_STORAGE_KEY)).toEqual([STORAGE_KEY]);
+		expect(legacyOf(STORAGE_KEY)).toEqual([]);
 	});
 
 	it('reads the same record from a request cookie header', () => {
@@ -477,6 +513,133 @@ describe('raw candidate reading', () => {
 		expect(
 			readStoredConsentRecordFromCookieHeader(undefined, undefined, NOW)
 				.selected
+		).toBeNull();
+	});
+});
+
+describe('records c15t stored', () => {
+	const envelope = (marketing: boolean) =>
+		encodeStoredConsentEnvelopeCompact({
+			categories: {
+				marketing: {
+					basis: currentBasis,
+					confirmedAt: NOW - DAY,
+					value: marketing,
+				},
+			},
+			subject: { subjectId: SUBJECT_ID },
+			version: 3,
+		});
+	const marketingOf = (selected: DecodedStoredConsent | null | undefined) =>
+		selected?.choice.categories.marketing?.value;
+
+	beforeEach(() => {
+		document.cookie = '';
+		window.localStorage.clear();
+	});
+
+	afterEach(() => {
+		document.cookie = '';
+		window.localStorage.clear();
+	});
+
+	it('are read from the cookie or localStorage when no Inth record exists', () => {
+		document.cookie = `${C15T_STORAGE_KEY}=${envelope(true)}`;
+		const fromCookie = readStoredConsentRecord(undefined, NOW).selected;
+		expect(fromCookie?.key).toBe(C15T_STORAGE_KEY);
+		expect(fromCookie?.source).toBe('legacy-cookie');
+		expect(marketingOf(fromCookie)).toBe(true);
+
+		document.cookie = '';
+		window.localStorage.setItem(
+			C15T_STORAGE_KEY,
+			JSON.stringify({
+				categories: {
+					marketing: {
+						basis: currentBasis,
+						confirmedAt: NOW - DAY,
+						value: true,
+					},
+				},
+				version: 3,
+			})
+		);
+		expect(readStoredConsentRecord(undefined, NOW).selected?.source).toBe(
+			'legacy-local-storage'
+		);
+	});
+
+	it('are read from a request cookie header when no Inth record exists', () => {
+		const header = `other=1; ${C15T_STORAGE_KEY}=${envelope(true)}; ${C15T_STORAGE_KEY}-notice=${encodeNoticeDismissalCompact(
+			{ dismissedAt: NOW - DAY, fingerprint: 'notice-fp-1', version: 1 }
+		)}; ${C15T_STORAGE_KEY}-vendors=${encodeVendorChoiceCompact({
+			confirmedAt: NOW - DAY,
+			denied: ['acme'],
+			version: 1,
+		})}`;
+
+		const selection = readStoredConsentRecordFromCookieHeader(
+			header,
+			undefined,
+			NOW
+		);
+		expect(selection.selected?.key).toBe(C15T_STORAGE_KEY);
+		expect(marketingOf(selection.selected)).toBe(true);
+		expect(
+			readStoredNoticeDismissalFromCookieHeader(header, undefined, NOW)
+		).toMatchObject({ ok: true, record: { fingerprint: 'notice-fp-1' } });
+		expect(
+			readStoredVendorChoiceFromCookieHeader(header, undefined, NOW)
+		).toMatchObject({ ok: true, record: { denied: ['acme'] } });
+	});
+
+	it('lose to an Inth record, wherever each is stored', () => {
+		const header = `${C15T_STORAGE_KEY}=${envelope(true)}; ${STORAGE_KEY_V2}=${envelope(false)}`;
+		expect(
+			marketingOf(
+				readStoredConsentRecordFromCookieHeader(header, undefined, NOW).selected
+			)
+		).toBe(false);
+
+		document.cookie = `${C15T_STORAGE_KEY}=${envelope(true)}`;
+		window.localStorage.setItem(
+			STORAGE_KEY_V2,
+			JSON.stringify({
+				categories: {
+					marketing: {
+						basis: currentBasis,
+						confirmedAt: NOW - 2 * DAY,
+						value: false,
+					},
+				},
+				version: 3,
+			})
+		);
+		const browser = readStoredConsentRecord(undefined, NOW).selected;
+		expect(browser?.key).toBe(STORAGE_KEY_V2);
+		expect(marketingOf(browser)).toBe(false);
+	});
+
+	it('are the configured family under storageKey c15t, and unread under a custom key', () => {
+		const header = `${STORAGE_KEY_V2}=${envelope(false)}; ${C15T_STORAGE_KEY}=${envelope(true)}`;
+		expect(
+			readStoredConsentRecordFromCookieHeader(
+				header,
+				{ storageKey: C15T_STORAGE_KEY },
+				NOW
+			).selected?.source
+		).toBe('cookie');
+
+		document.cookie = `${C15T_STORAGE_KEY}=${envelope(true)}`;
+		expect(
+			readStoredConsentRecord({ storageKey: 'custom-key' }, NOW).selected
+		).toBeNull();
+		expect(
+			readStoredConsentRecordFromCookieHeader(
+				document.cookie,
+				{ storageKey: 'custom-key' },
+				NOW
+			).selected
 		).toBeNull();
 	});
 });

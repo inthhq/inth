@@ -57,6 +57,10 @@ describe('buildBannerRevealScript', () => {
 			'a legacy record in localStorage',
 			() => localStorage.setItem('privacy-consent-storage', '{}'),
 		],
+		[
+			'a consent cookie c15t stored',
+			() => (document.cookie = 'c15t=v=3; path=/'),
+		],
 	])('leaves it to the runtime with %s', (_name, store) => {
 		store();
 		run(buildBannerRevealScript(undefined, 'consent-banner'));

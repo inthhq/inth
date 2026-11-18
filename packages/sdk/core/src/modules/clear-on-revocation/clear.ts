@@ -34,23 +34,11 @@ export const createClearOnRevocationWith = (
 		};
 	}
 	const { kernel, config, storageConfig } = options;
-	const { gateState, storageKey } = tools;
+	const { gateState } = tools;
 	const protectedKeys = new Set([
-		...tools.protectedStorageKeys,
-		// Keep the optional IAB addon's receipts without importing its runtime.
-		'inth-iab-authority-v1',
-		'euconsent-v2',
+		...tools.ownedStorageKeys(),
+		...tools.ownedStorageKeys(storageConfig),
 	]);
-	for (const key of [storageKey, storageConfig?.storageKey || storageKey]) {
-		for (const resolved of Object.values(
-			tools.resolveStorageKeys({ storageKey: key })
-		)) {
-			if (resolved) {
-				protectedKeys.add(resolved);
-			}
-		}
-		protectedKeys.add(`${key}-privacy`);
-	}
 	const previous = new Map<OptionalConsentCategory, boolean>();
 	const reconcile = (): void => {
 		const snapshot = kernel.getSnapshot();

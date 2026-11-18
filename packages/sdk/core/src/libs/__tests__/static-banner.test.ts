@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { storedAnswerKeys } from '../journey';
 import { PREFETCH_WINDOW_KEY } from '../prefetch/window-key';
 import {
 	buildStaticBannerScript,
 	STATIC_BANNER_ATTR,
 	staticBannerCopyHash,
 } from '../static-banner';
+import { storedChoiceNames } from '../storage-keys';
 
 const COPY = {
 	common: {
@@ -42,11 +42,8 @@ const answer = (changes: Record<string, unknown> = {}) => ({
 	producerPolicyContract: '1',
 });
 
-const keys = storedAnswerKeys('inth');
-const stored = {
-	cookies: [...keys.cookies, keys.notice],
-	local: [...keys.local, keys.notice],
-};
+const names = storedChoiceNames();
+const stored = [...names.choice, ...names.notice];
 
 /**
  * Puts the static banner and its script in the page and runs the script as
@@ -129,6 +126,15 @@ describe('static banner script', () => {
 	test('a stored notice dismissal counts as a returning visitor', () => {
 		localStorage.setItem('inth-notice', '1');
 		expect(mount(Promise.resolve(answer())).isConnected).toBe(false);
+	});
+
+	test('a choice c15t stored counts as a returning visitor', () => {
+		document.cookie = 'c15t=stored-record';
+		try {
+			expect(mount(Promise.resolve(answer())).isConnected).toBe(false);
+		} finally {
+			document.cookie = 'c15t=; max-age=0';
+		}
 	});
 
 	test.each([

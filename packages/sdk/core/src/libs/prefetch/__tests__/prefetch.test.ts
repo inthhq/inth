@@ -360,6 +360,31 @@ describe('prefetch utilities', () => {
 			}
 		});
 
+		it('says a choice is stored when c15t stored one, under the default key only', () => {
+			const fetch = respond();
+			vi.stubGlobal('fetch', fetch);
+			localStorage.setItem('c15t', '{"version":3,"categories":{}}');
+			try {
+				window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
+				expect(sent(fetch)?.storedChoice).toBe(true);
+				// The script's twin reads the same keys.
+				delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+				void primePrefetchedInitialData({ projectUrl: '/api/other' });
+				expect(
+					readJourneyParams(String(fetch.mock.calls[1]?.[0]))?.storedChoice
+				).toBe(true);
+				delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+				window.eval(
+					buildPrefetchScript({ projectUrl: '/api/shop', storageKey: 'shop' })
+				);
+				expect(
+					readJourneyParams(String(fetch.mock.calls[2]?.[0]))?.storedChoice
+				).toBe(false);
+			} finally {
+				localStorage.removeItem('c15t');
+			}
+		});
+
 		it('a tab journey continues the id in sessionStorage', () => {
 			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
 			sessionStorage.setItem('inth-journey-v1', id);

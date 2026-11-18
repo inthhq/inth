@@ -8,9 +8,9 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
-import { deleteConsentFromStorage } from '../../../libs/cookie';
 import { createPersistence } from '../index';
 import { readStoredConsentRecord } from '../record-storage';
+import { clearStoredConsentRecords } from './record-writes';
 
 beforeEach(() => {
 	vi.useFakeTimers();
@@ -18,11 +18,11 @@ beforeEach(() => {
 	vi.spyOn(console, 'error').mockImplementation(() => undefined);
 	vi.stubGlobal('reportError', undefined);
 	localStorage.clear();
-	deleteConsentFromStorage();
+	clearStoredConsentRecords();
 });
 
 afterEach(() => {
-	deleteConsentFromStorage();
+	clearStoredConsentRecords();
 	vi.unstubAllGlobals();
 	vi.useRealTimers();
 });

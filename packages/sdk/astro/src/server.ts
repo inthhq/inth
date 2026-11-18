@@ -21,7 +21,10 @@ import type {
  * boots without an `/init` roundtrip. Translations, the offline vendor
  * list, the snapshot and the banner flags stay Astro's own.
  */
-import { resolveStorageKeys } from '@inth/sdk/modules/persistence';
+import {
+	STORED_NAMES_CHECK,
+	storedChoiceNames,
+} from '@inth/sdk/modules/persistence';
 import { inferConsentCategories, isIABConfigured } from '@inth/sdk/runtime';
 import { recommendedPolicyRules } from '@inth/sdk/schema/types';
 import type {
@@ -567,17 +570,15 @@ export const buildBannerRevealScript = function buildBannerRevealScript(
 	storageConfig: InthResolvedOptions['storageConfig'],
 	testId: 'consent-banner' | 'iab-consent-banner'
 ): string {
-	const keys = resolveStorageKeys(storageConfig);
-	const names = [keys.consent, keys.notice, keys.legacyConsent].filter(
-		(name): name is string => Boolean(name)
-	);
+	const stored = storedChoiceNames(storageConfig);
 	// `<` is escaped so a storage key can never close the script tag.
-	const json = JSON.stringify(names).replace(/</gu, '\\u003c');
-	// An IIFE keeps its variables out of the page's global scope. Blocked
-	// cookies or storage (sandboxes, some privacy modes) throw on access: each
-	// is read as "nothing stored there" so the other still decides, and any
-	// other throw is swallowed so it cannot abort the rest of the document.
-	return `(function(){try{var names=${json},cookies=[],stored;try{cookies=document.cookie.split(';').map(function(p){return p.split('=')[0].trim()})}catch(e){}stored=function(n){if(cookies.indexOf(n)>=0)return true;try{return window.localStorage.getItem(n)!==null}catch(e){return false}};if(names.some(stored))return;var root=document.querySelector('[data-testid="${testId}-root"][hidden]'),overlay=document.querySelector('[data-testid="${testId}-overlay"][hidden]');if(root){root.hidden=false;root.setAttribute('data-inth-visible','true');if(overlay)overlay.hidden=false}}catch(e){}})();`;
+	const json = JSON.stringify([...stored.choice, ...stored.notice]).replace(
+		/</gu,
+		'\\u003c'
+	);
+	// An IIFE keeps its variables out of the page's global scope, and any
+	// throw is swallowed so it cannot abort the rest of the document.
+	return `(function(){try{if((${STORED_NAMES_CHECK})(${json}))return;var root=document.querySelector('[data-testid="${testId}-root"][hidden]'),overlay=document.querySelector('[data-testid="${testId}-overlay"][hidden]');if(root){root.hidden=false;root.setAttribute('data-inth-visible','true');if(overlay)overlay.hidden=false}}catch(e){}})();`;
 };
 
 export { buildPrefetchScript } from '@inth/sdk/engine';

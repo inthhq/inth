@@ -82,7 +82,7 @@ const POLICY_GVL = {
 };
 const config = { storageKey: 'inth-policy-conformance' };
 const keys = resolveStorageKeys(config);
-const legacyKey = keys.legacyConsent;
+const legacyKey = keys.legacy[0]?.consent;
 if (!legacyKey) {
 	throw new Error('Conformance storage requires a legacy key');
 }

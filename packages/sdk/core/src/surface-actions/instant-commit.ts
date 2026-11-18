@@ -28,6 +28,7 @@ import type {
 	OptionalConsentCategory,
 	RestrictionReason,
 } from '../consent-record/types';
+import { readCookieValueFromHeader } from '../libs/cookie/operations';
 import { generateSubjectId } from '../libs/generate-subject-id';
 import { resolveStorageKeys } from '../libs/storage-keys';
 import type { StorageConfig } from '../modules/persistence/types';
@@ -84,9 +85,7 @@ export const hasStoredClearEpoch = function hasStoredClearEpoch(
 		// Blocked storage: the cookie still tells.
 	}
 	try {
-		return document.cookie
-			.split(';')
-			.some((cookie) => cookie.trim().startsWith(`${key}=`));
+		return readCookieValueFromHeader(document.cookie, key) !== undefined;
 	} catch {
 		return false;
 	}

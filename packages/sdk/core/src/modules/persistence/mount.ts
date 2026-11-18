@@ -11,6 +11,7 @@ import {
 	readLegacySubjectId,
 	removeLegacySubjectId,
 } from '../../libs/legacy-subject-id';
+import { storageKeyFamilies } from '../../libs/storage-keys';
 import type {
 	ConsentSnapshot,
 	ConsentSubject,
@@ -798,10 +799,11 @@ export const mountPersistence = function mountPersistence(
 				scheduleReconcile();
 			};
 			const watched = new Set<string | null>([
-				consentKey,
-				keys.legacyConsent,
-				keys.notice,
-				keys.vendors,
+				...storageKeyFamilies(keys).flatMap((family) => [
+					family.consent,
+					family.notice,
+					family.vendors,
+				]),
 				keys.epoch,
 				// Another page called `localStorage.clear()`.
 				null,

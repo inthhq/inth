@@ -13,14 +13,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
-import {
-	deleteConsentFromStorage,
-	deleteCookie,
-	setCookie,
-} from '../../../libs/cookie';
+import { deleteCookie, setCookie } from '../../../libs/cookie';
 import { STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
 import { createPersistence } from '../index';
 import { readStoredConsentRecord } from '../record-storage';
+import { clearStoredConsentRecords } from './record-writes';
 
 const DAY = 86_400_000;
 const ORIGINAL_TIME = NOW - 2 * DAY;
@@ -58,14 +55,14 @@ beforeEach(() => {
 	vi.useFakeTimers();
 	vi.setSystemTime(NOW);
 	localStorage.clear();
-	deleteConsentFromStorage();
+	clearStoredConsentRecords();
 	deleteCookie(`${STORAGE_KEY_V2}-sid`);
 	deleteCookie(`${STORAGE_KEY_V2}-epoch`);
 	document.cookie = '';
 });
 
 afterEach(() => {
-	deleteConsentFromStorage(undefined, { storageKey: 'custom-key' });
+	clearStoredConsentRecords(undefined, { storageKey: 'custom-key' });
 	deleteCookie('custom-key-sid');
 	vi.useRealTimers();
 });

@@ -102,6 +102,27 @@ Use the same `storageConfig` on every site that shares the cookie. Pass it to
 storageConfig: { crossSubdomain: true },
 ```
 
+### Choices made with c15t
+
+Under the default key, Inth also reads the records c15t stores under
+`c15t`. A visitor who chose on a c15t page of the same site, or of a
+sibling subdomain that shares the cookie domain, is not asked again.
+
+- Inth writes only under `inth`. When both exist, the `inth` record wins.
+- Reading a c15t record never changes it, so c15t pages on the same site
+  keep working. `clear()` removes the c15t records too, so a cleared
+  choice does not come back from them.
+- A custom `storageKey` reads no c15t records.
+
+To share choices both ways with a c15t site, use c15t's key. Inth then
+reads and writes the same records c15t does:
+
+{/* example: fragment */}
+
+```ts
+storageConfig: { storageKey: 'c15t', crossSubdomain: true },
+```
+
 ## Keep open tabs in step
 
 Tabs on the same origin share localStorage, so a choice made in one tab

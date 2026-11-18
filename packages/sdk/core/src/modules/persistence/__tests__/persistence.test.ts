@@ -21,11 +21,13 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import {
+	C15T_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	STORAGE_KEY_V2,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../../libs/storage-keys';
 import { createPersistence } from '../index';
+import type { StorageConfig } from '../index';
 import { clearStoredConsentRecords } from './record-writes';
 
 /**
@@ -355,6 +357,92 @@ describe('persistence: clear', () => {
 		]);
 		expect(cookieNames()).toEqual([`${STORAGE_KEY_V2}-epoch`]);
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+	});
+});
+
+describe('persistence: records c15t stored', () => {
+	const C15T = { storageKey: C15T_STORAGE_KEY };
+
+	const saveUnder = async function saveUnder(
+		storageConfig: StorageConfig | undefined,
+		marketing: boolean
+	): Promise<void> {
+		const kernel = createConsentKernel({ now: NOW });
+		const handle = createPersistence({ kernel, storageConfig });
+		await kernel.commands.save({ marketing });
+		flushWrites();
+		handle.dispose();
+	};
+
+	const hydrated = function hydrated(storageConfig?: StorageConfig) {
+		const kernel = createConsentKernel({ now: NOW });
+		createPersistence({ kernel, storageConfig });
+		return kernel.getSnapshot();
+	};
+
+	const deleteCookieNamed = function deleteCookieNamed(name: string): void {
+		document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+	};
+
+	test('storageKey c15t writes and reads the c15t family', async () => {
+		await saveUnder(C15T, true);
+
+		expect(cookieNames()).toContain(C15T_STORAGE_KEY);
+		expect(cookieNames()).not.toContain(STORAGE_KEY_V2);
+		expect(localStorage.getItem(C15T_STORAGE_KEY)).not.toBeNull();
+		expect(localStorage.getItem(STORAGE_KEY_V2)).toBeNull();
+		expect(hydrated(C15T).effectivePermissions.marketing).toBe(true);
+	});
+
+	test.each([
+		['cookie', () => localStorage.removeItem(C15T_STORAGE_KEY)],
+		['localStorage copy', () => deleteCookieNamed(C15T_STORAGE_KEY)],
+	])(
+		'the default key reads a choice from the c15t %s, and leaves it as it was',
+		async (_name, keepOne) => {
+			await saveUnder(C15T, true);
+			keepOne();
+			const stored = [document.cookie, localStorage.getItem(C15T_STORAGE_KEY)];
+
+			expect(hydrated().effectivePermissions.marketing).toBe(true);
+			flushWrites();
+			expect([document.cookie, localStorage.getItem(C15T_STORAGE_KEY)]).toEqual(
+				stored
+			);
+		}
+	);
+
+	test('an Inth record wins over a c15t one', async () => {
+		await saveUnder(C15T, true);
+		await saveUnder(undefined, false);
+
+		expect(hydrated().effectivePermissions.marketing).toBe(false);
+		expect(hydrated(C15T).effectivePermissions.marketing).toBe(true);
+	});
+
+	test('a custom storageKey does not read c15t records', async () => {
+		await saveUnder(C15T, true);
+
+		expect(hydrated({ storageKey: 'shop' }).explicitChoice).toBeNull();
+	});
+
+	test('clear() leaves nothing of c15t to fall back to, even written back', async () => {
+		await saveUnder(C15T, true);
+		const written = localStorage.getItem(C15T_STORAGE_KEY);
+		const kernel = createConsentKernel({ now: NOW });
+		const handle = createPersistence({ kernel });
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		handle.clear();
+		flushWrites();
+
+		expect(localStorage.getItem(C15T_STORAGE_KEY)).toBeNull();
+		expect(cookieNames()).toEqual([`${STORAGE_KEY_V2}-epoch`]);
+		expect(hydrated().explicitChoice).toBeNull();
+		// A c15t page still open writes its record back: the clear epoch
+		// voids the decisions made before the clear.
+		localStorage.setItem(C15T_STORAGE_KEY, written ?? '');
+		expect(hydrated().explicitChoice).toBeNull();
 	});
 });
 

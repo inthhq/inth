@@ -20,7 +20,6 @@ import type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
 import type { PrefetchOptions } from '../libs/prefetch/types';
 import { PREFETCH_WINDOW_KEY } from '../libs/prefetch/window-key';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers';
-import { STORAGE_KEY_V2 } from '../libs/storage-keys';
 import { readHostedMode } from '../transports/hosted-modes';
 import type { ProviderTransportFactory } from '../transports/mode';
 import type { KernelOverrides } from '../types';
@@ -206,7 +205,7 @@ export const startPrefetchedInit = function startPrefetchedInit(
  * @internal
  */
 export const hasStoredConsent = function hasStoredConsent(
-	storageKey: string = STORAGE_KEY_V2
+	storageKey?: string
 ): boolean {
 	return hasStoredConsentRecord(storageKey);
 };

@@ -26,7 +26,5 @@ export {
 	stringToFlat,
 	unflattenObject,
 } from './serialization';
-// Re-export high-level storage functions
-export { deleteConsentFromStorage } from './storage';
 // Re-export types
 export type { CookieOptions, StorageConfig } from './types';

@@ -870,6 +870,42 @@ describe('serverScriptStart', () => {
 
 				expect(document.head.querySelectorAll('script')).toHaveLength(1);
 			});
+
+			test('does nothing for a choice c15t stored, with no Inth cookie', () => {
+				const { choice } = choiceRecords(
+					{ marketing: false },
+					{ confirmedAt: CONFIRMED_AT + 1 }
+				);
+				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
+				document.cookie = `c15t=${encodeStoredConsentEnvelopeCompact({
+					categories: choice?.categories ?? {},
+					version: 3,
+				})}; path=/`;
+
+				startPixel();
+
+				expect(document.head.querySelector('script')).toBeNull();
+			});
+
+			test('does nothing for c15t vendor denials while Inth stores none', () => {
+				const { choice } = choiceRecords(
+					{ marketing: true },
+					{ confirmedAt: CONFIRMED_AT }
+				);
+				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
+				document.cookie = `inth=${encodeStoredConsentEnvelopeCompact({
+					categories: choice?.categories ?? {},
+					version: 3,
+				})}; path=/`;
+				localStorage.setItem(
+					'c15t-vendors',
+					JSON.stringify({ confirmedAt: NOW, denied: ['pixel'], version: 1 })
+				);
+
+				startPixel();
+
+				expect(document.head.querySelector('script')).toBeNull();
+			});
 		});
 
 		test.each([
