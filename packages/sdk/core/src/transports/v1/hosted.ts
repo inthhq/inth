@@ -24,7 +24,12 @@ import { readApiError } from './error';
 import { createV1InitRequest } from './init-request';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
+import {
+	resolveV1Fetch,
+	toSharedHeaderName,
+	trimTrailingSlash,
+	V1_ROUTES,
+} from './routes';
 
 /** Options for {@link createV1HostedTransport}. */
 export interface V1HostedTransportOptions extends V1RecordTransportOptions {
@@ -54,7 +59,8 @@ export interface V1HostedTransportOptions extends V1RecordTransportOptions {
 	/**
 	 * Request headers a server-side caller forwards to init. Only the init
 	 * inputs (`accept-language`, the supported geo headers, `sec-gpc`) are
-	 * forwarded. In a browser, use the kernel's `overrides` instead.
+	 * forwarded, the override headers under their `x-inth-` names. In a
+	 * browser, use the kernel's `overrides` instead.
 	 */
 	headers?: Record<string, string>;
 }
@@ -71,7 +77,7 @@ const allowedInitHeaders = function allowedInitHeaders(
 ): Record<string, string> {
 	const allowed: Record<string, string> = {};
 	for (const [name, value] of Object.entries(headers ?? {})) {
-		const normalized = name.toLowerCase();
+		const normalized = toSharedHeaderName(name);
 		if (INIT_HEADER_ALLOWLIST.has(normalized)) {
 			allowed[normalized] = value;
 		}

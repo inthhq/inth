@@ -37,6 +37,7 @@ import type {
 import type { ConsentSubject, KernelTransport, SavePayload } from '../../types';
 import type { KernelRuntime } from '../runtime';
 import type { OutboxTransaction, pendingSave, SaveOutboxStore } from './store';
+import type { toStoredPayload } from './stored-payload';
 import type {
 	PendingSaveEntry,
 	supersededBy,
@@ -63,6 +64,7 @@ export interface QueueTools {
 	consentModels: typeof CONSENT_MODELS;
 	pendingSave: typeof pendingSave;
 	supersededBy: typeof supersededBy;
+	toStoredPayload: typeof toStoredPayload;
 	validateExplicitChoice: typeof validateExplicitChoice;
 	warnInDevelopment: typeof warnInDevelopment;
 	withoutSuperseded: typeof withoutSuperseded;
@@ -95,6 +97,7 @@ const createStoredLists = function createStoredLists(
 		isPlainRecord,
 		optionalCategories,
 		supersededBy,
+		toStoredPayload,
 		validateExplicitChoice,
 		withoutSuperseded,
 	} = tools;
@@ -313,7 +316,7 @@ const createStoredLists = function createStoredLists(
 			) {
 				continue;
 			}
-			entries.push(entry);
+			entries.push({ ...entry, payload: toStoredPayload(entry.payload) });
 		}
 		entries.sort(
 			(left, right) =>
@@ -536,7 +539,7 @@ export const createQueueWorker = function createQueueWorker({
 	 * for other categories keep waiting for their own replay.
 	 */
 	const discard = function discard(payload: SavePayload): Promise<void> {
-		const settled = JSON.stringify(payload);
+		const settled = JSON.stringify(tools.toStoredPayload(payload));
 		return store.transact((tx) => {
 			const pending = readPendingSaves(tx);
 			const remaining = pending.flatMap((candidate) => {

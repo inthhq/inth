@@ -5,7 +5,7 @@
  */
 import {
 	buildConsentSessionReport,
-	CONSENT_EXPERIMENT_HEADER,
+	INIT_EXPERIMENT_PARAM,
 	parseExperimentHeader,
 	readSessionJourney,
 } from '@inth/sdk-schema/types';
@@ -20,7 +20,12 @@ import {
 	resolveSessionReportProjectUrl,
 } from '../../libs/session-report';
 import type { SessionReportHeaders } from '../../libs/session-report';
-import { toProperty, V1_ROUTES } from './routes';
+import {
+	toProperty,
+	toV1Headers,
+	V1_EXPERIMENT_HEADER,
+	V1_ROUTES,
+} from './routes';
 
 /** How long a report may take before it is abandoned. */
 const REPORT_TIMEOUT_MS = 3000;
@@ -67,6 +72,30 @@ const readHeader = function readHeader(
 		}
 	}
 	return undefined;
+};
+
+/**
+ * The arm the visitor's init carried: the `x-inth-experiment` header, which
+ * an app sends, else the `experiment` query parameter, which a browser
+ * sends.
+ */
+const readExperiment = function readExperiment(
+	headers: SessionReportHeaders | undefined,
+	url: string | URL | undefined
+): string | undefined {
+	const header = readHeader(headers, V1_EXPERIMENT_HEADER);
+	if (header || url === undefined) {
+		return header;
+	}
+	try {
+		return (
+			new URL(url, 'http://localhost').searchParams.get(
+				INIT_EXPERIMENT_PARAM
+			) ?? undefined
+		);
+	} catch {
+		return undefined;
+	}
 };
 
 /**
@@ -134,9 +163,7 @@ export const reportV1ConsentSession = function reportV1ConsentSession(
 				...options,
 				experiment:
 					options.experiment ??
-					parseExperimentHeader(
-						readHeader(options.headers, CONSENT_EXPERIMENT_HEADER)
-					),
+					parseExperimentHeader(readExperiment(options.headers, options.url)),
 				journey:
 					options.journey ??
 					readSessionJourney(
@@ -148,7 +175,7 @@ export const reportV1ConsentSession = function reportV1ConsentSession(
 				body: JSON.stringify(body),
 				headers: {
 					'content-type': 'application/json',
-					...forwardSessionReportHeaders(options.headers),
+					...toV1Headers(forwardSessionReportHeaders(options.headers)),
 				},
 				method: 'POST',
 				signal:

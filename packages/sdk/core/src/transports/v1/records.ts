@@ -55,9 +55,14 @@ export interface V1RecordTransportOptions {
 	onSubjectId?: (subjectId: string, previous: string) => void;
 }
 
-/** A save result with the backend's answer about the identity link. */
+/** A save result with the record ID and the answer about the identity link. */
 export interface V1SaveResult extends SaveResult {
-	/** Present when the save sent an `externalId`. */
+	/** ID of the event that recorded the save. */
+	recordId: string;
+	/**
+	 * Present when the save sent an `externalId`. A link left off is not a
+	 * failure: the save was recorded, and `identify` can link it later.
+	 */
 	link?: V1ConsentRecordLink;
 }
 
@@ -73,29 +78,42 @@ const readLink = function readLink(
 	if (typeof value !== 'object' || value === null) {
 		return undefined;
 	}
-	const link = value as { stored?: unknown; verifiedBy?: unknown };
+	const link = value as {
+		reason?: unknown;
+		stored?: unknown;
+		verifiedBy?: unknown;
+	};
 	if (link.stored === true && link.verifiedBy === 'identity_token') {
 		return { stored: true, verifiedBy: 'identity_token' };
 	}
-	if (link.stored === false) {
-		return { reason: 'unverified', stored: false };
+	if (
+		link.stored === false &&
+		(link.reason === 'unverified' || link.reason === 'invalid_token')
+	) {
+		return { reason: link.reason, stored: false };
 	}
 	return undefined;
 };
 
-/** The save result, or `undefined` for an answer without a canonical subject ID. */
+/** The save result, or `undefined` for an answer that is not `{ subjectId, recordId }`. */
 const toSaveResult = function toSaveResult(
 	data: unknown
 ): (V1SaveResult & { subjectId: string }) | undefined {
 	const body =
 		typeof data === 'object' && data !== null
-			? (data as { link?: unknown; subjectId?: unknown })
+			? (data as { link?: unknown; recordId?: unknown; subjectId?: unknown })
 			: {};
-	if (typeof body.subjectId !== 'string' || !isUuidV7(body.subjectId)) {
+	if (
+		typeof body.subjectId !== 'string' ||
+		!isUuidV7(body.subjectId) ||
+		typeof body.recordId !== 'string' ||
+		body.recordId.length === 0
+	) {
 		return undefined;
 	}
 	const result: V1SaveResult & { subjectId: string } = {
 		ok: true,
+		recordId: body.recordId,
 		subjectId: body.subjectId,
 	};
 	const link = readLink(body.link);
@@ -197,7 +215,7 @@ export const createV1RecordTransport = function createV1RecordTransport(
 				// Not the backend's answer, such as a proxy's page: retry with the
 				// same key rather than count the save as recorded.
 				throw new Error(
-					`Inth transport: ${V1_ROUTES.records} answered ${response.status} without a canonical subject ID`
+					`Inth transport: ${V1_ROUTES.records} answered ${response.status} without a subject ID and record ID`
 				);
 			}
 			reportSubjectId(result.subjectId, payload.subjectId);

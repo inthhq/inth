@@ -26,6 +26,7 @@ import {
 } from '../../libs/storage-keys';
 import { decodeClearEpoch } from '../../modules/persistence/record-codec';
 import type { SavePayload } from '../../types';
+import { toStoredPayload } from './stored-payload';
 import type { PendingSaveEntry } from './supersession';
 
 /**
@@ -76,7 +77,7 @@ export interface SaveOutboxStore {
 }
 
 /**
- * A save as the outbox queues it.
+ * A save as the outbox queues it, without its identity token.
  *
  * @param now - When it was queued.
  * @internal
@@ -84,7 +85,11 @@ export interface SaveOutboxStore {
 export const pendingSave = (
 	payload: SavePayload,
 	now: number
-): PendingSaveEntry => ({ attempts: 0, payload, queuedAt: now });
+): PendingSaveEntry => ({
+	attempts: 0,
+	payload: toStoredPayload(payload),
+	queuedAt: now,
+});
 
 /**
  * Queues `payload` after the saves `store` holds, for the kernel's replay

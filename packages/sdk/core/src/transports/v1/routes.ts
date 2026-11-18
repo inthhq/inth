@@ -5,6 +5,8 @@
  * @internal
  */
 
+import { CONSENT_EXPERIMENT_HEADER } from '@inth/sdk-schema/types';
+
 /** Route paths below the project URL. */
 export const V1_ROUTES = {
 	acceptances: '/v1/documents/acceptances',
@@ -32,6 +34,46 @@ export const V1_JSON_HEADERS: Readonly<Record<string, string>> = {
 	accept: 'application/json',
 	'content-type': 'application/json',
 };
+
+/**
+ * `/v1` routes read `x-inth-<name>` request headers and ignore
+ * `x-c15t-<name>`, while the shared header readers use the `x-c15t-` names.
+ */
+const V1_HEADER_PREFIX = 'x-inth-';
+const SHARED_HEADER_PREFIX = 'x-c15t-';
+
+const renamePrefix = function renamePrefix(
+	name: string,
+	from: string,
+	to: string
+): string {
+	const lower = name.toLowerCase();
+	return lower.startsWith(from) ? `${to}${lower.slice(from.length)}` : lower;
+};
+
+/** The name the shared header readers use for a request header. */
+export const toSharedHeaderName = function toSharedHeaderName(
+	name: string
+): string {
+	return renamePrefix(name, V1_HEADER_PREFIX, SHARED_HEADER_PREFIX);
+};
+
+/** A header record under the names a `/v1` route reads. */
+export const toV1Headers = function toV1Headers(
+	headers: Readonly<Record<string, string>>
+): Record<string, string> {
+	const renamed: Record<string, string> = {};
+	for (const [name, value] of Object.entries(headers)) {
+		renamed[renamePrefix(name, SHARED_HEADER_PREFIX, V1_HEADER_PREFIX)] = value;
+	}
+	return renamed;
+};
+
+export const V1_EXPERIMENT_HEADER = renamePrefix(
+	CONSENT_EXPERIMENT_HEADER,
+	SHARED_HEADER_PREFIX,
+	V1_HEADER_PREFIX
+);
 
 export const trimTrailingSlash = function trimTrailingSlash(
 	url: string

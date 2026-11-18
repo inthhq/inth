@@ -10,7 +10,7 @@ import {
 	buildRequestContextSentHeaders,
 } from '../../libs/request-context-headers';
 import type { InitContext } from '../../types';
-import { trimTrailingSlash, V1_ROUTES } from './routes';
+import { toV1Headers, trimTrailingSlash, V1_ROUTES } from './routes';
 
 export interface V1InitRequest {
 	url: string;
@@ -65,11 +65,11 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 			// No custom headers: init must stay a CORS simple request, or a
 			// browser sends a preflight before the banner can show. The
 			// overrides go in the query; Accept-Language is safelisted.
-			headers: {
+			headers: toV1Headers({
 				accept: 'application/json',
 				...options.headers,
 				...buildRequestContextSentHeaders(options.overrides),
-			},
+			}),
 			method: 'GET',
 		},
 		requestHeaders,
