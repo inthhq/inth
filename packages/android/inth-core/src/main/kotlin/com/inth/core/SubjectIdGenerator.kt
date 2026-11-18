@@ -123,7 +123,7 @@ class SubjectIdGenerator(
 					if (char != '-') {
 						return false
 					}
-				} else if (!char.isDigit() && char !in 'a'..'f') {
+				} else if (char !in '0'..'9' && char !in 'a'..'f') {
 					return false
 				}
 			}
