@@ -18,14 +18,15 @@ export interface BootstrapPayload {
 	/** Newest protocol the native build itself accepts. */
 	readonly maxSupportedProtocolVersion: number;
 	/**
-	 * Native SDK version, which the core sends unprefixed as the
-	 * `x-inth-version` request header. The host platform travels separately
-	 * in `x-inth-platform`.
+	 * Native SDK version, which the core sends in the `x-inth-platform`
+	 * request header after the platform tag, as `rn-><version>`.
 	 */
 	readonly nativeSdkVersion: string;
 	/**
 	 * Subject id the core generated or loaded, or `null` before the first
-	 * write. It is a inth-generated `sub_` id, never a hardware identifier.
+	 * write. It is a UUIDv7 the core minted, or a c15t `sub_` id it read
+	 * from storage until a backend response names the canonical UUIDv7. It is
+	 * never a hardware identifier.
 	 */
 	readonly subjectId: string | null;
 	/**
