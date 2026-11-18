@@ -88,6 +88,8 @@ const notRegularFile = (path: string): CliError =>
     `${terminalText(path)} is not a regular file. Name a file, or - for stdin.`
   );
 
+// The same checks as openStableRegularFile in file-input.ts, whose errors name
+// a --option instead of the path.
 const readFile = async (path: string, add: AddBytes): Promise<void> => {
   // Windows refuses to open a directory, so check the type before opening.
   if (!accessFile(path, () => statSync(path)).isFile()) {
