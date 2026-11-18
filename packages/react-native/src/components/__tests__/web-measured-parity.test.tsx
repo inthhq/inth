@@ -1069,7 +1069,7 @@ describe('branding tab', () => {
 		tree.unmount();
 	});
 
-	test('draws the brand smaller than the words in front of it', () => {
+	test('draws the label at its own size and tracking', () => {
 		const tree = mountSurface(<ConsentBanner />, englishSnapshot());
 		const runs = [
 			...tree.container().querySelectorAll<HTMLElement>('span[data-rn-style]'),
@@ -1079,33 +1079,28 @@ describe('branding tab', () => {
 				(style) => style.color === defaultConsentTheme.colors.textOnPrimary
 			);
 
-		// The `max-width: 480px` query restates both runs as `0.625rem`, but only the
-		// wordmark's copy of that rule carries the `:not(.headless)` that ties it with
-		// the 11pt rule it displaces, and only that one comes later. So `Secured by`
-		// stays at `--consent-dialog-branding-label-size` and `c15t` drops to 10, which
-		// is what the demo at 411 wide computes and what the crop of the tag shows.
-		expect(runs.map((style) => style.fontSize)).toEqual([11, 10]);
-		expect(runs.map((style) => style.lineHeight)).toEqual([11, 10]);
-
-		// The tracking each run resolves to at its own size: `.01em` opens the label
-		// by 0.11, `.03em` closes the brand by 0.3 at 10pt, which is what lets the
-		// wordmark sit against its mark.
-		expect(runs.map((style) => style.letterSpacing)).toEqual([0.11, -0.3]);
+		// One run: the Inth mark is the wordmark, so nothing follows `Secured by`.
+		// The phone query restates `.brandingCopy` without the `:not(.headless)` that
+		// would tie it, so the label stays at 11 with `.01em` of tracking.
+		expect(runs.map((style) => style.fontSize)).toEqual([11]);
+		expect(runs.map((style) => style.lineHeight)).toEqual([11]);
+		expect(runs.map((style) => style.letterSpacing)).toEqual([0.11]);
 
 		tree.unmount();
 	});
 
-	test('centres the wordmark against the mark it is welded to', () => {
-		// The mark is 15pt and the brand beside it is 10 under the phone query, and the
-		// live tab puts both on one middle line. `.brandingWordmark` carries
-		// `align-items: center` for exactly that: let the row stretch its shorter child and
-		// the brand hangs off the mark instead of sitting against it. The 5 between them is
-		// the same rule's `gap: 0.3125rem`.
+	test('draws the mark at the phone height and centres it', () => {
+		// `.brandingInth` is `0.8125rem` under the `max-width: 480px` query, and
+		// `.brandingWordmark` centres it against the label.
 		const tree = mountSurface(<ConsentBanner />, englishSnapshot());
 		const tab = roleNodes(tree.container(), 'link')[0] as HTMLElement;
 		const row = tab.lastElementChild as HTMLElement;
 
-		expect(nodeStyle(row)).toMatchObject({ alignItems: 'center', gap: 5 });
+		expect(nodeStyle(row)).toMatchObject({ alignItems: 'center' });
+		expect(nodeStyle(row.firstElementChild as HTMLElement)).toMatchObject({
+			height: 13,
+			width: 13,
+		});
 
 		tree.unmount();
 	});

@@ -4,8 +4,8 @@ import { PolicyPlayground } from '../../../components/policy/policy-playground';
 
 export const metadata = {
 	description:
-		'Load a shipped inth policy preset, edit any field, and watch validation, fingerprints, geo resolution and the live consent runtime update.',
-	title: 'Policy playground · inth Demo',
+		'Load a shipped Inth policy preset, edit any field, and watch validation, fingerprints, geo resolution and the live consent runtime update.',
+	title: 'Policy playground · Inth Demo',
 };
 
 const PolicyPage = () => (

@@ -1,7 +1,7 @@
 /*
  * Rules for the classes `components` puts on the banner and dialog in
- * nuxt.config.ts. inth's own rules sit in the `components` cascade layer,
- * so these unlayered rules win without extra specificity. They read inth's
+ * nuxt.config.ts. Inth's own rules sit in the `components` cascade layer,
+ * so these unlayered rules win without extra specificity. They read Inth's
  * theme variables, so they follow the dark palette too.
  */
 

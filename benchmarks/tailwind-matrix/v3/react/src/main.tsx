@@ -14,7 +14,7 @@ const options = {
 		},
 	},
 	projectUrl,
-	// Tailwind 3 builds inth's stylesheet from app.css.
+	// Tailwind 3 builds Inth's stylesheet from app.css.
 	styles: false,
 };
 // #endregion docs:slot

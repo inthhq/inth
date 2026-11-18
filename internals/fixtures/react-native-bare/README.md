@@ -8,7 +8,7 @@ A bare React Native 0.87.1 app on the New Architecture. Normal native mode runs
 presenter through the public package entry point. Privacy settings reopens the
 native preference center, and the host displays presenter outcomes.
 
-`INTH_FAKE_NATIVE=true` selects the older React shell and diagnostics with a
+`C15T_FAKE_NATIVE=true` selects the older React shell and diagnostics with a
 JavaScript fake. Its IAB drawer stores a display selection in React state, not a
 native vendor commit. That shell is a UI fixture, not a production headless app.
 The E2E runner's IAB mode instead installs a test CMP configuration in native
@@ -60,7 +60,7 @@ cp .env.example .env
 `.env` is ignored; `.env.example` is the committed template. `babel.config.js` loads
 it and inlines every `process.env.INTH_*` read at build time, which is the only way a
 value reaches a React Native bundle. A variable already in the real environment wins,
-so `INTH_FAKE_NATIVE=true bun run android` overrides the file.
+so `C15T_FAKE_NATIVE=true bun run android` overrides the file.
 
 The app defaults to the public Inth demo, `https://example-inth.inth.app/`.
 It embeds a native policy resource for fresh offline startup. The checked-in demo
@@ -125,7 +125,7 @@ same link goes in as a launch variable. It enters through the launch options, so
 JavaScript cannot tell it apart from a link the OS delivered, and the verbs are unchanged.
 
 ```sh
-SIMCTL_CHILD_INTH_DEMO_LINK='inth-demo://accept' \
+SIMCTL_CHILD_C15T_DEMO_LINK='inth-demo://accept' \
   xcrun simctl launch --terminate-running-process <udid> org.reactjs.native.example.InthBare
 ```
 
@@ -206,7 +206,7 @@ Four things it does that are easy to get wrong:
 - It builds **Release** by default, so the JavaScript bundle is inside the app. In Debug the
   binary dials a Metro server, and on a machine with several worktrees checked out that is
   whichever server started first, so Debug starts its own and probes upward from 8084.
-- It sends links through `INTH_DEMO_LINK`, not `simctl openurl`. iOS asks
+- It sends links through `C15T_DEMO_LINK`, not `simctl openurl`. iOS asks
   "Open in “Inth Bare”?" before it hands a custom-scheme open to the app, and a headless
   run has no finger for it. One link per cold start also means every step survives process
   death on its own. Set `IOS_JOURNEY_PROBE_OPENURL=1` to re-test that claim rather than
@@ -450,7 +450,7 @@ JavaScript side: subscription counts, gating, prompt requirements, the offline q
 It proves nothing about Swift, Kotlin, Keychain, AndroidKeyStore, or Codegen, and the
 app says so on screen whenever it is active: a `Fake core` badge under the header, and the
 CORE panel on **Diagnostics** reading `fake stub, not a device core`, so a result cannot be
-misread. The real core is the default; `INTH_FAKE_NATIVE=true` forces the fake, and a
+misread. The real core is the default; `C15T_FAKE_NATIVE=true` forces the fake, and a
 binary without the module offers it as the way past the build error.
 
 ## Persistence and cold-start checklist
@@ -531,9 +531,9 @@ bun run --cwd internals/fixtures/react-native-bare e2e:android
 To run the retained bundled-policy expiry scenario on either platform:
 
 ```sh
-INTH_APP_E2E_SCENARIO=expiry INTH_APP_E2E_PORT=39883 \
+C15T_APP_E2E_SCENARIO=expiry C15T_APP_E2E_PORT=39883 \
   bun run --cwd internals/fixtures/react-native-bare e2e:ios
-INTH_APP_E2E_SCENARIO=expiry INTH_APP_E2E_PORT=39884 \
+C15T_APP_E2E_SCENARIO=expiry C15T_APP_E2E_PORT=39884 \
   bun run --cwd internals/fixtures/react-native-bare e2e:android
 ```
 
@@ -549,7 +549,7 @@ declaration to prove earlier grants cannot return.
 Android also has an adapter regression scenario:
 
 ```sh
-INTH_APP_E2E_SCENARIO=adapter INTH_APP_E2E_PORT=39884 \
+C15T_APP_E2E_SCENARIO=adapter C15T_APP_E2E_PORT=39884 \
   bun run --cwd internals/fixtures/react-native-bare e2e:android
 ```
 
@@ -575,12 +575,12 @@ creates and deletes its own simulator or emulator. No shared device is erased.
 Android's test APK runs in a separate process so it can force-stop the real app.
 
 The test backend binds loopback port 39873 by default. Set
-`INTH_APP_E2E_PORT` to an unused port for concurrent runs. It exports an authored conservative
+`C15T_APP_E2E_PORT` to an unused port for concurrent runs. It exports an authored conservative
 manifest and serves the existing `packages/native-protocol/evaluation-eu-fresh-install.json`
 response after reconnection. Only the E2E build artifact uses that endpoint and
 resource. The checked-in reference defaults remain the public Inth demo.
 
-`INTH_APP_E2E=1` embeds a fixture-only observer that publishes the real
+`C15T_APP_E2E=1` embeds a fixture-only observer that publishes the real
 TurboModule snapshot to the test backend. The test fails unless the active core
 is native. It checks effective permissions, explicit category receipts, their
 confirmation times and the actual `/subjects` bodies. The fake core cannot
@@ -607,9 +607,9 @@ Successful runs require the scenario's named frames and a non-empty recording.
 `command.xml` records runner failures, including compilation failures; it is not
 a substitute for the native test report.
 
-Set `INTH_APP_E2E_OUT` to a fresh absolute evidence directory. Optional device
-settings are `INTH_IOS_RUNTIME`, `INTH_IOS_DEVICE`, `INTH_ANDROID_IMAGE` and
-`INTH_ANDROID_ARCH`. Android defaults to an installed API 36 Google APIs arm64
+Set `C15T_APP_E2E_OUT` to a fresh absolute evidence directory. Optional device
+settings are `C15T_IOS_RUNTIME`, `C15T_IOS_DEVICE`, `C15T_ANDROID_IMAGE` and
+`C15T_ANDROID_ARCH`. Android defaults to an installed API 36 Google APIs arm64
 image. CI uses x86_64. A run fails if its selected backend port is occupied. Run platforms
 sequentially. `.github/workflows/mobile-app-e2e.yml` is callable and manually
 dispatchable, and has no publication dependency.

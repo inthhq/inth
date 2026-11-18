@@ -36,7 +36,7 @@ const isOff = (value: string | undefined): boolean =>
 /**
  * App E2E build: the real vendor SDKs start and every request goes to the
  * loopback E2E backend over plain HTTP. `scripts/vendor-e2e.sh` sets this, the
- * backend URL and `INTH_E2E_POLICY`, the policy resource it exported from that
+ * backend URL and `C15T_E2E_POLICY`, the policy resource it exported from that
  * backend. Normal builds keep the hosted demo and the committed resource.
  *
  * The Inth plugin accepts only an Inth project URL, and a Release build cannot
@@ -45,7 +45,7 @@ const isOff = (value: string | undefined): boolean =>
  * native app install the core against the loopback backend before React Native
  * starts. The JavaScript screens still read the loopback URL.
  */
-const appE2e = process.env.EXPO_PUBLIC_INTH_APP_E2E === '1';
+const appE2e = process.env.EXPO_PUBLIC_C15T_APP_E2E === '1';
 
 const consentCategories: NonNullable<InthPluginProps['consentCategories']> = [
 	'necessary',
@@ -132,10 +132,10 @@ const inthPluginProps: InthPluginProps = {
 	// An App E2E build installs the core itself, with its own policy resource.
 	...(appE2e
 		? { autoBootstrap: false }
-		: { policyResource: process.env.INTH_E2E_POLICY ?? './inth-policy.json' }),
-	// `INTH_NATIVE_UI=0` builds without the stock native consent screens; the app
+		: { policyResource: process.env.C15T_E2E_POLICY ?? './inth-policy.json' }),
+	// `C15T_NATIVE_UI=0` builds without the stock native consent screens; the app
 	// then draws its own with the headless hooks (src/screens/headless.tsx).
-	...(process.env.INTH_NATIVE_UI === '0' ? { nativeUI: false } : { theme }),
+	...(process.env.C15T_NATIVE_UI === '0' ? { nativeUI: false } : { theme }),
 	trackingMarkdownUsageDescription,
 	trackingMarkdownUsageDescriptionLocalizations,
 	trackingUsageDescription,
@@ -196,7 +196,7 @@ const plugins: PluginEntry[] = [
 					'./plugins/with-inth-e2e-install',
 					{
 						consentCategories,
-						policy: process.env.INTH_E2E_POLICY,
+						policy: process.env.C15T_E2E_POLICY,
 						projectUrl,
 					},
 				] satisfies PluginEntry,
@@ -238,9 +238,9 @@ const inthExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	extra: {
 		inth: {
 			projectUrl,
-			forceFakeNative: !isOff(process.env.EXPO_PUBLIC_INTH_FAKE_NATIVE),
+			forceFakeNative: !isOff(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE),
 			sampleIntervalMs:
-				Number(process.env.EXPO_PUBLIC_INTH_SAMPLE_INTERVAL_MS) || 1000,
+				Number(process.env.EXPO_PUBLIC_C15T_SAMPLE_INTERVAL_MS) || 1000,
 		},
 	},
 });

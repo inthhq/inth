@@ -1,4 +1,9 @@
-export { type Branding, brandingSchema, brandingValues } from './branding';
+export {
+	type Branding,
+	brandingSchema,
+	brandingValues,
+	DEFAULT_BRANDING,
+} from './branding';
 export { parseConsentManifest } from './consent-manifest-schema';
 export { type Hosting, hostingSchema, hostingValues } from './hosting';
 export {

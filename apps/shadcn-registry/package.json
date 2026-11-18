@@ -1,7 +1,7 @@
 {
 	"name": "@inth/shadcn-registry",
 	"private": true,
-	"description": "Source and build for the inth shadcn registry served at c15t.com/r.",
+	"description": "Source and build for the Inth shadcn registry served at c15t.com/r.",
 	"type": "module",
 	"scripts": {
 		"build": "bun scripts/build.ts",

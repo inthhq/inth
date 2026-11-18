@@ -51,7 +51,7 @@ held requests by one request.
 
 Your bundler names that chunk, so Inth cannot link it from your HTML. To
 start the download earlier, add a `<link rel="modulepreload">` for the chunk
-your build emits for `@inth/sdk/dist/modules/loader-and-blocker.js`. With
+your build emits for `@inth/sdk/lib/core/dist/modules/loader-and-blocker.js`. With
 Vite, `.vite/manifest.json` lists it under that path when `build.manifest` is
 on. Give the link `fetchpriority="low"`. Inth needs the chunk only when it
 starts, and at the default priority the preload can delay your app's own

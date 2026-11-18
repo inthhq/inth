@@ -525,7 +525,8 @@ describe('GTM template', () => {
 		page.run({
 			...tagData,
 			projectUrl: 'https://acme.inth.app',
-			scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
+			scriptUrl:
+				'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.js',
 		});
 
 		expect(queued[0]).toEqual([
@@ -612,9 +613,18 @@ describe('GTM template', () => {
 		['https://acme.inth.app/c15t.js', true],
 		['https://acme.inth.app/c15t.headless.js', true],
 		['https://acme.inth.app/c15t.iab.js', true],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js', true],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.offline.js', true],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/dist/c15t.local.js', true],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.js',
+			true,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.iab.js',
+			true,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/lib/browser/dist/c15t.local.js',
+			false,
+		],
 		['https://example.com/c15t.js', false],
 		['https://acme.inth.app.example.com/c15t.js', false],
 		['https://inth.app/c15t.js', false],
@@ -622,30 +632,61 @@ describe('GTM template', () => {
 		['https://acme.inth.app/assets/c15t.js', false],
 		['http://acme.inth.app/c15t.js', false],
 		['https://acme.inth.app/c15t.js?v=1', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/other.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.gpp.js', false],
 		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.devtools.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/other.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.gpp.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.devtools.js',
 			false,
 		],
 		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/c15t.js', false],
+		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js', false],
 		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/x/dist/c15t.js', false],
 		['https://acme.inth.app/inth/c15t.js', false],
 		['https://acme.inth.app/c15t.gpp.js', false],
 		['https://acme.inth.app/c15t.offline.js', false],
 		['https://acme.inth.app/c15t.local.js', false],
 		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0-canary.4/dist/c15t.headless.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0-canary.4/lib/browser/dist/c15t.headless.js',
 			true,
 		],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@latest/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@^3.1.0/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@~3.1.0/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.x/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0.1/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0-/dist/c15t.js', false],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@latest/lib/browser/dist/c15t.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3/lib/browser/dist/c15t.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1/lib/browser/dist/c15t.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@^3.1.0/lib/browser/dist/c15t.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@~3.1.0/lib/browser/dist/c15t.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.x/lib/browser/dist/c15t.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0.1/lib/browser/dist/c15t.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0-/lib/browser/dist/c15t.js',
+			false,
+		],
 	])('treats %s as allowed: %s', (scriptUrl, allowed) => {
 		const page = createPage();
 		// jsDelivr's hosted c15t.js needs a backend; see the cases below.
@@ -660,19 +701,9 @@ describe('GTM template', () => {
 
 	it.each([
 		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.js',
 			'',
 			'needs a "Project URL"',
-		],
-		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.offline.js',
-			'https://acme.inth.app',
-			'uses no backend',
-		],
-		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/dist/c15t.local.js',
-			'https://acme.inth.app',
-			'uses no backend',
 		],
 	])('fails %s with Project URL "%s"', (scriptUrl, projectUrl, message) => {
 		const page = createPage();
@@ -687,8 +718,14 @@ describe('GTM template', () => {
 	it.each([
 		['https://acme.inth.app/c15t.js', ''],
 		['https://acme.inth.app/c15t.js', 'https://other.inth.app'],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.headless.js', ''],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.iab.js', ''],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.headless.js',
+			'',
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.iab.js',
+			'',
+		],
 	])('loads %s with Project URL "%s"', (scriptUrl, projectUrl) => {
 		const page = createPage();
 		const result = page.run({ ...tagData, projectUrl, scriptUrl });
@@ -710,10 +747,9 @@ describe('GTM template', () => {
 		for (const url of [
 			'https://acme.inth.app/c15t.js',
 			'https://acme.inth.app/c15t.iab.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.offline.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/dist/c15t.local.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.headless.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0-canary.4/dist/c15t.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.iab.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.headless.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0-canary.4/lib/browser/dist/c15t.js',
 		]) {
 			expect(pattern.test(url)).toBe(true);
 		}
@@ -721,11 +757,13 @@ describe('GTM template', () => {
 			'https://example.com/c15t.js',
 			'https://acme.inth.app.example.com/c15t.js',
 			'https://acme.inth.app/c15t.gpp.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.devtools.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.devtools.js',
 			'https://acme.inth.app/c15t.offline.js',
 			'https://acme.inth.app/c15t.local.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@latest/dist/c15t.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1/dist/c15t.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/lib/browser/dist/c15t.local.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@latest/lib/browser/dist/c15t.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1/lib/browser/dist/c15t.js',
 		]) {
 			expect(pattern.test(url)).toBe(false);
 		}

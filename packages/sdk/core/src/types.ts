@@ -77,8 +77,7 @@ export type {
  */
 export type KernelBranding = 'c15t' | 'consent' | 'inth' | 'none';
 
-/** The branding a snapshot carries until `/init` or a transport names one. */
-export const DEFAULT_BRANDING: KernelBranding = 'inth';
+export { DEFAULT_BRANDING } from '@inth/sdk-schema/types';
 
 /**
  * Who runs the backend that served `/init`: Inth's hosted platform or a

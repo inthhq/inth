@@ -2,8 +2,8 @@
 
 Source for the Inth items in the shadcn registry, served from
 `https://c15t.com/r`. The items are presentation only. Each one renders the
-project's own shadcn components and gets its state and actions from inth's
-headless hooks, so consent logic stays in the `inth` package.
+project's own shadcn components and gets its state and actions from Inth's
+headless hooks, so consent logic stays in the `@inth/react` package.
 
 Users install items with the shadcn CLI:
 
@@ -11,13 +11,13 @@ Users install items with the shadcn CLI:
 npx shadcn add @c15t/next-consent-manager @c15t/next-consent-banner
 ```
 
-The `@inth` namespace resolves through the shadcn directory, or through this
+The `@c15t` namespace resolves through the shadcn directory, or through this
 entry in the project's `components.json`:
 
 ```json
 {
   "registries": {
-    "@inth": "https://c15t.com/r/{style}/{name}.json"
+    "@c15t": "https://c15t.com/r/{style}/{name}.json"
   }
 }
 ```
@@ -80,9 +80,8 @@ components don't expose all of it. The dialog and sheet pass
 
 ## Commands
 
-Run these from `apps/shadcn-registry`. `check-types` and `fixtures` need a
-built `inth`, so run `bun turbo run build --filter=inth` from the repo root
-first.
+Run these from `apps/shadcn-registry`. `check-types` and `fixtures` need the
+framework packages built, so run `pnpm sdk:build` from the repo root first.
 
 ```bash
 bun run build         # write dist/r for https://c15t.com/r
@@ -95,7 +94,7 @@ bun run fixtures      # real shadcn projects, see below
 `fixtures` scaffolds a shadcn project for each framework and base with
 `shadcn init`, serves the registry from memory, runs `shadcn add` for every
 item, declares one marketing vendor, and type-checks the result. It packs
-the built workspace `inth` and the `@inth` packages it depends on, and the
+each framework's built `@inth` package and the `@inth` packages it depends on, and the
 projects install those tarballs the way they would install a release. The
 TanStack Start fixtures also replace `src/routes/__root.tsx` with the root
 route the install notes describe. Projects live in
@@ -134,8 +133,8 @@ and copy `components/ui` and `lib/utils.ts` from each
 
 ## Deploying
 
-The items pin `inth@^3.2.0`, the first stable release with the headless
-hooks they use. 3.1.0 shipped without them. Publish 3.2.0 before deploying,
+The items pin their `@inth/*` framework package at `^3.2.0`, the first
+release with the headless hooks they use. Publish 3.2.0 before deploying,
 or installs fail to resolve the dependency.
 
 ```bash

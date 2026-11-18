@@ -105,7 +105,7 @@
 <main
 	style="padding: 32px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;"
 >
-	<h1 style="margin: 0 0 8px;">Svelte inth script benchmark</h1>
+	<h1 style="margin: 0 0 8px;">Svelte Inth script benchmark</h1>
 	<p style="margin: 0 0 16px;">Scripts: {count}</p>
 	<button
 		id="run-script-count"

@@ -4,6 +4,10 @@
  */
 export const brandingValues = ['c15t', 'inth', 'consent', 'none'] as const;
 
+/** The branding a manifest or snapshot carries when nothing names one. */
+export const DEFAULT_BRANDING =
+	'inth' satisfies (typeof brandingValues)[number];
+
 /**
  * Who runs the backend that served a consent decision: Inth's hosted
  * platform, or the site's own `@c15t/backend`.

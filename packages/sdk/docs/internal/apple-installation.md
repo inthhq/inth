@@ -103,8 +103,8 @@ module imports and attachment ordering for this path.
 SwiftPM source consumers import `InthCore`, `InthApple` and
 `InthReactNativeBridge` from the same resolved source package. The RN SwiftPM
 manifest currently supports a local source checkout only, through its default
-path or `INTH_CORE_PATH`. It explicitly refuses `INTH_CORE_VERSION` and
-`INTH_CORE_URL` until a remote native package containing both products exists.
+path or `C15T_CORE_PATH`. It explicitly refuses `C15T_CORE_VERSION` and
+`C15T_CORE_URL` until a remote native package containing both products exists.
 The npm tarball does not include that workspace SwiftPM manifest. Remote native
 distribution and clean SwiftPM consumers remain release gates.
 
@@ -133,7 +133,7 @@ of the RN npm version. None is the internal 12-bit IAB CMP version or a claim of
 CMP registration or certification. `Inth.version` in `Transports.swift` is the
 source of truth for the Swift native package. `InthApple.version` aliases it and
 the local `InthCore.podspec` reads it directly. The pod no longer accepts an
-independent `INTH_CORE_POD_VERSION`. Tests compare the native module versions;
+independent `C15T_CORE_POD_VERSION`. Tests compare the native module versions;
 request tests verify both header values.
 
 The CocoaPods RN package compiles generated copies of both native modules into

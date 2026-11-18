@@ -42,7 +42,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Each action is the app's button, carrying inth's action attribute. */
+/** Each action is the app's button, carrying Inth's action attribute. */
 const actionsUseOwnButton: Story['play'] = async () => {
 	const body = within(document.body);
 	const accept = await body.findByRole('button', { name: /^accept all$/iu });

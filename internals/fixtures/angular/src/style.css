@@ -111,7 +111,7 @@ footer {
 	background: white;
 }
 
-/* The Branded link (`?design=branded`) sets `data-design` on <html>. inth's
+/* The Branded link (`?design=branded`) sets `data-design` on <html>. Inth's
    default tokens sit on :where(:root), so these values win whichever
    stylesheet loads first. */
 :root[data-design='branded'] {

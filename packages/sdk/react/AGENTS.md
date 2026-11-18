@@ -13,9 +13,9 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [React quickstart](./docs/frameworks/react/quickstart.md)
 - [Choose your setup](./docs/concepts/choose-your-setup.md): Pick the Inth setup for your framework, rendering mode and hosting, and decide who runs the consent backend.
 - [How consent works](./docs/concepts/how-consent-works.md): What Inth decides on each page load, the difference between a permission and a recorded choice, and what happens when a visitor saves.
-- [Customize the interface](./docs/customization/overview.md): Change inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
+- [Customize the interface](./docs/customization/overview.md): Change Inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
 - [Verify consent](./docs/guides/verify-consent.md): Check in a production build that vendor requests wait for consent, rejection survives a reload, preferences reopen and privacy signals apply.
-- [Upgrade a React app from v2](./docs/frameworks/react/upgrade-v3.md): Upgrade a React app from Inth v2 (@c15t/react) to v3. Covers packages, ConsentProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+- [Upgrade a React app from v2](./docs/frameworks/react/upgrade-v3.md): Upgrade a React app from c15t v2 (@c15t/react) to Inth v3 (@inth/react). Covers packages, ConsentProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 
 ## More documentation
 
@@ -44,11 +44,11 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [IAB TCF](./docs/frameworks/react/iab.md): Mount the IAB TCF banner and dialog inside a React ConsentProvider and configure the CMP ID, policy and vendor data.
 - [Network blocker](./docs/frameworks/react/network-blocker.md): Hold fetch and XMLHttpRequest calls in a React app until their consent category is allowed, with networkBlocker rules in the ConsentProvider options.
 - [Quickstart](./docs/frameworks/react/quickstart.md): Add a consent banner, preferences dialog and consent-gated scripts to a React single-page app built with Vite, using Inth as the consent backend.
-- [Rendering and deployment](./docs/frameworks/react/rendering.md): How Inth resolves consent in client-rendered React apps, React Router framework mode, Remix and other server-rendered React apps without a Inth adapter.
+- [Rendering and deployment](./docs/frameworks/react/rendering.md): How Inth resolves consent in client-rendered React apps, React Router framework mode, Remix and other server-rendered React apps without an Inth adapter.
 - [Scripts](./docs/frameworks/react/scripts.md): Load vendor scripts by consent category in a React app with ConsentProvider, and clear stored data or reload the page when a visitor withdraws consent.
 - [Translations](./docs/frameworks/react/translations.md): Where Inth banner and dialog copy comes from in a React app, how the browser picks the visitor's language, and how to override copy and switch languages with the provider's i18n option and hooks.
 - [Troubleshooting](./docs/frameworks/react/troubleshooting.md): Fix a missing banner, early vendor requests, unstyled components and theme warnings in a React app that uses @inth/react.
-- [Upgrade from v2](./docs/frameworks/react/upgrade-v3.md): Upgrade a React app from Inth v2 (@c15t/react) to v3. Covers packages, ConsentProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+- [Upgrade from v2](./docs/frameworks/react/upgrade-v3.md): Upgrade a React app from c15t v2 (@c15t/react) to Inth v3 (@inth/react). Covers packages, ConsentProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 - [Vendor consent](./docs/frameworks/react/vendor-consent.md): Let visitors allow a category such as marketing in a React app and still turn off one vendor in it, with the vendors option on ConsentProvider and useVendorAllowed.
 
 ## Concepts
@@ -69,15 +69,15 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 
 ## Customization
 
-- [Class names and CSS-in-JS](./docs/customization/class-names.md): Style inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
-- [Dark mode](./docs/customization/dark-mode.md): Switch inth's banner and dialog to dark colors with colorScheme, set your own dark tokens, follow your site's theme switch, and paint dark on the first frame in every framework.
-- [Motion and animation](./docs/customization/motion.md): Change how fast inth's banner and dialog animate with duration and easing tokens, turn animations off per surface with disableAnimation, and check reduced-motion behavior in each framework.
-- [Customize the interface](./docs/customization/overview.md): Change inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
+- [Class names and CSS-in-JS](./docs/customization/class-names.md): Style Inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
+- [Dark mode](./docs/customization/dark-mode.md): Switch Inth's banner and dialog to dark colors with colorScheme, set your own dark tokens, follow your site's theme switch, and paint dark on the first frame in every framework.
+- [Motion and animation](./docs/customization/motion.md): Change how fast Inth's banner and dialog animate with duration and easing tokens, turn animations off per surface with disableAnimation, and check reduced-motion behavior in each framework.
+- [Customize the interface](./docs/customization/overview.md): Change Inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
 - [Banner designs](./docs/customization/recipes.md): Five consent banner designs built with Inth, from one prop to your own markup, with tested code for React, Vue, Svelte, Astro and plain HTML.
-- [Component parts](./docs/customization/slots.md): Find every part of inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
-- [Stylesheets and CSS layers](./docs/customization/stylesheets.md): See how Inth delivers its styles in each framework without a render-blocking stylesheet, when to import styles.css yourself with styles false, which file holds the dialog's rules, and how inth's cascade layer meets your own.
-- [Tailwind CSS](./docs/customization/tailwind.md): Use inth's styles with Tailwind CSS 4 or 3 in every framework, put utilities on Inth component parts, and use Tailwind's dark variant with Inth.
-- [Theme tokens](./docs/customization/tokens.md): Change inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
+- [Component parts](./docs/customization/slots.md): Find every part of Inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
+- [Stylesheets and CSS layers](./docs/customization/stylesheets.md): See how Inth delivers its styles in each framework without a render-blocking stylesheet, when to import styles.css yourself with styles false, which file holds the dialog's rules, and how Inth's cascade layer meets your own.
+- [Tailwind CSS](./docs/customization/tailwind.md): Use Inth's styles with Tailwind CSS 4 or 3 in every framework, put utilities on Inth component parts, and use Tailwind's dark variant with Inth.
+- [Theme tokens](./docs/customization/tokens.md): Change Inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
 - [Copy and translations](./docs/customization/translations.md): Change consent wording through i18n and test the complete prompt and preferences flow.
 
 ## Integrations
@@ -97,7 +97,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Attentive](./docs/integrations/attentive.md): Load the Attentive tag only after marketing consent with the Inth attentiveTag helper, and check its requests and storage in DevTools.
 - [Branch](./docs/integrations/branch.md): Set Branch's consumer protection attribution level and Google DMA parameters from Inth consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
 - [Braze](./docs/integrations/braze.md): Keep the Braze SDK disabled until Inth consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
-- [Custom integrations](./docs/integrations/building-integrations.md): Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using a Inth script configuration.
+- [Custom integrations](./docs/integrations/building-integrations.md): Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using an Inth script configuration.
 - [Clay](./docs/integrations/clay.md): Load Clay web intent only after marketing consent and understand its storage and revocation limits.
 - [Clearbit](./docs/integrations/clearbit.md): Load the Clearbit enrichment tag only after marketing consent with the Inth clearbit helper, and check it in DevTools.
 - [Cloudflare Web Analytics](./docs/integrations/cloudflare-web-analytics.md): Load the Cloudflare Web Analytics beacon only after measurement consent with the Inth cloudflareWebAnalytics helper, and check it in DevTools.

@@ -183,7 +183,7 @@ test('a click before hydration starts the load and replays once hydrated', async
 	expect(errors).toEqual([]);
 });
 
-test("leaves stock banner actions to inth's early-tap script", async () => {
+test("leaves stock banner actions to Inth's early-tap script", async () => {
 	heroImage();
 	const Inner = () => (
 		<div data-testid="consent-banner-root">

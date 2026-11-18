@@ -23,7 +23,7 @@
 	{scripts}
 >
 	<main>
-		<h1>inth + Svelte</h1>
+		<h1>Inth + Svelte</h1>
 		<p>Your app goes here.</p>
 	</main>
 	<footer>

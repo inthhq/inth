@@ -443,11 +443,14 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// paths. Registering the resolved runtime directory and its real path
 		// keeps every runtime file inlined regardless of how the package was
 		// reached (the official module template's `transpile.push(runtimeDir)`
-		// pattern, hardened for symlinked installs). The Vue runtime holds the
-		// plugins and components; this package's holds the server routes.
+		// pattern, hardened for symlinked installs). @inth/vue's whole dist
+		// is registered, not just its runtime/ with the plugins and
+		// components: this package's server routes import `@inth/vue/nuxt`,
+		// which sits beside runtime/, and Nitro would otherwise leave that
+		// import bare for an app that does not depend on @inth/vue itself.
 		nuxt.options.build.transpile.push('@inth/vue');
 		for (const runtimeDir of [
-			runtime.resolve('./runtime'),
+			runtime.resolve(),
 			resolver.resolve('./runtime'),
 		]) {
 			nuxt.options.build.transpile.push(runtimeDir);

@@ -19,7 +19,7 @@ onUnmounted(() => {
 
 <template>
 	<main class="consent-example">
-		<p>inth / Nuxt Vapor</p>
+		<p>Inth / Nuxt Vapor</p>
 		<h1>Consent example</h1>
 		<p>
 			PostHog waits for measurement permission. X Pixel waits for marketing

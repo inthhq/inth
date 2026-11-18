@@ -293,7 +293,7 @@ jobs:
         with:
           browsers: "true"
       # @inth/svelte's tests import a SvelteKit doc snippet whose tsconfig
-      # extends $app/tsconfig, which only `svelte-kit sync` writes. inth's CI
+      # extends $app/tsconfig, which only `svelte-kit sync` writes. c15t's CI
       # got it as a side effect of running type checks first in the same job.
       - name: Generate SvelteKit types the tests import
         run: pnpm --dir internals/doc-snippets/sveltekit exec svelte-kit sync

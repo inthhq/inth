@@ -672,7 +672,7 @@ describe('ConsentDialog', () => {
 			roleNodes(withoutEntry.container(), 'link').map((node) =>
 				node.getAttribute('aria-label')
 			)
-		).toEqual(['Secured by c15t']);
+		).toEqual(['Secured by Inth']);
 		withoutEntry.unmount();
 	});
 

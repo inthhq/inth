@@ -2,6 +2,10 @@
  * The Nuxt module's options, as they reach the app through the public
  * runtime config.
  */
+import { realpathSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { isAbsolute } from 'node:path';
+
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { logger, runWithNuxtContext } from '@nuxt/kit';
 import { applyEnv } from 'nitropack/runtime/internal/utils.env';
@@ -836,4 +840,20 @@ describe('gpp from the inth config key', () => {
 		const config = await publicConfig({ gpp: true, projectUrl: '/api/inth' });
 		expect(config).toHaveProperty('gpp', true);
 	});
+});
+
+test('inlines the @inth/vue entry the server routes import, by its real path', async () => {
+	// A workspace or aliased install reaches @inth/vue through a symlink whose
+	// real path has no node_modules/@inth/vue segment. Nitro then matches
+	// only by directory, and an import it does not inline stays bare in a
+	// server bundle that cannot resolve @inth/vue.
+	const nuxt = createNuxt({ projectUrl: '/api/inth' });
+	await runWithNuxtContext(nuxt, () => module({}, nuxt));
+	const entry = realpathSync(
+		createRequire(import.meta.url).resolve('@inth/vue/nuxt')
+	);
+	const dirs = nuxt.options.build.transpile.filter(
+		(item): item is string => typeof item === 'string' && isAbsolute(item)
+	);
+	expect(dirs.some((dir) => entry.startsWith(`${dir}/`))).toBe(true);
 });

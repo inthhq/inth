@@ -413,7 +413,7 @@ export interface ConsentSnapshot {
 	/**
 	 * Under an IAB TCF policy, whether the committed TC String grants the
 	 * `marketing` category: every TCF purpose it maps to that some vendor asks
-	 * consent for, as `iabPurposesToC15tConsents` in `@inth/sdk/iab` derives it.
+	 * consent for, as `iabPurposesToInthConsents` in `@inth/sdk/iab` derives it.
 	 * `null` outside IAB, before a TC String is saved, and on a binary that
 	 * predates the field. The ATT sequence reads it; purpose vectors stay in
 	 * native authority.

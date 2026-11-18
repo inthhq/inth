@@ -16,9 +16,9 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Static export setup](./docs/frameworks/next/static-export.md)
 - [Choose your setup](./docs/concepts/choose-your-setup.md): Pick the Inth setup for your framework, rendering mode and hosting, and decide who runs the consent backend.
 - [How consent works](./docs/concepts/how-consent-works.md): What Inth decides on each page load, the difference between a permission and a recorded choice, and what happens when a visitor saves.
-- [Customize the interface](./docs/customization/overview.md): Change inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
+- [Customize the interface](./docs/customization/overview.md): Change Inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
 - [Verify consent](./docs/guides/verify-consent.md): Check in a production build that vendor requests wait for consent, rejection survives a reload, preferences reopen and privacy signals apply.
-- [Upgrade a Next.js app from v2](./docs/frameworks/next/upgrade-v3.md): Upgrade a Next.js app from Inth v2 (@c15t/nextjs) to v3. Covers packages, ConsentRoot or ConsentProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+- [Upgrade a Next.js app from v2](./docs/frameworks/next/upgrade-v3.md): Upgrade a Next.js app from c15t v2 (@c15t/nextjs) to Inth v3 (@inth/nextjs). Covers packages, ConsentRoot or ConsentProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 
 ## More documentation
 
@@ -58,7 +58,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Static export](./docs/frameworks/next/static-export.md): Add Inth to a Next.js site built with output export, where the browser resolves consent through Inth without request helpers or API routes.
 - [Translations](./docs/frameworks/next/translations.md): Where Inth banner and dialog copy comes from in Next.js, how the server and browser pick the visitor's language, and how to override copy and switch languages from a Client Component.
 - [Troubleshooting](./docs/frameworks/next/troubleshooting.md): Diagnose failed Inth consent prefetch and build-time manifest downloads in Next.js, verify manifest requests, and fix a missing inth.config.ts, config errors, unknown server location and prerendering errors.
-- [Upgrade from v2](./docs/frameworks/next/upgrade-v3.md): Upgrade a Next.js app from Inth v2 (@c15t/nextjs) to v3. Covers packages, ConsentRoot or ConsentProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+- [Upgrade from v2](./docs/frameworks/next/upgrade-v3.md): Upgrade a Next.js app from c15t v2 (@c15t/nextjs) to Inth v3 (@inth/nextjs). Covers packages, ConsentRoot or ConsentProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 - [Vendor consent](./docs/frameworks/next/vendor-consent.md): Let visitors allow a category such as marketing in a Next.js app and still turn off one vendor in it, with vendors in inth.config.ts and useVendorAllowed.
 
 ## Concepts
@@ -79,15 +79,15 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 
 ## Customization
 
-- [Class names and CSS-in-JS](./docs/customization/class-names.md): Style inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
-- [Dark mode](./docs/customization/dark-mode.md): Switch inth's banner and dialog to dark colors with colorScheme, set your own dark tokens, follow your site's theme switch, and paint dark on the first frame in every framework.
-- [Motion and animation](./docs/customization/motion.md): Change how fast inth's banner and dialog animate with duration and easing tokens, turn animations off per surface with disableAnimation, and check reduced-motion behavior in each framework.
-- [Customize the interface](./docs/customization/overview.md): Change inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
+- [Class names and CSS-in-JS](./docs/customization/class-names.md): Style Inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
+- [Dark mode](./docs/customization/dark-mode.md): Switch Inth's banner and dialog to dark colors with colorScheme, set your own dark tokens, follow your site's theme switch, and paint dark on the first frame in every framework.
+- [Motion and animation](./docs/customization/motion.md): Change how fast Inth's banner and dialog animate with duration and easing tokens, turn animations off per surface with disableAnimation, and check reduced-motion behavior in each framework.
+- [Customize the interface](./docs/customization/overview.md): Change Inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
 - [Banner designs](./docs/customization/recipes.md): Five consent banner designs built with Inth, from one prop to your own markup, with tested code for React, Vue, Svelte, Astro and plain HTML.
-- [Component parts](./docs/customization/slots.md): Find every part of inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
-- [Stylesheets and CSS layers](./docs/customization/stylesheets.md): See how Inth delivers its styles in each framework without a render-blocking stylesheet, when to import styles.css yourself with styles false, which file holds the dialog's rules, and how inth's cascade layer meets your own.
-- [Tailwind CSS](./docs/customization/tailwind.md): Use inth's styles with Tailwind CSS 4 or 3 in every framework, put utilities on Inth component parts, and use Tailwind's dark variant with Inth.
-- [Theme tokens](./docs/customization/tokens.md): Change inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
+- [Component parts](./docs/customization/slots.md): Find every part of Inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
+- [Stylesheets and CSS layers](./docs/customization/stylesheets.md): See how Inth delivers its styles in each framework without a render-blocking stylesheet, when to import styles.css yourself with styles false, which file holds the dialog's rules, and how Inth's cascade layer meets your own.
+- [Tailwind CSS](./docs/customization/tailwind.md): Use Inth's styles with Tailwind CSS 4 or 3 in every framework, put utilities on Inth component parts, and use Tailwind's dark variant with Inth.
+- [Theme tokens](./docs/customization/tokens.md): Change Inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
 - [Copy and translations](./docs/customization/translations.md): Change consent wording through i18n and test the complete prompt and preferences flow.
 
 ## Integrations
@@ -107,7 +107,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Attentive](./docs/integrations/attentive.md): Load the Attentive tag only after marketing consent with the Inth attentiveTag helper, and check its requests and storage in DevTools.
 - [Branch](./docs/integrations/branch.md): Set Branch's consumer protection attribution level and Google DMA parameters from Inth consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
 - [Braze](./docs/integrations/braze.md): Keep the Braze SDK disabled until Inth consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
-- [Custom integrations](./docs/integrations/building-integrations.md): Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using a Inth script configuration.
+- [Custom integrations](./docs/integrations/building-integrations.md): Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using an Inth script configuration.
 - [Clay](./docs/integrations/clay.md): Load Clay web intent only after marketing consent and understand its storage and revocation limits.
 - [Clearbit](./docs/integrations/clearbit.md): Load the Clearbit enrichment tag only after marketing consent with the Inth clearbit helper, and check it in DevTools.
 - [Cloudflare Web Analytics](./docs/integrations/cloudflare-web-analytics.md): Load the Cloudflare Web Analytics beacon only after measurement consent with the Inth cloudflareWebAnalytics helper, and check it in DevTools.

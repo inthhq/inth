@@ -27,7 +27,7 @@ export const App = () => {
 	const marketing = useConsent('marketing');
 	return (
 		<main>
-			<p>inth / React</p>
+			<p>Inth / React</p>
 			<h1>Consent example</h1>
 			<p>One consent setup for your analytics, advertising and video embeds.</p>
 			<nav aria-label="Banner design">

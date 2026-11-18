@@ -83,6 +83,7 @@ export {
 	buildConsentId,
 	buildConsentManifestFromConfig,
 	buildConsentSessionReport,
+	DEFAULT_BRANDING,
 	canonicalizePolicySet,
 	CHOICE_PROMPT_FINGERPRINT_VERSION,
 	choicePromptFingerprintInput,

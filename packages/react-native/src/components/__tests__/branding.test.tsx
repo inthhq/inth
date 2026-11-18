@@ -79,7 +79,7 @@ const markNode = function markNode(container: HTMLElement): HTMLElement {
 	const node = container.querySelector('img');
 
 	if (node === null) {
-		throw new Error('expected the branding tab to draw the c15t mark');
+		throw new Error('expected the branding tab to draw the Inth mark');
 	}
 
 	return node;
@@ -102,10 +102,10 @@ describe('the branding mark asset', () => {
 		for (const scale of BRANDING_MARK_SCALES) {
 			const raster = decode(BRANDING_MARK_DATA_URI[scale]);
 
-			// The 15dp mark, at 1x, 2x and 3x. An asset that came back at the wrong
+			// The 13dp mark, at 1x, 2x and 3x. An asset that came back at the wrong
 			// size would still render, just soft or oversized, and nothing else
 			// would notice.
-			expect(raster.edge).toBe(scale * 15);
+			expect(raster.edge).toBe(scale * 13);
 			expect(raster.colorType).toBe(6);
 		}
 	});
@@ -178,8 +178,8 @@ describe('ConsentBrandingTag', () => {
 		const mark = markNode(tree.container());
 		const markStyle = nodeStyle(mark);
 
-		expect(markStyle.height).toBe(15);
-		expect(markStyle.width).toBe(15);
+		expect(markStyle.height).toBe(13);
+		expect(markStyle.width).toBe(13);
 
 		tree.unmount();
 	});
@@ -225,12 +225,12 @@ describe('ConsentBrandingTag', () => {
 		tree.unmount();
 	});
 
-	test('opens c15t on the press', () => {
+	test('opens Inth on the press', () => {
 		const tree = mountSurface(<ConsentBanner />);
 
 		tap(tabNode(tree.container()));
 
-		expect(linking.opened).toEqual(['https://c15t.com']);
+		expect(linking.opened).toEqual(['https://inth.com']);
 
 		tree.unmount();
 	});
@@ -281,7 +281,7 @@ describe('ConsentBrandingTag', () => {
 		const tree = mountSurface(<ConsentBanner />, snapshot);
 
 		expect(tabNode(tree.container()).getAttribute('aria-label')).toBe(
-			'Rechtsgrundlage c15t'
+			'Rechtsgrundlage Inth'
 		);
 		expect(tree.text()).toContain('Rechtsgrundlage');
 

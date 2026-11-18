@@ -3,7 +3,7 @@ import type { Theme } from '@inth/sdk/ui';
 /**
  * Theme presets for the demo.
  *
- * Each preset deliberately leans on a different part of inth's base theme
+ * Each preset deliberately leans on a different part of Inth's base theme
  * system — tokens (colors/dark, typography, spacing, radius, shadows,
  * motion), `consentActions` button treatments, and slots — to show how far
  * the stock components can be pushed without headless mode or compound
@@ -476,7 +476,7 @@ export const themePresets = {
 		theme: minimalTheme,
 	},
 	none: {
-		description: 'Base inth styling, untouched',
+		description: 'Base Inth styling, untouched',
 		label: 'Default',
 		theme: undefined,
 	},

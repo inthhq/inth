@@ -42,7 +42,7 @@ import { useConsentStyles } from './theme/use-consent-styles';
 /** Props for {@link ConsentPreferences}. */
 export interface ConsentPreferencesProps {
 	/**
-	 * Hide the "Secured by c15t" tab.
+	 * Hide the "Secured by" tab.
 	 *
 	 * Off by default, which is what the web surfaces do: the tab is what tells a
 	 * subject who is holding their consent, and a plan that has already paid for

@@ -53,9 +53,9 @@ ___TEMPLATE_PARAMETERS___
       {
         "type": "REGEX",
         "args": [
-          "^https://([a-z0-9-]+\\.inth\\.app/c15t(\\.headless|\\.iab)?|cdn\\.jsdelivr\\.net/npm/@inth/sdk@[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?/dist/c15t(\\.local|\\.offline|\\.headless|\\.iab)?)\\.js$"
+          "^https://([a-z0-9-]+\\.inth\\.app/c15t(\\.headless|\\.iab)?|cdn\\.jsdelivr\\.net/npm/@inth/sdk@[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?/lib/browser/dist/c15t(\\.headless|\\.iab)?)\\.js$"
         ],
-        "errorMessage": "Use your Inth project URL with /c15t.js on the end, or a jsDelivr URL for an exact @inth/sdk version, such as 3.1.0, and c15t.js, c15t.local.js, c15t.headless.js or c15t.iab.js."
+        "errorMessage": "Use your Inth project URL with /c15t.js on the end, or a jsDelivr URL for an exact @inth/sdk version, such as 3.2.0, and c15t.js, c15t.headless.js or c15t.iab.js."
       }
     ],
     "enablingConditions": [
@@ -65,7 +65,7 @@ ___TEMPLATE_PARAMETERS___
         "type": "EQUALS"
       }
     ],
-    "help": "Your Inth project URL with /c15t.js on the end, such as https://your-project.inth.app/c15t.js. You can also load an exact version from jsDelivr, such as https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js. Tags such as latest and ranges such as 3.1 are not accepted, because jsDelivr would serve new releases without a container change. A self-hosted backend is not supported here; add its script tag to your page instead."
+    "help": "Your Inth project URL with /c15t.js on the end, such as https://your-project.inth.app/c15t.js. You can also load an exact version from jsDelivr, such as https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/lib/browser/dist/c15t.js. Tags such as latest and ranges such as 3.1 are not accepted, because jsDelivr would serve new releases without a container change. A self-hosted backend is not supported here; add its script tag to your page instead."
   },
   {
     "type": "TEXT",
@@ -80,7 +80,7 @@ ___TEMPLATE_PARAMETERS___
         "type": "EQUALS"
       }
     ],
-    "help": "Required for jsDelivr's c15t.js, c15t.headless.js and c15t.iab.js. Inth serves its /c15t.js with the backend URL already set. Leave it blank only for c15t.local.js from an older release."
+    "help": "Required for jsDelivr's c15t.js. Inth serves its /c15t.js with the project URL already set."
   },
   {
     "type": "GROUP",
@@ -336,18 +336,10 @@ const JSDELIVR_PREFIX = 'cdn.jsdelivr.net/npm/@inth/sdk@';
 const DIGITS = '0123456789';
 const PRERELEASE_CHARS =
   DIGITS + 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-';
-// Bundles that install Inth. Add-ons such as c15t.gpp.js wait for one of
-// these, so loading one alone would show nothing and never send an update.
-// Inth serves no offline bundle.
+// Bundles that install Inth, from an Inth project or from @inth/sdk on
+// jsDelivr. Add-ons such as c15t.gpp.js wait for one of these, so loading
+// one alone would show nothing and never send an update.
 const INTH_FILES = ['c15t.js', 'c15t.headless.js', 'c15t.iab.js'];
-// c15t.offline.js is the old name for c15t.local.js, before 3.2.0.
-const JSDELIVR_FILES = [
-  'c15t.js',
-  'c15t.local.js',
-  'c15t.offline.js',
-  'c15t.headless.js',
-  'c15t.iab.js'
-];
 
 const isType = (key) => CONSENT_TYPES.indexOf(key) !== -1;
 const isValue = (value) => value === 'granted' || value === 'denied';
@@ -395,9 +387,9 @@ const isAllowedScriptUrl = (url) => {
     const version = dir.substring(JSDELIVR_PREFIX.length);
     const dist = version.indexOf('/');
     return (
-      JSDELIVR_FILES.indexOf(file) !== -1 &&
+      INTH_FILES.indexOf(file) !== -1 &&
       dist > 0 &&
-      version.substring(dist) === '/dist' &&
+      version.substring(dist) === '/lib/browser/dist' &&
       isExactVersion(version.substring(0, dist))
     );
   }
@@ -410,17 +402,11 @@ const isAllowedScriptUrl = (url) => {
 };
 
 // c15t.js from jsDelivr runs in hosted mode and stops without a backend URL.
-// c15t.local.js stops when it gets one. Inth bundles carry their own.
+// Inth bundles carry their own.
 const projectUrlProblem = (url, backend) => {
   if (url.indexOf('https://' + JSDELIVR_PREFIX) !== 0) return '';
   if (endsWith(url, '/c15t.js') && backend === '') {
     return 'jsDelivr\'s c15t.js needs a "Project URL".';
-  }
-  if (endsWith(url, '/c15t.local.js') && backend !== '') {
-    return 'c15t.local.js uses no backend. Clear "Project URL".';
-  }
-  if (endsWith(url, '/c15t.offline.js') && backend !== '') {
-    return 'c15t.offline.js uses no backend. Clear "Project URL".';
   }
   return '';
 };
@@ -550,7 +536,7 @@ const projectUrl =
 if (inject && !isAllowedScriptUrl(scriptUrl)) {
   log('inth: "Inth script URL" must be an Inth project /c15t.js URL or a ' +
       'jsDelivr URL for an exact @inth/sdk version and c15t.js, ' +
-      'c15t.local.js, c15t.headless.js or c15t.iab.js. Got: ' + scriptUrl);
+      'c15t.headless.js or c15t.iab.js. Got: ' + scriptUrl);
   data.gtmOnFailure();
 } else if (inject && projectUrlProblem(scriptUrl, projectUrl) !== '') {
   log('inth: ' + projectUrlProblem(scriptUrl, projectUrl));
@@ -971,7 +957,7 @@ scenarios:
 
     runCode({
       loadScript: true,
-      scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
+      scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.js',
       projectUrl: 'https://your-project.inth.app',
       waitForUpdate: '500'
     });
@@ -980,7 +966,7 @@ scenarios:
     assertThat(calls[1][1]).isEqualTo('ready');
     assertThat(calls[2][1]).isEqualTo('consent');
     assertThat(injected).isEqualTo(
-      'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js');
+      'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.js');
     assertApi('gtmOnSuccess').wasCalled();
 - name: The tag queues the ticked categories with the backend URL
   code: |-
@@ -1055,27 +1041,12 @@ scenarios:
 
     runCode({
       loadScript: true,
-      scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
+      scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/c15t.js',
       projectUrl: '',
       waitForUpdate: '500'
     });
 
     assertThat(calls.length).isEqualTo(0);
-    assertApi('injectScript').wasNotCalled();
-    assertApi('gtmOnFailure').wasCalled();
-- name: The jsDelivr offline bundle with a backend URL fails the tag
-  code: |-
-    mockObject('templateStorage', freshStorage());
-    mock('createQueue', () => () => {});
-    mock('copyFromWindow', () => undefined);
-
-    runCode({
-      loadScript: true,
-      scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.offline.js',
-      projectUrl: 'https://your-project.inth.app',
-      waitForUpdate: '500'
-    });
-
     assertApi('injectScript').wasNotCalled();
     assertApi('gtmOnFailure').wasCalled();
 - name: A second firing on the same page does not subscribe again

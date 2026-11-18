@@ -56,7 +56,7 @@ export const gatePageHTML = `<header class="site-header"><a href="/">Field notes
 /** CookieBench's reference stylesheet, inlined by every gate and control page. */
 export const gatePageCSS = `:root{font-family:system-ui,sans-serif;color:#223326;background:#f7f7f1;font-synthesis:none}*{box-sizing:border-box}body{margin:0}.site-header,main,footer{max-width:1060px;margin:auto;padding:24px}.site-header{display:flex;justify-content:space-between;border-bottom:1px solid #cbd1c6}.site-header>a{font-weight:700}nav{display:flex;gap:24px}a{color:inherit;text-underline-offset:3px}.eyebrow{margin-top:40px;color:#4c624f;font-size:14px}h1{font-size:clamp(32px,5vw,56px);line-height:1.1;max-width:800px;margin:16px 0}.intro{font-size:20px;max-width:720px;line-height:1.5}.hero{display:block;width:100%;height:auto;aspect-ratio:1200/640;margin:28px 0}.story-grid{display:grid;grid-template-columns:2fr 1fr;gap:48px}p{line-height:1.65}button,select{font:inherit;padding:12px 18px;cursor:pointer}footer{border-top:1px solid #cbd1c6;font-size:13px;margin-top:32px}button:focus-visible,a:focus-visible{outline:3px solid #285fc2;outline-offset:4px}@media(max-width:600px){.story-grid{grid-template-columns:1fr;gap:16px}.site-header{align-items:start;gap:16px}nav{flex-direction:column;gap:8px}}`;
 
-/** One gated script in inth's `scripts` / `useScriptLoader` shape. */
+/** One gated script in Inth's `scripts` / `useScriptLoader` shape. */
 export interface GateScript {
 	id: string;
 	category: (typeof gateAcceptCategories)[number];

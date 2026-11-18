@@ -9,8 +9,8 @@
 			"distribution": "internal",
 			"environment": "development",
 			"env": {
-				"EXPO_PUBLIC_INTH_FAKE_NATIVE": "false",
-				"INTH_LOCAL_PODS": "false"
+				"EXPO_PUBLIC_C15T_FAKE_NATIVE": "false",
+				"C15T_LOCAL_PODS": "false"
 			},
 			"android": { "buildType": "apk" }
 		},
@@ -19,8 +19,8 @@
 			"distribution": "internal",
 			"environment": "preview",
 			"env": {
-				"EXPO_PUBLIC_INTH_FAKE_NATIVE": "false",
-				"INTH_LOCAL_PODS": "false"
+				"EXPO_PUBLIC_C15T_FAKE_NATIVE": "false",
+				"C15T_LOCAL_PODS": "false"
 			},
 			"android": { "buildType": "apk" }
 		}

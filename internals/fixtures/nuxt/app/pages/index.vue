@@ -19,7 +19,7 @@ const openPreferences = () => {
 
 <template>
 	<main class="page">
-		<h1>inth × Nuxt</h1>
+		<h1>Inth × Nuxt</h1>
 		<NuxtLink to="/consent-example">Consent example</NuxtLink>
 		<p>
 			Consent management with the banner server-rendered into the first HTML

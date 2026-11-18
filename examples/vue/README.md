@@ -6,7 +6,7 @@ backend picks it from the visitor's location. The build runs on any static
 host.
 
 - `vite.config.ts` adds `consentManifest()` next to `@vitejs/plugin-vue`. It
-  hands the backend URL to the app and keeps inth's `.vue` components out of
+  hands the backend URL to the app and keeps Inth's `.vue` components out of
   Vite's pre-bundling.
 - `src/main.ts` installs `inthVue` with `hosted()` and loads PostHog once the
   visitor allows measurement.

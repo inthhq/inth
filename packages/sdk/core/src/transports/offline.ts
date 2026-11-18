@@ -87,7 +87,7 @@ export interface OfflineTransportOptions {
 	detectedLanguage?: string;
 
 	/**
-	 * Brand identifier. Defaults to 'c15t'.
+	 * Brand identifier. Defaults to {@link DEFAULT_BRANDING}.
 	 */
 	branding?: KernelBranding;
 

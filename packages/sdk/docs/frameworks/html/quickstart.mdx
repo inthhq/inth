@@ -130,14 +130,14 @@ If no banner appears, the policy for your location may not ask for one. See
   visitor gets the strict opt-in fallback. Choices stay in that browser.
   Never load it on a production page; the other script files contain
   neither its transport nor the policy presets.
-- **A self-hosted backend.** A [self-hosted Inth backend](/docs/self-host/overview)
+- **A self-hosted backend.** A [self-hosted c15t backend](/docs/self-host/overview)
   serves the hosted bundle at `/c15t.js` with its backend URL already
   configured, so the tag needs only a `src`:
   `<script src="https://consent.example.com/c15t.js" defer></script>`, with
   your backend's origin in place of `consent.example.com`.
 - **From a CDN.** Load a pinned version from jsDelivr. Use `c15t.js` with
   `data-project-url` for hosted mode:
-  `<script src="https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/dist/c15t.js" data-project-url="https://your-project.inth.app" defer></script>`.
+  `<script src="https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/lib/browser/dist/c15t.js" data-project-url="https://your-project.inth.app" defer></script>`.
   Replace `<version>` with the exact version listed on
   [npm](https://www.npmjs.com/package/@inth/sdk?activeTab=versions).
   `c15t.js` loads `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and

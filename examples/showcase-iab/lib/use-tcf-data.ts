@@ -7,7 +7,7 @@ import type { AdPartner } from '@/lib/ad-partners';
 
 /**
  * The visitor's TCF choices, read the way an ad tag reads them: through
- * `window.__tcfapi`, the standard CMP API that inth's IAB module installs.
+ * `window.__tcfapi`, the standard CMP API that Inth's IAB module installs.
  * Google Publisher Tag, Prebid.js and other TCF vendors call the same API,
  * so nothing here depends on Inth.
  *

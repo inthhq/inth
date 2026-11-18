@@ -817,7 +817,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
     `TCData` reported over `__tcfapi` disagree with the TC String on web.
 11. **`reset()` does not yet clear a bus**, and iOS Keychain persistence across uninstall means a
     naive reset leaves a live signal behind (section 6, point 3 and 4).
-12. **The GVL proxy question transfers.** inth/Inth operates `gvl.inth.app`
+12. **The GVL proxy question transfers.** Inth operates `gvl.inth.app`
     (`DEFAULT_GVL_ENDPOINT` in `packages/sdk/schema/src/shared/constants.ts`). A mobile SDK pointed at a proxy we run
     inherits the same staleness and availability duties, and S2's caching rules above are
     the only licence for using an archived version offline.

@@ -351,7 +351,7 @@ export const ConsentDemo = () => {
 			<div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
 				<header className="border-border/80 flex flex-wrap items-center justify-between gap-4 border-b pb-6">
 					<div className="space-y-1">
-						<h1 className="text-xl font-semibold tracking-tight">inth demo</h1>
+						<h1 className="text-xl font-semibold tracking-tight">Inth demo</h1>
 						<p className="text-muted-foreground text-sm">
 							Pick a scenario to see which policy resolves and the banner it
 							produces.

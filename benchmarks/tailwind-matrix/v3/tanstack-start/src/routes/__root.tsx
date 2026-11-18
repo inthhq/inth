@@ -30,7 +30,7 @@ const RootComponent = () => (
 							root: { className: '!p-[7px] dark:!p-[11px]' },
 						},
 					},
-					// Tailwind 3 builds inth's stylesheet from styles.css.
+					// Tailwind 3 builds Inth's stylesheet from styles.css.
 					styles: false,
 				}}
 				// #endregion docs:slot

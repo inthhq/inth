@@ -400,7 +400,7 @@ describe('ng-add', () => {
 		);
 	});
 
-	it("reuses a binding that already is inth's component", async () => {
+	it("reuses a binding that already is Inth's component", async () => {
 		const app = await createApp();
 		const component = `${root}/app/app.ts`;
 		app.create(
@@ -885,7 +885,7 @@ describe('ng-add', () => {
 		});
 
 		it.each(overridden)(
-			"adds a provider when %s replaces inth's providers",
+			"adds a provider when %s replaces Inth's providers",
 			async (_form, body) => {
 				const { before, tree, warnings } = await withConfig(body);
 				const calls = (text: string) =>
