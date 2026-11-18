@@ -1494,7 +1494,7 @@ New Architecture only. TurboModule plus Codegen, no legacy bridge, no
     setOverrides(overrides): Promise<void>
     dismissNotice(): void
     refresh(): Promise<void>
-    identify(externalId, identityToken?): Promise<void>
+    identify(externalId, identityToken | null): Promise<void>
     logout(): Promise<void>
     reset(): Promise<void>                      // wipe consent, keep the subject id
     getTrackingAuthorization(): TrackingAuthorizationPayload   // sync, JSON string

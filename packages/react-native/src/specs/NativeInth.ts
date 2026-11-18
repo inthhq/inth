@@ -63,14 +63,14 @@ export interface Spec extends TurboModule {
 	/**
 	 * Attach an external id to the subject. With an identity token, the core
 	 * also links the subject to that person on the backend
-	 * (`POST /v1/subjects/:id/link`); without one it sends nothing. The token is
-	 * used for that one request and never stored.
+	 * (`POST /v1/subjects/:id/link`); without one it sends no link request. The
+	 * token is used for that one request and never stored.
 	 *
-	 * JavaScript always passes both arguments, `undefined` for no token: iOS
-	 * places the promise blocks after the arguments it was given, so a missing
-	 * trailing argument would shift them into the token's slot.
+	 * The token slot is required, `null` for no token: iOS places the promise
+	 * blocks after the arguments it was given, so a missing trailing argument
+	 * would shift them into the token's slot.
 	 */
-	identify: (externalId: string, identityToken?: string) => Promise<void>;
+	identify: (externalId: string, identityToken: string | null) => Promise<void>;
 	/**
 	 * Detach the external id. The Inth subject id is kept, so consent does not
 	 * reset on sign-out.

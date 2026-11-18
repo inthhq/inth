@@ -147,7 +147,11 @@ export const parseSpecMethods = function parseSpecMethods(
 					);
 				}
 
-				const normalized = argument.slice(colon + 1).trim();
+				// A nullable slot, `string | null`, still crosses as a string.
+				const normalized = argument
+					.slice(colon + 1)
+					.trim()
+					.replace(/ *\| *null$/u, '');
 
 				if (normalized !== 'number' && normalized !== 'string') {
 					throw new Error(
@@ -206,6 +210,7 @@ export const ALLOWED_OBJC_TYPES = new Set([
 	'RCTPromiseRejectBlock',
 	'RCTPromiseResolveBlock',
 	'NSString',
+	'NSString?',
 	'double',
 	'void',
 ]);
