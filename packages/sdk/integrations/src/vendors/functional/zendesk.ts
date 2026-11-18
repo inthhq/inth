@@ -1,9 +1,9 @@
 import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
-import { permitted } from '../../engine/vendor-consent';
 import { resolveManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { permitted } from '../_shared/permitted';
 import { readId, skipMissingId } from '../_shared/required-id';
 import {
 	createScriptReuse,

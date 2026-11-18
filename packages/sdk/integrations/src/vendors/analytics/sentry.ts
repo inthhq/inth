@@ -7,10 +7,11 @@ import type {
 import { has } from '@inth/sdk/engine';
 
 import { isRecord } from '../../engine/runtime';
-import { ALL_DENIED, permitted } from '../../engine/vendor-consent';
+import { ALL_DENIED } from '../../engine/vendor-consent';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { permitted } from '../_shared/permitted';
 import {
 	waitForReplayIdle,
 	waitForReplayLoad,
