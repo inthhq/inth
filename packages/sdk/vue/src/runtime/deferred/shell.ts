@@ -81,9 +81,7 @@ export type DeferredEngineFactory = (
 export interface DeferredContextOptions {
 	/** The snapshot the server rendered the page from. */
 	snapshot: ConsentSnapshot;
-	/** The app's current config. */
 	config: () => RuntimeConsentConfig;
-	/** Loads the engine chunk. */
 	loadEngine: () => Promise<DeferredEngineFactory>;
 	/** Completes a commit; loads `commit.ts` by default. A test seam. */
 	completeCommit?: (
@@ -96,7 +94,6 @@ export interface DeferredContextOptions {
 /** The hiding `<style>` once the context handles the tap. */
 const COMMITTED_STYLE_ID = 'inth-early-commit';
 
-/** The stock dialog's root. */
 const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
 
 /** Load the engine anyway this long after an early dialog opened. */
@@ -122,8 +119,6 @@ const nextTask = (): Promise<void> =>
  * Creates the deferred context. Provide it like the engine's context; call
  * `start()` once the app has mounted.
  *
- * @param options - The server snapshot, the config and the engine loader.
- * @returns The context the plugin provides.
  * @internal
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements -- One context, its tap routing and its engine handover.
@@ -136,7 +131,6 @@ export const createDeferredContext = function createDeferredContext(
 	});
 	/** Scripts components registered before the engine (`registerScripts`). */
 	const registered = new Map<symbol, readonly Script[]>();
-	/** The app's config with the registered scripts in it. */
 	const configWithScripts = (): RuntimeConsentConfig =>
 		withRegisteredScripts(options.config(), registered.values());
 	/** The scripts still wanted besides registration `token`'s. */

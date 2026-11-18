@@ -3,8 +3,7 @@
  *
  * A port of the Svelte primitive, which mirrors the React one: same
  * `data-slot` names, same generated `{base}-trigger-{value}` /
- * `{base}-content-{value}` ids, same roving tabindex. Vue's IAB dialog
- * used to inline its own tablist, so it carried none of that.
+ * `{base}-content-{value}` ids, same roving tabindex.
  */
 
 import type { TabsOrientation } from '@inth/sdk/ui/primitives';
@@ -24,11 +23,7 @@ export interface TabsRootContextValue {
 export const tabsRootKey: InjectionKey<TabsRootContextValue> =
 	Symbol('inth-vue-tabs-root');
 
-/**
- * Publish the root's state to its sub-components.
- *
- * @param value - The context the root owns.
- */
+/** Publish the root's state to its sub-components. */
 export const provideTabsRootContext = function provideTabsRootContext(
 	value: TabsRootContextValue
 ): void {
@@ -38,7 +33,6 @@ export const provideTabsRootContext = function provideTabsRootContext(
 /**
  * Read the enclosing root's state.
  *
- * @returns The context.
  * @throws {Error} When used outside `<TabsRoot>`.
  */
 export const useTabsRootContext =

@@ -18,7 +18,6 @@ const tabs = new WeakMap<object, Ref<IabPreferenceTab>>();
  * fresh object on every read, so setting `preferenceCenterTab` on it is
  * lost. Kept out of the composables index so Nuxt does not auto-import it.
  *
- * @returns The shared tab ref.
  * @internal
  */
 export const useIabPreferenceTab =

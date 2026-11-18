@@ -32,7 +32,6 @@ export const useConsentKernelContext = function useConsentKernelContext() {
 	return context;
 };
 
-/** Read one canonical kernel field as a reactive value. */
 const useSnapshotField = <Key extends keyof ConsentSnapshot>(key: Key) => {
 	const snapshot = useConsentSnapshot();
 	return computed(() => snapshot.value[key]);
@@ -79,5 +78,4 @@ export const useHasConsentPreferences = () => {
 };
 /** Read the reasons that currently restrict permissions. */
 export const useConsentRestrictions = () => useSnapshotField('restrictions');
-/** Return the explicit notice dismissal command. */
 export const useDismissNotice = () => useConsentKernel().commands.dismissNotice;

@@ -22,7 +22,6 @@ import { isPlainScript } from '@inth/sdk/surface-actions/plain-scripts';
  * to `persistAfterDispose` keeps its element, as it would under the
  * loader.
  *
- * @param scripts - The scripts whose elements to remove.
  * @param kept - The scripts the page still wants.
  * @internal
  */

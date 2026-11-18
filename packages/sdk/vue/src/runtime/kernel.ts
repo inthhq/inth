@@ -6,8 +6,7 @@
  * and teardown. This module owns expression: it turns the Vue and Nuxt
  * config into runtime options, takes the transport factory the plugin
  * chose as the runtime's `mode`, and exposes the kernel to components as
- * Vue refs. One
- * runtime serves one app; the plugin provides it through
+ * Vue refs. One runtime serves one app; the plugin provides it through
  * {@link provideVueConsentContext}.
  */
 import {
@@ -343,16 +342,16 @@ const createVueRuntimeModules =
 	};
 
 /**
- * The runtime options a Vue config maps to. Everything but `mode`,
- * `prefetch` and the IAB factory comes from the config, so a new config
- * can go through `update()` unchanged.
- */
-/**
  * Loads `@inth/sdk/iab/gpp`, only when `gpp` is set. One function for every
  * call, so passing it to the runtime's `update()` never reads as a change.
  */
 const loadGPP: GPPModuleLoader = () => import('@inth/sdk/iab/gpp');
 
+/**
+ * The runtime options a Vue config maps to. Everything but `mode`,
+ * `prefetch` and the IAB factory comes from the config, so a new config
+ * can go through `update()` unchanged.
+ */
 const toRuntimeOptions = function toRuntimeOptions(
 	config: RuntimeConsentConfig
 ): Omit<ConsentRuntimeUpdate, 'createIAB' | 'mode' | 'prefetch'> {
@@ -364,8 +363,6 @@ const toRuntimeOptions = function toRuntimeOptions(
 		experiment: config.experiment,
 		experimentalScriptRegistry: config.experimentalScriptRegistry,
 		gpp: config.gpp,
-		// IAB is opt-in: without `iab` no CMP mounts, and an `iab` policy
-		// throws (see `createVueConsentKernelContext`).
 		iab: config.iab,
 		iframeBlocker: config.iframeBlocker,
 		loadGPP,
@@ -386,14 +383,12 @@ export type VueIABHost = 'nuxt' | 'vue';
 
 const IAB_UNAVAILABLE_FIX: Record<VueIABHost, string> = {
 	nuxt: 'Set `inth: { iab: {} }` in nuxt.config.ts, or `iab: { cmpId }` when your backend sends no CMP ID',
-	vue: 'Pass `iab` to the inth plugin, such as `app.use(inthVue, { iab: {} })`',
+	vue: 'Pass `iab` to the Inth plugin, such as `app.use(inthVue, { iab: {} })`',
 };
 
 /**
  * The error a Vue or Nuxt app raises for an `iab` policy without `iab`.
  *
- * @param host - Where the app sets `iab`.
- * @returns A fresh {@link IABUnavailableError}.
  * @internal
  */
 export const createIABUnavailableError = function createIABUnavailableError(
@@ -402,7 +397,6 @@ export const createIABUnavailableError = function createIABUnavailableError(
 	return new IABUnavailableError('`iab` is not set', IAB_UNAVAILABLE_FIX[host]);
 };
 
-/** Throw an error where nothing catches it. */
 const throwUncaught = function throwUncaught(error: unknown): never {
 	throw error;
 };
@@ -421,8 +415,6 @@ interface IABGuard {
  * The IAB guard for one context.
  *
  * @param lacksIAB - Whether the app owns its runtime and did not set `iab`.
- * @param options - Where the app sets `iab`, and who receives a later error.
- * @returns The guard.
  */
 const createIABGuard = function createIABGuard(
 	lacksIAB: boolean,
@@ -516,8 +508,6 @@ export interface VueConsentContextOptions {
  * `onIABUnavailable` when the browser resolves it later. A borrowed
  * runtime's host configures IAB, so it never raises.
  *
- * @param options - The config and what the server resolved.
- * @returns The context the plugin provides to components.
  * @throws {IABUnavailableError} When the starting snapshot already needs
  * IAB and `iab` is not set.
  */

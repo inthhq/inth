@@ -152,7 +152,6 @@ export const inthVue: Plugin<[InthVuePluginOptions]> = {
 		const mode = runtime
 			? undefined
 			: selectedMode({ mode: chosen, projectUrl });
-		// One runtime per app, shared through `provide`/`inject`.
 		const context = createVueConsentKernelContext({ config, mode, runtime });
 		provideVueConsentContext(app, context);
 		// Tokens and the color scheme apply from install, before the first

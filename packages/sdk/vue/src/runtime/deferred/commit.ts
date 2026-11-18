@@ -168,8 +168,6 @@ const planAndCommit = function planAndCommit(
  * attached, or when the outbox could not keep the save; the engine records
  * the choice then.
  *
- * @param input - The stand-in, the tap and the app's options.
- * @returns What the engine needs to take over, or `null`.
  * @internal
  */
 export const completeCommit = async function completeCommit(

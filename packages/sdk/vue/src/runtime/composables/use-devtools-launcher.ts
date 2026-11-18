@@ -43,9 +43,6 @@ export interface UseDevToolsLauncherReturn {
  *
  * SSR-safe: on the server nothing subscribes and nothing is claimed.
  *
- * @param kernel - Consent kernel shared with `<ConsentDevTools>`.
- * @param visible - Whether the trigger is on screen.
- * @returns The launcher state for this trigger.
  * @internal
  */
 export const useDevToolsLauncher = function useDevToolsLauncher(

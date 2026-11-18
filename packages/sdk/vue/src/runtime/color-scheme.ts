@@ -18,7 +18,6 @@ const noop = (): void => undefined;
  * Does nothing on the server. Where `matchMedia` is missing, as in a few
  * embedded webviews, `'system'` is light.
  *
- * @param colorScheme - The config's `colorScheme`.
  * @returns A function that stops following the system or the `dark` class.
  * @internal
  */

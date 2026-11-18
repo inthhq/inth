@@ -5,12 +5,7 @@ export const INIT_HEADER_NAMES = [...CONSENT_REQUEST_HEADER_NAMES] as const;
 
 const INIT_HEADER_ALLOWLIST = new Set<string>(INIT_HEADER_NAMES);
 
-/**
- * The consent headers among `headers`, lower-cased.
- *
- * @param headers - Request headers.
- * @returns Only the allowed, non-empty headers.
- */
+/** The non-empty consent headers among `headers`, lower-cased. */
 export const pickAllowedInitHeaders = function pickAllowedInitHeaders(
 	headers: Record<string, string | undefined>
 ): Record<string, string> {

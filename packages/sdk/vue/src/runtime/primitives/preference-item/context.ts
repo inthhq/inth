@@ -3,9 +3,7 @@
  *
  * A port of the Svelte primitive, which is itself the React one: same
  * `data-slot` names, same `data-state`, same collapsing three-element
- * content. Vue's IAB rows used to inline their own trigger and content, so
- * they carried none of that bookkeeping and could not be compared against
- * the other adapters' rows.
+ * content.
  */
 
 import type { ComputedRef, InjectionKey, Ref } from 'vue';
@@ -24,11 +22,7 @@ export interface PreferenceItemContextValue {
 export const preferenceItemKey: InjectionKey<PreferenceItemContextValue> =
 	Symbol('inth-vue-preference-item');
 
-/**
- * Publish the root's state to its sub-components.
- *
- * @param value - The context the root owns.
- */
+/** Publish the root's state to its sub-components. */
 export const providePreferenceItemContext =
 	function providePreferenceItemContext(
 		value: PreferenceItemContextValue
@@ -39,7 +33,6 @@ export const providePreferenceItemContext =
 /**
  * Read the enclosing root's state.
  *
- * @returns The context.
  * @throws {Error} When used outside `<PreferenceItemRoot>`.
  */
 export const usePreferenceItemContext =

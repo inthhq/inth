@@ -21,9 +21,6 @@ const ROOT_OVERRIDE_KEYS = ['country', 'language', 'region'] as const;
  * started yet asks in its first init instead of adopting a prefetch made
  * for other inputs. A prop removed since the last call clears its override.
  *
- * @param context - The app's consent context.
- * @param next - The current prop values.
- * @param previous - The prop values of the previous call, if any.
  * @internal
  */
 export const applyRootOverrides = function applyRootOverrides(

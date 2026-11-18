@@ -4,7 +4,6 @@ import type { ConsentKernel, ConsentState } from '@inth/sdk/engine';
  * Categories DevTools shows: `necessary`, then the policy scope narrowed to
  * the configured categories when any are configured.
  *
- * @param kernel - Kernel whose policy scope is read.
  * @param configured - Categories from props or provider config.
  * @returns The categories to display, in policy order.
  */

@@ -124,7 +124,6 @@ const readSubpath = function readSubpath(
  * it. The core handler is rebuilt only when the runtime config changes
  * where the route reads from.
  *
- * @param dependencies - Nitro's fetch and runtime config, and the snapshot.
  * @returns The h3 handler the module mounts at `${routePrefix}/**`.
  * @internal
  */

@@ -10,13 +10,6 @@ import {
 	symbolSnapshot,
 } from './utils/symbols';
 
-/**
- * Provide a context to every component of an app under the package's
- * injection keys.
- *
- * @param app - The Vue app.
- * @param context - The app's context.
- */
 export const provideVueConsentContext = function provideVueConsentContext(
 	app: App,
 	context: VueConsentKernelContext

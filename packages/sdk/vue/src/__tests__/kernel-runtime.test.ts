@@ -107,7 +107,7 @@ const initFixture: InitOutput = {
 				},
 			},
 			cookieBanner: {
-				description: 'Pick how inth may use cookies.',
+				description: 'Pick how Inth may use cookies.',
 				title: 'Cookie choices',
 			},
 			legalLinks: {
@@ -905,7 +905,7 @@ test('with `iab` set, mounts the shared CMP for a prefetched IAB reference and e
 
 describe('IAB is opt-in', () => {
 	const VUE_MESSAGE =
-		"inth: this visitor's policy uses IAB TCF, but `iab` is not set. Pass `iab` to the inth plugin, such as `app.use(inthVue, { iab: {} })`, or remove the IAB model from your policy.";
+		"inth: this visitor's policy uses IAB TCF, but `iab` is not set. Pass `iab` to the Inth plugin, such as `app.use(inthVue, { iab: {} })`, or remove the IAB model from your policy.";
 
 	const iabPolicyResolution = writePolicyResolutionWire(
 		resolvePolicyRules({

@@ -70,8 +70,6 @@ const escapeAttribute = (value: string): string =>
  * The inline `<script>` that starts this page's `/init` request, or
  * `undefined` when the page should not get one.
  *
- * @param input - The page's config, render kind, route rule and nonce.
- * @returns The tag, or `undefined`.
  * @internal
  */
 export const buildInitPrefetchTag = function buildInitPrefetchTag(

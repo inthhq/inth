@@ -57,7 +57,7 @@ const initFixture: InitOutput = {
 		language: 'en',
 		translations: {
 			cookieBanner: {
-				description: 'Pick how inth may use cookies.',
+				description: 'Pick how Inth may use cookies.',
 				title: 'Cookie choices',
 			},
 		},
