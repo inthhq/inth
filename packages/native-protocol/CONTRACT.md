@@ -1061,8 +1061,10 @@ The path is the version. A `/v1` request sends no `x-inth-version` header and no
 policy-contract header or query parameter, and a core reads no contract declaration
 from a response. Every `/v1` response uses the current policy contract, so a `200`
 from `/v1/consent/init` is a definitive answer, and a policy resolution the core
-cannot read is contract rule 5, not a configuration error. There is no
-`unsupported-contract` error any more.
+cannot read is contract rule 5, not a configuration error. No transport error
+reports a refused contract any more. `unsupported-contract` survives only as a value
+of a policy resolution's failure `reason`, which is the web kernel's vocabulary and
+reaches a device the same way as any other unreadable policy.
 
 Every request carries `accept: application/json` and, with a body,
 `content-type: application/json`, plus one telemetry header:
@@ -1350,6 +1352,15 @@ revision, one publication, the same decision. A value that is not a UUIDv7 is
 ignored. So a c15t id is sent until the first response that names the subject, and
 the canonical UUID after that. Queued bodies keep the id they were frozen with; the
 backend maps it.
+
+The ids a core replaced stay the same subject on the device. The identity slot keeps
+the few most recent ones, and every check that compares a subject id (a queued body's
+owner, a stored IAB decision, the envelope against the identity slot) accepts them as
+equal to the current one. Without that, a grant queued before the first response would
+stop being delivered and a stored decision would be dropped as a mismatch. An app
+stopped between the identity write and the envelope write therefore relaunches with an
+envelope under a previous id, which reads as the same subject rather than as
+`subject-id-mismatch`.
 
 ### Linking a person
 
