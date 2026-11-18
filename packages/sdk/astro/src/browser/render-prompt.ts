@@ -148,10 +148,9 @@ const renderFooter = function renderFooter(
 const renderLegalLinks = function renderLegalLinks(
 	model: PromptModel
 ): HTMLElement {
-	const last = model.legalLinks.length - 1;
 	return element('span', {}, [
 		' ',
-		...model.legalLinks.map((link, index) =>
+		...model.legalLinks.map((link) =>
 			element('span', {}, [
 				element(
 					'a',
@@ -159,12 +158,12 @@ const renderLegalLinks = function renderLegalLinks(
 						class: model.classes.legalLink || undefined,
 						'data-testid': `consent-banner-legal-link-${link.key}`,
 						href: link.href,
-						rel: 'noreferrer',
-						target: '_blank',
+						rel: link.rel,
+						target: link.target,
 					},
-					[index < last ? `${link.label},` : link.label]
+					[link.separated ? `${link.label},` : link.label]
 				),
-				...(index < last ? [' '] : []),
+				...(link.separated ? [' '] : []),
 			])
 		),
 	]);
@@ -252,16 +251,17 @@ export const buildPrompt = function buildPrompt(
 			renderFooter(model, props),
 		]
 	);
-	const branding = renderBrandingTag({
-		hide: props.hideBranding,
-		noStyle: props.noStyle,
-		securedBy: model.copy.securedBy,
-		snapshot,
-		styles: slot.classNames.branding,
-		testId: 'consent-banner-branding',
-		theme,
-		themeSlot: 'consentBannerTag',
-	});
+	const branding = renderBrandingTag(
+		{
+			branding: snapshot.branding,
+			hide: props.hideBranding,
+			noStyle: props.noStyle,
+			styles: slot.classNames.branding,
+			surface: 'banner',
+			theme,
+		},
+		model.copy.securedBy
+	);
 	const root = element(
 		'div',
 		{

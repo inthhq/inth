@@ -12,6 +12,7 @@
  * yet, so a site with a banner in every layout does not need this
  * explicitly — but `<head>` is where the colour-scheme script belongs.
  */
+import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
 import { applyExperimentTheme } from '@inth/sdk/engine';
 import {
 	buildColorSchemeScript,
@@ -56,7 +57,7 @@ const themeCSS = shouldEmit
 	themeCSS && (
 		<style
 			is:inline
-			id="inth-theme"
+			id={THEME_STYLE_ELEMENT_ID}
 			nonce={inth?.nonce}
 			set:html={themeCSS}
 		/>

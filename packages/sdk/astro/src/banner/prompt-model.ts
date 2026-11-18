@@ -9,6 +9,7 @@
  */
 
 import {
+	actionAppearanceFromTheme,
 	defaultTranslationConfig,
 	resolveConsentPresentation,
 } from '@inth/sdk/engine';
@@ -18,12 +19,10 @@ import type {
 	LegalLinks,
 } from '@inth/sdk/engine';
 import type { Translations } from '@inth/sdk/translations';
-import type {
-	AllThemeKeys,
-	ConsentActionStyle,
-	Theme,
-} from '@inth/sdk/ui/theme';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
+import { getTextDirection, resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
+import type { LegalLinkEntry } from '@inth/sdk/ui/utils';
 
 import type { PromptClassNames } from './class-names';
 import { resolveSlotBinding } from './theme-slots';
@@ -73,13 +72,6 @@ export interface PromptModelInput {
 	classNames: PromptClassNames;
 }
 
-/** One inline legal link. */
-export interface PromptLegalLink {
-	key: keyof LegalLinks;
-	href: string | undefined;
-	label: string;
-}
-
 /** One banner button. */
 export interface PromptAction {
 	action: string;
@@ -112,7 +104,7 @@ export interface PromptModel {
 		description: string;
 		securedBy: string;
 	};
-	legalLinks: PromptLegalLink[];
+	legalLinks: LegalLinkEntry[];
 	rights: { right: string; label: string }[];
 	actionGroups: PromptAction[][];
 	classes: {
@@ -322,41 +314,6 @@ const resolveClasses = function resolveClasses(
 };
 
 /**
- * The button treatment for one action, in the order the React banner
- * resolves it: the action's own `theme.consentActions` key, then `primary`
- * for a primary action, then `default`, then stroke with the primary or
- * neutral variant. Mode and variant each come from the first layer that
- * sets them.
- *
- * @param action - The consent action.
- * @param primary - Whether the policy marks the action primary.
- * @param consentActions - The theme's `consentActions`.
- * @returns The resolved mode and variant.
- */
-const resolveConsentActionStyle = function resolveConsentActionStyle(
-	action: string,
-	primary: boolean,
-	consentActions: Theme['consentActions']
-): Required<ConsentActionStyle> {
-	// `save` has no theme key; the other actions each have their own.
-	const themed =
-		action === 'save'
-			? undefined
-			: consentActions?.[action as keyof NonNullable<Theme['consentActions']>];
-	const layers: (ConsentActionStyle | undefined)[] = [
-		themed,
-		primary ? consentActions?.primary : undefined,
-		consentActions?.default,
-	];
-	return {
-		mode: layers.find((layer) => layer?.mode)?.mode ?? 'stroke',
-		variant:
-			layers.find((layer) => layer?.variant)?.variant ??
-			(primary ? 'primary' : 'neutral'),
-	};
-};
-
-/**
  * Resolve the banner's copy, actions, layout and class names.
  *
  * @param input - The snapshot, the component props and the site options.
@@ -376,6 +333,7 @@ export const resolvePromptModel = function resolvePromptModel(
 	// Same policy-driven action resolution the Svelte and React banners use,
 	// so an opt-out or IAB policy produces the same buttons in the same order.
 	const presentation = resolveConsentPresentation({
+		actionAppearance: actionAppearanceFromTheme(input.theme),
 		policy: snapshot.policyRule,
 		presentation: input.presentation,
 		surface: 'prompt',
@@ -415,11 +373,7 @@ export const resolvePromptModel = function resolvePromptModel(
 				const primary = primaries.includes(action);
 				const style = props.noStyle
 					? undefined
-					: resolveConsentActionStyle(
-							action,
-							primary,
-							input.theme?.consentActions
-						);
+					: resolveActionAppearance(input.theme, action, primary);
 				const slot = resolveSlotBinding(
 					input.theme,
 					primary ? 'buttonPrimary' : 'buttonSecondary',
@@ -446,20 +400,11 @@ export const resolvePromptModel = function resolvePromptModel(
 		),
 		direction,
 		language: snapshot.translations?.language,
-		legalLinks: (props.legalLinks ?? [])
-			.filter((key) => input.legalLinks?.[key])
-			.map((key) => ({
-				href: input.legalLinks?.[key]?.href,
-				key,
-				// A link without its own label takes the translated name
-				// for its type, as the React, Vue and Svelte banners do.
-				label: firstOf(
-					input.legalLinks?.[key]?.label,
-					bundle.legalLinks?.[key],
-					fallback.legalLinks?.[key],
-					key
-				),
-			})),
+		legalLinks: resolveLegalLinkEntries(
+			input.legalLinks,
+			props.legalLinks,
+			bundle.legalLinks
+		),
 		model: snapshot.policyRule.model,
 		position,
 		prompt:

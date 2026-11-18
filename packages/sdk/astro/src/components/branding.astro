@@ -1,6 +1,6 @@
 ---
 /**
- * The "Secured by c15t" tag.
+ * The "Secured by" tag.
  *
  * Server-rendered with the same markup, classes and `data-testid` as the
  * Svelte and React banners, so the shared stylesheet positions it
@@ -12,63 +12,55 @@
  * same markup from the same model.
  */
 import type { ConsentSnapshot } from '@inth/sdk/engine';
-import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
-import {
-	C15T_MARK_SVG,
-	INTH_LOGO_SVG,
-	promptClassNames,
-	resolveBrandingModel,
-} from '@inth/astro/server';
-import type { BrandingVariant } from '@inth/astro/server';
+import type { Theme } from '@inth/sdk/ui/theme';
+import { brandMarkSvg } from '@inth/sdk/ui/utils/branding';
+import type { BrandingSurface } from '@inth/sdk/ui/utils/branding';
+import { promptClassNames, resolveBrandingModel } from '@inth/astro/server';
 
 interface Props {
 	/** Render nothing. */
 	hide?: boolean;
 	/** Ship the DOM without the bundled stylesheet's class names. */
 	noStyle?: boolean;
-	/** Which surface the tag belongs to. */
-	variant?: BrandingVariant;
+	/** The surface the tag sits on. */
+	surface: BrandingSurface;
 	/** The brand the server resolved. */
 	branding: ConsentSnapshot['branding'];
 	/** "Secured by", already resolved from the translation bundle. */
 	securedBy: string;
 	/** The host to attribute the referral to. */
 	hostname?: string;
-	/** Test id, so each surface keeps its own. */
-	'data-testid'?: string;
 	/** The integration's `theme`, for the tag's `slots` entry. */
 	theme?: Theme;
-	/** The tag's `theme.slots` key, such as `consentBannerTag`. */
-	themeSlot?: AllThemeKeys;
 }
 
-const { securedBy, 'data-testid': testId, ...input } = Astro.props;
-const model = resolveBrandingModel({
+const { securedBy, ...input } = Astro.props;
+const tag = resolveBrandingModel({
 	...input,
 	styles: promptClassNames.branding,
 });
 ---
 
 {
-	model.show && (
+	tag && (
 		<a
-			class={model.classes.root}
-			data-branding={model.brand}
-			data-testid={testId}
-			data-variant={model.variant}
-			href={model.href}
-			style={model.style}
+			class={tag.root.class}
+			data-branding={tag.brand}
+			data-testid={tag.testId}
+			data-variant={tag.variant}
+			href={tag.href}
+			style={tag.root.style}
 		>
-			<span class={model.classes.content} data-slot="tag-content">
-				<span class={model.classes.copy}>
-					<span class={model.classes.text}>{securedBy}</span>
+			<span class={tag.classes.content} data-slot="tag-content">
+				<span class={tag.classes.copy}>
+					<span class={tag.classes.text}>{securedBy}</span>
 				</span>
-				{model.brand === 'inth' ? (
-					<span class={model.classes.wordmark} dir="ltr" set:html={INTH_LOGO_SVG} />
+				{tag.brand === 'inth' ? (
+					<span class={tag.classes.wordmark} dir="ltr" set:html={brandMarkSvg('inth')} />
 				) : (
-					<span class={model.classes.wordmark} dir="ltr">
-						<span class={model.classes.mark} set:html={C15T_MARK_SVG} />
-						<span class={model.classes.label}>c15t</span>
+					<span class={tag.classes.wordmark} dir="ltr">
+						<span class={tag.classes.mark} set:html={brandMarkSvg('c15t')} />
+						<span class={tag.classes.label}>c15t</span>
 					</span>
 				)}
 			</span>
