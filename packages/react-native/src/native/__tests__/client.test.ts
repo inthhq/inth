@@ -748,6 +748,20 @@ describe('actions', () => {
 
 		ready.stop();
 	});
+
+	test('hands identify the token, and always both arguments', async () => {
+		const { client, fake } = makeClient();
+
+		await client.identify('user-42', 'signed-token');
+		await client.identify('user-43');
+
+		// iOS puts the promise blocks after the arguments it was given, so a
+		// missing token would land the resolve block in the token's slot.
+		expect(fake.identify.mock.calls).toStrictEqual([
+			['user-42', 'signed-token'],
+			['user-43', undefined],
+		]);
+	});
 });
 
 describe('reset', () => {

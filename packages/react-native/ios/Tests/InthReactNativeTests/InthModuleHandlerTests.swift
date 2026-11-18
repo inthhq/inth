@@ -169,6 +169,21 @@ final class InthModuleHandlerTests: XCTestCase {
         XCTAssertNil(Inth.snapshot().subject?.externalId)
     }
 
+    func testIdentifyLinksOnTheBackendOnlyWithAToken() async {
+        let http = RecordingTransport()
+        let handler = InthModuleHandler(startCore: {
+            InthReactNativeBootstrap.start(configuration: memoryConfiguration(), fileStoreDirectory: nil, transport: { _ in http })
+        })
+        XCTAssertTrue(handler.ensureCore())
+
+        XCTAssertTrue(handler.identify(externalId: "user-1", identityToken: nil).isSuccess)
+        XCTAssertTrue(handler.identify(externalId: "user-1", identityToken: "signed-token").isSuccess)
+        await Inth.current?.waitUntilIdle()
+
+        XCTAssertEqual(http.linkTokens, ["signed-token"], "only the call that carried a token links")
+        XCTAssertEqual(Inth.snapshot().subject?.externalId, "user-1")
+    }
+
     func testResetKeepsIdentityAndConfigurationAndOwesTheChoiceAgain() {
         let handler = InthModuleHandler(startCore: { startMemoryCore() })
         XCTAssertTrue(handler.ensureCore())

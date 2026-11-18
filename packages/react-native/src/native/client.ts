@@ -296,11 +296,17 @@ export interface ConsentClient {
 	 */
 	refresh: () => Promise<void>;
 	/**
-	 * Attach an external id and load that subject's stored record.
+	 * Attach an external id to the subject.
+	 *
+	 * The id goes on every later consent record. With an identity token the
+	 * native core also links the subject to that person on the backend; without
+	 * one nothing is sent. The token is used for that one request and never
+	 * stored, so pass a fresh one each time.
 	 *
 	 * @param externalId - Id from the app's own account system.
+	 * @param identityToken - Signed proof of `externalId` from your server.
 	 */
-	identify: (externalId: string) => Promise<void>;
+	identify: (externalId: string, identityToken?: string) => Promise<void>;
 	/**
 	 * Detach the external id. Consent stays with the Inth subject id.
 	 */
@@ -1034,8 +1040,9 @@ export const createConsentClient = function createConsentClient(
 			typeof nativeModule.getWebViewConsent === 'function'
 				? parseWebViewConsent(nativeModule.getWebViewConsent())
 				: null,
-		identify: (externalId: string) =>
-			afterMutation(nativeModule.identify(externalId)),
+		identify: (externalId: string, identityToken?: string) =>
+			// Both arguments, always: see `identify` in `specs/NativeInth.ts`.
+			afterMutation(nativeModule.identify(externalId, identityToken)),
 		isAllowed: (category: AllConsentNames) =>
 			isCategoryAllowed(currentSnapshot(), category),
 		isReady: () => isSnapshotReady(currentSnapshot()),

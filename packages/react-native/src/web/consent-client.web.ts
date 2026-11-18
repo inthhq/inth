@@ -650,9 +650,16 @@ export const createWebConsentClient = function createWebConsentClient(
 		// The WebView bridge carries native consent into a page. On web the app
 		// and the page run in one browser, so there is nothing to carry.
 		getWebViewConsent: () => null,
-		identify: async (externalId: string): Promise<void> => {
+		identify: async (
+			externalId: string,
+			identityToken?: string
+		): Promise<void> => {
 			start();
-			await runtime?.identify({ externalId });
+			await runtime?.identify(
+				identityToken === undefined
+					? { externalId }
+					: { externalId, identityToken }
+			);
 		},
 		isAllowed: (category: AllConsentNames) =>
 			isCategoryAllowed(read(), category),

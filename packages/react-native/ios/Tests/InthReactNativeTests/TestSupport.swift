@@ -115,6 +115,7 @@ final class RecordingTransport: InthTransport, @unchecked Sendable {
     private var _initCount = 0
     private var _saveCount = 0
     private var _savesFail = true
+    private var _linkTokens: [String] = []
 
     /// Whether a save is refused, which is what keeps a queued entry in the queue where a
     /// test can watch it leave.
@@ -143,6 +144,13 @@ final class RecordingTransport: InthTransport, @unchecked Sendable {
         return _saveCount
     }
 
+    /// The identity token of every link request, in order.
+    var linkTokens: [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _linkTokens
+    }
+
     func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
         lock.lock()
         _initCount += 1
@@ -167,7 +175,10 @@ final class RecordingTransport: InthTransport, @unchecked Sendable {
         identityProvider: String?,
         identityToken: String
     ) async -> Result<String?, InthError> {
-        .success(nil)
+        lock.lock()
+        _linkTokens.append(identityToken)
+        lock.unlock()
+        return .success(nil)
     }
 
     /// The smallest policy resolution the core's wire reader accepts as an answer: a

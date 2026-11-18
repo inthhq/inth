@@ -307,10 +307,11 @@ public struct InthModuleHandler {
         return .success(())
     }
 
-    /// Attach an external id to the subject.
-    public func identify(externalId: String) -> Result<Void, InthBridgeError> {
+    /// Attach an external id to the subject. With `identityToken`, the core also links
+    /// the subject on the backend, holding the token for that one request only.
+    public func identify(externalId: String, identityToken: String? = nil) -> Result<Void, InthBridgeError> {
         guard ensureCore(), let core = Inth.current else { return .failure(.notBootstrapped) }
-        core.identify(KernelUser(externalId: externalId))
+        core.identify(KernelUser(externalId: externalId), identityToken: identityToken)
         return .success(())
     }
 

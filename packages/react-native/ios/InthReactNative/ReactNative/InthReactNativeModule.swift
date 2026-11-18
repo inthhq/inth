@@ -152,13 +152,14 @@ public final class InthReactNativeModule: RCTEventEmitter {
         }
     }
 
-    @objc(identify:resolve:reject:)
+    @objc(identify:identityToken:resolve:reject:)
     public func identify(
         _ externalId: String,
+        identityToken: String?,
         resolve: @escaping RCTPromiseResolveBlock,
         reject: @escaping RCTPromiseRejectBlock
     ) {
-        switch handler.identify(externalId: externalId) {
+        switch handler.identify(externalId: externalId, identityToken: identityToken) {
         case .success:
             resolve(nil)
         case let .failure(error):
