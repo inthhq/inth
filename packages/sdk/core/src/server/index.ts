@@ -96,6 +96,7 @@ export type { ConsentInputHeaderTarget } from './shared';
 export {
 	DEFAULT_CONSENT_ROUTE_PREFIX,
 	IN_PROCESS_ORIGIN,
+	keepAlive,
 	SAFE_NONCE,
 	trimPathSlashes,
 	writeConsentInputHeaders,

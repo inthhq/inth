@@ -1,7 +1,8 @@
 /**
  * Small values and helpers every server adapter needs, kept in one module
  * so a copy cannot drift: the default route prefix, the in-process origin,
- * path trimming, the canonical consent request headers and the nonce shape.
+ * path trimming, the canonical consent request headers, the nonce shape
+ * and handing work to the platform.
  */
 import { COUNTRY_HEADERS, REGION_HEADERS } from '@inth/sdk-schema/types';
 import type { ConsentRequestHeaderInputs } from '@inth/sdk-schema/types';
@@ -102,4 +103,31 @@ export const toPathFetch = function toPathFetch(
 		const url = new URL(input instanceof Request ? input.url : input);
 		return localFetch(`${url.pathname}${url.search}`, init);
 	};
+};
+
+/**
+ * Hands work nothing waits on to the platform's `waitUntil`, so a runtime
+ * that stops detached work after the response keeps it alive. The task's
+ * outcome is swallowed, with or without `waitUntil`: the next request
+ * retries. Registration is best effort; the work runs either way.
+ *
+ * @param waitUntil - The platform's `waitUntil`, or `undefined`.
+ * @param task - The work, already started.
+ */
+export const keepAlive = function keepAlive(
+	waitUntil: ((task: Promise<void>) => void) | undefined,
+	task: Promise<unknown>
+): void {
+	const settled = (async () => {
+		try {
+			await task;
+		} catch {
+			// Nothing waits on this result.
+		}
+	})();
+	try {
+		waitUntil?.(settled);
+	} catch {
+		// The work runs either way; it is only unregistered.
+	}
 };

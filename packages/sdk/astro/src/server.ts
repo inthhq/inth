@@ -32,6 +32,7 @@ import type {
 } from '@inth/sdk/schema/types';
 import {
 	fetchServerGvl,
+	keepAlive,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
@@ -281,15 +282,6 @@ const resolveExperiment = function resolveExperiment(
 	};
 };
 
-/** Waits for work the render stopped waiting for, swallowing its outcome. */
-const settle = async function settle(task: Promise<unknown>): Promise<void> {
-	try {
-		await task;
-	} catch {
-		// Nothing waits on this result.
-	}
-};
-
 /**
  * Resolve everything the page needs about consent for one request.
  *
@@ -360,7 +352,7 @@ export const resolveConsentContext = async function resolveConsentContext(
 		config = await withResolutionBudget(withGvl, budgetMs);
 	} catch {
 		// The list keeps filling the cache for the next render.
-		input.onBackgroundRevalidate?.(settle(withGvl));
+		keepAlive(input.onBackgroundRevalidate, withGvl);
 	}
 
 	config.initialPolicyPending = config.initialPolicyResolution === undefined;

@@ -109,6 +109,7 @@ import type { RequestHeaderSource } from './request-origin';
 import {
 	DEFAULT_CONSENT_ROUTE_PREFIX,
 	IN_PROCESS_ORIGIN,
+	keepAlive,
 	toPathFetch,
 	writeConsentInputHeaders,
 } from './shared';
@@ -520,27 +521,6 @@ const startServerJourney = function startServerJourney(
 		journey.domain = domain;
 	}
 	return journey;
-};
-
-/** Swallows a promise's outcome, for work handed to the platform. */
-const settle = async function settle(task: Promise<unknown>): Promise<void> {
-	try {
-		await task;
-	} catch {
-		// The render already fell back; nothing waits on this result.
-	}
-};
-
-const keepAlive = function keepAlive(
-	waitUntil: ((task: Promise<void>) => void) | undefined,
-	task: Promise<unknown>
-): void {
-	const settled = settle(task);
-	try {
-		waitUntil?.(settled);
-	} catch {
-		// Registration is best effort; the work runs either way.
-	}
 };
 
 const isPath = (url: string): boolean =>

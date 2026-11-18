@@ -104,7 +104,12 @@ import {
 	relativeLoop,
 	requestLoop,
 } from './route-loop';
-import { IN_PROCESS_ORIGIN, toPathFetch, trimPathSlashes } from './shared';
+import {
+	IN_PROCESS_ORIGIN,
+	keepAlive,
+	toPathFetch,
+	trimPathSlashes,
+} from './shared';
 
 /**
  * Request header a server render sets on its call to the init route: the
@@ -451,30 +456,6 @@ export const readWaitUntil = function readWaitUntil(
 				(waitUntil as (task: Promise<unknown>) => void).call(holder, task);
 			}
 		: undefined;
-};
-
-/** Swallows a promise's outcome, for work handed to the platform. */
-const settle = async function settle(task: Promise<unknown>): Promise<void> {
-	try {
-		await task;
-	} catch {
-		// The next request retries; the platform only keeps this one alive.
-	}
-};
-
-/** Hands work to the platform; registration is best effort. */
-const keepAlive = function keepAlive(
-	waitUntil: ((task: Promise<void>) => void) | undefined,
-	task: Promise<unknown>
-): void {
-	if (!waitUntil) {
-		return;
-	}
-	try {
-		waitUntil(settle(task));
-	} catch {
-		// The work runs either way; it is only unregistered.
-	}
 };
 
 const lastSegment = function lastSegment(pathname: string): string {
