@@ -81,7 +81,11 @@ export interface PolicyI18nValidationResult {
 	warnings: string[];
 }
 
-const normalizeLanguage = function normalizeLanguage(
+/**
+ * The primary language subtag of a language tag or `Accept-Language` value:
+ * `de` for `de-CH,de;q=0.9`.
+ */
+export const normalizeLanguage = function normalizeLanguage(
 	value: string | null | undefined
 ): string | undefined {
 	if (!value) {
@@ -118,7 +122,11 @@ const normalizeProfiles = function normalizeProfiles(
 	return {};
 };
 
-const resolveFallbackLanguage = function resolveFallbackLanguage(input: {
+/**
+ * A profile's fallback language: the configured one when the profile has
+ * it, else English when present, else its first language.
+ */
+export const resolveFallbackLanguage = function resolveFallbackLanguage(input: {
 	profile?: PolicyI18nMessageProfileLike;
 }): string {
 	const configuredFallbackLanguage =
@@ -138,7 +146,8 @@ const resolveFallbackLanguage = function resolveFallbackLanguage(input: {
 	return profileLanguages[0] ?? configuredFallbackLanguage;
 };
 
-const resolveActiveProfile = function resolveActiveProfile(input: {
+/** The policy's message profile when configured, else the default profile. */
+export const resolveActiveProfile = function resolveActiveProfile(input: {
 	profiles: Record<string, PolicyI18nMessageProfileLike>;
 	defaultProfile: string;
 	policyProfile?: string;

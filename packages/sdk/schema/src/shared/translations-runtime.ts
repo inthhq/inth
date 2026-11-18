@@ -8,6 +8,9 @@ import { translations as enTranslations } from '@inth/sdk-translations/en';
 
 import {
 	isBuiltInMessageProfile,
+	normalizeLanguage,
+	resolveActiveProfile,
+	resolveFallbackLanguage,
 	validatePolicyI18nConfig,
 } from './policy-i18n-validation';
 import type { PolicyRule } from './policy-rule';
@@ -74,21 +77,6 @@ const warnOnce = function warnOnce(
 
 	warnedKeys.add(key);
 	logger.warn(message, metadata);
-};
-
-const normalizeLanguage = function normalizeLanguage(
-	value: string | null | undefined
-): string | undefined {
-	if (!value) {
-		return undefined;
-	}
-
-	const normalized = value.split(',')[0]?.split(';')[0]?.trim().toLowerCase();
-	if (!normalized) {
-		return undefined;
-	}
-
-	return normalized.split('-')[0] ?? undefined;
 };
 
 const normalizeProfiles = function normalizeProfiles(params: {
@@ -166,36 +154,17 @@ const getSelectableLanguages = function getSelectableLanguages(input: {
 	return getProfileLanguages(input.profiles, input.profile);
 };
 
-const resolveFallbackLanguage = function resolveFallbackLanguage(input: {
-	profile?: I18nMessageProfile;
-}): string {
-	const configuredFallbackLanguage =
-		normalizeLanguage(input.profile?.fallbackLanguage) ?? 'en';
-	const profileLanguages = Object.keys(
-		input.profile?.translations ?? {}
-	).sort();
-
-	if (profileLanguages.includes(configuredFallbackLanguage)) {
-		return configuredFallbackLanguage;
-	}
-
-	if (profileLanguages.includes('en')) {
-		return 'en';
-	}
-
-	return profileLanguages[0] ?? configuredFallbackLanguage;
-};
-
-const resolveActiveProfile = function resolveActiveProfile(input: {
+/** {@link resolveActiveProfile}, warning once when the policy's profile is missing. */
+const resolveActiveProfileOrWarn = function resolveActiveProfileOrWarn(input: {
 	profiles: I18nMessageProfiles;
 	defaultProfile: string;
 	policyProfile?: string;
 	logger?: LoggerLike;
 }): string {
+	const profile = resolveActiveProfile(input);
 	const requestedProfile = input.policyProfile ?? input.defaultProfile;
-
-	if (input.profiles[requestedProfile]) {
-		return requestedProfile;
+	if (profile === requestedProfile) {
+		return profile;
 	}
 
 	if (input.policyProfile && !isBuiltInMessageProfile(input.policyProfile)) {
@@ -250,7 +219,7 @@ export const getTranslationsData = function getTranslationsData(
 		logger: options?.logger,
 	});
 	const defaultProfile = options?.i18n?.defaultProfile ?? DEFAULT_PROFILE;
-	const profile = resolveActiveProfile({
+	const profile = resolveActiveProfileOrWarn({
 		defaultProfile,
 		logger: options?.logger,
 		policyProfile: options?.policyI18n?.messageProfile,
