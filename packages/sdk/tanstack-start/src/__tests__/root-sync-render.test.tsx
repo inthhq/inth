@@ -5,7 +5,7 @@
  * `import()` instead.
  */
 import { renderToString } from 'react-dom/server';
-import { expect, test } from 'vitest';
+import { afterAll, expect, test, vi } from 'vitest';
 
 import {
 	choiceRecords,
@@ -15,6 +15,25 @@ import {
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { ConsentRoot } from '../root';
 import { transportMode } from './fixtures/transport-mode';
+
+// The engine starts loading the server start's module as it is imported, and
+// a fast machine finishes that before the test runs. Hold the module until
+// the test ends, so the render below is one that comes before it loads.
+const serverStart = vi.hoisted(() => {
+	let release: () => void = () => undefined;
+	const held = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	return { held, release: () => release() };
+});
+// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is a render before this chunk loads; nothing else can hold a dynamic import pending. The factory returns the real module once the test ends.
+vi.mock('@c15t/core/runtime/script-server-start', async (importOriginal) => {
+	await serverStart.held;
+	return importOriginal();
+});
+afterAll(() => {
+	serverStart.release();
+});
 
 test('renderToString of ConsentRoot right after its import does not suspend', () => {
 	const resolution = matchedResolution(optInRule());
