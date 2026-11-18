@@ -308,6 +308,39 @@ describe('documents', () => {
 		).toBe(valid);
 	});
 
+	it.each([
+		['June 30', '2026-06-30T00:00:00.000Z', '2026-11-19T00:00:00.000Z', true],
+		[
+			'an effective date of June 31',
+			'2026-06-31T00:00:00.000Z',
+			'2026-11-19T00:00:00.000Z',
+			false,
+		],
+		[
+			'a proof expiry of June 31',
+			'2026-06-30T00:00:00.000Z',
+			'2026-06-31T00:00:00.000Z',
+			false,
+		],
+	])(
+		'reads a current document dated %s',
+		(_label, effectiveDate, expiresAt, valid) => {
+			expect(
+				v.is(v1DocumentCurrentOutputSchema, {
+					document: {
+						effectiveDate,
+						hash: HASH,
+						requiresAcceptance: true,
+						type: 'terms_us',
+						version: '2026-11-18',
+					},
+					proofToken: 'token',
+					proofTokenExpiresAt: expiresAt,
+				})
+			).toBe(valid);
+		}
+	);
+
 	it('rejects a hash that is not lowercase sha256 hex', () => {
 		const result = v.safeParse(v1DocumentPublishInputSchema, {
 			effectiveDate: '2026-11-18T00:00:00.000Z',

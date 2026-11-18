@@ -50,13 +50,6 @@ const versionSchema = v.pipe(
 	v.examples(['2026-11-18'])
 );
 
-const effectiveDateSchema = v.pipe(
-	v.string(),
-	v.isoTimestamp(),
-	v.description('ISO 8601 date and time the version takes effect.'),
-	v.examples(['2026-11-18T00:00:00.000Z'])
-);
-
 /** Whether the date `value` starts with is a day on the calendar. */
 const isCalendarDay = function isCalendarDay(value: string): boolean {
 	const year = Number(value.slice(0, 4));
@@ -66,6 +59,22 @@ const isCalendarDay = function isCalendarDay(value: string): boolean {
 	date.setUTCFullYear(year, month, day);
 	return date.getUTCMonth() === month && date.getUTCDate() === day;
 };
+
+/**
+ * An ISO 8601 date and time with a zone, on a day the calendar has:
+ * `v.isoTimestamp()` alone takes June 31.
+ */
+const timestampSchema = v.pipe(
+	v.string(),
+	v.isoTimestamp(),
+	v.check(isCalendarDay, 'Timestamp must be on a day of the calendar')
+);
+
+const effectiveDateSchema = v.pipe(
+	timestampSchema,
+	v.description('ISO 8601 date and time the version takes effect.'),
+	v.examples(['2026-11-18T00:00:00.000Z'])
+);
 
 /** A publish may name the day alone; the answers carry a date and time. */
 const publishEffectiveDateSchema = v.pipe(
@@ -129,7 +138,7 @@ export const v1CurrentDocumentSchema = v.object({
 export const v1DocumentCurrentOutputSchema = v.object({
 	document: v1CurrentDocumentSchema,
 	proofToken: v.pipe(v.string(), v.minLength(1)),
-	proofTokenExpiresAt: v.pipe(v.string(), v.isoTimestamp()),
+	proofTokenExpiresAt: timestampSchema,
 });
 
 // ---------------------------------------------------------------------------
