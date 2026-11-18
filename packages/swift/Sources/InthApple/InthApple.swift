@@ -130,7 +130,7 @@ public struct InthAppleConfiguration: Sendable {
     /// The checked project URL in its normal form: `https://<host>`, no trailing slash.
     ///
     /// The same string reaches the transport and the bundled policy binding. The save
-    /// body's `property` is not derived from it: see ``resolvedProperty``.
+    /// body's `property` is not derived from it.
     /// - Throws: ``InthAppleInstallationError/dryRunInReleaseBuild`` for `dryRun` in a
     ///   release build, or ``InthAppleInstallationError/invalidBackendURL(_:)``.
     public func normalizedBackendURL() throws -> URL {
@@ -142,19 +142,12 @@ public struct InthAppleConfiguration: Sendable {
         }
     }
 
-    /// The save body's `property`: the configured value, otherwise the main bundle's
-    /// identifier, lowercased. `nil` only for a process with neither, such as a test
-    /// runner, where the transport falls back to the project URL's host.
-    public var resolvedProperty: String? {
-        (property ?? Bundle.main.bundleIdentifier)?.lowercased()
-    }
-
     /// Build the hosted transport for the checked project URL. Internal API.
     @_spi(InthInternal) public func makeTransport(
         client: any HTTPTransport = URLSession.shared
     ) throws -> any InthTransport {
         HostedTransport(
-            baseURL: try normalizedBackendURL(), property: resolvedProperty,
+            baseURL: try normalizedBackendURL(), property: property ?? Bundle.main.bundleIdentifier,
             extraHeaders: ["x-inth-platform": "\(platform)->\(InthApple.version)"],
             client: client
         )

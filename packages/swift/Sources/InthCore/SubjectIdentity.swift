@@ -54,9 +54,6 @@ public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
 
     /// Generate a new subject id.
     public static func generate() -> SubjectIdentity {
-        // Minted through ``SubjectId`` rather than here, because the layout is pinned
-        // by `subject-id/uuidv7.json` and the Kotlin core mints the same ids from the
-        // same clock and entropy.
         SubjectIdentity(unchecked: SubjectId.generate())
     }
 

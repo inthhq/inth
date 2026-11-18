@@ -603,7 +603,6 @@ public struct InitResponse: Sendable, Equatable {
     }
 
     /// `accept` always, `content-type` with a body, then the host's telemetry headers.
-    /// No version or policy-contract header: on `/v1` the path is the version.
     private func requestHeaders(withBody: Bool) -> [String: String] {
         var headers = ["accept": "application/json"]
         if withBody { headers["content-type"] = "application/json" }

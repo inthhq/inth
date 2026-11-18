@@ -337,7 +337,7 @@ enum ConsentRecordBodyBuilder {
             .map(\.rawValue)
     }
 
-    /// Receipts in the 3.x shape `{ value, confirmedAt, basis }`, keyed by category.
+    /// Receipts `{ value, confirmedAt, basis }`, keyed by category.
     private static func receipts(
         _ categories: [OptionalConsentCategory: CategoryDecision]
     ) -> [String: JSONValue] {

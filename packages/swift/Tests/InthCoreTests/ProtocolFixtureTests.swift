@@ -504,8 +504,8 @@ final class ProtocolFixtureTests: XCTestCase {
             "method": .string(request.method.rawValue),
             "path": .string(request.url.path),
         ])
-        // `headers` is empty on purpose: a `/v1` request pins no header, and telemetry
-        // headers such as `accept` are not compared, so extra keys are not a difference.
+        // These fixtures pin no request header (`transport/cases.json` does), so extra
+        // keys are not a difference.
         record(
             for: entry,
             path: "expected.request",

@@ -4,16 +4,9 @@ import Foundation
 import Security
 #endif
 
-/// Generates and reads Inth subject ids: lowercase UUIDv7 text.
-///
-/// `packages/native-protocol/subject-id/uuidv7.json` pins the layout, and the Kotlin
-/// core mints the same ids from the same clock and random bytes:
-///
-/// - bytes 0 to 5: milliseconds since the Unix epoch, big-endian, clamped to
-///   `0...2^48 - 1`, so a device with a wrong clock still writes an id the backend
-///   accepts.
-/// - byte 6: `0x70 | (random[0] & 0x0f)`; byte 7: `random[1]`.
-/// - byte 8: `0x80 | (random[2] & 0x3f)`; bytes 9 to 15: `random[3...9]`.
+/// Generates and reads Inth subject ids: lowercase UUIDv7 text, in the layout
+/// `packages/native-protocol/subject-id/uuidv7.json` pins. The clock is clamped, so a
+/// device with a wrong clock still writes an id the backend accepts.
 ///
 /// The same generator makes each save's idempotency key.
 enum SubjectId {

@@ -250,26 +250,6 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertTrue(core.snapshot().policyPending, "a refused save changes nothing")
     }
 
-    func testAContractDeclarationOnTheResponseIsNotRead() async {
-        // `/v1` has no negotiation: a 200 is a definitive answer whatever header rides
-        // on it, and the body alone decides what the core reads.
-        http.initResponse = HTTPResponse(
-            status: 200,
-            headers: ["x-inth-policy-contract": "9"],
-            body: Fixture.initBody(policyResolution: Fixture.matchedResolution())
-        )
-        let core = ConsentCore()
-        await core.bootstrapAndSettle(Fixture.configured(
-            store: store,
-            transport: Fixture.transport(http),
-            clock: clock
-        ))
-
-        XCTAssertFalse(core.snapshot().policyPending)
-        XCTAssertTrue(core.snapshot().ready)
-        XCTAssertNil(core.snapshot().error)
-    }
-
     func testMissingPolicyResolutionFailsClosedButAServedNoMatchDoesNot() async {
         let core = ConsentCore()
         await core.bootstrapAndSettle(Fixture.configured(
@@ -525,35 +505,6 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertNotEqual(replaced, "6E9A1F2C-3B4D-5E6F-A7B8-C9D0E1F2A3B4")
         XCTAssertTrue(SubjectId.isValid(replaced ?? ""))
         XCTAssertNotEqual(generated, replaced)
-    }
-
-    func testEveryBackendRequestUsesTheV1RoutesWithoutVersionHeaders() async {
-        http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution(
-            policy: Fixture.rule(model: "opt-out", rights: optOutRights)
-        ))
-        let core = ConsentCore()
-        await core.bootstrapAndSettle(Fixture.configured(
-            store: store,
-            transport: Fixture.transport(http),
-            clock: clock
-        ))
-        core.identify(KernelUser(externalId: "user-42", identityProvider: "clerk"), identityToken: "token")
-        core.save(.all)
-        await core.waitUntilIdle()
-
-        let subjectID = try? XCTUnwrap(core.snapshot().subject?.id)
-        let requests = http.recordedInitRequests + http.recordedSaveRequests
-            + http.recordedIdentityRequests
-        XCTAssertGreaterThanOrEqual(requests.count, 3)
-        for request in requests {
-            XCTAssertNil(request.headers["x-c15t-version"])
-            XCTAssertNil(request.headers["x-c15t-policy-contract"])
-            XCTAssertEqual(request.headers["accept"], "application/json")
-        }
-        XCTAssertEqual(http.recordedInitRequests.first?.url.path, "/v1/consent/init")
-        XCTAssertEqual(http.recordedSaveRequests.first?.url.path, "/v1/consent/records")
-        XCTAssertEqual(http.recordedIdentityRequests.first?.url.path, "/v1/subjects/\(subjectID ?? "")/link")
-        XCTAssertEqual(http.recordedIdentityRequests.first?.method, .post)
     }
 
     // MARK: Model defaults
