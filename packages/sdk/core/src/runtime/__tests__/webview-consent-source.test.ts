@@ -265,7 +265,7 @@ test('opening preferences asks the app through its message channel', () => {
 	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState()));
 	webViewConsentSource()?.openPreferences();
 	expect(postMessage).toHaveBeenCalledWith(
-		`{"type":"inth:open-preferences","key":"${KEY}"}`
+		`{"type":"c15t:open-preferences","key":"${KEY}"}`
 	);
 });
 
