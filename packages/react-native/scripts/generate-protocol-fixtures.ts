@@ -1079,16 +1079,14 @@ const hydrationFor = function hydrationFor(
 
 /** Ten hex bytes, the random part of a UUIDv7. */
 const hexBytes = function hexBytes(hex: string): number[] {
+	// parseInt reads a lone last digit and stops at a non-hex one, so check the
+	// whole string before reading it.
+	if (!/^[0-9a-f]{20}$/u.test(hex)) {
+		throw new Error(`${hex} must be exactly 10 random bytes in lowercase hex`);
+	}
 	const bytes: number[] = [];
 	for (let index = 0; index < hex.length; index += 2) {
-		const byte = Number.parseInt(hex.slice(index, index + 2), 16);
-		if (Number.isNaN(byte)) {
-			throw new Error(`${hex} is not hex`);
-		}
-		bytes.push(byte);
-	}
-	if (bytes.length !== 10) {
-		throw new Error(`${hex} must be exactly 10 random bytes`);
+		bytes.push(Number.parseInt(hex.slice(index, index + 2), 16));
 	}
 	return bytes;
 };
