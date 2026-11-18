@@ -3,7 +3,6 @@ package com.inth.core.policy
 import com.inth.core.model.ConsentCategory
 import com.inth.core.model.ConsentModel
 import com.inth.core.model.PolicyResolution
-import com.inth.core.transport.ProducerContract
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -23,10 +22,9 @@ sealed class PolicyRead {
 
 	/**
 	 * A refusal this build can state plainly: the resolution carries `status: "failed"`
-	 * with a reason it knows, or the producer declared a contract this build does not
-	 * speak. In both cases the core knows exactly what went wrong and can represent the
-	 * answer, so a device already under a policy keeps that policy through it, which is
-	 * what a failed init does everywhere else.
+	 * with a reason. The core knows what went wrong and can represent the answer, so a
+	 * device already under a policy keeps that policy through it, which is what a failed
+	 * init does everywhere else.
 	 */
 	data class Failed(val reason: String) : PolicyRead()
 
@@ -53,7 +51,7 @@ sealed class PolicyRead {
  * reader does not have, and there is no default that could be guessed for it.
  */
 object StrictPolicyReader {
-	/** Policy wire contract version this build reads; matches `@inth/sdk-schema`. */
+	/** The `policyResolution.version` this build reads; matches `@c15t/schema`. */
 	const val POLICY_CONTRACT_VERSION = 1
 
 	/** Categories the `'*'` wildcard expands to. */
@@ -62,37 +60,21 @@ object StrictPolicyReader {
 	/**
 	 * Read [element], the raw `policyResolution` member of an `/init` body.
 	 *
+	 * Every `/v1` answer uses the current policy contract, so there is nothing to
+	 * negotiate: a `200` without a resolution, or with one this build cannot parse, is
+	 * contract rule 5.
+	 *
 	 * @param element the raw wire value, or `null` when the member was absent.
-	 * @param declaration what the producer claimed about its contract; anything
-	 * this build does not speak fails before the body is read.
 	 */
-	fun read(
-		element: JsonElement?,
-		declaration: ProducerContract = ProducerContract.NotDeclared,
-	): PolicyRead {
-		// A body written under an unknown contract is not evidence, so this check
-		// runs before any field is looked at.
-		val negotiated = when (declaration) {
-			is ProducerContract.Declared -> declaration.version == POLICY_CONTRACT_VERSION
-			ProducerContract.Unreadable -> return PolicyRead.Failed(PolicyResolution.REASON_UNSUPPORTED_CONTRACT)
-			ProducerContract.NotDeclared -> false
-		}
-		if (declaration is ProducerContract.Declared && !negotiated) {
-			return PolicyRead.Failed(PolicyResolution.REASON_UNSUPPORTED_CONTRACT)
-		}
+	fun read(element: JsonElement?): PolicyRead {
 		if (element == null || element is JsonNull) {
-			return if (negotiated) {
-				// A negotiated producer that sent no resolution broke the protocol.
-				PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
-			} else {
-				PolicyRead.Failed(PolicyResolution.REASON_UNSUPPORTED_CONTRACT)
-			}
+			return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
 		}
 		val root = element as? JsonObject ?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
 
 		root.stringOrNull("version")?.let { declared ->
-			// The body declares its own contract; honour it even when the response
-			// header was missing.
+			// The resolution's own schema version. One from a newer schema is a value this
+			// build cannot read, which is rule 5.
 			val version = declared.toLongOrNull() ?: return PolicyRead.Unreadable(PolicyResolution.REASON_UNSUPPORTED_CONTRACT)
 			if (version != POLICY_CONTRACT_VERSION.toLong()) {
 				return PolicyRead.Unreadable(PolicyResolution.REASON_UNSUPPORTED_CONTRACT)

@@ -37,7 +37,7 @@ class IabUpgradeTest {
 		val frozen = store.readPending().single().body
 		core.reset()
 		assertTrue(store.readPending().any { it.body == frozen })
-		transport.respondSave(com.inth.core.transport.SaveOutcome.Delivered)
+		transport.respondSave(com.inth.core.transport.SaveOutcome.Delivered())
 		core.flushPending()
 		assertTrue(store.readPending().isEmpty())
 	}

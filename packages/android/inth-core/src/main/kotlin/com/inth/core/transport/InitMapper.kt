@@ -44,7 +44,6 @@ data class MappedInit(
 	 * instead of keeping the last rule's grants.
 	 */
 	val isFinal: Boolean = false,
-	val subjectId: String? = null,
 	val location: ConsentLocation? = null,
 	val resolvedOverrides: KernelOverrides? = null,
 	/**
@@ -88,12 +87,10 @@ data class MappedInit(
 )
 
 /**
- * Reads an `/init` response the way `mapInitOutputToInitResponse` in
- * `packages/sdk/core/src/transports/init-output.ts` does.
+ * Reads a `GET /v1/consent/init` response.
  *
- * The order matters. A producer that declares a contract this build does not
- * speak, or declares one it cannot parse, fails before the body is read at all:
- * a body under an unknown contract is not evidence.
+ * A `200` is a definitive answer: `/v1` has no contract negotiation, so no response
+ * header is read, and a policy resolution this build cannot parse is contract rule 5.
  */
 object InitMapper {
 	/** Map [outcome], never throwing; every unparseable path yields a failure. */
@@ -104,7 +101,7 @@ object InitMapper {
 			policyPending = true,
 			error = KernelError(
 				code = PolicyResolution.REASON_TRANSPORT,
-				message = "Inth: /init responded ${outcome.status}",
+				message = "Inth: /v1/consent/init responded ${outcome.describe()}",
 			),
 		)
 
@@ -119,11 +116,10 @@ object InitMapper {
 	}
 
 	private fun mapSuccess(outcome: TransportOutcome.Success): MappedInit {
-		val declaration = ProducerContract.fromHeader(outcome.header(InthProtocol.POLICY_CONTRACT_HEADER))
 		val body = (outcome.body as? JsonObject)
 
 		val rawResolution = body?.get("policyResolution")
-		val read = StrictPolicyReader.read(rawResolution, declaration)
+		val read = StrictPolicyReader.read(rawResolution)
 
 		val (resolution, policy) = when (read) {
 			is PolicyRead.Matched -> PolicyResolution(
@@ -143,7 +139,7 @@ object InitMapper {
 		val error = if (resolution.status == PolicyResolution.STATUS_FAILED) {
 			KernelError(
 				code = resolution.reason ?: PolicyResolution.REASON_INVALID_PAYLOAD,
-				message = initFailureMessage(resolution.reason, outcome),
+				message = initFailureMessage(read, resolution.reason),
 			)
 		} else {
 			null
@@ -154,7 +150,6 @@ object InitMapper {
 			evaluationPolicy = policy,
 			policyPending = resolution.status == PolicyResolution.STATUS_FAILED,
 			policyUnreadable = read is PolicyRead.Unreadable,
-			subjectId = body.stringOrNull("subjectId"),
 			location = (body?.get("location") as? JsonObject)?.let { location ->
 				ConsentLocation(
 					country = location.stringOrNull("countryCode") ?: location.stringOrNull("country"),
@@ -191,23 +186,10 @@ object InitMapper {
 		)
 	}
 
-	/**
-	 * An unsupported contract is a configuration error, not a transient one, so
-	 * the message says what to change.
-	 */
-	private fun initFailureMessage(
-		reason: String?,
-		outcome: TransportOutcome.Success,
-	): String = when (reason) {
-		PolicyResolution.REASON_UNSUPPORTED_CONTRACT -> {
-			val declared = outcome.header(InthProtocol.POLICY_CONTRACT_HEADER) ?: "<absent>"
-			"Inth: backend declares policy contract $declared, this SDK reads " +
-				InthProtocol.POLICY_CONTRACT_VERSION +
-				". Consent stays deny-all until the backend or the SDK is updated."
-		}
-
-		PolicyResolution.REASON_INVALID_PAYLOAD -> "Inth: /init returned a policy resolution this SDK cannot represent; consent stays deny-all"
-		else -> "Inth: /init policy resolution failed ($reason); consent stays deny-all"
+	private fun initFailureMessage(read: PolicyRead, reason: String?): String = when (read) {
+		is PolicyRead.Unreadable ->
+			"Inth: /v1/consent/init returned a policy resolution this SDK cannot read ($reason); consent stays deny-all"
+		else -> "Inth: /v1/consent/init policy resolution failed ($reason); consent stays deny-all"
 	}
 
 	private fun JsonObject?.stringOrNull(key: String): String? {

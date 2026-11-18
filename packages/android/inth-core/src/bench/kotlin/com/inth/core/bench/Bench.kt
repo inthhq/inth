@@ -335,10 +335,8 @@ object Bench {
 
 		override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("bench: no network")
 
-		override fun identify(
-			subject: ConsentSubject,
-			user: KernelUser,
-		): TransportOutcome = TransportOutcome.NetworkFailure("bench: no network")
+		override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): com.inth.core.transport.LinkOutcome =
+			com.inth.core.transport.LinkOutcome.Unavailable("offline")
 	}
 
 	private class Sample(

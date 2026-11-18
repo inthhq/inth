@@ -247,12 +247,16 @@ object Inth {
 		kernel.get()?.refresh()
 	}
 
-	/** Attach an external identity. */
-	fun identify(user: KernelUser) {
-		kernel.get()?.identify(user)
+	/**
+	 * Attach an external identity. With an [identityToken] the core also links the subject
+	 * to the person on the backend; the token is used once and never stored. See
+	 * [ConsentCore.identify].
+	 */
+	fun identify(user: KernelUser, identityToken: String? = null) {
+		kernel.get()?.identify(user, identityToken)
 	}
 
-	/** Detach the external identity. */
+	/** Detach the external identity, locally. */
 	fun logout() {
 		kernel.get()?.logout()
 	}

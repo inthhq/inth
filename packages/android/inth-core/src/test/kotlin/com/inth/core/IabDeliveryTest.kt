@@ -51,7 +51,7 @@ class IabDeliveryTest {
 		val transport =
 			RecordingTransport()
 				.respondInit(init())
-				.respondSave(SaveOutcome.Delivered)
+				.respondSave(SaveOutcome.Delivered())
 				.respondSave(SaveOutcome.Unavailable("offline"))
 		val core =
 			testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
@@ -59,7 +59,7 @@ class IabDeliveryTest {
 		assertTrue(core.save(CommitIntent.All).ok)
 		assertTrue(core.save(CommitIntent.Necessary).ok)
 		assertEquals(1, store.readPending().size)
-		transport.respondInit(init(listVersion = 43)).respondSave(SaveOutcome.Delivered)
+		transport.respondInit(init(listVersion = 43)).respondSave(SaveOutcome.Delivered())
 		core.refresh()
 		val before = transport.saveRequests.size
 		core.flushPending()
@@ -70,7 +70,7 @@ class IabDeliveryTest {
 		for (change in listOf("list", "expiry", "clock", "config", "model", "fingerprint", "identify", "logout", "reset")) {
 			val backend = InMemoryKeyValueStore()
 			val store = InthStore(backend)
-			val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Delivered)
+			val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Delivered())
 			val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 			core.bootstrap()
 			core.identify(KernelUser("u1"))
@@ -97,7 +97,7 @@ class IabDeliveryTest {
 			cold.bootstrap()
 			cold.flushPending()
 			assertEquals(1, store.readPending().size, change)
-			offline.respondSave(SaveOutcome.Delivered)
+			offline.respondSave(SaveOutcome.Delivered())
 			val before = offline.saveRequests.size
 			cold.flushPending()
 			assertEquals(listOf(frozen), offline.saveRequests.drop(before).map { it.body }, change)

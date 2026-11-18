@@ -16,8 +16,9 @@ import com.inth.core.transport.InthProtocol
  * @property dryRun For development and CI. Prompts, storage, gating and consent signals
  * work as normal, and consent records and identity calls are dropped instead of sent.
  * `InthAndroid.install` refuses it in an app that is not debuggable.
- * @property domain Value sent as the `domain` field of `POST /subjects`. Defaults
- * to the host of [backendUrl].
+ * @property property Value sent as the `property` field of `POST /v1/consent/records`,
+ * lowercased. `InthAndroid.install` defaults it to the application ID. Without one, as in a
+ * core built without an Android context, the core sends the host of [backendUrl].
  * @property consentCategories Categories the host offers. `null` or empty declares
  * none: a strict policy offers its full scope and a permissive one offers
  * `necessary` alone, with an acknowledgement prompt.
@@ -64,7 +65,7 @@ import com.inth.core.transport.InthProtocol
  */
 data class NativeConfig(
 	val backendUrl: String,
-	val domain: String? = null,
+	val property: String? = null,
 	val sdkVersion: String = InthProtocol.DEFAULT_SDK_VERSION,
 	val platform: String? = InthProtocol.PLATFORM_ANDROID,
 	val consentCategories: List<ConsentCategory>? = null,
@@ -101,4 +102,16 @@ data class NativeConfig(
 			"NativeConfig.policy does not mix with bundledPolicy"
 		}
 	}
+
+	/**
+	 * The `property` a save body carries: [property] lowercased, or the host of [backendUrl]
+	 * when none is configured.
+	 */
+	internal val resolvedProperty: String
+		get() = property?.trim()?.takeIf { it.isNotEmpty() }?.lowercase()
+			?: try {
+				java.net.URI(backendUrl).host
+			} catch (_: Exception) {
+				null
+			}?.lowercase().orEmpty()
 }

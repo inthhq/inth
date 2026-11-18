@@ -46,6 +46,7 @@ import java.security.MessageDigest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -152,13 +153,7 @@ class ProtocolFixtureTest {
 		// Kotlin carries no protocol constant of its own yet; the fixtures and this
 		// build must agree on one number, so it is pinned here until the core has one.
 		assertEquals(1L, indexProtocol, "index.json is protocol $indexProtocol and this build was written against 1")
-		val header = index["policyContractHeader"]!!.jsonObject
-		assertEquals(InthProtocol.POLICY_CONTRACT_HEADER, header["name"]!!.jsonPrimitive.content, "the fixtures declare a different contract header than this build sends")
-		assertEquals(
-			InthProtocol.POLICY_CONTRACT_VERSION.toString(),
-			header["value"]!!.jsonPrimitive.content,
-			"the fixtures pin policy contract ${header["value"]} and this build sends ${InthProtocol.POLICY_CONTRACT_VERSION}",
-		)
+		assertNull(index["policyContractHeader"], "a /v1 request sends no policy-contract header")
 		val listed = index.fixtures.map { it["file"]!!.jsonPrimitive.content }.toSet()
 		listed.forEach { file ->
 			assertTrue(File(directory, file).isFile, "index.json lists $file, which is not on disk")
@@ -316,7 +311,7 @@ class ProtocolFixtureTest {
 		)
 
 		val request = run.http.requests.lastOrNull { it.method == "POST" }
-			?: fail("${id(entry)}: the core sent no POST /subjects request")
+			?: fail("${id(entry)}: the core sent no POST /v1/consent/records request")
 		val body = json.parseToJsonElement(request.body ?: fail("${id(entry)}: the save request carried no JSON body"))
 		val actual = buildJsonObject {
 			put("body", body)
@@ -329,8 +324,13 @@ class ProtocolFixtureTest {
 			put("method", request.method)
 			put("path", java.net.URI(request.url).rawPath)
 		}
-		// `x-inth-version` is platform telemetry, and the contract says the fixtures
-		// deliberately leave it unpinned, so extra header keys are not a difference.
+		// `x-inth-platform` is telemetry, and the contract says the fixtures deliberately
+		// leave it unpinned, so extra header keys are not a difference. The retired ones are.
+		for (retired in listOf("x-inth-version", "x-inth-policy-contract")) {
+			if (request.headers.keys.any { it.equals(retired, ignoreCase = true) }) {
+				record(id(entry), "expected.request.headers", "a /v1 request must not send $retired")
+			}
+		}
 		record(
 			id(entry),
 			"expected.request",
@@ -623,7 +623,7 @@ class ProtocolFixtureTest {
 			?: fail("$fixtureId: privacySignals.gpc.detected is missing")
 		val config = NativeConfig(
 			backendUrl = "https://backend.example.com",
-			domain = input["domain"]?.jsonPrimitive?.contentOrNull ?: "app.example.com",
+			property = input["property"]?.jsonPrimitive?.contentOrNull ?: "com.example.app",
 			overrides = KernelOverrides(
 				country = overrides["country"]?.jsonPrimitive?.contentOrNull,
 				region = overrides["region"]?.jsonPrimitive?.contentOrNull,
@@ -661,6 +661,8 @@ class ProtocolFixtureTest {
 			// and not a double's idea of them.
 			transport = if (offline) InthTransport.NONE else HostedTransport(http = http, config = config, clock = clock),
 			executor = TaskExecutor.DIRECT,
+			// A save-body fixture supplies the key the action makes, so the frozen body is pinned.
+			idempotencyKeyGenerator = input["idempotencyKey"]?.jsonPrimitive?.contentOrNull?.let { key -> { key } },
 		)
 		return Run(kernel = kernel, http = http, initScript = initScript, backend = backend, store = store)
 	}

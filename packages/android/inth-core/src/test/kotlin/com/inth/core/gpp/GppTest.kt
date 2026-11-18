@@ -29,7 +29,6 @@ import com.inth.core.store.InthStore
 import com.inth.core.InMemoryKeyValueStore
 import com.inth.core.store.TcBusValue
 import com.inth.core.testKernel
-import com.inth.core.transport.ProducerContract
 import com.inth.core.wire.SnapshotWire
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -162,7 +161,7 @@ class PolicyRightsFixtureTest {
 		for (case in cases) {
 			val id = case.getValue("id").jsonPrimitive.content
 			val expected = case.getValue("expected").jsonObject
-			val read = StrictPolicyReader.read(case.getValue("policyResolution"), ProducerContract.Declared(1))
+			val read = StrictPolicyReader.read(case.getValue("policyResolution"))
 			val actual = when (read) {
 				is PolicyRead.Matched -> JsonObject(mapOf(
 					"accepted" to JsonPrimitive(true),
