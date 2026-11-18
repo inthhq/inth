@@ -95,6 +95,20 @@ const stripDevAttributes = function stripDevAttributes(html: string): string {
 	return html.replace(/\s+data-astro-source-(?:file|loc)="[^"]*"/gu, '');
 };
 
+/** Where the IAB stories' manifest says its vendor list lives. */
+const STORY_GVL_URL = 'https://consent.example/gvl';
+
+/**
+ * The server render's network: the stories' vendor list for the IAB
+ * manifest, and an empty answer for anything else, such as a session report.
+ */
+const storyFetch = ((input: RequestInfo | URL) =>
+	Promise.resolve(
+		String(input).startsWith(STORY_GVL_URL)
+			? Response.json(mockGVL)
+			: new Response(null, { status: 204 })
+	)) as typeof fetch;
+
 const renderVariants = async function renderVariants(
 	variants: readonly AstroStoryVariant[]
 ): Promise<Record<string, PrerenderedVariant>> {
@@ -144,11 +158,21 @@ const renderVariants = async function renderVariants(
 			]);
 		// The stories' policy as a manifest the server resolves: a static
 		// build renders the banner with no backend and no testing mode.
-		const snapshotOf = (policyRules: unknown[]) =>
-			schema.buildConsentManifestFromConfig({ branding: 'c15t', policyRules });
+		// An IAB rule is valid only in a manifest with IAB on. Its vendor list
+		// URL is answered with the stories' list: the build fetches nothing.
+		const snapshotOf = (policyRules: unknown[], iab?: unknown) =>
+			schema.buildConsentManifestFromConfig({
+				branding: 'c15t',
+				iab,
+				policyRules,
+			});
 		const [storySnapshot, storyIABSnapshot] = await Promise.all([
 			snapshotOf([storybook.storybookPolicy]),
-			snapshotOf([storybook.storybookIABPolicy]),
+			snapshotOf([storybook.storybookIABPolicy], {
+				cmpId: 160,
+				enabled: true,
+				endpoint: STORY_GVL_URL,
+			}),
 		]);
 		const container = await experimental_AstroContainer.create();
 
@@ -186,6 +210,7 @@ const renderVariants = async function renderVariants(
 			const resolved = integration.resolveOptions(astroOptions);
 			// oxlint-disable-next-line no-await-in-loop -- See above.
 			const locals = await serverModule.resolveConsentContext({
+				fetch: storyFetch,
 				headers: new Headers(),
 				options: resolved,
 			});

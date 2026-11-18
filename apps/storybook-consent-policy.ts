@@ -34,16 +34,19 @@ export const storybookIABPolicy: PolicyRule = {
  * so the stories build the transport it would hand the provider themselves.
  *
  * @param policy - The rules the story resolves.
+ * @param options - `iab: true` resolves an IAB rule where the provider cannot
+ *   tell that IAB is on, such as a React tree that renders `IABProvider`.
  * @returns A provider transport factory.
  */
 export const storybookMode = function storybookMode(
-	policy: PolicyRule[]
+	policy: PolicyRule[],
+	options: { iab?: boolean } = {}
 ): ProviderTransportFactory {
 	return Object.assign(
 		(context: Parameters<ProviderTransportFactory>[0]) =>
 			createOfflineTransport({
 				acknowledgeNoRecords: true,
-				iabEnabled: context.iabEnabled,
+				iabEnabled: options.iab ?? context.iabEnabled,
 				policyRules: policy,
 				translations: context.translations,
 				translationsFor: context.translationsFor,

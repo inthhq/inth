@@ -17,12 +17,16 @@ import {
 	registerDialogSurface,
 	registerIAB,
 	registerTransport,
-	testingTransport,
 } from '@c15t/astro/client';
 import { createLazyIABFactory } from '@c15t/core/runtime';
 import { mountRuntimeIAB } from '@c15t/core/runtime/on-demand';
 import prerendered from 'virtual:c15t-astro-prerendered';
 
+import {
+	storybookIABPolicy,
+	storybookMode,
+	storybookPolicy,
+} from '../../storybook-consent-policy';
 import { requireStoryVariant } from './story-variants';
 import type { AstroUIAdapter } from './story-variants';
 
@@ -30,9 +34,21 @@ const DIALOG_HOST_ID = 'c15t-dialog-host';
 
 const registered = new Set<string>();
 
-// Every story resolves its policy in the browser, so this is the transport the
-// integration's boot script would register for it.
-registerTransport(testingTransport);
+// Every story resolves its policy in the browser when it inits again, such as
+// when its dialog opens: the IAB rule when the story turns IAB on, else the
+// default. A Storybook build is a production build, where testing() refuses
+// to run.
+const storyModes = {
+	default: storybookMode([storybookPolicy]),
+	iab: storybookMode([storybookIABPolicy]),
+};
+registerTransport(() =>
+	Object.assign(
+		(context: Parameters<typeof storyModes.default>[0]) =>
+			(context.iabEnabled ? storyModes.iab : storyModes.default)(context),
+		{ kind: 'offline' as const }
+	)
+);
 
 /**
  * Register one dialog adapter and the island it mounts.

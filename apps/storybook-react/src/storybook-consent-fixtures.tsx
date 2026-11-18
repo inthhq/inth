@@ -91,7 +91,8 @@ export const editableStoredConsent: ConsentRecord = {
 
 export const defaultIABOptions: ConsentProviderOptions = {
 	...defaultConsentOptions,
-	mode: storybookMode([storybookIABPolicy]),
+	// The provider cannot see the IABProvider below it.
+	mode: storybookMode([storybookIABPolicy], { iab: true }),
 	presentation: storybookIABPresentation,
 };
 
