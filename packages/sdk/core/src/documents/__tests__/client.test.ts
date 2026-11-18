@@ -152,7 +152,7 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			idempotencyKey: KEY,
 			identityProvider: 'clerk',
 			identityToken: 'token',
-			property: 'WWW.Example.com',
+			property: 'WWW.Example.com.',
 			subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd',
 		});
 

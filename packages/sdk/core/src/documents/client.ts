@@ -25,6 +25,7 @@ import {
 	currentDocumentPath,
 	readJson,
 	resolveV1Fetch,
+	toProperty,
 	trimTrailingSlash,
 	V1_JSON_HEADERS,
 	V1_ROUTES,
@@ -67,7 +68,10 @@ export interface RecordAcceptancesInput {
 	identityToken?: string;
 	/** Lowercase host name or app ID where the documents were accepted. */
 	property?: string;
-	/** Epoch milliseconds of the acceptance. Defaults to now. */
+	/**
+	 * Epoch milliseconds of the acceptance. Defaults to now; pass the same
+	 * value on every retry.
+	 */
 	acceptedAt?: number;
 	/**
 	 * Key of this user action, from `createIdempotencyKey()`. Send the same
@@ -198,7 +202,7 @@ const buildAcceptancesBody = function buildAcceptancesBody(
 		body.identityToken = input.identityToken;
 	}
 	if (input.property) {
-		body.property = input.property.toLowerCase();
+		body.property = toProperty(input.property);
 	}
 	if (input.context) {
 		body.context = { ...input.context };
