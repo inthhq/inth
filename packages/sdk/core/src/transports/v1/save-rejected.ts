@@ -1,7 +1,5 @@
-/**
- * Saves the backend refused for good. The kernel drops these instead of
- * queueing them, since a replay would be refused the same way.
- */
+import type { V1ErrorCode } from '@inth/sdk-schema/types';
+
 import { ConsentSaveRejectedError } from '../save-rejection';
 import {
 	describeInthApiError,
@@ -38,10 +36,10 @@ export class InthConsentSaveRejectedError extends ConsentSaveRejectedError {
 export type InthApiFailure = InthApiError | InthConsentSaveRejectedError;
 
 /**
- * `409` codes a resent save gets again. `subject_conflict` is the one the
- * kernel recovers from, by moving the visitor to a new subject ID.
+ * `409` codes a resent save gets again. The kernel recovers from
+ * `subject_conflict` by moving the visitor to a new subject ID.
  */
-const PERMANENT_SAVE_CODES: ReadonlySet<string> = new Set([
+const PERMANENT_SAVE_CODES: ReadonlySet<string> = new Set<V1ErrorCode>([
 	'conflict',
 	'identity_conflict',
 	'policy_snapshot_expired',

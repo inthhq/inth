@@ -17,7 +17,6 @@ import {
 	stubFetch,
 	SUBJECT,
 	v1Error,
-	VERSION_HEADERS,
 } from './fixtures';
 
 const MANIFEST = {
@@ -42,7 +41,7 @@ const JOURNEY = {
 };
 
 describe('GET /v1/consent/manifest', () => {
-	test('fetches the manifest once, with no version header', async () => {
+	test('fetches the manifest once', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, MANIFEST));
 		const transport = createV1ManifestTransport({
 			fetch,
@@ -59,9 +58,6 @@ describe('GET /v1/consent/manifest', () => {
 		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/consent/manifest`);
 		expect(calls[0]?.init.method).toBe('GET');
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
-		for (const header of VERSION_HEADERS) {
-			expect(calls[0]?.headers).not.toHaveProperty(header);
-		}
 		expect(first.location).toEqual({ countryCode: 'DE', regionCode: null });
 	});
 
@@ -146,8 +142,8 @@ describe('POST /v1/consent/sessions', () => {
 			report: {
 				adapter: '@inth/nextjs',
 				headers: {
+					cookie: 'session=1',
 					'user-agent': 'Mozilla/5.0',
-					'x-c15t-version': 'must-not-forward',
 					'x-forwarded-for': '203.0.113.7',
 				},
 				source: 'render',
@@ -168,10 +164,11 @@ describe('POST /v1/consent/sessions', () => {
 		expect(calls).toHaveLength(1);
 		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/consent/sessions`);
 		expect(calls[0]?.init.method).toBe('POST');
-		for (const header of VERSION_HEADERS) {
-			expect(calls[0]?.headers).not.toHaveProperty(header);
-		}
-		expect(calls[0]?.headers['user-agent']).toBe('Mozilla/5.0');
+		expect(calls[0]?.headers).toEqual({
+			'content-type': 'application/json',
+			'user-agent': 'Mozilla/5.0',
+			'x-c15t-client-ip': '203.0.113.7',
+		});
 		expect(calls[0]?.body).toMatchObject({
 			adapter: '@inth/nextjs',
 			country: 'DE',
@@ -187,7 +184,7 @@ describe('POST /v1/consent/sessions', () => {
 		});
 	});
 
-	test('names the journey site property, never domain', () => {
+	test('names the journey site property, in lowercase', () => {
 		const report = buildV1ConsentSessionReport({
 			init: {
 				location: { countryCode: null, regionCode: null },

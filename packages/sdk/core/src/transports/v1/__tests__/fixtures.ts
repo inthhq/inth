@@ -8,12 +8,6 @@ export const LEGACY_SUBJECT = 'sub_2VZxR7YmNpKq3WfLs8TgHd';
 export const KEY = '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e';
 export const ACTION_AT = 1_763_467_200_000;
 
-/** Headers a `/v1` request must never carry. */
-export const VERSION_HEADERS = [
-	'x-c15t-version',
-	'x-c15t-policy-contract',
-] as const;
-
 /** One recorded call to a stubbed `fetch`. */
 export interface FetchCall {
 	url: string;

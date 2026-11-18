@@ -1,12 +1,3 @@
-/**
- * The `GET /v1/consent/init` request.
- *
- * A CORS simple request: a `GET` whose only headers are `Accept` and, with
- * a language override, `Accept-Language`. Country, region and GPC
- * overrides, the experiment arm and the journey travel in the query string,
- * so a cross-origin backend answers without an `OPTIONS` preflight. There is
- * no version or policy-contract parameter: the path is the version.
- */
 import {
 	appendInitParams,
 	appendJourneyParams,
@@ -19,23 +10,21 @@ import {
 	buildRequestContextSentHeaders,
 } from '../../libs/request-context-headers';
 import type { InitContext } from '../../types';
-import { trimTrailingSlash, V1_DEFAULT_CREDENTIALS, V1_ROUTES } from './routes';
+import { trimTrailingSlash, V1_ROUTES } from './routes';
 
-/** The init request a `/v1` transport sends. */
 export interface V1InitRequest {
-	/** `initUrl`, or `${projectUrl}/v1/consent/init`, with the query. */
 	url: string;
-	/**
-	 * The request inputs in header form: the caller headers plus the
-	 * overrides. The response is read against these.
-	 */
+	/** The request inputs in header form, which the response is read against. */
 	requestHeaders: Record<string, string>;
-	/** Fetch options for the request. */
 	init: RequestInit & { headers: Record<string, string> };
 }
 
 /**
  * Build the `GET /v1/consent/init` request.
+ *
+ * Do not add custom headers to it. Init must stay a CORS simple request, so
+ * a browser sends it with no preflight before the banner can show: the
+ * overrides go in the query string, and `Accept-Language` is safelisted.
  *
  * @param options - Project URL, optional `initUrl`, credentials, the
  *   caller headers already filtered to the init inputs, the overrides, and
@@ -76,7 +65,7 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 	);
 	return {
 		init: {
-			credentials: options.credentials ?? V1_DEFAULT_CREDENTIALS,
+			credentials: options.credentials,
 			headers: {
 				accept: 'application/json',
 				...options.headers,

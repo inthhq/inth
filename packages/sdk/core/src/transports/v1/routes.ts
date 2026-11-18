@@ -1,57 +1,36 @@
 /**
- * The `/v1` routes of an Inth backend, and the request settings they share.
- *
- * The path is the version: a `/v1` request carries no version header and no
- * policy-contract header or query parameter. `/v1` routes set and read no
- * cookies.
+ * The `/v1` routes of an Inth backend, and the request helpers their
+ * clients share.
  *
  * @internal
  */
 
 /** Route paths below the project URL. */
 export const V1_ROUTES = {
-	acceptances: '/v1/documents/acceptances',
 	init: '/v1/consent/init',
 	manifest: '/v1/consent/manifest',
 	records: '/v1/consent/records',
 	sessions: '/v1/consent/sessions',
+	subjectLink: '/v1/subjects/:id/link',
 } as const;
 
-/** `/v1/subjects/:id/link`. */
 export const subjectLinkPath = function subjectLinkPath(
 	subjectId: string
 ): string {
-	return `/v1/subjects/${encodeURIComponent(subjectId)}/link`;
+	return V1_ROUTES.subjectLink.replace(':id', encodeURIComponent(subjectId));
 };
 
-/** `/v1/documents/:type/current`. */
-export const currentDocumentPath = function currentDocumentPath(
-	type: string
-): string {
-	return `/v1/documents/${encodeURIComponent(type)}/current`;
-};
-
-/**
- * Credentials mode when the caller sets none. `/v1` routes use no cookies,
- * so a cross-origin request carries none and the backend can answer it with
- * `Access-Control-Allow-Origin: *`.
- */
-export const V1_DEFAULT_CREDENTIALS: RequestCredentials = 'same-origin';
-
-/** Headers of a `/v1` JSON request: content type and accept, nothing else. */
 export const V1_JSON_HEADERS: Readonly<Record<string, string>> = {
 	accept: 'application/json',
 	'content-type': 'application/json',
 };
 
-/** Strip trailing slashes so `${base}/v1/...` doesn't double up. */
 export const trimTrailingSlash = function trimTrailingSlash(
 	url: string
 ): string {
 	return url.replace(/\/+$/u, '');
 };
 
-/** Resolve the fetch implementation or throw when the runtime has none. */
 export const resolveV1Fetch = function resolveV1Fetch(
 	fetchImpl: typeof globalThis.fetch | undefined,
 	caller: string
@@ -67,8 +46,7 @@ export const resolveV1Fetch = function resolveV1Fetch(
 
 /**
  * The property a consent belongs to: the explicit option, else the page's
- * host name, else the project URL's host name, else `localhost`. Always
- * lowercase, with no scheme, port or path.
+ * host name, else the project URL's host name, else `localhost`.
  */
 export const resolveProperty = function resolveProperty(
 	projectUrl: string,

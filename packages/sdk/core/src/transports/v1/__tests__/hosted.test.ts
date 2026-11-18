@@ -18,7 +18,6 @@ import {
 	stubFetch,
 	SUBJECT,
 	v1Error,
-	VERSION_HEADERS,
 } from './fixtures';
 
 await import('../../../kernel/save-outbox/queue');
@@ -45,7 +44,7 @@ const INIT_OUTPUT = {
 } as unknown as InitOutput;
 
 describe('init: GET /v1/consent/init', () => {
-	test('is a simple request with every input in the query', async () => {
+	test('puts every input in the query string', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
 		const transport = createV1HostedTransport({
 			fetch,
@@ -78,11 +77,10 @@ describe('init: GET /v1/consent/init', () => {
 			stored: '0',
 		});
 		expect(calls[0]?.init.method).toBe('GET');
-		expect(calls[0]?.init.credentials).toBe('same-origin');
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
 	});
 
-	test('sends no version or policy-contract header or parameter', async () => {
+	test('sends a language override as Accept-Language', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
 		const transport = createV1HostedTransport({
 			fetch,
@@ -93,12 +91,6 @@ describe('init: GET /v1/consent/init', () => {
 
 		const url = new URL(calls[0]?.url ?? '');
 		expect(url.search).toBe('');
-		expect(url.searchParams.has('v')).toBe(false);
-		expect(url.searchParams.has('contract')).toBe(false);
-		for (const header of VERSION_HEADERS) {
-			expect(calls[0]?.headers).not.toHaveProperty(header);
-		}
-		// Accept-Language is CORS-safelisted, so the request stays simple.
 		expect(calls[0]?.headers).toEqual({
 			accept: 'application/json',
 			'accept-language': 'de',

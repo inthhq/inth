@@ -1,23 +1,3 @@
-/**
- * The `POST /v1/consent/records` body.
- *
- * One save action becomes one body:
- *
- * - `answer` is the subject's complete answer after the action: a receipt
- *   for every category that holds an explicit value, each with the time and
- *   policy basis the kernel recorded for it. Receipts are copied, never
- *   restamped, so a queued replay sends the same answer.
- * - `confirmed` names the categories this action confirmed, each a key of
- *   `answer.categories`. A vendor-only save confirms none.
- * - `idempotencyKey` is the key the kernel made with the action and keeps
- *   with the queued payload, so a replay is recorded once.
- *
- * `necessary` is left out of `answer`: the backend counts it as `true`.
- *
- * A payload the outbox narrowed (a newer action superseded some of its
- * categories) holds only the receipts still its own, so its `answer` leaves
- * the superseded categories out rather than resend their older receipts.
- */
 import type {
 	V1ConsentAnswer,
 	V1ConsentRecordInput,
@@ -26,18 +6,8 @@ import type {
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { ExplicitChoice } from '../../consent-record/types';
+import { createIdempotencyKey } from '../../libs/subject-uuid';
 import type { SavePayload } from '../../types';
-
-/** What the transport adds to a save besides the payload. */
-export interface V1ConsentRecordBodyOptions {
-	/** Lowercase host name or app ID the consent belongs to. */
-	property: string;
-	/**
-	 * Key to send when the payload has none, such as a save an older release
-	 * queued. The payload's own key always wins.
-	 */
-	fallbackIdempotencyKey: () => string;
-}
 
 /** The body, without the decision assertion the transport adds. */
 export type V1ConsentRecordBody = Omit<
@@ -45,7 +15,11 @@ export type V1ConsentRecordBody = Omit<
 	'country' | 'fingerprint' | 'gpc' | 'language' | 'policyId' | 'region'
 >;
 
-/** Every explicit receipt of a choice, in wire form. */
+/**
+ * Every explicit receipt of a choice, in wire form. Receipts are copied,
+ * never restamped, so a replay sends the same answer. `necessary` is left
+ * out: the backend counts it as `true`.
+ */
 export const buildV1Answer = function buildV1Answer(
 	choice: Readonly<ExplicitChoice>
 ): V1ConsentAnswer {
@@ -103,12 +77,12 @@ const buildVendorChoice = function buildVendorChoice(
  * Build the records body of one save.
  *
  * @param payload - The kernel's save payload.
- * @param options - Property and the key for a payload that has none.
+ * @param property - Lowercase host name or app ID the consent belongs to.
  * @returns The body, without the decision assertion.
  */
 export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 	payload: SavePayload,
-	options: V1ConsentRecordBodyOptions
+	property: string
 ): V1ConsentRecordBody {
 	const answer = buildV1Answer(payload.choice);
 	const confirmed = OPTIONAL_CONSENT_CATEGORIES.filter(
@@ -121,10 +95,9 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 		answer,
 		confirmed,
 		consentAction: payload.consentAction,
-		// The action time the kernel captured once; a replay reuses it.
 		givenAt: payload.confirmed.actionAt,
-		idempotencyKey: payload.idempotencyKey ?? options.fallbackIdempotencyKey(),
-		property: options.property,
+		idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey(),
+		property,
 		subjectId: payload.subjectId,
 	};
 	if (user?.externalId) {

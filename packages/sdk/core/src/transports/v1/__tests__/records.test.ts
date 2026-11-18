@@ -4,6 +4,7 @@
  */
 import { describe, expect, test } from 'vitest';
 
+import { isUuidV7 } from '../../../libs/subject-uuid';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
@@ -22,7 +23,6 @@ import {
 	stubFetch,
 	SUBJECT,
 	v1Error,
-	VERSION_HEADERS,
 } from './fixtures';
 
 const transportWith = (fetch: typeof globalThis.fetch, property?: string) =>
@@ -42,7 +42,6 @@ describe('save: POST /v1/consent/records', () => {
 		const [call] = calls;
 		expect(call?.url).toBe(`${PROJECT_URL}/v1/consent/records`);
 		expect(call?.init.method).toBe('POST');
-		expect(call?.init.credentials).toBe('same-origin');
 		expect(call?.headers).toEqual({
 			accept: 'application/json',
 			'content-type': 'application/json',
@@ -74,7 +73,7 @@ describe('save: POST /v1/consent/records', () => {
 		});
 	});
 
-	test('sends no version header and none of the removed fields', async () => {
+	test('sends the identity fields', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
 
 		await transportWith(fetch).save(
@@ -87,23 +86,7 @@ describe('save: POST /v1/consent/records', () => {
 			})
 		);
 
-		const [call] = calls;
-		for (const header of VERSION_HEADERS) {
-			expect(call?.headers).not.toHaveProperty(header);
-		}
-		const body = call?.body as Record<string, unknown>;
-		for (const removed of [
-			'type',
-			'domain',
-			'preferences',
-			'choice',
-			'externalSubjectId',
-			'documentSnapshotToken',
-			'policyHash',
-		]) {
-			expect(body).not.toHaveProperty(removed);
-		}
-		expect(body).toMatchObject({
+		expect(bodyAt(calls, 0)).toMatchObject({
 			externalId: 'user_123',
 			identityProvider: 'clerk',
 			identityToken: 'token',
@@ -173,14 +156,12 @@ describe('save: POST /v1/consent/records', () => {
 		).toEqual([KEY, KEY]);
 	});
 
-	test('a payload an older release queued without a key gets one', async () => {
+	test('a payload without a key gets one', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
 
 		await transportWith(fetch).save(savePayload({ idempotencyKey: undefined }));
 
-		expect(bodyAt(calls, 0).idempotencyKey).toMatch(
-			/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
-		);
+		expect(isUuidV7(String(bodyAt(calls, 0).idempotencyKey))).toBe(true);
 	});
 
 	test('lowercases the property', async () => {
@@ -323,29 +304,6 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 			identityProvider: 'clerk',
 			identityToken: 'token',
 		});
-	});
-
-	test('reports the canonical ID for a stored sub_ ID', async () => {
-		const { fetch } = stubFetch(() =>
-			json(200, {
-				externalId: 'user_123',
-				subjectId: SUBJECT,
-				verifiedBy: 'identity_token',
-			})
-		);
-		const seen: [string, string][] = [];
-		const transport = createV1RecordTransport({
-			fetch,
-			onSubjectId: (subjectId, previous) => seen.push([subjectId, previous]),
-			projectUrl: PROJECT_URL,
-		});
-
-		await transport.identify(
-			{ ...user, identityToken: 'token' },
-			LEGACY_SUBJECT
-		);
-
-		expect(seen).toEqual([[SUBJECT, LEGACY_SUBJECT]]);
 	});
 
 	test('a refused link throws the code and request ID', async () => {

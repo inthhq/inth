@@ -1,11 +1,7 @@
 /**
  * Hosted `/v1` transport: the backend picks the policy in
  * `GET /v1/consent/init`, and saves go to `POST /v1/consent/records`.
- *
- * Isomorphic: no top-level `window` or `document` access, and `fetch` is
- * injectable. `/v1` init answers with the policy shapes of the current
- * policy contract, with no negotiation, so the response is read as that
- * contract.
+ * Init answers in the shapes of the current policy contract.
  */
 import {
 	CONSENT_REQUEST_HEADER_NAMES,
@@ -16,6 +12,7 @@ import type { InitOutput } from '@inth/sdk-schema/types';
 import type { SSRInitialData } from '../../options/ssr';
 import type { InitContext, KernelOverrides } from '../../types';
 import {
+	buildDecisionAssertion,
 	decisionInputsMatchOverrides,
 	gpcFromHeaders,
 	rememberDecisionInputs,
@@ -27,11 +24,7 @@ import { readInthApiError } from './error';
 import { createV1InitRequest } from './init-request';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import {
-	resolveV1Fetch,
-	trimTrailingSlash,
-	V1_DEFAULT_CREDENTIALS,
-} from './routes';
+import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
 
 /** Options for {@link createV1HostedTransport}. */
 export interface V1HostedTransportOptions extends V1RecordTransportOptions {
@@ -61,8 +54,7 @@ export interface V1HostedTransportOptions extends V1RecordTransportOptions {
 	/**
 	 * Request headers a server-side caller forwards to init. Only the init
 	 * inputs (`accept-language`, the supported geo headers, `sec-gpc`) are
-	 * forwarded. In a browser, any of them except `accept-language` makes
-	 * the request non-simple; use the kernel's `overrides` instead.
+	 * forwarded. In a browser, use the kernel's `overrides` instead.
 	 */
 	headers?: Record<string, string>;
 }
@@ -142,7 +134,6 @@ export const createV1HostedTransport = function createV1HostedTransport(
 	const base = trimTrailingSlash(options.projectUrl);
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createV1HostedTransport');
 	const initHeaders = allowedInitHeaders(options.headers);
-	const credentials = options.credentials ?? V1_DEFAULT_CREDENTIALS;
 	let lastDecisionInputs = options.assertDecisionInputs
 		? options.decisionInputs
 		: undefined;
@@ -169,7 +160,7 @@ export const createV1HostedTransport = function createV1HostedTransport(
 		const generation = initGeneration;
 		prepareInit(ctx);
 		const request = createV1InitRequest({
-			credentials,
+			credentials: options.credentials,
 			experiment: ctx.experiment,
 			headers: initHeaders,
 			initUrl: options.initUrl,
@@ -193,7 +184,7 @@ export const createV1HostedTransport = function createV1HostedTransport(
 			const response = await fetchImpl(request.url, request.init);
 			if (!response.ok) {
 				throw await readInthApiError(
-					'Inth transport: /v1/consent/init',
+					`Inth transport: ${V1_ROUTES.init}`,
 					response
 				);
 			}
@@ -211,12 +202,8 @@ export const createV1HostedTransport = function createV1HostedTransport(
 	};
 
 	const records = createV1RecordTransport(
-		{ ...options, credentials, fetch: fetchImpl, projectUrl: base },
-		{
-			inputs: () => lastDecisionInputs,
-			pending: () => pendingInit,
-			required: options.assertDecisionInputs === true,
-		}
+		{ ...options, fetch: fetchImpl, projectUrl: base },
+		() => lastDecisionInputs
 	);
 
 	return {
@@ -231,6 +218,29 @@ export const createV1HostedTransport = function createV1HostedTransport(
 					pendingInit = undefined;
 				}
 			}
+		},
+		async save(payload) {
+			if (
+				options.assertDecisionInputs &&
+				!payload.policySnapshotToken &&
+				!payload.decisionInputs
+			) {
+				// Wait out every init in flight so the assertion reflects the
+				// latest decision; if none resolves, refuse rather than record an
+				// answer bound to no policy.
+				let awaited = pendingInit;
+				while (awaited) {
+					// oxlint-disable-next-line no-await-in-loop -- Each iteration waits for the init that superseded the last.
+					await awaited.catch(() => undefined);
+					awaited = pendingInit;
+				}
+				if (!buildDecisionAssertion(payload, lastDecisionInputs)) {
+					throw new Error(
+						'Inth transport: cannot save before init resolved a policy decision (assertDecisionInputs is set).'
+					);
+				}
+			}
+			return records.save(payload);
 		},
 	};
 };

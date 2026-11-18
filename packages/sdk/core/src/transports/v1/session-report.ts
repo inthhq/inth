@@ -1,12 +1,7 @@
 /**
- * `POST /v1/consent/sessions`: the per-visitor signal manifest mode would
- * otherwise lose.
- *
- * A server that resolves init from a manifest never sends the backend an
- * init request, so it reports the resolution after the fact. Server-only:
- * the report forwards the visitor's IP and user agent, which a browser
- * could not do and must not try to. Best effort: it never rejects, and a
- * failed report changes no consent decision.
+ * `POST /v1/consent/sessions`. A server that resolves init from a manifest
+ * sends the backend no init request, so it reports the resolution after the
+ * fact. Server-only: the report forwards the visitor's IP and user agent.
  */
 import {
 	buildConsentSessionReport,
@@ -75,8 +70,7 @@ const readHeader = function readHeader(
 };
 
 /**
- * The `/v1` report body: the same report, with the journey's site named
- * `property`, lowercase.
+ * The report body, with the journey's site as `property`.
  *
  * @param options - What to report.
  * @returns The body of `POST /v1/consent/sessions`.

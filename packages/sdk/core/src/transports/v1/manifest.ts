@@ -39,12 +39,7 @@ import type { TransportInitResponse } from '../init-output';
 import { readInthApiError } from './error';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import {
-	resolveV1Fetch,
-	trimTrailingSlash,
-	V1_DEFAULT_CREDENTIALS,
-	V1_ROUTES,
-} from './routes';
+import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
 import { reportV1ConsentSession } from './session-report';
 
 /** Session reporting for a server-side manifest transport. */
@@ -154,7 +149,6 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 ): V1ManifestTransport {
 	const base = trimTrailingSlash(options.projectUrl);
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createV1ManifestTransport');
-	const credentials = options.credentials ?? V1_DEFAULT_CREDENTIALS;
 	const manifestUrl = options.manifestUrl ?? `${base}${V1_ROUTES.manifest}`;
 	const unreported = createUnreportedJourneys();
 	let lastDecisionInputs: RememberedDecisionInputs | undefined;
@@ -168,13 +162,13 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 		manifestPromise ??= (async () => {
 			try {
 				const response = await fetchImpl(manifestUrl, {
-					credentials,
+					credentials: options.credentials,
 					headers: { accept: 'application/json', ...options.headers },
 					method: 'GET',
 				});
 				if (!response.ok) {
 					throw await readInthApiError(
-						'Inth transport: /v1/consent/manifest',
+						`Inth transport: ${V1_ROUTES.manifest}`,
 						response
 					);
 				}
@@ -198,12 +192,8 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 			}));
 
 	const records = createV1RecordTransport(
-		{ ...options, credentials, fetch: fetchImpl, projectUrl: base },
-		{
-			inputs: () => lastDecisionInputs,
-			pending: () => undefined,
-			required: false,
-		}
+		{ ...options, fetch: fetchImpl, projectUrl: base },
+		() => lastDecisionInputs
 	);
 
 	return {

@@ -1,18 +1,9 @@
 /**
- * Errors from `/v1` routes.
- *
- * Every `/v1` failure, from the backend and from its gateway, has one body:
- * `{ error: { code, message, details? }, requestId }`. {@link readInthApiError}
- * reads it into an {@link InthApiError}, so a caller can branch on `code` and
- * quote `requestId` when it reports the failure.
- *
- * A save the backend refused for good becomes an
- * `InthConsentSaveRejectedError` (`./save-rejected.ts`), which the kernel
- * drops instead of queueing for replay.
+ * Errors from `/v1` routes. Every failure, from the backend and from its
+ * gateway, has the body `{ error: { code, message, details? }, requestId }`.
  */
-
-/** Response header that carries the request ID. */
-const REQUEST_ID_HEADER = 'x-request-id';
+import { V1_REQUEST_ID_HEADER } from '@inth/sdk-schema/types';
+import type { V1ErrorCode } from '@inth/sdk-schema/types';
 
 /** Stop waiting for an error body after this long. */
 const BODY_TIMEOUT_MS = 2000;
@@ -21,8 +12,8 @@ const BODY_TIMEOUT_MS = 2000;
 const MAX_MESSAGE_LENGTH = 500;
 
 /**
- * A `/v1` error code. Usually one of `V1ErrorCode` from the schema, but a code added
- * after this client still reaches the caller unchanged.
+ * A `/v1` error code, usually a `V1ErrorCode`. A code added after this
+ * client comes through as it is.
  */
 export type InthApiErrorCode = string;
 
@@ -47,7 +38,6 @@ export interface InthApiErrorDetail {
  * `requestId` to quote when reporting it.
  */
 export class InthApiError extends Error {
-	/** Brand checked by {@link isInthApiError} across bundle copies. */
 	readonly inthApiError = true;
 	readonly code: InthApiErrorCode;
 	readonly requestId: string | undefined;
@@ -67,10 +57,9 @@ export class InthApiError extends Error {
 }
 
 /**
- * Whether `error` is a failed `/v1` response, retryable or not: an
- * {@link InthApiError}, or a refused save that carries the same fields.
- * Checks a brand rather than `instanceof`, so it holds across package
- * copies.
+ * Whether `error` is a failed `/v1` response: an {@link InthApiError}, or a
+ * refused save with the same fields. Checks a brand rather than
+ * `instanceof`, so it holds across package copies.
  *
  * @param error - Anything a `/v1` call threw.
  * @returns `true` for a failed `/v1` response.
@@ -88,8 +77,8 @@ export const isInthApiError = function isInthApiError(
 	);
 };
 
-/** A code for a body that named none: the gateway or a proxy answered. */
-const codeForStatus = function codeForStatus(status: number): InthApiErrorCode {
+/** A code for a body that named none, such as a proxy's answer. */
+const codeForStatus = function codeForStatus(status: number): V1ErrorCode {
 	switch (status) {
 		case 400:
 		case 422:
@@ -186,7 +175,7 @@ export const readInthApiErrorDetail = async function readInthApiErrorDetail(
 				: message,
 		requestId:
 			nonEmpty(record.requestId) ??
-			nonEmpty(response.headers?.get(REQUEST_ID_HEADER)),
+			nonEmpty(response.headers?.get(V1_REQUEST_ID_HEADER)),
 		retryAfter:
 			response.status === 429
 				? parseRetryAfter(response.headers?.get('retry-after') ?? null)
