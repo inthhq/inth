@@ -1,7 +1,8 @@
 // Tegami for the SDK: the @inth packages in packages/sdk. The public ones
 // publish to npm. The private @inth/sdk-* parts never publish, but take every
 // version bump, because each build writes its version into the code @inth/sdk
-// ships. Run it as `pnpm tegami:sdk <command>`. See .tegami/sdk/README.md.
+// ships. Run it as `pnpm tegami:sdk <command>`; the workflow runs
+// `pnpm tegami:sdk release`. See .tegami/sdk/README.md.
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -9,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { tegami } from "tegami";
 import type { TegamiPlugin } from "tegami";
-import { runCli } from "tegami/cli";
+import { createCli } from "tegami/cli";
 import { github } from "tegami/plugins/github";
 
 type Dependencies = Record<string, string>;
@@ -94,5 +95,13 @@ export const createSdkRelease = (
 };
 
 if (import.meta.main) {
-  await runCli(createSdkRelease());
+  const release = createSdkRelease();
+  let argv = process.argv.slice(2);
+  // `tegami ci` drafts a new version before it publishes, so `release`
+  // finishes a pending release first. A failed status check fails the run.
+  if (argv[0] === "release") {
+    const { status } = await release.getPublishStatus();
+    argv = [status === "pending" ? "publish" : "ci", ...argv.slice(1)];
+  }
+  await createCli(release).parseAsync(argv);
 }

@@ -61,15 +61,8 @@ jobs:
         run: pnpm turbo run build build:docs --concurrency=4 --filter='./packages/sdk/*'
       - name: Pack and check every package
         run: pnpm sdk:pack
-      # `tegami ci` drafts a new version before it publishes, so finish a
-      # release that is still pending first.
-      - name: Version or publish packages
-        run: |
-          if pnpm tegami:sdk check-publish; then
-            pnpm tegami:sdk publish
-          else
-            pnpm tegami:sdk ci
-          fi
+      - name: Finish a pending release, or version or publish packages
+        run: pnpm tegami:sdk release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"

@@ -85,6 +85,26 @@ test("a tarball that would install wrong is refused", () => {
   ]);
 });
 
+test("a wildcard export must match a packed file", () => {
+  const exports = {
+    ".": { import: "./dist/index.js", types: "./dist/index.d.ts" },
+    "./translations/*": "./dist/translations/*.js",
+  };
+  const withTranslations = packed({ exports });
+  expect(
+    tarballProblems(
+      {
+        ...withTranslations,
+        files: [...withTranslations.files, "dist/translations/ar.js"],
+      },
+      expectations
+    )
+  ).toEqual([]);
+  expect(tarballProblems(withTranslations, expectations)).toEqual([
+    "entry point dist/translations/*.js is not in the tarball",
+  ]);
+});
+
 test("a stable version must not keep a prerelease dist-tag", () => {
   expect(settingProblems({ ...source, version: "1.0.0" })).toEqual([
     'publishConfig.tag is set, but 1.0.0 publishes to "latest"',

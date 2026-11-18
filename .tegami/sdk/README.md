@@ -32,9 +32,11 @@ npm can only set up trusted publishing for a package that already exists, so `0.
    done
    ```
 
-   npm asks for a one-time password or a browser approval for each package. If a publish fails on the login, the password or the network, delete the tarballs that did publish and run the loop again. npm can't replace a published version, so if a package's contents must change after any package has published, release all ten as the next alpha instead.
+   npm asks for a one-time password or a browser approval for each package. If a publish fails on the login, the password or the network, delete the tarballs that did publish and run the loop again.
 
-4. Run `npm view @inth/react dist-tags` for each package. `alpha` must point at `0.0.0-alpha.0`. npm may point `latest` at it too, and then `npm install @inth/react` with no tag installs the alpha until the first stable release.
+   npm can't replace a published version. If a package's contents must change after any package has published, release all ten as the next alpha: add a changelog, run `pnpm tegami:sdk version --no-checks` on a branch to replace the publish lock, merge it, then rehearse and publish by hand again.
+
+4. Run `npm view @inth/react dist-tags` for each package. `alpha` must point at `0.0.0-alpha.0`. npm also points `latest` at a package's first version, whatever tag it went to, and later alphas only move `alpha`. Until the first stable release, `npm install @inth/react` with no tag installs `0.0.0-alpha.0`.
 
 ## Turn on the workflow
 
@@ -45,7 +47,7 @@ npm can only set up trusted publishing for a package that already exists, so `0.
    gh variable set SDK_RELEASE_ENABLED --body true --repo inthhq/inth
    ```
 
-3. Run **Release SDK** from the Actions tab on `main`. Every version is on npm already, so it publishes nothing. It tags `sdk@0.0.0-alpha.0` and creates that GitHub release.
+3. Run **Release SDK** from the Actions tab on `main`, before anything else merges to `main`. Every version is on npm already, so it publishes nothing. It tags the commit it runs on as `sdk@0.0.0-alpha.0` and creates that GitHub release.
 
 ## Release from CI
 
@@ -63,9 +65,11 @@ npm can only set up trusted publishing for a package that already exists, so `0.
    ```
 
 2. Run **Release SDK** on `main`. Tegami opens or updates a version PR on `tegami/sdk-version-packages`. It moves every SDK package to the next `alpha` version and writes the publish lock.
-3. Merge the version PR.
+3. The version PR's checks wait for approval, because the workflow's token opened it. Select **Approve workflows to run**, wait for the checks to pass, then merge.
 4. Before the first CI release only, connect each package to the workflow, as the next section shows.
-5. Run **Release SDK** again. It publishes the new versions to `alpha`, tags `sdk@<version>` and creates a GitHub release. It skips any version already on npm, so you can rerun a failed run. Until every package in the publish lock is on npm and tagged, a run finishes that release and drafts nothing new.
+5. Run **Release SDK** again. It publishes the new versions to `alpha`, tags `sdk@<version>` and creates a GitHub release. Until every package in the publish lock is on npm and tagged, a run finishes that release and drafts nothing new.
+
+   If a run fails partway, use **Re-run failed jobs** on that run. It builds the same commit and skips the versions already on npm. A new run would build whatever `main` is by then.
 
 ## Connect trusted publishing
 
@@ -79,11 +83,12 @@ Do this for each of the ten packages on npmjs.com:
 4. Allow it to publish with `npm publish`, not only to stage a publish. Save the connection and approve with two-factor authentication.
 5. Under **Publishing access**, select **Require two-factor authentication and disallow tokens**, then **Update Package Settings**. Trusted publishing still works, and no token can publish the package.
 
-Or connect all ten from a terminal, with npm 11.15 or later:
+Or connect all ten from a terminal, with npm 11.15 or later. npm asks for two-factor authentication once, and the pause avoids its rate limit:
 
 ```sh
 for name in sdk angular react svelte vue astro integrations nextjs nuxt tanstack-start; do
-  npm trust github "@inth/$name" --repo inthhq/inth --file release-sdk.yml --env npm-sdk --allow-publish
+  npm trust github "@inth/$name" --repo inthhq/inth --file release-sdk.yml --env npm-sdk --allow-publish --yes
+  sleep 2
 done
 ```
 

@@ -62,7 +62,7 @@ export const publishOrder = <T extends { manifest: Manifest }>(
 const distTagFor = (version = "") =>
   /^[^-+]*-(?<id>[^.+]+)/u.exec(version)?.groups?.id;
 
-/** Paths the manifest's entry points name, wildcards left out. */
+/** Paths the manifest's entry points name. */
 const entryTargets = (manifest: Manifest) => {
   const fields = [manifest.main, manifest.module, manifest.types]
     .filter((field) => field !== undefined)
@@ -75,9 +75,7 @@ const entryTargets = (manifest: Manifest) => {
   ].map((match) => match.groups?.target ?? "");
   return [
     ...new Set(
-      [...fields, ...exported]
-        .filter((target) => !target.includes("*"))
-        .map((target) => path.posix.normalize(target))
+      [...fields, ...exported].map((target) => path.posix.normalize(target))
     ),
   ];
 };
@@ -154,6 +152,15 @@ const dependencyProblems = (
   return problems;
 };
 
+const wildcard = (target: string) =>
+  new RegExp(
+    `^${target
+      .split("*")
+      .map((part) => part.replaceAll(/[.+?^${}()|[\]\\]/gu, "\\$&"))
+      .join(".+")}$`,
+    "u"
+  );
+
 const fileProblems = (packed: PackedPackage, source: Manifest) => {
   const fileSet = new Set(packed.files);
   // `files` entries are files or folders; a folder must contribute a file.
@@ -167,8 +174,13 @@ const fileProblems = (packed: PackedPackage, source: Manifest) => {
       );
     })
     .map((entry) => `files lists ${entry}, which is not in the tarball`);
+  // A wildcard target such as dist/translations/*.js must match a file.
   const entries = entryTargets(packed.manifest)
-    .filter((target) => !fileSet.has(target))
+    .filter((target) =>
+      target.includes("*")
+        ? !packed.files.some((file) => wildcard(target).test(file))
+        : !fileSet.has(target)
+    )
     .map((target) => `entry point ${target} is not in the tarball`);
   return [...listed, ...entries];
 };
