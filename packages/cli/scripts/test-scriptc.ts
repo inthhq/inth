@@ -11,6 +11,7 @@ import {
   verifyStatelessBypass,
   verifyUsageErrors,
 } from "./command-checks.ts";
+import { verifyDocumentHash } from "./document-checks.ts";
 import { verifyFileIdentity } from "./file-identity-checks.ts";
 import {
   verifyCliState,
@@ -91,6 +92,7 @@ const steps: Step[] = [
   { name: "Skills", run: () => verifySkills(binary) },
   { name: "c15t", run: () => verifyC15t(binary) },
   { name: "Mobile setup", run: () => verifyMobile(binary) },
+  { name: "Document hash", run: () => verifyDocumentHash(binary) },
   {
     name: "Update check",
     run: () => verifyUpdateCheck(binary, [], "development", false),
