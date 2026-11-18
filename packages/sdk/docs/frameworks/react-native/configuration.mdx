@@ -150,6 +150,7 @@ Remove these retired keys. Expo prebuild deletes them for you.
 | --- | --- |
 | `com.inth.backend.mode` (iOS), `com.inth.MODE` (Android) | Nothing for hosted. `com.inth.dryRun` or `com.inth.DRY_RUN` in development and CI. |
 | `com.inth.backend.initUrl` (iOS), `com.inth.BACKEND_INIT_URL` (Android) | Nothing. The app fetches policy from the project URL. |
+| `com.inth.backend.domain` (iOS) | `com.inth.backend.property`. |
 
 A build that still declares one does not start the engine. iOS logs
 `INTH_CONFIGURATION_RETIRED` with the key and its replacement. Android logs an

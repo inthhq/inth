@@ -198,6 +198,7 @@ final class InthBootstrapTests: XCTestCase {
             ("com.inth.backend.mode", "offline", ["com.inth.dryRun"]),
             ("com.inth.backend.mode", "none", ["com.inth.reactnative.AutoBootstrap"]),
             ("com.inth.backend.initUrl", "https://app.example.com/init", ["Policy is fetched from com.inth.backend.url"]),
+            ("com.inth.backend.domain", "acme.com", ["com.inth.backend.property"]),
         ]
         for (key, value, says) in expected {
             let plist: [String: Any] = [

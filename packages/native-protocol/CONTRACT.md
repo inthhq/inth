@@ -1276,9 +1276,10 @@ replacement:
     mode: 'custom'                                       autoBootstrap: false. Custom transports are gone.
     initURL, com.inth.backend.initUrl,                   None. Policy is fetched from the project URL.
       com.inth.BACKEND_INIT_URL, NativeConfig.initUrl
+    domain, com.inth.backend.domain                      property, com.inth.backend.property.
 
-The Expo plugin throws on `mode` and `initURL`. The iOS launch hook refuses
-`com.inth.backend.mode` and `com.inth.backend.initUrl` with
+The Expo plugin throws on `mode`, `initURL` and `domain`. The iOS launch hook refuses
+`com.inth.backend.mode`, `com.inth.backend.initUrl` and `com.inth.backend.domain` with
 `INTH_CONFIGURATION_RETIRED`. Android refuses `com.inth.MODE` and
 `com.inth.BACKEND_INIT_URL` with a logged error and leaves the core uninstalled.
 
@@ -1992,7 +1993,8 @@ string. `AutoBootstrap` is written only in the opt-out case, since on is the
 bridge's own default. The `dryRun` keys are written only when `dryRun` is on.
 
 Prebuild also deletes the retired keys `com.inth.backend.mode`,
-`com.inth.backend.initUrl`, `com.inth.MODE` and `com.inth.BACKEND_INIT_URL`. A
+`com.inth.backend.initUrl`, `com.inth.backend.domain`, `com.inth.MODE`,
+`com.inth.BACKEND_INIT_URL` and `com.inth.BACKEND_DOMAIN`. A
 prebuild without `--clean` keeps the old plist and manifest, and native start
 refuses a build that still declares one.
 

@@ -107,12 +107,14 @@ export const IOS_PLIST_KEY = {
 export const RETIRED_ANDROID_META_KEYS: readonly string[] = [
 	'com.inth.MODE',
 	'com.inth.BACKEND_INIT_URL',
+	'com.inth.BACKEND_DOMAIN',
 ];
 
 /** `Info.plist` keys earlier versions wrote, removed for the same reason. */
 export const RETIRED_IOS_PLIST_KEYS: readonly string[] = [
 	'com.inth.backend.mode',
 	'com.inth.backend.initUrl',
+	'com.inth.backend.domain',
 ];
 
 /** androidx.startup provider the app manifest declares. */

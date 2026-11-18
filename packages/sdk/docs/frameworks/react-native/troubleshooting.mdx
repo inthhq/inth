@@ -82,7 +82,7 @@ under the `inth` tag.
 | --- | --- | --- |
 | `INTH_CONFIGURATION_BACKEND_URL` | The project URL is missing or is not an Inth project URL. | Set `projectUrl` to the URL from your Inth dashboard, such as `https://your-project.inth.app`. |
 | `INTH_CONFIGURATION_DRY_RUN` | `dryRun` is on in a release build. | Remove `dryRun` from release builds. |
-| `INTH_CONFIGURATION_RETIRED` | `Info.plist` still has `com.inth.backend.mode`, `com.inth.backend.initUrl` or `com.inth.test`. | Remove the key. The message names its replacement. |
+| `INTH_CONFIGURATION_RETIRED` | `Info.plist` still has `com.inth.backend.mode`, `com.inth.backend.initUrl`, `com.inth.backend.domain` or `com.inth.test`. | Remove the key. The message names its replacement. |
 
 On Android the retired keys are `com.inth.MODE` and
 `com.inth.BACKEND_INIT_URL`. Expo prebuild removes the retired keys it used to
