@@ -22,7 +22,7 @@
 import type { AllConsentNames } from '../consent/consent-types';
 import type { InternalKernel } from '../kernel/internals';
 import { extractConsentNamesFromCondition } from '../libs/has';
-import { isProductionBuild } from '../libs/is-production';
+import { isProductionBuild, warnInDevelopment } from '../libs/is-production';
 import { declareOwnedVendors, resolveVendors } from '../libs/vendors';
 import { holdNetworkRequests, NOT_HELD } from '../modules/network-blocker/hold';
 import type { NetworkHold } from '../modules/network-blocker/hold';
@@ -549,6 +549,7 @@ export const createConsentProviderRuntime =
 				notHeld: NOT_HELD,
 				resolveVendors,
 				scriptRegistry,
+				warnInDevelopment,
 			},
 		};
 		/**

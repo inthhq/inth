@@ -93,7 +93,8 @@ import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 } from './consent-proxy';
-import { fetchCachedGvl } from './gvl-cache';
+import { fetchServerGvl } from './gvl-cache';
+import { IN_PROCESS_ORIGIN, toPathFetch } from './in-process';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
@@ -111,14 +112,6 @@ export const CONSENT_ROUTE_TIMEOUT_HEADER = 'x-c15t-timeout-ms';
 const MAX_ROUTE_TIMEOUT_MS = 10_000;
 
 const INIT_CACHE_CONTROL = 'private, no-store';
-
-/**
- * Origin a `/`-relative URL is placed on when the adapter can answer its
- * own routes in-process. It is never contacted: requests to it go to
- * {@link ConsentRouteRequestContext.localFetch} as a path. Loopback, so the
- * cleartext rules treat the in-process hop as local.
- */
-const IN_PROCESS_ORIGIN = 'http://localhost';
 
 /** A conservative BCP 47 shape: primary subtag plus up to two subtags. */
 const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}$/u;
@@ -553,16 +546,6 @@ interface ResolvedTarget {
 	inProcess?: true;
 }
 
-/** Sends {@link IN_PROCESS_ORIGIN} URLs to `localFetch` as paths. */
-const toPathFetch = function toPathFetch(
-	localFetch: ManifestFetch
-): ManifestFetch {
-	return (input, init) => {
-		const url = new URL(input instanceof Request ? input.url : input);
-		return localFetch(`${url.pathname}${url.search}`, init);
-	};
-};
-
 /**
  * The hop chain for a proxied request when the adapter supplies none.
  * Without `trustForwardedHeaders` the forwarding headers are
@@ -844,7 +827,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			}
 			const fill = options.fetchGvl
 				? options.fetchGvl({ fetch: configuredFetch(), language, reference })
-				: fetchCachedGvl({
+				: fetchServerGvl({
 						fetch: options.fetch,
 						headers: inthProtocolHeaders,
 						label: adapter,

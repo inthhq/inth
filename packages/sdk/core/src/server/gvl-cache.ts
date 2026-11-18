@@ -6,15 +6,12 @@
  * server render and a transport in one process never download one list
  * twice. On top of that it supplies what a server needs and a browser
  * bundle should not carry: a default `fetch` and a deadline on the
- * upstream request.
+ * upstream request. `clearGvlCache` clears that one cache.
  */
 import type { GlobalVendorList } from '@inth/sdk-schema/types';
 
 import type { ManifestFetch } from '../libs/manifest-cache-runtime';
-import {
-	clearGvlCache as clearDefaultGvlCache,
-	fetchCachedGvl as fetchThroughGvlCache,
-} from '../transports/gvl-cache';
+import { fetchCachedGvl } from '../transports/gvl-cache';
 
 /**
  * How long a server waits for the Global Vendor List before the request is
@@ -23,7 +20,7 @@ import {
  */
 export const GVL_FETCH_TIMEOUT_MS = 5000;
 
-/** Options for {@link fetchCachedGvl}. */
+/** Options for {@link fetchServerGvl}. */
 export interface FetchCachedGvlOptions {
 	/** Absolute URL of the vendor list. */
 	url: string;
@@ -66,10 +63,10 @@ const withDeadline = function withDeadline(
  * times out with no cached list to fall back on.
  * @example
  * ```ts
- * const gvl = await fetchCachedGvl({ language: 'en', url: reference.url });
+ * const gvl = await fetchServerGvl({ language: 'en', url: reference.url });
  * ```
  */
-export const fetchCachedGvl = function fetchCachedGvl(
+export const fetchServerGvl = function fetchServerGvl(
 	input: FetchCachedGvlOptions
 ): Promise<GlobalVendorList | null> {
 	const fetchImpl = input.fetch ?? globalThis.fetch?.bind(globalThis);
@@ -78,18 +75,9 @@ export const fetchCachedGvl = function fetchCachedGvl(
 			new Error('@inth/sdk/server: no fetch implementation available.')
 		);
 	}
-	return fetchThroughGvlCache({
+	return fetchCachedGvl({
 		...input,
 		fetch: withDeadline(fetchImpl),
 		label: input.label ?? '@inth/sdk/server',
 	});
-};
-
-/**
- * Drop every cached vendor list in the process cache.
- *
- * @remarks Test seam; nothing in production needs it.
- */
-export const clearGvlCache = function clearGvlCache(): void {
-	clearDefaultGvlCache();
 };

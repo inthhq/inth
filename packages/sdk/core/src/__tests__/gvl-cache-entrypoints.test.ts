@@ -11,7 +11,11 @@ const response = (headers: Record<string, string>, status = 200) =>
 
 describe.each([
 	{ name: 'transport', ...transport },
-	{ name: 'server', ...server },
+	{
+		clearGvlCache: transport.clearGvlCache,
+		fetchCachedGvl: server.fetchServerGvl,
+		name: 'server',
+	},
 ])('$name GVL cache', (cache) => {
 	afterEach(() => cache.clearGvlCache());
 	test.each([
@@ -94,10 +98,10 @@ test('the server and transport entry points read one process cache', async () =>
 			Promise.resolve(response({ 'cache-control': 'max-age=600' }))
 		);
 	try {
-		await server.fetchCachedGvl({ fetch, language: 'en', now: 0, url });
+		await server.fetchServerGvl({ fetch, language: 'en', now: 0, url });
 		await transport.fetchCachedGvl({ fetch, language: 'en', now: 1, url });
 		expect(fetch).toHaveBeenCalledTimes(1);
-		server.clearGvlCache();
+		transport.clearGvlCache();
 		await transport.fetchCachedGvl({ fetch, language: 'en', now: 2, url });
 		expect(fetch).toHaveBeenCalledTimes(2);
 	} finally {

@@ -46,6 +46,7 @@ import type { InitOutput } from '@inth/sdk-schema/types';
 import { failedResponseError } from '../libs/failed-response';
 import { consumePrefetchedInitialData } from '../libs/prefetch/prefetch';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers';
+import { trimSlash } from '../libs/url';
 import type { SSRInitialData } from '../options/ssr';
 import type { KernelOverrides, InitContext } from '../types';
 import {
@@ -55,15 +56,14 @@ import {
 } from './decision-inputs';
 import type { RememberedDecisionInputs } from './decision-inputs';
 import { createHostedInitRequest } from './hosted-init-request';
-import {
-	createHostedRecordTransport,
-	resolveFetch,
-	trimSlash,
-} from './hosted-records';
+import { createHostedRecordTransport, resolveFetch } from './hosted-records';
 import type { HostedRecordTransport } from './hosted-records';
 import { mapInitOutputToInitResponse } from './init-output';
 import type { TransportInitResponse } from './init-output';
-import { readProducerPolicyContract } from './version-header';
+import {
+	parsePolicyContract,
+	readProducerPolicyContract,
+} from './version-header';
 
 export interface HostedTransportOptions {
 	/**
@@ -330,15 +330,10 @@ export const createHostedTransport = function createHostedTransport(
 					gpcFromHeaders(headers)
 				);
 			}
-			const producerHeaders = new Headers();
-			if (typeof prefetched.producerPolicyContract === 'string') {
-				producerHeaders.set(
-					'x-c15t-policy-contract',
-					prefetched.producerPolicyContract
-				);
-			}
 			return mapInitOutputToInitResponse(prefetched.init, headers, {
-				producerContract: readProducerPolicyContract(producerHeaders),
+				producerContract: parsePolicyContract(
+					prefetched.producerPolicyContract
+				),
 			});
 		}
 		const response = await fetchImpl(request.url, request.init);

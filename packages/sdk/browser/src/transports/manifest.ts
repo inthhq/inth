@@ -8,51 +8,14 @@ import {
 	projectUrl as builtProjectUrl,
 	snapshot,
 } from '@inth/sdk-core/generated';
-import { manifest as browserManifest } from '@inth/sdk-core/transports/manifest-browser';
+import {
+	manifest as browserManifest,
+	withBuildDefaults,
+} from '@inth/sdk-core/transports/manifest-browser';
 import type {
 	BrowserManifestModeFactory,
 	BrowserManifestOptions,
 } from '@inth/sdk-core/transports/manifest-browser';
-import type { ConsentManifest } from '@inth/sdk-schema/types';
-
-/** What a build integration downloaded, as `@inth/sdk/generated` exports it. */
-export interface BuildOutput {
-	projectUrl?: string;
-	snapshot?: ConsentManifest;
-}
-
-/**
- * Fill the options the page left out from the build: the backend URL that
- * saves go to, and the snapshot unless the page passed one, a
- * `manifestUrl`, or `source: 'runtime'`.
- *
- * @param options - The page's options.
- * @param build - What the build downloaded.
- * @returns The options `manifest()` resolves with.
- * @internal
- */
-export const withBuildDefaults = function withBuildDefaults(
-	options: BrowserManifestOptions,
-	build: BuildOutput
-): BrowserManifestOptions {
-	const settings: BrowserManifestOptions = { ...options };
-	// Saves go to the build's backend even when `manifestUrl` names where
-	// the policy comes from, such as a CDN.
-	if (build.projectUrl !== undefined && settings.projectUrl === undefined) {
-		settings.projectUrl = build.projectUrl;
-	}
-	if (settings.manifestUrl !== undefined) {
-		return settings;
-	}
-	if (
-		build.snapshot &&
-		settings.snapshot === undefined &&
-		settings.source !== 'runtime'
-	) {
-		(settings as { snapshot?: ConsentManifest }).snapshot = build.snapshot;
-	}
-	return settings;
-};
 
 /**
  * Resolve the policy in the browser from the backend's consent manifest.

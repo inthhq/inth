@@ -23,6 +23,7 @@ import { isProductionBuild } from '../libs/is-production';
  * snapshot or any translation.
  */
 import { hasPrefetchedInitialData } from '../libs/prefetch/window-key';
+import { trimSlash } from '../libs/url';
 import type { ConsentMode, TestingModeOptions } from '../modes';
 import { testingOptionsOf } from '../modes';
 import type { SSRInitialData } from '../options/ssr';
@@ -93,10 +94,6 @@ const loadHostedModule: LoadHostedModule = () => import('./lazy-hosted');
 const loadTestingModule: LoadTestingModule = () => import('./lazy-offline');
 const loadManifestBrowserModule: LoadManifestBrowserModule = () =>
 	import('./lazy-manifest-browser');
-
-const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
 
 /**
  * A transport that loads its init path only when init runs.
@@ -233,7 +230,7 @@ export interface LazyHostedOptions {
 	assertDecisionInputs?: boolean;
 	/** Headers forwarded to `GET /init`. */
 	headers?: Record<string, string>;
-	/** Kind reported through `window.inth.mode`. Defaults to `'hosted'`. */
+	/** Kind reported through `window.__inthDebug.mode`. Defaults to `'hosted'`. */
 	kind?: ProviderTransportKind;
 	/**
 	 * An init response already requested. The first init reads it and sends

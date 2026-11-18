@@ -5,6 +5,8 @@
  * remains separate from a developer override.
  */
 import {
+	GPC_HEADERS,
+	parseGlobalPrivacyControl,
 	POLICY_CONTRACT_VERSION,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
@@ -141,11 +143,12 @@ export const mapInitOutputToInitResponse = function mapInitOutputToInitResponse(
 		translations: payload.translations,
 	};
 
-	const overrideGpc = headers['x-c15t-gpc'];
-	if (overrideGpc === '1' || overrideGpc === '0') {
+	// The application's override, not the browser's `sec-gpc`.
+	const overrideGpc = parseGlobalPrivacyControl(headers[GPC_HEADERS[0]]);
+	if (overrideGpc !== undefined) {
 		mapped.resolvedOverrides = {
 			...mapped.resolvedOverrides,
-			gpc: overrideGpc === '1',
+			gpc: overrideGpc,
 		};
 	}
 

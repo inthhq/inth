@@ -13,6 +13,7 @@
  */
 import { failedResponseError } from '../libs/failed-response';
 import { isValidSubjectId } from '../libs/generate-subject-id';
+import { trimSlash } from '../libs/url';
 import type { KernelTransport, KernelUser, SaveResult } from '../types';
 import { buildDecisionAssertion } from './decision-inputs';
 import type { RememberedDecisionInputs } from './decision-inputs';
@@ -73,11 +74,6 @@ export interface HostedRecordTransport extends KernelTransport {
 	) => Promise<TransportHydrationRecords | null>;
 }
 
-/** Strip a single trailing slash so `${base}/subjects` doesn't double up. */
-export const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
 /**
  * Resolve the `domain` field sent on `POST /subjects`: the explicit option,
  * the browser hostname, the backend URL hostname, then `'localhost'`.
@@ -106,7 +102,7 @@ const resolveDomain = function resolveDomain(
  * Reading the body as a `SaveResult` made every successful save look failed
  * and queued it for replay forever.
  */
-const toSaveResult = function toSaveResult(data: unknown): SaveResult {
+export const toSaveResult = function toSaveResult(data: unknown): SaveResult {
 	const subjectId =
 		typeof data === 'object' &&
 		data !== null &&

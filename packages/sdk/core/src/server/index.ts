@@ -51,7 +51,8 @@ export type {
 } from './request-subject';
 export { resolveRequestSubject } from './request-subject';
 export type { FetchCachedGvlOptions } from './gvl-cache';
-export { clearGvlCache, fetchCachedGvl } from './gvl-cache';
+export { fetchServerGvl } from './gvl-cache';
+export { clearGvlCache } from '../transports/gvl-cache';
 export type {
 	CachedManifestResponse,
 	FetchCachedManifestOptions,

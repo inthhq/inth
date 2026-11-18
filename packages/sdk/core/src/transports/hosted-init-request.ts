@@ -10,8 +10,8 @@ import {
 	buildRequestContextSentHeaders,
 	DEFAULT_INIT_CREDENTIALS,
 } from '../libs/request-context-headers';
+import { trimSlash } from '../libs/url';
 import type { InitContext } from '../types';
-import { trimSlash } from './hosted-records';
 import { inthProtocolParams } from './version-header';
 
 /** The `GET /init` request the hosted transport sends. */

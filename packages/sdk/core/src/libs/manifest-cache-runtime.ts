@@ -5,6 +5,7 @@ import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 import { inthProtocolHeaders } from '../transports/version-header';
 import { parseCacheDirectiveSeconds } from './cache-directive';
 import { failedResponseError } from './failed-response';
+import { trimSlash } from './url';
 
 export { parseCacheDirectiveSeconds } from './cache-directive';
 
@@ -435,10 +436,6 @@ export const MANIFEST_PASSTHROUGH_HEADERS = [
  * `Cache-Control` value.
  */
 export const MANIFEST_DEDUPE_TTL_SECONDS = 5;
-
-const trimSlash = function trimSlash(value: string): string {
-	return value.endsWith('/') ? value.slice(0, -1) : value;
-};
 
 const normalizeHeaders = function normalizeHeaders(
 	headers: Headers

@@ -13,6 +13,7 @@
  * @internal
  */
 import type { extractConsentNamesFromCondition } from '../libs/has';
+import type { warnInDevelopment } from '../libs/is-production';
 import type { declareOwnedVendors, resolveVendors } from '../libs/vendors';
 import type {
 	ClearOnRevocationHandle,
@@ -66,6 +67,7 @@ export interface ProviderUpdateTools {
 	notHeld: NetworkHold;
 	resolveVendors: typeof resolveVendors;
 	scriptRegistry: typeof scriptRegistry;
+	warnInDevelopment: typeof warnInDevelopment;
 }
 
 /** What the update needs from the provider runtime. */
@@ -81,24 +83,6 @@ export interface ProviderUpdateHost {
 	ownerSource: symbol;
 	tools: ProviderUpdateTools;
 }
-
-// This module imports no values (see above), so it repeats the production
-// check from `libs/is-production.ts` instead of importing it.
-declare const process: { env: { NODE_ENV?: string } };
-
-const isProductionBuild = function isProductionBuild(): boolean {
-	try {
-		return process.env.NODE_ENV === 'production';
-	} catch {
-		return false;
-	}
-};
-
-const warnInDevelopment = function warnInDevelopment(message: string): void {
-	if (!isProductionBuild()) {
-		console.warn(message);
-	}
-};
 
 const isPromiseLike = function isPromiseLike<Value>(
 	value: Value | PromiseLike<Value> | undefined
@@ -220,7 +204,7 @@ const redeclareVendors = function redeclareVendors(
 				return [rest];
 			}
 		),
-		onWarn: warnInDevelopment,
+		onWarn: host.tools.warnInDevelopment,
 	});
 	// The provider owns the config source outright: a vendor the host
 	// removed disappears, and a backend entry a config copy shadowed
@@ -357,11 +341,8 @@ export const applyProviderUpdate = function applyProviderUpdate(
 ): void {
 	const { tools } = host;
 	const { normalizeKernelUser } = tools;
-	if (
-		!isProductionBuild() &&
-		initialOnlyKey(current) !== initialOnlyKey(previous)
-	) {
-		console.warn(
+	if (initialOnlyKey(current) !== initialOnlyKey(previous)) {
+		tools.warnInDevelopment(
 			'inth: `mode`, `i18n`, `experiment`, `persistence` and `storageConfig` are read once. Create a new runtime (remount the provider) to change them.'
 		);
 	}

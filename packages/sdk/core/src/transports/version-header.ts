@@ -79,7 +79,20 @@ export const inthProtocolParams: Readonly<
 export const readProducerPolicyContract = function readProducerPolicyContract(
 	headers: Pick<Headers, 'get'> | undefined
 ): number | null | undefined {
-	const value = headers?.get(INTH_POLICY_CONTRACT_HEADER);
+	return parsePolicyContract(headers?.get(INTH_POLICY_CONTRACT_HEADER));
+};
+
+/**
+ * A policy contract header value as {@link readProducerPolicyContract}
+ * reads it: `undefined` when absent, `null` when malformed.
+ *
+ * @param value - The header value.
+ * @returns The contract version.
+ * @internal
+ */
+export const parsePolicyContract = function parsePolicyContract(
+	value: string | null | undefined
+): number | null | undefined {
 	if (value === null || value === undefined) {
 		return undefined;
 	}

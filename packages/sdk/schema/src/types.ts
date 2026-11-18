@@ -38,6 +38,7 @@ export type {
 export type { StatusOutput } from './api/meta';
 export type { ResolveProjectUrlOptions } from './shared';
 // API types - Session
+export { CONSENT_MODELS } from './api/session';
 export type { ConsentSessionReport, ConsentSessionSource } from './api/session';
 // API types - Subject
 export type {
@@ -143,6 +144,7 @@ export {
 	CONSENT_REQUEST_HEADER_NAMES,
 	COUNTRY_HEADERS,
 	consentInputsToOverrides,
+	GPC_HEADERS,
 	createConsentManifestPolicyPack,
 	EEA_COUNTRY_CODES,
 	EU_COUNTRY_CODES,

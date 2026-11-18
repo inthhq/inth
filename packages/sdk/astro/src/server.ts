@@ -33,7 +33,7 @@ import type {
 	PolicyRule,
 } from '@inth/sdk/schema/types';
 import {
-	fetchCachedGvl,
+	fetchServerGvl,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
@@ -248,7 +248,7 @@ const withResolvedGvl = async function withResolvedGvl(input: {
 	let gvl: GlobalVendorList | null = iab.gvl ?? null;
 	if (!gvl && iab.gvlUrl) {
 		try {
-			gvl = await fetchCachedGvl({
+			gvl = await fetchServerGvl({
 				fetch: input.fetch as ManifestFetch | undefined,
 				language: input.language,
 				url: iab.gvlUrl,

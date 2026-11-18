@@ -14,6 +14,7 @@
 import { isSpeculativeRequest } from '@inth/sdk-schema/types';
 
 import type { StorageConfig } from '../libs/cookie/types';
+import { toHeaders } from '../libs/headers';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
 import type { RequestHeaderSource } from './request-origin';
 
@@ -122,25 +123,6 @@ const readCookieHeader = function readCookieHeader(
 		.filter(([name]) => name.toLowerCase() === 'cookie')
 		.flatMap(([, value]) => value ?? [])
 		.join('; ');
-};
-
-const toHeaders = function toHeaders(
-	headers: RequestHeaderSource | undefined
-): Headers {
-	// Like `readCookieHeader`: a Headers object from a polyfill or another
-	// realm is not an instance of this realm's Headers, and has no
-	// enumerable entries to copy.
-	if (typeof (headers as Headers | undefined)?.get === 'function') {
-		return headers as Headers;
-	}
-	const result = new Headers();
-	for (const [name, value] of Object.entries(headers ?? {})) {
-		const first = Array.isArray(value) ? value[0] : value;
-		if (first !== undefined) {
-			result.set(name, first);
-		}
-	}
-	return result;
 };
 
 /**
