@@ -93,11 +93,7 @@ export class ConsentTheme {
 		);
 
 		effect((onCleanup) => {
-			const scheme = this.colorScheme();
-			if (scheme === null) {
-				return;
-			}
-			onCleanup(setupColorScheme(scheme));
+			onCleanup(setupColorScheme(this.colorScheme()));
 		});
 
 		if (isDevMode()) {

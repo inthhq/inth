@@ -422,12 +422,7 @@
 	// Unset mirrors a `dark` class on `<html>`, as in React and Vue. `null`
 	// leaves `inth-dark` to the site, or to a host that owns the class, such
 	// as the Astro page runtime behind a dialog island.
-	$effect(() => {
-		if (options.colorScheme === null) {
-			return;
-		}
-		return setupColorScheme(options.colorScheme);
-	});
+	$effect(() => setupColorScheme(options.colorScheme));
 
 	onDestroy(() => {
 		unsubscribe();

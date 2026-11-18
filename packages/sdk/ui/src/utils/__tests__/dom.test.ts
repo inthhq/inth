@@ -74,6 +74,14 @@ describe('setupColorScheme without matchMedia', () => {
 		release();
 	});
 
+	test('leaves the class to the site for null', () => {
+		root.classList.add('inth-dark', 'dark');
+		const release = setupColorScheme(null);
+		root.classList.remove('dark');
+		expect(root.classList.contains('inth-dark')).toBe(true);
+		release();
+	});
+
 	test('mirrors .dark when unset', async () => {
 		root.classList.add('dark');
 		const release = setupColorScheme(undefined);

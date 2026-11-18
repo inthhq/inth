@@ -1,7 +1,10 @@
 import type { HydrationRecords } from '@inth/sdk/engine';
 import { PREFETCH_WINDOW_KEY } from '@inth/sdk/runtime/page-globals';
 import type { RequestConsentState } from '@inth/sdk/server';
-import { buildColorSchemeScript } from '@inth/sdk/ui/utils/color-scheme';
+import {
+	buildColorSchemeScript,
+	setupColorScheme,
+} from '@inth/sdk/ui/utils/color-scheme';
 import { defu } from 'defu';
 import { computed, markRaw, shallowRef, toRaw, watch } from 'vue';
 
@@ -17,7 +20,7 @@ import {
 	useState as useNuxtState,
 } from '#imports';
 
-import { applyColorScheme, COLOR_SCHEME_SCRIPT_KEY } from './color-scheme';
+import { COLOR_SCHEME_SCRIPT_KEY } from './color-scheme';
 import { loadConsentBanner } from './components/lazy-surfaces';
 import type { NuxtConsentBoot } from './deferred/boot';
 import type { NuxtEngineInput } from './deferred/engine';
@@ -253,7 +256,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	const releaseColorScheme =
 		typeof window === 'undefined'
 			? () => undefined
-			: applyColorScheme(config.value.colorScheme);
+			: setupColorScheme(config.value.colorScheme);
 	// HTML that is prerendered or cached is served to every visitor, so it
 	// must carry nobody's consent, location or request headers. The server
 	// decides once and the payload tells the browser, which then resolves

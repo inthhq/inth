@@ -245,20 +245,6 @@ const applyColorScheme = function applyColorScheme(
 		return;
 	}
 
-	// `setupColorScheme` reaches for `matchMedia` whichever scheme it is
-	// given, and a few embedded webviews do not have it. The boot is the
-	// page's only entry point, so a throw here would take consent with it:
-	// set the class by hand instead. `system` falls back to light, and it
-	// has to say so — leaving the class alone would keep whatever a previous
-	// scheme or a swapped-in dark shell had put there.
-	if (typeof browserWindow.matchMedia !== 'function') {
-		document.documentElement.classList.toggle(
-			'inth-dark',
-			colorScheme === 'dark'
-		);
-		return;
-	}
-
 	browserWindow[COLOR_SCHEME_KEY] = setupColorScheme(colorScheme);
 };
 

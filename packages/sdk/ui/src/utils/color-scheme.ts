@@ -11,12 +11,16 @@
  * `'system'` is light.
  *
  * @param colorScheme - 'light' | 'dark' | 'system'. Unset mirrors a `dark`
- * class on `<html>` into `inth-dark` as it changes.
+ * class on `<html>` into `inth-dark` as it changes. `null` leaves the class
+ * to the site and does nothing, as does a call on the server.
  * @returns Cleanup function
  */
 export const setupColorScheme = function setupColorScheme(
-	colorScheme?: 'light' | 'dark' | 'system'
-) {
+	colorScheme?: 'light' | 'dark' | 'system' | null
+): () => void {
+	if (colorScheme === null || typeof document === 'undefined') {
+		return () => undefined;
+	}
 	const systemDarkQuery =
 		typeof window.matchMedia === 'function'
 			? window.matchMedia('(prefers-color-scheme: dark)')

@@ -2,11 +2,11 @@ import type { ProviderTransportFactory } from '@inth/sdk/engine';
 import type { HostedMode } from '@inth/sdk/modes';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentTesting } from '@inth/sdk/testing';
+import { setupColorScheme } from '@inth/sdk/ui/utils/color-scheme';
 // oxlint-disable oxc/no-barrel-file -- Public framework entry point intentionally re-exports the supported API.
 import { getCurrentInstance } from 'vue';
 import type { App, Plugin } from 'vue';
 
-import { applyColorScheme } from './runtime/color-scheme';
 import { consentConfigKey } from './runtime/composables/config';
 import {
 	createVueConsentKernelContext,
@@ -163,7 +163,7 @@ export const inthVue: Plugin<[InthVuePluginOptions]> = {
 			: mountTokensStyle(config);
 		const releaseColorScheme = runtime
 			? () => undefined
-			: applyColorScheme(config.colorScheme);
+			: setupColorScheme(config.colorScheme);
 		app.mixin({
 			mounted() {
 				// The app may hydrate server markup, so the runtime starts once
