@@ -3,28 +3,7 @@
  * Domain and configuration utilities for cookie storage.
  */
 
-import type { CookieOptions, StorageConfig } from './types';
-
-/**
- * Gets default cookie options (respects config)
- *
- * @returns Complete cookie options with all defaults filled in
- *
- * @internal
- */
-export const getDefaultCookieOptions = function getDefaultCookieOptions(
-	config?: StorageConfig
-): Required<CookieOptions> {
-	return {
-		crossSubdomain: config?.crossSubdomain ?? false,
-		domain: config?.defaultDomain ?? '',
-		expiryDays: config?.defaultExpiryDays ?? 365,
-		path: '/',
-		sameSite: 'Lax',
-		secure:
-			typeof window !== 'undefined' && window.location.protocol === 'https:',
-	};
-};
+import type { StorageConfig } from './types';
 
 /**
  * The domains a cookie for `hostname` can be scoped to: the host and every
@@ -79,7 +58,7 @@ export const rootDomainOf = function rootDomainOf(hostname: string): string {
  * @example
  * ```typescript
  * // Enable cross-subdomain consent
- * createPersistence({ kernel, storageConfig: { domain: getRootDomain() } });
+ * createPersistence({ kernel, storageConfig: { defaultDomain: getRootDomain() } });
  * ```
  *
  * @public
@@ -89,4 +68,20 @@ export const getRootDomain = function getRootDomain(): string {
 		return '';
 	}
 	return rootDomainOf(window.location.hostname);
+};
+
+/**
+ * The `domain` attribute for a cookie written or deleted under `config`:
+ * `defaultDomain` when set, else the root domain with `crossSubdomain`,
+ * else `''` (host-only).
+ *
+ * @internal
+ */
+export const resolveCookieDomain = function resolveCookieDomain(
+	config?: StorageConfig
+): string {
+	if (config?.defaultDomain) {
+		return config.defaultDomain;
+	}
+	return config?.crossSubdomain ? getRootDomain() : '';
 };

@@ -3,7 +3,7 @@
  * Low-level cookie operations.
  */
 
-import { getDefaultCookieOptions, getRootDomain } from './domain-utils';
+import { resolveCookieDomain } from './domain-utils';
 import { expandFlatKeys, shortenFlatKeys } from './key-mapping';
 import { readCookieValueFromHeader } from './read-header';
 import {
@@ -12,7 +12,7 @@ import {
 	stringToFlat,
 	unflattenObject,
 } from './serialization';
-import type { CookieOptions, StorageConfig } from './types';
+import type { StorageConfig } from './types';
 
 /**
  * Outcome of one attempt to store a cookie.
@@ -55,17 +55,10 @@ const serializeCookieValue = function serializeCookieValue(
 export const writeCookie = function writeCookie(
 	name: string,
 	value: unknown,
-	options?: CookieOptions,
 	config?: StorageConfig
 ): CookieWriteReport {
 	if (typeof document === 'undefined') {
 		return { attempted: false, verified: false };
-	}
-
-	const opts = { ...getDefaultCookieOptions(config), ...options };
-
-	if (opts.crossSubdomain && !options?.domain) {
-		opts.domain = getRootDomain();
 	}
 
 	let cookieValue: string;
@@ -73,22 +66,24 @@ export const writeCookie = function writeCookie(
 		cookieValue = serializeCookieValue(value);
 
 		const date = new Date();
-		date.setTime(date.getTime() + opts.expiryDays * 24 * 60 * 60 * 1000);
-		const expires = `expires=${date.toUTCString()}`;
-
-		const parts = [`${name}=${cookieValue}`, expires, `path=${opts.path}`];
-
-		if (opts.domain) {
-			parts.push(`domain=${opts.domain}`);
+		const expiryDays = config?.defaultExpiryDays ?? 365;
+		date.setTime(date.getTime() + expiryDays * 24 * 60 * 60 * 1000);
+		const parts = [
+			`${name}=${cookieValue}`,
+			`expires=${date.toUTCString()}`,
+			'path=/',
+		];
+		const domain = resolveCookieDomain(config);
+		if (domain) {
+			parts.push(`domain=${domain}`);
 		}
-
-		if (opts.secure) {
+		if (
+			typeof window !== 'undefined' &&
+			window.location.protocol === 'https:'
+		) {
 			parts.push('secure');
 		}
-
-		if (opts.sameSite) {
-			parts.push(`SameSite=${opts.sameSite}`);
-		}
+		parts.push('SameSite=Lax');
 
 		document.cookie = parts.join('; ');
 	} catch (error) {
@@ -117,10 +112,9 @@ export const writeCookie = function writeCookie(
 export const setCookie = function setCookie(
 	name: string,
 	value: unknown,
-	options?: CookieOptions,
 	config?: StorageConfig
 ): void {
-	const report = writeCookie(name, value, options, config);
+	const report = writeCookie(name, value, config);
 	if (!report.attempted && report.error !== undefined) {
 		console.warn(`Failed to set cookie "${name}":`, report.error);
 	}
@@ -218,34 +212,28 @@ export const getCookie = function getCookie<ReturnType = unknown>(
 };
 
 /**
- * @param options - Cookie configuration options (domain and path should match the original cookie)
+ * Expires a cookie at the domain {@link resolveCookieDomain} picks for
+ * `config`, at path `/`.
  *
  * @internal
  */
 export const deleteCookie = function deleteCookie(
 	name: string,
-	options?: CookieOptions,
 	config?: StorageConfig
 ): void {
 	if (typeof document === 'undefined') {
 		return;
 	}
 
-	const opts = { ...getDefaultCookieOptions(config), ...options };
-
-	if (opts.crossSubdomain && !options?.domain) {
-		opts.domain = getRootDomain();
-	}
-
 	try {
 		const parts = [
 			`${name}=`,
 			'expires=Thu, 01 Jan 1970 00:00:00 GMT',
-			`path=${opts.path}`,
+			'path=/',
 		];
-
-		if (opts.domain) {
-			parts.push(`domain=${opts.domain}`);
+		const domain = resolveCookieDomain(config);
+		if (domain) {
+			parts.push(`domain=${domain}`);
 		}
 
 		document.cookie = parts.join('; ');

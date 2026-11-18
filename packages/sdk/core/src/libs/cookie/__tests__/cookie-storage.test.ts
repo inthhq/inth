@@ -27,15 +27,12 @@ describe('Cookie Storage', () => {
 			expect(getCookie('test-cookie')).toEqual(testData);
 		});
 
-		it('should set cookie with custom options', () => {
+		it('should set cookie with the configured expiry', () => {
 			vi.useFakeTimers();
 			vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
-			setCookie('test-cookie', 'value', {
-				expiryDays: 7,
-				path: '/custom',
-			});
+			setCookie('test-cookie', 'value', { defaultExpiryDays: 7 });
 			// The Node fixture captures the assignment, including cookie attributes.
-			expect(document.cookie).toContain('path=/custom');
+			expect(document.cookie).toContain('path=/');
 			expect(document.cookie).toContain(
 				'expires=Thu, 08 Jan 2026 00:00:00 GMT'
 			);
@@ -124,6 +121,27 @@ describe('Cookie Storage', () => {
 		});
 	});
 	describe('Cross-subdomain support', () => {
+		it('writes and deletes at defaultDomain when crossSubdomain is set too', () => {
+			Object.defineProperty(window, 'location', {
+				configurable: true,
+				value: { hostname: 'app.shop.example.com', protocol: 'https:' },
+				writable: true,
+			});
+			const config = {
+				crossSubdomain: true,
+				defaultDomain: '.shop.example.com',
+			};
+
+			setCookie('test-cookie', 'value', config);
+			expect(document.cookie).toContain('domain=.shop.example.com');
+
+			deleteCookie('test-cookie', config);
+			expect(document.cookie).toContain('domain=.shop.example.com');
+
+			setCookie('test-cookie', 'value', { crossSubdomain: true });
+			expect(document.cookie).toContain('domain=.example.com');
+		});
+
 		it('should provide getRootDomain helper for cross-subdomain cookies', () => {
 			Object.defineProperty(window, 'location', {
 				configurable: true,

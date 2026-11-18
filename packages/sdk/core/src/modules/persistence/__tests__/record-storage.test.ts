@@ -896,7 +896,7 @@ describe('notice dismissal', () => {
 			'{"directives":[],"version":1}'
 		);
 
-		clearStoredConsentRecords(undefined, config);
+		clearStoredConsentRecords(config);
 
 		expect(window.localStorage.getItem('custom-key')).toBeNull();
 		expect(window.localStorage.getItem('custom-key-notice')).toBeNull();

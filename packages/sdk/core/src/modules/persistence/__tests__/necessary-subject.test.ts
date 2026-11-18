@@ -470,7 +470,7 @@ test.each([undefined, { storageKey: 'review-custom-notice' }])(
 		document.cookie = `${key}-subject=${encodeNoticeSubjectCompact(record)}; path=/`;
 		const restored = readStoredNoticeDismissal(storageConfig, now);
 		expect(restored?.ok && restored.record.subject?.subjectId).toBe('original');
-		clearStoredConsentRecords(undefined, storageConfig);
+		clearStoredConsentRecords(storageConfig);
 		expect(readStoredNoticeDismissal(storageConfig, now)).toBeNull();
 	}
 );
@@ -530,7 +530,7 @@ test.each([undefined, { storageKey: 'subject-removal' }])(
 		expect(changed?.ok && changed.record.subject?.subjectId).toBe(
 			'server-canonical'
 		);
-		clearStoredConsentRecords(undefined, storageConfig);
+		clearStoredConsentRecords(storageConfig);
 	}
 );
 

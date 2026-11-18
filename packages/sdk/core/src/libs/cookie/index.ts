@@ -1,5 +1,5 @@
 /** Cookie operations and storage configuration. Consent records are read through the persistence module. */
-export { getDefaultCookieOptions, getRootDomain } from './domain-utils';
+export { getRootDomain, resolveCookieDomain } from './domain-utils';
 export {
 	COOKIE_KEY_MAP,
 	expandFlatKeys,
@@ -23,4 +23,4 @@ export {
 	stringToFlat,
 	unflattenObject,
 } from './serialization';
-export type { CookieOptions, StorageConfig } from './types';
+export type { StorageConfig } from './types';

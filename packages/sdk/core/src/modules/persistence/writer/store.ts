@@ -10,7 +10,7 @@
  *
  * @internal
  */
-import type { CookieOptions, CookieWriteReport } from '../../../libs/cookie';
+import type { CookieWriteReport } from '../../../libs/cookie';
 import type {
 	DecodeResult,
 	StorageIssue,
@@ -33,8 +33,6 @@ import type { RecordStoreTools } from './types';
 export interface WriteStoredConsentOptions {
 	/** Current time. Rejects envelopes carrying future timestamps. */
 	now: number;
-	/** Cookie attributes; defaults derive from `config`. */
-	cookie?: CookieOptions;
 	config?: StorageConfig;
 }
 
@@ -86,8 +84,7 @@ export interface RecordStore {
 	writeStoredNoticeDismissal: (
 		record: StoredNoticeDismissal,
 		config: StorageConfig | undefined,
-		now: number,
-		cookie?: CookieOptions
+		now: number
 	) => DecodeResult<StoredNoticeDismissal> & {
 		written?: AuxiliaryWriteReport;
 	};
@@ -98,13 +95,9 @@ export interface RecordStore {
 	writeStoredVendorChoice: (
 		record: StoredVendorChoice,
 		config: StorageConfig | undefined,
-		now: number,
-		cookie?: CookieOptions
+		now: number
 	) => DecodeResult<StoredVendorChoice> & { written?: AuxiliaryWriteReport };
-	clearStoredVendorChoice: (
-		config?: StorageConfig,
-		cookie?: CookieOptions
-	) => void;
+	clearStoredVendorChoice: (config?: StorageConfig) => void;
 }
 
 const hasLocalStorage = function hasLocalStorage(): boolean {
@@ -165,23 +158,21 @@ export const createRecordStore = function createRecordStore(
 	const writeCookieText = function writeCookieText(
 		key: string,
 		text: string | null,
-		config: StorageConfig | undefined,
-		cookie?: CookieOptions
+		config: StorageConfig | undefined
 	): CookieWriteReport {
 		return text === null
 			? NO_COOKIE_TEXT
-			: tools.writeCookie(key, text, cookie, config);
+			: tools.writeCookie(key, text, config);
 	};
 
 	const writeBoth = function writeBoth(
 		key: string,
 		local: string,
 		compact: string | null,
-		config: StorageConfig | undefined,
-		cookie?: CookieOptions
+		config: StorageConfig | undefined
 	): AuxiliaryWriteReport {
 		const localStorageWritten = writeLocalStorageText(key, local);
-		const cookieDetail = writeCookieText(key, compact, config, cookie);
+		const cookieDetail = writeCookieText(key, compact, config);
 		return {
 			cookie: cookieDetail.attempted && cookieDetail.verified,
 			cookieDetail,
@@ -191,18 +182,16 @@ export const createRecordStore = function createRecordStore(
 
 	const removeBoth = function removeBoth(
 		key: string,
-		config: StorageConfig | undefined,
-		cookie?: CookieOptions
+		config: StorageConfig | undefined
 	): void {
 		removeLocalStorageKey(key);
-		tools.deleteCookie(key, cookie, config);
+		tools.deleteCookie(key, config);
 	};
 
 	const clearStoredVendorChoice: RecordStore['clearStoredVendorChoice'] = (
-		config,
-		cookie
+		config
 	) => {
-		removeBoth(tools.keys(config).vendors, config, cookie);
+		removeBoth(tools.keys(config).vendors, config);
 	};
 
 	return {
@@ -220,8 +209,7 @@ export const createRecordStore = function createRecordStore(
 			const cookieDetail = writeCookieText(
 				keys.consent,
 				cookieText(() => encodeStoredConsentEnvelopeCompact(validated.record)),
-				options.config,
-				options.cookie
+				options.config
 			);
 			if (!cookieDetail.attempted && cookieDetail.error !== undefined) {
 				console.warn('Failed to save consent to cookie:', cookieDetail.error);
@@ -250,7 +238,7 @@ export const createRecordStore = function createRecordStore(
 				},
 			};
 		},
-		writeStoredNoticeDismissal(record, config, now, cookie) {
+		writeStoredNoticeDismissal(record, config, now) {
 			const validated = tools.decodeNotice(record, now);
 			if (validated.ok === false) {
 				return validated;
@@ -261,8 +249,7 @@ export const createRecordStore = function createRecordStore(
 				key,
 				encodeNoticeDismissal(validated.record),
 				cookieText(() => encodeNoticeDismissalCompact(validated.record)),
-				config,
-				cookie
+				config
 			);
 			// Keep the original cookie readable by older runtimes. The companion is
 			// usable only with the same acknowledgement, never as a record on its own.
@@ -271,12 +258,11 @@ export const createRecordStore = function createRecordStore(
 				const subjectDetail = writeCookieText(
 					keys.noticeSubject,
 					cookieText(() => encodeNoticeSubjectCompact(validated.record)),
-					config,
-					cookie
+					config
 				);
 				subjectWritten = subjectDetail.attempted && subjectDetail.verified;
 			} else {
-				tools.deleteCookie(keys.noticeSubject, cookie, config);
+				tools.deleteCookie(keys.noticeSubject, config);
 				subjectWritten = tools.rawCookie(keys.noticeSubject) === null;
 			}
 			if (written.cookie && subjectWritten) {
@@ -295,7 +281,7 @@ export const createRecordStore = function createRecordStore(
 			}
 			return { ...validated, written };
 		},
-		writeStoredVendorChoice(record, config, now, cookie) {
+		writeStoredVendorChoice(record, config, now) {
 			const validated = tools.decodeVendors(record, now);
 			if (validated.ok === false) {
 				return validated;
@@ -306,8 +292,7 @@ export const createRecordStore = function createRecordStore(
 					tools.keys(config).vendors,
 					encodeVendorChoice(validated.record),
 					cookieText(() => encodeVendorChoiceCompact(validated.record)),
-					config,
-					cookie
+					config
 				),
 			};
 		},

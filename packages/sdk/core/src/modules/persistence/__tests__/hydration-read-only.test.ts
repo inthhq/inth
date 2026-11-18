@@ -66,7 +66,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	clearStoredConsentRecords(undefined, { storageKey: 'custom-key' });
+	clearStoredConsentRecords({ storageKey: 'custom-key' });
 	deleteCookie('custom-key-sid');
 	vi.useRealTimers();
 });

@@ -185,7 +185,7 @@ export type { HasCondition } from './libs/has';
 export { has } from './libs/has';
 
 // -- Storage -------------------------------------------------------------------
-export type { CookieOptions, StorageConfig } from './libs/cookie';
+export type { StorageConfig } from './libs/cookie';
 export { getRootDomain } from './libs/cookie';
 
 // -- Blockers ------------------------------------------------------------------
