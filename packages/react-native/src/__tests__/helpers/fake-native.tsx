@@ -226,7 +226,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 			return native.getTrackingAuthorization();
 		}),
 		getWebViewConsent: vi.fn(() => native.getWebViewConsent()),
-		identify: vi.fn((externalId: string, identityToken?: string) => {
+		identify: vi.fn((externalId: string, identityToken: string | null) => {
 			fake.identifyCalls.push(externalId);
 
 			return native.identify(externalId, identityToken);

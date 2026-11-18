@@ -759,7 +759,7 @@ describe('actions', () => {
 		// missing token would land the resolve block in the token's slot.
 		expect(fake.identify.mock.calls).toStrictEqual([
 			['user-42', 'signed-token'],
-			['user-43', undefined],
+			['user-43', null],
 		]);
 	});
 });

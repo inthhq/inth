@@ -84,7 +84,8 @@ const moduleSource = readFileSync(MODULE_PATH, 'utf8');
  *
  * `String` bridges to `NSString *`, the two promise blocks bridge by name, and a
  * TypeScript `number` arrives as `double` -- `Int` would bridge to `NSInteger` and
- * disagree, which is why `removeListeners` takes `Double`. A Swift type missing from
+ * disagree, which is why `removeListeners` takes `Double`. A `string | null` slot is
+ * `NSString * _Nullable`, written `NSString?` here, and only `String?` matches it. A Swift type missing from
  * this table fails the test instead of quietly comparing equal, so widening the
  * TypeScript spec forces a decision here rather than a surprise at runtime.
  */
@@ -93,12 +94,14 @@ const OBJC_TYPE_BY_SWIFT_TYPE: Readonly<Record<string, string>> = {
 	RCTPromiseRejectBlock: 'RCTPromiseRejectBlock',
 	RCTPromiseResolveBlock: 'RCTPromiseResolveBlock',
 	String: 'NSString',
+	'String?': 'NSString?',
 };
 
 /** Collapse an Objective-C type to the form the table values use. */
 const normalizeObjCType = (objcType: string): string =>
 	objcType
 		.replace(/\s+/gu, ' ')
+		.replace(/\s*\*\s*_Nullable\s*$/u, '?')
 		.replace(/\s*\*\s*$/u, '')
 		.trim();
 
@@ -106,7 +109,7 @@ const normalizeObjCType = (objcType: string): string =>
 const normalizeSwiftType = (swiftType: string): string =>
 	swiftType
 		.replace(/^@escaping\s+/u, '')
-		.replace(/[!?]$/u, '')
+		.replace(/!$/u, '')
 		.trim();
 
 const objcTypeForSwiftType = (swiftType: string, selector: string): string => {
