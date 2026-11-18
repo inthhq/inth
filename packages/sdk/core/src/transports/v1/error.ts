@@ -106,13 +106,45 @@ const codeForStatus = function codeForStatus(status: number): V1ErrorCode {
 	}
 };
 
-const readText = async function readText(response: Response): Promise<string> {
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<string>((resolve) => {
-		timer = setTimeout(() => resolve(''), BODY_TIMEOUT_MS);
-	});
+const cancelQuietly = async function cancelQuietly(
+	reader: ReadableStreamDefaultReader<Uint8Array>
+): Promise<void> {
 	try {
-		return await Promise.race([response.text(), timeout]);
+		await reader.cancel();
+	} catch {
+		// The stream already failed; nothing is left to stop.
+	}
+};
+
+/**
+ * The body as text, or `''` when it cannot be read within
+ * {@link BODY_TIMEOUT_MS}. A body still open at the deadline is cancelled,
+ * so a stalled gateway answer stops downloading.
+ */
+const readText = async function readText(response: Response): Promise<string> {
+	const reader = response.body?.getReader();
+	if (!reader) {
+		return '';
+	}
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const deadline = new Promise<undefined>((resolve) => {
+		timer = setTimeout(() => resolve(undefined), BODY_TIMEOUT_MS);
+	});
+	const decoder = new TextDecoder();
+	let text = '';
+	try {
+		for (;;) {
+			// oxlint-disable-next-line no-await-in-loop -- Chunks arrive in order.
+			const chunk = await Promise.race([reader.read(), deadline]);
+			if (!chunk) {
+				void cancelQuietly(reader);
+				return '';
+			}
+			if (chunk.done) {
+				return text + decoder.decode();
+			}
+			text += decoder.decode(chunk.value, { stream: true });
+		}
 	} catch {
 		return '';
 	} finally {

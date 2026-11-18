@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { InthApiError, isInthApiError, readInthApiError } from '../error';
 import { json } from './fixtures';
@@ -51,6 +51,30 @@ describe('readInthApiError', () => {
 			requestId: 'req_gateway',
 			status: 504,
 		});
+	});
+
+	test('cancels a body still open after two seconds and reads the status', async () => {
+		vi.useFakeTimers();
+		try {
+			const cancel = vi.fn();
+			const body = new ReadableStream<Uint8Array>({
+				cancel,
+				start(controller) {
+					controller.enqueue(new TextEncoder().encode('{"error":'));
+				},
+			});
+			const pending = readInthApiError(
+				'Inth',
+				new Response(body, { status: 502 })
+			);
+			await vi.advanceTimersByTimeAsync(2000);
+			const error = await pending;
+
+			expect(error).toMatchObject({ code: 'bad_gateway', status: 502 });
+			expect(cancel).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	test('keeps a code added after this client', async () => {
