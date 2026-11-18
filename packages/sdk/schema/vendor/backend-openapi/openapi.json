@@ -1,0 +1,4768 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "Inth API",
+		"description": "Inth consent and legal document API",
+		"version": "3.2.2"
+	},
+	"servers": [
+		{
+			"description": "Your project URL",
+			"url": "https://{project}.inth.app",
+			"variables": {
+				"project": {
+					"default": "your-project"
+				}
+			}
+		}
+	],
+	"paths": {
+		"/v1/consent/init": {
+			"get": {
+				"operationId": "getV1ConsentInit",
+				"description": "The consent policy for this visitor, the banner text, and the policy snapshot token a save sends back. A browser sends its inputs as the query parameters below, so the request stays simple and needs no preflight. An app may send them as the headers `x-inth-country`, `x-inth-region`, `x-inth-gpc`, `x-inth-experiment` and `x-inth-vendors` instead. A query parameter wins over its header.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"adTechProviders": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "integer",
+														"minimum": 1,
+														"maximum": 9007199254740991
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1
+													},
+													"policyUrl": {
+														"type": "string",
+														"pattern": "^https?:\\/\\/"
+													}
+												},
+												"required": [
+													"id",
+													"name",
+													"policyUrl"
+												]
+											}
+										},
+										"branding": {
+											"enum": [
+												"c15t",
+												"inth",
+												"consent",
+												"none"
+											],
+											"type": "string"
+										},
+										"cmpId": {
+											"type": "number"
+										},
+										"customVendors": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"cookieMaxAgeSeconds": {
+														"type": "integer",
+														"minimum": 1
+													},
+													"dataCategories": {
+														"type": "array",
+														"items": {
+															"type": "integer",
+															"minimum": 1,
+															"maximum": 11
+														}
+													},
+													"dataRetentionDays": {
+														"type": "integer",
+														"minimum": 1
+													},
+													"description": {
+														"type": "string"
+													},
+													"features": {
+														"type": "array",
+														"items": {
+															"type": "integer",
+															"minimum": 1,
+															"maximum": 3
+														}
+													},
+													"id": {
+														"anyOf": [
+															{
+																"type": "string"
+															},
+															{
+																"type": "integer"
+															}
+														]
+													},
+													"legIntPurposes": {
+														"type": "array",
+														"items": {
+															"type": "integer",
+															"minimum": 1,
+															"maximum": 11
+														}
+													},
+													"name": {
+														"type": "string"
+													},
+													"privacyPolicyUrl": {
+														"type": "string",
+														"format": "uri"
+													},
+													"purposes": {
+														"type": "array",
+														"items": {
+															"type": "integer",
+															"minimum": 1,
+															"maximum": 11
+														}
+													},
+													"specialFeatures": {
+														"type": "array",
+														"items": {
+															"type": "integer",
+															"minimum": 1,
+															"maximum": 2
+														}
+													},
+													"usesCookies": {
+														"type": "boolean"
+													},
+													"usesNonCookieAccess": {
+														"type": "boolean"
+													}
+												},
+												"required": [
+													"id",
+													"name",
+													"privacyPolicyUrl",
+													"purposes"
+												]
+											}
+										},
+										"gvl": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"dataCategories": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "object",
+																"properties": {
+																	"description": {
+																		"type": "string"
+																	},
+																	"id": {
+																		"type": "number"
+																	},
+																	"name": {
+																		"type": "string"
+																	}
+																},
+																"required": [
+																	"description",
+																	"id",
+																	"name"
+																]
+															}
+														},
+														"features": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "object",
+																"properties": {
+																	"description": {
+																		"type": "string"
+																	},
+																	"descriptionLegal": {
+																		"type": "string"
+																	},
+																	"id": {
+																		"type": "number"
+																	},
+																	"illustrations": {
+																		"type": "array",
+																		"items": {
+																			"type": "string"
+																		}
+																	},
+																	"name": {
+																		"type": "string"
+																	}
+																},
+																"required": [
+																	"description",
+																	"id",
+																	"illustrations",
+																	"name"
+																]
+															}
+														},
+														"gvlSpecificationVersion": {
+															"type": "number"
+														},
+														"lastUpdated": {
+															"type": "string"
+														},
+														"purposes": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "object",
+																"properties": {
+																	"description": {
+																		"type": "string"
+																	},
+																	"descriptionLegal": {
+																		"type": "string"
+																	},
+																	"id": {
+																		"type": "number"
+																	},
+																	"illustrations": {
+																		"type": "array",
+																		"items": {
+																			"type": "string"
+																		}
+																	},
+																	"name": {
+																		"type": "string"
+																	}
+																},
+																"required": [
+																	"description",
+																	"id",
+																	"illustrations",
+																	"name"
+																]
+															}
+														},
+														"specialFeatures": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "object",
+																"properties": {
+																	"description": {
+																		"type": "string"
+																	},
+																	"descriptionLegal": {
+																		"type": "string"
+																	},
+																	"id": {
+																		"type": "number"
+																	},
+																	"illustrations": {
+																		"type": "array",
+																		"items": {
+																			"type": "string"
+																		}
+																	},
+																	"name": {
+																		"type": "string"
+																	}
+																},
+																"required": [
+																	"description",
+																	"id",
+																	"illustrations",
+																	"name"
+																]
+															}
+														},
+														"specialPurposes": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "object",
+																"properties": {
+																	"description": {
+																		"type": "string"
+																	},
+																	"descriptionLegal": {
+																		"type": "string"
+																	},
+																	"id": {
+																		"type": "number"
+																	},
+																	"illustrations": {
+																		"type": "array",
+																		"items": {
+																			"type": "string"
+																		}
+																	},
+																	"name": {
+																		"type": "string"
+																	}
+																},
+																"required": [
+																	"description",
+																	"id",
+																	"illustrations",
+																	"name"
+																]
+															}
+														},
+														"stacks": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "object",
+																"properties": {
+																	"description": {
+																		"type": "string"
+																	},
+																	"id": {
+																		"type": "number"
+																	},
+																	"name": {
+																		"type": "string"
+																	},
+																	"purposes": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	},
+																	"specialFeatures": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	}
+																},
+																"required": [
+																	"description",
+																	"id",
+																	"name",
+																	"purposes",
+																	"specialFeatures"
+																]
+															}
+														},
+														"standardTexts": {
+															"type": "object",
+															"properties": {
+																"features": {
+																	"type": "string"
+																},
+																"purposes": {
+																	"type": "string"
+																},
+																"specialFeatures": {
+																	"type": "string"
+																},
+																"specialPurposes": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"features"
+															]
+														},
+														"tcfPolicyVersion": {
+															"type": "number"
+														},
+														"vendorListVersion": {
+															"type": "number"
+														},
+														"vendors": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "object",
+																"properties": {
+																	"cookieMaxAgeSeconds": {
+																		"anyOf": [
+																			{
+																				"type": "number"
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	},
+																	"cookieRefresh": {
+																		"type": "boolean"
+																	},
+																	"dataCategories": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	},
+																	"dataRetention": {
+																		"type": "object",
+																		"properties": {
+																			"purposes": {
+																				"type": "object",
+																				"propertyNames": {
+																					"type": "string"
+																				},
+																				"additionalProperties": {
+																					"type": "number"
+																				}
+																			},
+																			"specialPurposes": {
+																				"type": "object",
+																				"propertyNames": {
+																					"type": "string"
+																				},
+																				"additionalProperties": {
+																					"type": "number"
+																				}
+																			},
+																			"stdRetention": {
+																				"type": "number"
+																			}
+																		},
+																		"required": []
+																	},
+																	"deletedDate": {
+																		"type": "string"
+																	},
+																	"deviceStorageDisclosureUrl": {
+																		"type": "string"
+																	},
+																	"features": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	},
+																	"flexiblePurposes": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	},
+																	"id": {
+																		"type": "number"
+																	},
+																	"legIntPurposes": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	},
+																	"name": {
+																		"type": "string"
+																	},
+																	"overflow": {
+																		"type": "object",
+																		"properties": {
+																			"httpGetLimit": {
+																				"type": "number"
+																			}
+																		},
+																		"required": [
+																			"httpGetLimit"
+																		]
+																	},
+																	"purposes": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	},
+																	"specialFeatures": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	},
+																	"specialPurposes": {
+																		"type": "array",
+																		"items": {
+																			"type": "number"
+																		}
+																	},
+																	"urls": {
+																		"type": "array",
+																		"items": {
+																			"type": "object",
+																			"properties": {
+																				"langId": {
+																					"type": "string"
+																				},
+																				"legIntClaim": {
+																					"type": "string"
+																				},
+																				"privacy": {
+																					"type": "string"
+																				}
+																			},
+																			"required": [
+																				"langId"
+																			]
+																		}
+																	},
+																	"usesCookies": {
+																		"type": "boolean"
+																	},
+																	"usesNonCookieAccess": {
+																		"type": "boolean"
+																	}
+																},
+																"required": [
+																	"cookieMaxAgeSeconds",
+																	"cookieRefresh",
+																	"features",
+																	"flexiblePurposes",
+																	"id",
+																	"legIntPurposes",
+																	"name",
+																	"purposes",
+																	"specialFeatures",
+																	"specialPurposes",
+																	"urls",
+																	"usesCookies",
+																	"usesNonCookieAccess"
+																]
+															}
+														}
+													},
+													"required": [
+														"features",
+														"gvlSpecificationVersion",
+														"lastUpdated",
+														"purposes",
+														"specialFeatures",
+														"specialPurposes",
+														"stacks",
+														"tcfPolicyVersion",
+														"vendorListVersion",
+														"vendors"
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"gvlReference": {
+											"type": "object",
+											"properties": {
+												"context": {
+													"type": "object",
+													"properties": {
+														"country": {
+															"type": "string"
+														},
+														"gpc": {
+															"type": "boolean"
+														},
+														"region": {
+															"type": "string"
+														}
+													},
+													"required": []
+												},
+												"format": {
+													"const": "init"
+												},
+												"language": {
+													"type": "string"
+												},
+												"summary": {
+													"type": "object",
+													"properties": {
+														"items": {
+															"type": "array",
+															"items": {
+																"type": "string"
+															}
+														},
+														"vendorCount": {
+															"type": "number"
+														}
+													},
+													"required": [
+														"items",
+														"vendorCount"
+													]
+												},
+												"url": {
+													"type": "string"
+												},
+												"vendorListVersion": {
+													"type": "number"
+												}
+											},
+											"required": [
+												"language",
+												"url",
+												"vendorListVersion"
+											]
+										},
+										"hosting": {
+											"enum": [
+												"inth",
+												"self-hosted"
+											],
+											"type": "string"
+										},
+										"location": {
+											"type": "object",
+											"properties": {
+												"countryCode": {
+													"anyOf": [
+														{
+															"type": "string"
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"regionCode": {
+													"anyOf": [
+														{
+															"type": "string"
+														},
+														{
+															"type": "null"
+														}
+													]
+												}
+											},
+											"required": [
+												"countryCode",
+												"regionCode"
+											]
+										},
+										"policyResolution": {
+											"oneOf": [
+												{
+													"type": "object",
+													"properties": {
+														"policy": {
+															"type": "null"
+														},
+														"status": {
+															"const": "unconfigured"
+														},
+														"version": {
+															"const": 1
+														}
+													},
+													"required": [
+														"policy",
+														"status",
+														"version"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "object",
+													"properties": {
+														"policy": {
+															"type": "null"
+														},
+														"status": {
+															"const": "no-match"
+														},
+														"version": {
+															"const": 1
+														}
+													},
+													"required": [
+														"policy",
+														"status",
+														"version"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "object",
+													"properties": {
+														"policy": {
+															"type": "null"
+														},
+														"reason": {
+															"enum": [
+																"invalid-configuration",
+																"insufficient-inputs",
+																"transport",
+																"unsupported-contract",
+																"invalid-payload"
+															],
+															"type": "string"
+														},
+														"status": {
+															"const": "failed"
+														},
+														"version": {
+															"const": 1
+														}
+													},
+													"required": [
+														"policy",
+														"reason",
+														"status",
+														"version"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "object",
+													"properties": {
+														"fingerprints": {
+															"type": "object",
+															"properties": {
+																"choice": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"legacyMaterial": {
+																	"type": "string"
+																},
+																"notice": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"policy": {
+																	"type": "string",
+																	"minLength": 1
+																}
+															},
+															"required": [
+																"choice",
+																"notice",
+																"policy"
+															],
+															"additionalProperties": false
+														},
+														"matchedBy": {
+															"enum": [
+																"region",
+																"country",
+																"default",
+																"fallback"
+															],
+															"type": "string"
+														},
+														"policy": {
+															"type": "object",
+															"properties": {
+																"actions": {
+																	"type": "object",
+																	"properties": {
+																		"allowed": {
+																			"type": "array",
+																			"items": {
+																				"enum": [
+																					"accept",
+																					"reject",
+																					"customize",
+																					"dismiss"
+																				],
+																				"type": "string"
+																			}
+																		},
+																		"equivalent": {
+																			"type": "array",
+																			"items": {
+																				"type": "array",
+																				"items": {
+																					"enum": [
+																						"accept",
+																						"reject",
+																						"customize",
+																						"dismiss"
+																					],
+																					"type": "string"
+																				}
+																			}
+																		},
+																		"required": {
+																			"type": "array",
+																			"items": {
+																				"enum": [
+																					"accept",
+																					"reject",
+																					"customize",
+																					"dismiss"
+																				],
+																				"type": "string"
+																			}
+																		}
+																	},
+																	"required": [
+																		"allowed",
+																		"equivalent",
+																		"required"
+																	],
+																	"additionalProperties": false
+																},
+																"copyRevision": {
+																	"anyOf": [
+																		{
+																			"type": "string"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"i18n": {
+																	"type": "object",
+																	"properties": {
+																		"language": {
+																			"type": "string"
+																		},
+																		"messageProfile": {
+																			"type": "string"
+																		}
+																	},
+																	"required": [],
+																	"additionalProperties": false
+																},
+																"id": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"model": {
+																	"enum": [
+																		"opt-in",
+																		"opt-out",
+																		"iab",
+																		"none"
+																	],
+																	"type": "string"
+																},
+																"preselectedCategories": {
+																	"type": "array",
+																	"items": {
+																		"enum": [
+																			"experience",
+																			"functionality",
+																			"marketing",
+																			"measurement"
+																		],
+																		"type": "string"
+																	}
+																},
+																"privacySignals": {
+																	"type": "object",
+																	"properties": {
+																		"gpc": {
+																			"type": "object",
+																			"properties": {
+																				"denyCategories": {
+																					"type": "array",
+																					"items": {
+																						"enum": [
+																							"experience",
+																							"functionality",
+																							"marketing",
+																							"measurement"
+																						],
+																						"type": "string"
+																					}
+																				}
+																			},
+																			"required": [
+																				"denyCategories"
+																			],
+																			"additionalProperties": false
+																		}
+																	},
+																	"required": [
+																		"gpc"
+																	],
+																	"additionalProperties": false
+																},
+																"prompt": {
+																	"enum": [
+																		"choice",
+																		"notice",
+																		"none"
+																	],
+																	"type": "string"
+																},
+																"proof": {
+																	"type": "object",
+																	"properties": {
+																		"storeIp": {
+																			"type": "boolean"
+																		},
+																		"storeLanguage": {
+																			"type": "boolean"
+																		},
+																		"storeUserAgent": {
+																			"type": "boolean"
+																		}
+																	},
+																	"required": [
+																		"storeIp",
+																		"storeLanguage",
+																		"storeUserAgent"
+																	],
+																	"additionalProperties": false
+																},
+																"rights": {
+																	"type": "array",
+																	"items": {
+																		"enum": [
+																			"disclosure",
+																			"preferences",
+																			"opt-out"
+																		],
+																		"type": "string"
+																	}
+																},
+																"scope": {
+																	"type": "array",
+																	"items": {
+																		"enum": [
+																			"experience",
+																			"functionality",
+																			"marketing",
+																			"measurement"
+																		],
+																		"type": "string"
+																	}
+																},
+																"scopeMode": {
+																	"enum": [
+																		"strict",
+																		"permissive"
+																	],
+																	"type": "string"
+																},
+																"validity": {
+																	"type": "object",
+																	"properties": {
+																		"choiceMs": {
+																			"type": "number",
+																			"exclusiveMinimum": 0,
+																			"maximum": 9007199254740991
+																		},
+																		"noticeMs": {
+																			"type": "number",
+																			"exclusiveMinimum": 0,
+																			"maximum": 9007199254740991
+																		}
+																	},
+																	"required": [
+																		"choiceMs",
+																		"noticeMs"
+																	],
+																	"additionalProperties": false
+																}
+															},
+															"required": [
+																"actions",
+																"copyRevision",
+																"id",
+																"model",
+																"preselectedCategories",
+																"privacySignals",
+																"prompt",
+																"proof",
+																"rights",
+																"scope",
+																"scopeMode",
+																"validity"
+															],
+															"additionalProperties": false
+														},
+														"policyId": {
+															"type": "string",
+															"minLength": 1
+														},
+														"status": {
+															"const": "matched"
+														},
+														"version": {
+															"const": 1
+														}
+													},
+													"required": [
+														"fingerprints",
+														"matchedBy",
+														"policy",
+														"policyId",
+														"status",
+														"version"
+													],
+													"additionalProperties": false
+												}
+											]
+										},
+										"policySnapshotToken": {
+											"type": "string"
+										},
+										"resolvedPrivacySignals": {
+											"type": "object",
+											"properties": {
+												"gpc": {
+													"type": "boolean"
+												}
+											},
+											"required": []
+										},
+										"translations": {
+											"type": "object",
+											"properties": {
+												"language": {
+													"type": "string"
+												},
+												"translations": {
+													"type": "object",
+													"properties": {
+														"common": {
+															"type": "object",
+															"properties": {
+																"acceptAll": {
+																	"type": "string"
+																},
+																"acknowledge": {
+																	"type": "string"
+																},
+																"customize": {
+																	"type": "string"
+																},
+																"dismiss": {
+																	"type": "string"
+																},
+																"rejectAll": {
+																	"type": "string"
+																},
+																"save": {
+																	"type": "string"
+																}
+															},
+															"required": []
+														},
+														"consentGate": {
+															"type": "object",
+															"properties": {
+																"actionButton": {
+																	"type": "string"
+																},
+																"title": {
+																	"type": "string"
+																}
+															},
+															"required": []
+														},
+														"consentManagerDialog": {
+															"type": "object",
+															"properties": {
+																"description": {
+																	"type": "string"
+																},
+																"title": {
+																	"type": "string"
+																},
+																"vendors": {
+																	"type": "object",
+																	"properties": {
+																		"disabledByCategory": {
+																			"type": "string"
+																		},
+																		"privacyPolicy": {
+																			"type": "string"
+																		},
+																		"switchLabel": {
+																			"type": "string"
+																		},
+																		"title": {
+																			"type": "string"
+																		}
+																	},
+																	"required": []
+																}
+															},
+															"required": []
+														},
+														"consentTypes": {
+															"type": "object",
+															"properties": {
+																"experience": {
+																	"type": "object",
+																	"properties": {
+																		"description": {
+																			"type": "string"
+																		},
+																		"title": {
+																			"type": "string"
+																		}
+																	},
+																	"required": []
+																},
+																"functionality": {
+																	"type": "object",
+																	"properties": {
+																		"description": {
+																			"type": "string"
+																		},
+																		"title": {
+																			"type": "string"
+																		}
+																	},
+																	"required": []
+																},
+																"marketing": {
+																	"type": "object",
+																	"properties": {
+																		"description": {
+																			"type": "string"
+																		},
+																		"title": {
+																			"type": "string"
+																		}
+																	},
+																	"required": []
+																},
+																"measurement": {
+																	"type": "object",
+																	"properties": {
+																		"description": {
+																			"type": "string"
+																		},
+																		"title": {
+																			"type": "string"
+																		}
+																	},
+																	"required": []
+																},
+																"necessary": {
+																	"type": "object",
+																	"properties": {
+																		"description": {
+																			"type": "string"
+																		},
+																		"title": {
+																			"type": "string"
+																		}
+																	},
+																	"required": []
+																}
+															},
+															"required": []
+														},
+														"cookieBanner": {
+															"type": "object",
+															"properties": {
+																"description": {
+																	"type": "string"
+																},
+																"title": {
+																	"type": "string"
+																},
+																"noticeDescription": {
+																	"type": "string"
+																},
+																"noticeTitle": {
+																	"type": "string"
+																}
+															},
+															"required": []
+														},
+														"legalLinks": {
+															"type": "object",
+															"properties": {
+																"cookiePolicy": {
+																	"type": "string"
+																},
+																"privacyPolicy": {
+																	"type": "string"
+																},
+																"termsOfService": {
+																	"type": "string"
+																}
+															},
+															"required": []
+														},
+														"rights": {
+															"type": "object",
+															"properties": {
+																"optOut": {
+																	"type": "string"
+																},
+																"preferences": {
+																	"type": "string"
+																}
+															},
+															"required": []
+														}
+													},
+													"required": [
+														"common",
+														"consentManagerDialog",
+														"consentTypes",
+														"cookieBanner"
+													]
+												}
+											},
+											"required": [
+												"language",
+												"translations"
+											]
+										},
+										"vendorListVersion": {
+											"type": "string"
+										},
+										"vendors": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"category": {
+														"$ref": "#/$defs/0"
+													},
+													"description": {
+														"type": "string"
+													},
+													"disabled": {
+														"type": "boolean"
+													},
+													"homepageUrl": {
+														"type": "string",
+														"format": "uri"
+													},
+													"id": {
+														"type": "string",
+														"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+														"description": "Stable vendor slug used by scripts, rules and iframes.",
+														"examples": [
+															"meta-pixel",
+															"google-analytics"
+														]
+													},
+													"legalName": {
+														"type": "string"
+													},
+													"name": {
+														"type": "string"
+													},
+													"privacyPolicyUrl": {
+														"type": "string",
+														"format": "uri"
+													}
+												},
+												"required": [
+													"category",
+													"id",
+													"name",
+													"privacyPolicyUrl"
+												]
+											}
+										}
+									},
+									"required": [
+										"branding",
+										"location",
+										"policyResolution",
+										"translations"
+									],
+									"$defs": {
+										"0": {
+											"anyOf": [
+												{
+													"enum": [
+														"necessary",
+														"functionality",
+														"experience",
+														"measurement",
+														"marketing"
+													],
+													"type": "string"
+												},
+												{
+													"type": "object",
+													"properties": {
+														"and": {
+															"anyOf": [
+																{
+																	"$ref": "#/$defs/0"
+																},
+																{
+																	"type": "array",
+																	"items": {
+																		"$ref": "#/$defs/0"
+																	},
+																	"minItems": 1
+																}
+															]
+														}
+													},
+													"required": [
+														"and"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "object",
+													"properties": {
+														"or": {
+															"anyOf": [
+																{
+																	"$ref": "#/$defs/0"
+																},
+																{
+																	"type": "array",
+																	"items": {
+																		"$ref": "#/$defs/0"
+																	},
+																	"minItems": 1
+																}
+															]
+														}
+													},
+													"required": [
+														"or"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "object",
+													"properties": {
+														"not": {
+															"$ref": "#/$defs/0"
+														}
+													},
+													"required": [
+														"not"
+													],
+													"additionalProperties": false
+												}
+											]
+										}
+									}
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"forbidden"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "forbidden"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [],
+				"summary": "Resolve the consent policy for this visitor",
+				"tags": [
+					"Consent"
+				],
+				"x-inth-access": "none",
+				"parameters": [
+					{
+						"description": "ISO 3166-1 alpha-2 country code of the visitor.",
+						"in": "query",
+						"name": "country",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "ISO 3166-2 subdivision code of the visitor.",
+						"in": "query",
+						"name": "region",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "`1` when the browser sends Global Privacy Control.",
+						"in": "query",
+						"name": "gpc",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "A banner experiment arm to show.",
+						"in": "query",
+						"name": "experiment",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v1/consent/manifest": {
+			"get": {
+				"operationId": "getV1ConsentManifest",
+				"description": "The project’s policy set, the same for every visitor, so it may be cached and resolved on a server. Answers with an `ETag`; send it back as `If-None-Match` for a `304` when nothing changed. `language` asks for the banner text in one language only.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {},
+									"required": [],
+									"description": "Every policy the project serves, with the banner text in each language, independent of the visitor."
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [],
+				"summary": "Get the consent policy set",
+				"tags": [
+					"Consent"
+				],
+				"x-inth-access": "none",
+				"parameters": [
+					{
+						"description": "Only the banner text in this language.",
+						"in": "query",
+						"name": "language",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v1/consent/records": {
+			"post": {
+				"operationId": "postV1ConsentRecords",
+				"description": "Saves a banner answer for a subject and property, merged with the answer already stored: for each category, the receipt confirmed later wins, and a category left out keeps what is stored. A retry with the same idempotencyKey is recorded once and answered as the first try was. With externalId and an identityToken that names it, the subject is linked to that person. An identity never fails a save: `link` says whether the link was stored.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"link": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"stored": {
+															"const": true
+														},
+														"verifiedBy": {
+															"const": "identity_token"
+														}
+													},
+													"required": [
+														"stored",
+														"verifiedBy"
+													]
+												},
+												{
+													"type": "object",
+													"properties": {
+														"reason": {
+															"enum": [
+																"unverified",
+																"invalid_token"
+															],
+															"type": "string"
+														},
+														"stored": {
+															"const": false
+														}
+													},
+													"required": [
+														"reason",
+														"stored"
+													]
+												}
+											]
+										},
+										"recordId": {
+											"type": "string",
+											"format": "uuid",
+											"description": "The event that recorded the save."
+										},
+										"subjectId": {
+											"type": "string",
+											"format": "uuid",
+											"description": "The subject’s UUID. Store it in place of the ID sent."
+										}
+									},
+									"required": [
+										"recordId",
+										"subjectId"
+									]
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"forbidden"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "forbidden"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict",
+																"policy_snapshot_expired",
+																"policy_snapshot_invalid",
+																"policy_snapshot_required",
+																"subject_conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict, policy_snapshot_expired, policy_snapshot_invalid, policy_snapshot_required, subject_conflict"
+					},
+					"413": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"payload_too_large"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "payload_too_large"
+					},
+					"422": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"rate_limited"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "rate_limited",
+						"headers": {
+							"Retry-After": {
+								"description": "Seconds to wait before trying again.",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [],
+				"summary": "Save a consent answer",
+				"tags": [
+					"Consent"
+				],
+				"x-inth-access": "none",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"answer": {
+										"type": "object",
+										"properties": {
+											"categories": {
+												"type": "object",
+												"properties": {
+													"necessary": {
+														"type": "object",
+														"properties": {
+															"basis": {
+																"oneOf": [
+																	{
+																		"type": "object",
+																		"properties": {
+																			"fingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "Choice prompt fingerprint (domain choice, version 1)."
+																			},
+																			"kind": {
+																				"const": "choice-v1"
+																			}
+																		},
+																		"required": [
+																			"fingerprint",
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"kind": {
+																				"const": "legacy-v2"
+																			},
+																			"materialFingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "v2 material policy fingerprint, when the record had one."
+																			}
+																		},
+																		"required": [
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	}
+																]
+															},
+															"confirmedAt": {
+																"type": "integer",
+																"minimum": 0,
+																"maximum": 8640000000000000,
+																"description": "Epoch milliseconds when the category was confirmed."
+															},
+															"value": {
+																"type": "boolean"
+															}
+														},
+														"required": [
+															"basis",
+															"confirmedAt",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"experience": {
+														"type": "object",
+														"properties": {
+															"basis": {
+																"oneOf": [
+																	{
+																		"type": "object",
+																		"properties": {
+																			"fingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "Choice prompt fingerprint (domain choice, version 1)."
+																			},
+																			"kind": {
+																				"const": "choice-v1"
+																			}
+																		},
+																		"required": [
+																			"fingerprint",
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"kind": {
+																				"const": "legacy-v2"
+																			},
+																			"materialFingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "v2 material policy fingerprint, when the record had one."
+																			}
+																		},
+																		"required": [
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	}
+																]
+															},
+															"confirmedAt": {
+																"type": "integer",
+																"minimum": 0,
+																"maximum": 8640000000000000,
+																"description": "Epoch milliseconds when the category was confirmed."
+															},
+															"value": {
+																"type": "boolean"
+															}
+														},
+														"required": [
+															"basis",
+															"confirmedAt",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"functionality": {
+														"type": "object",
+														"properties": {
+															"basis": {
+																"oneOf": [
+																	{
+																		"type": "object",
+																		"properties": {
+																			"fingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "Choice prompt fingerprint (domain choice, version 1)."
+																			},
+																			"kind": {
+																				"const": "choice-v1"
+																			}
+																		},
+																		"required": [
+																			"fingerprint",
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"kind": {
+																				"const": "legacy-v2"
+																			},
+																			"materialFingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "v2 material policy fingerprint, when the record had one."
+																			}
+																		},
+																		"required": [
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	}
+																]
+															},
+															"confirmedAt": {
+																"type": "integer",
+																"minimum": 0,
+																"maximum": 8640000000000000,
+																"description": "Epoch milliseconds when the category was confirmed."
+															},
+															"value": {
+																"type": "boolean"
+															}
+														},
+														"required": [
+															"basis",
+															"confirmedAt",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"marketing": {
+														"type": "object",
+														"properties": {
+															"basis": {
+																"oneOf": [
+																	{
+																		"type": "object",
+																		"properties": {
+																			"fingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "Choice prompt fingerprint (domain choice, version 1)."
+																			},
+																			"kind": {
+																				"const": "choice-v1"
+																			}
+																		},
+																		"required": [
+																			"fingerprint",
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"kind": {
+																				"const": "legacy-v2"
+																			},
+																			"materialFingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "v2 material policy fingerprint, when the record had one."
+																			}
+																		},
+																		"required": [
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	}
+																]
+															},
+															"confirmedAt": {
+																"type": "integer",
+																"minimum": 0,
+																"maximum": 8640000000000000,
+																"description": "Epoch milliseconds when the category was confirmed."
+															},
+															"value": {
+																"type": "boolean"
+															}
+														},
+														"required": [
+															"basis",
+															"confirmedAt",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"measurement": {
+														"type": "object",
+														"properties": {
+															"basis": {
+																"oneOf": [
+																	{
+																		"type": "object",
+																		"properties": {
+																			"fingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "Choice prompt fingerprint (domain choice, version 1)."
+																			},
+																			"kind": {
+																				"const": "choice-v1"
+																			}
+																		},
+																		"required": [
+																			"fingerprint",
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"kind": {
+																				"const": "legacy-v2"
+																			},
+																			"materialFingerprint": {
+																				"type": "string",
+																				"minLength": 1,
+																				"description": "v2 material policy fingerprint, when the record had one."
+																			}
+																		},
+																		"required": [
+																			"kind"
+																		],
+																		"additionalProperties": false
+																	}
+																]
+															},
+															"confirmedAt": {
+																"type": "integer",
+																"minimum": 0,
+																"maximum": 8640000000000000,
+																"description": "Epoch milliseconds when the category was confirmed."
+															},
+															"value": {
+																"type": "boolean"
+															}
+														},
+														"required": [
+															"basis",
+															"confirmedAt",
+															"value"
+														],
+														"additionalProperties": false
+													}
+												},
+												"required": [],
+												"additionalProperties": false
+											}
+										},
+										"required": [
+											"categories"
+										],
+										"additionalProperties": false
+									},
+									"confirmed": {
+										"type": "array",
+										"items": {
+											"enum": [
+												"necessary",
+												"experience",
+												"functionality",
+												"marketing",
+												"measurement"
+											],
+											"type": "string"
+										}
+									},
+									"externalId": {
+										"type": "string",
+										"minLength": 1
+									},
+									"givenAt": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 8640000000000000,
+										"description": "Epoch milliseconds when the category was confirmed."
+									},
+									"idempotencyKey": {
+										"type": "string",
+										"format": "uuid"
+									},
+									"identityProvider": {
+										"type": "string"
+									},
+									"identityToken": {
+										"type": "string"
+									},
+									"property": {
+										"type": "string",
+										"maxLength": 253,
+										"pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9_])?$"
+									},
+									"subjectId": {
+										"type": "string",
+										"description": "A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place."
+									}
+								},
+								"required": [
+									"answer",
+									"confirmed",
+									"givenAt",
+									"idempotencyKey",
+									"property",
+									"subjectId"
+								]
+							}
+						}
+					},
+					"required": true
+				}
+			}
+		},
+		"/v1/consent/sessions": {
+			"post": {
+				"operationId": "postV1ConsentSessions",
+				"description": "Sent by a server that rendered a visit from a cached manifest. Send the IP address of the visitor on `x-inth-client-ip`, and their user agent on `user-agent`. A request from a page, which sends `Origin`, is refused. Nothing is stored.",
+				"responses": {
+					"204": {
+						"description": "Accepted. Nothing is returned."
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict"
+					},
+					"413": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"payload_too_large"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "payload_too_large"
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"rate_limited"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "rate_limited",
+						"headers": {
+							"Retry-After": {
+								"description": "Seconds to wait before trying again.",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [],
+				"summary": "Report a visit resolved from a cached manifest",
+				"tags": [
+					"Consent"
+				],
+				"x-inth-access": "none",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"adapter": {
+										"type": "string"
+									},
+									"country": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"experiment": {
+										"type": "object",
+										"properties": {
+											"arm": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128
+											},
+											"id": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128
+											}
+										},
+										"required": [
+											"arm",
+											"id"
+										]
+									},
+									"gpc": {
+										"type": "boolean"
+									},
+									"journey": {
+										"type": "object",
+										"properties": {
+											"id": {
+												"type": "string",
+												"format": "uuid"
+											},
+											"prompt": {
+												"enum": [
+													"due",
+													"stored",
+													"not-required"
+												],
+												"type": "string"
+											},
+											"scope": {
+												"enum": [
+													"page",
+													"tab"
+												],
+												"type": "string"
+											},
+											"storedChoice": {
+												"type": "boolean"
+											},
+											"property": {
+												"type": "string",
+												"maxLength": 253,
+												"pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9_])?$"
+											}
+										},
+										"required": [
+											"id",
+											"prompt",
+											"scope",
+											"storedChoice"
+										]
+									},
+									"language": {
+										"type": "string"
+									},
+									"policy": {
+										"anyOf": [
+											{
+												"type": "object",
+												"properties": {
+													"fingerprint": {
+														"type": "string"
+													},
+													"id": {
+														"type": "string"
+													},
+													"matchedBy": {
+														"enum": [
+															"region",
+															"country",
+															"default",
+															"fallback"
+														],
+														"type": "string"
+													},
+													"model": {
+														"enum": [
+															"opt-in",
+															"opt-out",
+															"iab",
+															"none"
+														],
+														"type": "string"
+													}
+												},
+												"required": [
+													"fingerprint",
+													"id",
+													"matchedBy",
+													"model"
+												]
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"region": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"resolution": {
+										"enum": [
+											"matched",
+											"no-match",
+											"unconfigured",
+											"failed"
+										],
+										"type": "string"
+									},
+									"revision": {
+										"type": "string"
+									},
+									"source": {
+										"enum": [
+											"render",
+											"route",
+											"init"
+										],
+										"type": "string"
+									},
+									"tenantId": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"country",
+									"gpc",
+									"language",
+									"policy",
+									"region",
+									"resolution",
+									"revision",
+									"source"
+								]
+							}
+						}
+					},
+					"required": true
+				}
+			}
+		},
+		"/v1/subjects/{id}/link": {
+			"post": {
+				"operationId": "postV1SubjectsByIdLink",
+				"description": "Links a device to a person, by your account ID for them. Needs the secret key, or an identityToken in the body that names externalId. Makes the device subject when it does not exist yet. A link the device already has writes nothing, so a retry is safe.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"externalId": {
+											"type": "string"
+										},
+										"subjectId": {
+											"type": "string",
+											"format": "uuid",
+											"description": "The device’s UUID. Store it in place of the ID sent."
+										},
+										"verifiedBy": {
+											"enum": [
+												"api_key",
+												"identity_token"
+											],
+											"type": "string"
+										}
+									},
+									"required": [
+										"externalId",
+										"subjectId",
+										"verifiedBy"
+									]
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"identity_token_invalid",
+																"identity_token_required",
+																"unauthorized"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "identity_token_invalid, identity_token_required, unauthorized"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict",
+																"identity_conflict",
+																"subject_conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict, identity_conflict, subject_conflict"
+					},
+					"413": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"payload_too_large"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "payload_too_large"
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"rate_limited"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "rate_limited",
+						"headers": {
+							"Retry-After": {
+								"description": "Seconds to wait before trying again.",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					},
+					{}
+				],
+				"summary": "Link a device to a person",
+				"tags": [
+					"Subjects"
+				],
+				"x-inth-access": "secret-key-or-identity-token",
+				"parameters": [
+					{
+						"description": "A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place.",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"externalId": {
+										"type": "string",
+										"minLength": 1
+									},
+									"identityProvider": {
+										"type": "string",
+										"minLength": 1
+									},
+									"identityToken": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"externalId"
+								]
+							}
+						}
+					},
+					"required": true
+				}
+			}
+		},
+		"/v1/documents/{type}/current": {
+			"put": {
+				"operationId": "putV1DocumentsByTypeCurrent",
+				"description": "Publishes a release of a legal document and makes it the one in force for its type. `requiresAcceptance` defaults to true; false marks a small edit, which people who accepted the release before it are not asked to accept again. Publishing a release the project already has, with the same version, effective date and requiresAcceptance, makes it current again. A hash already published under another version, or a version with another hash, is a conflict.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"document": {
+											"type": "object",
+											"properties": {
+												"effectiveDate": {
+													"type": "string",
+													"format": "date-time"
+												},
+												"hash": {
+													"anyOf": [
+														{
+															"type": "string"
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"requiresAcceptance": {
+													"type": "boolean"
+												},
+												"type": {
+													"type": "string"
+												},
+												"version": {
+													"type": "string"
+												},
+												"id": {
+													"type": "string",
+													"format": "uuid"
+												},
+												"isCurrent": {
+													"type": "boolean"
+												}
+											},
+											"required": [
+												"effectiveDate",
+												"hash",
+												"requiresAcceptance",
+												"type",
+												"version",
+												"id",
+												"isCurrent"
+											]
+										}
+									},
+									"required": [
+										"document"
+									]
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"unauthorized"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "unauthorized"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict"
+					},
+					"413": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"payload_too_large"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "payload_too_large"
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"rate_limited"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "rate_limited",
+						"headers": {
+							"Retry-After": {
+								"description": "Seconds to wait before trying again.",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"summary": "Publish a legal document release",
+				"tags": [
+					"Documents"
+				],
+				"x-inth-access": "secret-key",
+				"parameters": [
+					{
+						"description": "A document type, such as `terms_us` or `privacy_policy`.",
+						"in": "path",
+						"name": "type",
+						"required": true,
+						"schema": {
+							"pattern": "^[a-z][a-z0-9_]*$",
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"effectiveDate": {
+										"type": "string",
+										"description": "An ISO-8601 date, or a date and time that names its zone."
+									},
+									"hash": {
+										"type": "string",
+										"description": "`sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file.",
+										"pattern": "^sha256:[0-9a-f]{64}$"
+									},
+									"requiresAcceptance": {
+										"type": "boolean",
+										"default": true
+									},
+									"version": {
+										"type": "string",
+										"minLength": 1
+									}
+								},
+								"required": [
+									"effectiveDate",
+									"hash",
+									"version"
+								]
+							}
+						}
+					},
+					"required": true
+				}
+			},
+			"get": {
+				"operationId": "getV1DocumentsByTypeCurrent",
+				"description": "The release of a legal document in force for its type, and a proof token that pins the type, version and hash shown. Send the token back with an acceptance. It is valid for a day.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"document": {
+											"type": "object",
+											"properties": {
+												"effectiveDate": {
+													"type": "string",
+													"format": "date-time"
+												},
+												"hash": {
+													"anyOf": [
+														{
+															"type": "string"
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"requiresAcceptance": {
+													"type": "boolean"
+												},
+												"type": {
+													"type": "string"
+												},
+												"version": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"effectiveDate",
+												"hash",
+												"requiresAcceptance",
+												"type",
+												"version"
+											]
+										},
+										"proofToken": {
+											"type": "string",
+											"description": "Send it back with an acceptance. It pins the type, version and hash shown."
+										},
+										"proofTokenExpiresAt": {
+											"type": "string",
+											"format": "date-time"
+										}
+									},
+									"required": [
+										"document",
+										"proofToken",
+										"proofTokenExpiresAt"
+									]
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [],
+				"summary": "Read the legal document release in force",
+				"tags": [
+					"Documents"
+				],
+				"x-inth-access": "none",
+				"parameters": [
+					{
+						"description": "A document type, such as `terms_us` or `privacy_policy`.",
+						"in": "path",
+						"name": "type",
+						"required": true,
+						"schema": {
+							"pattern": "^[a-z][a-z0-9_]*$",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/v1/documents/acceptances": {
+			"post": {
+				"operationId": "postV1DocumentsAcceptances",
+				"description": "Records that a device or a person accepted one or more legal document releases, each named by the proof token `GET /v1/documents/{type}/current` gave. All are recorded, or none. With only subjectId, the acceptances are the device’s and need no key. With externalId, they are the person’s, who is made when missing, and the request needs the secret key or an identityToken that names them. `context` carries the visitor’s IP address and user agent when your server records the acceptance, and is read only with the secret key; otherwise both come from the request. A retry with the same idempotencyKey is recorded once and answered as the first try was.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"acceptances": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"acceptedAt": {
+														"type": "number",
+														"description": "Epoch milliseconds."
+													},
+													"hash": {
+														"anyOf": [
+															{
+																"type": "string"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"type": {
+														"type": "string"
+													},
+													"version": {
+														"type": "string"
+													}
+												},
+												"required": [
+													"acceptedAt",
+													"hash",
+													"type",
+													"version"
+												]
+											}
+										},
+										"subjectId": {
+											"type": "string",
+											"format": "uuid",
+											"description": "The device’s UUID when the request named a device, which replaces the ID sent, and the person’s otherwise."
+										}
+									},
+									"required": [
+										"acceptances",
+										"subjectId"
+									]
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"identity_token_invalid",
+																"identity_token_required",
+																"unauthorized"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "identity_token_invalid, identity_token_required, unauthorized"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict",
+																"document_proof_expired",
+																"document_proof_invalid",
+																"identity_conflict",
+																"subject_conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict, document_proof_expired, document_proof_invalid, identity_conflict, subject_conflict"
+					},
+					"413": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"payload_too_large"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "payload_too_large"
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"rate_limited"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "rate_limited",
+						"headers": {
+							"Retry-After": {
+								"description": "Seconds to wait before trying again.",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					},
+					{}
+				],
+				"summary": "Record document acceptances",
+				"tags": [
+					"Documents"
+				],
+				"x-inth-access": "secret-key-or-identity-token",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"acceptances": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"proofToken": {
+													"type": "string",
+													"minLength": 1
+												},
+												"type": {
+													"type": "string",
+													"pattern": "^[a-z][a-z0-9_]*$"
+												}
+											},
+											"required": [
+												"proofToken",
+												"type"
+											]
+										},
+										"minItems": 1,
+										"maxItems": 20
+									},
+									"acceptedAt": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 8640000000000000
+									},
+									"context": {
+										"type": "object",
+										"properties": {
+											"ipAddress": {
+												"type": "string"
+											},
+											"userAgent": {
+												"type": "string"
+											}
+										},
+										"required": []
+									},
+									"externalId": {
+										"type": "string",
+										"minLength": 1
+									},
+									"idempotencyKey": {
+										"type": "string",
+										"format": "uuid"
+									},
+									"identityProvider": {
+										"type": "string",
+										"minLength": 1
+									},
+									"identityToken": {
+										"type": "string"
+									},
+									"property": {
+										"type": "string",
+										"maxLength": 253,
+										"pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9_])?$"
+									},
+									"subjectId": {
+										"type": "string",
+										"description": "A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place."
+									}
+								},
+								"required": [
+									"acceptances",
+									"acceptedAt",
+									"idempotencyKey"
+								]
+							}
+						}
+					},
+					"required": true
+				}
+			}
+		},
+		"/v1/consent/check": {
+			"get": {
+				"operationId": "getV1ConsentCheck",
+				"description": "For a person, by your account ID for them, and each document type asked for: hasConsent when they accepted any release, and isLatestPolicy when they accepted the latest release that requires acceptance, or one after it. Acceptances from devices linked to the person count. Every type asked for is in the answer.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"results": {
+											"type": "object",
+											"propertyNames": {
+												"type": "string"
+											},
+											"additionalProperties": {
+												"type": "object",
+												"properties": {
+													"hasConsent": {
+														"type": "boolean"
+													},
+													"isLatestPolicy": {
+														"type": "boolean"
+													}
+												},
+												"required": [
+													"hasConsent",
+													"isLatestPolicy"
+												]
+											}
+										}
+									},
+									"required": [
+										"results"
+									]
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"unauthorized"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "unauthorized"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict"
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"rate_limited"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "rate_limited",
+						"headers": {
+							"Retry-After": {
+								"description": "Seconds to wait before trying again.",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"summary": "Check a person’s document acceptances",
+				"tags": [
+					"Consent"
+				],
+				"x-inth-access": "secret-key",
+				"parameters": [
+					{
+						"description": "Your account ID for the person.",
+						"in": "query",
+						"name": "externalId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"description": "Document types, comma separated.",
+						"in": "query",
+						"name": "type",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				]
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"V1Error": {
+				"description": "Every /v1 failure. `details` is optional; for a refused body it holds the issues by field.",
+				"properties": {
+					"error": {
+						"properties": {
+							"code": {
+								"enum": [
+									"bad_gateway",
+									"conflict",
+									"document_proof_expired",
+									"document_proof_invalid",
+									"forbidden",
+									"gateway_timeout",
+									"identity_conflict",
+									"identity_token_invalid",
+									"identity_token_required",
+									"invalid_request",
+									"not_found",
+									"payload_too_large",
+									"policy_snapshot_expired",
+									"policy_snapshot_invalid",
+									"policy_snapshot_required",
+									"rate_limited",
+									"server_error",
+									"subject_conflict",
+									"unauthorized"
+								],
+								"type": "string"
+							},
+							"details": {
+								"description": "For a refused body: `{ fieldErrors: { <field>: [message] }, formErrors: [message] }`."
+							},
+							"message": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"code",
+							"message"
+						],
+						"type": "object"
+					},
+					"requestId": {
+						"description": "The same as the `x-request-id` response header.",
+						"type": "string"
+					}
+				},
+				"required": [
+					"error",
+					"requestId"
+				],
+				"type": "object"
+			}
+		},
+		"securitySchemes": {
+			"bearerAuth": {
+				"description": "The project secret key: `Authorization: Bearer <key>`.",
+				"scheme": "bearer",
+				"type": "http"
+			}
+		}
+	}
+}

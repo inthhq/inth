@@ -74,6 +74,12 @@ export const v1ConsentInitOutputSchema = initOutputSchema;
 // POST /v1/consent/records
 // ---------------------------------------------------------------------------
 
+/** Query of `POST /v1/consent/records`: the journey the save belongs to. */
+export const v1ConsentRecordQuerySchema = v.pick(v1ConsentInitQuerySchema, [
+	'journey',
+	'journeyScope',
+]);
+
 /** Categories an answer may hold a receipt for. */
 export const V1_ANSWER_CATEGORIES = [
 	'necessary',
@@ -334,6 +340,9 @@ export type V1ConsentInitQuery = v.InferOutput<typeof v1ConsentInitQuerySchema>;
 export type V1ConsentInitOutput = InitOutput;
 export type V1ConsentManifest = ConsentManifest;
 export type V1ConsentAnswer = v.InferOutput<typeof v1ConsentAnswerSchema>;
+export type V1ConsentRecordQuery = v.InferOutput<
+	typeof v1ConsentRecordQuerySchema
+>;
 export type V1ConsentRecordInput = v.InferOutput<
 	typeof v1ConsentRecordInputSchema
 >;

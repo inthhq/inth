@@ -40,6 +40,7 @@ export {
 	type V1ConsentRecordInput,
 	type V1ConsentRecordLink,
 	type V1ConsentRecordOutput,
+	type V1ConsentRecordQuery,
 	type V1ConsentSessionJourney,
 	type V1ConsentSessionReport,
 	V1_ANSWER_CATEGORIES,
@@ -52,6 +53,7 @@ export {
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordLinkSchema,
 	v1ConsentRecordOutputSchema,
+	v1ConsentRecordQuerySchema,
 	v1ConsentSessionJourneySchema,
 	v1ConsentSessionReportSchema,
 } from './consent';
