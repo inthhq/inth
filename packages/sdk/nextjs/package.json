@@ -1,7 +1,7 @@
 {
 	"name": "@inth/nextjs",
 	"version": "3.2.0-canary.0",
-	"description": "Next.js cookie consent banner and consent management platform for inth. Server-rendered for the App Router and Pages Router, with a consent dialog and preference center.",
+	"description": "Next.js cookie consent banner and consent management platform for Inth. Server-rendered for the App Router and Pages Router, with a consent dialog and preference center.",
 	"keywords": [
 		"app-router",
 		"banner",

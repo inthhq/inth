@@ -1,8 +1,8 @@
 {
 	"title": "@inth/sdk-core: Headless JavaScript cookie consent engine",
-	"description": "The headless JavaScript cookie consent engine behind every inth adapter. It resolves consent policies for GDPR and other privacy laws, stores choices, and holds back configured scripts, iframes, and network requests that the visitor's policy and choices do not allow. Use it to build your own consent UI or to connect a framework that has no inth adapter.",
+	"description": "The headless JavaScript cookie consent engine behind every Inth adapter. It resolves consent policies for GDPR and other privacy laws, stores choices, and holds back configured scripts, iframes, and network requests that the visitor's policy and choices do not allow. Use it to build your own consent UI or to connect a framework that has no Inth adapter.",
 	"features": [
-		"Bring your own UI: render from a consent snapshot, and inth keeps state, storage, and policy resolution",
+		"Bring your own UI: render from a consent snapshot, and Inth keeps state, storage, and policy resolution",
 		"Control configured scripts, iframes, and network requests with category permissions from the resolved policy",
 		"Policies decide who sees a banner: opt-in for visitors in the EU, opt-out for some US states, or rules that you write",
 		"Google Consent Mode v2, IAB TCF 2.4, and Global Privacy Control support",
@@ -27,7 +27,7 @@
 	"githubLink": "https://github.com/c15t/c15t",
 	"showCLIGeneration": false,
 	"customSections": {
-		"Related Packages": "- [inth](https://www.npmjs.com/package/inth): this engine plus the React, Next.js, Vue, Nuxt, Astro, and TanStack Start adapters in one install\n- [@inth/sdk-browser](https://www.npmjs.com/package/@inth/sdk-browser): a stock banner and preference dialog for plain JavaScript and script-tag sites\n- [@inth/integrations](https://www.npmjs.com/package/@inth/integrations): consent-aware analytics, tag manager, pixel, and widget loaders\n- [@c15t/backend](https://www.npmjs.com/package/@c15t/backend): the self-hosted consent backend"
+		"Related Packages": "- [@inth/sdk](https://www.npmjs.com/package/@inth/sdk): this engine with a stock banner and preference dialog for plain JavaScript and script-tag sites\n- [@inth/integrations](https://www.npmjs.com/package/@inth/integrations): consent-aware analytics, tag manager, pixel, and widget loaders\n- [@c15t/backend](https://www.npmjs.com/package/@c15t/backend): the self-hosted consent backend"
 	},
 	"showHosting": true
 }

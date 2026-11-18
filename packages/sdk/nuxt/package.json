@@ -1,7 +1,7 @@
 {
 	"name": "@inth/nuxt",
 	"version": "3.2.0-canary.0",
-	"description": "Nuxt module for inth cookie consent: banner, consent dialog, preference center, consent route and build-time manifest.",
+	"description": "Nuxt module for Inth cookie consent: banner, consent dialog, preference center, consent route and build-time manifest.",
 	"keywords": [
 		"banner",
 		"ccpa",

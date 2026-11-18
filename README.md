@@ -20,7 +20,7 @@ See each package's README for installation, usage, and development instructions.
 
 ## SDK
 
-The consent SDK was imported from Inth and is being renamed and repackaged as `@inth/sdk`. Until that lands, its packages keep their `@inth/*` names and are not published from this repository.
+The consent SDK was imported from c15t and renamed to `@inth/sdk` and the `@inth/<framework>` packages.
 
 | Path | Contents |
 | --- | --- |

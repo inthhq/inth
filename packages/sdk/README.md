@@ -2,17 +2,17 @@
   <a href="https://c15t.com?utm_source=github&utm_medium=repo_homepage" target="_blank" rel="noopener noreferrer">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/c15t-banner-readme-dark.png">
-      <img src="docs/assets/c15t-banner-readme-light.png" alt="inth: the open standard for cookie banners">
+      <img src="docs/assets/c15t-banner-readme-light.png" alt="Inth: the open standard for cookie banners">
     </picture>
   </a>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/inth"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/inth.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/npm/inth.svg?variant=outline&size=xs&mode=light" alt="Latest NPM Version"></picture></a>
+  <a href="https://www.npmjs.com/package/@inth/sdk"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk.svg?variant=outline&size=xs&mode=light" alt="Latest NPM Version"></picture></a>
   <a href="https://github.com/c15t/c15t"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&size=xs&mode=light" alt="Stars"></picture></a>
   <a href="https://github.com/c15t/c15t/blob/main/LICENSE.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&size=xs&mode=light" alt="License"></picture></a>
   <a href="https://c15t.link/discord"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&size=xs&mode=light" alt="Discord"></picture></a>
-  <a href="https://skills.sh/inth/skills/inth"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/skills/inth/skills/inth.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/skills/inth/skills/inth.svg?variant=outline&size=xs&mode=light" alt="Skills"></picture></a>
+  <a href="https://skills.sh/c15t/skills/c15t"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline&size=xs&mode=light" alt="Skills"></picture></a>
   <a href="https://inth.com?utm_source=github&utm_medium=repo_homepage"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?size=xs&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&color=ffc803&labelTextColor=000000&valueColor=000000&mode=dark"><img src="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?size=xs&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&color=ffc803&labelTextColor=000000&valueColor=000000&mode=light" alt="Made by Inth"></picture></a>
 </p>
 
@@ -34,14 +34,14 @@ Inth is the open standard for cookie banners. It's an open-source cookie consent
 
 | Framework | Install | Import from | Quickstart |
 | --- | --- | --- | --- |
-| React 18 and 19 (Vite, React Router) | `inth` | `@inth/react` | [React](https://c15t.com/docs/frameworks/react/quickstart) |
-| Next.js 15 and 16 (App Router, Pages Router) | `inth` | `@inth/nextjs` | [Next.js](https://c15t.com/docs/frameworks/next/quickstart) |
-| Vue 3 | `inth` | `@inth/vue/vue-plugin` | [Vue](https://c15t.com/docs/frameworks/vue/quickstart) |
-| Nuxt 3 and 4 | `inth` | `@inth/vue` (Nuxt module) | [Nuxt](https://c15t.com/docs/frameworks/nuxt/quickstart) |
-| Astro 5, 6, and 7 | `inth` | `@inth/astro` | [Astro](https://c15t.com/docs/frameworks/astro/quickstart) |
-| TanStack Start | `inth` | `@inth/tanstack-start` | [TanStack Start](https://c15t.com/docs/frameworks/tanstack-start/quickstart) |
-| Svelte 5 and SvelteKit | `inth` | `@inth/svelte` | [Svelte](https://c15t.com/docs/frameworks/svelte/quickstart), [SvelteKit](https://c15t.com/docs/frameworks/sveltekit/quickstart) |
-| JavaScript, headless | `inth` | `inth`, `@inth/sdk/runtime` | [Headless runtime](https://c15t.com/docs/frameworks/javascript/headless) |
+| React 18 and 19 (Vite, React Router) | `@inth/react` | `@inth/react` | [React](https://c15t.com/docs/frameworks/react/quickstart) |
+| Next.js 15 and 16 (App Router, Pages Router) | `@inth/nextjs` | `@inth/nextjs` | [Next.js](https://c15t.com/docs/frameworks/next/quickstart) |
+| Vue 3 | `@inth/vue` | `@inth/vue/vue-plugin` | [Vue](https://c15t.com/docs/frameworks/vue/quickstart) |
+| Nuxt 3 and 4 | `@inth/nuxt` | `@inth/nuxt` (Nuxt module) | [Nuxt](https://c15t.com/docs/frameworks/nuxt/quickstart) |
+| Astro 5, 6, and 7 | `@inth/astro` | `@inth/astro` | [Astro](https://c15t.com/docs/frameworks/astro/quickstart) |
+| TanStack Start | `@inth/tanstack-start` | `@inth/tanstack-start` | [TanStack Start](https://c15t.com/docs/frameworks/tanstack-start/quickstart) |
+| Svelte 5 and SvelteKit | `@inth/svelte` | `@inth/svelte` | [Svelte](https://c15t.com/docs/frameworks/svelte/quickstart), [SvelteKit](https://c15t.com/docs/frameworks/sveltekit/quickstart) |
+| JavaScript, headless | `@inth/sdk` | `@inth/sdk/engine`, `@inth/sdk/runtime` | [Headless runtime](https://c15t.com/docs/frameworks/javascript/headless) |
 | Script tag, no build step (Webflow, WordPress, Framer, Squarespace) | `@inth/sdk` | `<script>` from a CDN | [HTML](https://c15t.com/docs/frameworks/html/quickstart) |
 
 ## Hosting
@@ -59,7 +59,7 @@ The frontend code is the same for Inth and a self-hosted backend. Only the backe
 A Next.js App Router app with the prebuilt banner, the preference dialog, and PostHog held until the visitor allows measurement. Install Inth and the vendor loaders:
 
 ```bash
-pnpm add inth @inth/integrations
+pnpm add @inth/nextjs @inth/integrations
 ```
 
 Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your Inth backend URL in `.env.local`, then add three files:
@@ -143,8 +143,7 @@ The layout stays a Server Component. You write no `'use client'` wrapper and nee
 
 | Package | Use it for | Version |
 | --- | --- | --- |
-| [`inth`](./packages/sdk/inth) | The package most apps install. The consent engine plus the React, Next.js, Vue, Nuxt, Astro, and TanStack Start adapters | <a href="https://www.npmjs.com/package/inth"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/inth.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/inth.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
-| [`@inth/sdk/engine`](./packages/sdk/core) | Headless consent engine: policies, storage, and script gating. Also in `inth` | <a href="https://www.npmjs.com/package/@inth/sdk/engine"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/engine.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/engine.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
+| [`@inth/sdk/engine`](./packages/sdk/core) | Headless consent engine: policies, storage, and script gating | <a href="https://www.npmjs.com/package/@inth/sdk/engine"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/engine.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/engine.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@inth/react`](./packages/sdk/react) | React 18 and 19 components and hooks. Also at `@inth/react` | <a href="https://www.npmjs.com/package/@inth/react"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/react.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/react.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@inth/nextjs`](./packages/sdk/nextjs) | Next.js 15 and 16, App Router and Pages Router, with server rendering. Also at `@inth/nextjs` | <a href="https://www.npmjs.com/package/@inth/nextjs"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/nextjs.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/nextjs.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@inth/vue`](./packages/sdk/vue) | Vue 3 plugin and Nuxt 3 and 4 module. Also at `@inth/vue` | <a href="https://www.npmjs.com/package/@inth/vue"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/vue.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/vue.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
@@ -161,15 +160,15 @@ The layout stays a Server Component. You write no `'use client'` wrapper and nee
 | [`@inth/sdk/devtools`](./packages/sdk/dev-tools) | Inspect consent state while you develop | <a href="https://www.npmjs.com/package/@inth/sdk/devtools"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/devtools.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/devtools.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@inth/sdk/schema`](./packages/sdk/schema) | Valibot schemas and TypeScript types for the consent API | <a href="https://www.npmjs.com/package/@inth/sdk/schema"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/schema.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/schema.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 
-To set up Inth from the terminal, run `inth inth` from the [Inth CLI](https://c15t.com/docs/cli/overview). It starts your coding agent with the Inth setup prompt or writes your framework's quickstart files.
+To set up Inth from the terminal, run `inth c15t` from the [Inth CLI](https://c15t.com/docs/cli/overview). It starts your coding agent with the Inth setup prompt or writes your framework's quickstart files.
 
 [`@c15t/scripts`](./packages/sdk/scripts) is deprecated. It re-exports `@inth/integrations` for older imports and goes away in v4.
 
 ## Docs for AI Agents
 
-Every package that has docs ships them as Markdown, matched to the installed version. After you install Inth, point your coding agent at `node_modules/inth/AGENTS.md`.
+Every package that has docs ships them as Markdown, matched to the installed version. After you install Inth, point your coding agent at the package's `AGENTS.md`, such as `node_modules/@inth/nextjs/AGENTS.md`.
 
-On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the Inth agent skills with `npx skills add inth/skills`.
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
 
 ## Talk
 

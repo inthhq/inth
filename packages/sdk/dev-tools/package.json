@@ -2,7 +2,7 @@
 	"name": "@inth/sdk-dev-tools",
 	"version": "3.2.0-canary.0",
 	"private": true,
-	"description": "Developer tools for debugging inth. Inspect consent state, resolved policy, location, IAB TCF state and kernel events.",
+	"description": "Developer tools for debugging Inth. Inspect consent state, resolved policy, location, IAB TCF state and kernel events.",
 	"keywords": [
 		"cmp",
 		"consent",

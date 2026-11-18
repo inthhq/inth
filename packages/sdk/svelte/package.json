@@ -1,7 +1,7 @@
 {
 	"name": "@inth/svelte",
 	"version": "3.2.0-canary.0",
-	"description": "Svelte cookie consent banner for Svelte and SvelteKit, with a consent dialog and preference center. The Svelte package for inth.",
+	"description": "Svelte cookie consent banner for Svelte and SvelteKit, with a consent dialog and preference center. The Svelte package for Inth.",
 	"keywords": [
 		"banner",
 		"ccpa",

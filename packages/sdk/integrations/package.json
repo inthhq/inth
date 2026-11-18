@@ -1,7 +1,7 @@
 {
 	"name": "@inth/integrations",
 	"version": "3.2.0-canary.0",
-	"description": "Consent-aware integrations for inth: 40+ analytics, advertising and chat tools, including GTM, GA4 and Meta Pixel, with Google Consent Mode v2 and script gating.",
+	"description": "Consent-aware integrations for Inth: 40+ analytics, advertising and chat tools, including GTM, GA4 and Meta Pixel, with Google Consent Mode v2 and script gating.",
 	"keywords": [
 		"adobe-analytics",
 		"adroll",

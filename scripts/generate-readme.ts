@@ -33,7 +33,7 @@ Do not open a public issue for a security vulnerability. Report it privately thr
  */
 const renderHostingSection = (npmBadgeName: string) => `## Hosting
 
-inth needs somewhere to keep policies and consent records. Pick one:
+Inth needs somewhere to keep policies and consent records. Pick one:
 
 - **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName})**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
 - **Self-hosted**: Run [\`@c15t/backend\`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
@@ -207,8 +207,8 @@ ${[
 	}),
 	renderThemeAwareBadge({
 		alt: 'Skills',
-		href: 'https://skills.sh/inth/skills/inth',
-		src: 'https://shieldcn.dev/skills/inth/skills/inth.svg?variant=outline',
+		href: 'https://skills.sh/c15t/skills/c15t',
+		src: 'https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'Made by Inth',
@@ -225,7 +225,7 @@ ${[
   <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName}" target="_blank" rel="noopener noreferrer">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="../docs/assets/c15t-banner-readme-dark.png">
-      <img src="../docs/assets/c15t-banner-readme-light.png" alt="inth: the open standard for cookie banners">
+      <img src="../docs/assets/c15t-banner-readme-light.png" alt="Inth: the open standard for cookie banners">
     </picture>
   </a>
 </p>`;
@@ -272,7 +272,7 @@ pnpm dlx @inth/cli c15t
 The CLI will:
 
 - Install necessary packages
-- Configure your inth instance
+- Configure your Inth instance
 - Set up environment variables
 - Add consent management components to your app
 `;
@@ -359,7 +359,7 @@ See the [documentation](${config.docsLink}) for guides, API reference, and examp
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at \`node_modules/${config.packageName}/AGENTS.md\`. It indexes every guide in \`node_modules/${config.packageName}/docs/\`.
 
-On the web, every page of the [inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the inth agent skills with \`npx skills add inth/skills\`.`;
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with \`npx skills add c15t/skills\`.`;
 	}
 
 	const hostingBlock = config.showHosting

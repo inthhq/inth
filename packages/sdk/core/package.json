@@ -2,7 +2,7 @@
 	"name": "@inth/sdk-core",
 	"version": "3.2.0-canary.0",
 	"private": true,
-	"description": "Headless consent engine behind inth. Stores consent, decides who sees the banner and gates configured scripts on each visitor's consent policy.",
+	"description": "Headless consent engine behind Inth. Stores consent, decides who sees the banner and gates configured scripts on each visitor's consent policy.",
 	"keywords": [
 		"banner",
 		"ccpa",
