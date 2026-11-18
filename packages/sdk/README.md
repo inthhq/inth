@@ -1,13 +1,4 @@
 <p align="center">
-  <a href="https://c15t.com?utm_source=github&utm_medium=repo_homepage" target="_blank" rel="noopener noreferrer">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/c15t-banner-readme-dark.png">
-      <img src="docs/assets/c15t-banner-readme-light.png" alt="Inth: the open standard for cookie banners">
-    </picture>
-  </a>
-</p>
-
-<p align="center">
   <a href="https://www.npmjs.com/package/@inth/sdk"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk.svg?variant=outline&size=xs&mode=light" alt="Latest NPM Version"></picture></a>
   <a href="https://github.com/c15t/c15t"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&size=xs&mode=light" alt="Stars"></picture></a>
   <a href="https://github.com/c15t/c15t/blob/main/LICENSE.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&size=xs&mode=light" alt="License"></picture></a>

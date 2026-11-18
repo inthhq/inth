@@ -70,8 +70,6 @@ interface PackageReadmeConfig {
 	docsLink?: string;
 	quickStartLink?: string;
 	showCLIGeneration?: boolean;
-	/** Omit the shared web banner when its assets are not bundled. */
-	showBanner?: boolean;
 	customSections?: Record<string, string>;
 	/** Sections rendered directly after Key Features, before setup steps. */
 	leadSections?: Record<string, string>;
@@ -218,25 +216,12 @@ ${[
 ].join('\n')}
 </p>`;
 
-	const bannerImage =
-		config.showBanner === false
-			? ''
-			: `<p align="center">
-  <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName}" target="_blank" rel="noopener noreferrer">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="../docs/assets/c15t-banner-readme-dark.png">
-      <img src="../docs/assets/c15t-banner-readme-light.png" alt="Inth: the open standard for cookie banners">
-    </picture>
-  </a>
-</p>`;
 	// A published @inth package opens with what it is and its install line.
 	const plainOpening =
 		config.packageName.startsWith('@inth/') && !config.privatePackage;
 	const bannerBlock = plainOpening
 		? `# ${config.packageName}`
-		: `${bannerImage}
-
-# ${config.title}
+		: `# ${config.title}
 
 ${badgeBlock}`;
 	const installLine = plainOpening
