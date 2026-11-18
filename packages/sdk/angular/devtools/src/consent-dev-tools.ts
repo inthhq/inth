@@ -23,7 +23,7 @@ import type { EnvironmentProviders, Signal } from '@angular/core';
 import { ConsentManager } from '@inth/angular';
 import { createDevTools } from '@inth/sdk/devtools';
 import type { DevToolsOptions } from '@inth/sdk/devtools';
-import { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
+import { attachDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 
 /**
  * DevTools options: everything `createDevTools()` from `@inth/sdk/devtools`
@@ -121,11 +121,8 @@ const mountDevTools = function mountDevTools(
 		);
 		// A visible `<inth-consent-dialog-trigger>` for the same kernel can
 		// render the launcher instead.
-		const withdrawLauncher = publishDevToolsLauncher(kernel, devTools);
-		onCleanup(() => {
-			withdrawLauncher();
-			devTools.destroy();
-		});
+		attachDevToolsLauncher(kernel, devTools);
+		onCleanup(() => devTools.destroy());
 	});
 };
 

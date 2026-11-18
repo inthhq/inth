@@ -135,6 +135,49 @@ export const publishDevToolsLauncher = function publishDevToolsLauncher(
 	};
 };
 
+/** Options for {@link attachDevToolsLauncher}. */
+export interface AttachDevToolsLauncherOptions {
+	/** An embedded panel has no floating launcher to hand over. */
+	embedded?: boolean;
+	/**
+	 * The slot's `publishDevToolsLauncher`, from the bundle that renders the
+	 * trigger. Defaults to this module's.
+	 */
+	publish?: typeof publishDevToolsLauncher;
+}
+
+/**
+ * Offer a new DevTools panel's launcher to the kernel's consent trigger,
+ * which then shows a DevTools button and docks the panel beside itself.
+ * The panel's `destroy()` withdraws the offer first.
+ *
+ * @param kernel - Consent kernel the panel inspects.
+ * @param instance - The panel `createDevTools` returned.
+ * @returns `instance`.
+ * @internal
+ */
+export const attachDevToolsLauncher = function attachDevToolsLauncher<
+	Instance extends DevToolsLauncherTarget & { destroy: () => void },
+>(
+	kernel: ConsentKernel,
+	instance: Instance,
+	options: AttachDevToolsLauncherOptions = {}
+): Instance {
+	if (options.embedded) {
+		return instance;
+	}
+	const withdraw = (options.publish ?? publishDevToolsLauncher)(
+		kernel,
+		instance
+	);
+	const { destroy } = instance;
+	instance.destroy = () => {
+		withdraw();
+		destroy();
+	};
+	return instance;
+};
+
 /**
  * Claim the launcher for a trigger. The first live claim owns it.
  * @param kernel - Consent kernel the trigger belongs to.

@@ -8,6 +8,7 @@
 
 import { createDevTools } from '@inth/sdk-dev-tools';
 import type { DevToolsInstance, DevToolsOptions } from '@inth/sdk-dev-tools';
+import { attachDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 import type { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import type { ConsentClient } from './types';
@@ -43,15 +44,10 @@ export const createBrowserDevTools = function createBrowserDevTools(
 		getPresentation: options.getPresentation ?? (() => client.presentation),
 		kernel: client.kernel,
 	});
-	// An embedded panel has no floating launcher to hand over.
-	if (!publish || options.embedded) {
-		return instance;
-	}
-	const withdraw = publish(client.kernel, instance);
-	const { destroy } = instance;
-	instance.destroy = () => {
-		withdraw();
-		destroy();
-	};
-	return instance;
+	return publish
+		? attachDevToolsLauncher(client.kernel, instance, {
+				embedded: options.embedded,
+				publish,
+			})
+		: instance;
 };

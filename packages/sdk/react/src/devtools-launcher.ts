@@ -30,7 +30,7 @@ import {
 
 import { KernelContext } from './context';
 
-export { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
+export { attachDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 export type { DevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
 
 /** Controls for the DevTools button a consent trigger renders. */

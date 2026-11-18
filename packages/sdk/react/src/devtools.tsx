@@ -29,7 +29,7 @@ import type {
 import { TriggerToolbar } from './components/panel-trigger/atoms/toolbar';
 import { registerTriggerToolbar } from './components/panel-trigger/toolbar-loader';
 import { KernelContext, ProviderServicesContext } from './context';
-import { publishDevToolsLauncher } from './devtools-launcher';
+import { attachDevToolsLauncher } from './devtools-launcher';
 import { useIsHydrated } from './hooks/use-is-hydrated';
 
 /** Props for the kernel-bound React DevTools adapter. */
@@ -144,22 +144,21 @@ export const ConsentDevTools = ({
 			return;
 		}
 
-		const devTools = createDevTools({
-			...stableServices,
-			defaultOpen,
-			defaultTab,
-			getConsentCategories: getDisplayedCategories,
-			kernel,
-			maxEvents,
-			position,
-			shadow,
-		});
 		// A mounted consent trigger can render the launcher instead.
-		const withdrawLauncher = publishDevToolsLauncher(kernel, devTools);
-		return () => {
-			withdrawLauncher();
-			devTools.destroy();
-		};
+		const devTools = attachDevToolsLauncher(
+			kernel,
+			createDevTools({
+				...stableServices,
+				defaultOpen,
+				defaultTab,
+				getConsentCategories: getDisplayedCategories,
+				kernel,
+				maxEvents,
+				position,
+				shadow,
+			})
+		);
+		return () => devTools.destroy();
 	}, [
 		defaultOpen,
 		defaultTab,

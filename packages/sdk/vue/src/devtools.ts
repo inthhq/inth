@@ -5,7 +5,7 @@ import type {
 	DevToolsPosition,
 	DevToolsTab,
 } from '@inth/sdk/devtools';
-import { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
+import { attachDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 import {
 	defineComponent,
 	h,
@@ -80,12 +80,9 @@ const useProviderDevTools = (
 			props.getConsentCategories?.() ?? config.value.consentCategories
 		);
 	let devTools: DevToolsInstance | null = null;
-	let withdrawLauncher: (() => void) | undefined;
 	let stopWatching: (() => void) | undefined;
 
 	const destroyDevTools = () => {
-		withdrawLauncher?.();
-		withdrawLauncher = undefined;
 		devTools?.destroy();
 		devTools = null;
 	};
@@ -105,26 +102,27 @@ const useProviderDevTools = (
 				if (!placement) {
 					return;
 				}
-				devTools = createDevTools({
-					...placement,
-					clearRecords:
-						props.clearRecords || context
-							? () => (props.clearRecords ?? context?.clearRecords)?.()
-							: undefined,
-					defaultTab: props.defaultTab,
-					getConsentCategories: getCategories,
-					getPresentation: () =>
-						props.getPresentation
-							? props.getPresentation()
-							: presentation.value,
-					kernel,
-					maxEvents: props.maxEvents,
-				});
 				// A visible consent trigger can render the floating launcher
 				// instead; an embedded panel has none to hand over.
-				if (!placement.embedded) {
-					withdrawLauncher = publishDevToolsLauncher(kernel, devTools);
-				}
+				devTools = attachDevToolsLauncher(
+					kernel,
+					createDevTools({
+						...placement,
+						clearRecords:
+							props.clearRecords || context
+								? () => (props.clearRecords ?? context?.clearRecords)?.()
+								: undefined,
+						defaultTab: props.defaultTab,
+						getConsentCategories: getCategories,
+						getPresentation: () =>
+							props.getPresentation
+								? props.getPresentation()
+								: presentation.value,
+						kernel,
+						maxEvents: props.maxEvents,
+					}),
+					{ embedded: placement.embedded }
+				);
 			},
 			{ immediate: true }
 		);
