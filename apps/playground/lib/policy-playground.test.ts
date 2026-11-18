@@ -240,13 +240,13 @@ describe('policy playground helpers', () => {
 		);
 		expect(recommended).toContain('mode: testing()');
 		expect(recommended).toContain('recommended pack');
-		expect(recommended).not.toContain('testing({ policyRules })');
+		expect(recommended).not.toContain('testing({ policy: policyRules })');
 		expect(recommended).not.toContain('policyRulePresets');
 		const explicit = buildProviderSnippet(
 			policyRulePresets.californiaOptOut(),
 			'californiaOptOut'
 		);
-		expect(explicit).toContain('testing({ policyRules })');
+		expect(explicit).toContain('testing({ policy: policyRules })');
 		expect(explicit).toContain('policyRulePresets.californiaOptOut()');
 		expect(
 			buildBackendSnippet(policyRulePresets.worldNone(), 'worldNone', {
@@ -369,6 +369,9 @@ describe('policy playground helpers', () => {
 		});
 		expect(withToolbar).toContain(
 			"import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider } from 'c15t/react';"
+		);
+		expect(withToolbar).toContain(
+			"import { testing } from 'c15t/react/testing';"
 		);
 		expect(withToolbar).toContain(
 			'    <ConsentDialogTriggerToolbar showWhen="after-prompt" />\n'

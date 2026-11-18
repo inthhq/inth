@@ -847,8 +847,8 @@ export const buildProviderSnippet = function buildProviderSnippet(
 		? `, presentation: ${JSON.stringify(presentation)}`
 		: '';
 	const componentImports = options.toolbar
-		? 'ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider, offline'
-		: 'ConsentBanner, ConsentDialog, ConsentProvider, offline';
+		? 'ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider'
+		: 'ConsentBanner, ConsentDialog, ConsentProvider';
 	const toolbarLine = options.toolbar
 		? '\n    <ConsentDialogTriggerToolbar showWhen="after-prompt" />'
 		: '';
@@ -859,8 +859,9 @@ const policyRules = [
   ${ruleSource},
 ];
 `;
-	const mode = recommended ? 'testing()' : 'testing({ policyRules })';
+	const mode = recommended ? 'testing()' : 'testing({ policy: policyRules })';
 	return `${presetImport}import { ${componentImports} } from 'c15t/react';
+import { testing } from 'c15t/react/testing';
 
 ${rulesBlock}
 export const Providers = ({ children }) => (
