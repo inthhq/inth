@@ -58,4 +58,9 @@ export interface ClearOnRevocationTools {
 	optionalConsentCategories: readonly OptionalConsentCategory[];
 	/** `ownedStorageKeys`: the names cleanup never deletes. */
 	ownedStorageKeys: (config?: StorageConfig) => string[];
+	/**
+	 * The sessionStorage names cleanup never deletes. Inth keeps no consent
+	 * record there, only a `journey: 'tab'` journey id.
+	 */
+	ownedSessionStorageKeys: readonly string[];
 }

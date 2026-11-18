@@ -59,6 +59,7 @@ import { experimentArmRef } from '../libs/experiment';
 import type { ExperimentState, ServerExperiment } from '../libs/experiment';
 import { failedResponseError } from '../libs/failed-response';
 import { readHeader, toHeaders } from '../libs/headers';
+import { isCleartextRemoteURL } from '../libs/identity-headers';
 import { createJourneyId } from '../libs/journey';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
 import {
@@ -73,9 +74,13 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
+import { resolveStorageKeys } from '../libs/storage-keys';
 import { trimSlash } from '../libs/url';
+import {
+	inthProtocolHeaders,
+	readProducerPolicyContract,
+} from '../libs/version-header';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
-import { resolveStorageKeys } from '../modules/persistence/record-storage';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
 import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
 import {
@@ -84,15 +89,10 @@ import {
 } from '../transports/init-output';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
-import {
-	inthProtocolHeaders,
-	readProducerPolicyContract,
-} from '../transports/version-header';
 import type { KernelConfig } from '../types';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
-	isCleartextRemoteURL,
 	stripIdentityForCleartext,
 } from './consent-proxy';
 import {

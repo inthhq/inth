@@ -83,8 +83,6 @@ export type {
 } from './transports/hosted-records';
 export { createHostedRecordTransport } from './transports/hosted-records';
 export type { HostedInitRequest } from './transports/hosted-init-request';
-export { createHostedInitRequest } from './transports/hosted-init-request';
-export { hasPrefetchedInitialData } from './libs/prefetch/window-key';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,
@@ -114,11 +112,6 @@ export type {
 } from './modes';
 export { hosted } from './modes';
 export type { ConsentTesting } from './transports/testing';
-export {
-	NO_RECORDS_WARNING,
-	warnNoConsentRecords,
-	warnNoConsentRecordsInDevelopment,
-} from './libs/no-records-warning';
 export { buildSubjectPostBody } from './transports/subject-body';
 export {
 	INTH_POLICY_CONTRACT_HEADER,
@@ -126,7 +119,7 @@ export {
 	inthProtocolHeaders,
 	inthProtocolParams,
 	inthVersionHeaders,
-} from './transports/version-header';
+} from './libs/version-header';
 export type {
 	AdTechProvider,
 	ConfirmedCoverage,
@@ -176,20 +169,16 @@ export type {
 } from './types';
 
 // -- Consent categories --------------------------------------------------------
-export type {
-	AllConsentNames,
-	ConsentInfo,
-	ConsentType,
-} from './consent/consent-types';
+export type { AllConsentNames, ConsentType } from './consent/consent-types';
 export { allConsentNames, consentTypes } from './consent/consent-types';
-export type { NamespaceProps } from './consent/compliance';
 
 // -- Consent conditions --------------------------------------------------------
 export type { HasCondition } from './libs/has';
 export { has } from './libs/has';
+export { policyDefault } from './consent/consent-types';
 
 // -- Storage -------------------------------------------------------------------
-export type { CookieOptions, StorageConfig } from './libs/cookie';
+export type { StorageConfig } from './libs/cookie';
 export { getRootDomain } from './libs/cookie';
 
 // -- Blockers ------------------------------------------------------------------
@@ -231,7 +220,6 @@ export type {
 	CMPStatus,
 	DisplayStatus,
 	EventStatus,
-	FetchGVLResult,
 	IABConfig,
 	LegalLink,
 	LegalLinks,
@@ -245,7 +233,6 @@ export type {
 	SSRInitialData,
 	SSRInitRequestContext,
 	SSRInitRequestMetadata,
-	SSRSkippedReason,
 	TCData,
 	TCDataOutsideTCF,
 	TCFApi,
@@ -318,13 +305,15 @@ export {
 } from './libs/policy-actions';
 export {
 	actionAppearanceFromTheme,
-	applyExperimentAssignment,
-	applyExperimentTheme,
 	defineExperiment,
 	hostExperiment,
-	resolveExperimentTheme,
 	seedExperiment,
 } from './libs/experiment';
+export {
+	applyExperimentAssignment,
+	applyExperimentTheme,
+	resolveExperimentTheme,
+} from './libs/experiment-presentation';
 export type {
 	ActionAppearance,
 	ConsentExperiment,
@@ -339,7 +328,6 @@ export type {
 	StartExperimentOptions,
 } from './libs/experiment';
 export type { ConsentJourneyOption, JourneyState } from './libs/journey';
-export { createUnreportedJourneys } from './libs/journey';
 export {
 	EXPERIMENT_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
@@ -385,11 +373,8 @@ export {
 export type { RevocationReloadOptions } from './modules/revocation-reload';
 export { watchRevocationReload } from './modules/revocation-reload';
 export type { ResolveVendorsInput, VendorOwner } from './libs/vendors';
-export {
-	declareOwnedVendors,
-	forgetOwnedVendors,
-	vendorsListedUnder,
-} from './libs/vendors';
+export { declareOwnedVendors, forgetOwnedVendors } from './libs/vendors';
+export { vendorsListedUnder } from './libs/vendor-listing';
 export { deferInitGvl } from './transports/gvl-reference';
 export {
 	IAB_UNAVAILABLE_ERROR_CODE,

@@ -5,7 +5,6 @@
  * by `parseUrl` for relative-URL resolution). Each helper takes plain
  * data and returns a boolean / `URL`.
  */
-import type { NetworkBlockerRule } from './types';
 
 /**
  * Normalize an HTTP method to upper-case. `null`/`undefined`/empty
@@ -52,61 +51,4 @@ export const parseUrl = function parseUrl(
 	} catch {
 		return null;
 	}
-};
-
-/**
- * Match a hostname against a rule's `domain`, treating the rule as a
- * suffix match: `example.com` rule matches both `example.com` and
- * `cdn.example.com`. Case-insensitive.
- */
-export const hostnameMatchesRule = function hostnameMatchesRule(
-	hostname: string,
-	rule: NetworkBlockerRule
-): boolean {
-	if (!hostname) {
-		return false;
-	}
-	const ruleDomain = rule.domain.trim().toLowerCase();
-	const targetHost = hostname.trim().toLowerCase();
-	if (!ruleDomain || !targetHost) {
-		return false;
-	}
-	if (targetHost === ruleDomain) {
-		return true;
-	}
-	return targetHost.endsWith(`.${ruleDomain}`);
-};
-
-/**
- * Match a request pathname against a rule's optional `pathIncludes`
- * filter (substring match). When the rule has no `pathIncludes`, every
- * pathname matches.
- */
-export const pathMatchesRule = function pathMatchesRule(
-	pathname: string,
-	rule: NetworkBlockerRule
-): boolean {
-	if (typeof rule.pathIncludes !== 'string') {
-		return true;
-	}
-	if (!pathname) {
-		return false;
-	}
-	return pathname.includes(rule.pathIncludes);
-};
-
-/**
- * Match an HTTP method against a rule's optional `methods` allow-list.
- * When the rule has no `methods`, every method matches. Comparison is
- * normalized to upper-case on both sides.
- */
-export const methodMatchesRule = function methodMatchesRule(
-	method: string,
-	rule: NetworkBlockerRule
-): boolean {
-	if (!rule.methods || rule.methods.length === 0) {
-		return true;
-	}
-	const upper = normalizeMethod(method);
-	return rule.methods.some((m: string) => normalizeMethod(m) === upper);
 };

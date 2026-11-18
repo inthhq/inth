@@ -15,6 +15,7 @@ import type { StorageConfig } from '../../libs/cookie/types';
 import { legacySubjectIdKey } from '../../libs/legacy-subject-id';
 import {
 	EXPERIMENT_STORAGE_KEY,
+	JOURNEY_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	resolveStorageKeys,
 	storageKeyFamilies,
@@ -54,5 +55,6 @@ export const clearOnRevocationTools: ClearOnRevocationTools = {
 	cookieDomainsOf,
 	gateState: getEffectiveGateState,
 	optionalConsentCategories: OPTIONAL_CONSENT_CATEGORIES,
+	ownedSessionStorageKeys: [JOURNEY_STORAGE_KEY],
 	ownedStorageKeys,
 };

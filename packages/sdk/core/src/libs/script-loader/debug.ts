@@ -1,4 +1,4 @@
-import { SCRIPT_DEBUG_LISTENERS_KEY } from '../../runtime/page-globals';
+import { SCRIPT_DEBUG_LISTENERS_KEY } from '../page-globals';
 import type {
 	ScriptDebugEvent,
 	ScriptDebugEventInput,

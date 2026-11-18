@@ -16,6 +16,7 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import { SERVER_START_FAILED_EVENT } from '../../libs/page-globals';
 import type { Script } from '../../libs/script-loader/types';
 import { STORAGE_KEY } from '../../libs/storage-keys';
 import { validateStoredConsentEnvelope } from '../../modules/persistence/record-codec';
@@ -25,7 +26,6 @@ import {
 	encodeVendorChoice,
 } from '../../modules/persistence/writer/encode';
 import { releaseServerStartedScripts } from '../../surface-actions/plain-scripts';
-import { SERVER_START_FAILED_EVENT } from '../page-globals';
 import {
 	serverScriptStart,
 	serverScriptStartPlan,

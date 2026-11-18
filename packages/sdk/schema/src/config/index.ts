@@ -14,8 +14,6 @@ export type ConsentBannerPosition =
 
 export type ConsentManagerMode = 'dialog' | 'sidebar-left' | 'sidebar-right';
 
-export type ConsentSaveAction = 'all' | 'necessary' | 'custom';
-
 export type ConsentLegalLinkKey =
 	| 'privacyPolicy'
 	| 'cookiePolicy'
@@ -528,8 +526,4 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 	components?: ConsentComponentSlots<T>;
 }
 
-export {
-	DEFAULT_BANNER_POSITION,
-	DEFAULT_MANAGER_MODE,
-	defaultConsentConfig,
-} from './defaults';
+export { DEFAULT_BANNER_POSITION, defaultConsentConfig } from './defaults';

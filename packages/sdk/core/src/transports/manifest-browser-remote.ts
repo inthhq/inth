@@ -48,6 +48,24 @@ const normalizeGeoValue = function normalizeGeoValue(
 };
 
 /**
+ * A location as the policy resolver reads it: trimmed, upper-case codes,
+ * from `country`/`region` or else `countryCode`/`regionCode`. A field that
+ * is not a non-blank string is unknown.
+ *
+ * @internal
+ */
+export const readGeoInputs = function readGeoInputs(
+	payload: unknown
+): ManifestModeInputs {
+	const geo = (payload ?? {}) as Record<string, unknown>;
+	return {
+		country:
+			normalizeGeoValue(geo.country) ?? normalizeGeoValue(geo.countryCode),
+		region: normalizeGeoValue(geo.region) ?? normalizeGeoValue(geo.regionCode),
+	};
+};
+
+/**
  * Ask a same-origin route for the visitor's `{ country, region }`.
  *
  * @returns The location, or `undefined` when the route fails; the `/init`
@@ -67,14 +85,7 @@ export const fetchGeoInputs = async function fetchGeoInputs(
 		if (!response.ok) {
 			return undefined;
 		}
-		const payload = (await response.json()) as {
-			country?: unknown;
-			region?: unknown;
-		};
-		return {
-			country: normalizeGeoValue(payload.country),
-			region: normalizeGeoValue(payload.region),
-		};
+		return readGeoInputs(await response.json());
 	} catch {
 		return undefined;
 	}

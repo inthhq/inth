@@ -6,7 +6,7 @@
  *
  * @internal
  */
-import type { CookieOptions, StorageConfig } from './cookie';
+import type { StorageConfig } from './cookie';
 import { deleteCookie, getRawCookieValue, getRootDomain } from './cookie';
 import { cookieDomainsOf } from './cookie/domain-utils';
 import { localStorageOf } from './local-storage';
@@ -75,8 +75,7 @@ export const readLegacySubjectId = function readLegacySubjectId(
  * @internal
  */
 export const removeLegacySubjectId = function removeLegacySubjectId(
-	config: StorageConfig | undefined,
-	cookie?: CookieOptions
+	config: StorageConfig | undefined
 ): void {
 	if (typeof document === 'undefined') {
 		return;
@@ -100,9 +99,8 @@ export const removeLegacySubjectId = function removeLegacySubjectId(
 		getRootDomain(),
 		...cookieDomainsOf(window.location.hostname),
 		config?.defaultDomain ?? '',
-		cookie?.domain ?? '',
 	]);
 	for (const domain of domains) {
-		deleteCookie(key, { crossSubdomain: false, domain, path: '/' });
+		deleteCookie(key, { defaultDomain: domain });
 	}
 };

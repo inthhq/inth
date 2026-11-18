@@ -275,9 +275,9 @@
 			"default": "./lib/core/dist/runtime/deferred-snapshot.js"
 		},
 		"./runtime/page-globals": {
-			"types": "./lib/core/dist-types/runtime/page-globals.d.ts",
-			"import": "./lib/core/dist/runtime/page-globals.js",
-			"default": "./lib/core/dist/runtime/page-globals.js"
+			"types": "./lib/core/dist-types/libs/page-globals.d.ts",
+			"import": "./lib/core/dist/libs/page-globals.js",
+			"default": "./lib/core/dist/libs/page-globals.js"
 		},
 		"./runtime/stand-in-kernel": {
 			"types": "./lib/core/dist-types/runtime/stand-in-kernel.d.ts",
@@ -285,9 +285,9 @@
 			"default": "./lib/core/dist/runtime/stand-in-kernel.js"
 		},
 		"./runtime/storage-for": {
-			"types": "./lib/core/dist-types/runtime/storage-for.d.ts",
-			"import": "./lib/core/dist/runtime/storage-for.js",
-			"default": "./lib/core/dist/runtime/storage-for.js"
+			"types": "./lib/core/dist-types/libs/storage-for.d.ts",
+			"import": "./lib/core/dist/libs/storage-for.js",
+			"default": "./lib/core/dist/libs/storage-for.js"
 		},
 		"./runtime/save-preload": {
 			"types": "./lib/core/dist-types/runtime/save-preload.d.ts",

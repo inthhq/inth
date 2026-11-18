@@ -184,22 +184,17 @@ export const mapInitOutputToInitResponse = function mapInitOutputToInitResponse(
 	return mapped;
 };
 
-/**
- * Configuration after folding validated prefetch records and policy.
- */
-export type TransportKernelConfig = KernelConfig;
-
 export const mergeInitResponseIntoKernelConfig =
 	// oxlint-disable-next-line complexity -- Preserve established branch order and control flow.
 	function mergeInitResponseIntoKernelConfig(
-		base: TransportKernelConfig,
+		base: KernelConfig,
 		response: TransportInitResponse | undefined
-	): TransportKernelConfig {
+	): KernelConfig {
 		if (!response) {
 			return base;
 		}
 
-		const merged: TransportKernelConfig = { ...base };
+		const merged: KernelConfig = { ...base };
 		const derivedOverrides: KernelOverrides = {};
 
 		if (response.location?.countryCode) {
@@ -334,7 +329,7 @@ export const mergeInitResponseIntoKernelConfig =
 
 export const initResponseToKernelConfig = function initResponseToKernelConfig(
 	response: TransportInitResponse | undefined
-): TransportKernelConfig {
+): KernelConfig {
 	return mergeInitResponseIntoKernelConfig({}, response);
 };
 
@@ -445,11 +440,11 @@ export const kernelConfigToInitResponse = function kernelConfigToInitResponse(
 
 export const mergeInitOutputIntoKernelConfig =
 	function mergeInitOutputIntoKernelConfig(
-		base: TransportKernelConfig,
+		base: KernelConfig,
 		payload: RichInitOutput | undefined,
 		headers: Record<string, string> = {},
 		options: MapInitOutputOptions = {}
-	): TransportKernelConfig {
+	): KernelConfig {
 		return mergeInitResponseIntoKernelConfig(
 			base,
 			payload
@@ -462,6 +457,6 @@ export const initOutputToKernelConfig = function initOutputToKernelConfig(
 	payload: RichInitOutput | undefined,
 	headers: Record<string, string> = {},
 	options: MapInitOutputOptions = {}
-): TransportKernelConfig {
+): KernelConfig {
 	return mergeInitOutputIntoKernelConfig({}, payload, headers, options);
 };

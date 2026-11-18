@@ -3,7 +3,7 @@ package com.inth.core.transport
 /**
  * Header contract shared with `@c15t/core`.
  *
- * See `packages/sdk/core/src/transports/version-header.ts`. `x-c15t-version` is
+ * See `packages/sdk/core/src/libs/version-header.ts`. `x-c15t-version` is
  * telemetry only. `x-c15t-policy-contract` is the capability declaration: a
  * producer that speaks a different contract answers `unsupported-contract`
  * rather than a wire this build would misread.

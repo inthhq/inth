@@ -11,12 +11,14 @@
  */
 import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
 
-import type { CookieOptions } from '../../libs/cookie';
 import { deleteCookie, writeCookie } from '../../libs/cookie';
 import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
-import { storageKeyFamilies } from '../../libs/storage-keys';
+import {
+	storageKeyFamilies,
+	resolveStorageKeys,
+} from '../../libs/storage-keys';
 import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec';
-import { readStoredClearEpoch, resolveStorageKeys } from './record-storage';
+import { readStoredClearEpoch } from './record-storage';
 import type { StorageConfig } from './types';
 
 const removeLocalStorageKey = function removeLocalStorageKey(
@@ -44,7 +46,6 @@ const removeLocalStorageKey = function removeLocalStorageKey(
  * @internal
  */
 export const clearStoredConsentRecords = function clearStoredConsentRecords(
-	cookie?: CookieOptions,
 	config?: StorageConfig
 ): void {
 	if (typeof document === 'undefined') {
@@ -68,9 +69,9 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 		removeLocalStorageKey(key);
 	}
 	for (const key of both) {
-		deleteCookie(key, cookie, config);
+		deleteCookie(key, config);
 	}
-	removeLegacySubjectId(config, cookie);
+	removeLegacySubjectId(config);
 	// Addon bytes must be removed even when the addon is not mounted.
 	removeLocalStorageKey(IAB_STORAGE_KEYS.authority);
 	for (const key of [
@@ -78,7 +79,7 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 		IAB_STORAGE_KEYS.additionalConsent,
 	]) {
 		removeLocalStorageKey(key);
-		deleteCookie(key, cookie, config);
+		deleteCookie(key, config);
 		deleteCookie(key);
 	}
 };
@@ -105,8 +106,7 @@ export const encodeClearEpoch = function encodeClearEpoch(
  */
 export const writeStoredClearEpoch = function writeStoredClearEpoch(
 	epoch: number,
-	config: StorageConfig | undefined,
-	cookie?: CookieOptions
+	config: StorageConfig | undefined
 ): void {
 	const key = resolveStorageKeys(config).epoch;
 	const text = encodeClearEpoch(epoch);
@@ -115,7 +115,7 @@ export const writeStoredClearEpoch = function writeStoredClearEpoch(
 	} catch {
 		// Blocked or full storage: the cookie copy still carries the epoch.
 	}
-	writeCookie(key, text, cookie, config);
+	writeCookie(key, text, config);
 };
 
 /**
@@ -134,7 +134,7 @@ export const clearStoredRecords = function clearStoredRecords(
 	if (typeof document === 'undefined') {
 		return;
 	}
-	clearStoredConsentRecords(undefined, config);
+	clearStoredConsentRecords(config);
 	// The epoch outlives the clear it records: decisions confirmed before it
 	// stay void wherever another runtime writes them back. Always past the
 	// previous epoch, even when the clock went back: a lower epoch would let

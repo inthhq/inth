@@ -10,6 +10,7 @@ import {
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
 import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
+import { resolveStorageKeys } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { createClearOnRevocation } from '../../clear-on-revocation';
@@ -17,7 +18,6 @@ import { createPersistence, readStoredRecordsFromCookieHeader } from '../index';
 import {
 	readStoredNoticeDismissal,
 	readStoredVendorChoice,
-	resolveStorageKeys,
 } from '../record-storage';
 import {
 	clearStoredConsentRecords,
@@ -470,7 +470,7 @@ test.each([undefined, { storageKey: 'review-custom-notice' }])(
 		document.cookie = `${key}-subject=${encodeNoticeSubjectCompact(record)}; path=/`;
 		const restored = readStoredNoticeDismissal(storageConfig, now);
 		expect(restored?.ok && restored.record.subject?.subjectId).toBe('original');
-		clearStoredConsentRecords(undefined, storageConfig);
+		clearStoredConsentRecords(storageConfig);
 		expect(readStoredNoticeDismissal(storageConfig, now)).toBeNull();
 	}
 );
@@ -530,7 +530,7 @@ test.each([undefined, { storageKey: 'subject-removal' }])(
 		expect(changed?.ok && changed.record.subject?.subjectId).toBe(
 			'server-canonical'
 		);
-		clearStoredConsentRecords(undefined, storageConfig);
+		clearStoredConsentRecords(storageConfig);
 	}
 );
 

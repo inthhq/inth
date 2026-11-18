@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createConsentKernel } from '../../kernel/index';
+import { PREFETCH_WINDOW_KEY } from '../../libs/page-globals';
 import type { PrefetchedInitialData } from '../../libs/prefetch/prefetch';
 import { mapInitOutputToInitResponse } from '../../transports/init-output';
 import { hosted } from '../../transports/mode';
@@ -16,7 +17,6 @@ import {
 	primeInitRequest,
 	snapshotFromPrefetchedInit,
 } from '../deferred-snapshot';
-import { PREFETCH_WINDOW_KEY } from '../page-globals';
 import init from './fixtures/hosted-init-gb.json' with { type: 'json' };
 
 const NOW = Date.UTC(2026, 10, 2, 12);

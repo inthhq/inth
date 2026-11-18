@@ -9,8 +9,6 @@ import {
 import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { SSRInitialData } from '../../options/ssr';
-import { PREFETCH_WINDOW_KEY } from '../../runtime/page-globals';
-import { inthProtocolParams } from '../../transports/version-header';
 import type { InitContext, KernelJourney } from '../../types';
 import {
 	claimEarlyExperimentArm,
@@ -26,20 +24,24 @@ import {
 	hasStoredConsentRecord,
 	JOURNEY_WINDOW_KEY,
 } from '../journey';
+import { PREFETCH_WINDOW_KEY } from '../page-globals';
 import {
-	buildRequestContextParams,
-	buildRequestContextSentHeaders,
 	createBrowserRequestContext,
 	createRuntimeRequestContextMatcher,
 	matchesStoredRequestContext,
 } from '../request-context';
-import { DEFAULT_INIT_CREDENTIALS } from '../request-context-headers';
+import {
+	buildRequestContextParams,
+	buildRequestContextSentHeaders,
+	DEFAULT_INIT_CREDENTIALS,
+} from '../request-context-headers';
 import {
 	EXPERIMENT_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
 	STORED_NAMES_CHECK,
 	storedChoiceNames,
 } from '../storage-keys';
+import { inthProtocolParams } from '../version-header';
 import type { PrefetchOptions } from './types';
 
 const WINDOW_PROMISES_KEY = PREFETCH_WINDOW_KEY;

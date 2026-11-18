@@ -193,9 +193,6 @@ const firstAddress = function firstAddress(
 	return first;
 };
 
-/** Header names checked in order, first match wins. */
-export const DEFAULT_IP_HEADERS_LIST: readonly string[] = DEFAULT_IP_HEADERS;
-
 export interface IpAddressConfig {
 	readonly tracking?: boolean;
 	readonly masking?: boolean;

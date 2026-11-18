@@ -20,6 +20,7 @@ import type {
 	ResolveInitFromManifestInputs,
 } from '@inth/sdk-schema/types';
 
+import { readGlobalPrivacyControl } from '../libs/global-privacy-control';
 import { createUnreportedJourneys } from '../libs/journey';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { trimSlash } from '../libs/url';
@@ -147,21 +148,6 @@ const asksInit = function asksInit(
 		!mayBeLocationFree(resolved) ||
 		undefined
 	);
-};
-
-const readGlobalPrivacyControl = function readGlobalPrivacyControl():
-	| boolean
-	| undefined {
-	if (typeof navigator === 'undefined') {
-		return undefined;
-	}
-	try {
-		const value = (navigator as Navigator & { globalPrivacyControl?: unknown })
-			.globalPrivacyControl;
-		return typeof value === 'boolean' ? value : undefined;
-	} catch {
-		return undefined;
-	}
 };
 
 const mergeInputs = function mergeInputs(

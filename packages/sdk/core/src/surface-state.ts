@@ -20,7 +20,7 @@ export { allConsentNames, consentTypes } from './consent/consent-types';
 export type { AllConsentNames, ConsentType } from './consent/consent-types';
 export { has } from './libs/has';
 export type { HasCondition } from './libs/has';
-export { deniedVendorIds } from './modules/has';
+export { deniedVendorIds } from './modules/vendor-denial';
 export { vendorsListedUnder } from './libs/vendor-listing';
 export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
 export { resolveConsentPresentation } from './libs/policy-actions';
@@ -38,7 +38,7 @@ export type { ResolvedIABCopy } from './libs/consent-copy';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,
-} from './libs/experiment';
+} from './libs/experiment-presentation';
 export { hasGlobalPrivacyControlSignal } from './libs/global-privacy-control';
 export { defaultTranslationConfig } from './translations/defaults';
 export { createLazyIABFactory, iabSurfaceActions } from './runtime/lazy-iab';

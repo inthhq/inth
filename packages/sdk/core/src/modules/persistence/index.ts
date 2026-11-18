@@ -112,7 +112,7 @@ export type {
 	StoredConsentEnvelope,
 	StoredVendorChoice,
 } from './record-codec';
-export { resolveStorageKeys } from './record-storage';
+export { resolveStorageKeys } from '../../libs/storage-keys';
 export { STORED_NAMES_CHECK, storedChoiceNames } from '../../libs/storage-keys';
 
 export const CONSENT_STORAGE_KEY = STORAGE_KEY_V2;

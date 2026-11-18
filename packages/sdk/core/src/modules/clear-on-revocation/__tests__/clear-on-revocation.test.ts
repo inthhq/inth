@@ -173,6 +173,18 @@ describe('web storage cleanup', () => {
 		expect(sessionStorage.getItem('unrelated')).toBe('keep');
 	});
 
+	test("keeps a 'tab' journey's id in sessionStorage", () => {
+		sessionStorage.setItem('inth-journey-v1', 'journey');
+		sessionStorage.setItem('inth-tracking', 'tracking');
+		attach(
+			{ measurement: { sessionStorage: ['inth*'] } },
+			createConsentKernel(),
+			'custom'
+		);
+		expect(sessionStorage.getItem('inth-journey-v1')).toBe('journey');
+		expect(sessionStorage.getItem('inth-tracking')).toBeNull();
+	});
+
 	test('matches exact and prefix names without skipping keys as indexes shift', () => {
 		for (const key of [
 			'track:1',

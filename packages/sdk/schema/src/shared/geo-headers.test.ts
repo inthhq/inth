@@ -3,41 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	consentInputsToOverrides,
 	extractConsentRequestInputs,
-	getRegionFromHeaders,
-	headersToRecord,
 	parseGlobalPrivacyControl,
 	CONSENT_REQUEST_HEADER_NAMES,
 } from './geo-headers';
-
-describe('getRegionFromHeaders', () => {
-	it('reads x-c15t-country and x-c15t-region', () => {
-		expect(
-			getRegionFromHeaders({
-				'x-c15t-country': 'DE',
-				'x-c15t-region': 'BE',
-			})
-		).toEqual({ country: 'DE', region: 'BE' });
-	});
-
-	it('falls back to cf-ipcountry', () => {
-		expect(getRegionFromHeaders({ 'cf-ipcountry': 'FR' })).toEqual({
-			country: 'FR',
-		});
-	});
-
-	it('prioritizes x-c15t-country over cf-ipcountry', () => {
-		expect(
-			getRegionFromHeaders({
-				'cf-ipcountry': 'FR',
-				'x-c15t-country': 'DE',
-			})
-		).toEqual({ country: 'DE' });
-	});
-
-	it('returns empty object when no geo headers are present', () => {
-		expect(getRegionFromHeaders({})).toEqual({});
-	});
-});
 
 describe('extractConsentRequestInputs', () => {
 	it('x-c15t-* overrides always beat infrastructure headers', () => {
@@ -99,21 +67,13 @@ describe('extractConsentRequestInputs', () => {
 	});
 });
 
-describe('consentInputsToOverrides / headersToRecord', () => {
+describe('consentInputsToOverrides', () => {
 	it('drops absent fields and keeps gpc=false', () => {
 		expect(consentInputsToOverrides({ country: 'DE', gpc: false })).toEqual({
 			country: 'DE',
 			gpc: false,
 		});
 		expect(consentInputsToOverrides({})).toEqual({});
-	});
-
-	it('headersToRecord lowercases keys', () => {
-		const record = headersToRecord(
-			new Headers({ 'Accept-Language': 'de', 'X-C15T-Country': 'DE' })
-		);
-		expect(record['x-c15t-country']).toBe('DE');
-		expect(record['accept-language']).toBe('de');
 	});
 });
 

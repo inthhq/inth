@@ -40,15 +40,6 @@ export interface SSRInitRequestMetadata {
 }
 
 /**
- * Why server-side init data was not applied on the client.
- */
-export type SSRSkippedReason =
-	| 'no_data'
-	| 'fetch_failed'
-	| 'context_mismatch'
-	| null;
-
-/**
  * Init data fetched on the server and handed to the client provider.
  */
 export interface SSRInitialData {

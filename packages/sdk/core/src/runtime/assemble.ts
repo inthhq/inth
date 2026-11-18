@@ -20,6 +20,7 @@ import { hostExperiment, startExperiment } from '../libs/experiment';
 import { generateSubjectId } from '../libs/generate-subject-id';
 import { extractConsentNamesFromCondition } from '../libs/has';
 import { removeLegacySubjectId } from '../libs/legacy-subject-id';
+import { storageFor } from '../libs/storage-for';
 import type { IframeBlockerHandle } from '../modules/iframe-blocker/types';
 import { holdNetworkRequests, NOT_HELD } from '../modules/network-blocker/hold';
 import type { NetworkHold } from '../modules/network-blocker/hold';
@@ -38,7 +39,6 @@ import {
 	requireTransportFactory,
 } from './runtime-kernel';
 import { scriptRegistry } from './script-registry';
-import { storageFor } from './storage-for';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeIABHandle,
@@ -194,9 +194,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		},
 		get consentCategories(): AllConsentNames[] {
 			const snapshot = kernel.getSnapshot();
-			return displayedCategories(
-				snapshot.evaluationPolicy.choiceScope ?? snapshot.policyRule.scope
-			);
+			return displayedCategories(snapshot.evaluationPolicy.choiceScope);
 		},
 		dispose() {
 			disposed = true;

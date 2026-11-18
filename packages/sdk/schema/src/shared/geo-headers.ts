@@ -152,45 +152,9 @@ export const consentInputsToOverrides = function consentInputsToOverrides(
 	return overrides;
 };
 
-export const headersToRecord = function headersToRecord(
-	headers: Headers
-): Record<string, string> {
-	const record: Record<string, string> = {};
-	headers.forEach((value, key) => {
-		record[key.toLowerCase()] = value;
-	});
-	return record;
-};
-
-/**
- * Resolves country and region from common geo IP headers.
- *
- * @deprecated Use {@link extractConsentRequestInputs} — same precedence,
- * plus language and GPC. Kept for the backend's existing call sites.
- */
-export const getRegionFromHeaders = function getRegionFromHeaders(
-	headers: Record<string, string | undefined>
-): {
-	region?: string;
-	country?: string;
-} {
-	const country = pickHeader(headers, COUNTRY_HEADERS);
-	const region = pickHeader(headers, REGION_HEADERS);
-
-	return {
-		...(country && { country }),
-		...(region && { region }),
-	};
-};
-
 // Client IP derivation lives alongside geo: both recover request metadata
 // from proxy headers, and both are shared so two backends cannot disagree.
-export {
-	DEFAULT_IP_HEADERS_LIST,
-	getIpAddress,
-	type IpAddressConfig,
-	maskIpAddress,
-} from './client-ip';
+export { getIpAddress, type IpAddressConfig, maskIpAddress } from './client-ip';
 
 // Origin allowlisting: shared for the same reason as the rest of this
 // module — a security decision that two live backends must not disagree on.

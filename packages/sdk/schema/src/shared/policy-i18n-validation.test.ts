@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { validatePolicyI18nConfig } from './policy-i18n-validation';
 import { policyRulePresets } from './policy-rule-presets';
-import { getTranslationsData, validateMessages } from './translations-runtime';
+import { getTranslationsData } from './translations-runtime';
 
 describe('stock policy message profiles', () => {
 	it('accepts recommended policy presets without custom translations', () => {
 		expect(
-			validateMessages({
+			validatePolicyI18nConfig({
 				policies: [
 					policyRulePresets.australiaOptOut(),
 					policyRulePresets.japanOptOut(),
@@ -22,7 +23,7 @@ describe('stock policy message profiles', () => {
 				...policyRulePresets.australiaOptOut(),
 				i18n: { messageProfile },
 			};
-			expect(validateMessages({ policies: [rule] }).errors).toEqual([]);
+			expect(validatePolicyI18nConfig({ policies: [rule] }).errors).toEqual([]);
 			const result = getTranslationsData('en', undefined, {
 				logger: { warn },
 				policyI18n: rule.i18n,
@@ -36,14 +37,14 @@ describe('stock policy message profiles', () => {
 			...policyRulePresets.australiaOptOut(),
 			i18n: { messageProfile: 'typo' },
 		};
-		expect(validateMessages({ policies: [rule] }).errors).toContain(
+		expect(validatePolicyI18nConfig({ policies: [rule] }).errors).toContain(
 			"Policy 'australia_opt_out' references missing i18n profile 'typo'."
 		);
 	});
 	it('validates an explicitly configured stock-profile override', () => {
 		const policies = [policyRulePresets.australiaOptOut()];
 		expect(
-			validateMessages({
+			validatePolicyI18nConfig({
 				i18n: { messages: { preferences: { translations: {} } } },
 				policies,
 			}).errors
@@ -51,7 +52,7 @@ describe('stock policy message profiles', () => {
 			"Policy 'australia_opt_out' references i18n profile 'preferences' with no configured translations."
 		);
 		expect(
-			validateMessages({
+			validatePolicyI18nConfig({
 				i18n: { messages: { preferences: { translations: { en: {} } } } },
 				policies,
 			}).errors

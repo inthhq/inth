@@ -15,6 +15,7 @@
 
 import { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
 import { hasStoredConsentRecord } from '../libs/journey';
+import { PREFETCH_WINDOW_KEY } from '../libs/page-globals';
 import { primeInitRequest } from '../libs/prefetch/prefetch';
 import type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
 import type { PrefetchOptions } from '../libs/prefetch/types';
@@ -22,7 +23,6 @@ import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers';
 import { readHostedMode } from '../transports/hosted-modes';
 import type { ProviderTransportFactory } from '../transports/mode';
 import type { KernelOverrides } from '../types';
-import { PREFETCH_WINDOW_KEY } from './page-globals';
 
 export { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
 export { primeInitRequest } from '../libs/prefetch/prefetch';

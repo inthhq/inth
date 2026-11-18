@@ -122,7 +122,7 @@ export const writeStoredExperimentArm = function writeStoredExperimentArm(
 		try {
 			storage.setItem(EXPERIMENT_STORAGE_KEY, serialized);
 			if (getRawCookieValue(EXPERIMENT_STORAGE_KEY)) {
-				deleteCookie(EXPERIMENT_STORAGE_KEY, undefined, storageConfig);
+				deleteCookie(EXPERIMENT_STORAGE_KEY, storageConfig);
 			}
 			return;
 		} catch {
@@ -132,7 +132,6 @@ export const writeStoredExperimentArm = function writeStoredExperimentArm(
 	setCookie(
 		EXPERIMENT_STORAGE_KEY,
 		encodeURIComponent(serialized),
-		undefined,
 		storageConfig
 	);
 };

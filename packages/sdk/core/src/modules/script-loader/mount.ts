@@ -16,7 +16,7 @@ import type {
 	LOADER_RAN_KEY,
 	STARTED_KEY,
 	StartedElement,
-} from '../../runtime/page-globals';
+} from '../../libs/page-globals';
 import type { ConsentSnapshot } from '../../types';
 import { isCallbackOnly } from './callback-only';
 import { buildCallbackInfo, hasAnyCallback, invokeCallback } from './callbacks';
@@ -245,7 +245,7 @@ const observeElement = (
 };
 
 // Written out, not imported: the loader's chunk imports nothing the first
-// load has. The types keep them equal to `../../runtime/page-globals`.
+// load has. The types keep them equal to `../../libs/page-globals`.
 const LOADER_RAN: typeof LOADER_RAN_KEY = '__inthLoaderRan';
 const STARTED: typeof STARTED_KEY = '__inthStarted';
 
@@ -716,7 +716,9 @@ export const mountScript = function mountScript(
 
 	const target =
 		pendingResource?.target ??
-		(script.target === 'body' ? document.body : document.head);
+		(script.target === 'body'
+			? (document.body ?? document.head)
+			: document.head);
 
 	if (batch) {
 		const pending: PendingMount = {

@@ -62,6 +62,7 @@ export type {
 export {
 	clearManifestCache,
 	createManifestCache,
+	DEFAULT_RESOLVE_TIMEOUT_MS,
 	createManifestRequestUrl,
 	fetchCachedManifest,
 	getManifestSMaxAge,
@@ -70,6 +71,7 @@ export {
 	MANIFEST_PASSTHROUGH_HEADERS,
 	ManifestUnavailableError,
 	resolveManifestSourceUrl,
+	withResolutionBudget,
 } from '../libs/manifest-cache-runtime';
 export type {
 	ConsentProxyRouteMethodHandlers,

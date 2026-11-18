@@ -44,7 +44,8 @@ export type RecordPatchResult =
 	  }
 	| { ok: false; issues: RecordIssue[] };
 
-const EMPTY_CHOICE: ExplicitChoice = Object.freeze({
+/** A choice with no category decided. @internal */
+export const EMPTY_CHOICE: ExplicitChoice = Object.freeze({
 	categories: Object.freeze({}),
 	version: 3,
 }) as ExplicitChoice;

@@ -34,6 +34,7 @@ import {
 	parsePolicyContractHeader,
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
+	primaryLanguage,
 	readJourneyParams,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
@@ -50,6 +51,7 @@ import type {
 	SessionJourney,
 } from '@inth/sdk-schema/types';
 
+import { markResponsePrivate } from '../libs/identity-headers';
 import {
 	fetchCachedManifest,
 	getManifestAge,
@@ -65,6 +67,10 @@ import type {
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { reportConsentSession } from '../libs/session-report';
 import {
+	inthProtocolHeaders,
+	readProducerPolicyContract,
+} from '../libs/version-header';
+import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
 } from '../transports/ad-tech-provider-cache';
@@ -78,10 +84,6 @@ import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
 } from '../transports/manifest-cache';
-import {
-	inthProtocolHeaders,
-	readProducerPolicyContract,
-} from '../transports/version-header';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
@@ -410,7 +412,7 @@ export const resolveConsentInit = async function resolveConsentInit(
 	);
 	if (options.loadGvl && isIabMatch(manifest, payload)) {
 		payload.gvl = await options.loadGvl(
-			payload.translations.language.split('-')[0] || 'en'
+			primaryLanguage(payload.translations.language) ?? 'en'
 		);
 	}
 	const adTechProviders = await providers;
@@ -795,9 +797,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			// The in-process cache is partitioned by these credentials; a shared
 			// cache in front of this route is keyed by URL only, so it must not
 			// reuse a credentialed manifest for the next visitor.
-			headers.set('cache-control', 'private, no-store');
-			headers.delete('etag');
-			headers.delete('last-modified');
+			markResponsePrivate(headers);
 			return new Response(JSON.stringify(cached.manifest), { headers });
 		}
 		// Downstream caches count the remaining lifetime, not a fresh TTL.

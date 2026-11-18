@@ -18,12 +18,9 @@ import type {
 } from '../consent-record/types';
 import { deriveActiveUI } from '../derive-surface';
 import { deepFreeze, ownScriptRegistry } from '../libs/freeze-data';
-import {
-	buildEvaluationPolicy,
-	deriveModel,
-	resolveEffectivePolicy,
-} from '../policy';
-import type { PresentedSelection } from '../policy';
+import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
+import { deriveModel } from '../policy-choice';
+import type { PresentedSelection } from '../policy-choice';
 import { applyTranslationOverrides } from '../translations';
 import type {
 	ConsentSnapshot,
@@ -42,18 +39,6 @@ import {
 	normalizeExternalPermissions,
 } from './external-permissions';
 import { validateHydrationRecords } from './record-validation';
-
-/**
- * Default effective permissions before any evaluation. `necessary` is
- * always granted; everything else starts denied.
- */
-export const DEFAULT_CONSENTS: ConsentState = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
 
 /**
  * Default IAB slice. Used as the base when constructing the initial IAB

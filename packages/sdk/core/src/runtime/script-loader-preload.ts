@@ -42,6 +42,7 @@
  */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
+import { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
 import { evaluateConsent } from '../modules/has';
 import type { ConsentKernel } from '../types';
 import type {
@@ -65,7 +66,7 @@ type PreloadScriptLoader = NonNullable<
  * through `init()`.
  * @internal
  */
-export const scriptLoaderRunsAtStart = function scriptLoaderRunsAtStart(
+const scriptLoaderRunsAtStart = function scriptLoaderRunsAtStart(
 	kernel: ConsentKernel,
 	options: ConsentRuntimeOptions,
 	createKernel: Parameters<PreloadScriptLoader>[2],
@@ -133,15 +134,7 @@ export const scriptLoaderRunsAtStart = function scriptLoaderRunsAtStart(
 					sync: false,
 				}).dispose();
 			}
-			let gpc: unknown;
-			try {
-				gpc = (navigator as { globalPrivacyControl?: unknown })
-					.globalPrivacyControl;
-			} catch {
-				// A getter that throws reads as no signal, as the kernel's own
-				// read does.
-			}
-			if (gpc === true) {
+			if (hasGlobalPrivacyControlSignal()) {
 				judged.set.privacySignals({ gpc: true });
 			}
 			if (records) {

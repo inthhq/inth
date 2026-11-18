@@ -7,6 +7,7 @@ import {
 	explicitChoice,
 	NOW,
 } from '../../../__tests__/fixtures/kernel-fixtures';
+import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import { createKernel as createConsentKernel } from '../../../kernel';
 import { setCookie } from '../../../libs/cookie';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
@@ -177,10 +178,13 @@ describe('hydrateFromStorage', () => {
 	});
 
 	test('applies stored records through kernel.hydrate without a choice event', () => {
-		setCookie(STORAGE_KEY_V2, {
-			consentInfo: { subjectId: 'legacy-cookie', time: NOW - 5000 },
-			consents: { marketing: true, necessary: true },
-		});
+		setCookie(
+			STORAGE_KEY_V2,
+			encodeV2Cookie({
+				consentInfo: { subjectId: 'legacy-cookie', time: NOW - 5000 },
+				consents: { marketing: true, necessary: true },
+			})
+		);
 		const kernel = createConsentKernel({ now: NOW });
 		const choiceRecorded = vi.fn();
 		const permissions = vi.fn();

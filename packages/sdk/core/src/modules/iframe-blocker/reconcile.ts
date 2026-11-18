@@ -18,7 +18,8 @@ import type { AllConsentNames } from '../../consent/consent-types';
 import { allConsentNames } from '../../consent/consent-types';
 import { vendorAxisActive } from '../../libs/vendors';
 import type { ConsentSnapshot, ConsentState } from '../../types';
-import { deniedVendorIds, getEffectiveGateState, has } from '../has';
+import { getEffectiveGateState, has } from '../has';
+import { deniedVendorIds } from '../vendor-denial';
 
 /**
  * Per-pass eligibility context. Built once per kernel tick / DOM scan

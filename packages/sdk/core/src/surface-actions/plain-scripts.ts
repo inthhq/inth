@@ -7,7 +7,7 @@
  * decide which of the page's `scripts` that is safe for and insert them
  * the way the loader would. The loader adopts each element when it
  * mounts, as it adopts one a server start inserted (`STARTED_KEY` in
- * `../runtime/page-globals`).
+ * `../libs/page-globals`).
  *
  * Small and free of the kernel, so a first-load chunk can carry them.
  *
@@ -16,9 +16,9 @@
  */
 
 import type { HasCondition } from '../libs/has';
+import { STARTED_KEY, startedElements } from '../libs/page-globals';
+import type { StartedElement } from '../libs/page-globals';
 import type { Script } from '../libs/script-loader/types';
-import { STARTED_KEY, startedElements } from '../runtime/page-globals';
-import type { StartedElement } from '../runtime/page-globals';
 import type { ConsentSnapshot } from '../types';
 
 export { evaluateCategoryGate } from '../modules/category-gate';

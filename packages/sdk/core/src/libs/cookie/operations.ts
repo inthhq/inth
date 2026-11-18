@@ -3,16 +3,9 @@
  * Low-level cookie operations.
  */
 
-import { getDefaultCookieOptions, getRootDomain } from './domain-utils';
-import { expandFlatKeys, shortenFlatKeys } from './key-mapping';
+import { resolveCookieDomain } from './domain-utils';
 import { readCookieValueFromHeader } from './read-header';
-import {
-	flatToString,
-	flattenObject,
-	stringToFlat,
-	unflattenObject,
-} from './serialization';
-import type { CookieOptions, StorageConfig } from './types';
+import type { StorageConfig } from './types';
 
 /**
  * Outcome of one attempt to store a cookie.
@@ -32,17 +25,6 @@ export interface CookieWriteReport {
 	error?: unknown;
 }
 
-const serializeCookieValue = function serializeCookieValue(
-	value: unknown
-): string {
-	if (typeof value === 'string') {
-		return value;
-	}
-	const flattened = flattenObject(value as Record<string, unknown>);
-	const shortened = shortenFlatKeys(flattened);
-	return flatToString(shortened);
-};
-
 /**
  * Writes a cookie and reports what happened instead of swallowing it.
  *
@@ -54,41 +36,33 @@ const serializeCookieValue = function serializeCookieValue(
  */
 export const writeCookie = function writeCookie(
 	name: string,
-	value: unknown,
-	options?: CookieOptions,
+	value: string,
 	config?: StorageConfig
 ): CookieWriteReport {
 	if (typeof document === 'undefined') {
 		return { attempted: false, verified: false };
 	}
 
-	const opts = { ...getDefaultCookieOptions(config), ...options };
-
-	if (opts.crossSubdomain && !options?.domain) {
-		opts.domain = getRootDomain();
-	}
-
-	let cookieValue: string;
 	try {
-		cookieValue = serializeCookieValue(value);
-
 		const date = new Date();
-		date.setTime(date.getTime() + opts.expiryDays * 24 * 60 * 60 * 1000);
-		const expires = `expires=${date.toUTCString()}`;
-
-		const parts = [`${name}=${cookieValue}`, expires, `path=${opts.path}`];
-
-		if (opts.domain) {
-			parts.push(`domain=${opts.domain}`);
+		const expiryDays = config?.defaultExpiryDays ?? 365;
+		date.setTime(date.getTime() + expiryDays * 24 * 60 * 60 * 1000);
+		const parts = [
+			`${name}=${value}`,
+			`expires=${date.toUTCString()}`,
+			'path=/',
+		];
+		const domain = resolveCookieDomain(config);
+		if (domain) {
+			parts.push(`domain=${domain}`);
 		}
-
-		if (opts.secure) {
+		if (
+			typeof window !== 'undefined' &&
+			window.location.protocol === 'https:'
+		) {
 			parts.push('secure');
 		}
-
-		if (opts.sameSite) {
-			parts.push(`SameSite=${opts.sameSite}`);
-		}
+		parts.push('SameSite=Lax');
 
 		document.cookie = parts.join('; ');
 	} catch (error) {
@@ -101,53 +75,23 @@ export const writeCookie = function writeCookie(
 	} catch {
 		readBack = undefined;
 	}
-	return { attempted: true, verified: readBack === cookieValue };
+	return { attempted: true, verified: readBack === value };
 };
 
 /**
- * @param value - Cookie value (will be flattened to compact string format)
- *
- * @remarks
- * Uses a flat key:value,key:value format without JSON special characters.
- * This avoids issues with curly braces, quotes, and simplifies encoding.
- * Only colons and commas are used as delimiters.
+ * {@link writeCookie}, warning instead of reporting when the assignment
+ * throws.
  *
  * @internal
  */
 export const setCookie = function setCookie(
 	name: string,
-	value: unknown,
-	options?: CookieOptions,
+	value: string,
 	config?: StorageConfig
 ): void {
-	const report = writeCookie(name, value, options, config);
+	const report = writeCookie(name, value, config);
 	if (!report.attempted && report.error !== undefined) {
 		console.warn(`Failed to set cookie "${name}":`, report.error);
-	}
-};
-
-/**
- * Parses a stored Inth cookie value using the same compact format that
- * `setCookie` writes. This is safe for server adapters that already have the
- * raw cookie value from a request header and cannot read `document.cookie`.
- *
- * @internal
- */
-export const parseCookieValue = function parseCookieValue<ReturnType = unknown>(
-	cookieValue: string
-): ReturnType | null {
-	try {
-		if (cookieValue.includes(':')) {
-			const shortened = stringToFlat(cookieValue);
-			const expanded = expandFlatKeys(shortened);
-			const nested = unflattenObject(expanded);
-			return nested as ReturnType;
-		}
-
-		return cookieValue as ReturnType;
-	} catch (error) {
-		console.warn('Failed to parse cookie value:', error);
-		return null;
 	}
 };
 
@@ -183,69 +127,28 @@ export const getRawCookieValue = function getRawCookieValue(
 };
 
 /**
- * @returns Parsed cookie value or null if not found
- *
- * @internal
- */
-export const getCookie = function getCookie<ReturnType = unknown>(
-	name: string
-): ReturnType | null {
-	if (typeof document === 'undefined') {
-		return null;
-	}
-
-	try {
-		const nameEQ = `${name}=`;
-		const cookies = document.cookie.split(';');
-
-		for (const cookie of cookies) {
-			let c = cookie;
-			while (c.charAt(0) === ' ') {
-				c = c.substring(1);
-			}
-
-			if (c.indexOf(nameEQ) === 0) {
-				const cookieValue = c.substring(nameEQ.length);
-				return parseCookieValue<ReturnType>(cookieValue);
-			}
-		}
-
-		return null;
-	} catch (error) {
-		console.warn(`Failed to get cookie "${name}":`, error);
-		return null;
-	}
-};
-
-/**
- * @param options - Cookie configuration options (domain and path should match the original cookie)
+ * Expires a cookie at the domain {@link resolveCookieDomain} picks for
+ * `config`, at path `/`.
  *
  * @internal
  */
 export const deleteCookie = function deleteCookie(
 	name: string,
-	options?: CookieOptions,
 	config?: StorageConfig
 ): void {
 	if (typeof document === 'undefined') {
 		return;
 	}
 
-	const opts = { ...getDefaultCookieOptions(config), ...options };
-
-	if (opts.crossSubdomain && !options?.domain) {
-		opts.domain = getRootDomain();
-	}
-
 	try {
 		const parts = [
 			`${name}=`,
 			'expires=Thu, 01 Jan 1970 00:00:00 GMT',
-			`path=${opts.path}`,
+			'path=/',
 		];
-
-		if (opts.domain) {
-			parts.push(`domain=${opts.domain}`);
+		const domain = resolveCookieDomain(config);
+		if (domain) {
+			parts.push(`domain=${domain}`);
 		}
 
 		document.cookie = parts.join('; ');

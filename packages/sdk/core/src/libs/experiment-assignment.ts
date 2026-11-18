@@ -73,7 +73,7 @@ const asksAboutNoCategory = function asksAboutNoCategory(
 	snapshot: ConsentSnapshot
 ): boolean {
 	const policy = snapshot.evaluationPolicy;
-	return (policy.choiceScope ?? policy.scope).length === 0;
+	return policy.choiceScope.length === 0;
 };
 
 /**

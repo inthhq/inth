@@ -13,17 +13,17 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
-import { createConsentRuntime } from '../../runtime/index';
 import {
 	EARLY_TAP_HOLD_PRESSES_KEY,
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
-} from '../../runtime/page-globals';
-import type { EarlyConsentTapQueue } from '../../runtime/page-globals';
+} from '../../libs/page-globals';
+import type { EarlyConsentTapQueue } from '../../libs/page-globals';
+import { inthProtocolHeaders } from '../../libs/version-header';
+import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
+import { createConsentRuntime } from '../../runtime/index';
 import type { ConsentRuntime } from '../../runtime/types';
 import { hosted } from '../../transports/mode';
-import { inthProtocolHeaders } from '../../transports/version-header';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	EARLY_TAP_OPT_OUT,

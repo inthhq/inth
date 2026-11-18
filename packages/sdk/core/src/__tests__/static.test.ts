@@ -170,6 +170,51 @@ describe('createStaticConsentResolver', () => {
 		await expect(fetched.resolved).resolves.toBe(fetched.initial);
 	});
 
+	test('reads a GPC getter that throws as no signal', () => {
+		const throwing = {
+			get globalPrivacyControl(): boolean {
+				throw new Error('blocked');
+			},
+		};
+		const saved = ['navigator', 'window'].map(
+			(name) =>
+				[name, Object.getOwnPropertyDescriptor(globalThis, name)] as const
+		);
+		for (const [name, descriptor] of saved) {
+			Object.defineProperty(globalThis, name, {
+				configurable: true,
+				value:
+					name === 'window'
+						? { ...descriptor?.value, navigator: throwing }
+						: throwing,
+			});
+		}
+		try {
+			expect(() =>
+				createStaticConsentResolver({ language: 'en', manifest })
+			).not.toThrow();
+		} finally {
+			for (const [name, descriptor] of saved) {
+				if (descriptor) {
+					Object.defineProperty(globalThis, name, descriptor);
+				}
+			}
+		}
+	});
+
+	test('reads a lower-case location the way the browser manifest resolver does', async () => {
+		const fetch = geoResponse({ country: 'us', region: 'ca' });
+		const resolution = createStaticConsentResolver({
+			fetch,
+			geoUrl: '/api/geo',
+			language: 'en',
+			manifest,
+		});
+		const resolved = await resolution.resolved;
+		expect(resolved.policyResolution.policy?.id).toBe('us-ca-opt-out');
+		expect(resolved.location).toEqual({ countryCode: 'US', regionCode: 'CA' });
+	});
+
 	test('trims location fields and falls through to the other spelling', async () => {
 		const resolution = createStaticConsentResolver({
 			fetch: geoResponse({ country: 1, countryCode: ' US ', regionCode: 'CA' }),

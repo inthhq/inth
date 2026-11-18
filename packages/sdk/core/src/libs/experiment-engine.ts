@@ -8,17 +8,16 @@
  */
 import type { ResolvedPolicyRule } from '@inth/sdk-schema/types';
 
-import {
-	actionAppearanceFromTheme,
-	experimentConfigError,
-	resolveExperimentPresentation,
-	resolveExperimentTheme,
-} from './experiment';
+import { actionAppearanceFromTheme, experimentConfigError } from './experiment';
 import type {
 	ActionAppearance,
 	ConsentExperiment,
 	ExperimentArmTheme,
 } from './experiment';
+import {
+	resolveExperimentPresentation,
+	resolveExperimentTheme,
+} from './experiment-presentation';
 import { resolveConsentPresentation } from './policy-actions';
 import type {
 	ConsentPresentation,

@@ -128,7 +128,7 @@ export default mergeConfig(
 				],
 				[
 					'@inth/sdk/runtime/page-globals',
-					resolve(__dirname, '../core/src/runtime/page-globals.ts'),
+					resolve(__dirname, '../core/src/libs/page-globals.ts'),
 				],
 				[
 					'@inth/sdk/runtime',

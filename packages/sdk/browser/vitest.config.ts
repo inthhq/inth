@@ -272,7 +272,7 @@ export default mergeConfig(
 								find: '@inth/sdk-core/runtime/page-globals',
 								replacement: resolve(
 									__dirname,
-									'../core/src/runtime/page-globals.ts'
+									'../core/src/libs/page-globals.ts'
 								),
 							},
 							{

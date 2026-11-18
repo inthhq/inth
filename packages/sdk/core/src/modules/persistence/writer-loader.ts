@@ -8,7 +8,7 @@
  * @internal
  */
 import type { InternalKernel } from '../../kernel/internals';
-import { SURFACE_ROOT_ATTRIBUTE } from '../../runtime/page-globals';
+import { SURFACE_ROOT_ATTRIBUTE } from '../../libs/page-globals';
 import type { createPersistenceWriter } from './writer/writer';
 
 /** The write code's module. @internal */

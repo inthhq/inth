@@ -11,7 +11,10 @@ import {
 	readLegacySubjectId,
 	removeLegacySubjectId,
 } from '../../libs/legacy-subject-id';
-import { storageKeyFamilies } from '../../libs/storage-keys';
+import {
+	storageKeyFamilies,
+	resolveStorageKeys,
+} from '../../libs/storage-keys';
 import type {
 	ConsentSnapshot,
 	ConsentSubject,
@@ -24,7 +27,7 @@ import {
 	readStoredRecordsFromCookieHeader,
 } from './hydrate';
 import type { StoredRecords } from './hydrate';
-import { isNewerDenial, resolveStorageKeys } from './record-storage';
+import { isNewerDenial } from './record-storage';
 import { persistenceTools } from './tools';
 import type { PersistenceHandle, PersistenceOptions } from './types';
 import { pageWriterLoader, preloadWriter } from './writer-loader';

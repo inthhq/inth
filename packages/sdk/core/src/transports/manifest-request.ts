@@ -3,7 +3,7 @@
  * that sends the request early, while the resolver chunk loads, builds the
  * same request the resolver would, without importing the resolver.
  */
-import { inthProtocolHeaders } from './version-header';
+import { inthProtocolHeaders } from '../libs/version-header';
 
 /**
  * Builds the fetch options for the browser's manifest request.

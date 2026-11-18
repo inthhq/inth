@@ -5,6 +5,7 @@
  *
  * @internal
  */
+import { primaryLanguage } from '@inth/sdk-schema/types';
 import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 
 import {
@@ -41,7 +42,7 @@ export const attachVendorList = async function attachVendorList(
 		output.gvl = await fetchCachedGvl({
 			fetch: fetchImpl,
 			label: 'inth manifest transport',
-			language: output.translations.language.split('-')[0] || 'en',
+			language: primaryLanguage(output.translations.language) ?? 'en',
 			url: manifest.iab.gvl.url,
 		});
 	}

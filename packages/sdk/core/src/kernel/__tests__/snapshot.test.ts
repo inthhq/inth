@@ -7,11 +7,11 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { DENIED_CONSENTS } from '../../consent/consent-types';
 import {
 	buildDraft,
 	buildInitialIab,
 	buildInitialSnapshot,
-	DEFAULT_CONSENTS,
 	DEFAULT_IAB,
 } from '../snapshot';
 
@@ -55,7 +55,7 @@ describe('buildInitialSnapshot', () => {
 		expect(snap.resolution).toEqual({ policy: null, status: 'unconfigured' });
 		expect(snap.policyRule.id).toBe('c15t_safe_fallback');
 		expect(snap.model).toBe('opt-in');
-		expect(snap.effectivePermissions).toEqual(DEFAULT_CONSENTS);
+		expect(snap.effectivePermissions).toEqual(DENIED_CONSENTS);
 		expect(snap.effectivePermissions).toBe(snap.effectivePermissions);
 		expect(snap.explicitChoice).toBeNull();
 		expect(snap).not.toHaveProperty('hasConsented');

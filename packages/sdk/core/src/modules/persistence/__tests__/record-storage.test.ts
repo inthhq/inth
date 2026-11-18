@@ -5,6 +5,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import { makePolicy } from '../../../consent-record/__tests__/fixtures';
 import { evaluateConsentRecord } from '../../../consent-record/evaluate';
 import type { ChoiceBasis } from '../../../consent-record/types';
@@ -14,6 +15,7 @@ import {
 	C15T_STORAGE_KEY,
 	STORAGE_KEY,
 	STORAGE_KEY_V2,
+	resolveStorageKeys,
 } from '../../../libs/storage-keys';
 import type { StoredConsentEnvelope } from '../record-codec';
 import type { DecodedStoredConsent } from '../record-storage';
@@ -24,7 +26,6 @@ import {
 	readStoredNoticeDismissal,
 	readStoredNoticeDismissalFromCookieHeader,
 	readStoredVendorChoiceFromCookieHeader,
-	resolveStorageKeys,
 } from '../record-storage';
 import {
 	encodeNoticeDismissalCompact,
@@ -81,7 +82,7 @@ describe('raw candidate reading', () => {
 	it('reports every source in cookie, configured, legacy order with encodings', () => {
 		setCookie(
 			STORAGE_KEY_V2,
-			legacyRecord({ marketing: true, necessary: true })
+			encodeV2Cookie(legacyRecord({ marketing: true, necessary: true }))
 		);
 		window.localStorage.setItem(
 			STORAGE_KEY_V2,
@@ -139,7 +140,9 @@ describe('raw candidate reading', () => {
 	it('keeps an expired but valid cookie over fresher localStorage grants', () => {
 		setCookie(
 			STORAGE_KEY_V2,
-			legacyRecord({ marketing: true, necessary: true }, NOW - 400 * DAY)
+			encodeV2Cookie(
+				legacyRecord({ marketing: true, necessary: true }, NOW - 400 * DAY)
+			)
 		);
 		window.localStorage.setItem(
 			STORAGE_KEY_V2,
@@ -180,7 +183,7 @@ describe('raw candidate reading', () => {
 		window.localStorage.clear();
 		setCookie(
 			STORAGE_KEY_V2,
-			legacyRecord({ marketing: true, necessary: true })
+			encodeV2Cookie(legacyRecord({ marketing: true, necessary: true }))
 		);
 		const fromCookie = readStoredConsentRecord(undefined, NOW).selected;
 		expect(fromCookie?.encoding).toBe('compact');
@@ -239,10 +242,13 @@ describe('raw candidate reading', () => {
 	});
 
 	it('treats an id-only v1 record as unsupported and moves to the next candidate', () => {
-		setCookie(STORAGE_KEY_V2, {
-			consentInfo: { id: 'server-id', time: NOW - DAY },
-			consents: { marketing: true, necessary: true },
-		});
+		setCookie(
+			STORAGE_KEY_V2,
+			encodeV2Cookie({
+				consentInfo: { id: 'server-id', time: NOW - DAY },
+				consents: { marketing: true, necessary: true },
+			})
+		);
 		window.localStorage.setItem(
 			STORAGE_KEY,
 			JSON.stringify(legacyRecord({ measurement: false, necessary: true }))
@@ -362,7 +368,7 @@ describe('raw candidate reading', () => {
 			consents: { marketing: true, measurement: false, necessary: true },
 			iabCustomVendorConsents: { '42': true, vendor: false },
 		};
-		setCookie(STORAGE_KEY_V2, legacyData);
+		setCookie(STORAGE_KEY_V2, encodeV2Cookie(legacyData));
 		window.localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(legacyData));
 		expect(document.cookie).toContain('i.eid:12345');
 		expect(document.cookie).toContain('i.idp:1');
@@ -896,7 +902,7 @@ describe('notice dismissal', () => {
 			'{"directives":[],"version":1}'
 		);
 
-		clearStoredConsentRecords(undefined, config);
+		clearStoredConsentRecords(config);
 
 		expect(window.localStorage.getItem('custom-key')).toBeNull();
 		expect(window.localStorage.getItem('custom-key-notice')).toBeNull();

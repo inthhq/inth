@@ -1,3 +1,4 @@
+import { primaryLanguage } from '@inth/sdk-schema/types';
 import type { Translations } from '@inth/sdk-translations';
 import {
 	deepMergeTranslations,
@@ -19,29 +20,36 @@ export type TranslationOverrides = Readonly<
 >;
 
 /**
- * Pick the overrides declared for a language: an exact key first, then its
- * primary subtag (`de` for `de-AT`). An exact key set to `undefined` counts
- * as missing. Own keys only, so a language named `constructor` never reads
- * the prototype.
+ * The value `record` holds for a language: under the exact key first, then
+ * under its primary subtag (`de` for `de-AT`). An exact key set to
+ * `undefined` counts as missing. Own keys only, so a language named
+ * `constructor` never reads the prototype.
+ *
+ * @internal
  */
-export const selectTranslationOverride = function selectTranslationOverride(
+export const pickByLanguage = function pickByLanguage<Value>(
+	record: Readonly<Record<string, Value | undefined>>,
+	language: string
+): Value | undefined {
+	const exact = Object.hasOwn(record, language) ? record[language] : undefined;
+	if (exact) {
+		return exact;
+	}
+	const primary = primaryLanguage(language);
+	return primary && primary !== language && Object.hasOwn(record, primary)
+		? record[primary]
+		: undefined;
+};
+
+/** The overrides declared for a language, picked by {@link pickByLanguage}. */
+const selectTranslationOverride = function selectTranslationOverride(
 	overrides: TranslationOverrides | undefined,
 	language: string
 ): Partial<Translations> | undefined {
 	if (!overrides) {
 		return undefined;
 	}
-	const exact = Object.hasOwn(overrides, language)
-		? overrides[language]
-		: undefined;
-	if (exact) {
-		return exact;
-	}
-	const primary = language.split('-')[0]?.toLowerCase();
-	if (primary && primary !== language && Object.hasOwn(overrides, primary)) {
-		return overrides[primary];
-	}
-	return undefined;
+	return pickByLanguage(overrides, language);
 };
 
 type TranslationTree = Readonly<Record<string, unknown>>;
@@ -99,7 +107,7 @@ const pickEffectiveOverride = function pickEffectiveOverride(
 const findStockTranslations = function findStockTranslations(
 	language: string
 ): Translations | undefined {
-	const primary = language.split('-')[0]?.toLowerCase();
+	const primary = primaryLanguage(language);
 	return (
 		getStockTranslations(language) ??
 		(primary ? getStockTranslations(primary) : undefined)

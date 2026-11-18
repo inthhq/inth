@@ -23,11 +23,11 @@ import {
 	EARLY_TAP_ROOT,
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
-} from '../runtime/page-globals';
+} from '../libs/page-globals';
 import type {
 	EarlyConsentTap,
 	EarlyConsentTapQueue,
-} from '../runtime/page-globals';
+} from '../libs/page-globals';
 import type { ConsentKernel, ConsentSnapshot, SaveUISource } from '../types';
 import { showConsentSurface } from './rules';
 import { saveConsentSurface } from './save';

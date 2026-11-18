@@ -164,6 +164,7 @@ export const createEvaluationPolicy = function createEvaluationPolicy(
 
 	const policy: EvaluationPolicy = {
 		choice,
+		choiceScope: choiceScope ? canonicalizeCategories(choiceScope) : scope,
 		gpcDenyCategories: canonicalizeCategories(gpcDenyCategories),
 		legacyMaterialFingerprint,
 		model,
@@ -172,8 +173,5 @@ export const createEvaluationPolicy = function createEvaluationPolicy(
 		scope,
 		scopeMode,
 	};
-	if (choiceScope) {
-		policy.choiceScope = canonicalizeCategories(choiceScope);
-	}
 	return policy;
 };

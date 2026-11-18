@@ -10,7 +10,7 @@ import {
 	EARLY_TAP_NOTIFY_KEY,
 	EARLY_TAPS_WINDOW_KEY,
 	SERVER_START_FAILED_EVENT,
-} from '../../../../core/src/runtime/page-globals';
+} from '../../../../core/src/libs/page-globals';
 import {
 	DISPLAY_ONLY_OPTIONS,
 	liveRootKey,

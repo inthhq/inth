@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { deleteCookie, getCookie, getRootDomain, setCookie } from '..';
+import { deleteCookie, getRawCookieValue, getRootDomain, setCookie } from '..';
 
 describe('Cookie Storage', () => {
 	beforeEach(() => {
@@ -18,24 +18,15 @@ describe('Cookie Storage', () => {
 	describe('setCookie', () => {
 		it('should set a cookie with a string value', () => {
 			setCookie('test-cookie', 'test-value');
-			expect(getCookie('test-cookie')).toBe('test-value');
+			expect(getRawCookieValue('test-cookie')).toBe('test-value');
 		});
 
-		it('should set a cookie with an object value', () => {
-			const testData = { key: 'value', number: 42 };
-			setCookie('test-cookie', testData);
-			expect(getCookie('test-cookie')).toEqual(testData);
-		});
-
-		it('should set cookie with custom options', () => {
+		it('should set cookie with the configured expiry', () => {
 			vi.useFakeTimers();
 			vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
-			setCookie('test-cookie', 'value', {
-				expiryDays: 7,
-				path: '/custom',
-			});
+			setCookie('test-cookie', 'value', { defaultExpiryDays: 7 });
 			// The Node fixture captures the assignment, including cookie attributes.
-			expect(document.cookie).toContain('path=/custom');
+			expect(document.cookie).toContain('path=/');
 			expect(document.cookie).toContain(
 				'expires=Thu, 08 Jan 2026 00:00:00 GMT'
 			);
@@ -57,41 +48,30 @@ describe('Cookie Storage', () => {
 		});
 	});
 
-	describe('getCookie', () => {
-		it('should retrieve a string cookie value', () => {
+	describe('getRawCookieValue', () => {
+		it('should retrieve a cookie value', () => {
 			document.cookie = 'test-cookie=test-value';
-			const value = getCookie<string>('test-cookie');
-			expect(value).toBe('test-value');
-		});
-
-		it('should retrieve and parse a JSON cookie value', () => {
-			const testData = { key: 'value', number: 42 };
-			setCookie('test-cookie', testData);
-			const value = getCookie<typeof testData>('test-cookie');
-			expect(value).toEqual(testData);
+			expect(getRawCookieValue('test-cookie')).toBe('test-value');
 		});
 
 		it('should return null for non-existent cookie', () => {
-			const value = getCookie('non-existent');
-			expect(value).toBeNull();
+			expect(getRawCookieValue('non-existent')).toBeNull();
 		});
 
 		it('should handle cookies with spaces in the cookie string', () => {
 			document.cookie = ' test-cookie=test-value';
-			const value = getCookie<string>('test-cookie');
-			expect(value).toBe('test-value');
+			expect(getRawCookieValue('test-cookie')).toBe('test-value');
 		});
 	});
 
 	describe('deleteCookie', () => {
 		it('should delete an existing cookie', () => {
 			setCookie('test-cookie', 'test-value');
-			const initialValue = getCookie('test-cookie');
-			expect(initialValue).toBeTruthy();
+			expect(getRawCookieValue('test-cookie')).toBeTruthy();
 
 			deleteCookie('test-cookie');
 			// After deletion, the cookie should no longer be retrievable (or empty string in jsdom)
-			const value = getCookie('test-cookie');
+			const value = getRawCookieValue('test-cookie');
 			expect(value === null || value === '').toBe(true);
 		});
 
@@ -100,30 +80,28 @@ describe('Cookie Storage', () => {
 		});
 	});
 
-	describe('Key shortening optimization', () => {
-		it('should handle timestamp field shortening', () => {
-			const dataWithTimestamp = {
-				preferences: { necessary: true },
-				timestamp: new Date().toISOString(),
+	describe('Cross-subdomain support', () => {
+		it('writes and deletes at defaultDomain when crossSubdomain is set too', () => {
+			Object.defineProperty(window, 'location', {
+				configurable: true,
+				value: { hostname: 'app.shop.example.com', protocol: 'https:' },
+				writable: true,
+			});
+			const config = {
+				crossSubdomain: true,
+				defaultDomain: '.shop.example.com',
 			};
 
-			setCookie('test-timestamp', dataWithTimestamp);
+			setCookie('test-cookie', 'value', config);
+			expect(document.cookie).toContain('domain=.shop.example.com');
 
-			const cookieValue =
-				document.cookie.split('test-timestamp=')[1]?.split(';')[0] || '';
+			deleteCookie('test-cookie', config);
+			expect(document.cookie).toContain('domain=.shop.example.com');
 
-			expect(cookieValue).toContain('ts:');
-
-			expect(cookieValue).toContain(':');
-			expect(cookieValue).toContain(',');
-			expect(cookieValue).not.toContain('{');
-
-			const retrieved = getCookie<typeof dataWithTimestamp>('test-timestamp');
-			expect(retrieved?.timestamp).toBe(dataWithTimestamp.timestamp);
-			expect(retrieved?.preferences).toEqual(dataWithTimestamp.preferences);
+			setCookie('test-cookie', 'value', { crossSubdomain: true });
+			expect(document.cookie).toContain('domain=.example.com');
 		});
-	});
-	describe('Cross-subdomain support', () => {
+
 		it('should provide getRootDomain helper for cross-subdomain cookies', () => {
 			Object.defineProperty(window, 'location', {
 				configurable: true,
@@ -176,45 +154,12 @@ describe('Cookie Storage', () => {
 
 			Reflect.deleteProperty(globalThis, 'document');
 
-			const value = getCookie('test');
+			const value = getRawCookieValue('test');
 			expect(value).toBeNull();
 
 			globalThis.document = originalDocument;
 			globalThis.window = originalWindow;
 		});
-	});
-});
-
-describe('unflattenObject prototype safety', () => {
-	it('drops __proto__ segments instead of walking the prototype chain', async () => {
-		const { unflattenObject } = await import('../serialization');
-
-		const result = unflattenObject({
-			'__proto__.polluted': '1',
-			'c.__proto__': '1',
-			'c.necessary': '1',
-		});
-
-		expect(result).toEqual({ c: { necessary: true } });
-		expect(
-			(Object.prototype as unknown as Record<string, unknown>).polluted
-		).toBeUndefined();
-		expect(({} as Record<string, unknown>).polluted).toBeUndefined();
-	});
-
-	it('does not descend into an inherited property when building nested keys', async () => {
-		const { unflattenObject } = await import('../serialization');
-
-		const result = unflattenObject({
-			'constructor.name': 'x',
-			'toString.tag': '1',
-		});
-
-		expect(result).toEqual({
-			constructor: { name: 'x' },
-			toString: { tag: true },
-		});
-		expect(Object.prototype.toString).toBeTypeOf('function');
 	});
 });
 
@@ -227,11 +172,11 @@ describe('writeCookie reporting', () => {
 		const { writeCookie } = await import('../operations');
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-		expect(writeCookie('inth', { consents: { necessary: true } })).toEqual({
+		expect(writeCookie('inth', 'c.necessary:1')).toEqual({
 			attempted: true,
 			verified: true,
 		});
-		setCookie('inth', { consents: { necessary: true } });
+		setCookie('inth', 'c.necessary:1');
 
 		expect(warn).not.toHaveBeenCalled();
 	});

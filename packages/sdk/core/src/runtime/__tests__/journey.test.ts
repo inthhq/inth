@@ -22,10 +22,10 @@ import {
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { buildPrefetchScript } from '../../libs/prefetch/prefetch';
 import { JOURNEY_STORAGE_KEY } from '../../libs/storage-keys';
+import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
-import { inthProtocolHeaders } from '../../transports/version-header';
 import type { KernelTransport } from '../../types';
 import {
 	createConsentProviderRuntime,

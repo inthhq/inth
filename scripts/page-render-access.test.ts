@@ -21,7 +21,7 @@ const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
  * `pageRender()`'s id check in its own source.
  */
 const ALLOWED = new Set([
-	'packages/sdk/core/src/runtime/page-globals.ts',
+	'packages/sdk/core/src/libs/page-globals.ts',
 	'packages/sdk/core/src/runtime/script-server-start.ts',
 	'packages/sdk/react/src/deferred/boot.ts',
 	'packages/sdk/react/src/deferred/engine-preload-script.ts',

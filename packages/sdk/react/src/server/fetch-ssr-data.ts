@@ -1,5 +1,6 @@
 import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { SSRInitialData } from '@inth/sdk/engine';
+import { SPECULATION_HEADERS } from '@inth/sdk/schema/types';
 import { fetchRequestInit, resolveRequestProjectUrl } from '@inth/sdk/server';
 
 import type { FetchSSRDataOptions } from './types';

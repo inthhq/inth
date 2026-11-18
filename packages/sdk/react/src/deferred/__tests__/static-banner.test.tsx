@@ -10,7 +10,7 @@ import { render } from 'vitest-browser-react';
 
 import { STATIC_BANNER_ATTR as CORE_STATIC_BANNER_ATTR } from '../../../../core/src/libs/static-banner';
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
-import { PREFETCH_WINDOW_KEY } from '../../../../core/src/runtime/page-globals';
+import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';
 import { ConsentBanner } from '../../components/prompt';
 import { STATIC_BANNER_ATTR } from '../../components/prompt/static-banner-shell';
 import { useSnapshot } from '../../hooks';

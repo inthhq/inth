@@ -129,7 +129,7 @@ const alias = {
 	),
 	'@inth/sdk/runtime/page-globals': resolve(
 		__dirname,
-		'../core/src/runtime/page-globals.ts'
+		'../core/src/libs/page-globals.ts'
 	),
 	'@inth/sdk/runtime': resolve(__dirname, '../core/src/runtime/index.ts'),
 	'@inth/sdk/generated': resolve(__dirname, '../core/src/generated.ts'),

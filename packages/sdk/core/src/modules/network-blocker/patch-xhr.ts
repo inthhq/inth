@@ -26,7 +26,7 @@ export interface XhrPatchDeps {
 	notifyBlocked: (info: BlockedRequestInfo) => void;
 	tools: Pick<
 		NetworkBlockerTools,
-		'evaluate' | 'failBlockedXhr' | 'stashXhr' | 'xhrRequest'
+		'evaluate' | 'failBlockedXhr' | 'ruleMatches' | 'stashXhr' | 'xhrRequest'
 	>;
 	/**
 	 * Promise that settles once consent is known, or `null` when it already
@@ -44,7 +44,7 @@ export interface XhrPatchDeps {
 export const installXhrPatch = function installXhrPatch(
 	deps: XhrPatchDeps
 ): () => void {
-	const { evaluate, failBlockedXhr, stashXhr, xhrRequest } = deps.tools;
+	const { failBlockedXhr, stashXhr, xhrRequest } = deps.tools;
 	const originalOpen = XMLHttpRequest.prototype.open;
 	const originalSend = XMLHttpRequest.prototype.send;
 
@@ -78,7 +78,7 @@ export const installXhrPatch = function installXhrPatch(
 			method,
 			deps.getRules(),
 			deps.getSnapshot(),
-			evaluate
+			deps.tools
 		);
 		if (!decision.shouldBlock) {
 			return originalSend.call(this, body as never);

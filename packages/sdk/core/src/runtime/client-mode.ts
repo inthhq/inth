@@ -109,7 +109,7 @@ const loadManifestBrowserModule: LoadManifestBrowserModule = () =>
  * @param records - Record transport used until init starts.
  * @param load - Loads the transport that runs init.
  */
-export const createLazyInitTransport = function createLazyInitTransport(
+const createLazyInitTransport = function createLazyInitTransport(
 	records: KernelTransport,
 	load: LoadInitTransport
 ): KernelTransport {

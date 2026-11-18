@@ -17,6 +17,7 @@ import {
 	blockedResponse,
 	failBlockedXhr,
 	releaseNetworkRequests,
+	ruleMatches,
 	stashXhr,
 	XHR_REQUEST,
 } from './hold';
@@ -31,6 +32,7 @@ export const networkBlockerTools: NetworkBlockerTools = {
 	failBlockedXhr,
 	forgetOwners: forgetOwnedVendors,
 	releaseHolds: releaseNetworkRequests,
+	ruleMatches,
 	stashXhr,
 	xhrRequest: XHR_REQUEST,
 };

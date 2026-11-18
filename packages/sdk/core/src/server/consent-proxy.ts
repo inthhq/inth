@@ -21,13 +21,17 @@
  * them in as {@link ConsentProxyForwarding}.
  */
 
-import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
-
-import { inthVersionHeaders } from '../transports/version-header';
+import {
+	identityHeaderOf,
+	isCleartextRemoteURL,
+	markResponsePrivate,
+	PUBLIC_REQUEST_HEADERS,
+} from '../libs/identity-headers';
+import { inthVersionHeaders } from '../libs/version-header';
 import { trimPathSlashes } from './shared';
 
 /** Paths the proxy forwards when no extra `paths` are configured. */
-export const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
+const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
 	'subjects',
 	'subjects/*',
 	'init',
@@ -47,21 +51,12 @@ export const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
  * page on another site can't save through this route.
  */
 export const CONSENT_PROXY_DEFAULT_FORWARD_HEADERS: readonly string[] = [
-	'accept',
-	'accept-language',
-	'content-type',
+	...PUBLIC_REQUEST_HEADERS,
 	'cookie',
-	'if-none-match',
-	'origin',
-	'referer',
-	'sec-fetch-site',
-	'user-agent',
-	'sec-gpc',
-	...CONSENT_REQUEST_HEADER_NAMES,
 ];
 
 /** Deadline applied to upstream requests when none is configured. */
-export const CONSENT_PROXY_DEFAULT_TIMEOUT_MS = 10_000;
+const CONSENT_PROXY_DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
  * Headers that describe the hop chain. They are never copied from the
@@ -75,23 +70,17 @@ export const CONSENT_PROXY_FORWARDING_HEADERS: ReadonlySet<string> = new Set([
 	'x-forwarded-proto',
 ]);
 
-/** Headers that carry credentials and must never cross a cleartext link. */
-const CREDENTIAL_HEADERS: ReadonlySet<string> = new Set([
-	'authorization',
-	'cookie',
-	'proxy-authorization',
-]);
-
 /** Browser headers the default allowlist forwards that carry no identity. */
-export const CONSENT_PROXY_PUBLIC_FORWARD_HEADERS: ReadonlySet<string> =
-	new Set(
-		CONSENT_PROXY_DEFAULT_FORWARD_HEADERS.filter(
-			(name) => !CREDENTIAL_HEADERS.has(name)
-		)
-	);
+const CONSENT_PROXY_PUBLIC_FORWARD_HEADERS: ReadonlySet<string> = new Set(
+	PUBLIC_REQUEST_HEADERS
+);
 
-/** Headers the proxy itself sets on every upstream request. */
-const PROXY_SET_HEADERS: ReadonlySet<string> = new Set([
+/**
+ * Headers an upstream request may carry without varying by visitor: the
+ * public allowlist and the headers the proxy itself sets.
+ */
+const PROXY_PUBLIC_HEADERS: ReadonlySet<string> = new Set([
+	...PUBLIC_REQUEST_HEADERS,
 	'x-c15t-proxy',
 	'x-forwarded-for',
 	'x-forwarded-host',
@@ -127,13 +116,6 @@ const BODYLESS_METHODS: ReadonlySet<string> = new Set([
 	'OPTIONS',
 ]);
 
-const LOOPBACK_HOSTS: ReadonlySet<string> = new Set([
-	'localhost',
-	'127.0.0.1',
-	'[::1]',
-	'::1',
-]);
-
 const MAX_DECODE_PASSES = 3;
 
 /** Options for an adapter's opt-in consent proxy (`proxy: { ... }`). */
@@ -148,10 +130,9 @@ export interface ConsentProxyOptions {
 
 	/**
 	 * Extra request headers to forward from the browser in addition to the
-	 * default allowlist (`accept`, `accept-language`, `content-type`,
-	 * `cookie`, `if-none-match`, `origin`, `referer`, `user-agent`,
-	 * `sec-gpc`, and every consent request header). `forwarded` and
-	 * `x-forwarded-*` are ignored: the proxy sets those itself.
+	 * default allowlist, {@link CONSENT_PROXY_DEFAULT_FORWARD_HEADERS}.
+	 * `forwarded` and `x-forwarded-*` are ignored: the proxy sets those
+	 * itself.
 	 */
 	forwardHeaders?: readonly string[];
 
@@ -315,22 +296,6 @@ export const isConsentProxyPathAllowed = function isConsentProxyPathAllowed(
 };
 
 /**
- * Whether a URL is `http:` to a host other than loopback.
- *
- * @returns `true` for a cleartext remote target.
- */
-export const isCleartextRemoteURL = function isCleartextRemoteURL(
-	url: string
-): boolean {
-	try {
-		const parsed = new URL(url);
-		return parsed.protocol === 'http:' && !LOOPBACK_HOSTS.has(parsed.hostname);
-	} catch {
-		return false;
-	}
-};
-
-/**
  * Strips every identity-bearing header when the target is a cleartext,
  * non-loopback URL, so manifest and prefetch fetches follow the same rule
  * as the proxy: only the public browser allowlist crosses `http:`.
@@ -379,23 +344,8 @@ export const filterCookieHeader = function filterCookieHeader(
  * per visitor: a known credential, or any caller-configured header outside
  * the public default allowlist (an API key, a tenant selector, ...).
  */
-const carriesIdentity = function carriesIdentity(headers: Headers): boolean {
-	for (const name of headers.keys()) {
-		const lower = name.toLowerCase();
-		if (CREDENTIAL_HEADERS.has(lower)) {
-			return true;
-		}
-		if (
-			!(
-				CONSENT_PROXY_PUBLIC_FORWARD_HEADERS.has(lower) ||
-				PROXY_SET_HEADERS.has(lower)
-			)
-		) {
-			return true;
-		}
-	}
-	return false;
-};
+const carriesIdentity = (headers: Headers): boolean =>
+	identityHeaderOf(headers.keys(), PROXY_PUBLIC_HEADERS) !== undefined;
 
 /** Inputs for {@link buildConsentProxyRequestHeaders}. */
 export interface BuildConsentProxyRequestHeadersInput {
@@ -417,7 +367,7 @@ export interface BuildConsentProxyRequestHeadersInput {
  *
  * @param input - Request, allowlists, forwarding values and adapter name.
  */
-export const buildConsentProxyRequestHeaders =
+const buildConsentProxyRequestHeaders =
 	function buildConsentProxyRequestHeaders({
 		adapter,
 		cookieNames,
@@ -492,7 +442,7 @@ const readSetCookies = function readSetCookies(headers: Headers): string[] {
  *
  * @returns Headers to send to the browser.
  */
-export const buildConsentProxyResponseHeaders =
+const buildConsentProxyResponseHeaders =
 	function buildConsentProxyResponseHeaders(upstream: Headers): Headers {
 		const headers = new Headers();
 		const nominated = new Set(
@@ -631,9 +581,7 @@ export const forwardConsentRequest = async function forwardConsentRequest({
 	if (carriesIdentity(init.headers)) {
 		// The response may vary by the forwarded identity; never let a shared
 		// cache reuse it for the next visitor.
-		responseHeaders.set('cache-control', 'private, no-store');
-		responseHeaders.delete('etag');
-		responseHeaders.delete('last-modified');
+		markResponsePrivate(responseHeaders);
 	}
 	return new Response(upstream.body, {
 		headers: responseHeaders,

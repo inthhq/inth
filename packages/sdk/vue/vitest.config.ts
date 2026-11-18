@@ -191,7 +191,7 @@ export default mergeConfig(
 				{
 					'@inth/sdk/runtime/page-globals': resolve(
 						__dirname,
-						'../core/src/runtime/page-globals.ts'
+						'../core/src/libs/page-globals.ts'
 					),
 					'@inth/sdk/runtime/stand-in-kernel': resolve(
 						__dirname,

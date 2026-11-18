@@ -9,6 +9,7 @@ import type {
 	ExplicitChoice,
 	OptionalConsentCategory,
 } from './consent-record/types';
+import { policyDefault } from './consent/consent-types';
 import type { KernelModel } from './types';
 
 /**
@@ -55,10 +56,7 @@ export const presentedSelection = function presentedSelection(
 			selection[category] = decision.value;
 			continue;
 		}
-		selection[category] =
-			rule.model === 'opt-out' || rule.model === 'none'
-				? true
-				: rule.preselectedCategories.includes(category);
+		selection[category] = policyDefault(rule, category);
 	}
 	return selection;
 };

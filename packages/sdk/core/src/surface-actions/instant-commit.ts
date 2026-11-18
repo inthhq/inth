@@ -136,7 +136,7 @@ const selectionValues = function selectionValues(
 	const ruleScope = snapshot.policyRule.scope;
 	let entries: [string, unknown][];
 	if (choice === 'all' || choice === 'none') {
-		const displayed = policy.choiceScope ?? ruleScope;
+		const displayed = policy.choiceScope;
 		const keys = displayed.length === ruleScope.length ? ruleScope : displayed;
 		entries = keys.map((key) => [
 			key,
@@ -192,7 +192,7 @@ export const isShortCase = function isShortCase(
 		kernelOnly(before) ||
 		before.explicitChoice !== null ||
 		policy.prompt !== 'choice' ||
-		(policy.choiceScope ?? policy.scope).length === 0 ||
+		policy.choiceScope.length === 0 ||
 		gpc ||
 		before.privacySignals.gpc.active ||
 		before.iab?.authority ||
@@ -221,7 +221,7 @@ const evaluateChoice = function evaluateChoice(
 	values: Map<OptionalConsentCategory, boolean>,
 	expiresAt: number | null
 ): ChoiceEvaluation {
-	const choiceScope = policy.choiceScope ?? policy.scope;
+	const { choiceScope } = policy;
 	const permissions: Record<string, boolean> = { necessary: true };
 	const restrictions: ChoiceEvaluation['restrictions'] = {};
 	let refused = false;

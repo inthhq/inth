@@ -113,8 +113,8 @@ describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
 			expect(listedRows()).toEqual([
 				'necessary',
 				'functionality',
-				'measurement',
 				'experience',
+				'measurement',
 				'marketing',
 			]);
 		}

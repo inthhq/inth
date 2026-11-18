@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { PREFETCH_WINDOW_KEY } from '../../runtime/page-globals';
+import { PREFETCH_WINDOW_KEY } from '../page-globals';
 import {
 	buildStaticBannerScript,
 	STATIC_BANNER_ATTR,

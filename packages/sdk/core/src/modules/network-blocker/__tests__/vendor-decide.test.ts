@@ -5,9 +5,9 @@ import {
 	NOW,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
-import { evaluateConsent } from '../../has';
 import { evaluateBlock } from '../decide';
 import { createNetworkBlocker } from '../index';
+import { networkBlockerTools } from '../tools';
 
 /** The slugs these tests deny, declared so the gate honors the denial. */
 const declaredVendors = (ids: readonly string[]) => ({
@@ -52,7 +52,7 @@ describe('network rules with a vendor slug', () => {
 				'GET',
 				rules,
 				snap,
-				evaluateConsent
+				networkBlockerTools
 			).shouldBlock
 		).toBe(true);
 		expect(
@@ -61,7 +61,7 @@ describe('network rules with a vendor slug', () => {
 				'GET',
 				rules,
 				snap,
-				evaluateConsent
+				networkBlockerTools
 			).shouldBlock
 		).toBe(false);
 	});

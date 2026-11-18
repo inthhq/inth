@@ -239,7 +239,6 @@ const deriveNextActiveUI = function deriveNextActiveUI(input: {
 	patch: SnapshotPatch;
 	derive: boolean;
 	choiceChanged: boolean;
-	policyRule: ConsentSnapshot['policyRule'];
 	policyPending: boolean;
 	experimentPending: boolean;
 	promptRequirement: PromptRequirement;
@@ -408,7 +407,6 @@ export const buildNextSnapshot = function buildNextSnapshot(
 				experimentPending,
 				patch,
 				policyPending,
-				policyRule,
 				promptRequirement,
 				resolution,
 			});

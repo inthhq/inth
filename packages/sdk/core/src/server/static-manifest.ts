@@ -1,7 +1,7 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 import { failedResponseError } from '../libs/failed-response';
-import { inthProtocolHeaders } from '../transports/version-header';
+import { inthProtocolHeaders } from '../libs/version-header';
 
 /** Names that parse but cannot be bound with `export const`. */
 const RESERVED_EXPORT_NAMES = new Set([
@@ -102,7 +102,7 @@ export const loadStaticManifest = async (
  * @throws {Error} When either identifier is invalid.
  * @internal
  */
-export const resolveStaticManifestModuleNames = (
+const resolveStaticManifestModuleNames = (
 	options: Pick<StaticManifestModuleOptions, 'exportName' | 'importSource'>,
 	defaults: { importSource: string; label: string }
 ): { exportName: string; importSource: string } => {
@@ -132,7 +132,7 @@ export const resolveStaticManifestModuleNames = (
  * @returns TypeScript source for the module.
  * @internal
  */
-export const renderStaticManifestModule = (
+const renderStaticManifestModule = (
 	names: { exportName: string; importSource: string },
 	manifest: ConsentManifest | undefined
 ): string =>

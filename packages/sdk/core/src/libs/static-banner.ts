@@ -16,7 +16,7 @@
 
 import { POLICY_CONTRACT_VERSION } from '@inth/sdk-schema/types';
 
-import { PREFETCH_WINDOW_KEY } from '../runtime/page-globals';
+import { PREFETCH_WINDOW_KEY } from './page-globals';
 import { STORED_NAMES_CHECK } from './storage-keys';
 
 /** Attribute on the element that wraps the static banner. @internal */
