@@ -674,7 +674,7 @@
       "outputs": []
     },
     "@c15t/dev-tools#test": {
-      "dependsOn": ["build", "^build", "transit"],
+      "dependsOn": ["build", "^build", "transit", "@c15t/iab#build"],
       "outputs": []
     },
     "@c15t/solid#test": {
