@@ -74,3 +74,28 @@ export const setupColorScheme = function setupColorScheme(
 		observer.disconnect();
 	};
 };
+
+/**
+ * Inline script that sets `inth-dark` before the first paint, for a server
+ * to render in `<head>` ahead of the stylesheet. It runs unbundled, so a
+ * module script's deferral cannot lose the race against the first paint.
+ *
+ * Only `'dark'` and `'system'` need one. Light is the absence of the class,
+ * and any other value leaves the class to the site.
+ *
+ * @param colorScheme - The provider's color scheme.
+ * @returns Script source, or an empty string when none is needed.
+ */
+export const buildColorSchemeScript = function buildColorSchemeScript(
+	colorScheme: string | null | undefined
+): string {
+	if (colorScheme === 'dark') {
+		return "document.documentElement.classList.add('inth-dark');";
+	}
+	if (colorScheme === 'system') {
+		// `matchMedia` is missing in some embedded webviews, and a throw here
+		// would stop the rest of the document from parsing.
+		return "try{document.documentElement.classList.toggle('inth-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
+	}
+	return '';
+};

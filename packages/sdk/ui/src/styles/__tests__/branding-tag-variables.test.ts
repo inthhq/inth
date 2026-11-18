@@ -130,20 +130,16 @@ const tag = () => `.${cls('brandingTag')}:not(.headless)`;
 
 /** Where each part of the tag gets the property under test. */
 const TARGETS = {
-	bannerTag: (selector: string) =>
-		selector.includes(`.${cls('brandingTag')}[data-context=banner]`),
-	inthMark: (_: string, selectors: string[]) =>
-		selectors.includes(`${tag()} .${cls('brandingInthMark')}`),
+	bannerTag: (_: string, selectors: string[]) =>
+		selectors.includes(`.${cls('brandingTagBanner')}:not(.headless)`),
+	c15tMark: (_: string, selectors: string[]) =>
+		selectors.includes(`${tag()} .${cls('brandingC15TMark')}`),
 	copy: (_: string, selectors: string[]) =>
 		selectors.includes(`${tag()} .${cls('brandingCopy')}`),
-	dialogTag: (selector: string) =>
-		selector.includes(`.${cls('brandingTag')}[data-context=dialog]`),
+	dialogTag: (_: string, selectors: string[]) =>
+		selectors.includes(`.${cls('brandingTagDialog')}:not(.headless)`),
 	inthMark: (_: string, selectors: string[]) =>
 		selectors.includes(`${tag()} .${cls('brandingInth')}`),
-	legacyBannerTag: (_: string, selectors: string[]) =>
-		selectors.includes(`.${cls('brandingTagBanner')}:not(.headless)`),
-	legacyDialogTag: (_: string, selectors: string[]) =>
-		selectors.includes(`.${cls('brandingTagDialog')}:not(.headless)`),
 	tag: (_: string, selectors: string[]) => selectors.includes(tag()),
 	wordmark: (_: string, selectors: string[]) =>
 		selectors.includes(`${tag()} .${cls('brandingWordmark')}`),
@@ -156,14 +152,11 @@ const CHECKS = [
 	['tag', 'box-shadow'],
 	['copy', 'color'],
 	['wordmark', 'color'],
-	['inthMark', 'color'],
+	['c15tMark', 'color'],
 	['inthMark', 'color'],
 	['bannerTag', 'border-bottom-width'],
-	['legacyBannerTag', 'border-bottom-width'],
 	['dialogTag', 'border-top-width'],
 	['dialogTag', 'transform'],
-	['legacyDialogTag', 'border-top-width'],
-	['legacyDialogTag', 'transform'],
 ] as const;
 
 /** What each check resolves to with `host` variables set on an ancestor. */
@@ -191,14 +184,11 @@ describe('the "Secured by" tag', () => {
 
 		expect(resolve({})).toEqual({
 			'bannerTag border-bottom-width': '0px',
-			'inthMark color': onPrimary,
+			'c15tMark color': onPrimary,
 			'copy color': onPrimary,
 			'dialogTag border-top-width': '0px',
 			'dialogTag transform': dialogOffset,
 			'inthMark color': onPrimary,
-			'legacyBannerTag border-bottom-width': '0px',
-			'legacyDialogTag border-top-width': '0px',
-			'legacyDialogTag transform': dialogOffset,
 			'tag background-color': 'var(--inth-primary)',
 			'tag border':
 				'1px solid color-mix(in srgb, var(--inth-primary), black 14%)',
@@ -222,14 +212,11 @@ describe('the "Secured by" tag', () => {
 			})
 		).toEqual({
 			'bannerTag border-bottom-width': '1px',
-			'inthMark color': 'var(--inth-primary)',
+			'c15tMark color': 'var(--inth-primary)',
 			'copy color': 'var(--inth-text-muted)',
 			'dialogTag border-top-width': '1px',
 			'dialogTag transform': dialogOffset,
 			'inthMark color': 'var(--inth-primary)',
-			'legacyBannerTag border-bottom-width': '1px',
-			'legacyDialogTag border-top-width': '1px',
-			'legacyDialogTag transform': dialogOffset,
 			'tag background-color': 'var(--inth-surface)',
 			'tag border': '1px solid var(--inth-border)',
 			'tag box-shadow': 'none',
@@ -243,7 +230,7 @@ describe('the "Secured by" tag', () => {
 			'--consent-branding-tag-text-color': 'CanvasText',
 		});
 
-		expect(resolved['inthMark color']).toBe('CanvasText');
+		expect(resolved['c15tMark color']).toBe('CanvasText');
 		expect(resolved['inthMark color']).toBe('CanvasText');
 	});
 });
