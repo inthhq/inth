@@ -81,7 +81,7 @@ before consent, set `loadMode: 'after-consent'`; see
 
 | Check | Fix |
 | --- | --- |
-| After saving, does DevTools Application show a `inth` cookie and a `inth` localStorage entry? | If not, look for `persistence: false` in your config. Examples use it on purpose; production apps should not. |
+| After saving, does DevTools Application show an `inth` cookie and an `inth` localStorage entry? | If not, look for `persistence: false` in your config. Examples use it on purpose; production apps should not. |
 | Does the browser block storage, for example in a sandboxed iframe or a strict privacy mode? | The choice works for the current page only. Nothing to fix in your app. |
 | Did the domain, subdomain or protocol change between visits? | Cookies and localStorage are per origin. Serve the site from one origin, or share the cookie across subdomains. |
 | Did the policy change since the visitor chose? | A changed policy, a new required category or an expired choice prompts again. This is intended. |

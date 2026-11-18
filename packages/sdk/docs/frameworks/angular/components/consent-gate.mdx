@@ -28,7 +28,7 @@ reload.
 | `ng-template[inthConsentGateContent]` | template | none | The gated content, created only while allowed. |
 | `ng-template[inthConsentGatePlaceholder]` | template | built-in placeholder | Replaces the placeholder while the category is denied. |
 
-Without a `inthConsentGateContent` template, the gate projects its children.
+Without an `inthConsentGateContent` template, the gate projects its children.
 Angular creates projected nodes with the parent view even while the gate
 keeps them out of the document, so an `<iframe>` loads nothing, but a
 component inside still runs its constructor. Use the template for anything

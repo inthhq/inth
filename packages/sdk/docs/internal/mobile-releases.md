@@ -289,7 +289,7 @@ native workflow. Its manifest already declares public access, but `private: true
 passes. Keep that flag until the release is approved.
 
 For the first release, establish npm ownership of the package and configure a
-GitHub Actions trusted publisher for owner `inth`, repository `inth`, workflow
+GitHub Actions trusted publisher for owner `inthhq`, repository `inth`, workflow
 `release.yml`. Do not add an npm token to the workflow. First-package ownership
 and trusted publishing setup may require a maintainer's npm account. The public
 registry returns 404 before package bootstrap; that does not prove ownership

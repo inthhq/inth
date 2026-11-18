@@ -92,7 +92,7 @@ optional configuration and transport factories return `nil` for refused settings
 In a CocoaPods RN application, host Swift code must `import InthReactNative` and
 call that module's public `InthApple.install`, `InthApple.tracking`, `Inth.current`
 and `InthReactNativeBootstrap.install` APIs. The pod compiles the generated core,
-Apple services and bridge into that same module. Do not also link a `InthCore`
+Apple services and bridge into that same module. Do not also link an `InthCore`
 pod or a separate SwiftPM `InthCore`/`InthApple` product into that process. A second
 compiled copy has its own installation singleton and can compete for the same
 Keychain service. Changing the service does not make two consent authorities safe.

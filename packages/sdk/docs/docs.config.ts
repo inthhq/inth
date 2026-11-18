@@ -1229,7 +1229,7 @@ export default defineDocsConfig({
 		docs: 'https://c15t.com/docs',
 		homepage: 'https://c15t.com',
 		kind: 'library',
-		name: 'inth',
+		name: 'Inth',
 		repository: 'https://github.com/c15t/c15t',
 		tagline:
 			'Consent management for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Astro, TanStack Start and JavaScript.',

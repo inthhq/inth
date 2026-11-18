@@ -48,8 +48,8 @@ banner. For your own stylesheet with `ui: { shadow: false }`, import both
 
 ## Attach the module to your kernel
 
-Without `@inth/sdk`, install `@inth/sdk/iab` with `inth`. The following
-fragment assumes an existing kernel connected to Inth and an applicable IAB
+With your own kernel, import `createIAB` from `@inth/sdk/iab`, which ships in
+`@inth/sdk`. The following fragment assumes an existing kernel connected to Inth and an applicable IAB
 policy:
 
 ```ts
