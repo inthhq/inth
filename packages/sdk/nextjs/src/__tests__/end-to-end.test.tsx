@@ -349,21 +349,29 @@ describe('ConsentRoot: config picks the transport', () => {
 				await expect
 					.element(getByTestId('probe'))
 					.toHaveTextContent('gdpr|DE|true');
+				// Every page of the origin shares the browser's save queue, and
+				// the kernel resends what another page queued once its init
+				// lands: other test files run in pages beside this one. Such a
+				// replay carries no journey; this page's requests carry its own.
+				const thisPage = () =>
+					fetchSpy.mock.calls.filter(
+						([url]) => readJourneyParams(String(url)) !== null
+					);
 				await vi.waitFor(() => {
-					expect(fetchSpy.mock.calls.map(([url]) => pathOf(url))).toEqual([
+					expect(thisPage().map(([url]) => pathOf(url))).toEqual([
 						'/api/consent/init',
 						saveURL,
 					]);
 				});
 				// The init and the save it led to carry one journey.
-				const [initJourney, saveJourney] = fetchSpy.mock.calls.map(([url]) =>
+				const [initJourney, saveJourney] = thisPage().map(([url]) =>
 					readJourneyParams(String(url))
 				);
 				expect(initJourney?.scope).toBe('page');
 				expect(saveJourney?.id).toBe(initJourney?.id);
 				// Manifest-resolved init issues no snapshot token, so the save
 				// asserts the policy it was made against.
-				const saveInit = fetchSpy.mock.calls[1]?.[1];
+				const saveInit = thisPage()[1]?.[1];
 				expect(JSON.parse(String(saveInit?.body))).toMatchObject({
 					fingerprint: policyFixture({}, { id: 'gdpr' }).initialPolicyResolution
 						.fingerprints.policy,
