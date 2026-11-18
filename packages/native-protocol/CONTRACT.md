@@ -1061,9 +1061,8 @@ body permanent. Both cores run it.
 
 ### No negotiation
 
-The path is the version. A `/v1` request sends no `x-inth-version` header and no
-policy-contract header or query parameter, and a core reads no contract declaration
-from a response. Every `/v1` response uses the current policy contract, so a `200`
+The path is the version. A request sends no version header and no policy-contract
+header or query parameter, and a core reads no contract declaration from a response. Every `/v1` response uses the current policy contract, so a `200`
 from `/v1/consent/init` is a definitive answer, and a policy resolution the core
 cannot read is contract rule 5, not a configuration error. The policy reader names a
 resolution from a newer schema (an unknown `version`, right or field)
@@ -1077,11 +1076,12 @@ Every request carries `accept: application/json` and, with a body,
                        for a Kotlin app, rn-><version> for a core either React Native
                        binding configures
 
-On `/v1` every application header is named `x-inth-<name>`. The backend does not read
-the `x-c15t-` names there, so no request a core sends carries one. No request carries
-an `Origin` header either: the backend checks `property` against a project's trusted
+Every application header is named `x-inth-<name>`, and no request carries an
+`x-c15t-` header, `x-inth-version` or `x-inth-policy-contract`. No request carries an
+`Origin` header either: the backend checks `property` against a project's trusted
 origins only for a request with an `Origin` header, which is how it accepts a bundle
-or application ID from an app.
+or application ID from an app. `transport/cases.json` pins these names and the
+forbidden ones.
 
 Kotlin reads the tag from `NativeConfig.platform`, which defaults to `android`; `null`
 sends no platform header. Swift reads it from `InthAppleConfiguration.platform`, which
@@ -1112,14 +1112,13 @@ The body is built once per action, frozen, and queued before the first send:
     model, uiSource    from the snapshot the action was made on
     policySnapshotToken  when the core holds one
     policyId, fingerprint, country, region, language, gpc
-                       the decision-input assertion, only when there is no token, by
-                       the same rule as before. Its `policyId` stays: the `policyId`
-                       the records body dropped is the 3.x legal-document field.
+                       the decision-input assertion, only when there is no token.
+                       This `policyId` names the consent policy, not a legal document.
     tcString, addtlConsent   for an IAB save, which carries its vendor choices in `tcString`
     metadata           `{ userProperties }` when the identified user has properties
     externalId, identityProvider   when the subject is identified
     answer             `{ categories: { <category>: receipt } }`: every receipt the
-                       subject holds after the action, in the 3.x receipt shape
+                       subject holds after the action, each
                        `{ value, confirmedAt, basis }`. `necessary` is left out.
     confirmed          the categories this action confirmed. It is a set: the cores
                        write it in the order functionality, experience, measurement,
