@@ -143,8 +143,8 @@ const ensureBaselineWorktree = function ensureBaselineWorktree() {
 
 const ensureBaselineInstall = function ensureBaselineInstall() {
 	const nodeModulesDir = resolve(WORKTREE_DIR, 'node_modules');
-	const hasCoreWorkspace = existsSync(resolve(nodeModulesDir, 'inth'));
-	const hasUiWorkspace = existsSync(resolve(nodeModulesDir, '@inth', 'ui'));
+	const hasCoreWorkspace = existsSync(resolve(nodeModulesDir, 'c15t'));
+	const hasUiWorkspace = existsSync(resolve(nodeModulesDir, '@c15t', 'ui'));
 
 	if (existsSync(nodeModulesDir) && hasCoreWorkspace && hasUiWorkspace) {
 		return;
@@ -202,7 +202,7 @@ const ensureBaselineWorkspaceBuild = function ensureBaselineWorkspaceBuild() {
 	);
 
 	linkWorkspacePackage({
-		packageName: 'inth',
+		packageName: 'c15t',
 		root: WORKTREE_DIR,
 		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/core'),
 	});
