@@ -10,7 +10,6 @@ import {
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
 import { readRequestConsent } from '../../../server/request-consent';
-import { resolveRequestSubject } from '../../../server/request-subject';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { createClearOnRevocation } from '../../clear-on-revocation';
 import { createPersistence, readStoredRecordsFromCookieHeader } from '../index';
@@ -688,17 +687,11 @@ test.each(['notice-subject', 'all'] as const)(
 		expect(getRawCookieValue(keys.subject)).toBeNull();
 
 		// The server renders from the cookies alone, so the render still
-		// names the startup ID, and it sets no cookie.
-		const subject = resolveRequestSubject({
-			now: Date.now(),
-			request: { cookie: document.cookie, url: 'https://example.com/' },
-		});
-		expect(subject?.subjectId).toBe(startup);
-		expect(subject?.setCookie).toBeNull();
+		// names the startup ID.
 		const { state } = readRequestConsent({
 			adapter: '@c15t/test',
 			now: Date.now(),
-			request: { cookie: subject?.cookie, headers: new Headers() },
+			request: { cookie: document.cookie, headers: new Headers() },
 		});
 		expect(state.initialRecords?.subject?.subjectId).toBe(startup);
 
@@ -884,14 +877,10 @@ test.each([
 		document.cookie = `${keys.subject}=; max-age=0; path=/`;
 		localStorage.removeItem(keys.subject);
 
-		const subject = resolveRequestSubject({
-			now,
-			request: { cookie: document.cookie, url: 'https://example.com/' },
-		});
 		const { state } = readRequestConsent({
 			adapter: '@c15t/test',
 			now,
-			request: { cookie: subject?.cookie, headers: new Headers() },
+			request: { cookie: document.cookie, headers: new Headers() },
 		});
 		expect(state.initialRecords?.subject?.externalId).toBe('account-a');
 		const sent: unknown[] = [];
@@ -983,15 +972,11 @@ test.each([
 				},
 			});
 		const render = () => {
-			const subject = resolveRequestSubject({
-				now: Date.now(),
-				request: { cookie: document.cookie, url: 'https://example.com/' },
-			});
 			const { state } = readRequestConsent({
 				adapter: '@c15t/test',
 				now: Date.now(),
 				request: {
-					cookie: subject?.cookie ?? document.cookie,
+					cookie: document.cookie,
 					headers: new Headers(),
 				},
 			});

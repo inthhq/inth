@@ -9,7 +9,6 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
 import { readRequestConsent } from '../../../server/request-consent';
-import { resolveRequestSubject } from '../../../server/request-subject';
 import type { HydrationRecords } from '../../../types';
 import { readStoredRecords } from '../hydrate';
 import { createPersistence } from '../index';
@@ -326,14 +325,10 @@ test.each([
 
 		let initialRecords: HydrationRecords | undefined;
 		if (start === 'server-seeded') {
-			const subject = resolveRequestSubject({
-				now: Date.now(),
-				request: { cookie: document.cookie, url: 'https://example.com/' },
-			});
 			({ initialRecords } = readRequestConsent({
 				adapter: '@c15t/test',
 				now: Date.now(),
-				request: { cookie: subject?.cookie, headers: new Headers() },
+				request: { cookie: document.cookie, headers: new Headers() },
 			}).state);
 		}
 		if (cookies === 'cannot be read') {

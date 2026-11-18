@@ -16,7 +16,6 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import { readRequestConsent } from '../../../server/request-consent';
-import { resolveRequestSubject } from '../../../server/request-subject';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { watchRevocationReload } from '../../revocation-reload';
 import { createPersistence } from '../index';
@@ -372,16 +371,12 @@ describe('vendor-only subject through a server render', () => {
 		return pair ? decodeURIComponent(pair.slice(name.length + 1)) : null;
 	};
 	const serverRender = () => {
-		const subject = resolveRequestSubject({
-			now: NOW,
-			request: { cookie: document.cookie, url: 'https://example.com/' },
-		});
 		const { state } = readRequestConsent({
 			adapter: '@c15t/test',
 			now: NOW,
-			request: { cookie: subject?.cookie, headers: new Headers() },
+			request: { cookie: document.cookie, headers: new Headers() },
 		});
-		return { initialRecords: state.initialRecords, subject };
+		return { initialRecords: state.initialRecords };
 	};
 	const seed = (initialRecords?: HydrationRecords) => {
 		const kernel = vendorOnlyKernel(initialRecords);
@@ -424,9 +419,8 @@ describe('vendor-only subject through a server render', () => {
 		handle.dispose();
 		kernel.dispose();
 
-		const { initialRecords, subject } = serverRender();
-		expect(subject?.subjectId).toBe(old);
-		expect(subject?.setCookie).toBeNull();
+		const { initialRecords } = serverRender();
+		expect(initialRecords?.subject?.subjectId).toBe(old);
 		const seeded = seed(initialRecords);
 		expect(seeded.kernel.getSnapshot().subject?.subjectId).toBe('sub_next');
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([
@@ -453,9 +447,8 @@ describe('vendor-only subject through a server render', () => {
 		kernel.dispose();
 		document.cookie = `inth-vendors=${encodeVendorChoiceCompact({ ...record, subject: { subjectId: 'sub_sibling' } })}; path=/`;
 
-		const { initialRecords, subject } = serverRender();
-		expect(subject?.subjectId).toBe('sub_sibling');
-		expect(subject?.setCookie).toBeNull();
+		const { initialRecords } = serverRender();
+		expect(initialRecords?.subject?.subjectId).toBe('sub_sibling');
 		const seeded = seed(initialRecords);
 		const hydrating = vendorOnlyKernel();
 		const hydratingHandle = createPersistence({
@@ -488,7 +481,7 @@ describe('vendor-only subject through a server render', () => {
 			false
 		);
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([]);
-		expect(serverRender().subject?.subjectId).toBe(local);
+		expect(serverRender().initialRecords?.subject?.subjectId).toBe(local);
 		expect(cookieValue('inth-sid')).toBeNull();
 		seeded.handle.dispose();
 		seeded.kernel.dispose();

@@ -17,7 +17,6 @@ import { createConsentKernel } from '../../../index';
 import { hasStoredConsentRecord } from '../../../libs/journey';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
-import { resolveRequestSubject } from '../../../server/request-subject';
 import type { ConsentKernel } from '../../../types';
 import { createPersistence } from '../index';
 import { readStoredConsentRecord } from '../record-storage';
@@ -316,12 +315,6 @@ test.each(['consent', 'all'] as const)(
 			drop.mockRestore();
 		}
 
-		expect(
-			resolveRequestSubject({
-				now: NOW,
-				request: { cookie: document.cookie, url: 'https://example.com/' },
-			})
-		).toEqual({ cookie: document.cookie, setCookie: null, subjectId: old });
 		const { state } = readRequestConsent({
 			adapter: '@c15t/test',
 			now: NOW,
