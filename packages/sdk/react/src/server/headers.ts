@@ -54,15 +54,7 @@ type RelevantHeaders = Partial<Record<ForwardedHeader, string>>;
  * Leave it off unless a proxy you control sets them and drops incoming ones.
  * @returns An object containing the relevant headers for consent management
  *
- * @example
- * ```ts
- * import { extractRelevantHeaders } from '@inth/react/server';
- *
- * // In your framework's request handler
- * const relevantHeaders = extractRelevantHeaders(request.headers);
- * ```
- *
- * @public
+ * @internal
  */
 export const extractRelevantHeaders = function extractRelevantHeaders(
 	headersList: Headers,

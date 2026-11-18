@@ -1,9 +1,9 @@
 import { INTH_VERSION_HEADER } from '@inth/sdk/engine';
 import type { InitOutput, SSRInitialData } from '@inth/sdk/engine';
+import { resolveRequestProjectUrl } from '@inth/sdk/server';
 
 import { version } from '../version';
 import { CLIENT_FORWARDING_HEADERS, extractRelevantHeaders } from './headers';
-import { normalizeProjectUrl } from './normalize-url';
 import type { FetchSSRDataOptions } from './types';
 
 interface SSRFetchResult {
@@ -89,15 +89,15 @@ const logRelevantHeaders = function logRelevantHeaders(
 	}
 	const headerKeys = Object.keys(relevantHeaders);
 	console.log(
-		`[@inth/sdk/server] Detected headers: [${headerKeys.join(', ')}]`
+		`[@inth/react/server] Detected headers: [${headerKeys.join(', ')}]`
 	);
 	const cfCountry = relevantHeaders['cf-ipcountry'];
 	const xCountry = relevantHeaders['x-vercel-ip-country'];
 	if (cfCountry) {
-		console.log(`[@inth/sdk/server] Country from cf-ipcountry: ${cfCountry}`);
+		console.log(`[@inth/react/server] Country from cf-ipcountry: ${cfCountry}`);
 	} else if (xCountry) {
 		console.log(
-			`[@inth/sdk/server] Country from x-vercel-ip-country: ${xCountry}`
+			`[@inth/react/server] Country from x-vercel-ip-country: ${xCountry}`
 		);
 	}
 };
@@ -137,11 +137,11 @@ const performInitFetch = async function performInitFetch(
 			};
 			if (debug) {
 				console.log(
-					`[@inth/sdk/server] SSR fetch succeeded in ${result.metadata?.requestDurationMs ?? 0}ms`
+					`[@inth/react/server] SSR fetch succeeded in ${result.metadata?.requestDurationMs ?? 0}ms`
 				);
 				if (result.metadata?.cache?.detail) {
 					console.log(
-						`[@inth/sdk/server] SSR cache status: ${result.metadata.cache.detail}`
+						`[@inth/react/server] SSR cache status: ${result.metadata.cache.detail}`
 					);
 				}
 			}
@@ -149,17 +149,17 @@ const performInitFetch = async function performInitFetch(
 		}
 		if (debug) {
 			console.log(
-				`[@inth/sdk/server] SSR fetch failed with status: ${response.status}`
+				`[@inth/react/server] SSR fetch failed with status: ${response.status}`
 			);
 			if (cache.detail) {
-				console.log(`[@inth/sdk/server] SSR cache status: ${cache.detail}`);
+				console.log(`[@inth/react/server] SSR cache status: ${cache.detail}`);
 			}
 		}
 		return { metadata };
 	} catch (error) {
 		if (debug) {
 			const message = error instanceof Error ? error.message : 'Unknown error';
-			console.log(`[@inth/sdk/server] SSR fetch error: ${message}`);
+			console.log(`[@inth/react/server] SSR fetch error: ${message}`);
 		}
 		return {};
 	}
@@ -210,7 +210,7 @@ export const fetchSSRData = async function fetchSSRData(
 	const { projectUrl, headers, overrides, debug } = options;
 
 	if (debug) {
-		console.log('[@inth/sdk/server] SSR fetch starting...');
+		console.log('[@inth/react/server] SSR fetch starting...');
 	}
 
 	// Extract relevant headers from the request
@@ -228,27 +228,28 @@ export const fetchSSRData = async function fetchSSRData(
 	if (!hasRequestHeaders) {
 		if (debug) {
 			console.log(
-				'[@inth/sdk/server] No relevant headers found, skipping SSR fetch'
+				'[@inth/react/server] No relevant headers found, skipping SSR fetch'
 			);
 		}
 		return undefined;
 	}
 
 	// Normalize URL synchronously
-	const normalizedUrl = normalizeProjectUrl(projectUrl, headers, {
+	const normalizedUrl = resolveRequestProjectUrl(projectUrl, {
+		headers,
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});
 	if (!normalizedUrl) {
 		if (debug) {
 			console.log(
-				'[@inth/sdk/server] Failed to normalize URL, skipping SSR fetch'
+				'[@inth/react/server] Failed to normalize URL, skipping SSR fetch'
 			);
 		}
 		return undefined;
 	}
 
 	if (debug) {
-		console.log(`[@inth/sdk/server] Fetching from: ${normalizedUrl}/init`);
+		console.log(`[@inth/react/server] Fetching from: ${normalizedUrl}/init`);
 	}
 
 	// Preserve an incoming client version; direct SSR requests use this
@@ -257,20 +258,22 @@ export const fetchSSRData = async function fetchSSRData(
 	if (overrides?.country) {
 		initHeaders['x-c15t-country'] = overrides.country;
 		if (debug) {
-			console.log(`[@inth/sdk/server] Country override: ${overrides.country}`);
+			console.log(
+				`[@inth/react/server] Country override: ${overrides.country}`
+			);
 		}
 	}
 	if (overrides?.region) {
 		initHeaders['x-c15t-region'] = overrides.region;
 		if (debug) {
-			console.log(`[@inth/sdk/server] Region override: ${overrides.region}`);
+			console.log(`[@inth/react/server] Region override: ${overrides.region}`);
 		}
 	}
 	if (overrides?.language) {
 		initHeaders['accept-language'] = overrides.language;
 		if (debug) {
 			console.log(
-				`[@inth/sdk/server] Language override: ${overrides.language}`
+				`[@inth/react/server] Language override: ${overrides.language}`
 			);
 		}
 	}
@@ -290,7 +293,7 @@ export const fetchSSRData = async function fetchSSRData(
 
 	if (!init) {
 		if (debug) {
-			console.log('[@inth/sdk/server] SSR fetch returned no data');
+			console.log('[@inth/react/server] SSR fetch returned no data');
 		}
 		return undefined;
 	}
