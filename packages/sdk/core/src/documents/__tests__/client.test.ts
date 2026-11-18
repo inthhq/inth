@@ -11,7 +11,6 @@ import {
 	stubFetch,
 	SUBJECT,
 	v1Error,
-	VERSION_HEADERS,
 } from '../../transports/v1/__tests__/fixtures';
 import { ApiError, createDocumentsClient } from '../index';
 
@@ -57,9 +56,6 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/documents/terms_us/current`);
 		expect(calls[0]?.init.method).toBe('GET');
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
-		for (const header of VERSION_HEADERS) {
-			expect(calls[0]?.headers).not.toHaveProperty(header);
-		}
 	});
 
 	test('a type with no current version throws not_found', async () => {

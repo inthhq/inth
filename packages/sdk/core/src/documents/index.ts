@@ -3,7 +3,7 @@
  * acceptances. Usable with no UI.
  */
 
-export { buildAcceptancesBody, createDocumentsClient } from './client';
+export { createDocumentsClient } from './client';
 export type {
 	DocumentsClient,
 	DocumentsClientOptions,

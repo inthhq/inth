@@ -12,6 +12,7 @@
  * the backend records the action once. Without one, each call makes its
  * own key and counts as a new action.
  */
+import { V1_DOCUMENT_TYPE_PATTERN } from '@inth/sdk-schema/types';
 import type {
 	V1DocumentAcceptanceItem,
 	V1DocumentAcceptancesInput,
@@ -25,13 +26,9 @@ import {
 	currentDocumentPath,
 	resolveV1Fetch,
 	trimTrailingSlash,
-	V1_DEFAULT_CREDENTIALS,
 	V1_JSON_HEADERS,
 	V1_ROUTES,
 } from '../transports/v1/routes';
-
-/** A document type, such as `privacy_policy`, `terms_us` or `terms_eu`. */
-const DOCUMENT_TYPE_PATTERN = /^[a-z][\d_a-z]*$/u;
 
 const LABEL = 'Inth documents';
 
@@ -39,12 +36,12 @@ const LABEL = 'Inth documents';
 export interface DocumentsClientOptions {
 	/**
 	 * Project URL, such as `https://your-project.inth.app`, or a same-origin
-	 * path that proxies it. Trailing slashes are stripped.
+	 * path that proxies it.
 	 */
 	projectUrl: string;
 	/** Fetch implementation. Defaults to `globalThis.fetch`. */
 	fetch?: typeof globalThis.fetch;
-	/** Fetch credentials mode. Defaults to `'same-origin'`. */
+	/** Fetch credentials mode. */
 	credentials?: RequestCredentials;
 	/**
 	 * The project's secret key, for a server that records acceptances for a
@@ -106,7 +103,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null;
 
 const assertDocumentType = function assertDocumentType(type: string): void {
-	if (!DOCUMENT_TYPE_PATTERN.test(type)) {
+	if (!V1_DOCUMENT_TYPE_PATTERN.test(type)) {
 		throw new TypeError(
 			`${LABEL}: "${type}" is not a document type. Use lowercase letters, digits and underscores, starting with a letter.`
 		);
@@ -151,7 +148,7 @@ const readAcceptances = function readAcceptances(
  * @throws {TypeError} When there is no acceptance, no subject ID or external
  * ID, or a document type is malformed.
  */
-export const buildAcceptancesBody = function buildAcceptancesBody(
+const buildAcceptancesBody = function buildAcceptancesBody(
 	input: RecordAcceptancesInput
 ): V1DocumentAcceptancesInput {
 	if (input.acceptances.length === 0) {
@@ -219,7 +216,6 @@ export const createDocumentsClient = function createDocumentsClient(
 ): DocumentsClient {
 	const base = trimTrailingSlash(options.projectUrl);
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createDocumentsClient');
-	const credentials = options.credentials ?? V1_DEFAULT_CREDENTIALS;
 	const authorization: Record<string, string> = options.secretKey
 		? { authorization: `Bearer ${options.secretKey}` }
 		: {};
@@ -228,13 +224,13 @@ export const createDocumentsClient = function createDocumentsClient(
 		async getCurrent(type) {
 			assertDocumentType(type);
 			const response = await fetchImpl(`${base}${currentDocumentPath(type)}`, {
-				credentials,
+				credentials: options.credentials,
 				headers: { accept: 'application/json', ...authorization },
 				method: 'GET',
 			});
 			if (!response.ok) {
 				throw await readApiError(
-					`${LABEL}: /v1/documents/:type/current`,
+					`${LABEL}: ${V1_ROUTES.currentDocument}`,
 					response
 				);
 			}
@@ -245,13 +241,13 @@ export const createDocumentsClient = function createDocumentsClient(
 			const body = buildAcceptancesBody(input);
 			const response = await fetchImpl(`${base}${V1_ROUTES.acceptances}`, {
 				body: JSON.stringify(body),
-				credentials,
+				credentials: options.credentials,
 				headers: { ...V1_JSON_HEADERS, ...authorization },
 				method: 'POST',
 			});
 			if (!response.ok) {
 				throw await readApiError(
-					`${LABEL}: /v1/documents/acceptances`,
+					`${LABEL}: ${V1_ROUTES.acceptances}`,
 					response
 				);
 			}
