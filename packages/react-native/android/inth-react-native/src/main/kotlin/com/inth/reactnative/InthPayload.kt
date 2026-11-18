@@ -126,7 +126,7 @@ object InthPayload {
 	 *
 	 * @param snapshot the current snapshot, which carries the subject id.
 	 * @param hasStoredSnapshot whether hydration found a stored envelope.
-	 * @param sdkVersion native SDK version, also sent as `x-inth-version`.
+	 * @param sdkVersion native SDK version, also sent in the `x-inth-platform` header.
 	 */
 	fun bootstrap(
 		snapshot: ConsentSnapshot,

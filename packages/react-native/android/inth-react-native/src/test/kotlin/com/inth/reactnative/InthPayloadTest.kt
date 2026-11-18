@@ -410,12 +410,12 @@ class InthPayloadTest {
 		))
 		val transport = object : com.inth.core.transport.InthTransport {
 			override fun init(context: com.inth.core.transport.InitContext) =
-				com.inth.core.transport.TransportOutcome.Success(body, mapOf("x-inth-policy-contract" to "1"))
+				com.inth.core.transport.TransportOutcome.Success(body, emptyMap())
 
 			override fun save(entry: com.inth.core.model.QueuedSave) = com.inth.core.transport.SaveOutcome.Unavailable("offline")
 
-			override fun identify(subject: ConsentSubject, user: com.inth.core.model.KernelUser) =
-				com.inth.core.transport.TransportOutcome.Success(null, emptyMap())
+			override fun link(subject: ConsentSubject, user: com.inth.core.model.KernelUser, identityToken: String) =
+				com.inth.core.transport.LinkOutcome.Unavailable("offline")
 		}
 		val now = headless.getValue("now").jsonPrimitive.content.toLong()
 		val configuration = Json.decodeFromJsonElement(IabConfiguration.serializer(), headless.getValue("configuration"))

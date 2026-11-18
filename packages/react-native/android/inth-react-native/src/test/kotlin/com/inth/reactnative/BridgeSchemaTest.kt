@@ -89,7 +89,7 @@ class BridgeSchemaTest {
 		val identified = ConsentSnapshot(
 			subject = ConsentSubject(id = "sub_1", externalId = "user-1"),
 			location = ConsentLocation(country = "DE"),
-			error = KernelError("unsupported-contract", "producer speaks 2"),
+			error = KernelError("save-rejected", "HTTP 422 invalid_request"),
 		)
 
 		val samples = listOf(

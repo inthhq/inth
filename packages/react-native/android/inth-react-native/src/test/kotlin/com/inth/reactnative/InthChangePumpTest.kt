@@ -86,10 +86,10 @@ class InthChangePumpTest {
 		val sink = RecordingSink()
 		val pump = InthChangePump(sink)
 
-		pump.onError(KernelError("unsupported-contract", "producer speaks 2"))
+		pump.onError(KernelError("save-rejected", "HTTP 422 invalid_request"))
 
 		val payload = json.parseToJsonElement(sink.names(InthChangePump.EVENT_ERROR).single()).jsonObject
-		assertEquals("unsupported-contract", payload["code"]!!.jsonPrimitive.content)
-		assertEquals("producer speaks 2", payload["message"]!!.jsonPrimitive.content)
+		assertEquals("save-rejected", payload["code"]!!.jsonPrimitive.content)
+		assertEquals("HTTP 422 invalid_request", payload["message"]!!.jsonPrimitive.content)
 	}
 }
