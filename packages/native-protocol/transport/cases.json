@@ -199,11 +199,7 @@
 				"region": "BE",
 				"language": "de"
 			},
-			"vendors": [
-				755,
-				1,
-				755
-			],
+			"vendors": [755, 1, 755],
 			"sent": {
 				"accept-language": "de",
 				"x-inth-country": "DE",
@@ -212,13 +208,7 @@
 			}
 		},
 		"platform": "x-inth-platform",
-		"forbiddenPrefixes": [
-			"x-c15t-"
-		],
-		"forbidden": [
-			"origin",
-			"x-inth-version",
-			"x-inth-policy-contract"
-		]
+		"forbiddenPrefixes": ["x-c15t-"],
+		"forbidden": ["origin", "x-inth-version", "x-inth-policy-contract"]
 	}
 }
