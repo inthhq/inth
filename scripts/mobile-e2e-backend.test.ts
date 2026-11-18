@@ -33,8 +33,11 @@ it('keeps observer routes reachable while the consent backend is unavailable', a
 		expect((await (await fetch(`${url}/e2e/state`)).json()).backendOnline).toBe(
 			false
 		);
-		await expect(fetch(`${url}/api/self-host/v1/consent/init`)).rejects.toThrow();
-		const frozenBody = '{ "consentAction" : "necessary", "answer" : { "categories" : {} } }';
+		await expect(
+			fetch(`${url}/api/self-host/v1/consent/init`)
+		).rejects.toThrow();
+		const frozenBody =
+			'{ "consentAction" : "necessary", "answer" : { "categories" : {} } }';
 		await expect(
 			fetch(`${url}/api/self-host/v1/consent/records`, {
 				body: frozenBody,
@@ -123,7 +126,9 @@ it('exposes fixed expiry controls only in the expiry fixture', async () => {
 			...narrowed,
 			expiresAt: initial.expiresAt,
 		});
-		await expect(fetch(`${url}/api/self-host/v1/consent/init`)).rejects.toThrow();
+		await expect(
+			fetch(`${url}/api/self-host/v1/consent/init`)
+		).rejects.toThrow();
 		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([]);
 	} finally {
 		process.kill();
