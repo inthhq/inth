@@ -106,9 +106,8 @@ test('a permissive policy with nothing declared asks about necessary alone', asy
 test('a strict policy with nothing declared keeps its whole scope', async () => {
 	policy = matchedResolution(optInRule({ scopeMode: 'strict' }));
 	const runtime = await start();
-	expect(runtime.kernel.getSnapshot().evaluationPolicy.choiceScope).toBe(
-		undefined
-	);
+	const { evaluationPolicy } = runtime.kernel.getSnapshot();
+	expect(evaluationPolicy.choiceScope).toEqual(evaluationPolicy.scope);
 	// In consentTypes order: the resolved scope is sorted, not ordered.
 	expect(runtime.consentCategories).toEqual([
 		'necessary',
@@ -161,7 +160,9 @@ test('an IAB policy with nothing declared keeps its whole scope', async () => {
 	const runtime = await start();
 	const snapshot = runtime.kernel.getSnapshot();
 	expect(snapshot.policyRule.scopeMode).toBe('permissive');
-	expect(snapshot.evaluationPolicy.choiceScope).toBe(undefined);
+	expect(snapshot.evaluationPolicy.choiceScope).toEqual(
+		snapshot.evaluationPolicy.scope
+	);
 	// In consentTypes order: the resolved scope is sorted, not ordered.
 	expect(runtime.consentCategories).toEqual([
 		'necessary',

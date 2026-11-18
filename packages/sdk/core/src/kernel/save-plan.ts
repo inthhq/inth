@@ -40,7 +40,7 @@ export const resolveSaveSelection = function resolveSaveSelection(
 	categories?: readonly AllConsentNames[]
 ): { values: unknown; consentAction: SavePayload['consentAction'] } {
 	const rule = snapshot.policyRule;
-	const choiceScope = snapshot.evaluationPolicy.choiceScope ?? rule.scope;
+	const { choiceScope } = snapshot.evaluationPolicy;
 	const displayed =
 		categories === undefined
 			? choiceScope
@@ -85,10 +85,7 @@ export const choiceAcknowledgement = function choiceAcknowledgement(
 	actionAt: number
 ): NoticeDismissal | null {
 	const policy = snapshot.evaluationPolicy;
-	if (
-		policy.prompt !== 'choice' ||
-		(policy.choiceScope ?? policy.scope).length > 0
-	) {
+	if (policy.prompt !== 'choice' || policy.choiceScope.length > 0) {
 		return null;
 	}
 	const current = snapshot.noticeDismissal;

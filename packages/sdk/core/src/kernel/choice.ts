@@ -92,8 +92,7 @@ const coversChoiceScope = function coversChoiceScope(
 	snapshot: ConsentSnapshot,
 	categories: readonly AllConsentNames[]
 ): boolean {
-	const scope =
-		snapshot.evaluationPolicy.choiceScope ?? snapshot.policyRule.scope;
+	const scope = snapshot.evaluationPolicy.choiceScope;
 	// An empty scope is vacuously covered by `every`, and the visitor decides
 	// nothing in it, so a narrowed action there is not the full clear.
 	return (

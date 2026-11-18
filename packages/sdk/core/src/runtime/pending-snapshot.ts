@@ -77,6 +77,11 @@ const fallbackEvaluationPolicy = (
 				'145fd951c0967e210d905acf5859a93cd03095c0291816b9c424d740048b7a47',
 			maxAgeMs: FALLBACK_VALIDITY_MS,
 		},
+		choiceScope: consentCategories
+			? FALLBACK_SCOPE.filter((category) =>
+					consentCategories.includes(category)
+				)
+			: [...FALLBACK_SCOPE],
 		gpcDenyCategories: [],
 		legacyMaterialFingerprint: null,
 		model: 'opt-in',
@@ -89,11 +94,6 @@ const fallbackEvaluationPolicy = (
 		scope: [...FALLBACK_SCOPE],
 		scopeMode: 'strict',
 	};
-	if (consentCategories) {
-		policy.choiceScope = FALLBACK_SCOPE.filter((category) =>
-			consentCategories.includes(category)
-		);
-	}
 	return policy;
 };
 

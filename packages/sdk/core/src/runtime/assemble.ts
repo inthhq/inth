@@ -194,9 +194,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		},
 		get consentCategories(): AllConsentNames[] {
 			const snapshot = kernel.getSnapshot();
-			return displayedCategories(
-				snapshot.evaluationPolicy.choiceScope ?? snapshot.policyRule.scope
-			);
+			return displayedCategories(snapshot.evaluationPolicy.choiceScope);
 		},
 		dispose() {
 			disposed = true;

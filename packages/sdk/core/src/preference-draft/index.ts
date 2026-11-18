@@ -332,8 +332,7 @@ export const createPreferenceDraft = function createPreferenceDraft(
 	): PreferenceDraftState {
 		const snapshot = kernel.getSnapshot();
 		derivedFrom = snapshot;
-		const scope =
-			snapshot.evaluationPolicy.choiceScope ?? snapshot.policyRule.scope;
+		const scope = snapshot.evaluationPolicy.choiceScope;
 		const displayedCategories = listDisplayed(scope);
 		const isClean = () => staged.size === 0 && stagedVendors.size === 0;
 		if (isClean()) {
