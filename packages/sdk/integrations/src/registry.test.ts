@@ -256,6 +256,17 @@ describe('script integration registry', () => {
 		}
 	});
 
+	it("labels each integration with its vendor's display name", () => {
+		const drifted = vendorManifests.flatMap((manifest) => {
+			const { label } = getBuiltInScriptIntegrationByVendor(
+				manifest.vendor
+			) ?? { label: undefined };
+			const name = manifest.vendorDetails?.name;
+			return label === name ? [] : [{ label, name, vendor: manifest.vendor }];
+		});
+		expect(drifted).toEqual([]);
+	});
+
 	it('runs helper parity cases from the registry list', () => {
 		for (const integration of builtInScriptIntegrations) {
 			const parityCase = helperParityCases[integration.key];
