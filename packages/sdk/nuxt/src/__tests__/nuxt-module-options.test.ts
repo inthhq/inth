@@ -4,6 +4,7 @@
  */
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { logger, runWithNuxtContext } from '@nuxt/kit';
+import { applyEnv } from 'nitropack/runtime/internal/utils.env';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 // `useLogger` creates its loggers from Nuxt Kit's, which hands them these
@@ -44,9 +45,9 @@ const createNuxt = function createNuxt(
 			app: { baseURL: '/' },
 			build: { templates: [], transpile: [] },
 			buildDir: '/virtual/.nuxt',
-			inth,
 			experimental: {},
 			imports: {},
+			inth,
 			nitro: {},
 			plugins: [],
 			rootDir: '/virtual',
@@ -99,11 +100,20 @@ test('experimentalScriptRegistry reaches the public runtime config the plugin re
 });
 
 describe('projectUrl in the public runtime config', () => {
-	test('is stored under backendURL, the key NUXT_PUBLIC_INTH_PROJECT_URL replaces', async () => {
-		// Nuxt maps a NUXT_PUBLIC_* variable onto the key its name spells.
-		const config = await publicConfig({ projectUrl: '/api/inth' });
-		expect(config).toHaveProperty('backendURL', '/api/inth');
-		expect(config).not.toHaveProperty('projectUrl');
+	test('is stored under the key NUXT_PUBLIC_INTH_PROJECT_URL replaces', async () => {
+		const runtimeConfig = {
+			public: { inth: await publicConfig({ projectUrl: '/api/inth' }) },
+		};
+		vi.stubEnv('NUXT_PUBLIC_INTH_PROJECT_URL', 'https://env.example.com');
+		try {
+			applyEnv(runtimeConfig, { altPrefix: '', prefix: 'NUXT_' });
+		} finally {
+			vi.unstubAllEnvs();
+		}
+		expect(runtimeConfig.public.inth).toHaveProperty(
+			'projectUrl',
+			'https://env.example.com'
+		);
 	});
 });
 
@@ -338,7 +348,7 @@ describe('the build snapshot in manifest() mode', () => {
 					dev: true,
 				})
 			).rejects.toThrow(
-				/needs a backend URL.*Set NUXT_PUBLIC_INTH_PROJECT_URL \(or NUXT_PUBLIC_INTH_PROJECT_URL\)/u
+				/needs a backend URL.*Set NUXT_PUBLIC_INTH_PROJECT_URL, or/u
 			);
 		}
 	);
@@ -399,7 +409,7 @@ describe('the build snapshot in manifest() mode', () => {
 			);
 			expect(await importManifestSnapshot(nuxt)).toEqual(snapshot);
 			expect(nuxt.options.runtimeConfig.public.inth).toHaveProperty(
-				'backendURL',
+				'projectUrl',
 				'https://env.example.com'
 			);
 		} finally {
@@ -407,18 +417,24 @@ describe('the build snapshot in manifest() mode', () => {
 		}
 	});
 
-	describe('NUXT_PUBLIC_INTH_PROJECT_URL', () => {
+	describe('NUXT_PUBLIC_C15T_BACKEND_URL', () => {
+		const C15T = 'https://c15t.example.com';
 		const INTH = 'https://inth.example.com';
-		const INTH = 'https://inth.example.com';
-		const inthPlugins = (nuxt: Nuxt) =>
-			((nuxt.options.nitro as { plugins?: string[] }).plugins ?? []).filter(
-				(plugin) => plugin.includes('inth-project-url')
-			);
+		/** The scopes the server's legacy project URL plugin applies. */
+		const legacyScopes = async (nuxt: Nuxt) => {
+			const { virtual } = nuxt.options.nitro as {
+				virtual: Record<string, () => string>;
+			};
+			const variables = (await evaluateModule(
+				virtual['#inth/legacy-project-url-env']?.()
+			)) as { scope: string }[];
+			return variables.map(({ scope }) => scope);
+		};
 		const setUp = async (
 			inth: Record<string, unknown>,
 			env: Record<string, string | undefined>
 		) => {
-			vi.stubEnv('NUXT_PUBLIC_INTH_PROJECT_URL', undefined);
+			vi.stubEnv('NUXT_PUBLIC_C15T_BACKEND_URL', undefined);
 			vi.stubEnv('NUXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			for (const [key, value] of Object.entries(env)) {
 				vi.stubEnv(key, value);
@@ -431,7 +447,7 @@ describe('the build snapshot in manifest() mode', () => {
 					nuxt,
 					projectUrl: (
 						nuxt.options.runtimeConfig.public.inth as Record<string, unknown>
-					).backendURL,
+					).projectUrl,
 				};
 			} finally {
 				vi.unstubAllEnvs();
@@ -441,31 +457,31 @@ describe('the build snapshot in manifest() mode', () => {
 		test('alone gives the build its URL and applies on a running server', async () => {
 			const { projectUrl, fetch, nuxt } = await setUp(
 				{},
-				{ NUXT_PUBLIC_INTH_PROJECT_URL: INTH }
+				{ NUXT_PUBLIC_C15T_BACKEND_URL: C15T }
 			);
-			expect(fetch).toHaveBeenCalledWith(`${INTH}/manifest`, expect.anything());
-			expect(projectUrl).toBe(INTH);
-			expect(inthPlugins(nuxt)).toHaveLength(1);
+			expect(fetch).toHaveBeenCalledWith(`${C15T}/manifest`, expect.anything());
+			expect(projectUrl).toBe(C15T);
+			expect(await legacyScopes(nuxt)).toEqual(['public', 'server']);
 		});
 
 		test('loses to NUXT_PUBLIC_INTH_PROJECT_URL when both are set', async () => {
 			const { projectUrl, fetch, nuxt } = await setUp(
 				{},
 				{
-					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
+					NUXT_PUBLIC_C15T_BACKEND_URL: C15T,
 					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
 				}
 			);
 			expect(fetch).toHaveBeenCalledWith(`${INTH}/manifest`, expect.anything());
 			expect(projectUrl).toBe(INTH);
-			expect(inthPlugins(nuxt)).toHaveLength(0);
+			expect(await legacyScopes(nuxt)).toEqual(['server']);
 		});
 
 		test('an explicit projectUrl beats both variables', async () => {
 			const { projectUrl, fetch, nuxt } = await setUp(
 				{ projectUrl: 'https://option.example.com' },
 				{
-					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
+					NUXT_PUBLIC_C15T_BACKEND_URL: C15T,
 					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
 				}
 			);
@@ -474,7 +490,7 @@ describe('the build snapshot in manifest() mode', () => {
 				expect.anything()
 			);
 			expect(projectUrl).toBe('https://option.example.com');
-			expect(inthPlugins(nuxt)).toHaveLength(0);
+			expect(await legacyScopes(nuxt)).toEqual(['server']);
 		});
 	});
 

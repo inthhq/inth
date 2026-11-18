@@ -4,6 +4,8 @@ import type {
 	ConsentManifestPluginOptions,
 } from '@inth/sdk/build';
 
+import { VITE_PROJECT_URL_ENV } from './runtime/env-names';
+
 export type {
 	ConsentManifest,
 	ConsentManifestPluginOptions,
@@ -31,9 +33,8 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
  * app. It also keeps `@inth/vue`, whose components are `.vue` files, out of
  * dependency pre-bundling.
  *
- * `projectUrl` defaults to `VITE_INTH_PROJECT_URL`, then
- * `VITE_INTH_PROJECT_URL`, including `.env` files. When
- * `VITE_INTH_PROJECT_URL` is unset, the plugin sets
+ * `projectUrl` defaults to `VITE_INTH_PROJECT_URL`, including `.env`
+ * files. When it is unset, the plugin sets
  * `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used, so app code
  * reads the same value.
  *
@@ -69,7 +70,7 @@ export const consentManifest = (
 ): VueConsentManifestPlugin => {
 	const plugin = createConsentManifestPlugin(options, {
 		adviseHostedForLocation: true,
-		envNames: ['VITE_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
+		envNames: [VITE_PROJECT_URL_ENV],
 		label: '@inth/vue/vite',
 	});
 	return {

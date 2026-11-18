@@ -36,7 +36,7 @@ vi.mock('#imports', async () => {
 		useRuntimeConfig: () => ({
 			public: {
 				inth: {
-					backendURL: 'https://consent.example.test',
+					projectUrl: 'https://consent.example.test',
 					...nuxt.runtimeConfig,
 				},
 			},

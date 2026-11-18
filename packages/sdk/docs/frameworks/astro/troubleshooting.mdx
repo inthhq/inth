@@ -45,7 +45,7 @@ load, so visitors do not download Svelte as well.
 
 ## Consent requests go to the wrong backend
 
-**Check.** Look at `PUBLIC_INTH_PROJECT_URL` and `PUBLIC_INTH_PROJECT_URL` in
+**Check.** Look at `PUBLIC_INTH_PROJECT_URL` in
 `.env`, `.env.local` and the
 build environment, and at any `projectUrl` in `astro.config.mjs`. One is still the placeholder
 `https://your-project.inth.app`, the demo project, or a URL from another
@@ -81,7 +81,7 @@ an absolute upstream URL`.
 A missing backend URL counts as a failed download: `astro build` stops with
 `no backend URL is set`, and `astro dev` warns.
 
-**Fix.** Set `PUBLIC_INTH_PROJECT_URL` (or `PUBLIC_INTH_PROJECT_URL`), or
+**Fix.** Set `PUBLIC_INTH_PROJECT_URL`, or
 `projectUrl` on `inth()`, to your
 Inth project's absolute backend URL, and make sure the machine that builds
 can reach it. To deploy while the backend is down, build with
@@ -183,7 +183,7 @@ reach it, so the policy ships with the build. Or raise the budget with
 browser saves consent there, so `astro.config` refuses to load without one.
 `hosted()` fails the same way with `hosted() needs a backend URL`.
 
-**Fix.** Set `PUBLIC_INTH_PROJECT_URL` (or `PUBLIC_INTH_PROJECT_URL`) in
+**Fix.** Set `PUBLIC_INTH_PROJECT_URL` in
 `.env`, or pass
 `inth({ projectUrl: 'https://your-project.inth.app' })` with your project's
 URL in place of the placeholder. A `manifest({ snapshot })` still needs one:

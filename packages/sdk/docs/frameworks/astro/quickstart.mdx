@@ -57,8 +57,8 @@ path prefix, in `.env` or wherever you build:
 PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-If your app already sets `PUBLIC_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `PUBLIC_INTH_PROJECT_URL` wins.
+The c15t name `PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `PUBLIC_INTH_PROJECT_URL` wins.
 
 `inth()` reads it from the environment, or from `.env` or `.env.local` in the
 project root, when `astro.config.mjs` loads, so the config needs no

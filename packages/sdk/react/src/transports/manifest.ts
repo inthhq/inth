@@ -57,7 +57,7 @@ export const withBuildDefaults = function withBuildDefaults(
  *
  * Without options it uses what `consentManifest()` from `@inth/sdk/build`
  * downloaded: the snapshot and the backend URL from
- * `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`, both served as
+ * `VITE_INTH_PROJECT_URL`, both served as
  * `@inth/sdk/generated`. Without a
  * snapshot, such as in dev after a failed fetch, it fetches
  * `${projectUrl}/manifest` at runtime. Saves go to the backend either way.

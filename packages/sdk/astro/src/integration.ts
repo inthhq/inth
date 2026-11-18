@@ -19,6 +19,7 @@
  */
 
 import { readBuildEnv } from '@inth/sdk/build';
+import type { BuildEnvSource } from '@inth/sdk/build';
 import type { ConsentMode } from '@inth/sdk/modes';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import { normalizeRoutePrefix } from '@inth/sdk/server';
@@ -37,11 +38,8 @@ const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
 const ENGINE_ID = 'virtual:inth/engine';
 const RESOLVED_ENGINE_ID = `\0${ENGINE_ID}`;
 
-/**
- * Variables the top-level `projectUrl` defaults to, in order: the Inth one,
- * then the Inth project URL other Inth SDKs share.
- */
-const BACKEND_URL_ENVS = ['PUBLIC_INTH_PROJECT_URL', 'PUBLIC_INTH_PROJECT_URL'];
+/** The variable the top-level `projectUrl` defaults to. */
+const PROJECT_URL_ENV = 'PUBLIC_INTH_PROJECT_URL';
 
 /** Where the injected route lives unless `routePrefix` says otherwise. */
 const DEFAULT_ROUTE_PREFIX = '/api/inth';
@@ -248,8 +246,7 @@ const resolveMode = function resolveMode(
 			'@inth/astro: `mode` must be manifest() or hosted() from @inth/astro, or testing() from @inth/astro/testing. A transport function cannot be serialized into the page.'
 		);
 	}
-	const envHint =
-		'Set PUBLIC_INTH_PROJECT_URL (or PUBLIC_INTH_PROJECT_URL) in .env, or pass `projectUrl` to inth().';
+	const envHint = `Set ${PROJECT_URL_ENV} in .env, or pass \`projectUrl\` to inth().`;
 	if (mode.type === 'hosted' && projectUrl === undefined) {
 		throw new Error(
 			`@inth/astro: hosted() needs a backend URL to ask for each visitor's policy. ${envHint}`
@@ -876,12 +873,14 @@ const missingAdapterMessage = function missingAdapterMessage(
  * @param resolved - The resolved options; its mode gains the snapshot.
  * @param command - `build` or `dev`.
  * @param logger - Astro's integration logger.
+ * @param envSource - Where `INTH_ON_BUILD_ERROR` is read.
  * @throws {Error} When the fetch fails in `'fail'` mode.
  */
 const bundleBuildManifest = async function bundleBuildManifest(
 	resolved: InthResolvedOptions,
 	command: 'build' | 'dev',
-	logger: { info: (message: string) => void; warn: (message: string) => void }
+	logger: { info: (message: string) => void; warn: (message: string) => void },
+	envSource: BuildEnvSource
 ): Promise<void> {
 	const { mode } = resolved;
 	if (mode.type !== 'manifest' || mode.snapshot || mode.source === 'runtime') {
@@ -892,7 +891,8 @@ const bundleBuildManifest = async function bundleBuildManifest(
 		{ manifestUrl: mode.manifestUrl, projectUrl: resolved.projectUrl },
 		{
 			command,
-			envNames: BACKEND_URL_ENVS,
+			envNames: [PROJECT_URL_ENV],
+			envSource,
 			label: '@inth/astro',
 			logger,
 			onBuildError: resolved.onBuildError,
@@ -948,7 +948,7 @@ export const buildLocalsTypes = async function buildLocalsTypes(
  *
  * @param options - The options passed to `inth()`.
  * @param config - Astro's config, as `astro:config:setup` has it.
- * @param command - The Astro command.
+ * @param envSource - Where the backend URL variable is read.
  * @returns The resolved options.
  * @throws {Error} When {@link resolveOptions} or
  * {@link resolveClientEntrypoint} does.
@@ -956,16 +956,11 @@ export const buildLocalsTypes = async function buildLocalsTypes(
 const resolveSiteOptions = async function resolveSiteOptions(
 	options: InthAstroOptions,
 	config: { root?: URL; integrations?: { name: string }[] } | undefined,
-	command: string
+	envSource: BuildEnvSource
 ): Promise<InthResolvedOptions> {
-	const { fileURLToPath } = await import('node:url');
 	const root = config?.root;
 	const projectUrl =
-		options.projectUrl ??
-		readBuildEnv(BACKEND_URL_ENVS, {
-			mode: command === 'build' ? 'production' : 'development',
-			root: root ? fileURLToPath(root) : process.cwd(),
-		});
+		options.projectUrl ?? readBuildEnv([PROJECT_URL_ENV], envSource);
 	const site = resolveOptions(
 		projectUrl === undefined ? options : { ...options, projectUrl }
 	);
@@ -1072,10 +1067,15 @@ export const inth = function inth(
 			}) {
 				command = setupCommand;
 				const root = config?.root;
-				const site = await resolveSiteOptions(options, config, command);
+				const { fileURLToPath } = await import('node:url');
+				const envSource = {
+					mode: command === 'build' ? 'production' : 'development',
+					root: root ? fileURLToPath(root) : process.cwd(),
+				};
+				const site = await resolveSiteOptions(options, config, envSource);
 				resolved = site;
 				if (command === 'build' || command === 'dev') {
-					await bundleBuildManifest(site, command, logger);
+					await bundleBuildManifest(site, command, logger, envSource);
 				}
 				const resolveEntry = await createOwnEntryResolver();
 				// Tailwind 3 unwraps inth's cascade layer in the stylesheets it

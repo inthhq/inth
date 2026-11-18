@@ -117,46 +117,39 @@ export type ManifestBuildCommand = 'build' | 'dev';
 /** Environment variable that overrides `onBuildError` in every framework. */
 export const MANIFEST_BUILD_ERROR_ENV = 'INTH_ON_BUILD_ERROR';
 
-const isBuildErrorMode = (value: unknown): value is ManifestBuildErrorMode =>
-	value === 'runtime' || value === 'fail';
+/** Inth variable suffixes, and the c15t suffixes they replaced. */
+const LEGACY_ENV_SUFFIXES = [
+	['INTH_PROJECT_URL', 'C15T_BACKEND_URL'],
+	['INTH_ON_BUILD_ERROR', 'C15T_ON_BUILD_ERROR'],
+] as const;
 
 /**
- * Decides what a failed manifest fetch does. `INTH_ON_BUILD_ERROR` wins over
- * `onBuildError`. Without either, the build and dev fall back to runtime
- * fetching with a warning.
- * @param onBuildError - The configured option, if any.
- * @param command - Whether this is a production build or dev.
- * @param label - Framework name for errors.
- * @param env - Environment to read the override from.
- * @returns The mode, and whether the user chose it.
- * @throws {Error} When the option or the variable has another value.
+ * The c15t name an Inth variable replaced, such as `VITE_C15T_BACKEND_URL`
+ * for `VITE_INTH_PROJECT_URL`. Builds still read it when the Inth name is
+ * unset.
+ * @param name - An Inth variable name, with any framework prefix.
+ * @returns The legacy name, or `undefined` when the name has none.
  * @internal
  */
-export const resolveManifestBuildErrorMode = (
-	onBuildError: unknown,
-	command: ManifestBuildCommand,
-	label: string,
-	env: Record<string, string | undefined> = process.env
-): { explicit: boolean; mode: ManifestBuildErrorMode } => {
-	const fromEnv = env[MANIFEST_BUILD_ERROR_ENV];
-	if (fromEnv) {
-		if (!isBuildErrorMode(fromEnv)) {
-			throw new Error(
-				`${label}: ${MANIFEST_BUILD_ERROR_ENV} must be 'runtime' or 'fail', received ${JSON.stringify(fromEnv)}.`
-			);
+export const legacyEnvName = (name: string): string | undefined => {
+	for (const [inth, legacy] of LEGACY_ENV_SUFFIXES) {
+		if (name === inth || name.endsWith(`_${inth}`)) {
+			return `${name.slice(0, -inth.length)}${legacy}`;
 		}
-		return { explicit: true, mode: fromEnv };
 	}
-	if (onBuildError !== undefined) {
-		if (!isBuildErrorMode(onBuildError)) {
-			throw new Error(
-				`${label}: onBuildError must be 'runtime' or 'fail', received ${JSON.stringify(onBuildError)}.`
-			);
-		}
-		return { explicit: true, mode: onBuildError };
-	}
-	return { explicit: false, mode: 'runtime' };
+	return undefined;
 };
+
+/**
+ * Where {@link readBuildEnv} looks besides the process environment:
+ * variables the framework already loaded, the directory with the `.env`
+ * files, and the mode, such as `production`.
+ */
+export interface BuildEnvSource {
+	env?: Record<string, unknown>;
+	mode?: string;
+	root?: string;
+}
 
 /** Values in a `.env` file. Handles `export`, quotes and comments. */
 const parseEnvFile = (source: string): Record<string, string> => {
@@ -183,26 +176,23 @@ const parseEnvFile = (source: string): Record<string, string> => {
 };
 
 /**
- * Reads the first of `names` that is set. Each name is looked up the way
- * Vite resolves variables: values the framework already loaded, then the
- * process environment, then `.env.[mode].local`, `.env.[mode]`,
- * `.env.local` and `.env` in `root`. An earlier name wins wherever it is
- * set, so `*_INTH_PROJECT_URL` in `.env` beats `*_INTH_PROJECT_URL` in the
- * environment. An empty value counts as unset.
- * @param names - Variable names in order of preference.
- * @param options - Variables the framework loaded, the directory with the
- * `.env` files and the mode, such as `production`.
- * @returns The value, or `undefined` when none of the names is set.
+ * Reads the first of `names` that is set, then the first of their
+ * {@link legacyEnvName legacy names}, and says which name it read. Each
+ * name is looked up the way Vite resolves variables: values the framework
+ * already loaded, then the process environment, then `.env.[mode].local`,
+ * `.env.[mode]`, `.env.local` and `.env` in `root`. An earlier name wins
+ * wherever it is set, so `VITE_INTH_PROJECT_URL` in `.env` beats
+ * `VITE_C15T_BACKEND_URL` in the environment. An empty value counts as
+ * unset.
+ * @param names - Inth variable names in order of preference.
+ * @param options - Where to look besides the process environment.
+ * @returns The name and its value, or `undefined` when no name is set.
  * @internal
  */
-export const readBuildEnv = (
+export const readBuildEnvEntry = (
 	names: readonly string[],
-	options: {
-		env?: Record<string, unknown>;
-		mode?: string;
-		root?: string;
-	} = {}
-): string | undefined => {
+	options: BuildEnvSource = {}
+): { name: string; value: string } | undefined => {
 	let parsed: Record<string, string>[] | undefined;
 	const readFiles = (root: string): Record<string, string>[] => {
 		const files = [
@@ -220,14 +210,15 @@ export const readBuildEnv = (
 			}
 		});
 	};
-	for (const name of names) {
+	const legacy = names.flatMap((name) => legacyEnvName(name) ?? []);
+	for (const name of [...names, ...legacy]) {
 		const loaded = options.env?.[name];
 		if (typeof loaded === 'string' && loaded !== '') {
-			return loaded;
+			return { name, value: loaded };
 		}
 		const fromProcess = process.env[name];
 		if (fromProcess) {
-			return fromProcess;
+			return { name, value: fromProcess };
 		}
 		if (!options.root) {
 			continue;
@@ -253,7 +244,8 @@ export const readBuildEnv = (
 			);
 		for (const values of files) {
 			if (values[name]) {
-				return expand(values[name], 0) || undefined;
+				const value = expand(values[name], 0);
+				return value ? { name, value } : undefined;
 			}
 		}
 	}
@@ -261,21 +253,55 @@ export const readBuildEnv = (
 };
 
 /**
- * Names backend URL variables for a message: the Inth names, then the Inth
- * ones in parentheses, as in
- * `VITE_INTH_PROJECT_URL (or VITE_INTH_PROJECT_URL)`.
- * @param names - Variable names in order of preference.
- * @returns The names joined for a sentence.
+ * The value {@link readBuildEnvEntry} finds.
+ * @param names - Inth variable names in order of preference.
+ * @param options - Where to look besides the process environment.
+ * @returns The value, or `undefined` when no name is set.
  * @internal
  */
-export const formatEnvNames = (names: readonly string[]): string => {
-	const isInth = (name: string) => name.endsWith('_INTH_PROJECT_URL');
-	const primary = names.filter((name) => !isInth(name)).join(' or ');
-	const inth = names.filter(isInth).join(' or ');
-	if (!primary) {
-		return inth;
+export const readBuildEnv = (
+	names: readonly string[],
+	options: BuildEnvSource = {}
+): string | undefined => readBuildEnvEntry(names, options)?.value;
+
+const isBuildErrorMode = (value: unknown): value is ManifestBuildErrorMode =>
+	value === 'runtime' || value === 'fail';
+
+/**
+ * Decides what a failed manifest fetch does. `INTH_ON_BUILD_ERROR` wins over
+ * `onBuildError`. Without either, the build and dev fall back to runtime
+ * fetching with a warning.
+ * @param onBuildError - The configured option, if any.
+ * @param label - Framework name for errors.
+ * @param source - Where to read the variable besides the process
+ * environment.
+ * @returns The mode, and whether the user chose it.
+ * @throws {Error} When the option or the variable has another value.
+ * @internal
+ */
+export const resolveManifestBuildErrorMode = (
+	onBuildError: unknown,
+	label: string,
+	source: BuildEnvSource = {}
+): { explicit: boolean; mode: ManifestBuildErrorMode } => {
+	const fromEnv = readBuildEnv([MANIFEST_BUILD_ERROR_ENV], source);
+	if (fromEnv) {
+		if (!isBuildErrorMode(fromEnv)) {
+			throw new Error(
+				`${label}: ${MANIFEST_BUILD_ERROR_ENV} must be 'runtime' or 'fail', received ${JSON.stringify(fromEnv)}.`
+			);
+		}
+		return { explicit: true, mode: fromEnv };
 	}
-	return inth ? `${primary} (or ${inth})` : primary;
+	if (onBuildError !== undefined) {
+		if (!isBuildErrorMode(onBuildError)) {
+			throw new Error(
+				`${label}: onBuildError must be 'runtime' or 'fail', received ${JSON.stringify(onBuildError)}.`
+			);
+		}
+		return { explicit: true, mode: onBuildError };
+	}
+	return { explicit: false, mode: 'runtime' };
 };
 
 /** Where a build reports a skipped or failed manifest fetch. */
@@ -306,6 +332,8 @@ export interface ManifestBuildPolicy {
 	command: ManifestBuildCommand;
 	/** Variables that can carry the backend URL, named in messages. */
 	envNames?: readonly string[];
+	/** Where `INTH_ON_BUILD_ERROR` is read besides the process environment. */
+	envSource?: BuildEnvSource;
 	/** Framework name for errors. */
 	label: string;
 	/** Receives skip notices and warnings, without the label. */
@@ -399,8 +427,8 @@ export const loadManifestForBuild = async (
 	const { command, label, logger } = policy;
 	const { explicit, mode } = resolveManifestBuildErrorMode(
 		policy.onBuildError,
-		command,
-		label
+		label,
+		policy.envSource
 	);
 	if (policy.skipReason) {
 		logger.info(
@@ -409,7 +437,7 @@ export const loadManifestForBuild = async (
 		return undefined;
 	}
 	const envHint = policy.envNames?.length
-		? ` Pass projectUrl or set ${formatEnvNames(policy.envNames)}.`
+		? ` Pass projectUrl or set ${policy.envNames.join(' or ')}.`
 		: '';
 	const configured = source.manifestUrl ?? source.projectUrl;
 	if (!configured) {
@@ -693,21 +721,23 @@ export const writeManifestCacheModule = async (
 	},
 	logger: ManifestBuildLogger = labelledBuildLogger(defaults.label)
 ): Promise<ManifestCacheFiles> => {
+	const rootDir = defaults.rootDir ?? process.cwd();
 	const snapshot = await loadManifestForBuild(
 		{ fetch: options.fetch, projectUrl: options.projectUrl },
 		{
 			command: defaults.command,
 			envNames: defaults.envNames,
+			envSource: {
+				mode: defaults.command === 'build' ? 'production' : 'development',
+				root: rootDir,
+			},
 			label: defaults.label,
 			logger,
 			onBuildError: options.onBuildError,
 			skipReason: defaults.skipReason,
 		}
 	);
-	const directory = resolve(
-		defaults.rootDir ?? process.cwd(),
-		MANIFEST_CACHE_DIR
-	);
+	const directory = resolve(rootDir, MANIFEST_CACHE_DIR);
 	const module = { projectUrl: options.projectUrl, snapshot };
 	const [server, browser] = await Promise.all([
 		writeModuleFile(
@@ -1046,9 +1076,9 @@ const GENERATED_IMPORTERS = [
  * Builds the Vite plugin behind each `consentManifest` export. It serves
  * the virtual `@inth/sdk/generated` module, so no file is written into the
  * app. Preview uses the existing build. Without `projectUrl`, the first of
- * `envNames` that is set supplies it; the first `VITE_` variable, when
- * unset or empty, is then set to the URL used, so app code reads the same
- * value. The Inth variables come before the Inth ones.
+ * `envNames` that is set supplies it, or else their c15t names; the first
+ * `VITE_` variable, when unset or empty, is then set to the URL used, so app
+ * code reads the same value under the Inth name.
  *
  * The manifest is fetched only for a bundle that reads `snapshot`, which
  * the hosted backend and a testing value never do. The mode is chosen in app code, so
@@ -1106,9 +1136,16 @@ export const createConsentManifestPlugin = (
 		resolved?.command === 'serve' ? 'dev' : 'build';
 	const logger = (): ManifestBuildLogger =>
 		labelledBuildLogger(defaults.label, resolved?.logger);
+	const envSource = (): BuildEnvSource => ({
+		env: resolved?.env,
+		mode: resolved?.mode,
+		root:
+			typeof resolved?.envDir === 'string' ? resolved.envDir : resolved?.root,
+	});
 	const policy = (): ManifestBuildPolicy => ({
 		command: command(),
 		envNames: defaults.envNames,
+		envSource: envSource(),
 		// The mode is set in app code, which the plugin can't read.
 		failureHint:
 			" If the app passes manifest({ manifestUrl }) or manifest({ source: 'runtime' }), pass `source: 'runtime'` to this plugin so the build skips this download.",
@@ -1157,7 +1194,7 @@ export const createConsentManifestPlugin = (
 		}
 		missingURLReported = true;
 		logger().warn(
-			`no backend URL is set. A provider without \`projectUrl\`, and \`manifest()\` without its own, throw when the app starts. Pass projectUrl to the plugin or set ${formatEnvNames(defaults.envNames)}.`
+			`no backend URL is set. A provider without \`projectUrl\`, and \`manifest()\` without its own, throw when the app starts. Pass projectUrl to the plugin or set ${defaults.envNames.join(' or ')}.`
 		);
 	};
 	/** Warns once, for a multi-page app, why no page got the script. */
@@ -1337,8 +1374,8 @@ export const createConsentManifestPlugin = (
 			// only when a bundle reads the snapshot.
 			resolveManifestBuildErrorMode(
 				options.onBuildError,
-				command(),
-				defaults.label
+				defaults.label,
+				envSource()
 			);
 			if (
 				options.source !== undefined &&
@@ -1357,15 +1394,8 @@ export const createConsentManifestPlugin = (
 					'initPrefetch has no effect in a server-rendered app, which resolves consent on the server.'
 				);
 			}
-			const envRoot =
-				typeof config.envDir === 'string' ? config.envDir : config.root;
 			projectUrl =
-				options.projectUrl ??
-				readBuildEnv(defaults.envNames, {
-					env: config.env,
-					mode: config.mode,
-					root: envRoot,
-				});
+				options.projectUrl ?? readBuildEnv(defaults.envNames, envSource());
 			const exposed = defaults.envNames.find((name) =>
 				name.startsWith('VITE_')
 			);
@@ -1525,7 +1555,7 @@ export const createConsentManifestPlugin = (
  * app would discard.
  *
  * @param options - Backend URL, `onBuildError` and `source`. `projectUrl`
- * defaults to `VITE_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL`.
+ * defaults to `VITE_INTH_PROJECT_URL`.
  * @returns A Vite plugin, compatible with React, Vue, Svelte and Solid builds.
  * @throws {Error} When the fetch fails in `'fail'` mode, stopping Vite.
  * @example
@@ -1540,6 +1570,6 @@ export const consentManifest = (
 ): ConsentManifestPlugin =>
 	createConsentManifestPlugin(options, {
 		adviseHostedForLocation: true,
-		envNames: ['VITE_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
+		envNames: ['VITE_INTH_PROJECT_URL'],
 		label: '@inth/sdk/build',
 	});

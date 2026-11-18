@@ -76,8 +76,7 @@ export type InthVuePluginOptions = InthVuePluginConfig &
 				/**
 				 * Backend URL. Setting it is how the app talks to the hosted
 				 * backend. Defaults to the URL `consentManifest()` from
-				 * `@inth/vue/vite` read from `VITE_INTH_PROJECT_URL` or
-				 * `VITE_INTH_PROJECT_URL`.
+				 * `@inth/vue/vite` read from `VITE_INTH_PROJECT_URL`.
 				 *
 				 * @example
 				 * ```ts

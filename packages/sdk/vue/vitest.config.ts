@@ -57,6 +57,12 @@ export default mergeConfig(
 					),
 				},
 				{
+					'#inth/legacy-project-url-env': resolve(
+						__dirname,
+						'./src/__tests__/legacy-project-url-env-virtual.ts'
+					),
+				},
+				{
 					'#@inth/sdk/server-manifest-snapshot': resolve(
 						__dirname,
 						'./src/__tests__/manifest-snapshot.ts'

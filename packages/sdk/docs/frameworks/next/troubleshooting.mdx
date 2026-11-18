@@ -18,8 +18,7 @@ Without it, the helper logs a warning only outside production.
 **Check.** If the consent route repeatedly calls itself, check its upstream
 URL.
 
-**Fix.** Set the config's `projectUrl`, or `NEXT_PUBLIC_INTH_PROJECT_URL` (or
-`NEXT_PUBLIC_INTH_PROJECT_URL`), to
+**Fix.** Set the config's `projectUrl`, or `NEXT_PUBLIC_INTH_PROJECT_URL`, to
 the absolute Inth or self-hosted backend endpoint. To send the browser through
 `/api/inth`, set `proxy: true` and `routePrefix` instead of a relative
 `projectUrl`; the route keeps the absolute URL. See
@@ -47,8 +46,7 @@ parentheses names the cause:
   not support this Inth version.
 
 `no backend URL is set` means the build found no `projectUrl` option, no
-`projectUrl` in `inth.config.ts` and no `NEXT_PUBLIC_INTH_PROJECT_URL` or
-`NEXT_PUBLIC_INTH_PROJECT_URL`, or empty ones. `next build` stops on it and
+`projectUrl` in `inth.config.ts` and no `NEXT_PUBLIC_INTH_PROJECT_URL`, or empty ones. `next build` stops on it and
 `next dev` warns. A notice that the build `skipped the consent manifest fetch`
 means the backend URL is a path such as `/api/inth`. With
 `onBuildError: 'fail'`, that stops the build with `build-time manifests
@@ -63,8 +61,7 @@ build could not evaluate the file, so it fetched the manifest as for
 error. The usual cause is an import Node can't load at build time, such as a
 stylesheet. Keep `inth.config.ts` to the config and the packages it needs.
 
-**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` (or
-`NEXT_PUBLIC_INTH_PROJECT_URL`) to the absolute backend URL from your Inth
+**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` to the absolute backend URL from your Inth
 project, or your self-hosted origin with its path prefix, wherever
 `next build` runs, including CI. To deploy while the backend is down, run the
 build with `INTH_ON_BUILD_ERROR=runtime`, or set `onBuildError: 'runtime'`.
@@ -143,7 +140,7 @@ else. A config in `src/` is not found. Check that:
 - You restarted `next dev` after adding the file.
 
 Without a config, `ConsentRoot` reads `NEXT_PUBLIC_INTH_PROJECT_URL`, which
-`withConsentManifest` sets from `NEXT_PUBLIC_INTH_PROJECT_URL` when only that
+`withConsentManifest` sets from `NEXT_PUBLIC_C15T_BACKEND_URL` when only that
 is set, uses
 `manifest()` and runs no `scripts`. With no backend URL either, it throws; see
 the next section.
@@ -153,18 +150,17 @@ the next section.
 **Check.** The page, or `next build` while it prerenders the page, throws one
 of these errors from `ConsentRoot`:
 
-- ``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in inth.config.ts.``
-- ``@inth/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in inth.config.ts.``
+- ``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.``
+- ``@inth/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.``
 
 A production build prints only the first sentence, such as
 `@inth/nextjs: manifest() needs a backend URL.`
 
 `ConsentRoot` found no `inth.config.ts`, or got a `config` prop without a
-backend URL, and neither `NEXT_PUBLIC_INTH_PROJECT_URL` nor
-`NEXT_PUBLIC_INTH_PROJECT_URL` was set when Next.js compiled the page.
+backend URL, and `NEXT_PUBLIC_INTH_PROJECT_URL` was not set when Next.js
+compiled the page.
 
-**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` (or
-`NEXT_PUBLIC_INTH_PROJECT_URL`) wherever `next build` and
+**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` wherever `next build` and
 `next dev` run, and check that `withConsentManifest` finds `inth.config.ts`
 (see the previous section). Earlier alphas fell back to local mode here;
 now the root throws. To run without a backend, set `mode: testing()` in
@@ -192,7 +188,7 @@ The checks run on the server only; the browser copy of the file skips them.
 
 **Fix.** The [config reference](/docs/frameworks/next/data-fetching-reference#config-reference)
 lists each message. The most common is
-``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.``
+``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_INTH_PROJECT_URL set at build time.``
 Set the variable in `.env.local` and in your host's build settings, or pass
 `projectUrl`.
 

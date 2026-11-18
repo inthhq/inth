@@ -196,23 +196,22 @@ Each framework reads its backend URL from a public environment variable, so
 the quickstarts never write it in code. Put it in `.env` or your host's build
 settings. The value is public configuration, not a secret.
 
-| Framework | Variable | Inth alternative |
+| Framework | Variable | c15t fallback |
 | --- | --- | --- |
-| Next.js | `NEXT_PUBLIC_INTH_PROJECT_URL` | `NEXT_PUBLIC_INTH_PROJECT_URL` |
-| Nuxt | `NUXT_PUBLIC_INTH_PROJECT_URL` | `NUXT_PUBLIC_INTH_PROJECT_URL` |
-| Astro | `PUBLIC_INTH_PROJECT_URL` | `PUBLIC_INTH_PROJECT_URL` |
-| SvelteKit and Svelte | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` |
-| TanStack Start, React, Vue and JavaScript with Vite | `VITE_INTH_PROJECT_URL` | `VITE_INTH_PROJECT_URL` |
+| Next.js | `NEXT_PUBLIC_INTH_PROJECT_URL` | `NEXT_PUBLIC_C15T_BACKEND_URL` |
+| Nuxt | `NUXT_PUBLIC_INTH_PROJECT_URL` | `NUXT_PUBLIC_C15T_BACKEND_URL` |
+| Astro | `PUBLIC_INTH_PROJECT_URL` | `PUBLIC_C15T_BACKEND_URL` |
+| SvelteKit and Svelte | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` | `PUBLIC_C15T_BACKEND_URL`, then `VITE_C15T_BACKEND_URL` |
+| TanStack Start, React, Vue and JavaScript with Vite | `VITE_INTH_PROJECT_URL` | `VITE_C15T_BACKEND_URL` |
 | Script tag | `data-project-url` on the script element | – |
 
-Set either variable. The Inth one holds your Inth project URL, so other Inth
-SDKs in the same app can read it too. When both are set, the Inth variable
+The c15t names still work as a fallback. When both are set, the Inth variable
 wins.
 
 A backend URL resolves in this order: the framework's `projectUrl` option,
-then the Inth variable, then the Inth variable. The build reads each variable from the process environment,
+then the Inth variable, then its c15t name. The build reads each variable from the process environment,
 then from `.env.[mode].local`, `.env.[mode]`, `.env.local` and `.env` in the
-project root, so a Inth variable in `.env` still beats an Inth variable in
+project root, so an Inth variable in `.env` still beats a c15t variable in
 the environment. The Vite plugins set an unset `VITE_INTH_PROJECT_URL` to the
 URL they used, so `import.meta.env.VITE_INTH_PROJECT_URL` in app code reads
 the same value. `withConsentManifest()` does the same for
@@ -276,7 +275,8 @@ Pass it where you configure the integration: the second argument of
 in `nuxt.config.ts`, or `inth({ onBuildError })` in Astro.
 
 The `INTH_ON_BUILD_ERROR` environment variable overrides the option, so a CI
-job can require a snapshot without a code change:
+job can require a snapshot without a code change. `C15T_ON_BUILD_ERROR` still
+works as a fallback:
 
 ```sh
 INTH_ON_BUILD_ERROR=fail npm run build

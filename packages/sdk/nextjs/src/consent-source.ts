@@ -24,7 +24,7 @@ export interface ConsentSourceOptions {
 
 	/**
 	 * Backend base URL. Defaults to the config's, then
-	 * `NEXT_PUBLIC_INTH_PROJECT_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL`.
+	 * `NEXT_PUBLIC_INTH_PROJECT_URL`.
 	 */
 	projectUrl?: string;
 

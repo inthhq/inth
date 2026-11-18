@@ -153,8 +153,7 @@ export const handle = inthHandle({
 ```
 
 The route skips a handle `projectUrl` that points at itself, and forwards to
-the backend URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` or
-`PUBLIC_INTH_PROJECT_URL`. To
+the backend URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL`. To
 forward somewhere else, pass `createConsentRoute({ projectUrl, proxy: true })`.
 With the proxy on, `GET`
 still resolves `init` and `manifest` in the process, and the handlers forward
@@ -234,7 +233,7 @@ own handles through `sequence(inthHandle(), yourHandle)` from
 | --- | --- | --- |
 | `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. |
 | `routePrefix` | none | Where [`createConsentRoute()`](#serve-the-consent-route) is mounted, such as `/api/inth`. Without it, the browser asks the backend's `/init` when it resolves consent itself. |
-| `projectUrl` | The URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` or `PUBLIC_INTH_PROJECT_URL` | The backend. |
+| `projectUrl` | The URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` | The backend. |
 | `snapshot` | The manifest `consentManifest` downloaded | A manifest of your own to resolve with. |
 | `cookieName` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | from headers | Forces one input for every request. |

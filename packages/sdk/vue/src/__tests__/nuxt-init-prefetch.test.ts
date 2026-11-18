@@ -28,7 +28,7 @@ const nuxt = vi.hoisted(() => ({
 // Hoisted with the mocks below, which both read it.
 const useRuntimeConfig = vi.hoisted(() => () => ({
 	inth: { ssr: nuxt.ssr },
-	public: { inth: { backendURL: '/api/inth', mode: { type: 'hosted' } } },
+	public: { inth: { projectUrl: '/api/inth', mode: { type: 'hosted' } } },
 }));
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Nitro supplies this runtime; the test provides the config the server plugin reads.
 vi.mock('nitropack/runtime', () => ({

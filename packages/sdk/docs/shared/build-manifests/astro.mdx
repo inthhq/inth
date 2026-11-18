@@ -11,8 +11,7 @@ completed build and never fetches a new snapshot.
 
 The build fetches only from an absolute upstream backend URL or
 `manifestUrl`, because it cannot fetch a route in the app it is still
-compiling. `inth()` without a `projectUrl` reads `PUBLIC_INTH_PROJECT_URL`, then
-`PUBLIC_INTH_PROJECT_URL`.
+compiling. `inth()` without a `projectUrl` reads `PUBLIC_INTH_PROJECT_URL`.
 With a relative URL, `manifest({ source: 'runtime' })`,
 `manifest({ snapshot })`, `hosted()` or `testing()`, the integration skips
 the fetch. If the fetch fails, or no backend URL is set, `astro build` stops.

@@ -5,7 +5,7 @@ Add the plugin before `tanstackStart()`:
 <include src="../examples/tanstack-start/vite-config.mdx" />
 
 The plugin reads the backend URL from `projectUrl`, or from
-`VITE_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL`, when you leave
+`VITE_INTH_PROJECT_URL`, when you leave
 `projectUrl` out. If `VITE_INTH_PROJECT_URL` is unset, the plugin sets it to the URL it used, so app code can read
 `import.meta.env.VITE_INTH_PROJECT_URL` instead of repeating the URL.
 

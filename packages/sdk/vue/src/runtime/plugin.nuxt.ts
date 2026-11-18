@@ -34,7 +34,6 @@ import {
 } from './nuxt-mode';
 import type { NuxtConsentModeConfig } from './nuxt-mode';
 import { provideVueConsentContext } from './provide';
-import { fromRuntimeConfig } from './runtime-config';
 import type { NuxtConsentRequest } from './server-consent';
 import { isSharedNuxtRender } from './shared-render';
 import { TOKENS_STYLE_ID } from './tokens-style-id';
@@ -190,7 +189,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	const config = computed(() => {
 		const merged = defu(
 			appConfig.inth,
-			fromRuntimeConfig(runtimeConfig.public.inth)
+			runtimeConfig.public.inth
 		) as Partial<RuntimeConsentConfig>;
 		// `defu` skips `null`, so an app config `colorScheme: null` would fall
 		// back to the module options. Nitro replaces `null` in runtime config

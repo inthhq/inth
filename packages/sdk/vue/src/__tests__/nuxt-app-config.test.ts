@@ -31,7 +31,7 @@ vi.mock('#imports', async () => {
 			public: {
 				inth: JSON.parse(
 					JSON.stringify({
-						backendURL: 'https://consent.example.test',
+						projectUrl: 'https://consent.example.test',
 						iframeBlocker: false,
 						networkBlocker: { logBlockedRequests: false, rules: [] },
 					})

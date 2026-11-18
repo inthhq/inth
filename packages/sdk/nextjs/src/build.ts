@@ -6,30 +6,27 @@ import { pathToFileURL } from 'node:url';
 import {
 	GENERATED_MODULE_IDS,
 	readBuildEnv,
+	readBuildEnvEntry,
 	writeManifestCacheModule,
 } from '@inth/sdk/build';
-import type { ManifestBuildOptions, ManifestCacheFiles } from '@inth/sdk/build';
+import type {
+	BuildEnvSource,
+	ManifestBuildOptions,
+	ManifestCacheFiles,
+} from '@inth/sdk/build';
 import type { NextConfig } from 'next';
 import {
 	PHASE_DEVELOPMENT_SERVER,
 	PHASE_PRODUCTION_BUILD,
 } from 'next/constants.js';
 
+import { BACKEND_URL_ENV } from './config';
 import type { ConsentConfig } from './config';
 
 export type {
 	ManifestBuildErrorMode,
 	ManifestBuildOptions,
 } from '@inth/sdk/build';
-
-/** Variable the build reads the backend URL from, like `defineConsentConfig`. */
-const BACKEND_URL_ENV = 'NEXT_PUBLIC_INTH_PROJECT_URL';
-
-/**
- * The Inth project URL, shared with other Inth SDKs. Read when
- * {@link BACKEND_URL_ENV} is unset.
- */
-const INTH_URL_ENV = 'NEXT_PUBLIC_INTH_PROJECT_URL';
 
 /** A Next.js configuration object or synchronous/asynchronous factory. */
 export type ConsentNextConfig =
@@ -258,30 +255,22 @@ const modeSkipReason = function modeSkipReason(
 };
 
 /**
- * `NEXT_PUBLIC_INTH_PROJECT_URL` when `NEXT_PUBLIC_INTH_PROJECT_URL` is
- * unset, copied to `NEXT_PUBLIC_INTH_PROJECT_URL` in the process
- * environment. `inth.config.ts`, evaluated next, reads the Inth name, and
- * the caller also adds it to the config's `env`, so bundles inline one
- * value and the browser gets no second read.
+ * The URL from the c15t name of {@link BACKEND_URL_ENV} when only that is
+ * set, copied to the Inth name in the process environment.
+ * `inth.config.ts`, evaluated next, reads the Inth name, and the caller also
+ * adds it to the config's `env`, so bundles inline it under that name.
  *
- * @returns The Inth URL that was copied, or `undefined`.
+ * @returns The URL that was copied, or `undefined`.
  */
-const exposeInthProjectURL = function exposeInthProjectURL(
-	root: string,
-	phase: string
+const exposeLegacyProjectUrl = function exposeLegacyProjectUrl(
+	envSource: BuildEnvSource
 ): string | undefined {
-	const envOptions = {
-		mode: phase === PHASE_PRODUCTION_BUILD ? 'production' : 'development',
-		root,
-	};
-	if (readBuildEnv([BACKEND_URL_ENV], envOptions)) {
+	const found = readBuildEnvEntry([BACKEND_URL_ENV], envSource);
+	if (!found || found.name === BACKEND_URL_ENV) {
 		return undefined;
 	}
-	const inth = readBuildEnv([INTH_URL_ENV], envOptions);
-	if (inth) {
-		process.env[BACKEND_URL_ENV] = inth;
-	}
-	return inth;
+	process.env[BACKEND_URL_ENV] = found.value;
+	return found.value;
 };
 
 /** A project-relative `./` path, the form Turbopack resolves alias targets in. */
@@ -410,16 +399,15 @@ const withConsentAliases = function withConsentAliases(
  * see the aliases: it reads no config and fetches the manifest at runtime.
  *
  * When `NEXT_PUBLIC_INTH_PROJECT_URL` is unset, the wrapper reads
- * `NEXT_PUBLIC_INTH_PROJECT_URL` instead and sets
+ * `NEXT_PUBLIC_C15T_BACKEND_URL` instead and sets
  * `NEXT_PUBLIC_INTH_PROJECT_URL` to it, in the environment and in the
  * config's `env`, so every reader of the Inth name sees the same URL.
  *
  * @param config - Existing Next.js configuration, preserved as given apart
  * from the alias and `env`, which gains the Inth variable.
  * @param options - Backend URL and `onBuildError`. `projectUrl` defaults to
- * the one in `inth.config.ts`, then `NEXT_PUBLIC_INTH_PROJECT_URL`, then
- * `NEXT_PUBLIC_INTH_PROJECT_URL`, from the environment or a `.env` file,
- * and the build appends `/manifest`.
+ * the one in `inth.config.ts`, then `NEXT_PUBLIC_INTH_PROJECT_URL`, from
+ * the environment or a `.env` file, and the build appends `/manifest`.
  * @returns An asynchronous Next.js configuration factory.
  * @throws {Error} When the fetch fails in `'fail'` mode, the default for
  * `next build`, the snapshot cannot be written, or `defineConsentConfig`
@@ -449,13 +437,17 @@ export const withConsentManifest =
 	) => Promise<NextConfig>) =>
 	async (phase, context) => {
 		const root = process.cwd();
-		const inthURL = exposeInthProjectURL(root, phase);
+		const envSource = {
+			mode: phase === PHASE_PRODUCTION_BUILD ? 'production' : 'development',
+			root,
+		};
+		const legacyURL = exposeLegacyProjectUrl(envSource);
 		const given =
 			typeof config === 'function' ? await config(phase, context) : config;
 		const resolved: NextConfig =
-			inthURL === undefined
+			legacyURL === undefined
 				? given
-				: { ...given, env: { ...given.env, [BACKEND_URL_ENV]: inthURL } };
+				: { ...given, env: { ...given.env, [BACKEND_URL_ENV]: legacyURL } };
 		if (
 			phase !== PHASE_PRODUCTION_BUILD &&
 			phase !== PHASE_DEVELOPMENT_SERVER
@@ -472,15 +464,11 @@ export const withConsentManifest =
 				projectUrl:
 					options.projectUrl ??
 					userConfig?.projectUrl ??
-					readBuildEnv([BACKEND_URL_ENV, INTH_URL_ENV], {
-						mode:
-							phase === PHASE_PRODUCTION_BUILD ? 'production' : 'development',
-						root,
-					}),
+					readBuildEnv([BACKEND_URL_ENV], envSource),
 			},
 			{
 				command: phase === PHASE_PRODUCTION_BUILD ? 'build' : 'dev',
-				envNames: [BACKEND_URL_ENV, INTH_URL_ENV],
+				envNames: [BACKEND_URL_ENV],
 				importSource: '@inth/nextjs/static',
 				label: '@inth/nextjs/build',
 				skipReason:

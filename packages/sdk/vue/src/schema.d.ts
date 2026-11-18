@@ -5,10 +5,8 @@ import type { ConsentConfig } from './runtime/config';
 // @inth/nuxt.
 declare module 'nuxt/schema' {
 	interface PublicRuntimeConfig {
-		inth?: Omit<Partial<ConsentConfig>, 'projectUrl'> & {
-			/** The `projectUrl` option. `NUXT_PUBLIC_INTH_PROJECT_URL` replaces it. */
-			backendURL?: string;
-		};
+		/** `NUXT_PUBLIC_INTH_PROJECT_URL` replaces `projectUrl`. */
+		inth?: Partial<ConsentConfig>;
 	}
 }
 

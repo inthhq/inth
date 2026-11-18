@@ -87,7 +87,7 @@ export interface ConsentManagerOptions
 	 * Backend URL, relative (`/api/inth`) or absolute. Setting it is how the
 	 * provider talks to the hosted backend. Defaults to the URL
 	 * `consentManifest()` from `@inth/svelte/vite` read from
-	 * `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`. Initial-only:
+	 * `VITE_INTH_PROJECT_URL`. Initial-only:
 	 * remount the provider to change it.
 	 *
 	 * @example

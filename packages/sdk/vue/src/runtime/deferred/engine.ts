@@ -17,6 +17,7 @@ import { clientMode, lazyHosted } from '@inth/sdk/runtime/client-mode';
 
 import { withClientData } from '../client-data';
 import type { ConsentConfig } from '../config';
+import { NUXT_PROJECT_URL_ENV } from '../env-names';
 import { createVueConsentKernelContext } from '../kernel';
 import type { RuntimeConsentConfig, VueConsentKernelContext } from '../kernel';
 import type { NuxtMode } from '../nuxt-mode';
@@ -111,7 +112,7 @@ const nuxtClientMode = function nuxtClientMode(
 			`@inth/vue: \`projectUrl\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
-					: ' Set NUXT_PUBLIC_INTH_PROJECT_URL (or NUXT_PUBLIC_INTH_PROJECT_URL), or `inth.projectUrl` in nuxt.config.ts.'
+					: ` Set ${NUXT_PROJECT_URL_ENV}, or \`inth.projectUrl\` in nuxt.config.ts.`
 			}`
 		);
 	}

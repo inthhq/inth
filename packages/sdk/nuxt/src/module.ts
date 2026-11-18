@@ -4,9 +4,11 @@ import { dirname } from 'node:path';
 
 import {
 	createDialogChunkPlugin,
+	legacyEnvName,
 	loadManifestForBuild,
-	readBuildEnv,
+	readBuildEnvEntry,
 } from '@inth/sdk/build';
+import type { BuildEnvSource } from '@inth/sdk/build';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import { defaultConsentConfig } from '@inth/sdk/schema/config';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
@@ -16,13 +18,17 @@ import {
 	DEVTOOLS_PAGE_ROUTE,
 } from '@inth/vue/runtime/devtools/constants.js';
 import {
+	NUXT_PROJECT_URL_ENV,
+	NUXT_SERVER_PROJECT_URL_ENV,
+} from '@inth/vue/runtime/env-names.js';
+import {
 	DEFAULT_NUXT_ROUTE_PREFIX,
 	readNuxtMode,
 	readNuxtRoutePrefix,
 } from '@inth/vue/runtime/nuxt-mode.js';
 import type { NuxtMode } from '@inth/vue/runtime/nuxt-mode.js';
-import { PROJECT_URL_RUNTIME_KEY } from '@inth/vue/runtime/runtime-config.js';
 import type { BuiltOptions } from '@inth/vue/runtime/server/build-options.js';
+import type { LegacyProjectUrlEnv } from '@inth/vue/runtime/server/legacy-project-url.js';
 import {
 	addComponent,
 	addImports,
@@ -137,27 +143,24 @@ const addDevToolsTab = (
 const renderSnapshotModule = (snapshot: ConsentManifest | undefined): string =>
 	`export default ${snapshot ? JSON.stringify(snapshot) : 'undefined'};`;
 
-/** Variable the module reads the backend URL from when none is set. */
-const BACKEND_URL_ENV = 'NUXT_PUBLIC_INTH_PROJECT_URL';
+/**
+ * Where the build reads variables: the environment first (Nuxt loads
+ * `.env` into it before the config), then the `.env` files in the root.
+ */
+const nuxtEnvSource = (nuxt: Nuxt): BuildEnvSource => ({
+	mode: nuxt.options.dev ? 'development' : 'production',
+	root: nuxt.options.rootDir,
+});
 
 /**
- * The Inth project URL, shared with other Inth SDKs. Read when
- * {@link BACKEND_URL_ENV} is unset.
+ * Where the backend URL came from, so the runtime knows whether the c15t
+ * variable may replace it on a running server.
  */
-const INTH_URL_ENV = 'NUXT_PUBLIC_INTH_PROJECT_URL';
-
-/**
- * Where the backend URL came from, so the runtime knows whether
- * `NUXT_PUBLIC_INTH_PROJECT_URL` may replace it on a running server.
- */
-type ProjectUrlSource = 'option' | 'inth-env' | 'inth-env' | 'none';
+type ProjectUrlSource = 'option' | 'env' | 'legacy-env' | 'none';
 
 /**
  * The variable the app reads at runtime also gives the build its backend
- * when the config sets none. Read like every other framework integration:
- * the environment first (Nuxt loads `.env` into it before the config), then
- * the `.env` files in the root. `NUXT_PUBLIC_INTH_PROJECT_URL` wins over
- * `NUXT_PUBLIC_INTH_PROJECT_URL`.
+ * when the config sets none, or else its c15t name.
  */
 const fillProjectUrlFromEnv = (
 	options: ModuleOptions,
@@ -166,22 +169,30 @@ const fillProjectUrlFromEnv = (
 	if (options.projectUrl !== undefined) {
 		return 'option';
 	}
-	const envOptions = {
-		mode: nuxt.options.dev ? 'development' : 'production',
-		root: nuxt.options.rootDir,
-	};
-	const fromInth = readBuildEnv([BACKEND_URL_ENV], envOptions);
-	if (fromInth) {
-		options.projectUrl = fromInth;
-		return 'inth-env';
+	const found = readBuildEnvEntry([NUXT_PROJECT_URL_ENV], nuxtEnvSource(nuxt));
+	if (!found) {
+		return 'none';
 	}
-	const fromInth = readBuildEnv([INTH_URL_ENV], envOptions);
-	if (fromInth) {
-		options.projectUrl = fromInth;
-		return 'inth-env';
-	}
-	return 'none';
+	options.projectUrl = found.value;
+	return found.name === NUXT_PROJECT_URL_ENV ? 'env' : 'legacy-env';
 };
+
+/**
+ * The c15t project URL variables the server applies. The public one only
+ * while neither the option nor the Inth variable gave the build its URL.
+ */
+const legacyProjectUrlEnv = (source: ProjectUrlSource): LegacyProjectUrlEnv[] =>
+	(
+		[
+			['public', NUXT_PROJECT_URL_ENV],
+			['server', NUXT_SERVER_PROJECT_URL_ENV],
+		] as const
+	).flatMap(([scope, name]) => {
+		const legacy = legacyEnvName(name);
+		const applies =
+			scope === 'server' || source === 'legacy-env' || source === 'none';
+		return legacy && applies ? [{ legacy, name, scope }] : [];
+	});
 
 /**
  * The `mode` option, checked. It reaches the browser as JSON through the
@@ -243,7 +254,7 @@ const assertManifestBackend = function assertManifestBackend(
 		? `manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest download, but the browser saves consent with POST \${projectUrl}/subjects`
 		: `manifest() needs a backend URL: the browser saves consent with POST \${projectUrl}/subjects`;
 	throw new Error(
-		`@inth/nuxt: ${reason}, and the consent route only answers GET. Set ${BACKEND_URL_ENV} (or ${INTH_URL_ENV}), or \`inth.projectUrl\` in nuxt.config.ts.`
+		`@inth/nuxt: ${reason}, and the consent route only answers GET. Set ${NUXT_PROJECT_URL_ENV}, or \`inth.projectUrl\` in nuxt.config.ts.`
 	);
 };
 
@@ -273,7 +284,8 @@ const loadNuxtBuildManifest = function loadNuxtBuildManifest(
 		{ manifestUrl: mode.manifestUrl, projectUrl },
 		{
 			command: nuxt.options.dev ? 'dev' : 'build',
-			envNames: [BACKEND_URL_ENV, INTH_URL_ENV],
+			envNames: [NUXT_PROJECT_URL_ENV],
+			envSource: nuxtEnvSource(nuxt),
 			label: '@inth/nuxt',
 			logger: {
 				info: (message) => logger.info(message),
@@ -374,11 +386,7 @@ const publishOptions = function publishOptions(
 		}
 	}
 	const { mode: _mode, routePrefix: _routePrefix, ...rest } = existing ?? {};
-	const { projectUrl, ...other } = options;
-	const published: Record<string, unknown> = defu(rest, {
-		...other,
-		[PROJECT_URL_RUNTIME_KEY]: projectUrl,
-	});
+	const published: Record<string, unknown> = defu(rest, options);
 	published.mode = built.mode;
 	published.routePrefix = built.routePrefix;
 	// Untyped: an app's generated runtime config types read `routePrefix`
@@ -456,7 +464,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 				// `NUXT_PUBLIC_INTH_PROJECT_URL` replaces at runtime. The key
 				// exists so `NUXT_INTH_PROJECT_URL` can give the route an
 				// address of its own.
-				[PROJECT_URL_RUNTIME_KEY]: '',
+				projectUrl: '',
 				// The `/init` script reads it: with `ssr: false` for the whole
 				// app, every page is a shell.
 				ssr: nuxt.options.ssr !== false,
@@ -622,14 +630,13 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		addServerPlugin(
 			runtime.resolve('./runtime/server/banner-preload-priority.nuxt')
 		);
-		// Nuxt applies `NUXT_PUBLIC_INTH_PROJECT_URL` on a running server by
-		// itself. The Inth variable needs a plugin, and only while neither the
-		// option nor the Inth variable gave the build its URL.
-		if (projectUrlSource === 'inth-env' || projectUrlSource === 'none') {
-			addServerPlugin(
-				runtime.resolve('./runtime/server/inth-project-url.nuxt')
-			);
-		}
+		// Nuxt applies the Inth variables on a running server by itself.
+		const legacyEnv = legacyProjectUrlEnv(projectUrlSource);
+		nuxt.options.nitro.virtual['#inth/legacy-project-url-env'] = () =>
+			`export default ${JSON.stringify(legacyEnv)};\n`;
+		addServerPlugin(
+			runtime.resolve('./runtime/server/legacy-project-url.nuxt')
+		);
 		if (initPrefetch !== false) {
 			// Starts `/init` from the HTML of `ssr: false` pages, before the
 			// app's JavaScript loads.

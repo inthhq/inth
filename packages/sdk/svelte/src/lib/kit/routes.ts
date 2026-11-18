@@ -106,8 +106,7 @@ export interface ConsentRouteOptions {
 	/**
 	 * The Inth backend. Defaults to what `inthHandle()` was given: a
 	 * `hosted()` mode's `projectUrl`, then the handle's `projectUrl`, then
-	 * the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL` or
-	 * `PUBLIC_INTH_PROJECT_URL`. A
+	 * the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL`. A
 	 * handle `projectUrl` that points at this route, as in the proxy setup,
 	 * is skipped. The manifest is read from `${projectUrl}/manifest` when
 	 * there is no snapshot.

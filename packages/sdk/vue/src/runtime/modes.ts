@@ -25,6 +25,8 @@ import type {
 	BrowserManifestOptions,
 } from '@inth/sdk/transports/manifest-browser';
 
+import { VITE_PROJECT_URL_ENV } from './env-names';
+
 export type {
 	HostedModeFactory,
 	ProviderTransportFactory,
@@ -44,8 +46,7 @@ const missingProjectUrl = function missingProjectUrl(
 	let hint = '';
 	try {
 		if (process.env.NODE_ENV !== 'production') {
-			hint =
-				' Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_INTH_PROJECT_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.';
+			hint = ` Add consentManifest() from @inth/vue/vite to vite.config.ts and set ${VITE_PROJECT_URL_ENV}, or pass \`projectUrl\`.`;
 		}
 	} catch {
 		// No bundler and no `process`: the short message has to do.
@@ -115,7 +116,7 @@ export const manifest = function manifest(
  * The transport the plugin's options select: `mode` when it is a factory
  * or a `testing()` value, else the hosted backend at `projectUrl`, which
  * defaults to the URL `consentManifest()` read from
- * `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`.
+ * `VITE_INTH_PROJECT_URL`.
  *
  * @param options - The plugin's `projectUrl` and `mode`.
  * @returns A transport factory for the runtime's `mode`.

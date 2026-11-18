@@ -219,7 +219,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	/**
 	 * Backend base URL of your Inth instance, for example
 	 * `https://consent.example.com`. Defaults to the URL `consentManifest()`
-	 * read from `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`. The
+	 * read from `VITE_INTH_PROJECT_URL`. The
 	 * helper reads
 	 * `${projectUrl}/manifest` through the in-process manifest cache and
 	 * resolves init locally, so the first paint already carries policy, UI,

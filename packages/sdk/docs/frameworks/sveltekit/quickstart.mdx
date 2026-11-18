@@ -50,8 +50,8 @@ path prefix, in `.env` or your host's build environment:
 PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-If your app already sets `PUBLIC_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `PUBLIC_INTH_PROJECT_URL` wins.
+The c15t name `PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `PUBLIC_INTH_PROJECT_URL` wins.
 
 The example app's `.env` points at `https://example-inth.inth.app`, a demo
 project. The build reads the variable, and the server and the browser use the

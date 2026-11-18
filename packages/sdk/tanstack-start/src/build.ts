@@ -66,10 +66,9 @@ interface SheetResolveContext {
  * is `undefined`. `projectUrl` is public and reaches both.
  *
  * The backend URL comes from `projectUrl` or, when that is omitted, from
- * `VITE_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL`, including `.env`
- * files. When `VITE_INTH_PROJECT_URL` is unset, the plugin sets
- * `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used, so server and
- * browser code read the same value.
+ * `VITE_INTH_PROJECT_URL`, including `.env` files. When that is unset, the
+ * plugin sets `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used,
+ * so server and browser code read the same value.
  *
  * The fetch waits at most 10 seconds. When it fails, `vite build` and
  * `vite dev` log a warning and serve `snapshot: undefined`, so the server
@@ -99,7 +98,7 @@ interface SheetResolveContext {
  */
 export const consentManifest = (options: ConsentManifestPluginOptions = {}) => {
 	const plugin = createConsentManifestPlugin(options, {
-		envNames: ['VITE_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
+		envNames: ['VITE_INTH_PROJECT_URL'],
 		label: '@inth/tanstack-start/build',
 		serverRendered: true,
 	});

@@ -45,8 +45,7 @@ The backend URL is public configuration, not a secret.
 
 Your Inth or self-hosted backend. The browser saves consent there with
 `POST /subjects`, `hosted()` asks its `/init`, and `manifest()` reads
-`${projectUrl}/manifest`. It defaults to `PUBLIC_INTH_PROJECT_URL`, then
-`PUBLIC_INTH_PROJECT_URL`, read from the environment or a `.env` file in the
+`${projectUrl}/manifest`. It defaults to `PUBLIC_INTH_PROJECT_URL`, read from the environment or a `.env` file in the
 project root when `astro.config.mjs` loads.
 
 On the server, a relative backend URL or `manifestUrl`, such as `/api/self-host`,
@@ -209,9 +208,9 @@ one copy. Keep it small, because it loads on every page.
 | --- | --- |
 | `` `mode` must be manifest(), hosted() or testing() `` | `mode` is a transport function, or not built with a helper from `@inth/astro` |
 | `is a function` | A serialized option, such as a `scripts` entry from `@inth/integrations`, holds a function. Move it to `src/inth.client.ts` |
-| `manifest() needs a backend URL` | No `projectUrl`, `PUBLIC_INTH_PROJECT_URL` or `PUBLIC_INTH_PROJECT_URL` |
-| `manifest({ snapshot }) still needs a backend URL` | A snapshot, but no `projectUrl`, `PUBLIC_INTH_PROJECT_URL` or `PUBLIC_INTH_PROJECT_URL`. Saves go to the backend whatever `routePrefix` is |
-| `hosted() needs a backend URL` | No `projectUrl`, `PUBLIC_INTH_PROJECT_URL` or `PUBLIC_INTH_PROJECT_URL` |
+| `manifest() needs a backend URL` | No `projectUrl` or `PUBLIC_INTH_PROJECT_URL` |
+| `manifest({ snapshot }) still needs a backend URL` | A snapshot, but no `projectUrl` or `PUBLIC_INTH_PROJECT_URL`. Saves go to the backend whatever `routePrefix` is |
+| `hosted() needs a backend URL` | No `projectUrl` or `PUBLIC_INTH_PROJECT_URL` |
 | `gives the server no manifest to fetch` | `projectUrl: ''` without `manifest({ manifestUrl })` or `manifest({ snapshot })` |
 | `` `routePrefix` must be a path `` | `routePrefix` is not `false` and does not start with `/` |
 | ``@inth/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would answer every page |

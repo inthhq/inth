@@ -229,7 +229,7 @@ describe('plain Vue modes', () => {
 		// no backend URL.
 		expect(() => manifest()).toThrow('consentManifest() from @inth/vue/vite');
 		expect(() => selectedMode({})).toThrow(
-			'inth: `projectUrl` is required. Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_INTH_PROJECT_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.'
+			'inth: `projectUrl` is required. Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_INTH_PROJECT_URL, or pass `projectUrl`.'
 		);
 	});
 

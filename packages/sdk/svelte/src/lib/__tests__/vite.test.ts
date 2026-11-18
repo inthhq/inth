@@ -277,7 +277,7 @@ describe('Svelte backend URL variables', () => {
 		env: Record<string, unknown>,
 		options: { projectUrl?: string } = {}
 	) => {
-		const root = await mkdtemp(path.join(tmpdir(), 'inth-inth-env-'));
+		const root = await mkdtemp(path.join(tmpdir(), 'inth-env-'));
 		try {
 			const [plugin] = consentManifest({
 				...options,
@@ -307,7 +307,7 @@ describe('Svelte backend URL variables', () => {
 			await rm(root, { force: true, recursive: true });
 		}
 	};
-	const INTH = 'https://inth.example.com';
+	const C15T = 'https://c15t.example.com';
 	const INTH = 'https://inth.example.com';
 
 	test('PUBLIC_INTH_PROJECT_URL alone gives the backend URL', async () => {
@@ -317,31 +317,31 @@ describe('Svelte backend URL variables', () => {
 		expect(projectUrl).toBe(INTH);
 	});
 
-	test('either inth variable beats either Inth variable', async () => {
+	test('either Inth variable beats either c15t variable', async () => {
 		const { projectUrl } = await resolveProjectUrl({
+			PUBLIC_C15T_BACKEND_URL: C15T,
 			PUBLIC_INTH_PROJECT_URL: INTH,
-			PUBLIC_INTH_PROJECT_URL: INTH,
-			VITE_INTH_PROJECT_URL: INTH,
+			VITE_C15T_BACKEND_URL: C15T,
 		});
 		expect(projectUrl).toBe(INTH);
 		const vite = await resolveProjectUrl({
-			PUBLIC_INTH_PROJECT_URL: INTH,
+			PUBLIC_C15T_BACKEND_URL: C15T,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
 		expect(vite.projectUrl).toBe(INTH);
 	});
 
-	test('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
+	test('VITE_C15T_BACKEND_URL alone gives the backend URL as VITE_INTH_PROJECT_URL', async () => {
 		const { projectUrl, env } = await resolveProjectUrl({
-			VITE_INTH_PROJECT_URL: INTH,
+			VITE_C15T_BACKEND_URL: C15T,
 		});
-		expect(projectUrl).toBe(INTH);
-		expect(env.VITE_INTH_PROJECT_URL).toBe(INTH);
+		expect(projectUrl).toBe(C15T);
+		expect(env.VITE_INTH_PROJECT_URL).toBe(C15T);
 	});
 
 	test('VITE_INTH_PROJECT_URL wins when both are set', async () => {
 		const { projectUrl } = await resolveProjectUrl({
-			VITE_INTH_PROJECT_URL: INTH,
+			VITE_C15T_BACKEND_URL: C15T,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
 		expect(projectUrl).toBe(INTH);
@@ -349,7 +349,7 @@ describe('Svelte backend URL variables', () => {
 
 	test('an explicit projectUrl beats both variables', async () => {
 		const { projectUrl } = await resolveProjectUrl(
-			{ VITE_INTH_PROJECT_URL: INTH, VITE_INTH_PROJECT_URL: INTH },
+			{ VITE_C15T_BACKEND_URL: C15T, VITE_INTH_PROJECT_URL: INTH },
 			{ projectUrl: 'https://option.example.com' }
 		);
 		expect(projectUrl).toBe('https://option.example.com');

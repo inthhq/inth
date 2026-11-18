@@ -373,18 +373,18 @@ describe('resolveOptions', () => {
 		);
 	});
 
-	it('reads PUBLIC_INTH_PROJECT_URL when the inth variable is unset', async () => {
+	it('reads PUBLIC_C15T_BACKEND_URL when the Inth variable is unset', async () => {
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', undefined);
-		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
 		const { calls } = await runSetup({ mode: hostedMode() });
 		expect(serverOptionsSource(calls)).toContain(
-			'"projectUrl":"https://inth.example.com"'
+			'"projectUrl":"https://c15t.example.com"'
 		);
 	});
 
-	it('prefers PUBLIC_INTH_PROJECT_URL in .env over PUBLIC_INTH_PROJECT_URL', async () => {
+	it('prefers PUBLIC_INTH_PROJECT_URL in .env over PUBLIC_C15T_BACKEND_URL', async () => {
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', undefined);
-		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
 		const root = mkdtempSync(join(tmpdir(), 'inth-astro-env-'));
 		writeFileSync(
 			join(root, '.env'),
@@ -400,7 +400,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('an explicit projectUrl beats both variables', async () => {
-		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
 		const { calls } = await runSetup({
 			mode: hostedMode(),
@@ -565,7 +565,7 @@ describe('resolveOptions', () => {
 		// The browser would post saves to the init route's own prefix,
 		// `/api/inth/subjects`, where nothing answers.
 		expect(() => resolveOptions({ mode: manifestMode() })).toThrowError(
-			/manifest\(\) needs a backend URL.*PUBLIC_INTH_PROJECT_URL \(or PUBLIC_INTH_PROJECT_URL\)/u
+			/manifest\(\) needs a backend URL.*Set PUBLIC_INTH_PROJECT_URL in \.env/u
 		);
 		expect(() => resolveOptions({ mode: hostedMode() })).toThrowError(
 			/hosted\(\) needs a backend URL/u

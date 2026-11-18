@@ -214,7 +214,7 @@ describe('TanStack Start manifest backend URL', () => {
 			root: await tempRoot(),
 		});
 		await expect(buildGenerated(plugin, 'server')).rejects.toThrow(
-			/VITE_INTH_PROJECT_URL \(or VITE_INTH_PROJECT_URL\)/u
+			/Pass projectUrl or set VITE_INTH_PROJECT_URL\./u
 		);
 	});
 
@@ -243,7 +243,7 @@ describe('TanStack Start backend URL variables', () => {
 		env: Record<string, unknown>,
 		options: { projectUrl?: string } = {}
 	) => {
-		const root = await mkdtemp(join(tmpdir(), 'inth-inth-env-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-env-'));
 		try {
 			const plugin = consentManifest({
 				...options,
@@ -273,20 +273,20 @@ describe('TanStack Start backend URL variables', () => {
 			await rm(root, { force: true, recursive: true });
 		}
 	};
-	const INTH = 'https://inth.example.com';
+	const C15T = 'https://c15t.example.com';
 	const INTH = 'https://inth.example.com';
 
-	test('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
+	test('VITE_C15T_BACKEND_URL alone gives the backend URL as VITE_INTH_PROJECT_URL', async () => {
 		const { projectUrl, env } = await resolveProjectUrl({
-			VITE_INTH_PROJECT_URL: INTH,
+			VITE_C15T_BACKEND_URL: C15T,
 		});
-		expect(projectUrl).toBe(INTH);
-		expect(env.VITE_INTH_PROJECT_URL).toBe(INTH);
+		expect(projectUrl).toBe(C15T);
+		expect(env.VITE_INTH_PROJECT_URL).toBe(C15T);
 	});
 
 	test('VITE_INTH_PROJECT_URL wins when both are set', async () => {
 		const { projectUrl } = await resolveProjectUrl({
-			VITE_INTH_PROJECT_URL: INTH,
+			VITE_C15T_BACKEND_URL: C15T,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
 		expect(projectUrl).toBe(INTH);
@@ -294,7 +294,7 @@ describe('TanStack Start backend URL variables', () => {
 
 	test('an explicit projectUrl beats both variables', async () => {
 		const { projectUrl } = await resolveProjectUrl(
-			{ VITE_INTH_PROJECT_URL: INTH, VITE_INTH_PROJECT_URL: INTH },
+			{ VITE_C15T_BACKEND_URL: C15T, VITE_INTH_PROJECT_URL: INTH },
 			{ projectUrl: 'https://option.example.com' }
 		);
 		expect(projectUrl).toBe('https://option.example.com');

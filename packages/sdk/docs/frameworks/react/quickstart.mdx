@@ -50,8 +50,8 @@ build:
 VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-If your app already sets `VITE_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `VITE_INTH_PROJECT_URL` wins.
+The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `VITE_INTH_PROJECT_URL` wins.
 
 `ConsentProvider` needs the URL as its `projectUrl` option, read from
 `import.meta.env.VITE_INTH_PROJECT_URL` in the next step.

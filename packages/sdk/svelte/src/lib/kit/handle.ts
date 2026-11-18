@@ -29,7 +29,7 @@ import type { InthLocals, ConsentRequestOptions, KitMode } from './types';
 export interface InthHandleOptions extends ConsentRequestOptions {
 	/**
 	 * The Inth backend. Defaults to the URL `consentManifest()` read from
-	 * `PUBLIC_INTH_PROJECT_URL` or `PUBLIC_INTH_PROJECT_URL`. Required
+	 * `PUBLIC_INTH_PROJECT_URL`. Required
 	 * unless `mode` is `testing()`.
 	 */
 	projectUrl?: string;

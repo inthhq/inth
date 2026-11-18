@@ -41,7 +41,7 @@ describe('createClientMode', () => {
 
 	test('throws without a backend URL instead of running offline', () => {
 		expect(() => createClientMode(manifest(), {})).toThrow(
-			'@inth/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in inth.config.ts.'
+			'@inth/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.'
 		);
 		expect(() => createClientMode(undefined, {})).toThrow(
 			'`projectUrl` is required'

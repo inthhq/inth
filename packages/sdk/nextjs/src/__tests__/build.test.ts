@@ -320,8 +320,8 @@ describe('Next.js build-time manifest', () => {
 		);
 	});
 
-	describe('NEXT_PUBLIC_INTH_PROJECT_URL', () => {
-		const INTH = 'https://inth.example.com';
+	describe('NEXT_PUBLIC_C15T_BACKEND_URL', () => {
+		const C15T = 'https://c15t.example.com';
 		const INTH = 'https://inth.example.com';
 		const build = (options: Parameters<typeof withConsentManifest>[1]) =>
 			withConsentManifest({ env: { OTHER: '1' } }, options)(
@@ -332,45 +332,45 @@ describe('Next.js build-time manifest', () => {
 		test('alone becomes NEXT_PUBLIC_INTH_PROJECT_URL for the build, the config and the bundles', async () => {
 			// Unset first, so the copy the wrapper writes is undone afterwards.
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
-			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
+			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', C15T);
 			const root = await createRoot();
 			const { fetch } = optionsFor();
 			const config = await build({ fetch });
 			expect(fetch).toHaveBeenCalledWith(
-				`${INTH}/manifest`,
+				`${C15T}/manifest`,
 				expect.any(Object)
 			);
 			expect(await readServerModule(root)).toContain(
-				`export const projectUrl = "${INTH}";`
+				`export const projectUrl = "${C15T}";`
 			);
 			// Bundles inline the Inth name only, so the browser reads one value.
 			expect(config.env).toEqual({
-				NEXT_PUBLIC_INTH_PROJECT_URL: INTH,
+				NEXT_PUBLIC_INTH_PROJECT_URL: C15T,
 				OTHER: '1',
 			});
 			// `defineConsentConfig`, on the server and in the browser.
-			expect(defineConsentConfig().projectUrl).toBe(INTH);
+			expect(defineConsentConfig().projectUrl).toBe(C15T);
 		});
 
 		test('reads it from a .env file', async () => {
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
-			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
+			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', undefined);
 			const root = await createRoot();
 			await writeFile(
 				join(root, '.env'),
-				`NEXT_PUBLIC_INTH_PROJECT_URL=${INTH}\n`
+				`NEXT_PUBLIC_C15T_BACKEND_URL=${C15T}\n`
 			);
 			const { fetch } = optionsFor();
 			const config = await build({ fetch });
 			expect(fetch).toHaveBeenCalledWith(
-				`${INTH}/manifest`,
+				`${C15T}/manifest`,
 				expect.any(Object)
 			);
-			expect(config.env?.NEXT_PUBLIC_INTH_PROJECT_URL).toBe(INTH);
+			expect(config.env?.NEXT_PUBLIC_INTH_PROJECT_URL).toBe(C15T);
 		});
 
 		test('loses to NEXT_PUBLIC_INTH_PROJECT_URL when both are set', async () => {
-			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
+			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', C15T);
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
 			await createRoot();
 			const { fetch } = optionsFor();
@@ -385,7 +385,7 @@ describe('Next.js build-time manifest', () => {
 
 		test('an explicit projectUrl beats both variables', async () => {
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
-			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', INTH);
+			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', C15T);
 			const root = await createRoot();
 			await writeFile(
 				join(root, 'inth.config.ts'),
@@ -410,13 +410,13 @@ describe('Next.js build-time manifest', () => {
 			);
 		});
 
-		test('names both variables when neither is set', async () => {
+		test('names only the Inth variable when neither is set', async () => {
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
-			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
+			vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', undefined);
 			await createRoot();
 			const { fetch } = optionsFor();
 			await expect(build({ fetch, onBuildError: 'fail' })).rejects.toThrow(
-				'Pass projectUrl or set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL).'
+				'Pass projectUrl or set NEXT_PUBLIC_INTH_PROJECT_URL.'
 			);
 		});
 	});

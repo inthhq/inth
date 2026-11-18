@@ -72,6 +72,15 @@ declare module '#@inth/sdk/build-options' {
 	export default built;
 }
 
+/** A Nitro virtual the module registers for its legacy project URL plugin. */
+declare module '#inth/legacy-project-url-env' {
+	import type { LegacyProjectUrlEnv } from './runtime/server/legacy-project-url';
+
+	/** The c15t variables the server still applies. */
+	const variables: readonly LegacyProjectUrlEnv[];
+	export default variables;
+}
+
 /** A Nitro virtual the module fills from the client manifest. */
 declare module '#inth/banner-preload-files' {
 	/** The stock banner's own files (`bannerOnlyFiles`). */

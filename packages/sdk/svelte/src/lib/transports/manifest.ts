@@ -19,7 +19,7 @@ export type ManifestModeOptions = BrowserManifestOptions;
  *
  * With no options it uses what `consentManifest()` from
  * `@inth/svelte/vite` downloaded: the snapshot, and the backend URL it
- * read from `VITE_INTH_PROJECT_URL` or `VITE_INTH_PROJECT_URL`. Saves
+ * read from `VITE_INTH_PROJECT_URL`. Saves
  * still go to that backend.
  * With `manifestUrl`, that URL is fetched when the page loads and the
  * build's snapshot is not used. Without a snapshot, as after

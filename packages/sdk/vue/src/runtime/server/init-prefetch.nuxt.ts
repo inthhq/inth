@@ -18,7 +18,6 @@ import {
 import { useServerAppConfig } from '#@inth/sdk/server-app-config';
 
 import type { RuntimeConsentConfig } from '../kernel';
-import { fromRuntimeConfig } from '../runtime-config';
 import { buildInitPrefetchTag, insertInitPrefetchTag } from './init-prefetch';
 import type { InitPrefetchRouteRule } from './init-prefetch';
 
@@ -50,10 +49,7 @@ export default defineNitroPlugin((nitroApp) => {
 		};
 		const tag = buildInitPrefetchTag({
 			// The same merge the Nuxt plugin makes in the browser.
-			config: defu(
-				appConfig.inth,
-				fromRuntimeConfig(runtimeConfig.public.inth)
-			),
+			config: defu(appConfig.inth, runtimeConfig.public.inth),
 			nonce: context.security?.nonce,
 			routeRule: rules.inth,
 			// What Nuxt's renderer checks to send a shell.

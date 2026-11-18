@@ -20,6 +20,8 @@ import {
 } from '@inth/sdk/runtime/client-mode';
 import type { LazyBrowserManifestOptions } from '@inth/sdk/runtime/client-mode';
 
+import { BACKEND_URL_ENV } from './config';
+
 /**
  * Bundlers replace `process.env.NODE_ENV` at build time, so production
  * bundles drop the warnings behind it.
@@ -95,7 +97,7 @@ export const createClientMode = function createClientMode(
 			`@inth/nextjs: \`projectUrl\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
-					: ' Set NEXT_PUBLIC_INTH_PROJECT_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in inth.config.ts.'
+					: ` Set ${BACKEND_URL_ENV}, or \`projectUrl\` in inth.config.ts.`
 			}`
 		);
 	}

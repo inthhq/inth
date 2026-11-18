@@ -17,7 +17,6 @@ import type { EventHandlerRequest, H3Event } from 'h3';
 import type { ConsentConfig } from '../config';
 import { readNuxtMode, readNuxtRoutePrefix } from '../nuxt-mode';
 import type { NuxtConsentModeConfig } from '../nuxt-mode';
-import { fromRuntimeConfig } from '../runtime-config';
 
 interface InthNitroRuntimeConfig {
 	inth?: Record<string, unknown>;
@@ -73,7 +72,7 @@ export const waitUntilFromEvent = function waitUntilFromEvent(
 /**
  * The public `inth` config with the private one over it. A private value
  * that is empty or unset leaves the public one: the module writes an empty
- * private `backendURL`, so `NUXT_PUBLIC_INTH_PROJECT_URL` alone moves this
+ * private `projectUrl`, so `NUXT_PUBLIC_INTH_PROJECT_URL` alone moves this
  * route, and `NUXT_INTH_PROJECT_URL` gives it a server-only address.
  */
 const readConsentConfig = function readConsentConfig(
@@ -84,12 +83,12 @@ const readConsentConfig = function readConsentConfig(
 			? (runtimeConfig as InthNitroRuntimeConfig)
 			: {};
 	const serverOnly = Object.fromEntries(
-		Object.entries(fromRuntimeConfig(config.inth) ?? {}).filter(
+		Object.entries(config.inth ?? {}).filter(
 			([, value]) => value !== '' && value !== undefined && value !== null
 		)
 	);
 	return {
-		...(fromRuntimeConfig(config.public?.inth) ?? {}),
+		...config.public?.inth,
 		...serverOnly,
 	} as RouteConfig;
 };

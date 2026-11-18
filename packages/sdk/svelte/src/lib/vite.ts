@@ -391,8 +391,7 @@ export const createFirstLoadChunkPlugin =
  * `projectUrl` is public and reaches both.
  *
  * `projectUrl` defaults to `PUBLIC_INTH_PROJECT_URL` (SvelteKit), then
- * `VITE_INTH_PROJECT_URL`, then the Inth variables `PUBLIC_INTH_PROJECT_URL`
- * and `VITE_INTH_PROJECT_URL`, including `.env` files. When
+ * `VITE_INTH_PROJECT_URL`, including `.env` files. When
  * `VITE_INTH_PROJECT_URL` is unset, the plugin sets
  * `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used, so app code
  * reads the same value. A missing URL or a failed fetch warns, and
@@ -437,12 +436,7 @@ export const consentManifest = (
 	createConsentManifestPlugin(options, {
 		// A Svelte single-page app only: SvelteKit resolves on the server.
 		adviseHostedForLocation: true,
-		envNames: [
-			'PUBLIC_INTH_PROJECT_URL',
-			'VITE_INTH_PROJECT_URL',
-			'PUBLIC_INTH_PROJECT_URL',
-			'VITE_INTH_PROJECT_URL',
-		],
+		envNames: ['PUBLIC_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
 		label: '@inth/svelte/vite',
 		serverRendered: (config) =>
 			config.plugins?.some((plugin) => plugin.name === SVELTEKIT_PLUGIN) ??

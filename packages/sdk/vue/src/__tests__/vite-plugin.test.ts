@@ -171,8 +171,8 @@ describe('runtime specifiers', () => {
 			) as PackageImports;
 
 			expect(Object.keys(imports).sort()).toEqual([
-				'#inth/composables',
 				'#imports',
+				'#inth/composables',
 			]);
 			for (const target of Object.values(imports)) {
 				expect(existsSync(join(packageDir, target.default))).toBe(true);
@@ -188,7 +188,7 @@ describe('Vue backend URL variables', () => {
 		env: Record<string, unknown>,
 		options: { projectUrl?: string } = {}
 	) => {
-		const root = await mkdtemp(join(tmpdir(), 'inth-inth-env-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-env-'));
 		try {
 			const plugin = consentManifest({
 				...options,
@@ -218,20 +218,20 @@ describe('Vue backend URL variables', () => {
 			await rm(root, { force: true, recursive: true });
 		}
 	};
-	const INTH = 'https://inth.example.com';
+	const C15T = 'https://c15t.example.com';
 	const INTH = 'https://inth.example.com';
 
-	it('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
+	it('VITE_C15T_BACKEND_URL alone gives the backend URL as VITE_INTH_PROJECT_URL', async () => {
 		const { projectUrl, env } = await resolveProjectUrl({
-			VITE_INTH_PROJECT_URL: INTH,
+			VITE_C15T_BACKEND_URL: C15T,
 		});
-		expect(projectUrl).toBe(INTH);
-		expect(env.VITE_INTH_PROJECT_URL).toBe(INTH);
+		expect(projectUrl).toBe(C15T);
+		expect(env.VITE_INTH_PROJECT_URL).toBe(C15T);
 	});
 
 	it('VITE_INTH_PROJECT_URL wins when both are set', async () => {
 		const { projectUrl } = await resolveProjectUrl({
-			VITE_INTH_PROJECT_URL: INTH,
+			VITE_C15T_BACKEND_URL: C15T,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
 		expect(projectUrl).toBe(INTH);
@@ -239,7 +239,7 @@ describe('Vue backend URL variables', () => {
 
 	it('an explicit projectUrl beats both variables', async () => {
 		const { projectUrl } = await resolveProjectUrl(
-			{ VITE_INTH_PROJECT_URL: INTH, VITE_INTH_PROJECT_URL: INTH },
+			{ VITE_C15T_BACKEND_URL: C15T, VITE_INTH_PROJECT_URL: INTH },
 			{ projectUrl: 'https://option.example.com' }
 		);
 		expect(projectUrl).toBe('https://option.example.com');

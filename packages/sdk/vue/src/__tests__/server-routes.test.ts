@@ -101,7 +101,7 @@ const callInitRoute = callRoute(
 beforeEach(() => {
 	clearManifestCache();
 	mocks.useRuntimeConfig.mockReturnValue({
-		public: { inth: { backendURL: '/api/self-host' } },
+		public: { inth: { projectUrl: '/api/self-host' } },
 	});
 });
 
@@ -115,7 +115,7 @@ describe('manifest route background revalidation', () => {
 		mocks.useRuntimeConfig.mockReturnValue({
 			public: {
 				inth: {
-					backendURL: 'https://consent.example.com',
+					projectUrl: 'https://consent.example.com',
 				},
 			},
 		});
@@ -334,8 +334,8 @@ describe('init route', () => {
 
 	test('private runtime config wins over the public one', async () => {
 		mocks.useRuntimeConfig.mockReturnValue({
-			inth: { backendURL: 'https://private.example' },
-			public: { inth: { backendURL: '/api/self-host' } },
+			inth: { projectUrl: 'https://private.example' },
+			public: { inth: { projectUrl: '/api/self-host' } },
 		});
 		mocks.serverFetch.mockResolvedValue(manifestResponse({}));
 
@@ -349,8 +349,8 @@ describe('init route', () => {
 	test('an empty private URL leaves the public one', async () => {
 		// What Nitro hands over when only NUXT_PUBLIC_INTH_PROJECT_URL is set.
 		mocks.useRuntimeConfig.mockReturnValue({
-			inth: { backendURL: '', ssr: true },
-			public: { inth: { backendURL: 'https://public.example' } },
+			inth: { projectUrl: '', ssr: true },
+			public: { inth: { projectUrl: 'https://public.example' } },
 		});
 		mocks.serverFetch.mockResolvedValue(manifestResponse({}));
 
@@ -365,7 +365,7 @@ describe('init route', () => {
 		mocks.useRuntimeConfig.mockReturnValue({
 			public: {
 				inth: {
-					backendURL: 'https://consent.example.com',
+					projectUrl: 'https://consent.example.com',
 					mode: {
 						manifestUrl: 'https://cdn.example.com/manifest.json',
 						type: 'manifest',

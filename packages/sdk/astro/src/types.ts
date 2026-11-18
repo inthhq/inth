@@ -113,9 +113,8 @@ export interface InthAstroOptions {
 	 * `POST /subjects`, `manifest()` reads `${projectUrl}/manifest`, and
 	 * `hosted()` asks its `/init`. Required unless `mode` is `testing()`.
 	 *
-	 * Defaults to `PUBLIC_INTH_PROJECT_URL`, then `PUBLIC_INTH_PROJECT_URL`,
-	 * read from the environment or a `.env` file in the project root when
-	 * `astro.config.mjs` loads.
+	 * Defaults to `PUBLIC_INTH_PROJECT_URL`, read from the environment or a
+	 * `.env` file in the project root when `astro.config.mjs` loads.
 	 */
 	projectUrl?: string;
 	/**
