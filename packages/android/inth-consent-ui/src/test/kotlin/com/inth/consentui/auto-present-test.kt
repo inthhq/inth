@@ -300,7 +300,7 @@ class AutoPresentTest {
             .map { File(it, "examples/native/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body?.invoke() ?: fixed) else HttpResponse(503)
+                HttpResponse(200, emptyMap(), body?.invoke() ?: fixed) else HttpResponse(503)
         }
         val store = object : KeyValueStore {
             private val values = java.util.concurrent.ConcurrentHashMap<String, String>()
