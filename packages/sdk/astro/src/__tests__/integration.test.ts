@@ -709,7 +709,7 @@ describe('resolveOptions', () => {
 });
 
 describe('astro:config:setup', () => {
-	it("hands inth's inline hashes to Astro's CSP when the site turned it on", async () => {
+	it("hands Inth's inline hashes to Astro's CSP when the site turned it on", async () => {
 		const options: InthAstroOptions = { mode: testingMode() };
 		const { calls } = await runSetup(options, { security: { csp: true } });
 		const hashes = await buildInlineCodeHashes(resolveOptions(options));

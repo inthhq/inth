@@ -8,7 +8,7 @@ export const appStylesheetHead = () => ({
 });
 
 /**
- * Route `head` for the consent routes. inth's surfaces render their own
+ * Route `head` for the consent routes. Inth's surfaces render their own
  * styles, including IAB, so each build links only the app's stylesheet.
  */
 export const consentStylesheetHead = () => ({

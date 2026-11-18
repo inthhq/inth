@@ -18,7 +18,7 @@ const config = {
 		process.env.NEXT_PUBLIC_INTH_PROJECT_URL ?? 'https://your-project.inth.app',
 };
 
-// A demonstration CMP ID, the same one inth's own IAB demos use. Every TC
+// A demonstration CMP ID, the same one c15t's own IAB demos use. Every TC
 // string names the CMP that wrote it, so a real site uses the ID IAB Europe
 // assigned when its CMP registered: https://register.consensu.org/CMP
 const CMP_ID = 160;
@@ -26,7 +26,7 @@ const CMP_ID = 160;
 // A three-vendor list served from public/vendor-list.json so the demo runs
 // offline. Its vendors are made up. In production, remove `gvlUrl`: Inth then
 // loads the official Global Vendor List, either through your backend with
-// `hosted()` or from inth's GVL endpoint, filtered to the vendors you work
+// `hosted()` or from Inth's GVL endpoint, filtered to the vendors you work
 // with through the `vendors` prop.
 const GVL_URL = '/vendor-list.json';
 

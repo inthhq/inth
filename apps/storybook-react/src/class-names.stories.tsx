@@ -68,7 +68,7 @@ type Story = StoryObj<typeof meta>;
 
 /**
  * Every class the recipe passes lands on the card, and the computed border
- * matches the class's values. inth's own card rule sets the same
+ * matches the class's values. Inth's own card rule sets the same
  * properties (1px border, theme color and radius), so matching values mean
  * the class won the cascade, not just that it was attached.
  */
@@ -82,7 +82,7 @@ const classApplies: Story['play'] = async ({ args }) => {
 	expect(readCardStyle(card)).toEqual(args.expected);
 };
 
-/** Control: without a class, inth's own card styles apply. */
+/** Control: without a class, Inth's own card styles apply. */
 export const Stock: Story = {
 	args: {},
 	play: async () => {

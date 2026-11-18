@@ -1,6 +1,6 @@
 # Custom banner
 
-Northwind Coffee's consent UI, built from inth's headless hooks. Inth decides
+Northwind Coffee's consent UI, built from Inth's headless hooks. Inth decides
 when to ask, which buttons the visitor's policy needs and what gets recorded.
 The markup, copy and CSS belong to the shop, and the Inth stylesheet is never
 loaded.

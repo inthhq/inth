@@ -2,7 +2,7 @@
 
 `template.tpl` is the Inth Consent Management tag template for the Google Tag
 Manager Community Template Gallery. It loads the `@inth/sdk` script-tag
-build and forwards inth's permissions to Google Consent Mode through the
+build and forwards Inth's permissions to Google Consent Mode through the
 existing `window.inth` queue.
 
 The `googleTagManager` helper stays the recommended setup. The template exists

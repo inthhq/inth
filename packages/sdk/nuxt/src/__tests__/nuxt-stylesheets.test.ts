@@ -133,7 +133,7 @@ describe('preloadInlinedConsentStyles', () => {
 		expect(own?.assets).toEqual(['button.css']);
 	});
 
-	test("keeps a stylesheet in a component's own chunk that is not inth's", () => {
+	test("keeps a stylesheet in a component's own chunk that is not Inth's", () => {
 		const manifest = createManifest();
 		const own =
 			manifest['node_modules/@inth/vue/dist/runtime/components/prompt.vue'];

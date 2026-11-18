@@ -1,4 +1,4 @@
-/* inth's default tokens sit on :where(:root), so these values win whichever
+/* Inth's default tokens sit on :where(:root), so these values win whichever
    stylesheet loads first. */
 :root {
 	--inth-primary: #6943a3;

@@ -4,7 +4,7 @@ Northwind Coffee sells in English, German and French, to visitors in Europe,
 the US and beyond. The consent banner follows both. Its language follows the
 route (`/en`, `/de`, `/fr`), and the policy follows the visitor's region: an
 opt-in banner in Germany, opt-out with no banner in California, and no consent
-UI in Brazil under inth's default rules.
+UI in Brazil under Inth's default rules.
 
 The bar above the header previews the site as a visitor from each region. It
 gives Inth a location the way a backend would from the request, and Inth
@@ -16,10 +16,10 @@ resolves its policy rules for it in the browser.
   with the route's locale and the copy for each language. A
   small `FollowLocale` component calls `useSetLanguage` when the route's
   locale changes.
-- [`lib/consent-i18n.ts`](./lib/consent-i18n.ts) imports inth's built-in
+- [`lib/consent-i18n.ts`](./lib/consent-i18n.ts) imports Inth's built-in
   German and French from `@inth/nextjs/translations/de` and `@inth/nextjs/translations/fr`,
   and rewrites one line per language in Northwind's voice. Everything else in
-  the banner and dialog is inth's own copy.
+  the banner and dialog is Inth's own copy.
 - [`components/visitor-preview.tsx`](./components/visitor-preview.tsx) sets
   the visitor's country and region with `useSetOverrides`, then runs `useInit`
   so Inth resolves the policy again.

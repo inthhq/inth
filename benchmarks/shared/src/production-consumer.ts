@@ -196,7 +196,7 @@ export const consumerPackageJson = function consumerPackageJson(
 	};
 };
 
-/** How an arm's stock surfaces get inth's rules. */
+/** How an arm's stock surfaces get Inth's rules. */
 export type ConsumerStyleDelivery = 'automatic' | 'external';
 
 /**

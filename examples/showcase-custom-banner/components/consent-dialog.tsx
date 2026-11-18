@@ -47,7 +47,7 @@ const preferenceLabels = {
 } as const;
 
 // Northwind's own words for each category. Anything not listed here falls
-// back to inth's translated title and description.
+// back to Inth's translated title and description.
 const categoryCopy: Partial<
 	Record<AllConsentNames, { title: string; description: string }>
 > = {
@@ -293,7 +293,7 @@ const CloseIcon = () => (
 );
 
 /**
- * Northwind's consent dialog: one centered modal for both of inth's
+ * Northwind's consent dialog: one centered modal for both of Inth's
  * surfaces. The banner surface is the first step (the question, the
  * categories and the policy's actions). "Choose" moves Inth to the dialog
  * surface, and the same modal turns each category into a switch.

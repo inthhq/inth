@@ -98,7 +98,7 @@ import { ConsentWidget } from "@/components/inth/consent-widget"
 export function InthPage() {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-6 p-6">
-      <h1 className="text-lg font-medium">inth fixture</h1>
+      <h1 className="text-lg font-medium">Inth fixture</h1>
       <ConsentGate category="marketing" className="aspect-video">
         <p>Marketing embed</p>
       </ConsentGate>

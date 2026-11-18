@@ -112,7 +112,7 @@ export const targets: ExampleTarget[] = [
 	},
 	{
 		// Nuxt 4.6 with Vue Vapor: every app page and component is a Vapor
-		// component that renders inth's virtual DOM components through
+		// component that renders Inth's virtual DOM components through
 		// Nuxt's interop. `/headless` swaps ConsentRoot for a Vapor
 		// ConsentPrompt built on the composables.
 		directory: 'nuxt-vapor',

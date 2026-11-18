@@ -24,7 +24,7 @@ const renderBrandButton = function renderBrandButton(
 
 /**
  * Your design system's button. To work under `asChild`, it forwards its ref
- * and passes every other prop to the `button` element, so inth's click
+ * and passes every other prop to the `button` element, so Inth's click
  * handler, `data-action` and class names reach the DOM.
  */
 export const BrandButton = forwardRef(renderBrandButton);

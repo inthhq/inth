@@ -1,6 +1,6 @@
 # Nuxt theme
 
-Northwind Coffee's product page with inth's stock banner and preference
+Northwind Coffee's product page with Inth's stock banner and preference
 dialog in the shop's brand. Nothing is rebuilt: the components are the ones
 `ConsentRoot` renders, changed through module options in `nuxt.config.ts`.
 
@@ -21,7 +21,7 @@ dialog in the shop's brand. Nothing is rebuilt: the components are the ones
 
 - **`nuxt.config.ts`** holds every Inth option. They are plain data, so they
   belong in module options rather than `app/app.config.ts`.
-- **`app/assets/consent.css`** styles the classes from `components`. inth's
+- **`app/assets/consent.css`** styles the classes from `components`. Inth's
   rules sit in a cascade layer, so these unlayered rules win without extra
   specificity. They read `--inth-primary`, so the rule follows the dark
   palette.

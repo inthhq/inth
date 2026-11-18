@@ -21,7 +21,7 @@ const config = {
 };
 
 /**
- * Keeps inth's language on the route's locale. `ConsentRoot` reads `i18n`
+ * Keeps Inth's language on the route's locale. `ConsentRoot` reads `i18n`
  * once, so a client-side move from /en to /de goes through
  * `useSetLanguage`, which switches the copy and resolves the policy again.
  */

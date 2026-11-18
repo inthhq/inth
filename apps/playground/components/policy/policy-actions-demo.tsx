@@ -625,7 +625,7 @@ const PolicyActionsDemoContent = ({
 					>
 						<Card className="border-slate-200/70 bg-white/80 shadow-lg backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
 							<CardHeader>
-								<CardTitle>Custom mapping with stock inth buttons</CardTitle>
+								<CardTitle>Custom mapping with stock Inth buttons</CardTitle>
 								<CardDescription>
 									This path keeps built-in consent behavior and copy while
 									letting you intercept the mapping seam with `renderAction`.
@@ -643,7 +643,7 @@ const PolicyActionsDemoContent = ({
 					>
 						<Card className="border-slate-200/70 bg-white/80 shadow-lg backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
 							<CardHeader>
-								<CardTitle>Custom DOM with base inth translations</CardTitle>
+								<CardTitle>Custom DOM with base Inth translations</CardTitle>
 								<CardDescription>
 									This is the advanced path. `renderAction` returns local app
 									buttons, while `useTranslations()` and headless action

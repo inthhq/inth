@@ -65,7 +65,7 @@ const readBody = async function readBody(
 
 /**
  * Cross-origin with credentials: echo the caller's origin and any
- * requested headers, because examples send inth's protocol headers.
+ * requested headers, because examples send Inth's protocol headers.
  */
 const corsHeaders = function corsHeaders(
 	request: IncomingMessage

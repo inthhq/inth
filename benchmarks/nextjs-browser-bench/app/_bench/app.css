@@ -1,6 +1,6 @@
 /*
  * The app's own stylesheet. The baseline arm loads only this file; the
- * consent arms load `with-consent.css`, which imports it. inth's surfaces
+ * consent arms load `with-consent.css`, which imports it. Inth's surfaces
  * render their own styles.
  */
 main {

@@ -24,7 +24,7 @@ CI_PRODUCTS=cli node tools/ci/plan.ts            # one product, as a release doe
 | Markdown in the SDK or mobile trees | SDK lint and format only |
 | `pnpm-lock.yaml`, `package.json`, `turbo.json`, `pnpm-workspace.yaml`, `.github/workflows/**`, `.github/actions/**`, `tools/ci/**`, `patches/**`, any file the planner does not know | Everything |
 
-The browser integration groups come from inth's planner (`tools/ci/browser-groups.ts`) and run through `scripts/ci-browser.ts`: example acceptance, starter smoke tests, Next.js compatibility cells, framework parity across the Storybooks, SSR journeys and CSS compatibility. A group runs when a fixture, starter, Storybook or bench it covers is selected.
+The browser integration groups come from c15t's planner (`tools/ci/browser-groups.ts`) and run through `scripts/ci-browser.ts`: example acceptance, starter smoke tests, Next.js compatibility cells, framework parity across the Storybooks, SSR journeys and CSS compatibility. A group runs when a fixture, starter, Storybook or bench it covers is selected.
 
 The React Native compatibility matrix packs `@inth/react-native` and installs it in a fresh app for each React Native and Expo release in `scripts/mobile-compatibility.json`, then checks types, Codegen and Expo prebuild.
 

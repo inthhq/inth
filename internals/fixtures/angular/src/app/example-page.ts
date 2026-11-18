@@ -18,7 +18,7 @@ import { YouTubeEmbed } from './youtube-embed';
 	selector: 'app-example-page',
 	template: `
 		<main>
-			<p>inth / Angular</p>
+			<p>Inth / Angular</p>
 			<h1>Consent example</h1>
 			<p>One consent setup for your analytics, advertising and video embeds.</p>
 			<nav aria-label="Banner design">

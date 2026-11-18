@@ -618,7 +618,7 @@ for (const target of selectedTargets()) {
 			test('Tailwind 4 utilities that rely on @property also need the page link', async () => {
 				// The same page without its own <link> to the Tailwind build, so
 				// the build loads only inside the shadow root. The observer sees
-				// the document, not the shadow root, so inth's link stays.
+				// the document, not the shadow root, so Inth's link stays.
 				await visit('/consent-example/tailwind', false, async (fresh) => {
 					await fresh.addInitScript(() => {
 						new MutationObserver((records) => {
