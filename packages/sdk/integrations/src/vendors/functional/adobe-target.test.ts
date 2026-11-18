@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	createCallbackInfo,
 	expectSkippedScript,
+	grantedServerStart,
 } from '../../__tests__/helpers';
 import { adobeTarget as createAdobeTarget } from './adobe-target';
 import type { AdobeTargetOptions } from './adobe-target';
@@ -78,7 +79,7 @@ describe('adobeTarget', () => {
 			expect(script.id).toBe('adobe-target');
 			expect(script.vendor).toBe('adobe-target');
 			expect(script.alwaysLoad).toBeUndefined();
-			expect(script.serverStart).toBeUndefined();
+			expect(grantedServerStart(script)).toBeUndefined();
 			expect(script.vendorDetails).toMatchObject({
 				legalName: 'Adobe Inc.',
 				name: 'Adobe Target',
@@ -259,7 +260,7 @@ describe('adobeTarget', () => {
 		await expect(pending).resolves.toEqual({ version: '2.30.0' });
 	});
 
-	it('ignores detached loads and does not configure a revoked download', async () => {
+	it('does not configure a revoked download', async () => {
 		const win = window as TargetWindow;
 		win.alloy = Object.assign(vi.fn().mockResolvedValue(undefined), { q: [] });
 		const script = adobeTarget(webSdkOptions);
@@ -270,8 +271,6 @@ describe('adobeTarget', () => {
 			id: script.id,
 		});
 		script.onBeforeLoad?.(info);
-		script.onLoad?.(info);
-		expect(win.alloy).not.toHaveBeenCalled();
 		document.head.appendChild(element);
 		script.onConsentChange?.({ ...info, hasConsent: false });
 		script.onLoad?.({ ...info, hasConsent: false });

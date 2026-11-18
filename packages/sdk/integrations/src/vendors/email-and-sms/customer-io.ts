@@ -213,7 +213,6 @@ const createCustomerIo = function createCustomerIo(
 				pageAfterLoad(info.element);
 			}
 		},
-		serverStart: undefined,
 	};
 };
 

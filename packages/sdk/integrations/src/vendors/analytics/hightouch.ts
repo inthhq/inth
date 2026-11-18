@@ -399,10 +399,7 @@ export const hightouch = function hightouch({
 
 	return resolveManifest(manifest, {
 		loadOptions,
-		scriptUrl: resolveScriptUrl(
-			trimToUndefined(scriptUrl),
-			DEFAULT_HIGHTOUCH_SCRIPT_URL
-		),
+		scriptUrl: resolveScriptUrl(scriptUrl, DEFAULT_HIGHTOUCH_SCRIPT_URL),
 		writeKey: normalizedWriteKey,
 	});
 };

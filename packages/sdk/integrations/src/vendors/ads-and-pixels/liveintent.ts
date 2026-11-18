@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { ManifestStep, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 /** LiveConnect's plain object event queue. */
 export interface LiveIntentEvent extends Record<string, unknown> {
@@ -75,7 +75,7 @@ export const liveIntentTag = function liveIntentTag(
 	}
 	const config: Record<string, unknown> = {
 		scriptUrl: resolveScriptUrl(
-			trimToUndefined(options.scriptUrl),
+			options.scriptUrl,
 			`https://b-code.liadm.com/${encodeURIComponent(tagId)}.min.js`
 		),
 	};

@@ -501,7 +501,6 @@ export const eloquaTracking = function eloquaTracking(
 					updateConsent(element && captureDispatcher(element));
 				}
 			},
-			serverStart: undefined,
 		};
 	});
 };

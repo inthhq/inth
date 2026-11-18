@@ -327,8 +327,6 @@ const createAmazonAdsTag = (options: AmazonAdsTagOptions): Script => {
 				finish();
 			}
 		},
-		// The custom bootstrap must run in the client consent lifecycle.
-		serverStart: undefined,
 	};
 };
 

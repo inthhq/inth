@@ -4,11 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import {
-	joinUrlPath,
-	resolveScriptUrl,
-	trimToUndefined,
-} from '../_shared/script-url';
+import { joinUrlPath, resolveScriptUrl } from '../_shared/script-url';
 
 /**
  * Default Heap config-loader base URL.
@@ -382,7 +378,7 @@ const resolveHeapScriptUrl = function resolveHeapScriptUrl(
 	scriptUrl: string | undefined
 ): string {
 	return resolveScriptUrl(
-		trimToUndefined(scriptUrl),
+		scriptUrl,
 		joinUrlPath(DEFAULT_HEAP_CONFIG_BASE_URL, `${envId}/heap_config.js`)
 	);
 };

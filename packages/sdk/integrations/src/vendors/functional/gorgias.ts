@@ -186,16 +186,11 @@ export const gorgiasChat = function gorgiasChat(
 		onDispose: cancel,
 		onError: cancel,
 		onLoad(info) {
-			if (!info.element?.isConnected) {
-				return;
-			}
 			const load = update(info);
 			if (load) {
 				void waitForInit(load);
 			}
 		},
-		// The readiness listener must exist before the remote loader executes.
-		serverStart: undefined,
 		target: 'body',
 	};
 };

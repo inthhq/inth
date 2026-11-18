@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 const getDefaultClearbitScriptUrl = function getDefaultClearbitScriptUrl(
 	publishableKey: string
@@ -89,7 +89,7 @@ export const clearbit = function clearbit(options: ClearbitOptions): Script {
 
 	return resolveManifest(clearbitManifest, {
 		scriptUrl: resolveScriptUrl(
-			trimToUndefined(options.scriptUrl),
+			options.scriptUrl,
 			getDefaultClearbitScriptUrl(publishableKey)
 		),
 	});

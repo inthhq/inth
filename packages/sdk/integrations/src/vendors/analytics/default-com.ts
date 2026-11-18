@@ -572,8 +572,6 @@ export const defaultComPixel = function defaultComPixel(
 				forwardPixelConsent(info);
 			}
 		},
-		// The runtime wrapper must apply consent before the loader is inserted.
-		serverStart: undefined,
 		validate: () => assertPixelConfiguration(configuration),
 	};
 };
@@ -732,6 +730,5 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 		// sdk.js keeps document listeners and a page-level module; running it
 		// again on remount would leave capture bound to the disposed client.
 		persistAfterDispose: true,
-		serverStart: undefined,
 	};
 };

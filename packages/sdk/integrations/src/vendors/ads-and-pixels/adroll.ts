@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 type AdrollMethod = 'setProperties' | 'identify' | 'track';
 type AdrollQueue = unknown[] &
@@ -72,7 +72,7 @@ export const adrollPixel = function adrollPixel(
 	}
 	const script = resolveManifest(adrollPixelManifest, {
 		scriptUrl: resolveScriptUrl(
-			trimToUndefined(options.scriptUrl),
+			options.scriptUrl,
 			`https://s.adroll.com/j/${encodeURIComponent(advertiserId)}/roundtrip.js`
 		),
 	});
@@ -97,6 +97,5 @@ export const adrollPixel = function adrollPixel(
 			client.track?.('pageView');
 			script.onBeforeLoad?.(info);
 		},
-		serverStart: undefined,
 	};
 };

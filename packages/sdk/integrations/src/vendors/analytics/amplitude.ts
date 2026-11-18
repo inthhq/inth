@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 /**
  * Browser SDK 2 version used by the default Amplitude CDN loader URL.
@@ -328,9 +328,6 @@ export const amplitude = function amplitude({
 	return resolveManifest(amplitudeManifest, {
 		apiKey: normalizedApiKey,
 		initOptions,
-		scriptUrl: resolveScriptUrl(
-			trimToUndefined(scriptUrl),
-			DEFAULT_AMPLITUDE_SCRIPT_URL
-		),
+		scriptUrl: resolveScriptUrl(scriptUrl, DEFAULT_AMPLITUDE_SCRIPT_URL),
 	});
 };

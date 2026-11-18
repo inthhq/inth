@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -91,7 +91,7 @@ export const rb2b = function rb2b(options: Rb2bOptions): Script {
 	}
 	const key = encodeURIComponent(accountKey);
 	const scriptUrl = resolveScriptUrl(
-		trimToUndefined(options.scriptUrl),
+		options.scriptUrl,
 		`https://ddwl4m2hdecbv.cloudfront.net/b/${key}/${key}.js.gz`
 	);
 	if (!isSupportedScriptUrl(scriptUrl, accountKey)) {

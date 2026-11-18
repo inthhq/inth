@@ -114,8 +114,6 @@ const createZendeskScript = (options: ZendeskWidgetOptions): Script => {
 			installed = false;
 		},
 		resourceKey: `zendesk:${options.key}`,
-		// The client must attach zE.s and set cookies before the vendor executes.
-		serverStart: undefined,
 	};
 };
 

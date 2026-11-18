@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 /**
  * Promptwatch vendor manifest.
@@ -61,10 +61,7 @@ export const promptwatch = function promptwatch({
 	}
 
 	const defaultScriptUrl = 'https://ingest.promptwatch.com/js/client.min.js';
-	const normalizedScriptUrl = resolveScriptUrl(
-		trimToUndefined(scriptUrl),
-		defaultScriptUrl
-	);
+	const normalizedScriptUrl = resolveScriptUrl(scriptUrl, defaultScriptUrl);
 
 	return resolveManifest(promptwatchManifest, {
 		projectId: normalizedProjectId,

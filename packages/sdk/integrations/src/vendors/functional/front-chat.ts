@@ -77,10 +77,7 @@ export const frontChat = function frontChat(options: FrontChatOptions): Script {
 		});
 	}
 
-	const scriptSrc = resolveScriptUrl(
-		trimToUndefined(options.scriptSrc),
-		FRONT_CHAT_SCRIPT_SRC
-	);
+	const scriptSrc = resolveScriptUrl(options.scriptSrc, FRONT_CHAT_SCRIPT_SRC);
 	const nonce = trimToUndefined(options.nonce);
 	const initOptions: Record<string, unknown> = {
 		chatId,
@@ -98,15 +95,14 @@ export const frontChat = function frontChat(options: FrontChatOptions): Script {
 		...script,
 		nonce,
 		onLoad(info) {
-			// Consent is captured when core inserts the loader. Its element can
-			// be removed while downloading; ignore that detached load event.
-			if (!info.hasConsent || !info.element?.isConnected) {
+			// Consent is captured when core inserts the loader.
+			if (!info.hasConsent) {
 				return;
 			}
 
 			// Core can also supply the nonce from provider configuration. Front
 			// needs the same nonce in init for its dynamically generated scripts.
-			const loadedNonce = info.element.nonce;
+			const loadedNonce = info.element?.nonce;
 			const resolved = loadedNonce
 				? resolveManifest(frontChatManifest, {
 						initOptions: { ...initOptions, nonce: loadedNonce },

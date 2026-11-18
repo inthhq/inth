@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	createCallbackInfo,
 	expectSkippedScript,
+	grantedServerStart,
 } from '../../__tests__/helpers';
 import { isArgumentsPayload, toArgs } from '../../e2e-test-utils';
 import { zendeskWidget } from './zendesk';
@@ -35,7 +36,7 @@ describe('zendeskWidget', () => {
 			'https://static.zdassets.com/ekr/snippet.js?key=widget%2Fkey%20%26%20value'
 		);
 		expect(script.alwaysLoad).toBeUndefined();
-		expect(script.serverStart).toBeUndefined();
+		expect(grantedServerStart(script)).toBeUndefined();
 		expect(script.persistAfterConsentRevoked).toBeUndefined();
 		expect(script.vendorDetails?.name).toBe('Zendesk Messaging');
 		expect(window.zE).toBeUndefined();

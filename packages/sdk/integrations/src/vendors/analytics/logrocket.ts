@@ -172,7 +172,7 @@ export const logRocket = function logRocket(options: LogRocketOptions): Script {
 		asyncScriptUrl,
 		initOptions: options.initOptions ?? {},
 		scriptUrl: resolveScriptUrl(
-			trimToUndefined(options.scriptUrl),
+			options.scriptUrl,
 			DEFAULT_LOGROCKET_SCRIPT_URL
 		),
 	});

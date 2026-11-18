@@ -60,6 +60,17 @@ export const createCallbackInfo = function createCallbackInfo(
 	};
 };
 
+/**
+ * The inline start a server render would write for a granted visitor, or
+ * `undefined` when the script starts only in the browser.
+ */
+export const grantedServerStart = function grantedServerStart(script: Script) {
+	return script.serverStart?.(
+		createCallbackInfo({ hasConsent: true, id: script.id }),
+		script
+	);
+};
+
 export type LifecycleCallbackOverrides = Partial<
 	Omit<ScriptCallbackInfo, 'id'>
 >;

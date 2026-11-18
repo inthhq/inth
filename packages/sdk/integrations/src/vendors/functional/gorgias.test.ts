@@ -9,6 +9,7 @@ import {
 	createCallbackInfo,
 	deniedConsentState,
 	expectSkippedScript,
+	grantedServerStart,
 } from '../../__tests__/helpers';
 import { gorgiasChat } from './gorgias';
 import type { GorgiasChatOptions } from './gorgias';
@@ -64,7 +65,7 @@ describe('gorgiasChat', () => {
 		expect(script.alwaysLoad).toBeUndefined();
 		expect(script.attributes).toBeUndefined();
 		expect(script.persistAfterConsentRevoked).toBeUndefined();
-		expect(script.serverStart).toBeUndefined();
+		expect(grantedServerStart(script)).toBeUndefined();
 		expect(window.GorgiasChat).toBeUndefined();
 	});
 

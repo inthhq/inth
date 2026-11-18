@@ -762,6 +762,5 @@ export const hubspot = function hubspot(options: HubSpotOptions): Script {
 			}
 			script.onDispose?.(info);
 		},
-		serverStart: undefined,
 	};
 };

@@ -119,8 +119,7 @@ export const wisepops = function wisepops(options: WisepopsOptions): Script {
 		...script,
 		nonce: trimToUndefined(options.nonce),
 		onLoad(info) {
-			// Core can detach the loader while it is still downloading.
-			if (!info.hasConsent || !info.element?.isConnected) {
+			if (!info.hasConsent) {
 				return;
 			}
 			script.onLoad?.(info);

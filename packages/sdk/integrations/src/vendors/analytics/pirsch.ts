@@ -135,7 +135,7 @@ const getPirschScriptUrl = function getPirschScriptUrl(
 			? DEFAULT_PIRSCH_EXTENDED_SCRIPT_URL
 			: DEFAULT_PIRSCH_SCRIPT_URL;
 
-	return resolveScriptUrl(trimToUndefined(options.scriptUrl), defaultScriptUrl);
+	return resolveScriptUrl(options.scriptUrl, defaultScriptUrl);
 };
 
 /**

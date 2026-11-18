@@ -4,6 +4,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultComFormsSdkMock } from './__tests__/default-com-sdk';
+import { grantedServerStart } from './__tests__/helpers';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -280,7 +281,7 @@ describe('Default loader options', () => {
 		'%s defers setup to browser lifecycle callbacks',
 		(name) => {
 			const script = helpers[name]({ publicKey: 'workspace-key' });
-			expect(script.serverStart).toBeUndefined();
+			expect(grantedServerStart(script)).toBeUndefined();
 			expect(script.vendor).toBe('default-com');
 			expect(script.id).toBe(
 				name === 'defaultComPixel' ? 'default-com' : 'default-com-forms-sdk'

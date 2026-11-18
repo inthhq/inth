@@ -175,7 +175,6 @@ const createAtJsScript = function createAtJsScript(
 				signalAtJsConsent(false);
 			}
 		},
-		serverStart: undefined,
 	};
 };
 
@@ -296,13 +295,9 @@ const createWebSdkScript = function createWebSdkScript(
 			signal(false);
 		},
 		onLoad(info) {
-			if (!info.element?.isConnected) {
-				return;
-			}
 			loaded = true;
 			signal(info.hasConsent);
 		},
-		serverStart: undefined,
 	};
 };
 
