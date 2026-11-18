@@ -5,7 +5,7 @@ import type { ConsentProviderCallbacks } from '@inth/svelte';
 
 // Pass as `callbacks={callbacks}` on ConsentProvider.
 export const callbacks: ConsentProviderCallbacks = {
-	// Runs just before inth reloads the page after a withdrawal.
+	// Runs just before Inth reloads the page after a withdrawal.
 	onBeforeConsentRevocationReload: ({ preferences }) => {
 		console.info('Reloading with', preferences);
 	},

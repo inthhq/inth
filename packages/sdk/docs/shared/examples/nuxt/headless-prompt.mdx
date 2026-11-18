@@ -6,12 +6,12 @@ const activeUI = useConsentActiveUI();
 const saveConsent = useConsentSave();
 const { displayedCategories, save: saveDraft, values } = useConsentDraft();
 
-// Recording a choice satisfies the prompt, so inth closes the banner itself.
+// Recording a choice satisfies the prompt, so Inth closes the banner itself.
 const choose = (choice: 'all' | 'none') => {
 	void saveConsent(choice);
 };
 
-// Preferences stay open until you close them. inth records the draft
+// Preferences stay open until you close them. Inth records the draft
 // locally before the network request, so closing right away is safe.
 const savePreferences = () => {
 	void saveDraft();

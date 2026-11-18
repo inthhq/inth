@@ -18,7 +18,7 @@ const renderBrandButton = function renderBrandButton(
 			{...props}
 			className={['brand-button', className].filter(Boolean).join(' ')}
 			data-tone={tone}
-			// Under `asChild`, inth passes no type. Default to `button` so an
+			// Under `asChild`, Inth passes no type. Default to `button` so an
 			// action never submits a surrounding form.
 			type={type === 'submit' ? 'submit' : 'button'}
 		/>

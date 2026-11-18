@@ -5,7 +5,7 @@ import type { InthCallbacks } from '@inth/angular';
 
 // Pass as `callbacks` to provideInth() in app.config.ts.
 export const callbacks: InthCallbacks = {
-	// Runs just before inth reloads the page after a withdrawal.
+	// Runs just before Inth reloads the page after a withdrawal.
 	onBeforeConsentRevocationReload: ({ preferences }) => {
 		console.info('Reloading with', preferences);
 	},
