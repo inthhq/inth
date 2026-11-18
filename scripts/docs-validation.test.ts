@@ -186,7 +186,7 @@ test('framework sidebars follow the shared group template', async () => {
 
 /**
  * v3 is npm `latest`, so SDK install commands use bare package names. A
- * major-version pin such as `inth@3` is allowed where a page shows what the
+ * major-version pin such as `c15t@3` is allowed where a page shows what the
  * CLI installs; dist-tags such as `@alpha` are not.
  */
 test('SDK install commands select the documented release', async () => {
@@ -199,7 +199,7 @@ test('SDK install commands select the documented release', async () => {
 		)) {
 			for (const name of (match.groups?.command ?? '').split(' ')) {
 				const bare = name.replace(/(?<=.)@[^/]*$/u, '');
-				if (!/^(?:inth|@inth\/.+|@inth\/.+)$/u.test(bare)) {
+				if (!/^(?:c15t|@c15t\/.+|@inth\/.+)$/u.test(bare)) {
 					continue;
 				}
 				if (name !== bare && !/^\d+$/u.test(name.slice(bare.length + 1))) {
