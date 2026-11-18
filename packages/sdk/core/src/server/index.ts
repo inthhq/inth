@@ -66,6 +66,15 @@ export {
 	ManifestUnavailableError,
 	resolveManifestSourceUrl,
 } from '../libs/manifest-cache-runtime';
+export type {
+	ConsentProxyRouteMethodHandlers,
+	ConsentRouteMethodHandlers,
+	ConsentRouteMethodHandlersFor,
+} from './route-handlers';
+export {
+	createConsentRouteHandlerCache,
+	createConsentRouteMethodHandlers,
+} from './route-handlers';
 export { normalizeRoutePrefix } from './route-prefix';
 export type {
 	ServerMode,

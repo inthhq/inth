@@ -191,7 +191,7 @@ describe('dispatch', () => {
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
 	});
 
-	test('an unknown path is a 404 that never reaches upstream without the proxy', async () => {
+	test('without the proxy an unknown read is a 404, a write a 405, and neither reaches upstream', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch });
 		const unknown = await handle(request('/api/inth/subjects'), {
@@ -202,7 +202,7 @@ describe('dispatch', () => {
 			{ path: 'subjects' }
 		);
 		expect(unknown.status).toBe(404);
-		expect(write.status).toBe(404);
+		expect(write.status).toBe(405);
 		expect(fetch).not.toHaveBeenCalled();
 	});
 

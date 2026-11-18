@@ -98,6 +98,12 @@ import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';
+import {
+	mountOf,
+	readUpstreams,
+	relativeLoop,
+	requestLoop,
+} from './route-loop';
 import { IN_PROCESS_ORIGIN, toPathFetch, trimPathSlashes } from './shared';
 
 /**
@@ -184,6 +190,15 @@ export interface ConsentRouteHandlerOptions {
 	 * adapter shares.
 	 */
 	cache?: ManifestCache;
+	/**
+	 * The path the route is mounted at, such as `/api/inth`, when the
+	 * adapter knows it before a request. A relative `projectUrl` or
+	 * `manifestUrl` on or beneath it then fails at setup. Without it, a
+	 * request that carries {@link ConsentRouteRequestContext.path} tells the
+	 * route where it is mounted. Either way, an upstream URL that leads
+	 * back into the route fails the request with a 500.
+	 */
+	routePrefix?: string;
 }
 
 /** What the adapter knows about one request that a `Request` does not carry. */
@@ -592,6 +607,8 @@ export const readRequestForwarding = function readRequestForwarding(
 
 const notFound = () => Response.json({ error: 'Not found' }, { status: 404 });
 
+const READ_METHODS: ReadonlySet<string> = new Set(['GET', 'HEAD']);
+
 /**
  * The country, region and GPC overrides a browser's `/init` carries as
  * query parameters, leaving out any it did not send.
@@ -623,6 +640,8 @@ const queryOverrides = function queryOverrides(
  * request budget that runs out.
  * @throws {Error} From the handler, when neither `projectUrl` nor
  * `manifestUrl` is set, or one cannot be resolved.
+ * @throws {TypeError} When a relative `projectUrl` or `manifestUrl` is on
+ * or beneath `routePrefix`.
  * @example
  * ```ts
  * const handle = createConsentRouteHandler({
@@ -636,6 +655,13 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 	options: ConsentRouteHandlerOptions
 ): ConsentRouteHandler {
 	const { adapter } = options;
+	const upstreams = readUpstreams(options);
+	if (options.routePrefix !== undefined) {
+		const loop = relativeLoop(upstreams, options.routePrefix);
+		if (loop) {
+			throw new TypeError(`${adapter}: ${loop}`);
+		}
+	}
 	const proxy = resolveConsentProxyOptions(options.proxy);
 	const extraForwardHeaders =
 		typeof options.proxy === 'object'
@@ -1068,7 +1094,15 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		path: string
 	): Promise<Response> {
 		if (!proxy) {
-			return Promise.resolve(notFound());
+			// Without the proxy the route only reads.
+			return Promise.resolve(
+				READ_METHODS.has(request.method.toUpperCase())
+					? notFound()
+					: new Response(null, {
+							headers: { allow: 'GET, HEAD' },
+							status: 405,
+						})
+			);
 		}
 		if (!options.projectUrl) {
 			throw new Error(`${adapter}: pass projectUrl to use proxy.`);
@@ -1098,8 +1132,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 				: trimPathSlashes(context.path);
 		let { route } = context;
 		if (route === undefined) {
-			const method = request.method.toUpperCase();
-			const readable = method === 'GET' || method === 'HEAD';
+			const readable = READ_METHODS.has(request.method.toUpperCase());
 			if (readable && path === 'manifest') {
 				route = 'manifest';
 			} else if (
@@ -1121,7 +1154,38 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		}
 	};
 
+	/**
+	 * Why this request's upstream would lead back into the route, or
+	 * `undefined`.
+	 */
+	const loopFor = function loopFor(
+		request: Request,
+		context: ConsentRouteRequestContext
+	): string | undefined {
+		if (upstreams.length === 0) {
+			return undefined;
+		}
+		const mount =
+			options.routePrefix ??
+			(context.path === undefined
+				? undefined
+				: mountOf(new URL(request.url).pathname, context.path));
+		if (mount === undefined) {
+			return undefined;
+		}
+		// The site's origin as the route sees it, forwarded headers included
+		// when it trusts them.
+		const site = context.forwarding
+			? context.forwarding()
+			: readRequestForwarding(request, trustForwardedHeaders);
+		return requestLoop(upstreams, mount, site);
+	};
+
 	return async (request, context = {}) => {
+		const loop = loopFor(request, context);
+		if (loop) {
+			return Response.json({ error: `${adapter}: ${loop}` }, { status: 500 });
+		}
 		const work = dispatch(request, context);
 		const { waitUntil } = context;
 		if (!waitUntil) {
