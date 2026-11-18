@@ -26,8 +26,6 @@ const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
  * `data-<file>-src`, or `c15t.<file>.js` at this version next to
  * `besides`.
  *
- * @param file - The file.
- * @param tag - The init script's tag.
  * @param besides - The URL of a file the wanted one sits next to.
  * @returns The URL, or `null` when none is known.
  * @internal

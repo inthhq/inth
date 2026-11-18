@@ -8,7 +8,7 @@
  *
  * Order does not matter: loaded first, it queues itself on `window.inth`
  * the way any pre-load call does and mounts once the client initialises.
- * The panel lands on `window.c15t.devtools`.
+ * The panel lands on `window.inth.devtools`.
  *
  * This file is its own bundle, so its copy of the launcher slot is not the
  * one the main tag's trigger reads. It publishes through

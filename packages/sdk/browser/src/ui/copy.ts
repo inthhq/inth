@@ -37,9 +37,6 @@ export interface SurfaceCopy {
  * The snapshot's resolved bundle wins, bundled English fills anything it
  * lacks. Prompt copy and labels follow core's order (`consent-copy`), as
  * in the framework surfaces.
- *
- * @param snapshot - The kernel snapshot.
- * @returns The copy.
  */
 export const resolveCopy = function resolveCopy(
 	snapshot: ConsentSnapshot

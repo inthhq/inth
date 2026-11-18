@@ -188,7 +188,6 @@ const buildDetails = function buildDetails(params: {
  * carries a switch that stages a grant in the widget's draft. A `disabled`
  * vendor is listed without a switch, since the kernel ignores grants for it.
  *
- * @param params - The category, its vendors and the widget's callbacks.
  * @returns The list, or `null` when the category has no vendor to list.
  */
 // oxlint-disable-next-line max-lines-per-function -- One card's markup and its patching belong together.

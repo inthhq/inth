@@ -1,9 +1,9 @@
 /**
- * `c15t.hosted()` before the engine has loaded.
+ * `inth.hosted()` before the engine has loaded.
  *
  * `init({ mode: inth.hosted({ projectUrl }) })` is the documented way to
  * pick the hosted transport on a script-tag page, but the transport is
- * engine code. The init script's `c15t.hosted()` returns a marker carrying
+ * engine code. The init script's `inth.hosted()` returns a marker carrying
  * the options instead, and the engine builds the real factory from it.
  *
  * @packageDocumentation
@@ -18,7 +18,7 @@ import type {
 /** Property of a marker that holds its `hosted()` options. */
 export const HOSTED_OPTIONS = '__inthHosted';
 
-/** A `c15t.hosted()` result from the init script. @internal */
+/** An `inth.hosted()` result from the init script. @internal */
 export type HostedMarker = ProviderTransportFactory & {
 	kind: 'hosted';
 	[HOSTED_OPTIONS]: HostedModeOptions;
@@ -27,7 +27,6 @@ export type HostedMarker = ProviderTransportFactory & {
 /**
  * Build a marker for `hosted(options)`.
  *
- * @param options - The `hosted()` options.
  * @returns A factory that throws if called before the engine replaces it.
  * @internal
  */
@@ -47,8 +46,6 @@ export const hostedMarker = function hostedMarker(
 /**
  * The options a marker carries, or `undefined` for anything else.
  *
- * @param mode - A `mode` option.
- * @returns The `hosted()` options.
  * @internal
  */
 export const readHostedMarker = function readHostedMarker(

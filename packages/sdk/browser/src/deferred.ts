@@ -8,8 +8,6 @@ export interface Deferred<Value> {
 /**
  * Create a promise that something else settles later, such as a kernel
  * event. `Promise.withResolvers` where the browser has it.
- *
- * @returns The deferred.
  */
 export const createDeferred = function createDeferred<
 	Value,

@@ -36,7 +36,6 @@ const THEME_TOKEN = /^--inth-/u;
  * Every class name a set of class maps can put on an element.
  *
  * @param maps - Class maps, nested in any shape, with space-separated values.
- * @returns The class names.
  */
 export const collectClassNames = function collectClassNames(
 	maps: unknown
@@ -65,7 +64,6 @@ export const collectClassNames = function collectClassNames(
  * Whether a selector can match an element built from `rendered` classes.
  *
  * @param selector - One complex selector (no top-level commas).
- * @param rendered - Class names the surfaces render.
  * @returns `false` only when the selector requires an unrendered ui class.
  */
 const canMatch = function canMatch(
@@ -85,9 +83,6 @@ const canMatch = function canMatch(
 /**
  * The custom properties a stylesheet reads: those a property or an at-rule
  * names in `var()`, and the ones their definitions name in turn.
- *
- * @param root - The parsed stylesheet.
- * @returns The custom property names.
  */
 const readCustomProperties = function readCustomProperties(
 	root: Root
@@ -127,8 +122,6 @@ const readCustomProperties = function readCustomProperties(
 /**
  * Keep only the rules a surface built from `rendered` classes can match.
  *
- * @param css - The stylesheet.
- * @param rendered - Class names the surfaces render.
  * @param canRender - Further drops selectors the surfaces cannot match,
  * such as an attribute value they never set.
  * @returns The pruned stylesheet, with the input's formatting.
@@ -190,9 +183,6 @@ export const pruneStylesheet = function pruneStylesheet(
  * fix) and line breaks between blocks. In the shadow root they only add
  * bytes to `c15t.js`. Selectors, at-rule params and declaration values
  * are left as written, so every rule still means the same thing.
- *
- * @param css - The stylesheet.
- * @returns The stylesheet without comments or formatting whitespace.
  */
 export const compactStylesheet = function compactStylesheet(
 	css: string

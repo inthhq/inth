@@ -52,7 +52,6 @@ const resolveMode = function resolveMode(
  * Create a script-tag client without starting it. `mode` may be a name.
  *
  * @param options - Client options from the tag and queued `config` calls.
- * @param context - Entry-point wiring.
  * @returns The client. Call `start()` to resolve the policy and mount.
  * @throws {Error} When the selected mode or policy presets are invalid.
  * @internal

@@ -32,7 +32,6 @@ const WAKE_EVENTS = ['pointerdown', 'keydown', 'scroll'] as const;
  * stored, so the gated scripts and `c15t.commit.js` get the connection
  * first.
  *
- * @param load - Loads the engine.
  * @param holds - Whether a press is one the init script handles first.
  * @returns Cancels the schedule.
  */

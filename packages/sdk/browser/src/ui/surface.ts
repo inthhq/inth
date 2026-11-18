@@ -51,7 +51,6 @@ export interface LegalLinksParams {
  * Matches the React banner's `InlineLegalLinks`: a space first, then each
  * link, with a comma inside every link but the last and a space after it.
  *
- * @param params - Which links, their config and labels.
  * @returns A wrapper holding the links, or nothing when there are none.
  */
 export const renderLegalLinks = function renderLegalLinks(

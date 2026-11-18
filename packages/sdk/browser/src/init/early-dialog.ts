@@ -36,7 +36,6 @@ export interface EarlyDialogHost {
 	};
 	/** Saves the dialog's input: without the engine when it can. */
 	save: (input: Record<string, unknown>) => unknown;
-	/** Closes the dialog. */
 	closeDialog: () => unknown;
 	/** The presentation options the dialog's actions follow. */
 	presentation: () => ConsentClient['presentation'];
@@ -74,8 +73,6 @@ const RENDERED_FROM = [
  * Create the dialog in the init script's UI root. It opens on the first
  * snapshot whose `activeUI` is `dialog`.
  *
- * @param host - The init script's hooks.
- * @returns The dialog.
  * @internal
  */
 export const openEarlyDialog = function openEarlyDialog(

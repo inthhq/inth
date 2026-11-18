@@ -35,7 +35,6 @@ export const resolveActions = function resolveActions(
 
 /** What {@link renderActionFooter} needs. */
 export interface ActionFooterParams {
-	/** The resolved actions. */
 	actions: ResolvedConsentPresentation;
 	/** Extra class on the footer root (the surface's `footer`). */
 	footerClassName: string;
@@ -61,12 +60,7 @@ export interface ActionFooterParams {
 	theme?: Theme;
 }
 
-/**
- * Render a surface's button footer.
- *
- * @param params - Actions, classes and handlers.
- * @returns The footer element.
- */
+/** Render a surface's button footer. */
 export const renderActionFooter = function renderActionFooter(
 	params: ActionFooterParams
 ): HTMLElement {

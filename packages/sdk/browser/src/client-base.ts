@@ -106,8 +106,6 @@ export interface ResolvedMode {
 /**
  * The mode a transport factory such as `hosted()` or `manifest()` names.
  *
- * @param factory - The factory.
- * @returns The factory and its mode name.
  * @internal
  */
 export const factoryMode = function factoryMode(
@@ -123,9 +121,7 @@ export const factoryMode = function factoryMode(
 /**
  * The hosted backend at `projectUrl`.
  *
- * @param projectUrl - The Inth project URL.
  * @param pkg - The entry, for the error.
- * @returns The hosted mode.
  * @throws {Error} Without a `projectUrl`.
  * @internal
  */
@@ -195,11 +191,7 @@ const resolvePageAction = function resolvePageAction(
  * Construction has no DOM or storage effects. Call {@link ConsentClient.start}
  * to hydrate stored records, resolve the policy and mount the UI.
  *
- * @param options - Client options.
- * @param mode - The selected transport.
- * @param context - Entry-point wiring.
- * @returns The client.
- * @throws {Error} When the mode cannot be resolved from the options.
+ * @throws {Error} When `options.iab` is on in an entry without IAB.
  */
 // oxlint-disable-next-line max-lines-per-function -- One cohesive lifecycle: construct, start, dispose.
 export const createConsentClientWith = function createConsentClientWith(

@@ -1,5 +1,5 @@
 /**
- * A site page inside a Inth mobile app's WebView, in real Chromium.
+ * A site page inside an Inth mobile app's WebView, in real Chromium.
  *
  * The fixture server puts the canonical native document-start script
  * (`packages/native-protocol/webview/document-start.js`) first in `<head>`, which is

@@ -5,8 +5,8 @@
  *
  * @example
  * ```ts
- * import { hosted, init } from '@inth/sdk-browser';
- * import { mountGPP } from '@inth/sdk-browser/gpp';
+ * import { hosted, init } from '@inth/sdk';
+ * import { mountGPP } from '@inth/sdk/gpp';
  *
  * const client = init({
  *   mode: hosted({ projectUrl: 'https://your-instance.c15t.dev' }),
@@ -25,7 +25,6 @@ import type { ConsentClient } from './types';
  * Install `window.__gpp` against a client and keep its GPP string in step
  * with the visitor's choices.
  *
- * @param client - The page's client.
  * @param options - GPP options. Every field is optional.
  * @returns A handle with `getGPPString()`, `getPingData()` and `dispose()`,
  * which removes `__gpp`. Dispose it before disposing the client.

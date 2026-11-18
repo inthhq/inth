@@ -186,8 +186,6 @@ interface GatedScriptActivatorOptions {
  * Own activation ordering without retaining a client outside its lifecycle.
  *
  * @param getSnapshot - Read current consent before each activation.
- * @param options - Scan root, discovery callbacks and the page nonce.
- * @returns A scanner and its disposal function.
  * @internal
  */
 export const createGatedScriptActivator = function createGatedScriptActivator(
@@ -318,7 +316,6 @@ const standaloneActivators = new WeakMap<
  * Pass the page's CSP nonce on a page whose policy uses `'strict-dynamic'`:
  * tags without it are then skipped, so injected markup cannot run.
  *
- * @param snapshot - The kernel snapshot.
  * @param root - Where to look. Defaults to the document.
  * @param options - `nonce` limits activation to tags carrying it. The root
  * remembers the last nonce passed: a call with a different nonce replaces

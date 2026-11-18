@@ -77,8 +77,6 @@ export interface InthGlobalBase {
 	 * Add options before `init()`. Later calls win over earlier ones, and
 	 * all of them win over the tag's `data-*` attributes. After `init()`
 	 * it warns and does nothing.
-	 *
-	 * @param options - Client options to layer on.
 	 */
 	config: (options: ScriptTagClientOptions) => void;
 	/**
@@ -87,14 +85,12 @@ export interface InthGlobalBase {
 	 *
 	 * @param options - Client options layered over the tag's attributes and
 	 * every queued `config`.
-	 * @returns The page's client.
 	 */
 	init: (options?: ScriptTagClientOptions) => ConsentClient;
 	/**
 	 * Run once the client exists, immediately if it already does. Safe to
 	 * call before `init()`; `c15t.devtools.js` mounts through this.
 	 *
-	 * @param listener - Called with the client.
 	 * @returns A function that cancels the call if it has not run yet.
 	 */
 	onInit: (listener: (client: ConsentClient) => void) => Unsubscribe;
@@ -268,7 +264,6 @@ const actionChains = new WeakMap<InthGlobalBase, ActionChain>();
  * has finished and the policy has resolved. Reserving before the batch is
  * filled keeps its place ahead of any `push()` made while it is filled.
  *
- * @param api - The API the actions run against.
  * @param actions - The batch. It is read when the batch runs, so the
  * caller can keep adding to it until it calls the returned function.
  * @returns A function that releases the batch.
@@ -373,8 +368,6 @@ const replayQueue = function replayQueue(
  * Put the API on `window.inth`, replaying in order any calls a page queued
  * on the array that was there before the script loaded. See `replayQueue`
  * for when each kind of call runs.
- *
- * @param api - The API object.
  */
 export const installGlobal = function installGlobal<Api extends InthGlobalBase>(
 	api: Api
@@ -423,9 +416,7 @@ export const installGlobal = function installGlobal<Api extends InthGlobalBase>(
  * Build the global API object.
  *
  * @param context - Entry-point wiring (UI mounter, package name).
- * @param createClient - The entry's client constructor.
  * @param supportedMode - When set, reject incompatible script-tag modes.
- * @param readOptions - Reads the options on the script tag.
  * @returns The API, not yet installed on `window`.
  * @internal
  */
@@ -620,7 +611,6 @@ export const createGlobalWith = function createGlobalWith(
 /**
  * Initialise from the script tag unless the page opted out.
  *
- * @param api - The installed API.
  * @returns The client, or `null` when the page asked to init itself.
  */
 export const autoInit = function autoInit(

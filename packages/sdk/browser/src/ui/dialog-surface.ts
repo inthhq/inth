@@ -66,11 +66,8 @@ const warmWhenIdle = function warmWhenIdle(): void {
  * same way (`./dialog-import-script.ts`); the other script-tag builds
  * replace this module with `./dialog` at build time and stay one file.
  *
- * @param ctx - The mount context.
- * @param options - Dialog options.
  * @param warmOnMount - Truthy when something else on screen opens the
  * dialog (the trigger options), so the chunk warms without a banner.
- * @returns The surface.
  */
 export const createDialog = function createDialog(
 	ctx: SurfaceContext,

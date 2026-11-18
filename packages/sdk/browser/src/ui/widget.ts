@@ -33,7 +33,7 @@ export interface Widget {
 
 /** Options for {@link createWidget}. */
 export interface WidgetOptions {
-	/** Drop the "Secured by c15t" tag. Defaults to `true`. */
+	/** Drop the "Secured by" tag. Defaults to `true`. */
 	hideBranding?: boolean;
 }
 
@@ -187,10 +187,6 @@ const patchOpen = function patchOpen(row: Row, open: boolean): void {
  * disabled while their category is off in it, and Save records only the
  * vendors the visitor moved. When the policy or the vendor list changes
  * under a staged edit, a notice asks the visitor to review before saving.
- *
- * @param ctx - The mount context.
- * @param options - Widget options.
- * @returns The widget.
  */
 // oxlint-disable-next-line max-lines-per-function -- Rows, draft and footer are one unit.
 export const createWidget = function createWidget(

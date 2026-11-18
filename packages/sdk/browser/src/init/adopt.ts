@@ -33,7 +33,6 @@ const dropInitUI = function dropInitUI(boot: InitBoot): void {
 /**
  * Keep the boot object the engine was installed over.
  *
- * @param boot - From the stand-in.
  * @internal
  */
 export const adoptBoot = function adoptBoot(boot: InitBoot): void {
@@ -51,8 +50,6 @@ export const adoptBoot = function adoptBoot(boot: InitBoot): void {
  * other mount, or a second one, gets none, and the init script's root is
  * removed.
  *
- * @param fits - Whether the mount renders where the init script did.
- * @returns The root, or `null`.
  * @internal
  */
 export const takeInitUI = function takeInitUI(fits: boolean): InitUI | null {
@@ -85,7 +82,6 @@ export const releaseBoot = function releaseBoot(): void {
 /**
  * The boot object the engine was installed over, if any.
  *
- * @returns It, or `null`.
  * @internal
  */
 export const adoptedBoot = function adoptedBoot(): InitBoot | null {
@@ -98,8 +94,6 @@ export const adoptedBoot = function adoptedBoot(): InitBoot | null {
  * and sends no `/init` of its own. Evaluated now, after any choice the
  * init script stored.
  *
- * @param options - The engine's resolved options.
- * @returns The options to create the client with.
  * @internal
  */
 export const withInitPrefetch = function withInitPrefetch(
@@ -130,7 +124,6 @@ export const withInitPrefetch = function withInitPrefetch(
  * itself; one given the init script's answer runs none, so it is asked to,
  * as a deferred React root asks its engine.
  *
- * @param kernel - The client's kernel.
  * @internal
  */
 export const sendInitCommit = function sendInitCommit(kernel: unknown): void {
