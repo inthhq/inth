@@ -62,7 +62,7 @@ final class InthBridgeSchemaTests: XCTestCase {
             resolution: PolicyResolutionInfo(status: .failed, policyId: nil, fingerprint: nil, reason: "transport"),
             subject: subject,
             location: LocationContext(countryCode: "DE", regionCode: nil),
-            error: CoreErrorInfo(code: "unsupported-contract", message: "producer speaks 2")
+            error: CoreErrorInfo(code: "save-rejected", message: "HTTP 422 invalid_request")
         )
 
         let samples: [(String, String)] = [

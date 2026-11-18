@@ -74,7 +74,7 @@ func memoryConfiguration() -> InthBridgeConfiguration {
     InthBridgeConfiguration(
         autoBootstrap: true,
         backendURL: testProjectURL,
-        domain: nil,
+        property: nil,
         storageMode: .memory,
         keychainService: InthBridgeConfiguration.defaultKeychainService,
         overrides: ConsentOverrides(country: nil, region: nil, language: "de", gpc: nil),
@@ -100,7 +100,7 @@ func startWithoutNetwork(infoPlist: [String: Any]) -> Bool {
 /// deliverable.
 ///
 /// Each lifecycle leg this package wires has exactly one observable effect: a
-/// `POST /subjects` that goes out again, and an `/init` that asks again. Neither shows up
+/// `POST /v1/consent/records` that goes out again, and an init that asks again. Neither shows up
 /// in a snapshot, so counting the calls is the whole measurement.
 ///
 /// Init serves an `unconfigured` policy resolution rather than a matched rule. That is
@@ -109,7 +109,7 @@ func startWithoutNetwork(infoPlist: [String: Any]) -> Bool {
 /// against and the queue holds real bytes. Hand-building a matched rule here would copy
 /// `Fixture` from the core's own suite for no extra coverage.
 final class RecordingTransport: InthTransport, @unchecked Sendable {
-    let domain = "recording"
+    let property = "recording"
 
     private let lock = NSLock()
     private var _initCount = 0
@@ -150,7 +150,7 @@ final class RecordingTransport: InthTransport, @unchecked Sendable {
         return .success(InitResponse(policyResolution: Self.unconfiguredResolution))
     }
 
-    func sendSave(_ body: Data) async -> Result<Void, InthError> {
+    func sendSave(_ body: Data) async -> Result<String?, InthError> {
         lock.lock()
         _saveCount += 1
         let failing = _savesFail
@@ -158,15 +158,16 @@ final class RecordingTransport: InthTransport, @unchecked Sendable {
         // `.offline` rather than an HTTP status: a body the producer refused outright is
         // dropped by design, and a drop would empty the queue for the wrong reason.
         if failing { return .failure(.offline) }
-        return .success(())
+        return .success(nil)
     }
 
-    func patchIdentity(
+    func linkSubject(
         subjectId: String,
         externalId: String,
-        identityProvider: String?
-    ) async -> Result<Void, InthError> {
-        .success(())
+        identityProvider: String?,
+        identityToken: String
+    ) async -> Result<String?, InthError> {
+        .success(nil)
     }
 
     /// The smallest policy resolution the core's wire reader accepts as an answer: a
