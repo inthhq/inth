@@ -185,6 +185,15 @@ const mergeOver = function mergeOver<Section extends object>(
 	return result as Section;
 };
 
+type Filled<Section> = {
+	[Key in keyof Section]-?: NonNullable<Section[Key]> extends object
+		? Filled<NonNullable<Section[Key]>>
+		: NonNullable<Section[Key]>;
+};
+
+/** The IAB copy with every key set, including the ones a language may omit. */
+export type ResolvedIABCopy = Filled<IABTranslations>;
+
 /**
  * The IAB copy, every key filled.
  *
@@ -203,8 +212,9 @@ const mergeOver = function mergeOver<Section extends object>(
  */
 export const resolveIABCopy = function resolveIABCopy(
 	translations: Partial<Translations> | undefined
-): IABTranslations {
-	return mergeOver(enTranslations.iab, translations?.iab);
+): ResolvedIABCopy {
+	// English sets every key, so the merge leaves none unset.
+	return mergeOver(enTranslations.iab as ResolvedIABCopy, translations?.iab);
 };
 
 /**

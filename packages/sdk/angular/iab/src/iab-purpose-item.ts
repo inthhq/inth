@@ -28,7 +28,6 @@ import type {
 	HeadlessIABVendorId,
 	ProcessedPurpose,
 } from '@inth/sdk/iab/headless';
-import type { IABTranslations } from '@inth/sdk/translations';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
@@ -38,6 +37,7 @@ import {
 	LegitimateInterestIcon,
 	LockIcon,
 } from './iab-icons';
+import type { IABTranslations } from './iab-translations';
 
 /** A vendor's choice, as the IAB rows emit it. */
 export interface IABVendorChoice {

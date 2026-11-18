@@ -1,5 +1,6 @@
 import { resolveIABCopy } from '@inth/sdk/surface-state';
-import type { IABTranslations, Translations } from '@inth/sdk/translations';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
+import type { Translations } from '@inth/sdk/translations';
 import { computed, toValue } from 'vue';
 import type { ComputedRef } from 'vue';
 
@@ -12,7 +13,7 @@ import { useConsentInit } from './init';
  * @returns The complete IAB translations for the active language.
  */
 export const useIabTranslations =
-	function useIabTranslations(): ComputedRef<IABTranslations> {
+	function useIabTranslations(): ComputedRef<ResolvedIABCopy> {
 		const init = useConsentInit();
 		return computed(() =>
 			resolveIABCopy(

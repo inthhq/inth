@@ -12,7 +12,6 @@ import type {
 	HeadlessIABVendorId,
 	ProcessedStack,
 } from '@inth/sdk/iab/headless';
-import type { IABTranslations } from '@inth/sdk/translations';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
@@ -23,6 +22,7 @@ import type {
 	IABPurposeRow,
 	IABVendorChoice,
 } from './iab-purpose-item';
+import type { IABTranslations } from './iab-translations';
 
 /** A stack, or a display-model row whose purposes carry `hasConsentBasis`. */
 export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {

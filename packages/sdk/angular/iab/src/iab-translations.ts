@@ -3,10 +3,11 @@ import {
 	defaultTranslationConfig,
 	resolveIABCopy,
 } from '@inth/sdk/surface-state';
-import type { IABTranslations } from '@inth/sdk/translations';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import { resolveTranslations } from '@inth/sdk/ui/utils';
 
-export type { IABTranslations } from '@inth/sdk/translations';
+/** The IAB copy with every key set, including the ones a language may omit. */
+export type IABTranslations = ResolvedIABCopy;
 
 /**
  * The IAB copy for the active language, every missing key filled from

@@ -31,7 +31,6 @@ import type {
 	ProcessedPurpose,
 	ProcessedVendor,
 } from '@inth/sdk/iab/headless';
-import type { IABTranslations } from '@inth/sdk/translations';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { switchVariants } from '@inth/sdk/ui/styles/primitives';
@@ -49,6 +48,7 @@ import {
 } from './iab-icons';
 import { PREFERENCE_ITEM, SWITCH } from './iab-purpose-item';
 import type { IABVendorChoice } from './iab-purpose-item';
+import type { IABTranslations } from './iab-translations';
 
 const sw = switchVariants();
 

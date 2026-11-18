@@ -363,7 +363,11 @@ export {
 	resolvePromptCopy,
 	resolveTriggerLabels,
 } from './libs/consent-copy';
-export type { PreferenceControl, PromptCopy } from './libs/consent-copy';
+export type {
+	PreferenceControl,
+	PromptCopy,
+	ResolvedIABCopy,
+} from './libs/consent-copy';
 
 export {
 	deniedVendorIds,

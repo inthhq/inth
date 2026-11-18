@@ -32,6 +32,7 @@ export {
 	resolvePromptCopy,
 	resolveTriggerLabels,
 } from './libs/consent-copy';
+export type { ResolvedIABCopy } from './libs/consent-copy';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,
