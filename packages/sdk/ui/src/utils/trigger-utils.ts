@@ -323,16 +323,23 @@ export const isTriggerVisible = function isTriggerVisible(
 export type TriggerToolbarItem = 'preferences' | 'devtools';
 
 /**
- * The toolbar's items from left to right in a corner. Preferences sits in
+ * The toolbar's items in reading order for a corner. Preferences sits in
  * the corner; DevTools, a development aid, sits farthest from it.
  *
  * @param corner - The corner the toolbar sits in.
- * @returns The two items in visual order.
+ * @param orientation - The toolbar's direction. A vertical toolbar puts
+ * preferences first in a top corner.
+ * @returns The two items in order.
  */
 export const toolbarOrder = function toolbarOrder(
-	corner: CornerPosition
+	corner: CornerPosition,
+	orientation: 'horizontal' | 'vertical' = 'horizontal'
 ): readonly [TriggerToolbarItem, TriggerToolbarItem] {
-	return corner.endsWith('left')
+	const preferencesFirst =
+		orientation === 'horizontal'
+			? corner.endsWith('left')
+			: corner.startsWith('top');
+	return preferencesFirst
 		? ['preferences', 'devtools']
 		: ['devtools', 'preferences'];
 };

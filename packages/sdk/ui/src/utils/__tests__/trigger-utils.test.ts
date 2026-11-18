@@ -44,6 +44,10 @@ describe('isTriggerVisible', () => {
 test('toolbarOrder keeps preferences in the corner', () => {
 	expect(toolbarOrder('bottom-left')).toEqual(['preferences', 'devtools']);
 	expect(toolbarOrder('top-right')).toEqual(['devtools', 'preferences']);
+	expect(toolbarOrder('top-right', 'vertical')).toEqual([
+		'preferences',
+		'devtools',
+	]);
 });
 
 describe('nextToolbarItem', () => {

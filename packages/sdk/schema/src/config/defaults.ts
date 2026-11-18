@@ -64,7 +64,6 @@ export const defaultConsentConfig = {
 		'inth-text-muted': 'hsl(0, 0%, 40%)',
 		'inth-text-on-primary': 'hsl(0, 0%, 100%)',
 	},
-	triggerAriaLabel: 'Open privacy settings',
 	triggerDefaultPosition: 'bottom-right',
 	triggerIcon: 'fingerprint',
 	triggerPersistPosition: true,

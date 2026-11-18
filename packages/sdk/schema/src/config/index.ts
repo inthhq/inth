@@ -468,6 +468,10 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 	triggerDefaultPosition?: ConsentDialogTriggerPosition;
 	triggerPersistPosition?: boolean;
 	triggerShowWhen?: ConsentDialogTriggerVisibility;
+	/**
+	 * The trigger's accessible name. Defaults to the active language's
+	 * `trigger.label` translation.
+	 */
 	triggerAriaLabel?: string;
 	triggerSize?: ConsentDialogTriggerSize;
 	triggerIcon?: ConsentDialogTriggerIcon;

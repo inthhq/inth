@@ -1,4 +1,4 @@
-import type { TranslationConfig, Translations } from '@inth/sdk-translations';
+import type { Translations } from '@inth/sdk-translations';
 import {
 	deepMergeTranslations,
 	enTranslations,
@@ -8,13 +8,7 @@ import {
 
 import type { KernelTranslations } from '../types';
 
-export const defaultTranslationConfig: TranslationConfig = {
-	defaultLanguage: 'en',
-	disableAutoLanguageSwitch: false,
-	translations: {
-		en: enTranslations,
-	},
-};
+export { defaultTranslationConfig } from './defaults';
 
 /**
  * Message overrides an app declares in code, keyed by language, as in

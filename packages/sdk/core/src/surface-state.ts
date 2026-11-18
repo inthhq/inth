@@ -37,6 +37,7 @@ export {
 	applyExperimentTheme,
 } from './libs/experiment';
 export { hasGlobalPrivacyControlSignal } from './libs/global-privacy-control';
+export { defaultTranslationConfig } from './translations/defaults';
 export { createLazyIABFactory } from './runtime/lazy-iab';
 export { pendingBootSnapshot } from './runtime/pending-snapshot';
 export type { PendingSnapshotOptions } from './runtime/pending-snapshot';
