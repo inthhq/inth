@@ -40,6 +40,7 @@ import type { AllConsentNames } from '../consent/consent-types';
 import { listedVendors } from '../libs/vendor-listing';
 import { vendorAxisActive } from '../libs/vendors';
 import { deniedVendorIds } from '../modules/has';
+import { policyDefault } from '../policy-choice';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -232,8 +233,7 @@ const recordedValues = function recordedValues(
 			values[category] =
 				recorded?.[category]?.value ??
 				defaults?.[category] ??
-				(rule.model === 'opt-out' ||
-					rule.preselectedCategories.includes(category));
+				policyDefault(rule, category);
 		}
 	}
 	return values;

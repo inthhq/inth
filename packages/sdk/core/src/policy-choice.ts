@@ -26,6 +26,21 @@ export const deriveModel = function deriveModel(
 	return rule.model;
 };
 
+/**
+ * A category's value before any choice: on under opt-out and `none`, which
+ * allow it, else on when the rule preselects it.
+ */
+export const policyDefault = function policyDefault(
+	rule: Pick<ResolvedPolicyRule, 'model' | 'preselectedCategories'>,
+	category: OptionalConsentCategory
+): boolean {
+	return (
+		rule.model === 'opt-out' ||
+		rule.model === 'none' ||
+		rule.preselectedCategories.includes(category)
+	);
+};
+
 /** Values a form would present before any restriction is applied. */
 export type PresentedSelection = Partial<
 	Record<OptionalConsentCategory, boolean>
@@ -55,10 +70,7 @@ export const presentedSelection = function presentedSelection(
 			selection[category] = decision.value;
 			continue;
 		}
-		selection[category] =
-			rule.model === 'opt-out' || rule.model === 'none'
-				? true
-				: rule.preselectedCategories.includes(category);
+		selection[category] = policyDefault(rule, category);
 	}
 	return selection;
 };
