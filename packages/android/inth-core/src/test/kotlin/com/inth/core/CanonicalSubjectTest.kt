@@ -247,6 +247,26 @@ class CanonicalSubjectTest {
 	}
 
 	@Test
+	fun `a link answered after identify moved to another provider keeps the local id`() {
+		val store = InthStore(InMemoryKeyValueStore())
+		val transport = RecordingTransport().respondInit(initSuccess()).respondLink(LinkOutcome.Linked(CANONICAL))
+		val pending = ArrayDeque<() -> Unit>()
+		val core = testKernel(store = store, transport = transport, executor = TaskExecutor { pending += it })
+		fun drain() { while (pending.isNotEmpty()) pending.removeFirst()() }
+		core.bootstrap()
+		drain()
+		val original = assertNotNull(core.snapshot().subject).id
+
+		core.identify(KernelUser("user-1", identityProvider = "provider-a"), identityToken = "token-1")
+		core.identify(KernelUser("user-1", identityProvider = "provider-b"))
+		drain()
+
+		assertEquals(1, transport.linkRequests.size)
+		assertEquals(original, core.snapshot().subject?.id, "provider-a's canonical id is not installed under provider-b")
+		assertEquals(original, store.readSubject()?.id)
+	}
+
+	@Test
 	fun `a save is sent even when a snapshot observer throws`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val core = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
