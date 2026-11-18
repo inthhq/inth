@@ -24,21 +24,21 @@ import { InthPluginError } from './errors';
  * Colour fields of the `theme` prop that the native consent screens draw.
  *
  * Fields that have a web counterpart take its name from `Theme['colors']` in
- * `@inth/sdk/ui`, which is also the `--c15t-*` custom property the web components
- * read: `primary` is `--c15t-primary`, `textMuted` is `--c15t-text-muted`. The
+ * `@inth/sdk/ui`, which is also the `--inth-*` custom property the web components
+ * read: `primary` is `--inth-primary`, `textMuted` is `--inth-text-muted`. The
  * remaining fields are surfaces the native screens draw and the web components
  * do not, so they keep the native name. Each value is `#RRGGBB`.
  */
 export interface InthThemeColors {
-	/** Links, switches, the Save button and the brand eyebrow. Web: `--c15t-primary`. */
+	/** Links, switches, the Save button and the brand eyebrow. Web: `--inth-primary`. */
 	primary?: string;
-	/** Text on `primary`. Web: `--c15t-text-on-primary`. */
+	/** Text on `primary`. Web: `--inth-text-on-primary`. */
 	textOnPrimary?: string;
-	/** Cards and list rows that sit on `canvas`. Web: `--c15t-surface`. */
+	/** Cards and list rows that sit on `canvas`. Web: `--inth-surface`. */
 	surface?: string;
-	/** Primary text. Web: `--c15t-text`. */
+	/** Primary text. Web: `--inth-text`. */
 	text?: string;
-	/** Supporting text and section labels. Web: `--c15t-text-muted`. */
+	/** Supporting text and section labels. Web: `--inth-text-muted`. */
 	textMuted?: string;
 	/** Page background behind every consent screen. No web token. */
 	canvas?: string;

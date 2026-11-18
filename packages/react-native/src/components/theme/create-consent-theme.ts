@@ -16,20 +16,20 @@
  * Palette half of a {@link ConsentTheme}.
  *
  * A colour that has a web token carries that token's name: `primary` is
- * `--c15t-primary`, `surfaceHover` is `--c15t-surface-hover`. The rest are
+ * `--inth-primary`, `surfaceHover` is `--inth-surface-hover`. The rest are
  * surfaces the web components draw from a fixed value and this package exposes.
  */
 export interface ConsentThemeColors {
-	/** Color behind a modal sheet, dimming the app below it. Web: `--c15t-overlay`. */
+	/** Color behind a modal sheet, dimming the app below it. Web: `--inth-overlay`. */
 	readonly overlay: string;
-	/** Sheet or banner background. Web: `--c15t-surface`. */
+	/** Sheet or banner background. Web: `--inth-surface`. */
 	readonly surface: string;
 	/**
 	 * Muted surface: the banner footer band, and rows raised off the card. Web:
-	 * `--c15t-surface-hover`, which is the token the web footer band reads.
+	 * `--inth-surface-hover`, which is the token the web footer band reads.
 	 */
 	readonly surfaceHover: string;
-	/** Hairline separating rows from the footer. Web: `--c15t-border`. */
+	/** Hairline separating rows from the footer. Web: `--inth-border`. */
 	readonly border: string;
 	/**
 	 * The disclosure glyph on a collapsed category row: the plus that becomes a
@@ -49,14 +49,14 @@ export interface ConsentThemeColors {
 	 * size as the label it explains, so tone is the only thing separating them.
 	 */
 	readonly contentText: string;
-	/** Primary text. Web: `--c15t-text`. */
+	/** Primary text. Web: `--inth-text`. */
 	readonly text: string;
-	/** Secondary text, such as a heading's supporting line. Web: `--c15t-text-muted`. */
+	/** Secondary text, such as a heading's supporting line. Web: `--inth-text-muted`. */
 	readonly textMuted: string;
 	/**
 	 * Accent: the outline and label of the action the surface is asking for, which
 	 * is `Customize` on a banner and `Save Settings` in a sheet, and the switch
-	 * track when on. Web: `--c15t-primary`.
+	 * track when on. Web: `--inth-primary`.
 	 *
 	 * The two decisions stay in {@link ConsentThemeColors.text} so a prompt never
 	 * leans a subject either way, and the fill is never used: every consent action
@@ -65,14 +65,14 @@ export interface ConsentThemeColors {
 	readonly primary: string;
 	/**
 	 * Text on a filled {@link ConsentThemeColors.primary}, for a host that fills
-	 * one. Web: `--c15t-text-on-primary`.
+	 * one. Web: `--inth-text-on-primary`.
 	 */
 	readonly textOnPrimary: string;
 	/**
 	 * The outline of a control drawn in the accent: the branding tab, whose fill is
 	 * already the accent and so needs an edge darker than itself to read.
 	 *
-	 * Web asks for `color-mix(in srgb, var(--c15t-primary), black 14%)`, which is
+	 * Web asks for `color-mix(in srgb, var(--inth-primary), black 14%)`, which is
 	 * the accent at 86% against black. React Native has no colour function to run at
 	 * render, so each scheme ships the literal that mix resolves to: `#335CFF` to
 	 * `#2C4FDB`, and the dark accent `#6685FF` to `#5872DB`.
@@ -80,11 +80,11 @@ export interface ConsentThemeColors {
 	readonly primaryBorder: string;
 	/** Focus and selected outline. */
 	readonly focus: string;
-	/** Off-state switch track. Web: `--c15t-switch-track`. */
+	/** Off-state switch track. Web: `--inth-switch-track`. */
 	readonly switchTrack: string;
-	/** On-state switch track. Web: `--c15t-switch-track-active`. */
+	/** On-state switch track. Web: `--inth-switch-track-active`. */
 	readonly switchTrackActive: string;
-	/** Switch thumb. Web: `--c15t-switch-thumb`. */
+	/** Switch thumb. Web: `--inth-switch-thumb`. */
 	readonly switchThumb: string;
 }
 
@@ -108,7 +108,7 @@ export interface ConsentNativeThemeColors {
 export type ConsentThemeColorOptions = Partial<ConsentThemeColors> &
 	ConsentNativeThemeColors;
 
-/** Spacing scale in density-independent pixels, named after `--c15t-space-*`. */
+/** Spacing scale in density-independent pixels, named after `--inth-space-*`. */
 export interface ConsentThemeSpacing {
 	/** 4 */
 	readonly xs: number;
@@ -134,7 +134,7 @@ export interface ConsentTypeStyle {
 
 /**
  * Type tokens, named after the web `typography` tokens and the
- * `--c15t-font-*` and `--c15t-line-height-*` custom properties.
+ * `--inth-font-*` and `--inth-line-height-*` custom properties.
  *
  * Sizes are density-independent pixels; `Text` applies the platform font scale
  * on its own. Line heights are multipliers, as on the web.
@@ -142,7 +142,7 @@ export interface ConsentTypeStyle {
 export interface ConsentThemeTypography {
 	/**
 	 * Face for every text role. `undefined` is the platform face. Web:
-	 * `--c15t-font-family`. A bundled font: a PostScript name on iOS and a font
+	 * `--inth-font-family`. A bundled font: a PostScript name on iOS and a font
 	 * resource name on Android, given once when one name serves both
 	 * (`inter_bold`) or per platform as `{ ios: 'Inter-Regular', android:
 	 * 'inter_regular' }`.
@@ -155,7 +155,7 @@ export interface ConsentThemeTypography {
 	 * only.
 	 */
 	readonly headlineFont?: ConsentFontName;
-	/** Web: `--c15t-font-size-sm`, `-base` and `-lg`. */
+	/** Web: `--inth-font-size-sm`, `-base` and `-lg`. */
 	readonly fontSize: {
 		/** 14 */
 		readonly sm: number;
@@ -164,7 +164,7 @@ export interface ConsentThemeTypography {
 		/** 18 */
 		readonly lg: number;
 	};
-	/** Web: `--c15t-font-weight-*`. */
+	/** Web: `--inth-font-weight-*`. */
 	readonly fontWeight: {
 		/** 400 */
 		readonly normal: number;
@@ -173,7 +173,7 @@ export interface ConsentThemeTypography {
 		/** 600 */
 		readonly semibold: number;
 	};
-	/** Web: `--c15t-line-height-*`. */
+	/** Web: `--inth-line-height-*`. */
 	readonly lineHeight: {
 		/** 1.25 */
 		readonly tight: number;
@@ -221,7 +221,7 @@ export interface ConsentTypeRoles {
 	readonly caption: ConsentTypeStyle;
 }
 
-/** Corner radii, named after `--c15t-radius-*`. */
+/** Corner radii, named after `--inth-radius-*`. */
 export interface ConsentThemeRadius {
 	/** 4 */
 	readonly sm: number;
