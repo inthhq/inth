@@ -9,7 +9,6 @@
 		"amplitude",
 		"analytics-consent",
 		"block-scripts-until-consent",
-		"inth",
 		"ccpa",
 		"clay",
 		"clearbit",
@@ -30,6 +29,7 @@
 		"heap",
 		"hightouch",
 		"hubspot",
+		"inth",
 		"klaviyo",
 		"lgpd",
 		"linkedin-insights",
@@ -307,11 +307,6 @@
 			"types": "./dist-types/registry.d.ts",
 			"import": "./dist/registry.js",
 			"default": "./dist/registry.js"
-		},
-		"./*": {
-			"types": "./dist-types/*.d.ts",
-			"import": "./dist/*.js",
-			"default": "./dist/*.js"
 		},
 		"./events": {
 			"types": "./dist-types/events.d.ts",

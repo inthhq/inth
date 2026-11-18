@@ -163,7 +163,6 @@ const getPublicScriptExportSubpaths =
 				(key) =>
 					key.startsWith('./') &&
 					key !== '.' &&
-					key !== './*' &&
 					key !== './package.json' &&
 					key !== './events' &&
 					// A consent bridge, not a script integration.
