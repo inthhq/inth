@@ -299,9 +299,9 @@ export interface ConsentClient {
 	 * Attach an external id to the subject.
 	 *
 	 * The id goes on every later consent record. With an identity token the
-	 * native core also links the subject to that person on the backend; without
-	 * one nothing is sent. The token is used for that one request and never
-	 * stored, so pass a fresh one each time.
+	 * native core also links the subject to that person on the backend. Without
+	 * one, or under `dryRun`, no link request is sent. The token is used for
+	 * that one request and never stored, so pass a fresh one each time.
 	 *
 	 * @param externalId - Id from the app's own account system.
 	 * @param identityToken - Signed proof of `externalId` from your server.
