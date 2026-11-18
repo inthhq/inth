@@ -110,12 +110,17 @@ const RELEASE_TIMEOUT_MS = 2000;
  * A manifest endpoint that holds its answers until `expected` fetches are
  * waiting, then answers the newest first, so the first visitor's resolution
  * finishes after the second one's. Later fetches are answered at once.
+ * Each resolution also reports itself to `POST /sessions`; those are
+ * answered at once and not counted as manifest fetches.
  */
 const reversedManifestFetch = function reversedManifestFetch(expected: number) {
 	const pending: (() => void)[] = [];
 	const requested: string[] = [];
 	let released = false;
 	const fetch = (input: RequestInfo | URL): Promise<Response> => {
+		if (String(input).endsWith('/sessions')) {
+			return Promise.resolve(new Response(null, { status: 204 }));
+		}
 		requested.push(String(input));
 		if (released) {
 			return Promise.resolve(manifestResponse());
