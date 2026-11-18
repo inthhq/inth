@@ -1077,6 +1077,12 @@ Every request carries `accept: application/json` and, with a body,
                        for a Kotlin app, rn-><version> for a core either React Native
                        binding configures
 
+On `/v1` every application header is named `x-inth-<name>`. The backend does not read
+the `x-c15t-` names there, so no request a core sends carries one. No request carries
+an `Origin` header either: the backend checks `property` against a project's trusted
+origins only for a request with an `Origin` header, which is how it accepts a bundle
+or application ID from an app.
+
 Kotlin reads the tag from `NativeConfig.platform`, which defaults to `android`; `null`
 sends no platform header. Swift reads it from `InthAppleConfiguration.platform`, which
 defaults to `apple`. No request carries cookies, and a core stores none a response
@@ -1085,8 +1091,10 @@ sets.
 `GET /v1/consent/init` takes its inputs in the query string: `country`, `region`,
 `language` and `gpc` (`1` or `0`), each only when the device has a value. The
 override headers that repeat them (`accept-language`, `x-inth-country`,
-`x-inth-region`, `sec-gpc`) and the vendor scope header `x-inth-vendors` are sent as
-before.
+`x-inth-region`, and for GPC `sec-gpc` from Swift, `x-inth-gpc` for an override and
+`sec-gpc` for a detected signal from Kotlin) and the vendor scope header
+`x-inth-vendors` are sent too. An app is not bound by the browser's CORS rule, so it
+may send them as headers.
 
 ### Saving: `POST /v1/consent/records`
 
@@ -1105,16 +1113,18 @@ The body is built once per action, frozen, and queued before the first send:
     policySnapshotToken  when the core holds one
     policyId, fingerprint, country, region, language, gpc
                        the decision-input assertion, only when there is no token, by
-                       the same rule as before
+                       the same rule as before. Its `policyId` stays: the `policyId`
+                       the records body dropped is the 3.x legal-document field.
     tcString, addtlConsent   for an IAB save, which carries its vendor choices in `tcString`
     metadata           `{ userProperties }` when the identified user has properties
     externalId, identityProvider   when the subject is identified
     answer             `{ categories: { <category>: receipt } }`: every receipt the
                        subject holds after the action, in the 3.x receipt shape
                        `{ value, confirmedAt, basis }`. `necessary` is left out.
-    confirmed          the categories this action confirmed, in the order
-                       functionality, experience, measurement, marketing. Every entry
-                       is a key of `answer.categories`; it is empty for an
+    confirmed          the categories this action confirmed. It is a set: the cores
+                       write it in the order functionality, experience, measurement,
+                       marketing, and the backend gives the order no meaning. Every
+                       entry is a key of `answer.categories`; it is empty for an
                        acknowledgement.
 
 `answer` has no `version` field. The backend merges it per category, the receipt with
@@ -1144,7 +1154,10 @@ device sends no token it is `{ "stored": false, "reason": "unverified" }`, and
 the save is delivered and leaves the queue. `recordId` is not read.
 
 A refused request records nothing under its `idempotencyKey`, so a resend of the same
-bytes after a refusal is a new request, not a duplicate.
+bytes after a refusal is a new request, not a duplicate. A key the backend already
+recorded for another subject or property answers `409 conflict`. A core never sends
+that: the key is frozen in the body with its `subjectId` and `property`, and adopting
+a canonical subject ID does not rewrite a queued body.
 
 ### Errors
 
