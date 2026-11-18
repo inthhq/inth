@@ -150,8 +150,6 @@ export const klaviyoFormsOnlyManifest = {
  * allowed, because the bundle serves signup forms and behaviour tracking
  * together. The helper sends no `identify` or `track` calls of its own.
  *
- * @param options - Klaviyo account and consent configuration.
- * @returns The Klaviyo script configuration.
  * @throws {Error} When `mode` is not `'full'` or `'forms-only'`, or
  *   `scriptUrl` is not an https URL.
  * @remarks When `publicApiKey` is missing, blank, or not a six-character

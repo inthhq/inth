@@ -134,7 +134,7 @@ interface SentryIntegration {
 	name: string;
 }
 
-/** SDK initialization options with inth's consent integration installed first. */
+/** SDK initialization options with Inth's consent integration installed first. */
 export interface SentryInitOptions extends Record<string, unknown> {
 	integrations: (defaults: SentryIntegration[]) => SentryIntegration[];
 }
@@ -934,7 +934,7 @@ const createGate = (options: GateOptions) => {
 			!has(options.piiCategory, ALL_DENIED)
 		) {
 			warn(
-				'Sentry.init ran before inth, so its first session can infer the visitor IP address before consent. Pass init to sentry(), or disable SDK collection and filter startup events as described in the Sentry integration guide.'
+				'Sentry.init ran before Inth, so its first session can infer the visitor IP address before consent. Pass init to sentry(), or disable SDK collection and filter startup events as described in the Sentry integration guide.'
 			);
 		}
 		const existing = findReplay(client);
@@ -1346,7 +1346,6 @@ const withConsentInitOptions = (
 	};
 };
 
-/** Build the `Sentry.init` options for the CDN bundle. */
 const createInitOptions = (
 	sentryGlobal: SentryGlobal,
 	dsn: string,
@@ -1544,7 +1543,6 @@ const createCdnScript = (
 	};
 };
 
-/** Resolve the consent category of the script for these options. */
 const getScriptCategory = (
 	options: SentryOptions
 ): HasCondition<AllConsentNames> =>
@@ -1581,7 +1579,7 @@ const createSentryScript = (options: SentryOptions): Script => {
 	}
 	if (errorsGated && !options.init) {
 		throw new Error(
-			"sentry: pass init with loadMode 'after-consent', so inth can start Sentry after consent"
+			"sentry: pass init with loadMode 'after-consent', so Inth can start Sentry after consent"
 		);
 	}
 	const { init } = options;
@@ -1647,7 +1645,6 @@ const reuseSentryScript = createScriptReuse<SentryOptions>();
  * every active configuration must allow each feature before it can run.
  *
  * @param options - A DSN for Inth to load Sentry, or your Sentry SDK functions.
- * @returns A script for the Inth script loader.
  * @throws {Error} If `pii.user` is set without `setUser`, or
  *   `loadMode: 'after-consent'` is set with `getClient` but without `init`.
  * @remarks When `dsn` is blank, or neither `dsn` nor `getClient` is passed,

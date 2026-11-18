@@ -65,8 +65,6 @@ const PROJECT_ID_PATTERN = /^\d+$/u;
  * Keep the provider's `reloadOnConsentRevoked` enabled to unload an already-running
  * SDK. A standalone core script loader needs application-owned reload handling.
  *
- * @param options - Project, consent condition and loader configuration.
- * @returns The consent-gated Optimizely script configuration.
  * @remarks When `projectId` is missing, blank or not a project number, the
  *   helper logs `optimizelyWeb: missing or invalid projectId` with
  *   `console.error` and returns a script that never loads.
@@ -114,7 +112,6 @@ export const optimizelyWeb = function optimizelyWeb(
  * Reload to unload code that already ran; this does not undo page changes.
  * Does nothing during SSR or when no Optimizely API or queue exists.
  *
- * @returns Nothing.
  * @example
  * optOutOptimizely();
  * @see https://docs.optimizely.com/web-experimentation/api/d8Gy-opt-out

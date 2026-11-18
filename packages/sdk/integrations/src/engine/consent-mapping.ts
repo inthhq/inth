@@ -10,8 +10,6 @@ import type { ConsentState } from '@inth/sdk/engine';
  * sends.
  *
  * @param mapping - Inth category to the vendor consent types it controls.
- * @param consents - The consent state to translate.
- * @returns Every mapped vendor type, as `granted` or `denied`.
  * @internal
  */
 export const mapConsentState = function mapConsentState(

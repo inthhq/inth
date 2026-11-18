@@ -143,8 +143,6 @@ const getPirschScriptUrl = function getPirschScriptUrl(
  *
  * @see https://docs.pirsch.io/get-started/frontend-integration
  *
- * @param options - The options for the Pirsch script.
- * @returns The Pirsch script.
  * @remarks When `identificationCode` is missing or blank, the helper logs
  *   `pirsch: missing or invalid identificationCode` with `console.error`
  *   and returns a script that never loads.

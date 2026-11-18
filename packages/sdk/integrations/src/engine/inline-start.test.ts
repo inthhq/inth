@@ -95,7 +95,7 @@ let baseline = new Set<string>();
 
 const vendorGlobals = function vendorGlobals(): string[] {
 	return Object.getOwnPropertyNames(getTestGlobal()).filter(
-		// `__inth*` globals are inth's own (the runner, debug listeners).
+		// `__inth*` globals are Inth's own (the runner, debug listeners).
 		(name) => !(baseline.has(name) || name.startsWith('__inth'))
 	);
 };

@@ -15,9 +15,6 @@ import type { LiveVendorProbeConfig } from './types';
  * has to run wherever it can possibly pass, not only at `full` tier. Gating on
  * tier alone left `loader-only` vendors carrying `runtimeCheck` definitions
  * that were never executed: declared coverage that did not exist.
- *
- * @param config - The vendor's probe config.
- * @returns `true` when the runtime phase should run and be asserted.
  */
 export const assertsRuntime = function assertsRuntime(
 	config: Pick<
@@ -35,7 +32,6 @@ export const assertsRuntime = function assertsRuntime(
 /**
  * Digests a loader body so reports pin the exact upstream bundle a run saw.
  *
- * @param body - Raw loader response bytes.
  * @returns The first 16 hex characters of the body's SHA-256 — collision-proof
  * enough to answer "same bundle as the last green run?" without bloating the
  * report.

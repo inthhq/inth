@@ -49,7 +49,6 @@ const SIGNATURE_MARKER_PATTERN =
  * before it is interpolated into GitHub-flavored Markdown, so a hostile or
  * malformed vendor response cannot inject links, references, or formatting.
  *
- * @param value - Untrusted text destined for an issue body.
  * @returns A single-line, backtick-free, length-capped string.
  */
 const sanitizeInline = function sanitizeInline(value: string): string {
@@ -246,7 +245,6 @@ export const buildMonitorRecoveryComment = function buildMonitorRecoveryComment(
  * Open GitHub issue candidate considered during dedupe planning.
  */
 export interface ExistingMonitorIssue {
-	/** GitHub issue number. */
 	number: number;
 	/** Issue title, matched against the monitor title format. */
 	title: string;

@@ -70,7 +70,6 @@ export interface ActiveCampaignTrackingOptions {
  * Loads ActiveCampaign site tracking only after consent.
  * Keep reloadOnConsentRevoked enabled. setTrackByDefault(false) does not
  * revoke an allowTracking call on an already-running tracker.
- * @param options - Account ID and optional contact email.
  * @returns A gated script, or an inactive script for a missing account ID.
  * @example activeCampaignTracking({ accountId: '123456' });
  * @see https://help.activecampaign.com/hc/en-us/articles/360000872064-Site-tracking-and-the-GDPR

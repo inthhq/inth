@@ -9,7 +9,6 @@ import {
 } from '../_shared/google-consent';
 import { readId, skipMissingId } from '../_shared/required-id';
 
-// Extended Window interface to include GTM-specific properties
 declare global {
 	interface Window {
 		dataLayer: unknown[];
@@ -19,11 +18,6 @@ declare global {
 
 /**
  * Google Tag Manager vendor manifest.
- *
- * Defines GTM as a declarative integration:
- * - Initializes dataLayer and gtag function before the container loads
- * - Maps Inth consent categories to Google Consent Mode v2 types
- * - Signals consent state via `gtag('consent', 'default'|'update', ...)`
  */
 export const googleTagManagerManifest = {
 	...vendorManifestContract,
@@ -185,14 +179,12 @@ export interface GoogleTagManagerOptions {
 /**
  * Creates a Google Tag Manager script.
  * GTM can be used for managing the consent of other scripts via Google Tag Manager consent mode.
- * We recommend using inth's script loader instead so your script logic is centralised.
+ * We recommend using Inth's script loader instead so your script logic is centralised.
  *
  * By default the container loads before a choice and passes Google Consent
  * Mode v2 signals. Set `loadMode: 'after-consent'` to keep every request to
  * Google waiting until `category` is allowed.
  *
- * @param options - The options for the Google Tag Manager script.
- * @returns The Google Tag Manager script.
  * @remarks When `id` is missing or blank, the
  *   helper logs `googleTagManager: missing or invalid id` with
  *   `console.error` and returns a script that never loads.

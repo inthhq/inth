@@ -157,8 +157,6 @@ export interface IntercomOptions {
  * The helper bootstraps the documented Intercom settings object and queues
  * early `Intercom(...)` calls until the messenger bundle loads.
  *
- * @param options - The options for the Intercom script.
- * @returns The Intercom script configuration.
  * @remarks When `appId` is missing or blank, the
  *   helper logs `intercom: missing or invalid appId` with
  *   `console.error` and returns a script that never loads.

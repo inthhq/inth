@@ -14,7 +14,6 @@ import type {
  * @param info - The callback info, or one registration's state.
  * @param condition - Categories to check instead of the script's own
  * condition, which `hasConsent` reports.
- * @returns `true` when the vendor may run.
  */
 export const permitted = function permitted(
 	info: Pick<ScriptCallbackInfo, 'consents' | 'hasConsent' | 'vendor'>,

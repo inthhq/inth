@@ -63,14 +63,12 @@ export interface RudderStackApi {
 	/**
 	 * Sets the default instance key for multi-instance setups.
 	 *
-	 * @param key - Instance key to use for subsequent calls.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	setDefaultInstanceKey: (key: string) => unknown;
 	/**
 	 * Loads and initializes the RudderStack JavaScript SDK.
 	 *
-	 * @param writeKey - Source write key from RudderStack.
 	 * @param dataPlaneUrl - HTTPS data plane URL for the source.
 	 * @param options - Optional JSON-serializable load options.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
@@ -83,18 +81,13 @@ export interface RudderStackApi {
 	/**
 	 * Registers a callback that fires when the SDK is ready.
 	 *
-	 * @param callback - Function to run once the SDK is ready.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	ready: (callback: () => void) => unknown;
 	/**
 	 * Tracks a page view with optional category, name, properties, and options.
 	 *
-	 * @param category - Optional page category.
-	 * @param name - Optional page name.
-	 * @param properties - Optional page metadata payload.
 	 * @param options - Optional event context or integrations options.
-	 * @param callback - Optional callback after processing.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	page: (
@@ -107,10 +100,7 @@ export interface RudderStackApi {
 	/**
 	 * Tracks a named event.
 	 *
-	 * @param event - Event name to record.
-	 * @param properties - Optional event properties payload.
 	 * @param options - Optional event context or integrations options.
-	 * @param callback - Optional callback after processing.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	track: (
@@ -122,10 +112,7 @@ export interface RudderStackApi {
 	/**
 	 * Identifies a user and associates traits with that identity.
 	 *
-	 * @param userId - Stable user identifier.
-	 * @param traits - Optional trait map associated with the user.
 	 * @param options - Optional event context or integrations options.
-	 * @param callback - Optional callback after processing.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	identify: (
@@ -140,7 +127,6 @@ export interface RudderStackApi {
 	 * @param userId - New canonical user identifier.
 	 * @param previousId - Optional previous identifier.
 	 * @param options - Optional event context or integrations options.
-	 * @param callback - Optional callback after processing.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	alias: (
@@ -152,10 +138,7 @@ export interface RudderStackApi {
 	/**
 	 * Associates the current user with a group or account.
 	 *
-	 * @param groupId - Group or account identifier.
-	 * @param traits - Optional group trait map.
 	 * @param options - Optional event context or integrations options.
-	 * @param callback - Optional callback after processing.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	group: (
@@ -173,14 +156,12 @@ export interface RudderStackApi {
 	/**
 	 * Sets the anonymous ID used for subsequent events.
 	 *
-	 * @param anonymousId - Anonymous identifier to assign.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	setAnonymousId: (anonymousId: string) => unknown;
 	/**
 	 * Starts a session with an optional session identifier.
 	 *
-	 * @param sessionId - Optional session identifier.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	startSession: (sessionId?: string) => unknown;
@@ -198,7 +179,7 @@ export interface RudderStackApi {
 	 *
 	 * @remarks
 	 * This API is for RudderStack's consent-management flow. In the default
-	 * (blocked-load) mode it is not a Inth revocation hook; Inth unloads the
+	 * (blocked-load) mode it is not an Inth revocation hook; Inth unloads the
 	 * SDK when measurement consent is revoked. In the opt-in pre-consent mode
 	 * (`consentManagement` option) Inth calls it with the mapped consent IDs on
 	 * every consent decision and change.
@@ -209,8 +190,6 @@ export interface RudderStackApi {
 	 * registrations made before `load()` completes, which is why this is part
 	 * of the pre-load queue.
 	 *
-	 * @param name - Integration name.
-	 * @param integration - Integration implementation object.
 	 * @returns The RudderStack runtime or a promise-like value from the SDK.
 	 */
 	addCustomIntegration: (name: string, integration: unknown) => unknown;
@@ -452,7 +431,7 @@ const validateConsentMapping = function validateConsentMapping(
 
 	if (Object.keys(normalized).length === 0) {
 		throw new Error(
-			'rudderstack: consentManagement.mapping must map at least one inth category to a non-empty list of RudderStack consent IDs'
+			'rudderstack: consentManagement.mapping must map at least one Inth category to a non-empty list of RudderStack consent IDs'
 		);
 	}
 
@@ -514,8 +493,6 @@ const isHttpsUrl = function isHttpsUrl(value: string): boolean {
  *
  * @see https://www.rudderstack.com/docs/sources/event-streams/sdks/rudderstack-javascript-sdk/quickstart/
  *
- * @param options - The options for the RudderStack script.
- * @returns The RudderStack script configuration.
  * @throws {Error} When `scriptUrl` is not HTTPS or `consentManagement` is
  *   invalid.
  *

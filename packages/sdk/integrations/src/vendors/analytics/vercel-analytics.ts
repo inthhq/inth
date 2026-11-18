@@ -97,9 +97,6 @@ const getVercelScriptUrl = function getVercelScriptUrl(
 
 /**
  * Creates a Vercel Analytics script.
- *
- * @param options - The options for the Vercel Analytics script.
- * @returns The Vercel Analytics script.
  */
 export const vercelAnalytics = function vercelAnalytics(
 	options: VercelAnalyticsOptions = {}

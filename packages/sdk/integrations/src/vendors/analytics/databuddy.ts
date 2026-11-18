@@ -463,8 +463,6 @@ const reuseDatabuddyReplay = createScriptReuse<DatabuddyConsentOptions>();
  * and the same flag keeps the tracker from sending until measurement is
  * granted. `replay.js` still waits for consent.
  *
- * @param options - Configuration for the Databuddy consent script
- * @returns The Databuddy script configuration object for inth's script loader
  * @remarks When `clientId` is missing or blank, the
  *   helper logs `databuddy: missing or invalid clientId` with
  *   `console.error` and returns a script that never loads.

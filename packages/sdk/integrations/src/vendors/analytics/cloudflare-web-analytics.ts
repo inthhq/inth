@@ -69,8 +69,6 @@ export interface CloudflareWebAnalyticsOptions {
  *
  * @see https://developers.cloudflare.com/analytics/web-analytics/get-started/
  *
- * @param options - The options for the Cloudflare Web Analytics script.
- * @returns The Cloudflare Web Analytics script.
  * @remarks When `token` is missing or blank, the
  *   helper logs `cloudflareWebAnalytics: missing or invalid token` with
  *   `console.error` and returns a script that never loads.

@@ -1,4 +1,3 @@
-/** Wait for a browser event or timeout, cancelling every registered callback. */
 const waitForStage = function waitForStage(
 	signal: AbortSignal,
 	subscribe: (ready: () => void) => () => void,

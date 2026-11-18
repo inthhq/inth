@@ -18,8 +18,6 @@ const getDefaultClearbitScriptUrl = function getDefaultClearbitScriptUrl(
  * Loads Clearbit's visitor and company enrichment tag from the account-keyed
  * `tags.js` endpoint. Clearbit enrichment can identify visitors and companies,
  * so the default consent category is `marketing` rather than `measurement`.
- * The GitHub issue left the category open between measurement and marketing;
- * Inth treats enrichment and intent profiling as marketing-sensitive.
  */
 export const clearbitManifest = {
 	...vendorManifestContract,
@@ -60,9 +58,6 @@ export interface ClearbitOptions {
  * Creates a Clearbit enrichment script.
  *
  * @see https://help.clearbit.com/hc/en-us/articles/4420022080783 — installing the Clearbit tag
- *
- * @param options - The options for the Clearbit script.
- * @returns The Clearbit script.
  *
  * @remarks
  * When `publishableKey` is missing or blank, the helper logs

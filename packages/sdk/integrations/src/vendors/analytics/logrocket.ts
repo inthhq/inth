@@ -114,9 +114,6 @@ export interface LogRocketOptions {
  *
  * @see https://docs.logrocket.com/reference/init
  *
- * @param options - The options for the LogRocket script.
- * @returns The LogRocket script.
- *
  * @remarks
  * When `appId` is missing, blank, or not in `org/app` format, the helper
  * logs the problem with `console.error` and returns a script that never

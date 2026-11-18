@@ -16,14 +16,6 @@ export interface SkippedScript {
  *
  * @param value - Caller-supplied value. Strings are trimmed; finite numbers
  * are converted to strings for callers that pass numeric IDs.
- * @returns The ID without surrounding whitespace, or `undefined` when the
- * value is missing, blank, or not a string or finite number.
- *
- * @example
- * ```ts
- * readId(' 123456 '); // '123456'
- * readId(''); // undefined
- * ```
  */
 export const readId = function readId(value: unknown): string | undefined {
 	let normalized = '';
@@ -49,17 +41,6 @@ export const readId = function readId(value: unknown): string | undefined {
  *
  * @param problem - What is wrong, prefixed with the helper name, for example
  * `posthog: missing or invalid id`.
- * @param script - Consent category and manifest of the script the helper
- * would have returned.
- * @returns A callback-only script without callbacks.
- *
- * @example
- * ```ts
- * skipScript('posthog: missing or invalid id', {
- *   category: 'measurement',
- *   manifest: posthogManifest,
- * });
- * ```
  */
 export const skipScript = function skipScript(
 	problem: string,
@@ -79,12 +60,6 @@ export const skipScript = function skipScript(
 /**
  * Logs `<helper>: missing or invalid <option>` and returns a script that
  * never loads. See {@link skipScript}.
- *
- * @param helper - Name of the helper, used as the message prefix.
- * @param option - Name of the missing option.
- * @param script - Consent category and manifest of the script the helper
- * would have returned.
- * @returns A callback-only script without callbacks.
  */
 export const skipMissingId = function skipMissingId(
 	helper: string,

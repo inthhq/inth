@@ -157,11 +157,8 @@ const setTrackingConsent = async (
 };
 
 /**
- * Map inth's effective permissions to Shopify's consent choices.
+ * Map Inth's effective permissions to Shopify's consent choices.
  *
- * @param permissions - Effective permissions from a consent snapshot.
- * @param categories - Category overrides.
- * @returns The four booleans Shopify's Customer Privacy API takes.
  * @example
  * ```ts
  * toShopifyConsent(kernel.getSnapshot().effectivePermissions);
@@ -240,7 +237,6 @@ const nextStep = (
  * events until then. Under opt-out, Shopify's region defaults apply until
  * then. After that, each change is sent once.
  *
- * @param options - Category overrides and callbacks.
  * @returns A bridge to feed snapshots and pass to Hydrogen's `ShopifyScripts`.
  * @example
  * ```tsx

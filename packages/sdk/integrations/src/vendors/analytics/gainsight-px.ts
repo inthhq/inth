@@ -191,7 +191,7 @@ const assertProductKey = (productKey: string): void => {
 	if (!hasStartedGainsightPx()) {
 		return;
 	}
-	// inth's bootstrap always records its product key, including server starts.
+	// Inth's bootstrap always records its product key, including server starts.
 	if (typeof previous !== 'string') {
 		throw new Error(
 			'gainsightPx: another Gainsight PX installation is already running. Remove the other PX snippet and reload the page.'

@@ -10,7 +10,6 @@ import { readId, skipMissingId, skipScript } from '../_shared/required-id';
 export interface InsiderProduct {
 	/** Unique product ID. */
 	id: string;
-	/** Product name. */
 	name: string;
 	/** Product category hierarchy. */
 	taxonomy: string[];
@@ -20,9 +19,7 @@ export interface InsiderProduct {
 	unit_sale_price: number;
 	/** Product page URL. */
 	url: string;
-	/** Product image URL. */
 	product_image_url: string;
-	/** Available stock. */
 	stock?: number;
 	/** Selected color. */
 	color?: string;
@@ -30,21 +27,17 @@ export interface InsiderProduct {
 	size?: string;
 	/** Identifier shared by product variants. */
 	groupcode?: string;
-	/** Product description. */
 	description?: string;
 	/** Global Trade Item Number. */
 	gtin?: string;
 	/** Stock keeping unit. */
 	sku?: string;
-	/** Product brand. */
 	brand?: string;
 	/** Whether a unique product identifier exists, expressed as a string. */
 	identifier_exists?: string;
-	/** Product locale. */
 	locale?: string;
 	/** Product title used for Google feeds. */
 	google_title?: string;
-	/** Product gender. */
 	gender?: string;
 	/** Omnibus price, expressed as a string in the Web SDK guide. */
 	omnibus_price?: string;
@@ -235,8 +228,6 @@ const PARTNER_NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/u;
  * still show cookieless campaigns, and removing a loader does not unload its
  * SDK or cancel earlier queued entries.
  *
- * @param options - Insider account, current user, currency, page, and consent.
- * @returns The consent-gated Insider script configuration.
  * @remarks A missing or blank required ID, an invalid partner hostname, a
  *   blank or non-string currency, or user data that cannot be serialized to
  *   JSON logs an error with `console.error` and returns a script that never

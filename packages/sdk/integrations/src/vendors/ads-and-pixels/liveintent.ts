@@ -57,7 +57,6 @@ export interface LiveIntentTagOptions {
 
 /**
  * Loads LiveConnect only after marketing consent.
- * @param options - Public tag ID, optional initial events and loader URL.
  * @returns A gated script, or a skipped script for a missing tag ID.
  * @remarks Keep reload on revocation enabled. LiveConnect has no documented stop API.
  * Applicable TCF and GPP requirements remain additional to this loader gate.

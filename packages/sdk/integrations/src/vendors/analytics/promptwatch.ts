@@ -44,13 +44,9 @@ export interface PromptwatchOptions {
 /**
  * Promptwatch analytics script for AI traffic and usage insights.
  *
- * @param options - Promptwatch integration options.
- * @param options.projectId - Promptwatch project id from your dashboard.
- * @param options.scriptUrl - Optional custom script URL override.
  * @remarks When `projectId` is missing or blank, the helper logs
  *   `promptwatch: missing or invalid projectId` with `console.error` and
  *   returns a script that never loads.
- * @returns The Promptwatch script configuration.
  */
 export const promptwatch = function promptwatch({
 	projectId,

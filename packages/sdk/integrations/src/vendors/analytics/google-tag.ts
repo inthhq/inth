@@ -9,7 +9,6 @@ import {
 } from '../_shared/google-consent';
 import { readId, skipMissingId } from '../_shared/required-id';
 
-// Extended Window interface to include gtag specific properties
 declare global {
 	interface Window {
 		dataLayer: unknown[];
@@ -163,8 +162,6 @@ export interface GtagOptions {
  * v2 signals. Set `loadMode: 'after-consent'` to keep every request to Google
  * waiting until `category` is allowed.
  *
- * @param options - The options for the gtag script.
- * @returns The Google Tag script.
  * @remarks When `id` is missing or blank, the
  *   helper logs `gtag: missing or invalid id` with
  *   `console.error` and returns a script that never loads.
