@@ -685,8 +685,8 @@ describe('mountConsentUI', () => {
 		expect(rows).toEqual([
 			'necessary',
 			'functionality',
-			'measurement',
 			'experience',
+			'measurement',
 			'marketing',
 		]);
 	});

@@ -56,8 +56,8 @@ test('the widget lists categories in the draft order, not the policy or configur
 	const expected = [
 		'necessary',
 		'functionality',
-		'measurement',
 		'experience',
+		'measurement',
 		'marketing',
 	];
 	await expect

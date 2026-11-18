@@ -161,8 +161,8 @@ describe('seeding', () => {
 		const expected = [
 			'necessary',
 			'functionality',
-			'measurement',
 			'experience',
+			'measurement',
 			'marketing',
 		];
 		expect(

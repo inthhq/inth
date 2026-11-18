@@ -207,8 +207,8 @@ describe('createConsentClient', () => {
 		]);
 		expect(client.consentCategories).toEqual([
 			'necessary',
-			'measurement',
 			'experience',
+			'measurement',
 			'marketing',
 		]);
 	});

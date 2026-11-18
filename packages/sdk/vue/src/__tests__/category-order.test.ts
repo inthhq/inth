@@ -94,8 +94,8 @@ test('the widget lists categories in the draft order, not the policy or configur
 		expect(rows).toEqual([
 			'necessary',
 			'functionality',
-			'measurement',
 			'experience',
+			'measurement',
 			'marketing',
 		]);
 	} finally {

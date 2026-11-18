@@ -2,6 +2,8 @@
  * @packageDocumentation
  * Provides types and constants for managing GDPR-compliant consent categories and their configurations.
  */
+import { CONSENT_CATEGORIES } from '../consent-record/types';
+import type { ConsentCategory } from '../consent-record/types';
 
 /**
  * Defines all possible consent categories that can be managed within the application.
@@ -36,12 +38,7 @@
  *
  * @public
  */
-export type AllConsentNames =
-	| 'experience'
-	| 'functionality'
-	| 'marketing'
-	| 'measurement'
-	| 'necessary';
+export type AllConsentNames = ConsentCategory;
 
 /**
  * Defines the configuration structure for each consent type.
@@ -192,18 +189,18 @@ export const consentTypes: ConsentType[] = [
 	{
 		defaultValue: false,
 		description:
-			'These trackers help us to measure traffic and analyze your behavior to improve our service.',
-		display: false,
-		gdprType: 4,
-		name: 'measurement',
-	},
-	{
-		defaultValue: false,
-		description:
 			'These trackers help us to improve the quality of your user experience and enable interactions with external content, networks, and platforms.',
 		display: false,
 		gdprType: 3,
 		name: 'experience',
+	},
+	{
+		defaultValue: false,
+		description:
+			'These trackers help us to measure traffic and analyze your behavior to improve our service.',
+		display: false,
+		gdprType: 4,
+		name: 'measurement',
 	},
 	{
 		defaultValue: false,
@@ -219,8 +216,7 @@ export const consentTypes: ConsentType[] = [
  * Runtime array of all valid consent names.
  *
  * @remarks
- * This array is automatically derived from {@link consentTypes} to ensure
- * runtime validation stays in sync with the {@link AllConsentNames} type definition.
+ * The categories in display order, the order of {@link consentTypes}.
  * Use this for validation logic where you need to check if a string is a valid consent name.
  *
  * @example
@@ -237,15 +233,9 @@ export const consentTypes: ConsentType[] = [
  * @see {@link consentTypes} for the full consent configurations
  * @public
  */
-// A literal, not `consentTypes.map(...)`, so code that only needs the
-// names does not carry the descriptions. A test keeps the two in step.
-export const allConsentNames: AllConsentNames[] = [
-	'necessary',
-	'functionality',
-	'measurement',
-	'experience',
-	'marketing',
-];
+// Not `consentTypes.map(...)`, so code that only needs the names does not
+// carry the descriptions. A test keeps the two in step.
+export const allConsentNames: readonly AllConsentNames[] = CONSENT_CATEGORIES;
 
 /**
  * The categories a preference surface lists: `necessary` plus the scope, in

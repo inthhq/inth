@@ -113,8 +113,8 @@ test('a strict policy with nothing declared keeps its whole scope', async () => 
 	expect(runtime.consentCategories).toEqual([
 		'necessary',
 		'functionality',
-		'measurement',
 		'experience',
+		'measurement',
 		'marketing',
 	]);
 	expect(runtime.kernel.getSnapshot().activeUI).toBe('banner');
@@ -166,8 +166,8 @@ test('an IAB policy with nothing declared keeps its whole scope', async () => {
 	expect(runtime.consentCategories).toEqual([
 		'necessary',
 		'functionality',
-		'measurement',
 		'experience',
+		'measurement',
 		'marketing',
 	]);
 });

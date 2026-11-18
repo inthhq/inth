@@ -17,8 +17,8 @@ const ITEM_PREFIX = 'consent-widget-accordion-item-';
 const EXPECTED = [
 	'necessary',
 	'functionality',
-	'measurement',
 	'experience',
+	'measurement',
 	'marketing',
 ];
 
