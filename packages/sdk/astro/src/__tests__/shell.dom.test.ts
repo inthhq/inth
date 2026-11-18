@@ -9,7 +9,7 @@ import {
 	EARLY_TAP_ROOT,
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
-} from '../../../core/src/runtime/page-globals';
+} from '../../../core/src/libs/page-globals';
 import { startDeferredClient } from '../browser/shell';
 import type { EngineModule } from '../browser/shell';
 import {

@@ -21,7 +21,7 @@ import { PENDING_SAVES_STORAGE_KEY } from '../../../../core/src/libs/storage-key
 import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
-} from '../../../../core/src/runtime/page-globals';
+} from '../../../../core/src/libs/page-globals';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import {
