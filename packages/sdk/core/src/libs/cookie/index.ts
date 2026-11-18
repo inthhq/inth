@@ -13,11 +13,11 @@ export {
 	getCookie,
 	getRawCookieValue,
 	parseCookieValue,
-	readCookieValueFromHeader,
 	setCookie,
 	writeCookie,
 } from './operations';
 export type { CookieWriteReport } from './operations';
+export { readCookieValueFromHeader } from './read-header';
 
 // Re-export serialization (internal use)
 export {

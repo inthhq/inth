@@ -7,7 +7,7 @@ import { parseJourneyId, parseJourneyScope } from '@inth/sdk-schema/types';
 import type { ConsentJourneyScope } from '@inth/sdk-schema/types';
 
 import type { KernelJourney } from '../types';
-import { readCookieValueFromHeader } from './cookie/operations';
+import { readCookieValueFromHeader } from './cookie/read-header';
 import { JOURNEY_STORAGE_KEY, storedChoiceNames } from './storage-keys';
 
 /**

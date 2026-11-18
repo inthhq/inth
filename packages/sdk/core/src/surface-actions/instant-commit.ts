@@ -28,7 +28,7 @@ import type {
 	OptionalConsentCategory,
 	RestrictionReason,
 } from '../consent-record/types';
-import { readCookieValueFromHeader } from '../libs/cookie/operations';
+import { readCookieValueFromHeader } from '../libs/cookie/read-header';
 import { generateSubjectId } from '../libs/generate-subject-id';
 import { resolveStorageKeys } from '../libs/storage-keys';
 import type { StorageConfig } from '../modules/persistence/types';
