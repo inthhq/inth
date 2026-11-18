@@ -19,8 +19,6 @@
 
 IAB TCF 2.4 and Global Privacy Platform (GPP) addon for Inth with TC String and GPP string generation, GVL support, TCF and GPP APIs, and programmatic advertising consent workflows.
 
-Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 ## Key Features
 
 - IAB TCF 2.4 support for programmatic advertising consent

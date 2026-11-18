@@ -19,8 +19,6 @@
 
 Framework-neutral developer tools for inspecting Inth v3 consent state, resolved policy, location, IAB state, kernel events, and actions.
 
-Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 ## Key Features
 
 - Explicit ConsentKernel binding with no global store discovery

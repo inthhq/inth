@@ -18,8 +18,6 @@
 
 Inth is the open standard for cookie banners. It's an open-source cookie consent manager and consent management platform (CMP) for JavaScript. You get a GDPR cookie banner, a preference dialog, and consent-gated scripts for React, Next.js, Vue, Nuxt, Svelte, Astro, TanStack Start, and plain HTML. Google Consent Mode v2 works through `@inth/integrations`, and IAB TCF through an optional add-on.
 
-Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 **[Docs](https://c15t.com/docs)** · **[Hosted on Inth](https://inth.com?utm_source=github&utm_medium=repo_homepage)** · **[Discord](https://c15t.link/discord)**
 
 ## Why Inth

@@ -19,8 +19,6 @@
 
 Valibot schemas and TypeScript types for the Inth consent API. The Inth backend, frontends, and Node.js SDK share them, so requests and responses match on both sides.
 
-Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 ## Key Features
 
 - Valibot schemas for consent API requests and responses

@@ -19,8 +19,6 @@
 
 Typed cookie consent translations for Inth banners, dialogs, and preference centers, in 53 languages.
 
-Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 ## Key Features
 
 - 53 languages, including all 24 official EU languages

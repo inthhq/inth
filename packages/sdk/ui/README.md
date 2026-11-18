@@ -19,8 +19,6 @@
 
 The framework-agnostic cookie consent UI primitives, CSS, and theme tokens behind the Inth React, Vue, Svelte, and Astro components. Most apps get this package through a framework adapter and do not install it directly.
 
-Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 ## Key Features
 
 - One theme system for every Inth framework: set `--inth-*` tokens once and the banner, dialog, and preference center follow

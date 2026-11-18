@@ -19,8 +19,6 @@
 
 The headless JavaScript cookie consent engine behind every Inth adapter. It resolves consent policies for GDPR and other privacy laws, stores choices, and holds back configured scripts, iframes, and network requests that the visitor's policy and choices do not allow. Use it to build your own consent UI or to connect a framework that has no Inth adapter.
 
-Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 ## Key Features
 
 - Bring your own UI: render from a consent snapshot, and Inth keeps state, storage, and policy resolution

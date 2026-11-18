@@ -26,9 +26,6 @@ Do not open a public issue for a security vulnerability. Report it privately thr
 - Give the steps to reproduce it and the versions it affects
 - Give us time to release a fix before you disclose it`;
 
-const SOCIAL_PROOF_LINE =
-	'Inth is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/inth/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.';
-
 /**
  * Renders the shared hosting section with Inth links tagged for one package.
  *
@@ -262,14 +259,14 @@ ${config.features.map((f) => `- ${f}`).join('\n')}`;
 	if (config.showCLIGeneration) {
 		quickStartBlock = `## Quick Start
 
-Easiest setup with @c15t/cli:
+Easiest setup with @inth/cli:
 
 \`\`\`bash
 # Set up Inth in your project
-pnpm dlx @c15t/cli setup
+pnpm dlx @inth/cli c15t
 # Alternatives:
-# npx @c15t/cli setup
-# bunx --bun @c15t/cli setup
+# npx @inth/cli c15t
+# bunx --bun @inth/cli c15t
 \`\`\`
 
 The CLI will:
@@ -391,7 +388,6 @@ On the web, every page of the [inth docs](https://c15t.com/docs) has a Markdown 
 		bannerBlock,
 		config.description,
 		installLine,
-		plainOpening ? '' : SOCIAL_PROOF_LINE,
 		featuresBlock,
 		leadSectionsBlock,
 		config.showHosting === 'lead' ? hostingBlock : '',
