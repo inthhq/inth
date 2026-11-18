@@ -2,12 +2,15 @@ import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { SSRInitialData } from '@inth/sdk/engine';
 import { fetchRequestInit, resolveRequestProjectUrl } from '@inth/sdk/server';
 
-import {
-	CLIENT_FORWARDING_HEADERS,
-	extractRelevantHeaders,
-	SPECULATION_HEADERS,
-} from './headers';
 import type { FetchSSRDataOptions } from './types';
+
+/** Headers that mark a prefetch or prerender rather than a page view. */
+const SPECULATION_HEADERS = [
+	'purpose',
+	'sec-purpose',
+	'next-router-prefetch',
+	'x-middleware-prefetch',
+] as const;
 
 /** What the request told the backend, from the headers `/init` was sent. */
 const buildRequestContext = function buildRequestContext(
@@ -75,28 +78,6 @@ const inspectCacheHeaders = function inspectCacheHeaders(headers: Headers): {
 	};
 };
 
-const logRelevantHeaders = function logRelevantHeaders(
-	relevantHeaders: Record<string, string>,
-	debug?: boolean
-): void {
-	if (!debug) {
-		return;
-	}
-	const headerKeys = Object.keys(relevantHeaders);
-	console.log(
-		`[@inth/react/server] Detected headers: [${headerKeys.join(', ')}]`
-	);
-	const cfCountry = relevantHeaders['cf-ipcountry'];
-	const xCountry = relevantHeaders['x-vercel-ip-country'];
-	if (cfCountry) {
-		console.log(`[@inth/react/server] Country from cf-ipcountry: ${cfCountry}`);
-	} else if (xCountry) {
-		console.log(
-			`[@inth/react/server] Country from x-vercel-ip-country: ${xCountry}`
-		);
-	}
-};
-
 /**
  * Fetches initial consent data on the server for SSR hydration.
  *
@@ -144,21 +125,12 @@ export const fetchSSRData = async function fetchSSRData(
 		console.log('[@inth/react/server] SSR fetch starting...');
 	}
 
-	const relevantHeaders = extractRelevantHeaders(headers, {
-		trustForwardedHeaders: options.trustForwardedHeaders,
-	});
-
-	logRelevantHeaders(relevantHeaders, debug);
-
-	// We can't fetch from the server if the headers are not present. Untrusted
-	// forwarding headers are not sent, but they still mark a live request.
-	const hasRequestHeaders =
-		Object.keys(relevantHeaders).length > 0 ||
-		CLIENT_FORWARDING_HEADERS.some((name) => headers.has(name));
-	if (!hasRequestHeaders) {
+	// A render with no request headers, such as a prerender, has no visitor
+	// to ask the backend about.
+	if (headers.keys().next().done) {
 		if (debug) {
 			console.log(
-				'[@inth/react/server] No relevant headers found, skipping SSR fetch'
+				'[@inth/react/server] The request has no headers, skipping SSR fetch'
 			);
 		}
 		return undefined;
@@ -215,7 +187,7 @@ export const fetchSSRData = async function fetchSSRData(
 	};
 	if (debug) {
 		console.log(
-			`[@inth/react/server] SSR fetch succeeded in ${metadata.requestDurationMs}ms`
+			`[@inth/react/server] SSR fetch succeeded in ${metadata.requestDurationMs}ms, sending [${Object.keys(answer.requestHeaders).join(', ')}]`
 		);
 		if (metadata.cache?.detail) {
 			console.log(
