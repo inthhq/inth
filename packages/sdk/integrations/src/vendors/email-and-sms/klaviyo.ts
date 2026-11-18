@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
-import { trimToUndefined } from '../_shared/script-url';
+import { httpsScriptUrl } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -109,28 +109,6 @@ const getPublicApiKeyProblem = function getPublicApiKeyProblem(
 	return undefined;
 };
 
-const validateScriptUrl = function validateScriptUrl(
-	value: string | undefined
-): string | undefined {
-	const scriptUrl = trimToUndefined(value);
-	if (scriptUrl === undefined) {
-		return undefined;
-	}
-
-	let parsed: URL;
-	try {
-		parsed = new URL(scriptUrl);
-	} catch {
-		throw new Error('klaviyo: scriptUrl must be a valid https URL');
-	}
-
-	if (parsed.protocol !== 'https:') {
-		throw new Error('klaviyo: scriptUrl must be a valid https URL');
-	}
-
-	return scriptUrl;
-};
-
 /**
  * Klaviyo.js in forms-only mode. Klaviyo.js reads the `__kla_off` opt-out
  * cookie when it starts, so the bootstrap sets it before the loader runs.
@@ -189,7 +167,7 @@ export const klaviyo = function klaviyo(options: KlaviyoOptions): Script {
 		{
 			category,
 			scriptUrl:
-				validateScriptUrl(options.scriptUrl) ??
+				httpsScriptUrl('klaviyo', options.scriptUrl) ??
 				`https://static.klaviyo.com/onsite/js/${publicApiKey}/klaviyo.js`,
 		}
 	);

@@ -3,6 +3,7 @@ import type { Script } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { ANALYTICS_JS_QUEUE_METHODS } from '../_shared/analytics-js';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
 
@@ -10,26 +11,7 @@ const DEFAULT_HIGHTOUCH_SCRIPT_URL =
 	'https://cdn.hightouch-events.com/browser/release/v1-latest/events.min.js';
 
 export const HIGHTOUCH_QUEUE_METHODS = [
-	'trackSubmit',
-	'trackClick',
-	'trackLink',
-	'trackForm',
-	'pageview',
-	'identify',
-	'reset',
-	'group',
-	'track',
-	'ready',
-	'alias',
-	'debug',
-	'page',
-	'once',
-	'off',
-	'on',
-	'addSourceMiddleware',
-	'addIntegrationMiddleware',
-	'setAnonymousId',
-	'addDestinationMiddleware',
+	...ANALYTICS_JS_QUEUE_METHODS,
 	'load',
 ] as const;
 

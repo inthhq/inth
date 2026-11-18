@@ -4,7 +4,11 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId, skipScript } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import {
+	httpsScriptUrl,
+	isHttpsUrl,
+	resolveScriptUrl,
+} from '../_shared/script-url';
 
 const DEFAULT_RUDDERSTACK_SCRIPT_URL =
 	'https://cdn.rudderlabs.com/v3/modern/rsa.min.js';
@@ -369,28 +373,6 @@ const skippedRudderstackScript = {
 	manifest: rudderstackManifest,
 } as const;
 
-const validateOptionalHttpsScriptUrl = function validateOptionalHttpsScriptUrl(
-	scriptUrlOverride: string | undefined
-): string | undefined {
-	const scriptUrl = trimToUndefined(scriptUrlOverride);
-	if (scriptUrl === undefined) {
-		return undefined;
-	}
-
-	let parsed: URL;
-	try {
-		parsed = new URL(scriptUrl);
-	} catch {
-		throw new Error('rudderstack: scriptUrl must be a valid https URL');
-	}
-
-	if (parsed.protocol !== 'https:') {
-		throw new Error('rudderstack: scriptUrl must be a valid https URL');
-	}
-
-	return scriptUrl;
-};
-
 const isJsonObjectValue = function isJsonObjectValue(
 	value: unknown
 ): value is JsonObject {
@@ -478,14 +460,6 @@ const buildPreConsentLoadOptions = function buildPreConsentLoadOptions(
 			provider: 'custom',
 		},
 	};
-};
-
-const isHttpsUrl = function isHttpsUrl(value: string): boolean {
-	try {
-		return new URL(value).protocol === 'https:';
-	} catch {
-		return false;
-	}
 };
 
 /**
@@ -591,7 +565,7 @@ export const rudderstack = function rudderstack({
 		dataPlaneUrl: normalizedDataPlaneUrl,
 		loadOptions: resolvedLoadOptions,
 		scriptUrl: resolveScriptUrl(
-			validateOptionalHttpsScriptUrl(trimToUndefined(scriptUrl)),
+			httpsScriptUrl('rudderstack', scriptUrl),
 			DEFAULT_RUDDERSTACK_SCRIPT_URL
 		),
 		writeKey: normalizedWriteKey,

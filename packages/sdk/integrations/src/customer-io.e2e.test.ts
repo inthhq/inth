@@ -17,14 +17,12 @@ import {
 	registerVendorContractCleanup,
 	updateScripts,
 } from './e2e-test-utils';
-import {
-	CUSTOMER_IO_METHODS,
-	customerIo,
-} from './vendors/email-and-sms/customer-io';
+import { ANALYTICS_JS_QUEUE_METHODS } from './vendors/_shared/analytics-js';
+import { customerIo } from './vendors/email-and-sms/customer-io';
 
 const GLOBALS = ['cioanalytics'];
 type CustomerIoTestQueue = [string, ...unknown[]][] & {
-	[Method in (typeof CUSTOMER_IO_METHODS)[number]]: (
+	[Method in (typeof ANALYTICS_JS_QUEUE_METHODS)[number]]: (
 		...args: unknown[]
 	) => CustomerIoTestQueue;
 } & { _cdn?: string; _loadOptions?: unknown; _writeKey?: string };
@@ -171,7 +169,7 @@ describe('Customer.io loading and identity', () => {
 			['identify', 'customer-123', traits],
 			['track', 'Signed up', properties],
 		]);
-		for (const method of CUSTOMER_IO_METHODS) {
+		for (const method of ANALYTICS_JS_QUEUE_METHODS) {
 			const stub = queue[method] as (...args: unknown[]) => CustomerIoTestQueue;
 			expect(stub('argument')).toBe(queue);
 			expect(queue.at(-1)).toEqual([method, 'argument']);

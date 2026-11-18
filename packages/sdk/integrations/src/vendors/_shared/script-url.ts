@@ -17,6 +17,32 @@ export const trimToUndefined = function trimToUndefined(
 	return trimmed;
 };
 
+/** Whether `value` parses as an absolute `https:` URL. */
+export const isHttpsUrl = function isHttpsUrl(value: string): boolean {
+	try {
+		return new URL(value).protocol === 'https:';
+	} catch {
+		return false;
+	}
+};
+
+/**
+ * A script URL override, trimmed, or `undefined` when it is unset or blank.
+ *
+ * @param vendor - The helper's name, for the error.
+ * @throws {Error} When the override is not an absolute `https:` URL.
+ */
+export const httpsScriptUrl = function httpsScriptUrl(
+	vendor: string,
+	value: string | undefined
+): string | undefined {
+	const scriptUrl = trimToUndefined(value);
+	if (scriptUrl !== undefined && !isHttpsUrl(scriptUrl)) {
+		throw new Error(`${vendor}: scriptUrl must be a valid https URL`);
+	}
+	return scriptUrl;
+};
+
 /**
  * Resolves a script URL from an optional override and a required fallback.
  * An empty or whitespace-only override counts as unset.

@@ -3,33 +3,10 @@ import type { Script } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { ANALYTICS_JS_QUEUE_METHODS } from '../_shared/analytics-js';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
 import { resolveScriptUrl, stripTrailingSlashes } from '../_shared/script-url';
-
-/** Customer.io's callable analytics.js queue methods. */
-export const CUSTOMER_IO_METHODS = [
-	'trackSubmit',
-	'trackClick',
-	'trackLink',
-	'trackForm',
-	'pageview',
-	'identify',
-	'reset',
-	'group',
-	'track',
-	'ready',
-	'alias',
-	'debug',
-	'page',
-	'once',
-	'off',
-	'on',
-	'addSourceMiddleware',
-	'addIntegrationMiddleware',
-	'setAnonymousId',
-	'addDestinationMiddleware',
-] as const;
 
 declare global {
 	interface Window {
@@ -48,7 +25,7 @@ export const customerIoManifest = {
 	install: [
 		{ name: 'cioanalytics', type: 'setGlobal', value: [] },
 		{
-			methods: [...CUSTOMER_IO_METHODS],
+			methods: [...ANALYTICS_JS_QUEUE_METHODS],
 			preserveExisting: true,
 			returnTarget: true,
 			target: 'cioanalytics',

@@ -3,6 +3,7 @@ import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { SetGlobalPathStep, VendorManifest } from '../../types';
+import { booleanDataAttribute } from '../_shared/attributes';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
 import { resolveScriptUrl } from '../_shared/script-url';
@@ -308,16 +309,6 @@ export interface DatabuddyReplayOptions {
 	scriptUrl?: string;
 }
 
-/**
- * Maps a feature switch to its `data-*` attribute value. `undefined` drops
- * the attribute from the script.
- */
-const featureAttribute = function featureAttribute(
-	enabled: boolean | undefined
-): string | undefined {
-	return enabled === undefined ? undefined : String(enabled);
-};
-
 interface ReplaySettings {
 	apiUrl: string;
 	clientId: string;
@@ -348,11 +339,11 @@ const createReplayLoader = function createReplayLoader(
 			element.setAttribute('crossorigin', 'anonymous');
 			element.setAttribute('data-api-url', settings.apiUrl);
 			element.setAttribute('data-client-id', settings.clientId);
-			const maskText = featureAttribute(settings.maskText);
+			const maskText = booleanDataAttribute(settings.maskText);
 			if (maskText !== undefined) {
 				element.setAttribute('data-mask-text', maskText);
 			}
-			const recordIframes = featureAttribute(settings.recordIframes);
+			const recordIframes = booleanDataAttribute(settings.recordIframes);
 			if (recordIframes !== undefined) {
 				element.setAttribute('data-record-iframes', recordIframes);
 			}
@@ -400,10 +391,10 @@ const createDatabuddyScript = function createDatabuddyScript(
 			options.scriptUrl,
 			'https://cdn.databuddy.cc/databuddy.js'
 		),
-		trackErrors: featureAttribute(features.errors),
-		trackInteractions: featureAttribute(features.interactions),
-		trackOutgoingLinks: featureAttribute(features.outgoingLinks),
-		trackWebVitals: featureAttribute(features.webVitals),
+		trackErrors: booleanDataAttribute(features.errors),
+		trackInteractions: booleanDataAttribute(features.interactions),
+		trackOutgoingLinks: booleanDataAttribute(features.outgoingLinks),
+		trackWebVitals: booleanDataAttribute(features.webVitals),
 	});
 	if (!options.replay) {
 		return script;
