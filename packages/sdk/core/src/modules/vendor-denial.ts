@@ -11,6 +11,23 @@
 import type { ConsentSnapshot } from '../types';
 
 /**
+ * The vendor ids a choice may toggle: declared and not `disabled`.
+ *
+ * @internal
+ */
+export const toggleableVendorIds = function toggleableVendorIds(
+	snapshot: Pick<ConsentSnapshot, 'vendors'>
+): Set<string> {
+	const ids = new Set<string>();
+	for (const vendor of snapshot.vendors?.declared ?? []) {
+		if (vendor.disabled !== true) {
+			ids.add(vendor.id);
+		}
+	}
+	return ids;
+};
+
+/**
  * Ids the subject turned off that a gate should honor, or `null` when
  * nothing is denied. Only a vendor currently declared and not `disabled`
  * counts: for anything else the visitor has no switch to grant it again, so
@@ -26,12 +43,7 @@ export const deniedVendorIds = function deniedVendorIds(
 	if (!denied || denied.length === 0) {
 		return null;
 	}
-	const toggleable = new Set<string>();
-	for (const vendor of snapshot.vendors?.declared ?? []) {
-		if (vendor.disabled !== true) {
-			toggleable.add(vendor.id);
-		}
-	}
+	const toggleable = toggleableVendorIds(snapshot);
 	const ids = new Set<string>();
 	for (const id of denied) {
 		if (toggleable.has(id)) {

@@ -121,6 +121,8 @@ export const pendingBootSnapshot = function pendingBootSnapshot(
 		activeUI: 'none',
 		branding: DEFAULT_BRANDING,
 		consentCategories,
+		// Not DENIED_CONSENTS: importing it would list one more chunk in
+		// every first-load preload map.
 		effectivePermissions: {
 			experience: false,
 			functionality: false,

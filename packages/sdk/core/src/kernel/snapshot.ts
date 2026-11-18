@@ -44,18 +44,6 @@ import {
 import { validateHydrationRecords } from './record-validation';
 
 /**
- * Default effective permissions before any evaluation. `necessary` is
- * always granted; everything else starts denied.
- */
-export const DEFAULT_CONSENTS: ConsentState = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
-
-/**
  * Default IAB slice. Used as the base when constructing the initial IAB
  * state and when folding partial IAB patches onto a previously-null slice.
  */

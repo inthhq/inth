@@ -6,6 +6,7 @@
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { OptionalConsentCategory } from '../../consent-record/types';
+import { DENIED_CONSENTS } from '../../consent/consent-types';
 import type { ConsentSnapshot, SavePayload } from '../../types';
 
 /** A save waiting for a replay. */
@@ -58,13 +59,7 @@ export const withoutSuperseded = function withoutSuperseded(
 	if (kept.length < keys.length) {
 		const categories: Partial<Record<OptionalConsentCategory, boolean>> = {};
 		const receipts: SavePayload['choice']['categories'] = {};
-		const consents = {
-			experience: false,
-			functionality: false,
-			marketing: false,
-			measurement: false,
-			necessary: true,
-		};
+		const consents = { ...DENIED_CONSENTS };
 		for (const category of kept) {
 			const receipt = payload.choice.categories[category];
 			if (receipt) {

@@ -72,11 +72,6 @@ export const resolveSaveSelection = function resolveSaveSelection(
 	return { consentAction: 'custom', values: input };
 };
 
-export const EMPTY_CHOICE: ExplicitChoice = Object.freeze({
-	categories: Object.freeze({}),
-	version: 3,
-}) as ExplicitChoice;
-
 /**
  * The acknowledgement a save records when the choice prompt has no category
  * to decide, or `null` when the choice scope has one. It is a dismissal

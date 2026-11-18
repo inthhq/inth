@@ -248,6 +248,16 @@ export const allConsentNames: AllConsentNames[] = [
 	'marketing',
 ];
 
+/** The permissions before any choice: `necessary` granted, the rest denied. */
+export const DENIED_CONSENTS: Readonly<Record<ConsentCategory, boolean>> =
+	Object.freeze({
+		experience: false,
+		functionality: false,
+		marketing: false,
+		measurement: false,
+		necessary: true,
+	});
+
 /**
  * The categories a preference surface lists: `necessary` plus the scope, in
  * the order of {@link consentTypes}. A policy's scope carries no order of its

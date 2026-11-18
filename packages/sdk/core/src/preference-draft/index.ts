@@ -36,13 +36,14 @@
 import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 
 import {
+	DENIED_CONSENTS,
 	displayedCategories as listDisplayed,
 	policyDefault,
 } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { listedVendors } from '../libs/vendor-listing';
 import { vendorAxisActive } from '../libs/vendors';
-import { deniedVendorIds } from '../modules/has';
+import { deniedVendorIds, toggleableVendorIds } from '../modules/vendor-denial';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -223,13 +224,7 @@ const recordedValues = function recordedValues(
 ): ConsentState {
 	const rule = snapshot.policyRule;
 	const recorded = snapshot.explicitChoice?.categories;
-	const values: ConsentState = {
-		experience: false,
-		functionality: false,
-		marketing: false,
-		measurement: false,
-		necessary: true,
-	};
+	const values: ConsentState = { ...DENIED_CONSENTS };
 	for (const category of scope) {
 		if (category !== 'necessary') {
 			values[category] =
@@ -251,17 +246,14 @@ const recordedVendors = function recordedVendors(
 	snapshot: ConsentSnapshot
 ): [Grants, Set<string>] {
 	const grants: Grants = {};
-	const toggleable = new Set<string>();
-	if (vendorAxisActive(snapshot)) {
-		const denied = deniedVendorIds(snapshot);
-		for (const vendor of snapshot.vendors?.declared ?? []) {
-			setOwn(grants, vendor.id, !denied?.has(vendor.id));
-			if (vendor.disabled !== true) {
-				toggleable.add(vendor.id);
-			}
-		}
+	if (!vendorAxisActive(snapshot)) {
+		return [grants, new Set()];
 	}
-	return [grants, toggleable];
+	const denied = deniedVendorIds(snapshot);
+	for (const vendor of snapshot.vendors?.declared ?? []) {
+		setOwn(grants, vendor.id, !denied?.has(vendor.id));
+	}
+	return [grants, toggleableVendorIds(snapshot)];
 };
 
 /** `value` over `base` for every staged key `include` accepts. */
