@@ -1,3 +1,4 @@
+import { createConsentRuntime } from '@inth/sdk/runtime';
 /**
  * @vitest-environment jsdom
  *
@@ -5,7 +6,6 @@
  * vetted copy on the site's own host, keeps its setup and attributes.
  */
 import { custom } from '@inth/sdk/transports';
-import { createConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { registerVendorContractCleanup } from './e2e-test-utils';
