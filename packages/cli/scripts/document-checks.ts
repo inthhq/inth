@@ -6,16 +6,16 @@ import path from "node:path";
 
 import { z } from "zod";
 
-const EMPTY =
+export const EMPTY =
   "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 // CRLF text, then bytes that are not UTF-8 and span more than one 64 KiB read.
 const text = new TextEncoder().encode("Privacy policy\r\nVersion 2\r\n");
-const FIXTURE = new Uint8Array(text.length + 70_000);
+export const FIXTURE = new Uint8Array(text.length + 70_000);
 FIXTURE.set(text);
 for (let index = 0; index < 70_000; index += 1) {
   FIXTURE[text.length + index] = index % 251;
 }
-const FIXTURE_HASH =
+export const FIXTURE_HASH =
   "sha256:263db960f76e2c1e34a9774ef85730cd7eba491e9b8141de87d4f5f2b5d32f86";
 
 const resultSchema = z.object({
@@ -53,7 +53,7 @@ export const verifyDocumentHash = async (binary: string): Promise<void> => {
     const file = hash([path.join(parent, "fixture"), "--json"]);
     assert.equal(file.status, 0, file.stdout);
     assert.deepEqual(resultSchema.parse(JSON.parse(file.stdout)).data, {
-      bytes: 70_027,
+      bytes: FIXTURE.byteLength,
       hash: FIXTURE_HASH,
       path: path.join(parent, "fixture"),
     });
@@ -61,7 +61,7 @@ export const verifyDocumentHash = async (binary: string): Promise<void> => {
     const piped = hash(["-", "--json"], FIXTURE);
     assert.equal(piped.status, 0, piped.stdout);
     assert.deepEqual(resultSchema.parse(JSON.parse(piped.stdout)).data, {
-      bytes: 70_027,
+      bytes: FIXTURE.byteLength,
       hash: FIXTURE_HASH,
       path: null,
     });
@@ -78,6 +78,14 @@ export const verifyDocumentHash = async (binary: string): Promise<void> => {
     const directory = hash([parent]);
     assert.equal(directory.status, 1);
     assert.match(directory.stderr, /is not a regular file/u);
+
+    if (process.platform !== "win32") {
+      const fifo = path.join(parent, "fifo");
+      assert.equal(spawnSync("mkfifo", [fifo]).status, 0);
+      const named = hash([fifo]);
+      assert.equal(named.status, 1, named.stderr);
+      assert.match(named.stderr, /is not a regular file/u);
+    }
   } finally {
     await rm(parent, { force: true, recursive: true });
   }

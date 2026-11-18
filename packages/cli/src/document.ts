@@ -1,5 +1,12 @@
 import { createHash } from "node:crypto";
-import { closeSync, constants, fstatSync, openSync, readSync } from "node:fs";
+import {
+  closeSync,
+  constants,
+  fstatSync,
+  openSync,
+  readSync,
+  statSync,
+} from "node:fs";
 import { setTimeout } from "node:timers/promises";
 
 import type { CliArguments } from "./arguments.ts";
@@ -75,17 +82,25 @@ const accessFile = <T>(path: string, access: () => T): T => {
   }
 };
 
+const notRegularFile = (path: string): CliError =>
+  new CliError(
+    "usage_error",
+    `${terminalText(path)} is not a regular file. Name a file, or - for stdin.`
+  );
+
 const readFile = async (path: string, add: AddBytes): Promise<void> => {
+  // Windows refuses to open a directory, so check the type before opening.
+  if (!accessFile(path, () => statSync(path)).isFile()) {
+    throw notRegularFile(path);
+  }
   const descriptor = accessFile(path, () =>
     // eslint-disable-next-line no-bitwise -- Keep flags inline for Scriptc and refuse a FIFO without blocking.
     openSync(path, constants.O_RDONLY | constants.O_NONBLOCK)
   );
   try {
+    // The path can be replaced between the stat and the open.
     if (!fstatSync(descriptor).isFile()) {
-      throw new CliError(
-        "usage_error",
-        `${terminalText(path)} is not a regular file. Name a file, or - for stdin.`
-      );
+      throw notRegularFile(path);
     }
     const buffer = new Uint8Array(65_536);
     for (;;) {
