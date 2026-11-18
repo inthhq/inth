@@ -30,7 +30,7 @@ class SaveOrderingTest {
 	fun `the decision and obligation are durable before the request`() {
 		val timeline = mutableListOf<String>()
 		val backend = InMemoryKeyValueStore(eventLog = timeline)
-		val transport = RecordingTransport(timeline).respondSave(SaveOutcome.Delivered)
+		val transport = RecordingTransport(timeline).respondSave(SaveOutcome.Delivered())
 		val kernel = testKernel(store = InthStore(backend), transport = transport)
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
 		// the same error list this test asserts on.
@@ -52,7 +52,7 @@ class SaveOrderingTest {
 	fun `a store without durable acknowledgement cannot commit a decision`() {
 		val backend = VanishingKeyValueStore(InthStoreKeys.PENDING)
 		val store = InthStore(backend)
-		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
+		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered())
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
@@ -102,7 +102,7 @@ class SaveOrderingTest {
 	fun `delivered stays false while the send is still in flight`() {
 		val inFlight = mutableListOf<() -> Unit>()
 		val store = InthStore(InMemoryKeyValueStore())
-		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
+		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered())
 		val kernel = testKernel(
 			store = store,
 			transport = transport,
@@ -128,7 +128,7 @@ class SaveOrderingTest {
 	@Test
 	fun `delivered is true only when the executor ran the send inline`() {
 		val store = InthStore(InMemoryKeyValueStore())
-		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
+		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered())
 		val kernel = testKernel(store = store, transport = transport)
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
 		// the same error list this test asserts on.
@@ -200,9 +200,11 @@ class SaveOrderingTest {
 	}
 
 	@Test
-	fun `an unsupported contract is a verdict on the body`() {
+	fun `a dropped grant names the backend code and request id`() {
 		val store = InthStore(InMemoryKeyValueStore())
-		val transport = RecordingTransport().respondSave(SaveOutcome.UnsupportedContract("2", 1))
+		val transport = RecordingTransport().respondSave(
+			SaveOutcome.Rejected(400, code = "invalid_request", requestId = "req_42", message = "answer is required"),
+		)
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
@@ -213,7 +215,7 @@ class SaveOrderingTest {
 
 		assertTrue(store.readPending().isEmpty())
 		assertEquals(listOf("save-rejected"), errors.map { it.code })
-		assertContains(errors.single().message, "policy contract 2")
+		assertContains(errors.single().message, "HTTP 400 invalid_request (request req_42): answer is required")
 	}
 
 	@Test

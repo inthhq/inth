@@ -121,6 +121,28 @@ class HostedConfigTest {
 	}
 
 	@Test
+	fun `property defaults to the application ID and is lowercased`() {
+		fun property(configured: String?, applicationId: String?) = InthAndroid.checkedConfig(
+			NativeConfig(url, property = configured),
+			debuggable = false,
+			enforceProjectUrl = true,
+			applicationId = applicationId,
+		).property
+		assertEquals("com.example.myapp", property(null, "com.Example.MyApp"))
+		assertEquals("com.example.myapp", property(" ", "com.Example.MyApp"))
+		assertEquals("www.example.com", property("WWW.Example.com", "com.example.myapp"))
+		assertNull("no application ID: the core falls back to the project URL host", property(null, null))
+
+		val declared = InthAndroid.checkedDeclaration(
+			read = { mapOf(InthAndroid.META_BACKEND_URL to url, InthAndroid.META_BACKEND_PROPERTY to "Shop.Example.com")[it] },
+			readAsset = { null },
+			debuggable = false,
+			applicationId = "com.example.myapp",
+		)
+		assertEquals("shop.example.com", (declared as DeclaredConfig.Valid).config.property)
+	}
+
+	@Test
 	fun `install rules normalize the project URL and refuse other hosts`() {
 		assertEquals(url, InthAndroid.checkedConfig(NativeConfig("acme.inth.app/"), debuggable = false, enforceProjectUrl = true).backendUrl)
 		for (debuggable in listOf(false, true)) {

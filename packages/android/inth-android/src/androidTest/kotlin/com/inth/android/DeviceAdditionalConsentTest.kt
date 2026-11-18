@@ -65,8 +65,8 @@ internal const val DEVICE_IAB_NOW = 1_758_100_000_000L
 internal class NativeIabDeviceBackend : InthTransport {
 	override fun init(context: InitContext): TransportOutcome = TransportOutcome.Success(Json.parseToJsonElement(INIT), emptyMap())
 	override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("device test offline")
-	override fun identify(subject: ConsentSubject, user: KernelUser): TransportOutcome = TransportOutcome.NetworkFailure("offline")
-	override fun logout(subject: ConsentSubject): TransportOutcome = TransportOutcome.NetworkFailure("offline")
+	override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): com.inth.core.transport.LinkOutcome =
+		com.inth.core.transport.LinkOutcome.Unavailable("offline")
 
 	companion object {
 		val INIT = """{

@@ -149,46 +149,37 @@ class IabCommitTest {
 	}
 
 	@Test
-	fun `blank domains freeze the same backend host used by HostedTransport`() {
-		for (domain in listOf("", " \t")) {
+	fun `blank properties freeze the same backend host used by HostedTransport`() {
+		for (property in listOf("", " \t")) {
 			val store = InthStore(InMemoryKeyValueStore())
-			val core = boot(store, config.copy(domain = domain))
+			val core = boot(store, config.copy(property = property))
 			assertTrue(core.save(CommitIntent.All).ok)
 			val entry = store.readPending().single()
 			val body = assertNotNull(entry.body)
-			assertEquals("cmp.example.test", Json.parseToJsonElement(body).jsonObject["domain"]?.jsonPrimitive?.content)
+			assertEquals("cmp.example.test", Json.parseToJsonElement(body).jsonObject["property"]?.jsonPrimitive?.content)
 			val client = RecordingHttpClient { HttpResponse(503, emptyMap(), "{}") }
-			HostedTransport(client, config.copy(domain = domain)).save(entry)
+			HostedTransport(client, config.copy(property = property)).save(entry)
 			assertEquals(body, client.requests.single().body)
 		}
 	}
 
 	@Test
-	fun `IAB logout notifies transport only after the durable transition succeeds`() {
+	fun `IAB logout clears the identity only after the durable transition succeeds`() {
 		val backend = FailingBackend()
 		val store = InthStore(backend)
-		val logouts = mutableListOf<ConsentSubject>()
 		val recorded = transport()
-		val http = object : InthTransport by recorded {
-			override fun logout(subject: ConsentSubject): TransportOutcome {
-				assertNull(store.readEnvelope()?.snapshot?.subject?.externalId)
-				logouts += subject
-				return TransportOutcome.Success(null, emptyMap())
-			}
-		}
-		val core = testKernel(config, store, FixedClock(vector.now), http)
+		val core = testKernel(config, store, FixedClock(vector.now), recorded)
 		core.bootstrap()
 		core.identify(KernelUser("u1"))
 		assertTrue(core.save(CommitIntent.All).ok)
 		backend.fail = true
 		core.logout()
 		assertEquals("u1", core.snapshot().subject?.externalId)
-		assertTrue(logouts.isEmpty())
 		backend.fail = false
 		core.logout()
 		assertNull(core.snapshot().subject?.externalId)
-		assertEquals(1, logouts.size)
-		assertNull(logouts.single().externalId)
+		assertNull(store.readEnvelope()?.snapshot?.subject?.externalId)
+		assertTrue(recorded.linkRequests.isEmpty(), "logout sends nothing")
 	}
 
 	@Test
@@ -262,7 +253,7 @@ class IabCommitTest {
 				Json.parseToJsonElement(frozen).jsonObject["tcString"]?.jsonPrimitive?.content,
 			)
 			val client = RecordingHttpClient { HttpResponse(503, emptyMap(), "{}") }
-			HostedTransport(client, config.copy(domain = "changed.example")).save(entry)
+			HostedTransport(client, config.copy(property = "changed.example")).save(entry)
 			assertEquals(frozen, client.requests.single().body)
 			System.getenv("INTH_IAB_SAVE_EVIDENCE_DIR")?.let { path ->
 				File(path).mkdirs()

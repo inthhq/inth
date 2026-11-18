@@ -35,6 +35,12 @@ data class SavePayload(
 	val givenAt: Long,
 	val tcString: String? = null,
     val addtlConsent: String? = null,
+	/**
+	 * The lowercase UUID made once for this action and frozen into the body, so every
+	 * replay sends the same key and the backend records the action once. `null` only on an
+	 * entry a build from before `/v1` queued.
+	 */
+	val idempotencyKey: String? = null,
 )
 
 /**
@@ -64,7 +70,7 @@ data class QueuedSave(
 
 /** A complete denial owes delivery even after current consent authority expires. */
 internal fun QueuedSave.isWithdrawal(): Boolean {
-	// A legacy category payload has no frozen domain. Do not invent one for an
+	// A legacy category payload has no frozen property. Do not invent one for an
 	// authority-independent delivery exception.
 	if (body == null && payload.tcString == null && payload.model != ConsentModel.IAB) return false
 	if (ConsentCategory.OPTIONAL.any { payload.consents[it] }) return false
@@ -76,11 +82,12 @@ internal fun QueuedSave.isWithdrawal(): Boolean {
 			wire["givenAt"]?.jsonPrimitive?.longOrNull != payload.givenAt ||
 			wire["tcString"]?.jsonPrimitive?.contentOrNull != payload.tcString ||
 			wire["addtlConsent"]?.jsonPrimitive?.contentOrNull != payload.addtlConsent) return false
-		val preferences = wire["preferences"] as? JsonObject ?: return false
-		if ((preferences["necessary"] as? JsonPrimitive)?.booleanOrNull != true) return false
+		val receipts = (wire["answer"] as? JsonObject)?.get("categories") as? JsonObject ?: return false
 		val ac = (wire["addtlConsent"] as? JsonPrimitive)?.contentOrNull
 		if (ac != null && !ac.startsWith("2~~dv.")) return false
-		if (ConsentCategory.OPTIONAL.any { (preferences[it.wireName] as? JsonPrimitive)?.booleanOrNull == true }) return false
+		if (ConsentCategory.OPTIONAL.any { category ->
+				((receipts[category.wireName] as? JsonObject)?.get("value") as? JsonPrimitive)?.booleanOrNull == true
+			}) return false
 	}
 	val encoded = payload.tcString ?: return payload.consentAction == ConsentAction.NECESSARY ||
 		payload.confirmed.categories.let { it.isNotEmpty() && it.values.none { granted -> granted } }
@@ -93,12 +100,18 @@ internal fun QueuedSave.isWithdrawal(): Boolean {
 			p.publisherCustomConsents.isEmpty() && p.publisherCustomLegitimateInterests.isEmpty())
 }
 
-/** Exact owner of an already frozen delivery obligation. */
+/**
+ * Exact owner of an already frozen delivery obligation: the same subject, external id and
+ * property. A subject id the other entry's subject replaced counts as the same subject.
+ */
 internal fun QueuedSave.sameOwner(other: QueuedSave): Boolean {
 	val left = body?.let { runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull() } ?: return false
 	val right = other.body?.let { runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull() } ?: return false
-	if (left["subjectId"] == null || left["domain"] == null) return false
-	return listOf("subjectId", "externalSubjectId", "domain").all {
-		(left[it] as? JsonPrimitive)?.contentOrNull == (right[it] as? JsonPrimitive)?.contentOrNull
-	}
+	fun value(wire: JsonObject, key: String) = (wire[key] as? JsonPrimitive)?.contentOrNull
+	val leftSubject = value(left, "subjectId") ?: return false
+	if (value(left, "property") == null) return false
+	val rightSubject = value(right, "subjectId")
+	val sameSubject = leftSubject == rightSubject ||
+		payload.subject.owns(rightSubject) || other.payload.subject.owns(leftSubject)
+	return sameSubject && listOf("externalId", "property").all { value(left, it) == value(right, it) }
 }

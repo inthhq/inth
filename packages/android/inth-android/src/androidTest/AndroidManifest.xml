@@ -23,7 +23,7 @@
 			android:name="com.inth.DRY_RUN"
 			android:value="true" />
 		<meta-data
-			android:name="com.inth.BACKEND_DOMAIN"
+			android:name="com.inth.BACKEND_PROPERTY"
 			android:value="consent.instrumentation.invalid" />
 		<!--
 			The declared category scope, comma-separated, with a trailing name

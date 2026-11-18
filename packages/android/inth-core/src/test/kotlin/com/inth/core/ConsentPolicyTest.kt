@@ -72,7 +72,7 @@ class ConsentPolicyTest {
 	}
 
 	@Test fun `an in-code policy with a backend URL skips init and delivers the save`() {
-		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
+		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered())
 		val core = testKernel(
 			NativeConfig("https://test.inth.app", policy = policy, consentCategories = ConsentCategory.entries),
 			InthStore(InMemoryKeyValueStore()), FixedClock(), transport,

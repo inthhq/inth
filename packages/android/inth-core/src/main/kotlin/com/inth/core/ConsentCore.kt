@@ -43,6 +43,7 @@ import com.inth.core.transport.InthTransport
 import com.inth.core.transport.InitContext
 import com.inth.core.transport.InitMapper
 import com.inth.core.transport.MappedInit
+import com.inth.core.transport.LinkOutcome
 import com.inth.core.transport.SaveOutcome
 import com.inth.core.transport.TransportOutcome
 import java.lang.ref.WeakReference
@@ -127,19 +128,27 @@ class ConsentCore @InthInternalApi constructor(
 	subjectIdGenerator: (() -> String)? = null,
 	private val queueIdGenerator: () -> String = { UUID.randomUUID().toString() },
 	private val logger: (KernelError) -> Unit = {},
+	idempotencyKeyGenerator: (() -> String)? = null,
 ) {
 	private val background: TaskExecutor = executor
 		?: TaskExecutor { task -> backgroundPool.execute(task) }
 
 	/**
-	 * Mints the inth-owned subject id, in the `sub_` format the backend validates.
+	 * Mints the Inth-owned subject id, a lowercase UUIDv7.
 	 *
-	 * Separate from [queueIdGenerator] on purpose: a subject id travels and has to
-	 * satisfy `subjectIdSchema` in `@inth/sdk-schema`, while a queue entry id is a local
-	 * row id that never reaches the wire. The default follows the injected [clock],
-	 * so a test that pins time gets ids it can predict.
+	 * Separate from [queueIdGenerator] on purpose: a subject id travels and every `/v1`
+	 * route checks its layout, while a queue entry id is a local row id that never reaches
+	 * the wire. The default follows the injected [clock], so a test that pins time gets ids
+	 * it can predict.
 	 */
 	private val subjectIdGenerator: () -> String = subjectIdGenerator
+		?: SubjectIdGenerator(clock = clock)::generate
+
+	/**
+	 * Makes each save's idempotency key, once per action. The same UUIDv7 generator as the
+	 * subject id; a test injects one to pin the frozen body.
+	 */
+	private val idempotencyKeyGenerator: () -> String = idempotencyKeyGenerator
 		?: SubjectIdGenerator(clock = clock)::generate
 
 	private val state = AtomicReference(ConsentSnapshot.denyAll())
@@ -426,7 +435,7 @@ class ConsentCore @InthInternalApi constructor(
 		store.initializeTcStorageBus(iabConfiguration)
 		val now = clock.nowMillis()
 		val subject = resolveSubject()
-		val envelope = store.readEnvelope()?.takeIf { it.snapshot.subject?.id == subject.id }
+		val envelope = store.readEnvelope()?.takeIf { subject.owns(it.snapshot.subject?.id) }
 
 		storedSnapshotFound = envelope != null
 
@@ -492,7 +501,7 @@ class ConsentCore @InthInternalApi constructor(
 				iab = (envelope.gvl ?: restored.iab?.gvl)
 					?.narrowToVendorIds(config.vendors)
 					?.let(::KernelIabState),
-				subject = restored.subject?.copy(id = subject.id) ?: subject,
+				subject = restored.subject?.copy(id = subject.id, previousIds = subject.previousIds) ?: subject,
 				consentCategories = decidedCategories(envelope.evaluationPolicy),
 				overrides = hydratedOverrides,
 				// A stored `active` is never trusted: it would keep a category denied
@@ -1015,11 +1024,16 @@ class ConsentCore @InthInternalApi constructor(
 		// its storage write off the lock, as the class requires.
 		val payload =
 			buildSavePayload(published, policy, action, confirmed, actionAt, surfaceAtAction)
-				.copy(tcString = nextIab?.tcString, addtlConsent = nextIab?.addtlConsent)
+				.copy(
+					tcString = nextIab?.tcString,
+					addtlConsent = nextIab?.addtlConsent,
+					// Made once for this action and frozen into the body below, so every
+					// replay sends the same key.
+					idempotencyKey = idempotencyKeyGenerator(),
+				)
 
 		val isIab = policy?.model == ConsentModel.IAB
-		val frozen = com.inth.core.transport.SaveBodyBuilder.build(payload,
-			config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.backendUrl).host.orEmpty()).toString()
+		val frozen = com.inth.core.transport.SaveBodyBuilder.build(payload, config.resolvedProperty).toString()
 		val entry = QueuedSave(
 			if (isIab) UUID.randomUUID().toString() else queueIdGenerator(),
 			actionAt, payload, body = frozen,
@@ -1073,6 +1087,10 @@ class ConsentCore @InthInternalApi constructor(
 			)
 		}
 
+		// Published before the first send, so the response to it -- which can name a canonical
+		// subject id and so commit an identity change of its own -- is the later publication.
+		notifySnapshot()
+
 		// The first send is not joined. What this thread may claim about it is whatever the
 		// atomic holds at this instant and nothing more: `null` behind a pool, and the
 		// settled answer only where the host's executor ran the send before returning.
@@ -1080,15 +1098,13 @@ class ConsentCore @InthInternalApi constructor(
 		background.execute { requestDeliveryPass { deliverIfOwed(entry)?.let(firstSend::set) } }
 		val delivered = firstSend.get() === Delivery.Reached
 
-		val result = CommitResult(
+		CommitResult(
 			ok = true,
 			revision = published.revision,
 			confirmed = payload.confirmed.categories,
 			queued = true,
 			delivered = delivered,
 		)
-		notifySnapshot()
-		result
 	}
 
 	/**
@@ -1142,7 +1158,7 @@ class ConsentCore @InthInternalApi constructor(
         true
     }
 
-	/** Re-run init: policy, geo, translations, and any server-side subject id. */
+	/** Re-run init: policy, geo and translations. */
 	fun refresh() {
 		background.execute { runInit() }
 	}
@@ -1167,8 +1183,17 @@ class ConsentCore @InthInternalApi constructor(
 		}
 	}
 
-	/** Attach an external identity to the subject, then refresh. */
-	fun identify(user: KernelUser) = mutate { mutation ->
+	/**
+	 * Attach an external identity to the subject, then refresh.
+	 *
+	 * The external id is local state: the snapshot, the envelope and every later save body
+	 * carry it. With an [identityToken] the core also sends `POST /v1/subjects/{id}/link`
+	 * once, after the local change. The token is held for that request only and never
+	 * stored. Without one, or under `dryRun`, nothing is sent. A failed link emits an error
+	 * with the backend's code, keeps the local identity and is not retried: call `identify`
+	 * again with a fresh token. A successful one adopts the canonical subject id it names.
+	 */
+	fun identify(user: KernelUser, identityToken: String? = null) = mutate { mutation ->
 		val transition = transitionIab(user.externalId, false)
 		if (transition != null) {
 			mutation.release()
@@ -1183,7 +1208,7 @@ class ConsentCore @InthInternalApi constructor(
 				val snapshot = state.get()
 				notifySnapshot()
 				background.execute {
-					if (!config.dryRun) transport.identify(snapshot.subject!!, user)
+					link(snapshot.subject!!, user, identityToken)
 					runInit()
 				}
 			}
@@ -1210,13 +1235,76 @@ class ConsentCore @InthInternalApi constructor(
 		mutation.release()
 		notifySnapshot()
 		background.execute {
-			if (!config.dryRun) transport.identify(subject, user)
+			link(subject, user, identityToken)
 			runInit()
 		}
 	}
 
 	/**
-	 * Detach the external identity.
+	 * Send the link request for [identify], when there is a token and records are sent.
+	 *
+	 * Runs off the mutation gate, like every network call. A refusal names the backend's
+	 * code, status and request id; a success adopts the canonical subject id.
+	 */
+	private fun link(subject: ConsentSubject, user: KernelUser, identityToken: String?) {
+		if (identityToken == null || config.dryRun) return
+		val outcome = try {
+			transport.link(subject, user, identityToken)
+		} catch (error: Exception) {
+			LinkOutcome.Unavailable("Inth transport: ${error.message ?: error.javaClass.simpleName}")
+		}
+		when (outcome) {
+			is LinkOutcome.Linked -> adoptCanonicalSubject(subject.id, outcome.subjectId)
+			is LinkOutcome.Rejected -> emitError(
+				KernelError(
+					code = outcome.failure.code ?: IDENTITY_LINK_FAILED,
+					message = "Inth: the backend refused to link ${user.externalId} to subject ${subject.id} " +
+						"(${outcome.failure.describe()}). The identity stays on this device; call identify " +
+						"again with a fresh identity token.",
+				),
+			)
+			is LinkOutcome.Unavailable -> emitError(
+				KernelError(
+					code = IDENTITY_LINK_FAILED,
+					message = "Inth: the link request for subject ${subject.id} did not reach the backend " +
+						"(${outcome.message}). The identity stays on this device; call identify again " +
+						"with a fresh identity token.",
+				),
+			)
+		}
+	}
+
+	/**
+	 * Replace the stored subject id with the canonical one a `/v1` response named.
+	 *
+	 * Only a UUIDv7 that differs from [sentId] is adopted, and only while the core still
+	 * holds [sentId]. The identity slot and the envelope change together, as one identity
+	 * change: one revision, one publication, the same decision. The identity slot is
+	 * written first, so an app stopped between the two writes relaunches with an envelope
+	 * under a previous id, which [ConsentSubject.owns] reads as the same subject.
+	 *
+	 * Queued bodies and the stored IAB record are never rewritten. [sentId] becomes one of
+	 * [ConsentSubject.previousIds], so they stay this subject's: replay still sends them,
+	 * and the backend maps the old id.
+	 */
+	private fun adoptCanonicalSubject(sentId: String, canonical: String?) {
+		if (canonical == null || canonical == sentId || !SubjectIdGenerator.isUuidV7(canonical)) return
+		mutate { mutation ->
+			val published = synchronized(mutationLock) {
+				val current = state.get()
+				val subject = current.subject?.takeIf { it.id == sentId } ?: return@mutate
+				current.copy(subject = subject.replacingId(canonical), revision = current.revision + 1)
+					.also(::installSnapshot)
+			}
+			store.writeSubject(published.subject!!)
+			persist()
+			mutation.release()
+			notifySnapshot()
+		}
+	}
+
+	/**
+	 * Detach the external identity, locally. Nothing is sent.
 	 *
 	 * The Inth subject id stays: it is the installation's identity, not the user's,
 	 * and the records already attached to it stay attributable.
@@ -1226,9 +1314,7 @@ class ConsentCore @InthInternalApi constructor(
 		if (transition != null) {
 			mutation.release()
 			if (transition) {
-				val snapshot = state.get()
 				notifySnapshot()
-				if (!config.dryRun) background.execute { transport.logout(snapshot.subject!!) }
 			}
 			else
 				emitError(
@@ -1256,7 +1342,6 @@ class ConsentCore @InthInternalApi constructor(
 		persist()
 		mutation.release()
 		notifySnapshot()
-		if (!config.dryRun) background.execute { transport.logout(subject) }
 	}
 
 	/**
@@ -1557,7 +1642,7 @@ class ConsentCore @InthInternalApi constructor(
 	private fun resolveSubject(): ConsentSubject {
 		store.readSubject()?.let { subject ->
 			val envelope = store.readEnvelope()
-			if (envelope != null && envelope.snapshot.subject?.id != subject.id) {
+			if (envelope != null && !subject.owns(envelope.snapshot.subject?.id)) {
 				discardOrphanedIdentityRecords("mismatch")
 			}
 			return subject
@@ -1676,9 +1761,9 @@ class ConsentCore @InthInternalApi constructor(
 			val heldCustomVendors = customVendors
 			val heldIab = committedIab
 			if (online || bundle != null) bundledPolicyAuthority = bundle?.authority
-			val subject = mapped.subjectId?.let { serverId ->
-				base.subject?.copy(id = serverId) ?: ConsentSubject(id = serverId)
-			} ?: base.subject
+			// `/v1/consent/init` names no subject: only records and link answer with the
+			// canonical id, which [adoptCanonicalSubject] handles.
+			val subject = base.subject
 			// Rule 5 is the one exception to the latching below, and a different event
 			// from a failed init: the response carried a resolution this build cannot
 			// parse, so there is no answer left to serve. The rule the current
@@ -1820,7 +1905,7 @@ class ConsentCore @InthInternalApi constructor(
 			if (!queue.isPending(entry.id)) return null
 			return deliver(entry)
 		}
-		if (entry.payload.subjectId != state.get().subject?.id) return null
+		if (state.get().subject?.owns(entry.payload.subjectId) != true) return null
 		val requiresIab =
 			synchronized(mutationLock) {
 				iabConfiguration != null && evaluationPolicy?.model == ConsentModel.IAB
@@ -1838,7 +1923,7 @@ class ConsentCore @InthInternalApi constructor(
 				entry.payload.tcString != saved.tcString ||
 					value("tcString")?.contentOrNull != saved.tcString ||
 					value("subjectId")?.contentOrNull != saved.subjectId ||
-					value("externalSubjectId")?.contentOrNull != saved.externalId ||
+					value("externalId")?.contentOrNull != saved.externalId ||
 					value("givenAt")?.longOrNull != saved.actionAt ||
 					value("model")?.contentOrNull != "iab" ||
 					value("addtlConsent")?.contentOrNull != saved.addtlConsent
@@ -1861,6 +1946,7 @@ class ConsentCore @InthInternalApi constructor(
 		return when (val outcome = transport.save(entry)) {
 			is SaveOutcome.Delivered -> {
 				if (queue.complete(entry.id)) {
+					adoptCanonicalSubject(entry.payload.subjectId, outcome.subjectId)
 					Delivery.Reached
 				} else {
 					// Accepted, and still on disk. Keep the obligation: the next replay sends
@@ -1931,7 +2017,7 @@ class ConsentCore @InthInternalApi constructor(
 		} else {
 			KernelError(
 				code = notice,
-				message = "Inth: a queued consent save did not reach the backend ($outcome), so " +
+				message = "Inth: a queued consent save did not reach the backend (${describe(outcome)}), so " +
 					"it stays queued for a later attempt",
 			)
 		}
@@ -1944,19 +2030,18 @@ class ConsentCore @InthInternalApi constructor(
 		entry: QueuedSave,
 		outcome: SaveOutcome,
 	): KernelError {
-		val why = when (outcome) {
-			is SaveOutcome.Rejected -> "HTTP ${outcome.status}"
-			is SaveOutcome.UnsupportedContract ->
-				"policy contract ${outcome.declared ?: "unreadable"} against this build's " +
-					"${outcome.expected}"
-
-			else -> outcome.toString()
-		}
 		return KernelError(
 			code = "save-rejected",
 			message = "Inth: the backend refused a queued consent save for " +
-				"${entry.payload.subjectId} ($why), so it was dropped and will not be retried",
+				"${entry.payload.subjectId} (${describe(outcome)}), so it was dropped and will not be retried",
 		)
+	}
+
+	/** A save outcome for an error event: status, backend code and request id for a refusal. */
+	private fun describe(outcome: SaveOutcome): String = when (outcome) {
+		is SaveOutcome.Rejected -> outcome.describe()
+		is SaveOutcome.Unavailable -> outcome.message
+		is SaveOutcome.Delivered -> "delivered"
 	}
 
 	/**
@@ -1987,7 +2072,7 @@ class ConsentCore @InthInternalApi constructor(
 		return KernelError(
 			code = "save-undeliverable",
 			message = "Inth: a queued consent save for ${entry.payload.subjectId} was dropped " +
-				"because $reason. Last backend answer: $outcome",
+				"because $reason. Last backend answer: ${describe(outcome)}",
 		)
 	}
 
@@ -2005,7 +2090,7 @@ class ConsentCore @InthInternalApi constructor(
 					c != null &&
 					gvl != null &&
 					saved.configuration == c &&
-					saved.subjectId == snapshot.subject?.id &&
+					snapshot.subject?.owns(saved.subjectId) == true &&
 					saved.externalId == snapshot.subject?.externalId &&
 					saved.fingerprint == evaluationPolicy?.choiceFingerprint &&
 					saved.vendorListVersion.toLong() == gvl.vendorListVersion &&
@@ -2447,6 +2532,9 @@ class ConsentCore @InthInternalApi constructor(
 
 		/** Code of the one log line that says dryRun is on. */
 		const val DRY_RUN = "dry-run"
+
+		/** A link request that failed without a backend `error.code` to report. */
+		const val IDENTITY_LINK_FAILED = "identity-link-failed"
 
 		val deadlineScheduler = ScheduledThreadPoolExecutor(1) { runnable ->
 			Thread(runnable, "inth-deadline").apply { isDaemon = true }

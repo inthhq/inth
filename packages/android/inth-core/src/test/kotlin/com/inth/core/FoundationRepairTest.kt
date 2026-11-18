@@ -55,7 +55,7 @@ class FoundationRepairTest {
 	@Test
 	fun `category withdrawal survives switch to IAB`() {
 		val store = InthStore(InMemoryKeyValueStore())
-		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"opt-in\""))).respondSave(SaveOutcome.Delivered)
+		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"opt-in\""))).respondSave(SaveOutcome.Delivered())
 		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
@@ -64,12 +64,12 @@ class FoundationRepairTest {
 		val queued = store.readPending().single()
 		val frozen = assertNotNull(queued.body)
 		val client = RecordingHttpClient { HttpResponse(503, emptyMap(), "{}") }
-		HostedTransport(client, config.copy(domain = "changed.example.test")).save(queued)
+		HostedTransport(client, config.copy(property = "changed.example.test")).save(queued)
 		assertEquals(frozen, client.requests.single().body)
 		transport.respondInit(init())
 		core.refresh()
 		assertEquals(listOf(frozen), store.readPending().map { it.body })
-		val online = RecordingTransport().respondSave(SaveOutcome.Delivered)
+		val online = RecordingTransport().respondSave(SaveOutcome.Delivered())
 		val cold = testKernel(config = config, store = store, transport = online, clock = FixedClock(vector.now))
 		cold.bootstrap()
 		assertEquals(listOf(frozen), online.saveRequests.map { it.body })
@@ -96,7 +96,7 @@ class FoundationRepairTest {
 		assertNull(loggedOut.iabConsent)
 	}
 
-	@Test fun `frozen subject owner and domain remain separate at capacity`() {
+	@Test fun `frozen subject owner and property remain separate at capacity`() {
 		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
@@ -105,13 +105,13 @@ class FoundationRepairTest {
 		val original = store.readPending().single()
 		val envelope = store.readEnvelope()!!
 		store.writePending(emptyList())
-		fun entry(owner: Int, domain: Int, subject: String = original.payload.subjectId, time: Long = vector.now): QueuedSave {
+		fun entry(owner: Int, property: Int, subject: String = original.payload.subjectId, time: Long = vector.now): QueuedSave {
 			val frozen = Json.parseToJsonElement(original.body!!).jsonObject.toMutableMap()
-			frozen["externalSubjectId"] = JsonPrimitive("u$owner")
-			frozen["domain"] = JsonPrimitive("d$domain.example.test")
+			frozen["externalId"] = JsonPrimitive("u$owner")
+			frozen["property"] = JsonPrimitive("d$property.example.test")
 			frozen["subjectId"] = JsonPrimitive(subject)
 			frozen["givenAt"] = JsonPrimitive(time)
-			return original.copy(id = "$owner-$domain-$subject-$time", body = JsonObject(frozen).toString(),
+			return original.copy(id = "$owner-$property-$subject-$time", body = JsonObject(frozen).toString(),
 				payload = original.payload.copy(subjectId = subject, givenAt = time,
 					subject = original.payload.subject.copy(id = subject, externalId = "u$owner")))
 		}

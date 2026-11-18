@@ -7,11 +7,11 @@ import com.inth.core.model.PolicyResolution
 import com.inth.core.store.InthStore
 import com.inth.core.store.InthStoreKeys
 import com.inth.core.transport.TransportOutcome
-import com.inth.core.transport.InthProtocol
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -82,42 +82,22 @@ class FailClosedTest {
 	}
 
 	@Test
-	fun `a producer on another policy contract is a configuration error`() {
-		val transport = RecordingTransport().respondInit(
-			initSuccess(InthProtocol.POLICY_CONTRACT_HEADER to "2"),
-		)
-		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
-		kernel.bootstrap()
+	fun `a 200 is definitive and no contract header is read from it`() {
+		for (declared in listOf("2", "latest")) {
+			val transport = RecordingTransport().respondInit(initSuccess("x-c15t-policy-contract" to declared))
+			val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
+			kernel.bootstrap()
 
-		assertDenyAll(kernel)
-		assertEquals(
-			PolicyResolution.REASON_UNSUPPORTED_CONTRACT,
-			kernel.snapshot().resolution.reason,
-			"a body under an unknown contract is not evidence",
-		)
-		val message = assertNotNull(kernel.snapshot().error).message
-		assertTrue("contract" in message && "deny-all" in message, "got: $message")
+			assertEquals(PolicyResolution.STATUS_MATCHED, kernel.snapshot().resolution.status, "declared $declared")
+			assertFalse(kernel.snapshot().policyPending)
+			assertNull(kernel.snapshot().error)
+		}
 	}
 
 	@Test
-	fun `an unparseable contract header fails closed`() {
+	fun `a 200 with no policyResolution fails as an invalid payload`() {
 		val transport = RecordingTransport().respondInit(
-			initSuccess(InthProtocol.POLICY_CONTRACT_HEADER to "latest"),
-		)
-		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
-		kernel.bootstrap()
-
-		assertDenyAll(kernel)
-		assertEquals(PolicyResolution.REASON_UNSUPPORTED_CONTRACT, kernel.snapshot().resolution.reason)
-	}
-
-	@Test
-	fun `a negotiated producer with no policyResolution fails as an invalid payload`() {
-		val transport = RecordingTransport().respondInit(
-			initSuccess(
-				InthProtocol.POLICY_CONTRACT_HEADER to InthProtocol.POLICY_CONTRACT_VERSION.toString(),
-				body = """{"location":{"countryCode":"US"}}""",
-			)
+			initSuccess(body = """{"location":{"countryCode":"US"}}"""),
 		)
 		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()

@@ -27,7 +27,7 @@ class BundledPolicyTest {
 			assertEquals(row.jsonObject.getValue("expected").jsonObject.getValue("policyId").jsonPrimitive.content, selected.mapped.resolution.policyId)
 			assertEquals(row.jsonObject.getValue("expected").jsonObject.getValue("fingerprints").jsonObject.getValue("policy").jsonPrimitive.content, selected.mapped.resolution.fingerprint)
 			assertEquals(row.jsonObject.getValue("expectedLanguage").jsonPrimitive.content, selected.mapped.translationsLanguage)
-			assertNull(selected.mapped.subjectId); assertNull(selected.mapped.policySnapshotToken)
+			assertNull(selected.mapped.policySnapshotToken)
 		}
 	}
 	@Test fun `every malformed shared resource is refused or carries no usable vendor list`() {
@@ -167,7 +167,7 @@ class BundledPolicyTest {
 		assertTrue(queued.isWithdrawal())
 		ConsentCategory.OPTIONAL.forEach { assertFalse(testKernel(config, store, clock, transport).also { k -> k.bootstrap() }.isAllowed(it)) }
 		transport.saveRequests.clear()
-		transport.respondSave(SaveOutcome.Delivered)
+		transport.respondSave(SaveOutcome.Delivered())
 		core.flushPending()
 		assertEquals(listOf(queued.body), transport.saveRequests.map { it.body })
 	}

@@ -30,7 +30,7 @@ data class InitContext(
 )
 
 /**
- * The three async commands the core delegates.
+ * The three commands the core delegates, one per `/v1` route.
  *
  * Implementations must be thread safe. They must not throw for a non-2xx status:
  * report it as [TransportOutcome.HttpFailure] and let the core decide. The core
@@ -41,20 +41,27 @@ data class InitContext(
  */
 @InthInternalApi
 interface InthTransport {
-	/** Fetch policy, location, translations, and any server-side subject id. */
+	/** `GET /v1/consent/init`: policy, location, translations and the vendor list. */
 	fun init(context: InitContext): TransportOutcome
 
-	/** Deliver one queued consent write. [payload] must be sent byte for byte. */
+	/**
+	 * `POST /v1/consent/records`: deliver one queued consent write. [QueuedSave.body] must
+	 * be sent byte for byte. A `200` answers [SaveOutcome.Delivered] with the canonical
+	 * subject id the response named.
+	 */
 	fun save(entry: QueuedSave): SaveOutcome
 
-	/** Attach an external identity to the subject. */
-	fun identify(
+	/**
+	 * `POST /v1/subjects/{id}/link`: link [subject] to [user], proven by [identityToken].
+	 *
+	 * The token is used for this one request and never stored. A `200` answers
+	 * [LinkOutcome.Linked] with the canonical subject id the response named.
+	 */
+	fun link(
 		subject: ConsentSubject,
 		user: KernelUser,
-	): TransportOutcome
-
-	/** Detach the external identity. */
-	fun logout(subject: ConsentSubject): TransportOutcome = TransportOutcome.Success(null, emptyMap())
+		identityToken: String,
+	): LinkOutcome
 
 	companion object {
 		/**
@@ -66,10 +73,11 @@ interface InthTransport {
 
 			override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("no transport configured")
 
-			override fun identify(
+			override fun link(
 				subject: ConsentSubject,
 				user: KernelUser,
-			): TransportOutcome = TransportOutcome.NetworkFailure("no transport configured")
+				identityToken: String,
+			): LinkOutcome = LinkOutcome.Unavailable("no transport configured")
 		}
 	}
 }

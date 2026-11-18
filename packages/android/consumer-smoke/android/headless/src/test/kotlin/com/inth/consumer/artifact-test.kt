@@ -16,7 +16,6 @@ class ArtifactTest {
         }
         assertEquals(expected, metadata.getProperty("version"))
         assertEquals(expected, NativeConfig("https://your-project.inth.app").sdkVersion)
-        assertEquals(expected, InthProtocol.protocolHeaders()[InthProtocol.VERSION_HEADER])
         assertEquals("android->$expected", InthProtocol.protocolHeaders(platform = InthProtocol.PLATFORM_ANDROID)[InthProtocol.PLATFORM_HEADER])
         assertFalse(Inth.isAllowed(ConsentCategory.MARKETING))
     }
