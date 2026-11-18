@@ -24,6 +24,7 @@ export const OPTIONS: Record<keyof ConsentProviderOptions, 'display' | 'key'> =
 		disableAnimation: 'display',
 		enabled: 'key',
 		experiment: 'key',
+		experimentalScriptRegistry: 'key',
 		i18n: 'display',
 		iframeBlocker: 'key',
 		journey: 'key',
