@@ -152,6 +152,7 @@ const primaryActions = function primaryActions(
 							: null
 					"
 					data-testid="consent-banner-root"
+					data-inth-surface="banner"
 					data-inth-streamed=""
 					[inthScrollLock]="presentation().scrollLock"
 				>

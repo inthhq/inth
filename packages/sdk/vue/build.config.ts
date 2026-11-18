@@ -43,6 +43,7 @@ export default defineBuildConfig({
 		'./src/index',
 		'./src/testing',
 		'./src/devtools',
+		'./src/nuxt',
 		'./src/gpp',
 		'./src/engine',
 		'./src/postcss-tailwind3',

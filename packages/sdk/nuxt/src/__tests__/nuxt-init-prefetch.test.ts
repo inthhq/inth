@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, ref } from 'vue';
 import type { App, Ref } from 'vue';
 
-import ConsentBanner from '../runtime/components/prompt.vue';
+import ConsentBanner from '../../../vue/src/runtime/components/prompt.vue';
 import { buildInitPrefetchTag } from '../runtime/server/init-prefetch';
 
 const nuxt = vi.hoisted(() => ({
@@ -144,7 +144,7 @@ const startApp = async function startApp(): Promise<App> {
 			hook: (name: string, callback: () => void) => void;
 			payload: { serverRendered?: boolean };
 		}) => Promise<void>;
-	}>('../runtime/plugin.nuxt');
+	}>('../../../vue/src/runtime/plugin.nuxt');
 	const app = createApp(defineComponent({ render: () => h(ConsentBanner) }));
 	await plugin({ hook: () => undefined, payload: {}, vueApp: app });
 	const container = document.createElement('div');

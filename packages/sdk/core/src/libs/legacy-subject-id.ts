@@ -10,7 +10,21 @@ import type { CookieOptions, StorageConfig } from './cookie';
 import { deleteCookie, getRawCookieValue, getRootDomain } from './cookie';
 import { cookieDomainsOf } from './cookie/domain-utils';
 import { localStorageOf } from './local-storage';
-import { resolveStorageKeys } from './storage-keys';
+import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from './storage-keys';
+
+/**
+ * Where c15t 3.2 stored the visitor's subject ID before any choice:
+ * `c15t-sid` under the default key, which c15t's own default was, else
+ * `<storageKey>-sid`.
+ *
+ * @internal
+ */
+export const legacySubjectIdKey = function legacySubjectIdKey(
+	config: StorageConfig | undefined
+): string {
+	const consent = config?.storageKey || STORAGE_KEY_V2;
+	return `${consent === STORAGE_KEY_V2 ? C15T_STORAGE_KEY : consent}-sid`;
+};
 
 /**
  * The ID a `<key>-sid` copy from c15t 3.2 holds, `null` for none: the cookie
@@ -26,7 +40,7 @@ export const readLegacySubjectId = function readLegacySubjectId(
 	if (typeof document === 'undefined') {
 		return null;
 	}
-	const key = resolveStorageKeys(config).subject;
+	const key = legacySubjectIdKey(config);
 	const raw = getRawCookieValue(key);
 	if (raw) {
 		try {
@@ -67,7 +81,7 @@ export const removeLegacySubjectId = function removeLegacySubjectId(
 	if (typeof document === 'undefined') {
 		return;
 	}
-	const key = resolveStorageKeys(config).subject;
+	const key = legacySubjectIdKey(config);
 	try {
 		const storage = localStorageOf();
 		if (storage?.getItem(key) !== null) {

@@ -255,7 +255,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		// A clear's epoch outlives it and would void the next seed's records.
 		keys.epoch,
 		// A clear keeps the subject ID; the next scenario is a new visitor.
-		keys.subject,
+		`${config.storageKey}-sid`,
 	]) {
 		localStorage.removeItem(key);
 		document.cookie = `${key}=; Max-Age=0; Path=/`;

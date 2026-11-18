@@ -4,6 +4,7 @@
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 	import buttonStyles from '@inth/sdk/ui/styles/components/button';
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
@@ -232,6 +233,7 @@
 				? 'late'
 				: undefined}
 			data-testid="iab-consent-banner-root"
+			{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 			tabindex="-1"
 			use:scrollLock={shouldScrollLock}
 		>

@@ -41,9 +41,9 @@ export { withClientData } from './client-data';
 
 /**
  * Development only: after the first init, warn when the `/init` request the
- * page's HTML started (see `server/init-prefetch.ts`) is still unused. The
- * app asked with other inputs than the server expected, so the page sent
- * two requests.
+ * page's HTML started (`runtime/server/init-prefetch.ts` in `@inth/nuxt`)
+ * is still unused. The app asked with other inputs than the server
+ * expected, so the page sent two requests.
  */
 const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
 	context: Pick<VueConsentKernelContext, 'kernel'>

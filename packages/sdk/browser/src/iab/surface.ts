@@ -1,5 +1,6 @@
 import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
 import type { ConsentRuntimeIABHandle } from '@inth/sdk-core/runtime';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
 import { resolveIABBannerSummary } from '@inth/sdk-iab/headless';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
@@ -303,6 +304,7 @@ export const createIABSurface = (
 					{
 						class: css(classes.dialog.root, classes.dialog.dialogVisible),
 						'data-testid': `${prefix}-root`,
+						[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 						dir,
 						lang: language,
 					},
@@ -323,6 +325,7 @@ export const createIABSurface = (
 						'data-blocking': String(actions.blocking),
 						'data-position': position,
 						'data-testid': `${prefix}-root`,
+						[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 						'data-variant': actions.variant,
 						dir,
 						lang: language,

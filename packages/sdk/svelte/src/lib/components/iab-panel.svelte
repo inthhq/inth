@@ -10,6 +10,7 @@
 		resolveIABDialogDisplayModel,
 	} from '@inth/sdk/iab/headless';
 	import type { HeadlessIABVendorId as VendorId } from '@inth/sdk/iab/headless';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 	import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
@@ -322,6 +323,7 @@
 			class={rootStyle.className || ''}
 			style={toStyleAttributeValue(rootStyle.style)}
 			data-testid="iab-consent-dialog-root"
+			{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 			dir={textDirection}
 		>
 			<!-- A `div`, not a `dialog`: the user agent's dialog padding is

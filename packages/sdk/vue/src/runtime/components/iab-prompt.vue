@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { PresentationAction } from '@inth/sdk/engine';
 import { resolveIABBannerSummary } from '@inth/sdk/iab/headless';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
-import bannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 
 import '@inth/sdk/ui/styles/components/iab-consent-banner.css';
+import bannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { getTextDirection } from '@inth/sdk/ui/utils';
 import { computed, ref, Teleport, Transition, toValue } from 'vue';
 
@@ -244,6 +245,7 @@ useFocusTrap(bannerCard, () => shouldTrapFocus.value);
 					])
 				"
 				data-testid="iab-consent-banner-root"
+				:[SURFACE_ROOT_ATTRIBUTE]="'banner'"
 				:data-entry="entryAttribute"
 				data-position="bottom-left"
 				:dir="textDirection"

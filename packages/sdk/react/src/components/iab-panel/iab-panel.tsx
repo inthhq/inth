@@ -2,6 +2,7 @@
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
 import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -565,6 +566,7 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 				<div
 					{...rootProps}
 					data-testid="iab-consent-dialog-root"
+					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 					dir={textDirection}
 				>
 					{/* A `div`, not a `dialog`: the user agent's dialog padding

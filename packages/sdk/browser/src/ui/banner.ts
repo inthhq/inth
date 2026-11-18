@@ -1,4 +1,5 @@
 import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/styles';
@@ -193,6 +194,7 @@ export const createBanner = function createBanner(
 					'data-blocking': String(actions.blocking),
 					'data-position': position,
 					'data-testid': 'consent-banner-root',
+					[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 					'data-variant': actions.variant,
 					dir: copy.dir,
 					lang: copy.language,

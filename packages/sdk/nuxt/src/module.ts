@@ -21,15 +21,11 @@ import {
 import {
 	DEVTOOLS_ICON_ROUTE,
 	DEVTOOLS_PAGE_ROUTE,
-} from '@inth/vue/runtime/devtools/constants.js';
-import {
 	NUXT_PROJECT_URL_ENV,
 	NUXT_SERVER_PROJECT_URL_ENV,
-} from '@inth/vue/runtime/env-names.js';
-import { readNuxtRoutePrefix } from '@inth/vue/runtime/nuxt-mode.js';
-import type { NuxtMode } from '@inth/vue/runtime/nuxt-mode.js';
-import type { BuiltOptions } from '@inth/vue/runtime/server/build-options.js';
-import type { LegacyProjectUrlEnv } from '@inth/vue/runtime/server/legacy-project-url.js';
+	readNuxtRoutePrefix,
+} from '@inth/vue/nuxt';
+import type { NuxtMode } from '@inth/vue/nuxt';
 import {
 	addComponent,
 	addImports,
@@ -60,6 +56,8 @@ import {
 	preloadDeferredEngine,
 	stopPrefetchingConsentChunks,
 } from './prefetch';
+import type { BuiltOptions } from './runtime/server/build-options';
+import type { LegacyProjectUrlEnv } from './runtime/server/legacy-project-url';
 import {
 	collectStyleSources,
 	preloadInlinedConsentStyles,
@@ -383,8 +381,9 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			options.colorScheme = null;
 		}
 		const resolver = createResolver(import.meta.url);
-		// The runtime (plugins, server handlers, components and composables)
-		// ships in @inth/vue, under its dist/runtime/.
+		// The Nuxt plugins, components and composables run on the Vue runtime
+		// and ship in @inth/vue, under its dist/runtime/. The server routes
+		// and Nitro plugins ship here, under `resolver`'s runtime/.
 		const runtime = createResolver(
 			dirname(createRequire(import.meta.url).resolve('@inth/vue/vite'))
 		);
@@ -458,26 +457,31 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// paths. Registering the resolved runtime directory and its real path
 		// keeps every runtime file inlined regardless of how the package was
 		// reached (the official module template's `transpile.push(runtimeDir)`
-		// pattern, hardened for symlinked installs).
+		// pattern, hardened for symlinked installs). The Vue runtime holds the
+		// plugins and components; this package's holds the server routes.
 		nuxt.options.build.transpile.push('@inth/vue');
-		const runtimeDir = runtime.resolve('./runtime');
-		nuxt.options.build.transpile.push(runtimeDir);
-		try {
-			const realRuntimeDir = realpathSync(runtimeDir);
-			if (realRuntimeDir !== runtimeDir) {
-				nuxt.options.build.transpile.push(realRuntimeDir);
+		for (const runtimeDir of [
+			runtime.resolve('./runtime'),
+			resolver.resolve('./runtime'),
+		]) {
+			nuxt.options.build.transpile.push(runtimeDir);
+			try {
+				const realRuntimeDir = realpathSync(runtimeDir);
+				if (realRuntimeDir !== runtimeDir) {
+					nuxt.options.build.transpile.push(realRuntimeDir);
+				}
+			} catch {
+				// The runtime directory always exists next to the module entry;
+				// realpath can only fail on exotic filesystems — the resolved path
+				// is already registered above.
 			}
-		} catch {
-			// The runtime directory always exists next to the module entry;
-			// realpath can only fail on exotic filesystems — the resolved path
-			// is already registered above.
 		}
 
 		// One catch-all answers `${routePrefix}/init` and
 		// `${routePrefix}/manifest` in `manifest()` mode.
 		if (routePrefix !== undefined) {
 			addServerHandler({
-				handler: runtime.resolve('./runtime/server/consent-route'),
+				handler: resolver.resolve('./runtime/server/consent-route'),
 				route: `${routePrefix}/**`,
 			});
 		}
@@ -578,7 +582,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		};
 		nuxt.options.nitro.virtual['#@inth/sdk/build-options'] = () =>
 			`export default ${JSON.stringify(built)};\n`;
-		addServerPlugin(runtime.resolve('./runtime/server/build-options.nuxt'));
+		addServerPlugin(resolver.resolve('./runtime/server/build-options.nuxt'));
 		// The stock banner's own files, from the client manifest
 		// (`build:manifest` below runs before Nitro builds). The plugin
 		// preloads them at low priority.
@@ -593,12 +597,12 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		nuxt.options.nitro.virtual['#inth/legacy-project-url-env'] = () =>
 			`export default ${JSON.stringify(legacyEnv)};\n`;
 		addServerPlugin(
-			runtime.resolve('./runtime/server/legacy-project-url.nuxt')
+			resolver.resolve('./runtime/server/legacy-project-url.nuxt')
 		);
 		if (initPrefetch !== false) {
 			// Starts `/init` from the HTML of `ssr: false` pages, before the
 			// app's JavaScript loads.
-			addServerPlugin(runtime.resolve('./runtime/server/init-prefetch.nuxt'));
+			addServerPlugin(resolver.resolve('./runtime/server/init-prefetch.nuxt'));
 			// The plugin reads `app.config.ts` through this virtual, not
 			// `#imports`, which Nuxt 5 stops providing to server code. Nuxt 4
 			// builds the merged config as `#internal/nuxt/app-config`; Nuxt 3

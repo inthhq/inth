@@ -567,25 +567,12 @@ interface Target {
 }
 
 /**
- * Resolves the server-side consent state for one request.
- *
- * Never throws and never rejects: an unresolvable URL, a target on the
- * app's own consent routes, a failed or slow upstream all return the
- * request-only state, and `onError` hears about it.
- *
- * @returns The JSON-serializable state the client hydrates from.
- * @example
- * ```ts
- * const state = await resolveRequestConsent({
- *   adapter: '@c15t/example',
- *   projectUrl: 'https://consent.example.com',
- *   mode: 'manifest',
- *   request: { headers: request.headers, url: request.url },
- * });
- * ```
+ * {@link resolveRequestConsent}, telling `onHostedAnswer` what a hosted
+ * `/init` answered.
  */
-export const resolveRequestConsent = async function resolveRequestConsent(
-	options: ResolveRequestConsentOptions
+const resolveRequest = async function resolveRequest(
+	options: ResolveRequestConsentOptions,
+	onHostedAnswer?: (answer: RequestInitAnswer) => void
 ): Promise<RequestConsentState> {
 	const { inputs, state: base } = readRequestConsent(options);
 	const mode = resolveMode(options);
@@ -1015,6 +1002,12 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 					error
 				);
 			}
+			onHostedAnswer?.({
+				init: payload,
+				requestHeaders: { ...headers },
+				responseHeaders: response.headers,
+				url: target.url,
+			});
 			// A reference makes the browser ask the same `/init` for the list;
 			// it cannot replay a caller's fetch, cookie or private headers.
 			const deferred =
@@ -1098,4 +1091,84 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		);
 		return carry(base);
 	}
+};
+
+/**
+ * Resolves the server-side consent state for one request.
+ *
+ * Never throws and never rejects: an unresolvable URL, a target on the
+ * app's own consent routes, a failed or slow upstream all return the
+ * request-only state, and `onError` hears about it.
+ *
+ * @returns The JSON-serializable state the client hydrates from.
+ * @example
+ * ```ts
+ * const state = await resolveRequestConsent({
+ *   adapter: '@c15t/example',
+ *   projectUrl: 'https://consent.example.com',
+ *   mode: 'manifest',
+ *   request: { headers: request.headers, url: request.url },
+ * });
+ * ```
+ */
+export const resolveRequestConsent = function resolveRequestConsent(
+	options: ResolveRequestConsentOptions
+): Promise<RequestConsentState> {
+	return resolveRequest(options);
+};
+
+/** What the backend's `/init` answered a hosted request, unmapped. */
+export interface RequestInitAnswer {
+	/** The response body. */
+	init: InitOutput;
+	/** The URL asked, or the path for an in-process route. */
+	url: string;
+	/** The headers sent upstream, after the forwarding rule. */
+	requestHeaders: Readonly<Record<string, string>>;
+	/** The response's headers: cache status, the producer's contract. */
+	responseHeaders: Headers;
+}
+
+/** Configuration for {@link fetchRequestInit}: the hosted subset. */
+export type FetchRequestInitOptions = Omit<
+	ResolveRequestConsentOptions,
+	| 'cache'
+	| 'cookieNames'
+	| 'fetchGvl'
+	| 'gvlRoute'
+	| 'manifest'
+	| 'manifestFetchInit'
+	| 'manifestUrl'
+	| 'mode'
+	| 'offline'
+	| 'seed'
+>;
+
+/**
+ * Asks the backend's `/init` for one request, as
+ * {@link resolveRequestConsent} does in hosted mode (the same target,
+ * forwarding and budget rules), and returns the answer as received rather
+ * than folded into a consent state.
+ *
+ * Never throws: when nothing was fetched or the request failed, it returns
+ * `undefined` and `onError` hears why.
+ *
+ * @returns The answer, or `undefined`.
+ * @example
+ * ```ts
+ * const answer = await fetchRequestInit({
+ *   adapter: '@inth/react',
+ *   projectUrl: 'https://consent.example.com',
+ *   request: { headers: request.headers },
+ * });
+ * ```
+ */
+export const fetchRequestInit = async function fetchRequestInit(
+	options: FetchRequestInitOptions
+): Promise<RequestInitAnswer | undefined> {
+	let answer: RequestInitAnswer | undefined;
+	await resolveRequest({ ...options, mode: 'hosted' }, (received) => {
+		answer = received;
+	});
+	return answer;
 };

@@ -9,6 +9,7 @@ import { makePolicy } from '../../../consent-record/__tests__/fixtures';
 import { evaluateConsentRecord } from '../../../consent-record/evaluate';
 import type { ChoiceBasis } from '../../../consent-record/types';
 import { setCookie } from '../../../libs/cookie';
+import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
 import {
 	C15T_STORAGE_KEY,
 	STORAGE_KEY,
@@ -471,9 +472,10 @@ describe('raw candidate reading', () => {
 			noticeCookieMiss: 'custom-key-notice-cookie-miss',
 			noticeSubject: 'custom-key-notice-subject',
 			privacy: 'custom-key-privacy',
-			subject: 'custom-key-sid',
 			vendors: 'custom-key-vendors',
 		});
+		expect(legacySubjectIdKey(config)).toBe('custom-key-sid');
+		expect(legacySubjectIdKey(undefined)).toBe('c15t-sid');
 	});
 
 	it('falls back to c15t only under the default key', () => {

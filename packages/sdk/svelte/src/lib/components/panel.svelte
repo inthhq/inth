@@ -4,6 +4,7 @@
 		defaultTranslationConfig,
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 	import {
@@ -213,6 +214,7 @@
 				aria-describedby="consent-dialog-description"
 				data-blocking={preferences.blocking ? 'true' : undefined}
 				data-testid="consent-dialog-root"
+				{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 				onkeydown={handleControlledDismiss}
 			>
 				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->

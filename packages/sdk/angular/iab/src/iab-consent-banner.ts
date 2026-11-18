@@ -93,6 +93,7 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 							: null
 					"
 					data-testid="iab-consent-banner-root"
+					data-inth-surface="banner"
 					data-inth-streamed=""
 					tabindex="-1"
 					[inthScrollLock]="presentation().blocking"

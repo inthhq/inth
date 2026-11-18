@@ -2,6 +2,7 @@
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
 import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
 import {
@@ -213,6 +214,7 @@ const ConsentBannerRootChildren = createForwardRef<
 					data-model={policy.model}
 					data-entry={lateEntry ? 'late' : undefined}
 					data-testid="consent-banner-root"
+					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 					dir={textDirection}
 				>
 					{children}

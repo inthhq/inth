@@ -97,34 +97,52 @@ describe('fetchSSRData', () => {
 		});
 	});
 
-	it.each([undefined, '3.0.0-proxy'])(
-		'sends the incoming version %s or the package version on init',
-		async (incomingVersion) => {
-			const fetchMock = vi
-				.fn()
-				.mockResolvedValue(createResponse({ categories: [], gvl: null }));
-			vi.stubGlobal('fetch', fetchMock);
+	it('sends the SDK version and policy contract, and returns the producer contract', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(JSON.stringify({ categories: [], gvl: null }), {
+				headers: { 'x-c15t-policy-contract': '2' },
+				status: 200,
+			})
+		);
+		vi.stubGlobal('fetch', fetchMock);
 
-			const requestHeaders = createRequestHeaders();
-			if (incomingVersion !== undefined) {
-				requestHeaders.set('x-c15t-version', incomingVersion);
-			}
+		const result = await fetchSSRData({
+			headers: createRequestHeaders(),
+			projectUrl: 'https://consent.example.com/api/inth',
+		});
 
-			await fetchSSRData({
-				headers: requestHeaders,
-				projectUrl: 'https://consent.example.com/api/inth',
-			});
+		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
+			string,
+			string
+		>;
+		expect(fetchMock.mock.calls[0]?.[0]).toBe(
+			'https://consent.example.com/api/inth/init'
+		);
+		expect(sent['x-c15t-version']).toBe(version);
+		expect(sent['x-c15t-policy-contract']).toMatch(/^\d+$/u);
+		expect(result?.producerPolicyContract).toBe('2');
+	});
 
-			expect(fetchMock).toHaveBeenCalledWith(
-				'https://consent.example.com/api/inth/init',
-				expect.objectContaining({
-					headers: expect.objectContaining({
-						'x-c15t-version': incomingVersion ?? version,
-					}),
-				})
-			);
-		}
-	);
+	it('forwards the prefetch markers, so the backend can tell a prefetch from a view', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+		const headers = createRequestHeaders();
+		headers.set('sec-purpose', 'prefetch');
+
+		await fetchSSRData({
+			headers,
+			projectUrl: 'https://consent.example.com/api/inth',
+		});
+
+		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
+			string,
+			string
+		>;
+		expect(sent['sec-purpose']).toBe('prefetch');
+		expect(sent['x-c15t-country']).toBe('US');
+	});
 
 	it('resolves a relative projectUrl against host, not a forged x-forwarded-host', async () => {
 		const fetchMock = vi

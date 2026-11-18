@@ -9,6 +9,7 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
+import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { createClearOnRevocation } from '../../clear-on-revocation';
@@ -349,7 +350,7 @@ test.each([
 		kernel.dispose();
 		localStorage.clear();
 		// Without `<key>-sid` only the companion could name the visitor.
-		document.cookie = `${resolveStorageKeys().subject}=; max-age=0; path=/`;
+		document.cookie = `${legacySubjectIdKey(undefined)}=; max-age=0; path=/`;
 		await vi.advanceTimersByTimeAsync(1);
 		if (change === 'absent') {
 			document.cookie = `${key}=; max-age=0; path=/`;
@@ -684,7 +685,7 @@ test.each(['notice-subject', 'all'] as const)(
 		handle.dispose();
 		kernel.dispose();
 		expect(getRawCookieValue(keys.noticeSubject)).toContain(`sid=${startup}`);
-		expect(getRawCookieValue(keys.subject)).toBeNull();
+		expect(getRawCookieValue(legacySubjectIdKey(undefined))).toBeNull();
 
 		// The server renders from the cookies alone, so the render still
 		// names the startup ID.
@@ -706,8 +707,8 @@ test.each(['notice-subject', 'all'] as const)(
 		});
 		expect(seeded.getSnapshot().subject?.subjectId).toBe('canonical');
 		expect(seeded.getSnapshot().explicitChoice).toBeNull();
-		expect(localStorage.getItem(keys.subject)).toBeNull();
-		expect(getRawCookieValue(keys.subject)).toBeNull();
+		expect(localStorage.getItem(legacySubjectIdKey(undefined))).toBeNull();
+		expect(getRawCookieValue(legacySubjectIdKey(undefined))).toBeNull();
 		seededHandle.dispose();
 		seeded.dispose();
 
@@ -772,7 +773,6 @@ test('dismissing a notice keeps a server-seeded subject over an older stored not
 // ID, like a choice or vendor record would be, so another tab's ID does
 // not replace it.
 test('a reset ID a notice acknowledgement carries does not follow another tab', async () => {
-	const keys = resolveStorageKeys();
 	const sent: (string | undefined)[] = [];
 	const initialPolicyResolution = matchedResolution(noticeRule());
 	const kernel = createConsentKernel({
@@ -798,9 +798,11 @@ test('a reset ID a notice acknowledgement carries does not follow another tab', 
 	expect(notice?.ok && notice.record.subject?.subjectId).toBe(reset);
 
 	// Another tab stores a different ID.
-	localStorage.setItem(keys.subject, 'sub_other_tab');
-	document.cookie = `${keys.subject}=sub_other_tab; path=/`;
-	window.dispatchEvent(new StorageEvent('storage', { key: keys.subject }));
+	localStorage.setItem(legacySubjectIdKey(undefined), 'sub_other_tab');
+	document.cookie = `${legacySubjectIdKey(undefined)}=sub_other_tab; path=/`;
+	window.dispatchEvent(
+		new StorageEvent('storage', { key: legacySubjectIdKey(undefined) })
+	);
 	window.dispatchEvent(new Event('focus'));
 	await vi.advanceTimersByTimeAsync(0);
 	expect(kernel.getSnapshot().subject?.subjectId).toBe(reset);
@@ -874,8 +876,8 @@ test.each([
 		const local = { ...identity, subjectId: 'sub_local' };
 		writeStoredNoticeDismissal({ ...record, subject: local }, undefined, now);
 		dropped.mockRestore();
-		document.cookie = `${keys.subject}=; max-age=0; path=/`;
-		localStorage.removeItem(keys.subject);
+		document.cookie = `${legacySubjectIdKey(undefined)}=; max-age=0; path=/`;
+		localStorage.removeItem(legacySubjectIdKey(undefined));
 
 		const { state } = readRequestConsent({
 			adapter: '@c15t/test',
@@ -991,7 +993,7 @@ test.each([
 			return { hydrated: id, rendered: render()?.subject?.subjectId };
 		};
 		const sync = async () => {
-			for (const key of [keys.notice, keys.subject]) {
+			for (const key of [keys.notice, legacySubjectIdKey(undefined)]) {
 				window.dispatchEvent(new StorageEvent('storage', { key }));
 			}
 			window.dispatchEvent(new Event('focus'));
@@ -1126,8 +1128,8 @@ test.each([
 			now
 		);
 		// A copy c15t 3.2 stored before any choice. Nothing reads it now.
-		localStorage.setItem(keys.subject, 'sub_a');
-		document.cookie = `${keys.subject}=sub_a; path=/`;
+		localStorage.setItem(legacySubjectIdKey(undefined), 'sub_a');
+		document.cookie = `${legacySubjectIdKey(undefined)}=sub_a; path=/`;
 		const sent: unknown[] = [];
 		const createTab = () =>
 			createConsentKernel({
@@ -1233,7 +1235,11 @@ const settleAll = async (pending?: Promise<unknown>) => {
 };
 const syncTab = async () => {
 	const keys = resolveStorageKeys();
-	for (const key of [keys.consent, keys.notice, keys.subject]) {
+	for (const key of [
+		keys.consent,
+		keys.notice,
+		legacySubjectIdKey(undefined),
+	]) {
 		window.dispatchEvent(new StorageEvent('storage', { key }));
 	}
 	window.dispatchEvent(new Event('focus'));
@@ -1249,7 +1255,6 @@ test.each([
 ] as const)(
 	'a seed from elsewhere keeps its linked account for the stored ID over %s',
 	async (_, stored) => {
-		const keys = resolveStorageKeys();
 		const now = Date.now();
 		const initialPolicyResolution = matchedResolution(noticeRule());
 		const { categories } = explicitChoice(
@@ -1260,8 +1265,8 @@ test.each([
 			{ categories, subject: stored, version: 3 },
 			{ now }
 		);
-		localStorage.setItem(keys.subject, 'sub_s');
-		document.cookie = `${keys.subject}=sub_s; path=/`;
+		localStorage.setItem(legacySubjectIdKey(undefined), 'sub_s');
+		document.cookie = `${legacySubjectIdKey(undefined)}=sub_s; path=/`;
 		// A seed read from those cookies adds nothing to storage: storage
 		// starts it, as before.
 		const { state } = readRequestConsent({

@@ -1,7 +1,6 @@
 import type { OptionalConsentCategory } from '../../consent-record/types';
 import type { cookieDomainsOf } from '../../libs/cookie/domain-utils';
 import type { StorageConfig } from '../../libs/cookie/types';
-import type { ownedStorageKeys } from '../../libs/storage-keys';
 import type { ConsentKernel } from '../../types';
 import type { getEffectiveGateState } from '../has';
 
@@ -58,5 +57,5 @@ export interface ClearOnRevocationTools {
 	gateState: typeof getEffectiveGateState;
 	optionalConsentCategories: readonly OptionalConsentCategory[];
 	/** `ownedStorageKeys`: the names cleanup never deletes. */
-	ownedStorageKeys: typeof ownedStorageKeys;
+	ownedStorageKeys: (config?: StorageConfig) => string[];
 }

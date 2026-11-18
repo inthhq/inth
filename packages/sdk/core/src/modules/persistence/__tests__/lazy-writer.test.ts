@@ -25,6 +25,7 @@ import {
 	PENDING_SAVES_STORAGE_KEY,
 	STORAGE_KEY_V2,
 } from '../../../libs/storage-keys';
+import { SURFACE_ROOT_ATTRIBUTE } from '../../../runtime/page-globals';
 import type { SaveResult } from '../../../types';
 import { watchRevocationReload } from '../../revocation-reload';
 import { createScriptLoader } from '../../script-loader';
@@ -961,10 +962,12 @@ describe('before the write code lands', () => {
 		});
 		createPersistence({ kernel }, loader);
 		const banner = document.createElement('div');
-		banner.dataset.testid = 'consent-banner-root';
+		banner.setAttribute(SURFACE_ROOT_ATTRIBUTE, 'banner');
 		const button = document.createElement('button');
 		banner.append(button);
 		const outside = document.createElement('button');
+		// A test id alone does not mark a surface.
+		outside.dataset.testid = 'consent-banner-root';
 		document.body.append(banner, outside);
 		try {
 			// Before a banner is shown, a press does nothing.
@@ -1002,7 +1005,7 @@ describe('before the write code lands', () => {
 		createPersistence({ kernel }, loader);
 		kernel.markLive();
 		const dialog = document.createElement('div');
-		dialog.dataset.testid = 'iab-consent-dialog-root';
+		dialog.setAttribute(SURFACE_ROOT_ATTRIBUTE, 'dialog');
 		const toggle = document.createElement('input');
 		dialog.append(toggle);
 		document.body.append(dialog);

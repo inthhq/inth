@@ -39,27 +39,9 @@ export default mergeConfig(
 					),
 				},
 				{
-					'#@inth/sdk/server-app-config': resolve(
-						__dirname,
-						'./src/__tests__/server-app-config.ts'
-					),
-				},
-				{
-					'#@inth/sdk/build-options': resolve(
-						__dirname,
-						'./src/__tests__/build-options-virtual.ts'
-					),
-				},
-				{
 					'#inth/banner-preload-files': resolve(
 						__dirname,
 						'./src/__tests__/banner-preload-files-virtual.ts'
-					),
-				},
-				{
-					'#inth/legacy-project-url-env': resolve(
-						__dirname,
-						'./src/__tests__/legacy-project-url-env-virtual.ts'
 					),
 				},
 				{
@@ -68,10 +50,6 @@ export default mergeConfig(
 						'./src/__tests__/manifest-snapshot.ts'
 					),
 					'#inth/client-manifest-snapshot': resolve(
-						__dirname,
-						'./src/__tests__/manifest-snapshot.ts'
-					),
-					'#inth/manifest-snapshot': resolve(
 						__dirname,
 						'./src/__tests__/manifest-snapshot.ts'
 					),

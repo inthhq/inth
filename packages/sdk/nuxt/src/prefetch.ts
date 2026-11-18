@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
+import { CORE_CHUNK_MODULES, coreModuleFile } from '@inth/sdk/build';
+
 import { GLOBAL_COMPONENTS } from './global-components';
 
 /**
@@ -26,7 +28,9 @@ export interface ClientManifestChunk {
  * resolver keep their hints only when the build uses them; see
  * {@link IAB_FIRST_BANNER_SOURCES} and {@link BROWSER_RESOLVER_SOURCE}.
  */
-const FIRST_BANNER_SOURCES = ['/dist/libs/experiment-assignment.js'];
+const FIRST_BANNER_SOURCES = [
+	coreModuleFile(CORE_CHUNK_MODULES.experimentAssignment),
+];
 
 /**
  * The IAB banner and its CMP, kept like {@link FIRST_BANNER_SOURCES} only
@@ -35,7 +39,7 @@ const FIRST_BANNER_SOURCES = ['/dist/libs/experiment-assignment.js'];
 const IAB_FIRST_BANNER_SOURCES = [
 	'/iab/dist/headless.js',
 	'/iab/dist/index.js',
-	'/dist/libs/iab-banner-summary.js',
+	coreModuleFile(CORE_CHUNK_MODULES.iabBannerSummary),
 	'/dist/runtime/components/iab-prompt.vue',
 ];
 
@@ -45,7 +49,9 @@ const IAB_FIRST_BANNER_SOURCES = [
  * starts; no other mode loads it at all, so a hint there would download it
  * on every page for nothing.
  */
-const BROWSER_RESOLVER_SOURCE = '/dist/transports/manifest-browser.js';
+const BROWSER_RESOLVER_SOURCE = coreModuleFile(
+	CORE_CHUNK_MODULES.browserResolver
+);
 
 /** What the Nuxt module knows about the build when it edits the manifest. */
 export interface ConsentPrefetchOptions {

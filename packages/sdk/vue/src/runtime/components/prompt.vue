@@ -4,6 +4,7 @@ import type {
 	PromptPosition,
 	PromptVariant,
 } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
 import {
 	resolveActionLabels,
@@ -249,6 +250,7 @@ const onAction = function onAction(action: PresentationAction) {
 					])
 				"
 				data-testid="consent-banner-root"
+				:[SURFACE_ROOT_ATTRIBUTE]="'banner'"
 				:data-entry="entryAttribute"
 				:data-variant="variant"
 				:data-position="position"

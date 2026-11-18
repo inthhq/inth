@@ -1,4 +1,5 @@
 import { insertPrefetchScript } from '@inth/sdk/engine';
+import type { RuntimeConsentConfig } from '@inth/vue/nuxt';
 /**
  * Nitro plugin: writes the `/init` script into the HTML shell of every
  * `ssr: false` page (see `./init-prefetch`). The module registers it unless
@@ -18,7 +19,6 @@ import {
 
 import { useServerAppConfig } from '#@inth/sdk/server-app-config';
 
-import type { RuntimeConsentConfig } from '../kernel';
 import { buildInitPrefetchTag } from './init-prefetch';
 import type { InitPrefetchRouteRule } from './init-prefetch';
 

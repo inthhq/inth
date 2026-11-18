@@ -1,5 +1,3 @@
-import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
-
 import type { StorageConfig } from './cookie';
 
 /** Default consent storage key. */
@@ -64,13 +62,6 @@ export interface StorageKeyFamily {
 /** The storage keys one configuration resolves to. */
 export interface ResolvedStorageKeys extends StorageKeyFamily {
 	/**
-	 * Where c15t 3.2 stored the visitor's subject ID before any choice:
-	 * `c15t-sid` under the default key, which c15t's own default was, else
-	 * `<storageKey>-sid`. Nothing writes it now; startup and `clear()`
-	 * remove a copy c15t left.
-	 */
-	subject: string;
-	/**
 	 * Families another or an earlier store wrote, in the order they are
 	 * read: c15t's under the default key, then the pre-1.8 consent key. The
 	 * consent record, the notice dismissal and the vendor denials each fall
@@ -109,11 +100,7 @@ export const resolveStorageKeys = function resolveStorageKeys(
 		...(consent === STORAGE_KEY_V2 ? [C15T_STORAGE_KEY] : []),
 		...(consent === STORAGE_KEY ? [] : [STORAGE_KEY]),
 	];
-	return {
-		...familyOf(consent),
-		legacy: legacy.map(familyOf),
-		subject: `${consent === STORAGE_KEY_V2 ? C15T_STORAGE_KEY : consent}-sid`,
-	};
+	return { ...familyOf(consent), legacy: legacy.map(familyOf) };
 };
 
 /**
@@ -125,30 +112,8 @@ export const resolveStorageKeys = function resolveStorageKeys(
 export const storageKeyFamilies = function storageKeyFamilies(
 	keys: ResolvedStorageKeys
 ): StorageKeyFamily[] {
-	const { legacy, subject: _subject, ...configured } = keys;
+	const { legacy, ...configured } = keys;
 	return [configured, ...legacy];
-};
-
-/**
- * Every name Inth stores under for `config`, the legacy families and the
- * fixed keys included: what revocation cleanup never deletes.
- *
- * @returns Cookie and localStorage names.
- */
-export const ownedStorageKeys = function ownedStorageKeys(
-	config?: StorageConfig
-): string[] {
-	const keys = resolveStorageKeys(config);
-	return [
-		...storageKeyFamilies(keys).flatMap((family) => Object.values(family)),
-		keys.subject,
-		PENDING_SAVES_STORAGE_KEY,
-		SUBJECT_REASSIGNMENTS_STORAGE_KEY,
-		EXPERIMENT_STORAGE_KEY,
-		// The IAB addon's records, which revocation cleanup keeps without
-		// loading the addon.
-		...Object.values(IAB_STORAGE_KEYS),
-	];
 };
 
 /**

@@ -11,7 +11,7 @@
  *
  * @internal
  */
-import type { NuxtMode } from '../nuxt-mode';
+import type { NuxtMode } from '@inth/vue/nuxt';
 
 /** The options the build used. */
 export interface BuiltOptions {
