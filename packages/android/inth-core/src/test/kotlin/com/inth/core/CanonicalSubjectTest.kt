@@ -15,6 +15,7 @@ import com.inth.core.transport.SaveOutcome
 import com.inth.core.transport.TransportOutcome
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -209,6 +210,18 @@ class CanonicalSubjectTest {
 		val save = http.requests.single { it.url.endsWith("/v1/consent/records") }
 		assertTrue("secret-token" !in assertNotNull(save.body), "the token never goes into a save body")
 		assertTrue("\"externalId\":\"user 1\"" in save.body!!)
+	}
+
+	@Test
+	fun `a save is sent even when a snapshot observer throws`() {
+		val transport = RecordingTransport().respondInit(initSuccess())
+		val core = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
+		core.bootstrap()
+		core.onChange { throw IllegalStateException("host observer") }
+
+		assertFailsWith<IllegalStateException> { core.save(CommitIntent.All) }
+
+		assertEquals(1, transport.saveRequests.size, "the durable entry still goes out")
 	}
 
 	private companion object {
