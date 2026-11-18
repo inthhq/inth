@@ -1473,7 +1473,7 @@ describe('HubSpot external installation compatibility', () => {
 			expect(api.widget.load).not.toHaveBeenCalled();
 			expect(document.getElementById('hs-script-loader')).toBe(existing);
 			expect(console.warn).toHaveBeenCalledExactlyOnceWith(
-				'hubspot: #hs-script-loader has an incompatible URL or nonce. Consent forwarding and automatic chat will not start. Remove the other installation and reload.'
+				'hubspot: #hs-script-loader has an incompatible URL, nonce or integrity. Consent forwarding and automatic chat will not start. Remove the other installation and reload.'
 			);
 		}
 	);

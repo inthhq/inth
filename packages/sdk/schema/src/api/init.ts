@@ -6,6 +6,7 @@ import { globalVendorListSchema } from '../shared/gvl';
 import { hostingSchema } from '../shared/hosting';
 import { nonIABVendorSchema } from '../shared/non-iab-vendor';
 import { policyResolutionWireSchema } from '../shared/policy-wire-schema';
+import { scriptRegistrySchema } from '../shared/script-sources';
 import { vendorSchema } from '../shared/vendor';
 
 /**
@@ -175,6 +176,12 @@ export const initOutputSchema = v.object({
 	resolvedPrivacySignals: v.optional(
 		v.object({ gpc: v.optional(v.boolean()) })
 	),
+	/**
+	 * What the Inth script registry tells c15t, such as where it serves
+	 * each script, copied from the manifest. Absent from backends without a
+	 * registry.
+	 */
+	scriptRegistry: scriptRegistrySchema,
 	translations: v.object({
 		language: v.string(),
 		translations: translationsSchema,

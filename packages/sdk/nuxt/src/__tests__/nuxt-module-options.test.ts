@@ -90,6 +90,14 @@ describe('colorScheme from the c15t config key', () => {
 	});
 });
 
+test('experimentalScriptRegistry reaches the public runtime config the plugin reads', async () => {
+	const config = await publicConfig({
+		experimentalScriptRegistry: true,
+		projectUrl: '/api/c15t',
+	});
+	expect(config).toHaveProperty('experimentalScriptRegistry', true);
+});
+
 describe('projectUrl in the public runtime config', () => {
 	test('is stored under backendURL, the key NUXT_PUBLIC_C15T_BACKEND_URL replaces', async () => {
 		// Nuxt maps a NUXT_PUBLIC_* variable onto the key its name spells.

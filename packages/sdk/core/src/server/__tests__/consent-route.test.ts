@@ -428,6 +428,23 @@ describe('manifest route', () => {
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
+	test("copies the manifest's script registry list onto the init it serves", async () => {
+		const scriptSources = {
+			posthog: {
+				integrity: 'sha384-posthog',
+				src: 'https://acme.inth.app/scripts/posthog@0123456789abcdef.js',
+			},
+		};
+		const handle = route({
+			fetch: upstream(),
+			manifest: { ...MANIFEST, scriptRegistry: { sources: scriptSources } },
+		});
+		const init = await handle(request('/api/c15t/init'), {
+			inputs: { country: 'DE' },
+		});
+		expect((await init.json()).scriptRegistry?.sources).toEqual(scriptSources);
+	});
+
 	test('serves an inline manifest without fetching', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch, manifest: MANIFEST });
@@ -1298,6 +1315,26 @@ describe('/init fallback for a backend without /manifest', () => {
 			vendors: [acmeVendor],
 		});
 		expect(body).not.toHaveProperty('jurisdiction');
+	});
+
+	test('keeps the script registry list from backend /init', async () => {
+		const scriptSources = {
+			posthog: {
+				integrity: 'sha384-posthog',
+				src: 'https://acme.inth.app/scripts/posthog@0123456789abcdef.js',
+			},
+		};
+		const fetch = backendInit({
+			location: { countryCode: 'DE', regionCode: null },
+			scriptRegistry: { sources: scriptSources },
+			translations: { language: 'en', translations: {} },
+		});
+		const response = await route({ fetch })(
+			request('/api/c15t/init', { headers: { 'x-c15t-country': 'DE' } })
+		);
+		expect((await response.json()).scriptRegistry?.sources).toEqual(
+			scriptSources
+		);
 	});
 
 	test('keeps a deferred vendor list from the backend', async () => {

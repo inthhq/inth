@@ -179,6 +179,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		createIAB: context.createIAB,
 		enabled: options.enabled,
 		experiment: options.experiment,
+		experimentalScriptRegistry: options.experimentalScriptRegistry,
 		gpp: options.gpp ?? context.defaultGPP,
 		i18n: options.i18n,
 		iab: context.createIAB ? (options.iab ?? { enabled: true }) : undefined,

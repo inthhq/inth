@@ -303,6 +303,54 @@ describe('provideC15tServer', () => {
 		const fresh = await render({ mode: testing(), scripts });
 		expect(fresh).not.toContain('pixel.js');
 	});
+
+	test('starts an integration from the registry source the manifest lists with experimentalScriptRegistry', async () => {
+		const registrySrc =
+			'https://acme.inth.app/scripts/pixel@0123456789abcdef.js';
+		const route = createConsentRoute({
+			snapshot: {
+				...MANIFEST_FIXTURE,
+				scriptRegistry: {
+					sources: {
+						pixel: { integrity: 'sha384-registry', src: registrySrc },
+					},
+				},
+			},
+		});
+		// The URL and attributes the server start inserts the pixel's tag with.
+		const started = async (experimentalScriptRegistry?: boolean) => {
+			const html = await render(
+				{
+					experimentalScriptRegistry,
+					mode: hosted({ projectUrl: '/api/c15t' }),
+					projectUrl: '/api/c15t',
+					scripts: [
+						{
+							category: 'necessary',
+							id: 'pixel',
+							integration: 'pixel',
+							serverStart: () => ({ code: '' }),
+							src: 'https://cdn.example/pixel.js',
+						},
+					],
+				},
+				{ route }
+			);
+			return {
+				...(/i\("pixel",(?<src>"[^"]+")(?:,\{"attributes":(?<attributes>\{[^}]*\}))?/u.exec(
+					html
+				)?.groups ?? {}),
+			};
+		};
+
+		expect(await started(true)).toEqual({
+			attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
+			src: JSON.stringify(registrySrc),
+		});
+		expect((await started()).src).toBe(
+			JSON.stringify('https://cdn.example/pixel.js')
+		);
+	});
 });
 
 describe('the early-tap script', () => {

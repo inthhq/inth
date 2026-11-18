@@ -38,6 +38,7 @@ import {
 	normalizeKernelUser,
 	requireTransportFactory,
 } from './runtime-kernel';
+import { scriptRegistry } from './script-registry';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
@@ -547,6 +548,7 @@ export const createConsentProviderRuntime =
 				normalizeKernelUser,
 				notHeld: NOT_HELD,
 				resolveVendors,
+				scriptRegistry,
 			},
 		};
 		/**

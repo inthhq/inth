@@ -6,9 +6,13 @@
  */
 import { ChangeDetectionStrategy, Component, CSP_NONCE } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { KernelTransport } from '@inth/sdk/engine';
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 
-import { offlineMode } from '../../__tests__/fixtures/transport-mode';
+import {
+	offlineMode,
+	transportMode,
+} from '../../__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE, testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from './consent-manager';
 import type { C15tOptions, C15tProviderOptions } from './options';
@@ -217,6 +221,73 @@ test('clearOnRevocation clears the configured storage when permission is revoked
 		localStorage.removeItem('analytics:visitor');
 		localStorage.removeItem('application:setting');
 	}
+});
+
+describe('experimentalScriptRegistry', () => {
+	const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
+	const REGISTRY_SRC =
+		'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
+	const REGISTRY_INTEGRITY =
+		'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+
+	/** Boots an app whose init lists the registry's copy of an integration. */
+	const loadedTag = async (experimentalScriptRegistry?: boolean) => {
+		TestBed.configureTestingModule({
+			providers: [
+				provideC15t({
+					...testOptions(),
+					experimentalScriptRegistry,
+					mode: transportMode({
+						init: () =>
+							Promise.resolve({
+								scriptRegistry: {
+									sources: {
+										vendor: {
+											integrity: REGISTRY_INTEGRITY,
+											src: REGISTRY_SRC,
+										},
+									},
+								},
+							}),
+						save: () => Promise.resolve({ ok: true }),
+					} as unknown as KernelTransport),
+					reloadOnConsentRevoked: false,
+					// A script `@inth/integrations` built, which loads without consent.
+					scripts: [
+						{
+							category: 'necessary',
+							id: 'vendor',
+							integration: 'vendor',
+							src: VENDOR_SRC,
+						},
+					],
+				} as C15tProviderOptions),
+			],
+		});
+		const fixture = TestBed.createComponent(TestApp);
+		await fixture.whenStable();
+		TestBed.inject(ConsentManager);
+		const tag = () =>
+			document.head.querySelector<HTMLScriptElement>(
+				`script[src="${REGISTRY_SRC}"], script[src="${VENDOR_SRC}"]`
+			);
+		await vi.waitFor(() => expect(tag()).not.toBeNull());
+		return {
+			integrity: tag()?.getAttribute('integrity'),
+			src: tag()?.getAttribute('src'),
+		};
+	};
+
+	test('loads an integration from the registry source init lists', async () => {
+		expect(await loadedTag(true)).toEqual({
+			integrity: REGISTRY_INTEGRITY,
+			src: REGISTRY_SRC,
+		});
+	});
+
+	test('loads the vendor URL without it', async () => {
+		expect(await loadedTag()).toEqual({ integrity: null, src: VENDOR_SRC });
+	});
 });
 
 describe('callbacks', () => {

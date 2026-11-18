@@ -54,6 +54,16 @@ export interface ScriptCallbackInfo {
 	 */
 	readonly afterReplacement?: (effect: () => void) => void;
 
+	/**
+	 * Report that a file a callback-only script inserted itself failed to
+	 * load, such as a copy that failed its integrity check. Runs this
+	 * registration's `onError` with `error`. Does nothing once the
+	 * registration is gone. Non-enumerable.
+	 * @param error - Why the file failed.
+	 * @internal
+	 */
+	readonly reportLoadError?: (error: Error) => void;
+
 	/** The original script ID */
 	id: string;
 
@@ -79,6 +89,15 @@ export interface ScriptCallbackInfo {
 	 * Will be undefined for callback-only scripts
 	 */
 	element?: HTMLScriptElement;
+
+	/**
+	 * Where a script with a `src` loads its file from, after
+	 * `scriptLoader.sources` or the script registry replaced its URL, with
+	 * the `integrity` and `crossorigin` the element needs. A callback that
+	 * sets or checks a loader's URL itself reads it here, not from a URL it
+	 * captured, so the replacement reaches the browser.
+	 */
+	source?: { src: string; integrity?: string; crossorigin?: string };
 
 	/** Error information (for error callbacks) */
 	error?: Error;
@@ -129,9 +148,11 @@ export interface Script {
 	 * Throw to reject the batch before existing registrations are changed.
 	 * Must not mutate script or SDK state. Lifecycle callback errors are isolated;
 	 * the loader does not catch validation errors.
+	 * @param resolved - The script as the loader mounts it, with the URL and
+	 * integrity `scriptLoader.sources` or the registry gave it.
 	 * @internal
 	 */
-	validate?: () => void;
+	validate?: (resolved: Script) => void;
 
 	/**
 	 * Stable identity of the DOM resource, separate from the logical script ID.
@@ -396,6 +417,15 @@ export interface Script {
 	vendorDetails?: VendorDetails;
 
 	/**
+	 * The `@inth/integrations` integration that built this script, by its
+	 * vendor slug. Every helper in that package sets it. With
+	 * `experimentalScriptRegistry`, a script that has it and a `src`
+	 * loads from the source the backend's script registry lists for its
+	 * `id`, and from its own URL when the registry lists none.
+	 */
+	integration?: string;
+
+	/**
 	 * IAB TCF vendor ID - links script to a registered vendor.
 	 *
 	 * Only evaluated in IAB mode, where the script loads when this vendor has
@@ -470,6 +500,36 @@ export interface Script {
 	 * ```
 	 */
 	iabSpecialFeatures?: number[];
+}
+
+/**
+ * A URL to load a script from in place of its own `src`, such as a vetted
+ * copy of a vendor script on another host. The script keeps its id,
+ * consent condition, attributes and callbacks, so an integration's setup
+ * still runs.
+ *
+ * @public
+ */
+export interface ScriptSource {
+	/** URL to load instead of the script's `src`. */
+	src: string;
+	/**
+	 * Subresource Integrity hash of the file at `src`, such as
+	 * `sha384-…`. The browser refuses the script when the bytes differ.
+	 * Setting it also sets `crossorigin="anonymous"`, which a cross-origin
+	 * integrity check needs. A script that declares its own `integrity`
+	 * keeps it: it loads from `src` only when this hash is one its own lists,
+	 * or this is unset, and otherwise keeps its own URL.
+	 */
+	integrity?: string;
+	/**
+	 * `data-*` attributes for the script's tag when it loads from `src`, for
+	 * a file that reads its own tag, such as Plausible's `data-api`. A string
+	 * is set unless the script already sets that attribute, so a site's own
+	 * endpoint stays. `null` removes the attribute. Names that do not start
+	 * with `data-` are ignored. None apply when the script keeps its own URL.
+	 */
+	attributes?: Readonly<Record<string, string | null>>;
 }
 
 /**

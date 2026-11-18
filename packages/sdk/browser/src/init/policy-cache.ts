@@ -98,6 +98,7 @@ export const writePolicyCache = function writePolicyCache(
 			location: init.location,
 			policyResolution: init.policyResolution,
 			policySnapshotToken: init.policySnapshotToken,
+			scriptRegistry: init.scriptRegistry,
 		},
 		k: keyOf(projectUrl, overrides),
 		t: Date.now(),

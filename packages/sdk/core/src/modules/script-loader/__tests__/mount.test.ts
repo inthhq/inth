@@ -343,6 +343,32 @@ describe('mountScript', () => {
 			scriptId: 's',
 		});
 	});
+	test('reuses an element without the integrity the script asks for, and says so', () => {
+		const { deps } = makeDeps();
+		const emit = vi.spyOn(deps, 'emit');
+		const script: Script = {
+			anonymizeId: false,
+			attributes: { crossorigin: 'anonymous', integrity: 'sha384-mirror' },
+			category: 'marketing',
+			id: 's',
+			src: 'https://mirror/s.js',
+		};
+		const existing = document.createElement('script');
+		existing.id = 'c15t-script-s';
+		existing.src = 'https://vendor/s.js';
+		document.head.appendChild(existing);
+
+		mountScript(deps, script, createConsentKernel().getSnapshot(), true, null);
+
+		expect(document.head.querySelectorAll('script')).toHaveLength(1);
+		expect(deps.loadedElements.get('s')).toBe(existing);
+		expect(emit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				action: 'already_loaded',
+				data: { existingIntegrity: null, existingSrc: 'https://vendor/s.js' },
+			})
+		);
+	});
 });
 
 describe('mountScript with a server-started element', () => {

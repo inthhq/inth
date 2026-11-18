@@ -100,6 +100,8 @@ const SERVER_STARTED_WAITING_FIELDS = [
 	'iabLegIntPurposes',
 	'iabPurposes',
 	'iabSpecialFeatures',
+	// The server start already applied its source.
+	'integration',
 	'observeConsentBeforeLoad',
 	'onBeforeLoad',
 	'onConsentChange',

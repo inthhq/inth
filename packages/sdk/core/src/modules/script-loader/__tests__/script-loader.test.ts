@@ -47,6 +47,7 @@ interface StubScriptElement {
 	listeners: Map<string, ((event: unknown) => void)[]>;
 	attributes: Map<string, string>;
 	setAttribute: (key: string, value: string) => void;
+	getAttribute: (key: string) => string | null;
 	addEventListener: (event: string, handler: (event: unknown) => void) => void;
 	removeEventListener: (
 		event: string,
@@ -69,6 +70,11 @@ const createStubElement = function createStubElement(): StubScriptElement {
 			this.listeners.set(event, bucket);
 		},
 		attributes: new Map(),
+		getAttribute(key) {
+			return key === 'src'
+				? (this.src ?? null)
+				: (this.attributes.get(key) ?? null);
+		},
 		id: '',
 		get isConnected() {
 			return this.parentNode !== null;

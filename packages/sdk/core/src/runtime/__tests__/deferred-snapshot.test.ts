@@ -53,6 +53,21 @@ const engineSnapshot = async function engineSnapshot() {
 };
 
 describe('snapshotFromPrefetchedInit', () => {
+	test('carries the script registry list a prefetched init holds', () => {
+		const scriptSources = {
+			posthog: {
+				integrity: 'sha384-posthog',
+				src: 'https://acme.inth.app/scripts/posthog@0123456789abcdef.js',
+			},
+		};
+		const shell = snapshotFromPrefetchedInit(
+			prefetched({ ...init, scriptRegistry: { sources: scriptSources } }),
+			{ consentCategories: [...categories] },
+			NOW
+		);
+		expect(shell?.scriptRegistry?.sources).toEqual(scriptSources);
+	});
+
 	test('matches what the kernel computes from the same response', async () => {
 		const shell = snapshotFromPrefetchedInit(
 			prefetched(),

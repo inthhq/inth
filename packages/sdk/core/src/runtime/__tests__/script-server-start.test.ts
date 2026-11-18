@@ -32,7 +32,7 @@ import {
 	serverScriptStartPlan,
 	storedChoiceCheckScript,
 } from '../script-server-start';
-import type { RuntimePrefetch } from '../types';
+import type { ConsentRuntimeOptions, RuntimePrefetch } from '../types';
 
 type StartedWindow = Window & {
 	__c15tRender?: {
@@ -143,6 +143,127 @@ describe('serverScriptStart', () => {
 			expect((window as StartedWindow).__c15tSetup).toBeUndefined();
 		}
 	);
+
+	test('starts a script from its scriptLoader.sources entry with integrity', () => {
+		run(
+			serverScriptStart({
+				mode,
+				prefetch: prefetchFor({ marketing: true }),
+				scriptLoader: {
+					sources: {
+						pixel: {
+							integrity: 'sha384-registry',
+							src: 'https://acme.example/scripts/pixel.js',
+						},
+					},
+				},
+				scripts: [pixel],
+			})
+		);
+		const element = document.head.querySelector('script');
+		expect((window as StartedWindow).__c15tSetup).toBe(1);
+		expect(element?.getAttribute('src')).toBe(
+			'https://acme.example/scripts/pixel.js'
+		);
+		expect(element?.getAttribute('integrity')).toBe('sha384-registry');
+		expect(element?.getAttribute('crossorigin')).toBe('anonymous');
+	});
+
+	test("starts an integration from the prefetched registry list's hash URL", () => {
+		const listed = (
+			sources: Record<string, unknown>,
+			scriptLoader?: ConsentRuntimeOptions['scriptLoader']
+		) =>
+			serverScriptStart({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialScriptRegistry: { sources: sources as never },
+				},
+				scriptLoader,
+				scripts: [{ ...pixel, integration: 'pixel' }],
+			});
+		const started = () => {
+			const element = document.head.querySelector('script');
+			return {
+				integrity: element?.getAttribute('integrity'),
+				src: element?.getAttribute('src'),
+			};
+		};
+
+		run(
+			listed({
+				pixel: {
+					integrity: 'sha384-registry',
+					src: 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js',
+				},
+			})
+		);
+		expect(started()).toEqual({
+			integrity: 'sha384-registry',
+			src: 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js',
+		});
+		expect((window as StartedWindow).__c15tSetup).toBe(1);
+		document.head.innerHTML = '';
+
+		// An entry it cannot check starts nothing, here or from its own URL.
+		expect(listed({ pixel: { src: 'https://acme.inth.app/x.js' } })).toBe(
+			undefined
+		);
+
+		// The page's own source wins over the list's.
+		run(
+			listed(
+				{
+					pixel: {
+						integrity: 'sha384-registry',
+						src: 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js',
+					},
+				},
+				{
+					sources: {
+						[pixel.id]: {
+							integrity: 'sha384-pinned',
+							src: 'https://cdn.example.com/pinned/pixel.js',
+						},
+					},
+				}
+			)
+		);
+		expect(started()).toEqual({
+			integrity: 'sha384-pinned',
+			src: 'https://cdn.example.com/pinned/pixel.js',
+		});
+	});
+
+	test('leaves an integration to the client when the prefetch has not resolved init', () => {
+		expect(
+			serverScriptStart({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialPolicyPending: true,
+				},
+				scripts: [{ ...pixel, integration: 'pixel' }],
+			})
+		).toBeUndefined();
+	});
+
+	test('starts an integration from its own URL when the prefetch carries no registry list', () => {
+		run(
+			serverScriptStart({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: prefetchFor({ marketing: true }),
+				scripts: [{ ...pixel, integration: 'pixel' }],
+			})
+		);
+		expect(document.head.querySelector('script')?.getAttribute('src')).toBe(
+			pixel.src
+		);
+	});
 
 	test('does not evaluate predicates when no script can start on the server', () => {
 		const callbackOnly = vi.fn(() => {

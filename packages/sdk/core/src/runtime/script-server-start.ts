@@ -27,6 +27,8 @@ import {
 	SUBJECT_CODES,
 } from '../modules/persistence/writer/encode';
 import { isCallbackOnly } from '../modules/script-loader/callback-only';
+import { readScriptRegistry } from '../modules/script-loader/registry';
+import { createScriptSourceResolver } from '../modules/script-loader/sources';
 import {
 	portableDeclaration,
 	rootNeedsEngine,
@@ -299,7 +301,23 @@ const serverStartCandidates = function serverStartCandidates(
 	options: ServerScriptOptions,
 	failedPredicates: Set<Script>
 ): Script[] {
-	const scripts = options.scripts ?? [];
+	// With the registry on, scripts start from the sources the prefetched
+	// init carries, as the loader would load them. Without a resolved
+	// prefetch, an integration the list may name waits for the loader.
+	const { prefetch } = options;
+	const { scripts } = createScriptSourceResolver(
+		options.scriptLoader?.sources,
+		options.experimentalScriptRegistry
+			? () =>
+					readScriptRegistry({
+						policyPending:
+							prefetch?.initialPolicyPending ??
+							!prefetch?.initialPolicyResolution,
+						resolution: prefetch?.initialPolicyResolution,
+						scriptRegistry: prefetch?.initialScriptRegistry ?? null,
+					})
+			: undefined
+	)(options.scripts ?? []);
 	if (
 		options.scriptLoader?.serverStart === false ||
 		!scripts.some((script) => script.serverStart && script.src)

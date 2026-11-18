@@ -993,6 +993,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			),
 			policySnapshotToken: mapped.policySnapshotToken,
 			resolvedPrivacySignals: mapped.resolvedPrivacySignals,
+			scriptRegistry: mapped.scriptRegistry,
 			subjectId: mapped.subjectId,
 			translations: payload.translations,
 			vendorListVersion: mapped.vendorListVersion,

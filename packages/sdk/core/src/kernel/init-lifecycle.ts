@@ -29,6 +29,7 @@ import type { Translations } from '@inth/sdk-translations';
 import { deepMergeTranslations } from '@inth/sdk-translations';
 
 import type { RecordIssue } from '../consent-record/validation';
+import { ownScriptRegistry } from '../libs/freeze-data';
 import { isProductionBuild } from '../libs/is-production';
 import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 import { applyTranslationOverrides } from '../translations';
@@ -263,6 +264,9 @@ const foldInitResponse = function foldInitResponse(
 	if (response.hosting !== undefined) {
 		patch.hosting = response.hosting;
 	}
+	// Always set: an init without a list means the backend has none now, so
+	// a list a prefetch or cache carried must not outlive it.
+	patch.scriptRegistry = ownScriptRegistry(response.scriptRegistry);
 
 	const resolution = readInitResolution(response);
 	patch.resolution = resolution;

@@ -170,6 +170,7 @@ export const configFromPrefetchedInit = function configFromPrefetchedInit(
 				payload.policyResolution as PolicyResolutionWire
 			),
 			initialPolicySnapshotToken: payload.policySnapshotToken,
+			initialScriptRegistry: payload.scriptRegistry,
 			initialTranslations: payload.translations,
 			now,
 		};

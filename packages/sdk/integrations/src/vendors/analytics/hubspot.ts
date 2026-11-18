@@ -145,6 +145,8 @@ interface HubSpotInstallation {
 	portalId: string;
 	src: string;
 	nonce: string | undefined;
+	integrity?: string;
+	crossorigin?: string;
 }
 
 interface HubSpotOwner {
@@ -161,6 +163,19 @@ const sameConsent = (left: HubSpotConsent, right: HubSpotConsent) =>
 
 const currentInfo = (info: ScriptCallbackInfo): ScriptCallbackInfo =>
 	info.getCurrentConsent?.() ?? info;
+
+/**
+ * Whether a loader built for `next` keeps the SRI check `required` asks
+ * for: a required hash or credentials mode must match, or the browser would
+ * run HubSpot without the check its source promised
+ */
+const keepsIntegrity = (
+	required: Pick<HubSpotInstallation, 'crossorigin' | 'integrity'>,
+	next: Pick<HubSpotInstallation, 'crossorigin' | 'integrity'>
+) =>
+	(required.integrity === undefined || required.integrity === next.integrity) &&
+	(required.crossorigin === undefined ||
+		required.crossorigin === next.crossorigin);
 
 const createController = (host: Window, installation: HubSpotInstallation) => {
 	const owners = new Map<symbol, Map<symbol, HubSpotOwner>>();
@@ -334,13 +349,17 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 		if (
 			existing.src !== installation.src ||
 			(installation.nonce !== undefined &&
-				existing.nonce !== installation.nonce)
+				existing.nonce !== installation.nonce) ||
+			!keepsIntegrity(installation, {
+				crossorigin: existing.getAttribute('crossorigin') ?? undefined,
+				integrity: existing.getAttribute('integrity') ?? undefined,
+			})
 		) {
 			externalConflict = true;
 			if (!warnedLoaders.has(existing)) {
 				warnedLoaders.add(existing);
 				console.warn(
-					'hubspot: #hs-script-loader has an incompatible URL or nonce. Consent forwarding and automatic chat will not start. Remove the other installation and reload.'
+					'hubspot: #hs-script-loader has an incompatible URL, nonce or integrity. Consent forwarding and automatic chat will not start. Remove the other installation and reload.'
 				);
 			}
 			return false;
@@ -370,6 +389,22 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 		if (installation.nonce) {
 			element.nonce = installation.nonce;
 		}
+		if (installation.integrity) {
+			element.setAttribute('integrity', installation.integrity);
+		}
+		if (installation.crossorigin) {
+			element.setAttribute('crossorigin', installation.crossorigin);
+		}
+		// A copy that fails its integrity check, or a 423 or 410, fires
+		// `error`. Core does not watch this tag, so pass it to each owner.
+		element.addEventListener('error', () => {
+			const error = new Error(`Failed to load script: ${installation.src}`);
+			for (const registrations of owners.values()) {
+				for (const owner of registrations.values()) {
+					owner.info.reportLoadError?.(error);
+				}
+			}
+		});
 		ownedLoaders.add(element);
 		host.document.head.appendChild(element);
 	};
@@ -587,7 +622,9 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 			if (
 				settings.portalId !== installation.portalId ||
 				settings.src !== installation.src ||
-				(settings.nonce !== undefined && settings.nonce !== installation.nonce)
+				(settings.nonce !== undefined &&
+					settings.nonce !== installation.nonce) ||
+				!keepsIntegrity(settings, installation)
 			) {
 				let pending = retries.get(config);
 				if (!pending) {
@@ -598,7 +635,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 				if (!rejected.has(config)) {
 					rejected.add(config);
 					console.warn(
-						'hubspot: conflicting portal, loader URL or explicit nonce. Keep one compatible HubSpot installation per page; reload to change it. This configuration will not control the installed SDK.'
+						'hubspot: conflicting portal, loader URL, explicit nonce or integrity. Keep one compatible HubSpot installation per page; reload to change it. This configuration will not control the installed SDK.'
 					);
 				}
 				return;
@@ -668,10 +705,19 @@ export const hubspot = function hubspot(options: HubSpotOptions): Script {
 		if (typeof window === 'undefined') {
 			return;
 		}
-		const installation = {
+		// The loader passes the URL `scriptLoader.sources` or the script
+		// registry chose; the vendor URL captured above is only the default
+		const { source } = info;
+		const installation: HubSpotInstallation = {
 			...settings,
-			src: new URL(settings.src, document.baseURI).href,
+			src: new URL(source?.src ?? settings.src, document.baseURI).href,
 		};
+		if (source?.integrity) {
+			installation.integrity = source.integrity;
+		}
+		if (source?.crossorigin) {
+			installation.crossorigin = source.crossorigin;
+		}
 		let controller = controllers.get(window);
 		if (!controller) {
 			controller = createController(window, installation);

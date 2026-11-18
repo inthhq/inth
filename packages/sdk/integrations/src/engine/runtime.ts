@@ -775,6 +775,7 @@ export const resolvedManifestToScript = function resolvedManifestToScript(
 		defer: resolvedManifest.loadScript?.defer,
 		fetchPriority: resolvedManifest.loadScript?.fetchPriority,
 		id: resolvedManifest.vendor,
+		integration: resolvedManifest.vendor,
 		persistAfterConsentRevoked: resolvedManifest.persistAfterConsentRevoked,
 		src: resolvedManifest.loadScript?.src,
 		// The manifest's vendor slug doubles as the vendor-level consent id, so

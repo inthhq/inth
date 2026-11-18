@@ -7,6 +7,9 @@ import { defineConfig, mergeConfig } from 'vitest/config';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
 
+/** Requests the `serveScript` browser command answered, by URL. */
+const servedScripts = new Map<string, number>();
+
 /** `vitest run` is run mode; a bare `vitest` or `--watch` is watch mode. */
 const isVitestWatchMode = function isVitestWatchMode(): boolean {
 	const args = process.argv.slice(2);
@@ -226,6 +229,41 @@ export default mergeConfig(
 		},
 		test: {
 			browser: {
+				commands: {
+					/**
+					 * Answers requests for `url` with `body` as JavaScript, the
+					 * way a CDN that allows CORS would, and counts them. Lets a
+					 * test load a script from an https URL whose bytes it knows.
+					 */
+					async serveScript(context, url: string, body: string) {
+						const { page } = context as unknown as {
+							page: {
+								route: (
+									url: string,
+									handler: (route: {
+										fulfill: (response: {
+											body: string;
+											contentType: string;
+											headers: Record<string, string>;
+										}) => Promise<void>;
+									}) => Promise<void>
+								) => Promise<void>;
+							};
+						};
+						await page.route(url, (route) => {
+							servedScripts.set(url, (servedScripts.get(url) ?? 0) + 1);
+							return route.fulfill({
+								body,
+								contentType: 'text/javascript',
+								headers: { 'access-control-allow-origin': '*' },
+							});
+						});
+					},
+					/** How many requests `serveScript` answered for `url`. */
+					servedScriptCount(_context, url: string) {
+						return servedScripts.get(url) ?? 0;
+					},
+				},
 				enabled: true,
 				headless: true,
 				instances: [{ browser: 'chromium' }],

@@ -646,6 +646,9 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 		initOptions.schedulerOrigins = options.schedulerOrigins.slice();
 	}
 	const scriptUrl = script.src ?? '';
+	// The URL `scriptLoader.sources` or the script registry chose, if any
+	const loadUrl = (info: ScriptCallbackInfo): string =>
+		info.source?.src ?? scriptUrl;
 	let reportedSource = false;
 	const reportSource = (): void => {
 		if (!reportedSource) {
@@ -669,7 +672,7 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 			return;
 		}
 		// Core adopts a retained element by id; it keeps the original source.
-		if (info.element.getAttribute('src') !== scriptUrl) {
+		if (info.element.getAttribute('src') !== loadUrl(info)) {
 			reportSource();
 			return;
 		}
@@ -708,13 +711,13 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 				return;
 			}
 			const source = formsSdkSources.get(document);
-			if (source !== undefined && source !== scriptUrl) {
+			if (source !== undefined && source !== loadUrl(info)) {
 				info.element.removeAttribute('src');
 				info.element.type = blockedLoaderType;
 				reportSource();
 				return;
 			}
-			formsSdkSources.set(document, scriptUrl);
+			formsSdkSources.set(document, loadUrl(info));
 			formsElements.add(info.element);
 		},
 		onConsentChange: synchronize,

@@ -70,6 +70,8 @@ const LOADER_FIELDS = [
 	'iabLegIntPurposes',
 	'iabPurposes',
 	'iabSpecialFeatures',
+	// The script registry may move it to another URL first, or hold it.
+	'integration',
 	'observeConsentBeforeLoad',
 	'onBeforeLoad',
 	'onConsentChange',

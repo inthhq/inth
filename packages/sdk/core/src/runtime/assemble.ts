@@ -37,6 +37,7 @@ import {
 	normalizeKernelUser,
 	requireTransportFactory,
 } from './runtime-kernel';
+import { scriptRegistry } from './script-registry';
 import { storageFor } from './storage-for';
 import type {
 	ConsentRuntime,
@@ -379,7 +380,9 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 					kernel,
 					nonce: options.nonce,
 					onDebug: options.scriptLoader?.onDebug,
+					registry: scriptRegistry(options, enabled && !consentSource),
 					scripts: options.scripts,
+					sources: options.scriptLoader?.sources,
 				});
 				const mounted = loader;
 				disposers.push(() => mounted.dispose());

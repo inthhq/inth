@@ -28,6 +28,7 @@ export const buildCallbackInfo = function buildCallbackInfo(
 		| 'deniedVendors'
 		| 'gateState'
 		| 'getConsentReader'
+		| 'getLoadErrorReporter'
 		| 'isReplacing'
 		| 'registration'
 	>,
@@ -55,8 +56,22 @@ export const buildCallbackInfo = function buildCallbackInfo(
 			value: getCurrentConsent,
 		});
 	}
+	const reportLoadError = tools.getLoadErrorReporter?.(script);
+	if (reportLoadError) {
+		Object.defineProperty(info, 'reportLoadError', { value: reportLoadError });
+	}
 	if (tools.isReplacing?.(script)) {
 		Object.defineProperty(info, 'replacing', { value: true });
+	}
+	if (script.src) {
+		const { crossorigin, integrity } = script.attributes ?? {};
+		info.source = { src: script.src };
+		if (integrity) {
+			info.source.integrity = integrity;
+		}
+		if (crossorigin) {
+			info.source.crossorigin = crossorigin;
+		}
 	}
 	if (script.vendor && snapshot.model !== 'iab') {
 		info.vendor = {

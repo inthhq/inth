@@ -8,6 +8,7 @@
  * during a SvelteKit render.
  */
 import type { Script } from '@inth/sdk/engine';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { render } from 'svelte/server';
@@ -42,9 +43,12 @@ const optOut: PolicyRule = {
 const renderPage = function renderPage({
 	rule = optOut,
 	shared = false,
+	scriptRegistry,
 	...options
 }: Partial<ConsentManagerOptions> & {
 	rule?: PolicyRule;
+	/** The registry list the server's init carries. */
+	scriptRegistry?: RuntimePrefetch['initialScriptRegistry'];
 	shared?: boolean;
 }): string {
 	// `c15tHandle` makes the transform before SvelteKit renders the page.
@@ -62,6 +66,7 @@ const renderPage = function renderPage({
 						regionCode: null,
 						rules: [rule],
 					}),
+					initialScriptRegistry: scriptRegistry,
 					// A shared render's state carries no request clock.
 					now: shared ? undefined : Date.now(),
 				},
@@ -120,4 +125,33 @@ test('starts nothing when the app turns the server start off', () => {
 
 test('starts nothing without scripts', () => {
 	expect(startScripts(renderPage({ scripts: [] }))).toEqual([]);
+});
+
+test('starts an integration from the registry source init lists with experimentalScriptRegistry', () => {
+	const registrySrc = 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js';
+	// The URL and attributes the start inserts the pixel's tag with.
+	const started = (experimentalScriptRegistry?: boolean) => {
+		const [start] = startScripts(
+			renderPage({
+				experimentalScriptRegistry,
+				scriptRegistry: {
+					sources: {
+						pixel: { integrity: 'sha384-registry', src: registrySrc },
+					},
+				},
+				scripts: [{ ...pixel, integration: 'pixel' }],
+			})
+		);
+		return {
+			...(/i\("pixel",(?<src>"[^"]+")(?:,\{"attributes":(?<attributes>\{[^}]*\}))?/u.exec(
+				start ?? ''
+			)?.groups ?? {}),
+		};
+	};
+
+	expect(started(true)).toEqual({
+		attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
+		src: JSON.stringify(registrySrc),
+	});
+	expect(started().src).toBe(JSON.stringify(pixel.src));
 });

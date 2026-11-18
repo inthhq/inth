@@ -8,6 +8,7 @@ import type {
 	PolicyResolution,
 	PolicyScopeMode,
 	ResolvedPolicyRule,
+	ScriptRegistryWire,
 	TranslationsResponse,
 	Vendor,
 } from '@inth/sdk-schema/types';
@@ -414,6 +415,12 @@ export interface ConsentSnapshot {
 	readonly hosting: KernelHosting | null;
 	/** Signed token for write-time consistency — sent back on save. */
 	readonly policySnapshotToken: string | null;
+	/**
+	 * What the Inth script registry told init, such as where it serves each
+	 * script (`sources`). Unchecked: the script loader checks each entry.
+	 * `null` until init resolves, and for backends without a registry.
+	 */
+	readonly scriptRegistry: Readonly<ScriptRegistryWire> | null;
 
 	// -- Derived from policy rule + iab.enabled -------------------------------
 	/** Effective consent model. */
@@ -517,6 +524,8 @@ export interface KernelConfig {
 	initialBranding?: KernelBranding;
 	/** Initial backend hosting (e.g. from prefetch). */
 	initialHosting?: KernelHosting;
+	/** Initial script registry data (e.g. from prefetch). */
+	initialScriptRegistry?: ScriptRegistryWire;
 	/**
 	 * Marks the policy as pending transport initialization.
 	 * Suppresses `activeUI` until init completes.
@@ -633,6 +642,8 @@ export interface InitResponse {
 	branding?: KernelBranding;
 	/** Who runs the backend that answered. */
 	hosting?: KernelHosting;
+	/** What the Inth script registry tells c15t, such as its `sources`. */
+	scriptRegistry?: ScriptRegistryWire;
 	/** Signed token for write-time consistency. Sent back on save. */
 	policySnapshotToken?: string;
 
