@@ -265,6 +265,22 @@ describe('provideInthServer', () => {
 		});
 	});
 
+	test("leaves a transport of the app's own to the browser", async () => {
+		const network = vi.spyOn(globalThis, 'fetch');
+		const html = await render(
+			{
+				mode: Object.assign(() => ({}), { kind: 'offline' as const }),
+				projectUrl: '/api/inth',
+			},
+			{},
+			new Request(`${SITE}/`, { headers: { cookie: CONSENTED } })
+		);
+		const state = transferred(html);
+		expect(state?.initialPolicyResolution).toBeUndefined();
+		expect(state?.initialRecords?.choice).not.toBeNull();
+		expect(network).not.toHaveBeenCalled();
+	});
+
 	test('a render without a request is shared: no visitor clock', async () => {
 		const html = await render({ mode: testing() }, {}, null);
 		expect(html).toContain('data-testid="ui">banner</p>');

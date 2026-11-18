@@ -77,6 +77,15 @@ export interface ServerModeOptions {
 	/** The browser sends saves through the consent route. */
 	proxy?: boolean;
 	/**
+	 * The adapter's provider takes transport factories of the app's own
+	 * (Angular's `provideInth({ mode })`). One that carries no mode data
+	 * runs only in the browser: the server resolves nothing, so the cookie
+	 * alone seeds the state, instead of the mode being rejected.
+	 *
+	 * @default false
+	 */
+	browserTransports?: boolean;
+	/**
 	 * The snapshot the build downloaded (`@inth/sdk/generated`, or the
 	 * adapter's own build output). `undefined` when it made none.
 	 */
@@ -202,6 +211,13 @@ export const readModeData = function readModeData(
 	};
 	return data as ConsentMode;
 };
+
+/** What a transport without mode data resolves on the server: nothing. */
+const BROWSER_RESOLVES: ConsentMode = { resolve: 'browser', type: 'manifest' };
+
+const isDatalessTransport = (mode: ServerModeInput): boolean =>
+	typeof mode === 'function' &&
+	typeof (mode as { type?: unknown }).type !== 'string';
 
 /**
  * Why a build downloads no manifest snapshot for this mode, or `undefined`
@@ -379,7 +395,8 @@ const browserModeOf = function browserModeOf(mode: ConsentMode): ConsentMode {
  *
  * @returns The `resolveRequestConsent` options, the route's manifest
  * source, and the browser's copy of the mode and backend.
- * @throws {TypeError} When the mode is not mode data, `proxy` is set
+ * @throws {TypeError} When the mode is not mode data (unless
+ * `browserTransports` allows a transport), `proxy` is set
  * without `routePrefix`, or, with `checkBackend`, when `manifest()` or
  * `hosted()` has no backend URL.
  * @example
@@ -396,7 +413,10 @@ const browserModeOf = function browserModeOf(mode: ConsentMode): ConsentMode {
 export const resolveServerMode = function resolveServerMode(
 	options: ServerModeOptions
 ): ServerMode {
-	const mode = readModeData(options.adapter, options.mode);
+	const mode =
+		options.browserTransports && isDatalessTransport(options.mode)
+			? BROWSER_RESOLVES
+			: readModeData(options.adapter, options.mode);
 	assertBackend(options, mode);
 	if (options.proxy && options.routePrefix === undefined) {
 		throw new TypeError(

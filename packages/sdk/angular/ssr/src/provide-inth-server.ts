@@ -23,11 +23,7 @@ import type { InthProviderOptions } from '@inth/angular';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import { resolveRequestConsent, resolveServerMode } from '@inth/sdk/server';
-import type {
-	ManifestFetch,
-	ResolveRequestConsentOptions,
-	ServerModeInput,
-} from '@inth/sdk/server';
+import type { ManifestFetch, ServerModeInput } from '@inth/sdk/server';
 
 import type { ConsentRoute } from './consent-route';
 import { addEarlyTapScript } from './early-tap-script';
@@ -93,30 +89,6 @@ export interface InthServerOptions {
 	shared?: boolean;
 }
 
-/**
- * How the server resolves the provider's options, by the rule
- * `resolveServerMode` applies in every adapter. A transport of the
- * provider's own carries no mode data: nothing the server can call, so the
- * cookie alone seeds the state.
- */
-const serverResolution = function serverResolution(
-	provider: InthProviderOptions,
-	route: ConsentRoute | undefined
-): Partial<ResolveRequestConsentOptions> {
-	const { mode } = provider;
-	const data = mode as { type?: unknown; projectUrl?: string } | undefined;
-	if (typeof mode === 'function' && typeof data?.type !== 'string') {
-		return {};
-	}
-	return resolveServerMode({
-		adapter: ADAPTER,
-		iab: isIABConfigured(provider.iab),
-		mode: mode as ServerModeInput,
-		projectUrl: data?.projectUrl ?? provider.projectUrl,
-		routePrefix: route?.routePrefix,
-	}).consent;
-};
-
 const resolveServerState = function resolveServerState(
 	options: InthServerOptions,
 	provider: InthProviderOptions,
@@ -126,7 +98,16 @@ const resolveServerState = function resolveServerState(
 		options.route?.localFetchFor(request);
 	return resolveRequestConsent({
 		adapter: ADAPTER,
-		...serverResolution(provider, options.route),
+		...resolveServerMode({
+			adapter: ADAPTER,
+			// A transport of the provider's own carries no mode data: nothing
+			// the server can call, so the cookie alone seeds the state.
+			browserTransports: true,
+			iab: isIABConfigured(provider.iab),
+			mode: provider.mode as ServerModeInput,
+			projectUrl: provider.projectUrl,
+			routePrefix: options.route?.routePrefix,
+		}).consent,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
 		journey: provider.journey,

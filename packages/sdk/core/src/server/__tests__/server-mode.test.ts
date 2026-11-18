@@ -163,6 +163,14 @@ describe('resolveServerMode: checks', () => {
 		);
 	});
 
+	test('browserTransports leaves a transport without mode data to the browser', () => {
+		const { consent } = resolve({
+			browserTransports: true,
+			mode: (() => undefined) as never,
+		});
+		expect(consent).toEqual({ ownRoutes: ['/api/inth'] });
+	});
+
 	test('reads the data a transport factory carries', () => {
 		const factory = Object.assign(() => undefined, {
 			kind: 'manifest',
