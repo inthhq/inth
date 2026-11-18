@@ -31,6 +31,7 @@ import {
 	saveIABConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk-core/surface-actions';
+import { hosted } from '@inth/sdk-core/transports';
 import type { Theme } from '@inth/sdk-ui/theme';
 
 import { createBrowserRuntime } from './create-runtime';
@@ -101,6 +102,44 @@ export interface ResolvedMode {
 	factory: ProviderTransportFactory;
 	name: ConsentModeName | 'testing' | 'custom';
 }
+
+/**
+ * The mode a transport factory such as `hosted()` or `manifest()` names.
+ *
+ * @param factory - The factory.
+ * @returns The factory and its mode name.
+ * @internal
+ */
+export const factoryMode = function factoryMode(
+	factory: ProviderTransportFactory
+): ResolvedMode {
+	const { kind } = factory;
+	return {
+		factory,
+		name: kind === 'hosted' || kind === 'manifest' ? kind : 'custom',
+	};
+};
+
+/**
+ * The hosted backend at `projectUrl`.
+ *
+ * @param projectUrl - The Inth project URL.
+ * @param pkg - The entry, for the error.
+ * @returns The hosted mode.
+ * @throws {Error} Without a `projectUrl`.
+ * @internal
+ */
+export const hostedMode = function hostedMode(
+	projectUrl: string | undefined,
+	pkg: string
+): ResolvedMode {
+	if (!projectUrl) {
+		throw new Error(
+			`${pkg}: \`projectUrl\` is required. Set it to your Inth project URL (data-project-url on a script tag), or use testing() from @inth/sdk/testing in tests.`
+		);
+	}
+	return { factory: hosted({ projectUrl }), name: 'hosted' };
+};
 
 const dispatchDocumentEvent = function dispatchDocumentEvent(
 	name: keyof ConsentClientEventMap,
@@ -200,8 +239,6 @@ export const createConsentClientWith = function createConsentClientWith(
 		theme: options.ui === false ? undefined : options.ui?.theme,
 		user: options.user,
 		vendors: options.vendors,
-		// The script-tag build owns `window.inth`; core must not overwrite it.
-		windowDebug: false,
 	});
 	const { kernel } = runtime;
 	// Inert tags own the vendor slugs they name, the way scripts, rules and

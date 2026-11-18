@@ -4,10 +4,13 @@
  * `data-mode`. ES module entries take `hosted()` or a factory instead
  * (`./client`).
  */
-import { hosted } from '@inth/sdk-core/transports';
 import { manifest } from '@inth/sdk-core/transports/manifest-browser';
 
-import { createConsentClientWith } from './client-base';
+import {
+	createConsentClientWith,
+	factoryMode,
+	hostedMode,
+} from './client-base';
 import type { CreateConsentClientContext, ResolvedMode } from './client-base';
 import type {
 	ConsentClient,
@@ -25,20 +28,11 @@ const resolveMode = function resolveMode(
 	options: ScriptTagClientOptions
 ): ResolvedMode {
 	if (typeof options.mode === 'function') {
-		const { kind } = options.mode;
-		return {
-			factory: options.mode,
-			name: kind === 'hosted' || kind === 'manifest' ? kind : 'custom',
-		};
+		return factoryMode(options.mode);
 	}
 	const name = options.mode ?? defaultModeName(options);
 	if (name === 'hosted') {
-		if (!options.projectUrl) {
-			throw new Error(
-				'@inth/sdk: `projectUrl` is required (data-project-url on the script tag). Tests load c15t.testing.js instead.'
-			);
-		}
-		return { factory: hosted({ projectUrl: options.projectUrl }), name };
+		return hostedMode(options.projectUrl, '@inth/sdk');
 	}
 	return {
 		factory: manifest({

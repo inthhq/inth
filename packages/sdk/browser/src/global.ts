@@ -6,7 +6,8 @@ import { createGlobalWith } from './global-base';
 import type { InthGlobalBase } from './global-base';
 import { createScriptTagConsentClient } from './script-tag-client';
 
-export { autoInit, GLOBAL_NAME, installGlobal } from './global-base';
+export { autoInit, installGlobal } from './global-base';
+export { GLOBAL_NAME } from './global-name';
 export type { InthGlobalBase, QueuedCall } from './global-base';
 
 /** The global API installed by the browser bundle with the hosted and manifest transports. */

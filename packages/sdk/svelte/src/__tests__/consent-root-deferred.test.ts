@@ -19,7 +19,7 @@ import ConsentRootFixture from './fixtures/consent-root-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 import { closeSsrWorker, renderRootSsr, warmSsrWorker } from './server-render';
 
-type WindowWithInth = Window & { inth?: unknown };
+type WindowWithInth = Window & { __inthDebug?: unknown };
 
 const SCRIPT = {
 	category: 'measurement',
@@ -78,7 +78,7 @@ afterEach(() => {
 		}
 	}
 	localStorage.clear();
-	delete (window as WindowWithInth).inth;
+	delete (window as WindowWithInth).__inthDebug;
 	(
 		window as { __inthEarlyTaps?: { stop?: () => void } }
 	).__inthEarlyTaps?.stop?.();
@@ -105,7 +105,7 @@ describe('ConsentRoot deferred engine', () => {
 		expect(
 			warn.mock.calls.filter(([message]) => /hydrat/iu.test(String(message)))
 		).toEqual([]);
-		expect((window as WindowWithInth).inth).toBeUndefined();
+		expect((window as WindowWithInth).__inthDebug).toBeUndefined();
 	});
 
 	test('an accept before the engine records the choice and starts the scripts in the tap', async () => {
@@ -116,7 +116,7 @@ describe('ConsentRoot deferred engine', () => {
 		const accept = document.querySelector<HTMLButtonElement>(
 			'[data-testid="consent-banner-accept-button"]'
 		);
-		expect((window as WindowWithInth).inth).toBeUndefined();
+		expect((window as WindowWithInth).__inthDebug).toBeUndefined();
 
 		accept?.click();
 
@@ -137,7 +137,7 @@ describe('ConsentRoot deferred engine', () => {
 		});
 		await vi.waitFor(
 			() => {
-				expect((window as WindowWithInth).inth).toBeDefined();
+				expect((window as WindowWithInth).__inthDebug).toBeDefined();
 			},
 			{ timeout: 5000 }
 		);
@@ -203,7 +203,7 @@ describe('ConsentRoot deferred engine', () => {
 		);
 		await vi.waitFor(
 			() => {
-				expect((window as WindowWithInth).inth).toBeDefined();
+				expect((window as WindowWithInth).__inthDebug).toBeDefined();
 			},
 			{ timeout: 5000 }
 		);

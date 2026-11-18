@@ -73,7 +73,6 @@ const visitorCookie = async function visitorCookie(
 			})
 		),
 		prefetch: { initialPolicyResolution: observedPolicy() },
-		windowDebug: false,
 	});
 	try {
 		runtime.start();

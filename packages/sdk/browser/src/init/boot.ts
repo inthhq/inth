@@ -26,6 +26,7 @@ import type {
 } from '@inth/sdk-core/surface-actions/early-commit';
 
 import type { InthGlobalBase, QueuedCall } from '../global-base';
+import { GLOBAL_NAME } from '../global-name';
 import type { ConsentClient } from '../types';
 import type { Surface } from '../ui/surface';
 
@@ -183,7 +184,7 @@ export const readBoot = function readBoot(): InitBoot | undefined {
 	if (typeof window === 'undefined') {
 		return undefined;
 	}
-	const current = (window as unknown as { inth?: unknown }).inth;
+	const current = (window as unknown as Record<string, unknown>)[GLOBAL_NAME];
 	return current !== null && typeof current === 'object' && BOOT_KEY in current
 		? (current as InitStandIn)[BOOT_KEY]
 		: undefined;

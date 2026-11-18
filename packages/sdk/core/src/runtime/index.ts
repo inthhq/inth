@@ -9,7 +9,7 @@ import type {
  * component tree that renders it. This module is the first half. It builds
  * a kernel from the prepared server snapshot, then mounts persistence,
  * the script loader, network and iframe blockers, IAB, the callback bridge,
- * `window.inth` and the initial `init()` (or adopts a resolved prefetch) on
+ * `window.__inthDebug` and the initial `init()` (or adopts a resolved prefetch) on
  * `start()`, and undoes all of it on `dispose()`.
  *
  * Two constructors share that lifecycle. `createConsentRuntime` is for a

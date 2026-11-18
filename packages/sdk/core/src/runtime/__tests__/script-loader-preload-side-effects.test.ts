@@ -268,7 +268,6 @@ const construct = function construct(
 					vendor: 'pixel-co',
 				},
 			],
-			windowDebug: false,
 		},
 		{
 			...defaultRuntimeModules,

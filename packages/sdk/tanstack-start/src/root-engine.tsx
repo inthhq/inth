@@ -92,7 +92,7 @@ const transportFor = function transportFor(
 	);
 };
 
-/** The kind a mode reports through `window.inth.mode`. */
+/** The kind a mode reports through `window.__inthDebug.mode`. */
 const kindOf = function kindOf(
 	mode: ConsentMode | undefined
 ): ProviderTransportFactory['kind'] {

@@ -17,7 +17,7 @@ import {
 } from '../runtime/nuxt-mode';
 
 type WindowWithInth = Window & {
-	inth?: {
+	__inthDebug?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -82,7 +82,7 @@ afterEach(() => {
 	clearManifestCache();
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
-	delete (window as WindowWithInth).inth;
+	delete (window as WindowWithInth).__inthDebug;
 });
 
 describe('manifest resolution in core', () => {
@@ -353,7 +353,7 @@ describe('Nuxt modes', () => {
 				expect(context.snapshot.value.policyRule.id).toBe('eu-opt-in');
 			});
 			expect(fetchMock).not.toHaveBeenCalled();
-			expect((window as WindowWithInth).inth).toMatchObject({
+			expect((window as WindowWithInth).__inthDebug).toMatchObject({
 				mode: 'manifest',
 				pkg: '@inth/vue',
 			});

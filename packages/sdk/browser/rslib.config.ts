@@ -205,7 +205,6 @@ export default defineConfig({
 					iab: './src/iab.ts',
 					index: './src/index.ts',
 					'postcss-tailwind3': './src/postcss-tailwind3.ts',
-					prefetch: './src/prefetch.ts',
 					testing: './src/testing.ts',
 				},
 			},

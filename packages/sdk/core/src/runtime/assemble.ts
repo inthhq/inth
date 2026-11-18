@@ -61,7 +61,7 @@ export interface AssembledRuntime {
 	adoptJourney: (id: string | null | undefined) => void;
 	runtime: ConsentRuntime;
 	/**
-	 * Unmount every module and `window.inth` and detach callbacks, keeping
+	 * Unmount every module and `window.__inthDebug` and detach callbacks, keeping
 	 * the kernel and its records. `start()` mounts them again, then adopts
 	 * the prefetch at the current clock or runs `init()`.
 	 */
@@ -258,14 +258,12 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				disposers = wire();
 			}
 
-			if (options.windowDebug !== false) {
-				const windowDebug = modules.createWindowDebug({
-					getHosting: () => kernel.getSnapshot().hosting,
-					mode: resolveWindowDebugMode(mode),
-					pkg: options.pkg ?? '@inth/sdk/engine',
-				});
-				disposers.push(() => windowDebug.dispose());
-			}
+			const windowDebug = modules.createWindowDebug({
+				getHosting: () => kernel.getSnapshot().hosting,
+				mode: resolveWindowDebugMode(mode),
+				pkg: options.pkg ?? '@inth/sdk/engine',
+			});
+			disposers.push(() => windowDebug.dispose());
 
 			const { persistence: persistenceOption } = options;
 			if (enabled && !consentSource && persistenceOption !== false) {

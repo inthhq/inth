@@ -168,8 +168,9 @@ export const privacySettings = (page: Page) =>
  * Waits until Inth has started in the page. Server HTML shows controls such
  * as Privacy settings before the framework hydrates, and a click on one
  * then does nothing. Every framework adapter starts its runtime after
- * mount, and starting installs the `window.inth` object. The script-tag
- * build replaces the array a page may queue calls on with its API.
+ * mount, and starting installs the `window.__inthDebug` object. The
+ * script-tag build replaces the array a page may queue calls on with its
+ * API at `window.inth`.
  * `@inth/sdk` from npm installs no global; its pages are not hydrated,
  * so callers skip this wait there.
  */
@@ -177,8 +178,11 @@ export const waitForConsentRuntime = async function waitForConsentRuntime(
 	page: Page
 ): Promise<void> {
 	await page.waitForFunction(() => {
-		const api = (window as { inth?: unknown }).inth;
-		return typeof api === 'object' && api !== null && !Array.isArray(api);
+		const page = window as { __inthDebug?: unknown; inth?: unknown };
+		return [page.__inthDebug, page.inth].some(
+			(value) =>
+				typeof value === 'object' && value !== null && !Array.isArray(value)
+		);
 	});
 };
 

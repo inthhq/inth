@@ -68,7 +68,7 @@ beforeEach(() => {
 });
 afterEach(() => {
 	vi.restoreAllMocks();
-	delete (window as { inth?: unknown }).inth;
+	delete (window as { __inthDebug?: unknown }).__inthDebug;
 	delete (window as { __inthExperiment?: unknown }).__inthExperiment;
 });
 

@@ -36,7 +36,7 @@ import type {
 import { inthVue } from './test-plugin';
 
 type WindowWithInth = Window & {
-	inth?: {
+	__inthDebug?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -250,7 +250,7 @@ const renderRootToString = async function renderRootToString(
 };
 
 beforeEach(() => {
-	delete (window as WindowWithInth).inth;
+	delete (window as WindowWithInth).__inthDebug;
 	document.body.innerHTML = '';
 	window.localStorage.clear();
 	document.cookie = 'inth=; max-age=0; path=/';
@@ -259,7 +259,7 @@ beforeEach(() => {
 afterEach(() => {
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
-	delete (window as WindowWithInth).inth;
+	delete (window as WindowWithInth).__inthDebug;
 	document.body.innerHTML = '';
 	window.localStorage.clear();
 	document.cookie = 'inth=; max-age=0; path=/';
@@ -440,17 +440,19 @@ describe('@inth/vue kernel runtime', () => {
 		expect(dispose).toHaveBeenCalledOnce();
 	});
 
-	test('installs window.inth with Vue hosted identity', async () => {
+	test('installs window.__inthDebug with Vue hosted identity', async () => {
 		const { wrapper } = await mountRoot();
 
-		expect((window as WindowWithInth).inth).toMatchObject({
+		expect((window as WindowWithInth).__inthDebug).toMatchObject({
 			mode: 'hosted',
 			pkg: '@inth/vue',
 		});
-		expect(typeof (window as WindowWithInth).inth?.version).toBe('string');
+		expect(typeof (window as WindowWithInth).__inthDebug?.version).toBe(
+			'string'
+		);
 
 		wrapper.unmount();
-		expect((window as WindowWithInth).inth).toBeUndefined();
+		expect((window as WindowWithInth).__inthDebug).toBeUndefined();
 	});
 
 	test('renders the banner from kernel init state', async () => {

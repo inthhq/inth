@@ -79,7 +79,6 @@ export const createObservedRuntime = function createObservedRuntime(
 		),
 		persistence: false,
 		prefetch,
-		windowDebug: false,
 	});
 };
 

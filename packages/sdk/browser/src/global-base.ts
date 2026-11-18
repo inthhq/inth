@@ -17,6 +17,7 @@ import {
 import type { CreateConsentClientContext } from './client-base';
 import { createDeferred } from './deferred';
 import type { PublishDevToolsLauncher } from './devtools-mount';
+import { GLOBAL_NAME } from './global-name';
 import {
 	adoptBoot,
 	adoptedBoot,
@@ -34,9 +35,6 @@ import type {
 	ConsentUIOptions,
 } from './types';
 import { version } from './version';
-
-/** The name the script-tag build installs itself under. */
-export const GLOBAL_NAME = 'inth';
 
 /** A call queued before the script loaded: `[method, ...args]`. */
 export type QueuedCall = [method: string, ...args: unknown[]];
@@ -404,12 +402,10 @@ export const installGlobal = function installGlobal<Api extends InthGlobalBase>(
 		}
 		return api;
 	}
+	// Another copy of this API, from a tag loaded twice.
 	if (
 		existing !== null &&
 		typeof existing === 'object' &&
-		'pkg' in existing &&
-		typeof existing.pkg === 'string' &&
-		existing.pkg.startsWith('@inth/sdk') &&
 		'init' in existing &&
 		typeof existing.init === 'function' &&
 		'client' in existing

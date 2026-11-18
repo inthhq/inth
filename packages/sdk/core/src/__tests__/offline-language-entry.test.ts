@@ -14,7 +14,6 @@ describe('offline(): a language imported from its own entry', () => {
 		const runtime = createConsentRuntime({
 			mode: testing(),
 			persistence: false,
-			windowDebug: false,
 		});
 		const { kernel } = runtime;
 		await kernel.commands.init();
