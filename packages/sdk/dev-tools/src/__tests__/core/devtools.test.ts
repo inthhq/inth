@@ -37,7 +37,7 @@ describe('createDevTools', () => {
 			const tools = createDevTools({ kernel, maxEvents });
 			instances.push(tools);
 			const launcher = tools.element?.querySelector<HTMLButtonElement>(
-				'button[aria-label="Open inth DevTools"]'
+				'button[aria-label="Open Inth DevTools"]'
 			);
 			launcher?.focus();
 			for (let index = 0; index < 110; index += 1) {
@@ -169,7 +169,7 @@ describe('createDevTools', () => {
 	it('opens from an accessible icon-only launcher', () => {
 		const devTools = createInstance();
 		const launcher = devTools.element?.querySelector<HTMLButtonElement>(
-			'button[aria-label="Open inth DevTools"]'
+			'button[aria-label="Open Inth DevTools"]'
 		);
 
 		expect(launcher?.textContent).toBe('');
@@ -197,7 +197,7 @@ describe('createDevTools', () => {
 			expect(devTools.getState().isOpen).toBe(false);
 			await vi.waitFor(() => {
 				expect(activeElementOf(devTools)?.getAttribute('aria-label')).toBe(
-					'Open inth DevTools'
+					'Open Inth DevTools'
 				);
 			});
 		}

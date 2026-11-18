@@ -98,7 +98,7 @@
 	--inth-dev-tools-radius: var(--inth-radius-md, 0.5rem);
 	--inth-dev-tools-mono:
 		ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-	/* Inspection controls sit above inth's banner and dialog layers. */
+	/* Inspection controls sit above Inth's banner and dialog layers. */
 	--inth-dev-tools-z: calc(
 		max(
 				var(--consent-dialog-z-index, 999999999),
@@ -304,8 +304,6 @@
 	height: 1.25rem;
 }
 
-/* Tabs */
-
 .inth-dev-tools__tabs {
 	display: flex;
 	flex-wrap: wrap;
@@ -314,8 +312,6 @@
 	flex-shrink: 0;
 	border-bottom: 1px solid var(--inth-dev-tools-border);
 }
-
-/* Buttons */
 
 .inth-dev-tools__button {
 	display: inline-flex;
@@ -461,8 +457,6 @@
 .inth-dev-tools__tabs .inth-dev-tools__button:focus-visible {
 	outline-offset: -2px;
 }
-
-/* Content */
 
 .inth-dev-tools__content {
 	display: flex;
@@ -660,8 +654,6 @@ label.inth-dev-tools__check:has(input:disabled) {
 	line-height: 1.4;
 }
 
-/* Switch */
-
 .inth-dev-tools__check input {
 	appearance: none;
 	position: relative;
@@ -785,8 +777,6 @@ label.inth-dev-tools__check:has(input:disabled) {
 .inth-dev-tools__status[data-status='retained']::before {
 	background: var(--inth-dev-tools-accent);
 }
-
-/* Fields */
 
 .inth-dev-tools__field {
 	display: grid;
@@ -942,8 +932,6 @@ label.inth-dev-tools__check:has(input:disabled) {
 	font-size: 0.75rem;
 }
 
-/* Policy stats */
-
 .inth-dev-tools__stats {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
@@ -970,8 +958,6 @@ label.inth-dev-tools__check:has(input:disabled) {
 	font-weight: 500;
 }
 
-/* Code */
-
 .inth-dev-tools__code {
 	min-width: 0;
 	max-width: 100%;
@@ -991,8 +977,6 @@ label.inth-dev-tools__check:has(input:disabled) {
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
 }
-
-/* Events */
 
 .inth-dev-tools__event-list {
 	display: grid;
@@ -1045,8 +1029,6 @@ label.inth-dev-tools__check:has(input:disabled) {
 	font-family: var(--inth-dev-tools-mono);
 	font-weight: 500;
 }
-
-/* IAB */
 
 .inth-dev-tools__iab-list {
 	display: grid;
@@ -1134,8 +1116,6 @@ label.inth-dev-tools__check:has(input:disabled) {
 .inth-dev-tools__feedback[data-status='error']::before {
 	background: var(--inth-dev-tools-danger);
 }
-
-/* Hover */
 
 @media (hover: hover) and (pointer: fine) {
 	.inth-dev-tools__button:hover:not(:disabled) {

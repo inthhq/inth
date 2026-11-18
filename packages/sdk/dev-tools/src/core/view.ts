@@ -58,7 +58,6 @@ const asColumn = (section: HTMLElement): HTMLElement => {
 };
 const LIGHT_DOM_STYLE_ID = 'inth-dev-tools-styles';
 
-/** DOM view owned by a DevTools instance. */
 export interface DevToolsView {
 	/** Root node, or null when no DOM is available. */
 	element: HTMLElement | null;
@@ -984,11 +983,6 @@ function applyPlacement(root: HTMLElement, state: DevToolsState): void {
 	}
 }
 
-/**
- * Create a view for a kernel-bound state manager.
- * @param options - Kernel, scope getter, state manager, and optional container.
- * @returns A disposable view; element is null without a browser document.
- */
 // oxlint-disable-next-line func-style -- Preserve the public view factory declaration.
 export function createDevToolsView(options: ViewOptions): DevToolsView {
 	const document = options.container?.ownerDocument ?? globalThis.document;
@@ -1141,13 +1135,13 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 
 		const toggle = createButton(
 			document,
-			state.isOpen ? 'Close inth DevTools' : 'Open inth DevTools',
+			state.isOpen ? 'Close Inth DevTools' : 'Open Inth DevTools',
 			() => options.stateManager.setOpen(!state.isOpen),
 			'primary'
 		);
 		toggle.classList.add('inth-dev-tools__toggle');
 		toggle.replaceChildren(createLogo(document));
-		toggle.setAttribute('aria-label', 'Open inth DevTools');
+		toggle.setAttribute('aria-label', 'Open Inth DevTools');
 		toggle.hidden = state.isOpen;
 		toggle.setAttribute('aria-expanded', String(state.isOpen));
 		toggle.setAttribute('aria-controls', panelId);
@@ -1156,19 +1150,19 @@ export function createDevToolsView(options: ViewOptions): DevToolsView {
 		const panel = createElement(document, 'section', 'inth-dev-tools__panel');
 		panel.id = panelId;
 		panel.hidden = !state.isOpen;
-		panel.setAttribute('aria-label', 'inth consent developer tools');
+		panel.setAttribute('aria-label', 'Inth consent developer tools');
 		const header = createElement(document, 'header', 'inth-dev-tools__header');
 		const title = createElement(document, 'h2', 'inth-dev-tools__title');
-		title.setAttribute('aria-label', 'inth DevTools');
+		title.setAttribute('aria-label', 'Inth DevTools');
 		title.append(
 			createLogo(document),
 			createElement(document, 'span', undefined, 'DevTools')
 		);
-		const close = createButton(document, 'Close inth DevTools', () => {
+		const close = createButton(document, 'Close Inth DevTools', () => {
 			options.stateManager.setOpen(false);
 		});
 		close.textContent = '×';
-		close.setAttribute('aria-label', 'Close inth DevTools');
+		close.setAttribute('aria-label', 'Close Inth DevTools');
 		close.classList.add('inth-dev-tools__close');
 		header.append(title, close);
 		panel.append(header);

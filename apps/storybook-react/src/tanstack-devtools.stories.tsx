@@ -58,7 +58,7 @@ export const ConsentAndScriptsFlow: Story = {
 		expect(root?.classList.contains('inth-dev-tools--embedded')).toBe(true);
 		expect(
 			within(document.body).queryByRole('button', {
-				name: 'Open inth DevTools',
+				name: 'Open Inth DevTools',
 			})
 		).toBeNull();
 		await userEvent.click(

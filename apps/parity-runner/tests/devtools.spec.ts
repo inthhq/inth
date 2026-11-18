@@ -96,7 +96,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 				for (const tab of [...tabs, 'Launcher']) {
 					if (tab === 'Launcher') {
 						await root
-							.getByRole('button', { name: 'Close inth DevTools' })
+							.getByRole('button', { name: 'Close Inth DevTools' })
 							.click();
 					} else {
 						await root.getByRole('tab', { exact: true, name: tab }).click();

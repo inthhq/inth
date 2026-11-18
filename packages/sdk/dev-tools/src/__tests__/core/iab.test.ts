@@ -310,8 +310,6 @@ describe('IAB DevTools', () => {
 			toggle(tools, 'iab:purposes:1:consent').click();
 			button(tools, 'Save IAB consent').click();
 			expect(button(tools, 'Save IAB consent').disabled).toBe(true);
-			// Encoding a TC string is real work, and a loaded CI runner takes
-			// longer over it than `waitFor`'s one-second default allows.
 			await vi.waitFor(
 				() =>
 					expect(
