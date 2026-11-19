@@ -229,24 +229,22 @@ describe('Google Additional Consent providers', () => {
 		]);
 	});
 
-	test('resolves a relative provider URL against the manifest URL', async () => {
+	test('resolves a relative provider URL against the manifest URL, not projectUrl', async () => {
 		const { calls, fetch } = stubFetch(() =>
 			json(200, { providers: { '89': META } })
 		);
 		const transport = createV1ManifestTransport({
 			fetch,
 			fetchGvl: () => Promise.resolve(null),
+			manifestUrl: 'https://cdn.example.com/policies/manifest.json',
 			projectUrl: PROJECT_URL,
-			snapshot: iabManifest({
-				providers: [89],
-				url: '/api/additional-consent-relative',
-			}),
+			snapshot: iabManifest({ providers: [89], url: 'ac-providers.json' }),
 		});
 
 		const response = await transport.init({ overrides: {}, user: null });
 
 		expect(calls.map((call) => call.url)).toEqual([
-			`${PROJECT_URL}/api/additional-consent-relative?providerIds=89`,
+			'https://cdn.example.com/policies/ac-providers.json?providerIds=89',
 		]);
 		expect(response.adTechProviders).toHaveLength(1);
 	});
