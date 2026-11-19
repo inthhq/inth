@@ -1,8 +1,8 @@
 /**
  * The browser outbox store: localStorage under a Web Lock, in the format
  * earlier releases wrote, so saves a visitor queued before an upgrade
- * still replay. c15t's lists are never replayed, only cleared. Storage and
- * locks are injected; the last test runs the default store against the
+ * still replay. c15t's lists move into Inth's under the lock and replay
+ * from there. Storage and locks are injected; the last test runs the default store against the
  * test window's localStorage.
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -178,14 +178,89 @@ describe('browser outbox store', () => {
 		kernel.dispose();
 	});
 
-	test('never replays or moves the saves a c15t page queued, which may target another backend', async () => {
+	test('replays a save a c15t page queued and removes its key', async () => {
 		const storage = memoryStorage();
-		const c15tEntry = {
+		storage.setItem(C15T_SAVES_KEY, JSON.stringify([legacyEntry]));
+		const save = vi.fn().mockResolvedValue({ ok: true });
+		const kernel = kernelOn(
+			{ transport: { init: vi.fn().mockResolvedValue({}), save } },
+			{ localStorage: () => storage, locks: () => serialLocks().locks }
+		);
+
+		await kernel.commands.init();
+		await vi.waitFor(() => {
+			expect(save).toHaveBeenCalledWith(legacyEntry.payload, { replay: true });
+		});
+		await vi.waitFor(() => {
+			expect(storage.getItem(SAVES_KEY)).toBeNull();
+		});
+		expect(save).toHaveBeenCalledTimes(1);
+		expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
+		kernel.dispose();
+	});
+
+	test('follows a subject reassignment a c15t page recorded', async () => {
+		const storage = memoryStorage();
+		storage.setItem(
+			C15T_REASSIGNMENTS_KEY,
+			JSON.stringify([{ at: Date.now(), from: 'sub_taken', to: 'sub_c15t' }])
+		);
+		const save = vi
+			.fn()
+			.mockRejectedValueOnce(
+				new ConsentSaveRejectedError({
+					code: 'SUBJECT_CONFLICT',
+					message: '/subjects responded 409',
+					status: 409,
+				})
+			)
+			.mockResolvedValue({ ok: true });
+		const kernel = kernelOn(
+			{
+				initialRecords: { subject: { subjectId: 'sub_taken' } },
+				transport: { save },
+			},
+			{ localStorage: () => storage, locks: () => serialLocks().locks }
+		);
+
+		await kernel.commands.save('all');
+
+		expect(kernel.getSnapshot().subject?.subjectId).toBe('sub_c15t');
+		expect(storage.getItem(C15T_REASSIGNMENTS_KEY)).toBeNull();
+		expect(JSON.parse(storage.getItem(REASSIGNMENTS_KEY) ?? 'null')).toEqual([
+			{ at: expect.any(Number), from: 'sub_taken', to: 'sub_c15t' },
+		]);
+		kernel.dispose();
+	});
+
+	test("merges c15t's saves into the queue, which still narrows and dedupes them", async () => {
+		const storage = memoryStorage();
+		const entryFor = (subjectId: string, marketing: boolean, at: number) => ({
 			...legacyEntry,
-			payload: { ...legacyEntry.payload, subjectId: 'sub_c15t' },
-		};
-		storage.setItem(SAVES_KEY, JSON.stringify([legacyEntry]));
-		storage.setItem(C15T_SAVES_KEY, JSON.stringify([c15tEntry]));
+			payload: {
+				...legacyEntry.payload,
+				choice: {
+					categories: {
+						marketing: {
+							basis: { fingerprint: 'fp', kind: 'choice-v1' },
+							confirmedAt: at,
+							value: marketing,
+						},
+					},
+					version: 3,
+				},
+				confirmed: { actionAt: at, categories: { marketing } },
+				consents: { marketing, necessary: true },
+				givenAt: at,
+				subject: { subjectId },
+				subjectId,
+			},
+		});
+		const older = entryFor('sub_legacy', true, 1_700_000_000_000);
+		const other = entryFor('sub_other', true, 1_700_000_000_000);
+		const newer = entryFor('sub_legacy', false, 1_700_000_001_000);
+		storage.setItem(SAVES_KEY, JSON.stringify([older, other]));
+		storage.setItem(C15T_SAVES_KEY, JSON.stringify([newer, other]));
 		const save = vi.fn().mockResolvedValue({ ok: true });
 		const kernel = kernelOn(
 			{ transport: { init: vi.fn().mockResolvedValue({}), save } },
@@ -196,11 +271,34 @@ describe('browser outbox store', () => {
 		await vi.waitFor(() => {
 			expect(storage.getItem(SAVES_KEY)).toBeNull();
 		});
-		expect(save).toHaveBeenCalledTimes(1);
-		expect(save).toHaveBeenCalledWith(legacyEntry.payload, { replay: true });
-		expect(JSON.parse(storage.getItem(C15T_SAVES_KEY) ?? 'null')).toEqual([
-			c15tEntry,
+		expect(save.mock.calls.map(([payload]) => payload)).toEqual([
+			other.payload,
+			newer.payload,
 		]);
+		expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
+		kernel.dispose();
+	});
+
+	test.each([
+		{ label: 'invalid JSON', stored: '{not json' },
+		{ label: 'a non-array value', stored: '{"payload":{}}' },
+	])("drops c15t's lists when they hold $label", async ({ stored }) => {
+		const storage = memoryStorage();
+		storage.setItem(C15T_SAVES_KEY, stored);
+		storage.setItem(C15T_REASSIGNMENTS_KEY, stored);
+		const save = vi.fn().mockResolvedValue({ ok: true });
+		const kernel = kernelOn(
+			{ transport: { init: vi.fn().mockResolvedValue({}), save } },
+			{ localStorage: () => storage, locks: () => serialLocks().locks }
+		);
+
+		await kernel.commands.init();
+		await vi.waitFor(() => {
+			expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
+		});
+		expect(storage.getItem(C15T_REASSIGNMENTS_KEY)).toBeNull();
+		expect(storage.getItem(SAVES_KEY)).toBeNull();
+		expect(save).not.toHaveBeenCalled();
 		kernel.dispose();
 	});
 
@@ -237,6 +335,7 @@ describe('browser outbox store', () => {
 		releaseLock();
 		await vi.waitFor(() => {
 			expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
+			expect(storage.getItem(SAVES_KEY)).toBeNull();
 		});
 		kernel.dispose();
 	});

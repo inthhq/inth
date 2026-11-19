@@ -13,9 +13,9 @@ export const C15T_STORAGE_KEY = 'c15t';
 export const PENDING_SAVES_STORAGE_KEY = 'inth-pending-consent-saves:v1';
 
 /**
- * c15t's {@link PENDING_SAVES_STORAGE_KEY}. Never read: a queued save does
- * not record its backend, and a c15t page may send to another one. A clear
- * removes it.
+ * c15t's {@link PENDING_SAVES_STORAGE_KEY}. The browser outbox store moves
+ * what it holds into that key and replays it against this page's backend,
+ * since a queued save does not record its own. A clear removes it.
  */
 export const C15T_PENDING_SAVES_STORAGE_KEY =
 	'c15t-v3-pending-consent-saves:v1';
@@ -29,8 +29,8 @@ export const SUBJECT_REASSIGNMENTS_STORAGE_KEY =
 	'inth-subject-reassignments:v1';
 
 /**
- * c15t's {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}. Never read, for the
- * same reason as {@link C15T_PENDING_SAVES_STORAGE_KEY}. A clear removes it.
+ * c15t's {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}, moved into that key like
+ * {@link C15T_PENDING_SAVES_STORAGE_KEY}. A clear removes it.
  */
 export const C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY =
 	'c15t-v3-subject-reassignments:v1';

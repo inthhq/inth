@@ -25,9 +25,9 @@ import type { SavePayload } from '../../types';
 import type { PendingSaveEntry } from './supersession';
 
 /**
- * The Web Lock every browser outbox transaction holds: c15t's, so the
- * transaction that follows a clear also runs after one a c15t tab of the
- * origin started on the c15t lists the clear removes.
+ * The Web Lock every browser outbox transaction holds: c15t's, so c15t and
+ * Inth tabs of one origin take turns on c15t's lists, which a transaction
+ * adopts and a clear removes.
  */
 const OUTBOX_LOCK_NAME = 'c15t-v3-pending-consent-saves:v1';
 
@@ -140,11 +140,17 @@ const SLOT_KEYS: Record<OutboxSlot, string> = {
 	saves: PENDING_SAVES_STORAGE_KEY,
 };
 
+const C15T_SLOT_KEYS: Record<OutboxSlot, string> = {
+	reassignments: C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
+	saves: C15T_PENDING_SAVES_STORAGE_KEY,
+};
+
 /**
  * The outbox store every tab of an origin shares: JSON arrays in
  * localStorage under {@link PENDING_SAVES_STORAGE_KEY} and
- * {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}. `clear` also removes c15t's
- * lists.
+ * {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}. Every transaction first
+ * appends c15t's lists to these and removes them, so the outbox replays
+ * what a c15t page queued; `clear` removes c15t's lists too.
  *
  * Every transaction holds one Web Lock, so two tabs cannot overwrite each
  * other's entries or replay one twice. Without
@@ -173,8 +179,7 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 			const storage = environment.localStorage() ?? memory;
 			for (const key of [
 				...Object.values(SLOT_KEYS),
-				C15T_PENDING_SAVES_STORAGE_KEY,
-				C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
+				...Object.values(C15T_SLOT_KEYS),
 			]) {
 				try {
 					storage.removeItem(key);
@@ -185,15 +190,16 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 		},
 		async transact(run) {
 			const storage = environment.localStorage() ?? memory;
+			const readKey = (key: string): unknown => {
+				try {
+					const text = storage.getItem(key);
+					return text === null ? undefined : JSON.parse(text);
+				} catch {
+					return null;
+				}
+			};
 			const tx: OutboxTransaction = {
-				read(slot) {
-					try {
-						const text = storage.getItem(SLOT_KEYS[slot]);
-						return text === null ? undefined : JSON.parse(text);
-					} catch {
-						return null;
-					}
-				},
+				read: (slot) => readKey(SLOT_KEYS[slot]),
 				write(slot, value) {
 					try {
 						if (value.length === 0) {
@@ -208,14 +214,39 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 					}
 				},
 			};
+			const adoptC15tLists = () => {
+				for (const slot of ['saves', 'reassignments'] as const) {
+					const adopted = readKey(C15T_SLOT_KEYS[slot]);
+					if (adopted === undefined) {
+						continue;
+					}
+					if (Array.isArray(adopted)) {
+						const own = tx.read(slot);
+						if (
+							!tx.write(slot, [...(Array.isArray(own) ? own : []), ...adopted])
+						) {
+							continue;
+						}
+					}
+					try {
+						storage.removeItem(C15T_SLOT_KEYS[slot]);
+					} catch {
+						// Left for the next transaction.
+					}
+				}
+			};
+			const runAdopting = () => {
+				adoptC15tLists();
+				return run(tx);
+			};
 			const locks = storage === memory ? null : environment.locks();
 			if (!locks) {
-				return run(tx);
+				return runAdopting();
 			}
 			try {
-				return await locks.request(OUTBOX_LOCK_NAME, () => run(tx));
+				return await locks.request(OUTBOX_LOCK_NAME, runAdopting);
 			} catch {
-				return run(tx);
+				return runAdopting();
 			}
 		},
 	};
