@@ -197,7 +197,7 @@ import type {
 									<a
 										inth-branding
 										[noStyle]="resolvedNoStyle()"
-										surface="dialog"
+										[surface]="'dialog'"
 									></a>
 								}
 							</div>

@@ -160,7 +160,7 @@ const primaryActions = function primaryActions(
 							<a
 								inth-branding
 								[noStyle]="resolvedNoStyle()"
-								surface="banner"
+								[surface]="'banner'"
 							></a>
 						}
 						<div

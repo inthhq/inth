@@ -10,7 +10,7 @@
  *
  * @example
  * ```html
- * <svg inth-brand-mark-icon mark="inth" width="16" height="16"></svg>
+ * <svg inth-brand-mark-icon [mark]="'inth'" width="16" height="16"></svg>
  * ```
  *
  * @packageDocumentation

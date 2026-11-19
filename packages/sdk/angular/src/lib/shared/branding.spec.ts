@@ -14,7 +14,7 @@ import { Branding } from './branding';
 	template: `
 		<a
 			inth-branding
-			surface="banner"
+			[surface]="'banner'"
 		></a>
 	`,
 })
@@ -62,6 +62,9 @@ describe('Branding', () => {
 			'true'
 		);
 		expect(branding.querySelector('[id]')).toBeNull();
+		// The other frameworks render neither input as an attribute.
+		expect(branding.hasAttribute('surface')).toBe(false);
+		expect(branding.querySelector('[mark]')).toBeNull();
 	});
 
 	test('shows the c15t mark for c15t branding', async () => {

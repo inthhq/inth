@@ -43,7 +43,7 @@ export const shouldShowBranding = function shouldShowBranding(
  * @example
  * ```html
  * @if (showBranding()) {
- *   <a inth-branding surface="banner"></a>
+ *   <a inth-branding [surface]="'banner'"></a>
  * }
  * ```
  * @internal
@@ -79,13 +79,13 @@ export const shouldShowBranding = function shouldShowBranding(
 				@if (tag.brand === 'inth') {
 					<svg
 						inth-brand-mark-icon
-						mark="inth"
+						[mark]="'inth'"
 					></svg>
 				} @else {
 					<span [class]="tag.classes.mark">
 						<svg
 							inth-brand-mark-icon
-							mark="c15t"
+							[mark]="'c15t'"
 						></svg>
 					</span>
 					<span [class]="tag.classes.label">c15t</span>
