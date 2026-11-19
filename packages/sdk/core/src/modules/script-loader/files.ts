@@ -407,28 +407,26 @@ const scriptsIn = function scriptsIn(node: unknown): HTMLScriptElement[] {
 	if (!isTree(node)) {
 		return [];
 	}
-	const found = Array.from(node.querySelectorAll('script'));
 	if (!madeShadowRoot) {
-		return found;
+		return Array.from(node.querySelectorAll('script'));
 	}
-	const trees: (Element | DocumentFragment)[] = [];
-	if (node instanceof Element) {
-		trees.push(node);
-	}
-	for (const host of node.querySelectorAll('*')) {
-		trees.push(host);
-	}
-	// A loop, not recursion or a spread: a tree can hold more scripts than a
-	// call can take arguments.
-	for (const host of trees) {
-		const root = host instanceof Element ? shadowRootOf(host) : null;
+	// Shadow-including tree order, the order the browser runs inserted
+	// scripts in: a host's shadow root before its children. A stack, not
+	// recursion, so a deep tree cannot overflow it.
+	const found: HTMLScriptElement[] = [];
+	const stack: (Element | DocumentFragment)[] = [node];
+	while (stack.length > 0) {
+		const next = stack.pop() as Element | DocumentFragment;
+		if (next instanceof HTMLScriptElement) {
+			found.push(next);
+		}
+		const { children } = next;
+		for (let index = children.length - 1; index >= 0; index -= 1) {
+			stack.push(children[index] as Element);
+		}
+		const root = next instanceof Element ? shadowRootOf(next) : null;
 		if (root) {
-			for (const script of root.querySelectorAll('script')) {
-				found.push(script);
-			}
-			for (const inner of root.querySelectorAll('*')) {
-				trees.push(inner);
-			}
+			stack.push(root);
 		}
 	}
 	return found;
@@ -522,14 +520,17 @@ const releaseHeld = function releaseHeld(install: Install): void {
 	install.held.clear();
 	for (const element of elements) {
 		restoreType(dom, element);
+		// The install now in place decides: a script released before this one
+		// can run page code that installs a new pin.
+		const router = active;
 		const src = dom.getAttribute.call(element, 'src');
-		if (src !== null && active === install) {
-			const next = route(install, element, src);
+		if (src !== null && router) {
+			const next = route(router, element, src);
 			if (next !== src) {
 				dom.setAttribute.call(element, 'src', next as string);
 			}
 		}
-		if (!(install.held.has(element) || refused.has(element))) {
+		if (!(router?.held.has(element) || refused.has(element))) {
 			reinsert(dom, element);
 		}
 	}
@@ -554,6 +555,10 @@ const settle = function settle(install: Install): void {
 };
 
 type Method = (this: unknown, ...args: unknown[]) => unknown;
+
+/** A namespace argument the DOM reads as no namespace. */
+const isNoNamespace = (namespace: unknown): boolean =>
+	namespace === null || namespace === undefined || namespace === '';
 
 /** A prototype the pin patches: a DOM node's, or `Range`'s. */
 type Patchable = Node | Range;
@@ -647,8 +652,7 @@ const installPatches = function installPatches(): Install {
 		'setAttributeNS',
 		routeArgument(
 			2,
-			([namespace, name]) =>
-				(namespace === null || namespace === '') && name === 'src'
+			([namespace, name]) => isNoNamespace(namespace) && name === 'src'
 		)
 	);
 	const routeNode = (original: Method): Method =>
@@ -682,7 +686,7 @@ const installPatches = function installPatches(): Install {
 	const isType = (name: unknown): boolean =>
 		String(name).toLowerCase() === 'type';
 	const isPlainType = (namespace: unknown, name: unknown): boolean =>
-		(namespace === null || namespace === '') && name === 'type';
+		isNoNamespace(namespace) && name === 'type';
 	const guardType =
 		(
 			matches: (args: unknown[]) => boolean,
@@ -835,9 +839,20 @@ const installPatches = function installPatches(): Install {
 		insertion((args) => args.slice(1, 2))
 	);
 	if (typeof Range !== 'undefined') {
-		for (const name of ['insertNode', 'surroundContents']) {
-			patch(Range.prototype, name, insertion(first));
-		}
+		patch(Range.prototype, 'insertNode', insertion(first));
+		// `surroundContents` empties the new parent before it inserts it, so
+		// only the parent itself, or its shadow root, joins the page.
+		patch(
+			Range.prototype,
+			'surroundContents',
+			insertion(([parent]) => {
+				if (parent instanceof HTMLScriptElement) {
+					return [parent];
+				}
+				const root = parent instanceof Element ? shadowRootOf(parent) : null;
+				return root ? [root] : [];
+			})
+		);
 	}
 	return install;
 };

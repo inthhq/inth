@@ -381,6 +381,18 @@ describe('pinRegistryFiles', () => {
 		expect(fetched(element)).toEqual(untouched(other));
 	});
 
+	test('reads an undefined namespace as none, as the DOM does', () => {
+		join(files);
+		const element = document.createElement('script');
+		element.setAttributeNS(undefined as unknown as null, 'src', LOGGER);
+		document.head.append(element);
+		expect(fetched(element)).toEqual(PINNED);
+
+		const refusedElement = insert(HELD);
+		refusedElement.removeAttributeNS(undefined as unknown as null, 'type');
+		expect(refusedElement.getAttribute('type')).toBe('inth/held');
+	});
+
 	test('keeps a crossorigin the page set after the pin when it points the element elsewhere', () => {
 		join(files);
 		const other = 'https://cdn.vendor.example/other.js';
@@ -528,6 +540,24 @@ describe('pinRegistryFiles', () => {
 			expect(onerror).not.toHaveBeenCalled();
 		});
 
+		test('fails nothing that surroundContents drops from the new parent', async () => {
+			join(files);
+			const onerror = vi.fn();
+			const dropped = document.createElement('script');
+			dropped.onerror = onerror;
+			dropped.src = HELD;
+			const parent = document.createElement('div');
+			parent.append(dropped);
+			document.body.append(document.createTextNode('text'));
+			const range = document.createRange();
+			range.selectNodeContents(document.body);
+			range.surroundContents(parent);
+
+			expect(dropped.isConnected).toBe(false);
+			await tick();
+			expect(onerror).not.toHaveBeenCalled();
+		});
+
 		test('keeps an inserted element refused when its src changes', async () => {
 			join(files);
 			const onerror = vi.fn();
@@ -587,6 +617,35 @@ describe('pinRegistryFiles', () => {
 			pin.list(files);
 
 			await vi.waitFor(() => expect(added).toEqual([dependency, consumer]));
+		});
+
+		test("runs held scripts again in shadow-including tree order, a host's shadow root first", async () => {
+			const pin = join(null);
+			const host = document.createElement('div');
+			const root = host.attachShadow({ mode: 'open' });
+			root.append(parsed('https://cdn.other.example/shadow.js'));
+			host.append(parsed('https://cdn.other.example/light.js'));
+			document.body.append(host);
+
+			const added: string[] = [];
+			const observer = new MutationObserver((records) => {
+				for (const record of records) {
+					for (const node of record.addedNodes) {
+						added.push((node as HTMLScriptElement).src);
+					}
+				}
+			});
+			observer.observe(host, { childList: true });
+			observer.observe(root, { childList: true });
+			pin.list(files);
+
+			await vi.waitFor(() =>
+				expect(added).toEqual([
+					'https://cdn.other.example/shadow.js',
+					'https://cdn.other.example/light.js',
+				])
+			);
+			observer.disconnect();
 		});
 
 		test('lets a held script go as it came when the list does not name it', () => {
