@@ -184,7 +184,9 @@ origin wait too: c15t holds each one until the list arrives. Then it loads the
 element from the registry, refuses it, or lets it load unchanged. A script on
 the page's own origin, such as a bundler chunk, never waits. When the list
 names no files, or init fails, c15t lets the held elements load unchanged and
-removes its patches. While a prefetched list names files, or init has not
+removes its patches. `dispose()` before init answers does the same, so a held
+script that stays on the page, such as one with `persistAfterDispose`, loads
+from its own URL. While a prefetched list names files, or init has not
 answered, a server start leaves every script for the loader to start.
 
 #### What `files` does not cover
@@ -198,8 +200,8 @@ the script loader starts. These load code without c15t seeing it:
 - Workers, including `importScripts` in a worker.
 - Iframes, including `srcdoc` frames, and a script element made with another
   frame's DOM methods.
-- A script in a closed shadow root made before the script loader starts, or
-  declared in HTML.
+- A script in a shadow root made before the script loader starts, or declared
+  in HTML.
 - A `src` set with `script.attributes.setNamedItem`, and a `<script>` inside
   an inline SVG.
 - A file on your own origin that the list names, while init has not answered,
@@ -239,8 +241,8 @@ loads nothing. A `refuseIfSet` that is not a list of paths makes the entry one
 c15t cannot use. To load such a script with that option, give it your own
 `scriptLoader.sources` entry, which wins over the list.
 
-Only a Content Security Policy closes these gaps in your page. Allow the
-registry and your own origin, and no vendor host:
+Only a Content Security Policy closes these gaps in your page, for files on a
+vendor host. Allow the registry and your own origin, and no vendor host:
 
 ```http
 Content-Security-Policy: script-src 'self' https://acme.inth.app; worker-src blob:

@@ -351,19 +351,23 @@ describe('pinRegistryFiles', () => {
 		refusedLater.src = LOGGER;
 		const heldLater = document.createElement('script');
 		heldLater.src = LOGGER;
-		join({ [LOGGER]: null });
+
+		const refusing = join({ [LOGGER]: null });
 		document.head.append(refusedLater);
 		expect(fetched(refusedLater)).toEqual({
 			...untouched(LOGGER),
 			type: 'inth/held',
 		});
+		refusing.dispose();
 
-		join(null);
+		const waiting = join(null);
 		document.head.append(heldLater);
 		expect(fetched(heldLater)).toEqual({
 			...untouched(LOGGER),
 			type: 'inth/held',
 		});
+		waiting.list(files);
+		expect(fetched(heldLater)).toEqual(PINNED);
 	});
 
 	test('takes back what it set when the page points the element elsewhere', () => {
@@ -467,6 +471,63 @@ describe('pinRegistryFiles', () => {
 			expect(repointed.getAttribute('type')).toBe('inth/held');
 		});
 
+		test('keeps its inert type through every way the page sets one', () => {
+			join(files);
+			const element = insert(HELD);
+			element.removeAttribute('type');
+			element.type = 'text/javascript';
+			element.setAttributeNS(null, 'type', 'module');
+			element.toggleAttribute('type');
+			element.setAttribute('TYPE', 'module');
+			// Text would make the browser check a script that has not started.
+			element.text = '1';
+			expect(element.getAttribute('type')).toBe('inth/held');
+		});
+
+		test('gives a held script the last type the page set while it was held', () => {
+			const pin = join(null);
+			const element = insert(LOGGER);
+			element.type = 'text/javascript';
+			element.removeAttribute('type');
+			element.setAttribute('type', 'module');
+			expect(element.getAttribute('type')).toBe('inth/held');
+
+			pin.list(files);
+			expect(fetched(element)).toEqual({ ...PINNED, type: 'module' });
+		});
+
+		test('lets an element go as an inline script when the page takes the refused URL off before inserting it', async () => {
+			join(files);
+			const onerror = vi.fn();
+			const element = document.createElement('script');
+			element.onerror = onerror;
+			element.src = HELD;
+			element.removeAttribute('src');
+			element.text = 'void 0';
+			document.head.append(element);
+
+			expect(element.hasAttribute('type')).toBe(false);
+			await tick();
+			expect(onerror).not.toHaveBeenCalled();
+		});
+
+		test('fails nothing when the insertion throws, and decides the element again next time', async () => {
+			join(files);
+			const onerror = vi.fn();
+			const element = document.createElement('script');
+			element.onerror = onerror;
+			element.src = HELD;
+			const stranger = document.createElement('div');
+			expect(() => document.head.replaceChild(element, stranger)).toThrow();
+
+			const fallback = 'https://cdn.other.example/fallback.js';
+			element.src = fallback;
+			document.head.append(element);
+			expect(fetched(element)).toEqual(untouched(fallback));
+			await tick();
+			expect(onerror).not.toHaveBeenCalled();
+		});
+
 		test('keeps an inserted element refused when its src changes', async () => {
 			join(files);
 			const onerror = vi.fn();
@@ -508,6 +569,24 @@ describe('pinRegistryFiles', () => {
 
 			pin.list(files);
 			expect(fetched(element)).toEqual(PINNED);
+		});
+
+		test('runs held scripts again in the order the page inserted them', async () => {
+			const pin = join(null);
+			const consumer = document.createElement('script');
+			consumer.src = 'https://cdn.other.example/consumer.js';
+			const dependency = document.createElement('script');
+			dependency.src = 'https://cdn.other.example/dependency.js';
+			document.head.append(dependency);
+			document.head.append(consumer);
+
+			const added: Node[] = [];
+			new MutationObserver((records) => {
+				added.push(...records.flatMap((record) => [...record.addedNodes]));
+			}).observe(document.head, { childList: true });
+			pin.list(files);
+
+			await vi.waitFor(() => expect(added).toEqual([dependency, consumer]));
 		});
 
 		test('lets a held script go as it came when the list does not name it', () => {

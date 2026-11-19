@@ -31,8 +31,8 @@
  * its own list; the prototypes are restored once the last one leaves.
  *
  * Code the pin cannot see loads files without it: `document.write`, `eval`,
- * `import()`, workers, iframes, script elements from another realm, closed
- * shadow roots made before the pin, `attributes.setNamedItem`, SVG
+ * `import()`, workers, iframes, script elements from another realm, shadow
+ * roots made before the pin, `attributes.setNamedItem`, SVG
  * scripts, and any URL a page override hands the loader that the list does
  * not name.
  * Only a Content Security Policy that allows the registry, and not the
@@ -135,6 +135,11 @@ const failed = new WeakSet<HTMLScriptElement>();
 const pinned = new WeakMap<HTMLScriptElement, Pinned>();
 /** Shadow roots by host, closed ones included, made while installed. */
 const shadowRoots = new WeakMap<Element, ShadowRoot>();
+/**
+ * Whether any shadow root was made while installed. Until one is, a sweep
+ * does not look for hosts, which costs a walk over every inserted element.
+ */
+let madeShadowRoot = false;
 
 type Decision =
 	| { readonly kind: 'pass' | 'hold' | 'refuse' }
@@ -403,14 +408,27 @@ const scriptsIn = function scriptsIn(node: unknown): HTMLScriptElement[] {
 		return [];
 	}
 	const found = Array.from(node.querySelectorAll('script'));
-	const hosts = Array.from(node.querySelectorAll('*'));
-	if (node instanceof Element) {
-		hosts.push(node);
+	if (!madeShadowRoot) {
+		return found;
 	}
-	for (const host of hosts) {
-		const root = shadowRootOf(host);
+	const trees: (Element | DocumentFragment)[] = [];
+	if (node instanceof Element) {
+		trees.push(node);
+	}
+	for (const host of node.querySelectorAll('*')) {
+		trees.push(host);
+	}
+	// A loop, not recursion or a spread: a tree can hold more scripts than a
+	// call can take arguments.
+	for (const host of trees) {
+		const root = host instanceof Element ? shadowRootOf(host) : null;
 		if (root) {
-			found.push(...scriptsIn(root));
+			for (const script of root.querySelectorAll('script')) {
+				found.push(script);
+			}
+			for (const inner of root.querySelectorAll('*')) {
+				trees.push(inner);
+			}
 		}
 	}
 	return found;
@@ -422,19 +440,33 @@ const keepsPin = (decision: Decision, file: RegistryFile): boolean =>
 	decision.file.src === file.src &&
 	decision.file.integrity === file.integrity;
 
-/** Route each script in `node` that inserting it may run. */
-const sweep = function sweep(install: Install, node: unknown): void {
+/**
+ * Route each script in `node` that inserting it may run.
+ *
+ * @returns The refused scripts, to fail once the insertion succeeds.
+ */
+const sweep = function sweep(
+	install: Install,
+	node: unknown
+): HTMLScriptElement[] {
+	const refusals: HTMLScriptElement[] = [];
+	// A connected script has run, waits on its own `src`, or is held or
+	// refused with a type the pin keeps on it: moving it runs nothing new.
+	if (node instanceof Node && node.isConnected) {
+		return refusals;
+	}
 	const { dom } = install;
 	for (const element of scriptsIn(node)) {
-		// A held or refused script never started, so moving it can still run
-		// it: it stays inert wherever it goes.
-		if (install.held.has(element) || failed.has(element)) {
+		if (install.held.has(element)) {
 			enforceType(dom, element);
+			// Held scripts run again in the order they were inserted, as the
+			// browser runs scripts with `async = false`.
+			install.held.delete(element);
+			install.held.add(element);
 			continue;
 		}
-		// A connected script has run, or waits on its own `src`: moving it
-		// never runs it again.
-		if (element.isConnected) {
+		if (failed.has(element)) {
+			enforceType(dom, element);
 			continue;
 		}
 		// A list that joined or arrived since the element got its URL may
@@ -463,11 +495,16 @@ const sweep = function sweep(install: Install, node: unknown): void {
 			if (next !== src) {
 				dom.setAttribute.call(element, 'src', next as string);
 			}
+		} else if (refused.has(element)) {
+			// The page took the refused URL off: it is an inline script now.
+			refused.delete(element);
+			restoreType(dom, element);
 		}
 		if (refused.has(element)) {
-			failLater(element);
+			refusals.push(element);
 		}
 	}
+	return refusals;
 };
 
 /** Insert a connected element again in place, so the browser runs it. */
@@ -506,9 +543,11 @@ const settle = function settle(install: Install): void {
 	if (!needed && active === install) {
 		// No list names a file, or every loader left. A held element was never
 		// listed, so it goes as it came.
+		// Restore first: a released script can run page code at once, and a
+		// pin installed then must wrap the native methods, not ours.
 		active = null;
-		releaseHeld(install);
 		install.restore();
+		releaseHeld(install);
 		return;
 	}
 	releaseHeld(install);
@@ -631,6 +670,100 @@ const installPatches = function installPatches(): Install {
 		};
 	patch(elementProto, 'setAttributeNode', routeNode);
 	patch(elementProto, 'setAttributeNodeNS', routeNode);
+
+	// A held or refused script has not started, so the browser checks it
+	// again when it moves, gets text or gets a `src`. It keeps the type the
+	// browser does not run; a type the page sets meanwhile is the one it
+	// gets back.
+	const keepsInert = (element: unknown): element is HTMLScriptElement =>
+		active === install &&
+		element instanceof HTMLScriptElement &&
+		(install.held.has(element) || refused.has(element));
+	const isType = (name: unknown): boolean =>
+		String(name).toLowerCase() === 'type';
+	const isPlainType = (namespace: unknown, name: unknown): boolean =>
+		(namespace === null || namespace === '') && name === 'type';
+	const guardType =
+		(
+			matches: (args: unknown[]) => boolean,
+			value: (args: unknown[]) => string | null
+		) =>
+		(original: Method): Method =>
+			function guarded(this: unknown, ...args: unknown[]) {
+				if (keepsInert(this) && matches(args)) {
+					ownTypes.set(this, value(args));
+					return undefined;
+				}
+				return original.apply(this, args);
+			};
+	patch(
+		elementProto,
+		'setAttribute',
+		guardType(
+			([name]) => isType(name),
+			([, value]) => String(value)
+		)
+	);
+	patch(
+		elementProto,
+		'removeAttribute',
+		guardType(
+			([name]) => isType(name),
+			() => null
+		)
+	);
+	patch(
+		elementProto,
+		'setAttributeNS',
+		guardType(
+			([namespace, name]) => isPlainType(namespace, name),
+			([, , value]) => String(value)
+		)
+	);
+	patch(
+		elementProto,
+		'removeAttributeNS',
+		guardType(
+			([namespace, name]) => isPlainType(namespace, name),
+			() => null
+		)
+	);
+	patch(
+		elementProto,
+		'toggleAttribute',
+		(original: Method): Method =>
+			function toggled(this: unknown, ...args: unknown[]) {
+				const [name, force] = args;
+				if (!(keepsInert(this) && isType(name))) {
+					return original.apply(this, args);
+				}
+				const own = ownTypes.get(this) ?? null;
+				const next = force === undefined ? own === null : Boolean(force);
+				ownTypes.set(this, next ? (own ?? '') : null);
+				return next;
+			}
+	);
+	const typeDescriptor = Object.getOwnPropertyDescriptor(srcProto, 'type');
+	const ownTypeSet = typeDescriptor?.set;
+	if (typeDescriptor?.configurable && ownTypeSet) {
+		const setType = function setType(this: HTMLScriptElement, value: unknown) {
+			if (keepsInert(this)) {
+				ownTypes.set(this, String(value));
+				return;
+			}
+			ownTypeSet.call(this, value);
+		};
+		Object.defineProperty(srcProto, 'type', {
+			...typeDescriptor,
+			get: typeDescriptor.get,
+			set: setType,
+		});
+		restores.push(() => {
+			if (Object.getOwnPropertyDescriptor(srcProto, 'type')?.set === setType) {
+				Object.defineProperty(srcProto, 'type', typeDescriptor);
+			}
+		});
+	}
 	// A closed shadow root is out of reach from its host, and a script in a
 	// detached one is swept when its host joins the page.
 	patch(
@@ -641,6 +774,7 @@ const installPatches = function installPatches(): Install {
 				const root = original.apply(this, args);
 				if (this instanceof Element && root instanceof ShadowRoot) {
 					shadowRoots.set(this, root);
+					madeShadowRoot = true;
 				}
 				return root;
 			}
@@ -658,15 +792,17 @@ const installPatches = function installPatches(): Install {
 				// A node inserted into a detached tree is swept when that tree
 				// joins the page.
 				if (
-					active === install &&
-					anchor instanceof Node &&
-					anchor.isConnected
+					!(active === install && anchor instanceof Node && anchor.isConnected)
 				) {
-					for (const node of pick(args)) {
-						sweep(install, node);
-					}
+					return original.apply(this, args);
 				}
-				return original.apply(this, args);
+				const refusals = pick(args).flatMap((node) => sweep(install, node));
+				const result = original.apply(this, args);
+				// Only an insertion that happened fails what it refused.
+				for (const element of refusals) {
+					failLater(element);
+				}
+				return result;
 			};
 	const first = (args: unknown[]) => args.slice(0, 1);
 	const all = (args: unknown[]) => args;
