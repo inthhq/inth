@@ -8,7 +8,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createKernel } from '../../../kernel';
 import { createMemoryOutboxStore } from '../../../kernel/save-outbox';
-import { InthApiError } from '../error';
+import { ApiError } from '../error';
 import { createV1HostedTransport } from '../hosted';
 import {
 	bodyAt,
@@ -133,7 +133,7 @@ describe('init: GET /v1/consent/init', () => {
 			.init({ overrides: {}, user: null })
 			.catch((caught: unknown) => caught);
 
-		expect(error).toBeInstanceOf(InthApiError);
+		expect(error).toBeInstanceOf(ApiError);
 		expect(error).toMatchObject({
 			code: 'bad_gateway',
 			requestId: 'req_header',

@@ -18,7 +18,7 @@ import type {
 } from '../../types';
 import { buildDecisionAssertion } from '../decision-inputs';
 import type { RememberedDecisionInputs } from '../decision-inputs';
-import { readInthApiError } from './error';
+import { readApiError } from './error';
 import { buildV1ConsentRecordBody } from './records-body';
 import {
 	readJson,
@@ -155,7 +155,7 @@ export const createV1RecordTransport = function createV1RecordTransport(
 				}),
 			});
 			if (!response.ok) {
-				throw await readInthApiError(
+				throw await readApiError(
 					`Inth transport: ${V1_ROUTES.subjectLink}`,
 					response
 				);

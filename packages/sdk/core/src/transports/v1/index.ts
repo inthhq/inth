@@ -10,10 +10,10 @@
  *   adapter that resolves init some other way.
  */
 
-export { InthApiError, isInthApiError } from './error';
-export type { InthApiErrorCode, InthApiErrorDetail } from './error';
-export { InthConsentSaveRejectedError } from './save-rejected';
-export type { InthApiFailure } from './save-rejected';
+export { ApiError, isApiError } from './error';
+export type { ApiErrorCode, ApiErrorDetail } from './error';
+export { ApiSaveRejectedError } from './save-rejected';
+export type { ApiFailure } from './save-rejected';
 export { createV1HostedTransport } from './hosted';
 export type { V1HostedTransport, V1HostedTransportOptions } from './hosted';
 export { createV1ManifestTransport } from './manifest';

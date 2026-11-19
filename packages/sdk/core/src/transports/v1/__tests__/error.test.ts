@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { InthApiError, isInthApiError, readInthApiError } from '../error';
+import { ApiError, isApiError, readApiError } from '../error';
 import { json } from './fixtures';
 
-describe('readInthApiError', () => {
+describe('readApiError', () => {
 	test('reads the code, message, details and request ID from the body', async () => {
-		const error = await readInthApiError(
+		const error = await readApiError(
 			'Inth: /v1/consent/records',
 			json(
 				422,
@@ -24,8 +24,8 @@ describe('readInthApiError', () => {
 			)
 		);
 
-		expect(error).toBeInstanceOf(InthApiError);
-		expect(isInthApiError(error)).toBe(true);
+		expect(error).toBeInstanceOf(ApiError);
+		expect(isApiError(error)).toBe(true);
 		expect(error).toMatchObject({
 			code: 'invalid_request',
 			details: { fieldErrors: { property: ['Required'] }, formErrors: [] },
@@ -38,7 +38,7 @@ describe('readInthApiError', () => {
 	});
 
 	test('falls back to the header request ID and a code for the status', async () => {
-		const error = await readInthApiError(
+		const error = await readApiError(
 			'Inth',
 			new Response('<html>Gateway Timeout</html>', {
 				headers: { 'x-request-id': 'req_gateway' },
@@ -63,10 +63,7 @@ describe('readInthApiError', () => {
 					controller.enqueue(new TextEncoder().encode('{"error":'));
 				},
 			});
-			const pending = readInthApiError(
-				'Inth',
-				new Response(body, { status: 502 })
-			);
+			const pending = readApiError('Inth', new Response(body, { status: 502 }));
 			await vi.advanceTimersByTimeAsync(2000);
 			const error = await pending;
 
@@ -78,7 +75,7 @@ describe('readInthApiError', () => {
 	});
 
 	test('keeps a code added after this client', async () => {
-		const error = await readInthApiError(
+		const error = await readApiError(
 			'Inth',
 			json(409, { error: { code: 'new_code', message: 'm' }, requestId: 'r' })
 		);
@@ -87,7 +84,7 @@ describe('readInthApiError', () => {
 	});
 
 	test('reads Retry-After on a 429', async () => {
-		const error = await readInthApiError(
+		const error = await readApiError(
 			'Inth',
 			json(
 				429,

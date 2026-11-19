@@ -35,7 +35,7 @@ import type { RememberedDecisionInputs } from '../decision-inputs';
 import { fetchCachedGvl } from '../gvl-cache';
 import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
-import { readInthApiError } from './error';
+import { readApiError } from './error';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
 import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
@@ -167,7 +167,7 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 				method: 'GET',
 			});
 			if (!response.ok) {
-				throw await readInthApiError(
+				throw await readApiError(
 					`Inth transport: ${V1_ROUTES.manifest}`,
 					response
 				);

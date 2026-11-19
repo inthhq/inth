@@ -10,9 +10,9 @@ import {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../save-rejection';
-import { InthApiError, isInthApiError } from '../error';
+import { ApiError, isApiError } from '../error';
 import { createV1RecordTransport } from '../records';
-import { InthConsentSaveRejectedError } from '../save-rejected';
+import { ApiSaveRejectedError } from '../save-rejected';
 import {
 	ACTION_AT,
 	bodyAt,
@@ -252,9 +252,9 @@ describe('save: the answer', () => {
 				.save(savePayload())
 				.catch((caught: unknown) => caught);
 
-			expect(error).toBeInstanceOf(InthConsentSaveRejectedError);
+			expect(error).toBeInstanceOf(ApiSaveRejectedError);
 			expect(isConsentSaveRejection(error)).toBe(true);
-			expect(isInthApiError(error)).toBe(true);
+			expect(isApiError(error)).toBe(true);
 			expect(error).toMatchObject({ code, requestId: 'req_save', status });
 		}
 	);
@@ -294,7 +294,7 @@ describe('save: the answer', () => {
 			.save(savePayload())
 			.catch((caught: unknown) => caught);
 
-		expect(error).toBeInstanceOf(InthApiError);
+		expect(error).toBeInstanceOf(ApiError);
 		expect(isConsentSaveRejection(error)).toBe(false);
 		expect(error).toMatchObject({ code, requestId: 'req_123', status });
 	});
@@ -414,7 +414,7 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 			.identify({ ...user, identityToken: 'stale' }, SUBJECT)
 			.catch((caught: unknown) => caught);
 
-		expect(error).toBeInstanceOf(InthApiError);
+		expect(error).toBeInstanceOf(ApiError);
 		expect(error).toMatchObject({
 			code: 'identity_token_invalid',
 			requestId: 'req_link',

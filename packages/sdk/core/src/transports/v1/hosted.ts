@@ -20,7 +20,7 @@ import {
 import type { RememberedDecisionInputs } from '../decision-inputs';
 import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
-import { readInthApiError } from './error';
+import { readApiError } from './error';
 import { createV1InitRequest } from './init-request';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
@@ -183,10 +183,7 @@ export const createV1HostedTransport = function createV1HostedTransport(
 		} else {
 			const response = await fetchImpl(request.url, request.init);
 			if (!response.ok) {
-				throw await readInthApiError(
-					`Inth transport: ${V1_ROUTES.init}`,
-					response
-				);
+				throw await readApiError(`Inth transport: ${V1_ROUTES.init}`, response);
 			}
 			payload = (await response.json()) as InitOutput;
 		}

@@ -6,7 +6,7 @@ import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
-import { InthApiError } from '../error';
+import { ApiError } from '../error';
 import { createV1ManifestTransport } from '../manifest';
 import { buildV1ConsentSessionReport } from '../session-report';
 import {
@@ -74,7 +74,7 @@ describe('GET /v1/consent/manifest', () => {
 		const error = await transport
 			.init({ overrides: {}, user: null })
 			.catch((caught: unknown) => caught);
-		expect(error).toBeInstanceOf(InthApiError);
+		expect(error).toBeInstanceOf(ApiError);
 		expect(error).toMatchObject({
 			code: 'server_error',
 			requestId: 'req_manifest',
