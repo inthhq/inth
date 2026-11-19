@@ -25,7 +25,7 @@ import type {
 	storeEarlyCommit,
 } from '@inth/sdk-core/surface-actions/early-commit';
 
-import type { InthGlobalBase, QueuedCall } from '../global-base';
+import type { GlobalApiBase, QueuedCall } from '../global-base';
 import { GLOBAL_NAME } from '../global-name';
 import type { ConsentClient } from '../types';
 import type { Surface } from '../ui/surface';
@@ -166,7 +166,7 @@ export interface InitBoot {
 	 * Called by the engine once `window.inth` is the real API. The init
 	 * script stops its own listeners and forwards every later call.
 	 */
-	attach: (api: InthGlobalBase) => void;
+	attach: (api: GlobalApiBase) => void;
 }
 
 /** The stand-in `window.inth`, as far as the engine reads it. @internal */

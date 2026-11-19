@@ -21,8 +21,7 @@ const openPage = async (search = ''): Promise<UICSPPage> => {
 	frame.src = `/__inth-test__/ui-csp${search}`;
 	document.body.append(frame);
 	const read = () =>
-		(frame.contentWindow as (Window & { inthUICSP?: UICSPPage }) | null)
-			?.inthUICSP;
+		(frame.contentWindow as (Window & { uiCSP?: UICSPPage }) | null)?.uiCSP;
 	await expect.poll(read, { timeout: 10_000 }).toBeDefined();
 	const page = read() as UICSPPage;
 	await page.ready;

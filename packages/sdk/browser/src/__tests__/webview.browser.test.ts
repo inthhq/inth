@@ -34,8 +34,7 @@ const openPage = async (query = ''): Promise<[Window, WebViewPage]> => {
 		throw new Error('The browser blocked the page');
 	}
 	opened.push(tab);
-	const read = () =>
-		(tab as Window & { inthWebView?: WebViewPage }).inthWebView;
+	const read = () => (tab as Window & { webView?: WebViewPage }).webView;
 	// A cold tab transforms the client's module graph first, which takes
 	// longer while other suites load theirs.
 	await expect.poll(read, { timeout: 45_000 }).toBeDefined();

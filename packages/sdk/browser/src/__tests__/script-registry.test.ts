@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createConsentClient } from '../client';
 import { installGlobal } from '../global';
 import { createTestingGlobal } from '../testing-global';
-import type { TestingInthGlobal } from '../testing-global';
+import type { TestingGlobalApi } from '../testing-global';
 import type { ConsentClient, ConsentClientOptions } from '../types';
 
 const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
@@ -49,7 +49,7 @@ const listing: ConsentClientOptions = {
 };
 
 const testWindow = window as Window & { inth?: unknown };
-let client: ConsentClient | TestingInthGlobal | undefined;
+let client: ConsentClient | TestingGlobalApi | undefined;
 
 /** The vendor's script tag, once the loader inserted it. */
 const loadedTag = async () => {

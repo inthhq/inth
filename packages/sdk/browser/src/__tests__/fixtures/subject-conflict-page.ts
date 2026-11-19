@@ -114,4 +114,4 @@ const page: SubjectConflictPage = {
 		unreachable = value;
 	},
 };
-Object.assign(window, { inthSubjectConflict: page });
+Object.assign(window, { subjectConflict: page });

@@ -23,7 +23,7 @@ import {
 } from '../../../core/src/libs/page-globals';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { autoInit, createGlobal, installGlobal } from '../global';
-import type { InthGlobalBase } from '../global-base';
+import type { GlobalApiBase } from '../global-base';
 import { releaseBoot } from '../init/adopt';
 import type { InitBoot } from '../init/boot';
 import { runInitScript } from '../init/run';
@@ -32,7 +32,7 @@ import { version } from '../version';
 const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/inth.js';
 const BACKEND_URL = 'https://consent.example';
 
-type StandIn = InthGlobalBase & { __inthBoot: InitBoot };
+type StandIn = GlobalApiBase & { __inthBoot: InitBoot };
 
 const target = window as unknown as Record<string, unknown>;
 

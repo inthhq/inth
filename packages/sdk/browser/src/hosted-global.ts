@@ -2,11 +2,11 @@ import { hosted } from '@inth/sdk-core/transports';
 
 import type { CreateConsentClientContext } from './client-base';
 import { createGlobalWith } from './global-base';
-import type { InthGlobalBase } from './global-base';
+import type { GlobalApiBase } from './global-base';
 import { createHostedConsentClient } from './hosted-client';
 
 /** The global API installed by the hosted browser bundle. */
-export interface HostedInthGlobal extends InthGlobalBase {
+export interface HostedGlobalApi extends GlobalApiBase {
 	/** Hosted transport factory for `init({ mode: inth.hosted({ projectUrl }) })`. */
 	hosted: typeof hosted;
 }
@@ -21,7 +21,7 @@ export interface HostedInthGlobal extends InthGlobalBase {
  */
 export const createHostedGlobal = function createHostedGlobal(
 	context: CreateConsentClientContext = {}
-): HostedInthGlobal {
+): HostedGlobalApi {
 	return Object.assign(
 		createGlobalWith(
 			{ ...context, pkg: context.pkg ?? '@inth/sdk/hosted' },

@@ -6,7 +6,7 @@ import {
 	createTestingGlobal as createGlobal,
 	createTestingConsentClient as createConsentClient,
 } from '../testing-global';
-import type { TestingInthGlobal as InthGlobal } from '../testing-global';
+import type { TestingGlobalApi as GlobalApi } from '../testing-global';
 import type { ConsentClient } from '../types';
 
 type TestWindow = Window & { inth?: unknown };
@@ -24,7 +24,7 @@ const clearCookies = function clearCookies(): void {
 };
 
 afterEach(() => {
-	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	(testWindow.inth as GlobalApi | undefined)?.dispose?.();
 	testWindow.inth = undefined;
 	for (const client of clients.splice(0)) {
 		client.dispose();

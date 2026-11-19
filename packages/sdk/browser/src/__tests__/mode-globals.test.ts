@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createGlobal } from '../global';
 import { autoInit, installGlobal } from '../global-base';
-import type { InthGlobalBase } from '../global-base';
+import type { GlobalApiBase } from '../global-base';
 import { createHostedGlobal } from '../hosted-global';
 import { createTestingGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
@@ -72,13 +72,13 @@ const optionsFor = function optionsFor(
 	};
 };
 
-const installed = function installed(): InthGlobalBase {
-	return testWindow.inth as InthGlobalBase;
+const installed = function installed(): GlobalApiBase {
+	return testWindow.inth as GlobalApiBase;
 };
 
 const loadTag = async function loadTag(
 	mode: 'hosted' | 'testing'
-): Promise<InthGlobalBase> {
+): Promise<GlobalApiBase> {
 	vi.resetModules();
 	if (mode === 'hosted') {
 		await import('../entries/cdn');

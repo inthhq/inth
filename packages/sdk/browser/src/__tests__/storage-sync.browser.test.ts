@@ -20,7 +20,7 @@ const openPage = async (): Promise<StorageSyncPage> => {
 	}
 	opened.push(tab);
 	const read = () =>
-		(tab as Window & { inthStorageSync?: StorageSyncPage }).inthStorageSync;
+		(tab as Window & { storageSync?: StorageSyncPage }).storageSync;
 	await expect.poll(read, { timeout: 10_000 }).toBeDefined();
 	const page = read() as StorageSyncPage;
 	await page.ready;

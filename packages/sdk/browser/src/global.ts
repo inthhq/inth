@@ -3,15 +3,15 @@ import { manifest } from '@inth/sdk-core/transports/manifest-browser';
 
 import type { CreateConsentClientContext } from './client-base';
 import { createGlobalWith } from './global-base';
-import type { InthGlobalBase } from './global-base';
+import type { GlobalApiBase } from './global-base';
 import { createScriptTagConsentClient } from './script-tag-client';
 
 export { autoInit, installGlobal } from './global-base';
 export { GLOBAL_NAME } from './global-name';
-export type { InthGlobalBase, QueuedCall } from './global-base';
+export type { GlobalApiBase, QueuedCall } from './global-base';
 
 /** The global API installed by the browser bundle with the hosted and manifest transports. */
-export interface InthGlobal extends InthGlobalBase {
+export interface GlobalApi extends GlobalApiBase {
 	/** Transport factories, for `init({ mode: inth.manifest({ inputs }) })`. */
 	hosted: typeof hosted;
 	manifest: typeof manifest;
@@ -25,7 +25,7 @@ export interface InthGlobal extends InthGlobalBase {
  */
 export const createGlobal = function createGlobal(
 	context: CreateConsentClientContext
-): InthGlobal {
+): GlobalApi {
 	return Object.assign(
 		createGlobalWith(context, createScriptTagConsentClient),
 		{ hosted, manifest }

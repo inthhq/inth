@@ -48,7 +48,7 @@ import { mergeClientOptions, readPageOptions } from '../auto-init';
 import { dropRejection } from '../drop-rejection';
 import { activateGatedScripts } from '../gated-scripts';
 import { stylesheet } from '../generated/styles';
-import type { InthGlobalBase, QueuedCall } from '../global-base';
+import type { GlobalApiBase, QueuedCall } from '../global-base';
 import { GLOBAL_NAME } from '../global-name';
 import { hasDecided } from '../has-decided';
 import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from '../page-actions';
@@ -188,7 +188,7 @@ const supportsEarlyBanner = function supportsEarlyBanner(
 // oxlint-disable-next-line max-lines-per-function, max-statements -- One lifecycle: stand in, start, hand over.
 export const runInitScript = function runInitScript(
 	script: HTMLScriptElement | null
-): InthGlobalBase | null {
+): GlobalApiBase | null {
 	const target = window as unknown as Record<string, unknown>;
 	const existing = target[GLOBAL_NAME];
 	if (existing && !Array.isArray(existing)) {
@@ -198,7 +198,7 @@ export const runInitScript = function runInitScript(
 	const queued = (existing ?? []) as unknown[];
 	const { manual, options: scriptOptions } = readPageOptions(script);
 
-	let api: InthGlobalBase | null = null;
+	let api: GlobalApiBase | null = null;
 	let options: ScriptTagClientOptions | null = null;
 	let snapshot: ConsentSnapshot | null = null;
 	let lastInit: PrefetchedInitialData | undefined;
@@ -1103,7 +1103,7 @@ export const runInitScript = function runInitScript(
 			};
 		},
 		pkg: '@inth/sdk',
-		provideGPP(module: Parameters<InthGlobalBase['provideGPP']>[0]) {
+		provideGPP(module: Parameters<GlobalApiBase['provideGPP']>[0]) {
 			if (api) {
 				return api.provideGPP(module);
 			}
@@ -1226,5 +1226,5 @@ export const runInitScript = function runInitScript(
 		);
 	};
 	cleanups.push(scheduleEngine(loadEngine, holdsEngine));
-	return standIn as unknown as InthGlobalBase;
+	return standIn as unknown as GlobalApiBase;
 };
