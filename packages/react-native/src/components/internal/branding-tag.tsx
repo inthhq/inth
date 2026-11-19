@@ -1,5 +1,5 @@
 /**
- * The "Secured by Inth" tab welded to a consent surface.
+ * The "Secured by c15t" tab welded to a consent surface.
  *
  * On web this is an anchor rendered from an SVG path. React Native ships no SVG
  * renderer, so the glyph is the same path rasterised at build time by
@@ -33,28 +33,29 @@ import type { ConsentSurfacePresentation } from './consent-surface';
  * hostname to attribute from inside an app, and guessing one from a bundle
  * identifier would be a different claim, so the mobile link stays bare.
  */
-const INTH_HREF = 'https://inth.com';
+const C15T_HREF = 'https://c15t.com';
+
+/** The brand the tab carries. */
+const WORDMARK = 'c15t';
 
 /**
- * The brand the tab names. React Native snapshots carry no `branding`, and the
- * web tag shows Inth for a snapshot without one. The mark is the wordmark, so
- * the tab draws no text after it, as on web.
- */
-const BRAND_NAME = 'Inth';
-
-/**
- * The mark's edge: `height: 0.8125rem` on `.brandingInth` under the
- * `max-width: 480px` query every phone matches.
+ * The mark's edge: `height: 0.9375rem` on `.brandingC15TMark`.
  *
- * Square, though the glyph's viewBox is 88 by 90: the raster centres the glyph
- * in a square viewport rather than stretching it.
+ * Square, though the glyph's viewBox is 446 by 445. The raster is drawn into a
+ * square viewport, and 0.2% is nothing at this size.
  */
-const MARK_SIZE = 13;
+const MARK_SIZE = 15;
 
-// `align-items: center` on `.brandingWordmark`.
+/** `gap: 0.3125rem` on `.brandingWordmark`, between the mark and the wordmark. */
+const WORDMARK_GAP = 5;
+
+// `align-items: center` on `.brandingWordmark`. The mark is 15pt and the label is
+// 10 under the phone query, so the two need a shared middle line; letting the row
+// stretch its shorter child would hang the wordmark off the mark it is welded to.
 const WORDMARK_ROW: ViewStyle = {
 	alignItems: 'center',
 	flexDirection: 'row',
+	gap: WORDMARK_GAP,
 };
 
 const MARK_STYLE = { height: MARK_SIZE, width: MARK_SIZE };
@@ -151,7 +152,7 @@ export interface ConsentBrandingTagProps {
  * @returns The pressable tab.
  */
 export const ConsentBrandingTag = ({
-	href = INTH_HREF,
+	href = C15T_HREF,
 	label,
 	parts,
 	presentation,
@@ -169,7 +170,7 @@ export const ConsentBrandingTag = ({
 
 	return (
 		<Pressable
-			accessibilityLabel={`${label} ${BRAND_NAME}`}
+			accessibilityLabel={`${label} ${WORDMARK}`}
 			accessibilityRole="link"
 			onPress={() => {
 				void open();
@@ -183,6 +184,7 @@ export const ConsentBrandingTag = ({
 					source={{ uri: selectBrandingMark(PixelRatio.get()) }}
 					style={MARK_STYLE}
 				/>
+				<Text style={parts.brandingWordmark}>{WORDMARK}</Text>
 			</View>
 		</Pressable>
 	);

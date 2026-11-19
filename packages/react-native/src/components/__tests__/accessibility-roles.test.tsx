@@ -234,7 +234,7 @@ describe('accessibility roles', () => {
 		// The web tag is an anchor whose name is the text it wraps, "Secured by"
 		// then the wordmark. A reader on mobile has to hear the same sentence, not
 		// the mark announced as an unlabelled image.
-		expect(tab.getAttribute('aria-label')).toBe('Secured by Inth');
+		expect(tab.getAttribute('aria-label')).toBe('Secured by c15t');
 
 		// The card clips, so a tab inside it would be cut off along the very edge it
 		// is meant to merge into. Being the card's preceding sibling is the only

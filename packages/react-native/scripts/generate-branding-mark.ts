@@ -1,24 +1,24 @@
 #!/usr/bin/env bun
 
 /**
- * Regenerate the rasterised brand marks the branding tag renders.
+ * Regenerate the rasterised c15t mark the branding tag renders.
  *
- * The marks are SVG paths owned by the web: `BRAND_MARKS` in
- * `@inth/sdk/ui/utils/branding`. React Native ships no SVG renderer, so the
- * paths cannot be drawn at runtime the way the web draws them. This script
- * rasterises each mark once, with the Chromium already in the Playwright
- * cache, and writes the bytes into a committed module as `data:` URIs. Running
- * it is deliberate: it is never wired into a build, so a missing browser can
- * never break a build, and the committed module is what a checkout and a
- * tarball both render from.
+ * The mark is an SVG path owned by the web: `C15T_MARK` in
+ * `packages/sdk/browser/src/ui/branding.ts`. React Native ships no SVG renderer, so
+ * the path cannot be drawn at runtime the way the web draws it. This script
+ * rasterises it once, with the Chromium already in the Playwright cache, and
+ * writes the bytes into a committed module as `data:` URIs. Running it is
+ * deliberate: it is never wired into a build, so a missing browser can never
+ * break a build, and the committed module is what a checkout and a tarball
+ * both render from.
  *
- * Re-run it when a web mark changes, after building `@inth/sdk`:
+ * Re-run it when the web path changes:
  *
  * ```bash
  * bun run --cwd packages/react-native scripts/generate-branding-mark.ts
  * ```
  *
- * Point it at a specific browser with `INTH_CHROME_PATH` when the Playwright
+ * Point it at a specific browser with `C15T_CHROME_PATH` when the Playwright
  * cache is somewhere unusual.
  */
 
@@ -33,8 +33,6 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { BRAND_MARKS, brandMarkSvg } from '@inth/sdk/ui/utils/branding';
-
 /** One raster to emit, and the device-pixel scale it is meant for. */
 interface RenderTarget {
 	/** Square edge length in device pixels. */
@@ -48,16 +46,13 @@ interface RenderTarget {
  * an xxxhdpi phone. A screen above 3 gets the largest, which downsamples.
  */
 const TARGETS: readonly RenderTarget[] = [
-	{ pixels: 13, scale: 1 },
-	{ pixels: 26, scale: 2 },
-	{ pixels: 39, scale: 3 },
+	{ pixels: 15, scale: 1 },
+	{ pixels: 30, scale: 2 },
+	{ pixels: 45, scale: 3 },
 ];
 
-/**
- * The CSS height the mark is drawn at on a phone: `.brandingInth` under the
- * `max-width: 480px` query, `0.8125rem`.
- */
-const MARK_HEIGHT_CSS = 13;
+/** The CSS height the mark is drawn at, so the rasters stay in proportion. */
+const MARK_HEIGHT_CSS = 15;
 
 /**
  * A transparent render of this size compresses to a few dozen bytes, so anything
@@ -65,11 +60,46 @@ const MARK_HEIGHT_CSS = 13;
  */
 const MIN_BYTES = 128;
 
+/** Where the path lives, relative to this script. */
+const SOURCE_URL = new URL(
+	'../../sdk/browser/src/ui/branding.ts',
+	import.meta.url
+);
+
 /** The module this script writes. */
 const OUTPUT_URL = new URL(
 	'../src/components/internal/branding-mark.ts',
 	import.meta.url
 );
+
+/**
+ * Read the path and its viewBox out of the web source.
+ *
+ * Text rather than an import: `branding.ts` is browser code that pulls in
+ * `@inth/sdk/engine` and the DOM helpers, none of which this script needs or could run
+ * under Bun.
+ *
+ * @param source - Contents of `packages/sdk/browser/src/ui/branding.ts`.
+ * @returns The path data and its viewBox.
+ * @throws {Error} When either is missing, which means the web file moved.
+ */
+const readPath = function readPath(source: string): {
+	path: string;
+	viewBox: string;
+} {
+	const path = /const C15T_MARK\s*=\s*'(?<path>[^']+)'/u.exec(source)?.groups
+		?.path;
+	const viewBox = /svg\('(?<viewBox>[\d.\s]+)',\s*\[C15T_MARK\]\)/u.exec(source)
+		?.groups?.viewBox;
+
+	if (path === undefined || viewBox === undefined) {
+		throw new Error(
+			'generate-branding-mark: could not find C15T_MARK and its svg() viewBox in packages/sdk/browser/src/ui/branding.ts. The web branding moved; update this script rather than hand-editing the generated module.'
+		);
+	}
+
+	return { path, viewBox };
+};
 
 /**
  * The browsers cache location Playwright writes to.
@@ -204,12 +234,12 @@ const executableIn = function executableIn(
  * green build ship a badge with no glyph in it.
  */
 const findChromium = function findChromium(): string {
-	const override = process.env.INTH_CHROME_PATH;
+	const override = process.env.C15T_CHROME_PATH;
 
 	if (override !== undefined && override !== '') {
 		if (!isFile(override)) {
 			throw new Error(
-				`generate-branding-mark: INTH_CHROME_PATH points at ${override}, which is not a readable file.`
+				`generate-branding-mark: C15T_CHROME_PATH points at ${override}, which is not a readable file.`
 			);
 		}
 
@@ -245,28 +275,27 @@ const findChromium = function findChromium(): string {
 	}
 
 	throw new Error(
-		'generate-branding-mark: no Chromium found. Run `bunx playwright install chromium`, or set INTH_CHROME_PATH to a browser binary. Refusing to write the module with a blank mark.'
+		'generate-branding-mark: no Chromium found. Run `bunx playwright install chromium`, or set C15T_CHROME_PATH to a browser binary. Refusing to write the module with a blank mark.'
 	);
 };
 
 /**
- * The brand the tag shows. React Native snapshots carry no `branding`, and the
- * web shows the Inth mark for a snapshot without one (`resolveBrandMark`).
- */
-const MARK = 'inth';
-
-/**
  * One page, just the glyph, on a transparent canvas.
  *
- * The page draws the same `<svg>` the web writes, sized to the target and
- * filled white through `currentColor`. The viewBox keeps the drawing
- * proportional inside the square.
+ * The `width`/`height` on the root element is what fixes the output size; the
+ * viewBox keeps the drawing proportional.
  *
  * @param target - Edge length to render at.
+ * @param path - Path data.
+ * @param viewBox - The path's viewBox.
  * @returns An HTML document.
  */
-const pageFor = function pageFor(target: RenderTarget): string {
-	return `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:transparent;color:#FFFFFF}svg{display:block;width:${target.pixels}px;height:${target.pixels}px}</style></head><body>${brandMarkSvg(MARK)}</body></html>`;
+const pageFor = function pageFor(
+	target: RenderTarget,
+	path: string,
+	viewBox: string
+): string {
+	return `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:transparent}</style></head><body><svg xmlns="http://www.w3.org/2000/svg" width="${target.pixels}" height="${target.pixels}" viewBox="${viewBox}"><path fill="#FFFFFF" fill-rule="evenodd" d="${path}"/></svg></body></html>`;
 };
 
 /**
@@ -366,10 +395,12 @@ const renderScale = function renderScale(
  * every one of them.
  *
  * @param entries - One row per scale.
+ * @param viewBox - Recorded so a reader can check the aspect.
  * @returns Contents of the module to write.
  */
 const moduleFor = function moduleFor(
-	entries: readonly { scale: RenderTarget['scale']; uri: string }[]
+	entries: readonly { scale: RenderTarget['scale']; uri: string }[],
+	viewBox: string
 ): string {
 	const tick = '`';
 	const code = (text: string): string => `${tick}${text}${tick}`;
@@ -379,15 +410,16 @@ const moduleFor = function moduleFor(
 
 	return [
 		'/**',
-		' * The Inth mark as transparent PNGs, one per device-pixel scale.',
+		' * The c15t mark as transparent PNGs, one per device-pixel scale.',
 		' *',
 		` * Generated by ${code('scripts/generate-branding-mark.ts')} from`,
-		` * ${code(`BRAND_MARKS.${MARK}`)} in ${code('@inth/sdk/ui/utils/branding')}, the same paths the`,
-		' * web tag draws. Do not hand-edit: re-run the script, which rewrites this',
+		` * ${code('C15T_MARK')} in ${code('packages/sdk/browser/src/ui/branding.ts')}, the same path the`,
+		' * web badge draws. Do not hand-edit: re-run the script, which rewrites this',
 		' * whole file, so a regenerated mark and the web keep agreeing by construction.',
 		' *',
-		` * The viewBox is ${BRAND_MARKS[MARK].viewBox}. Each raster is square: the glyph is`,
-		' * centred in a square viewport at its own aspect, not stretched.',
+		` * The viewBox is ${viewBox}, so the glyph is about 0.2% taller than wide. Each`,
+		` * raster is square because it is drawn into a square viewport, which is far`,
+		` * inside the distortion a ${MARK_HEIGHT_CSS}dp mark can show.`,
 		' */',
 		'',
 		'/** Device-pixel scales {@link BRANDING_MARK_DATA_URI} carries. */',
@@ -434,14 +466,15 @@ const moduleFor = function moduleFor(
 };
 
 const main = function main(): void {
+	const { path, viewBox } = readPath(readFileSync(SOURCE_URL, 'utf8'));
 	const binary = findChromium();
 
 	const entries = TARGETS.map((target) => ({
 		scale: target.scale,
-		uri: renderScale(binary, target, pageFor(target)),
+		uri: renderScale(binary, target, pageFor(target, path, viewBox)),
 	}));
 
-	writeFileSync(OUTPUT_URL, moduleFor(entries), 'utf8');
+	writeFileSync(OUTPUT_URL, moduleFor(entries, viewBox), 'utf8');
 
 	process.stdout.write(
 		`generate-branding-mark: wrote ${TARGETS.length} rasters (1x, 2x, 3x, ${MARK_HEIGHT_CSS}dp) to ${OUTPUT_URL.pathname}\n`

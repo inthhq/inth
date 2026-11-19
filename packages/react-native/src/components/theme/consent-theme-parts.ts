@@ -13,6 +13,7 @@ export const CONSENT_THEME_PARTS = [
 	'banner',
 	'branding',
 	'brandingLabel',
+	'brandingWordmark',
 	'caption',
 	'captionLink',
 	'categoryContent',
