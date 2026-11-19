@@ -77,6 +77,7 @@ import { resolveSessionReportProjectUrl } from '../libs/session-report';
 import { resolveStorageKeys, STORAGE_KEY } from '../libs/storage-keys';
 import { trimSlash } from '../libs/url';
 import {
+	INTH_VERSION_HEADER,
 	inthProtocolHeaders,
 	readProducerPolicyContract,
 } from '../libs/version-header';
@@ -549,6 +550,17 @@ interface Target {
 	sameOrigin: boolean;
 }
 
+/** What {@link fetchRequestInit} changes about a hosted `/init`. */
+interface InitRequestRules {
+	/** Whether a remote backend gets the visitor's consent cookie. */
+	sendConsentCookie?: boolean;
+	/**
+	 * Whether a version header the request carries, such as a client's a
+	 * proxy relays, is sent in place of this package's.
+	 */
+	keepRequestVersion?: boolean;
+}
+
 /**
  * {@link resolveRequestConsent}, telling `onHostedAnswer` what a hosted
  * `/init` answered.
@@ -556,7 +568,10 @@ interface Target {
 const resolveRequest = async function resolveRequest(
 	options: ResolveRequestConsentOptions,
 	onHostedAnswer?: (answer: RequestInitAnswer) => void,
-	sendConsentCookie = true
+	{
+		keepRequestVersion = false,
+		sendConsentCookie = true,
+	}: InitRequestRules = {}
 ): Promise<RequestConsentState> {
 	const { inputs, state: base } = readRequestConsent(options);
 	const mode = resolveMode(options);
@@ -940,6 +955,21 @@ const resolveRequest = async function resolveRequest(
 		}
 	};
 
+	/**
+	 * The Inth protocol headers, with the request's own version header in
+	 * place of this package's under {@link InitRequestRules.keepRequestVersion}.
+	 */
+	const protocolHeaders = function protocolHeaders(): Readonly<
+		Record<string, string>
+	> {
+		const requestVersion = keepRequestVersion
+			? readHeader(options.request.headers, INTH_VERSION_HEADER)
+			: null;
+		return requestVersion
+			? { ...inthProtocolHeaders, [INTH_VERSION_HEADER]: requestVersion }
+			: inthProtocolHeaders;
+	};
+
 	const resolveFromHosted =
 		async function resolveFromHosted(): Promise<RequestConsentState> {
 			const initUrl =
@@ -973,7 +1003,7 @@ const resolveRequest = async function resolveRequest(
 				headers[CONSENT_EXPERIMENT_HEADER] = formatExperimentHeader(arm);
 			}
 			nameThePage(headers, target);
-			Object.assign(headers, inthProtocolHeaders);
+			Object.assign(headers, protocolHeaders());
 			if (target.sameOrigin) {
 				headers[RENDER_REQUEST_HEADER] = '1';
 			}
@@ -1165,7 +1195,8 @@ export type FetchRequestInitOptions = Omit<
  * Asks the backend's `/init` for one request, as
  * {@link resolveRequestConsent} does in hosted mode (the same target,
  * forwarding and budget rules), and returns the answer as received rather
- * than folded into a consent state.
+ * than folded into a consent state. A version header the request carries,
+ * such as a client's a proxy relays, is sent in place of this package's.
  *
  * Never throws: when nothing was fetched or the request failed, it returns
  * `undefined` and `onError` hears why.
@@ -1189,7 +1220,7 @@ export const fetchRequestInit = async function fetchRequestInit(
 		(received) => {
 			answer = received;
 		},
-		options.sendConsentCookie
+		{ keepRequestVersion: true, sendConsentCookie: options.sendConsentCookie }
 	);
 	return answer;
 };

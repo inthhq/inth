@@ -123,6 +123,35 @@ describe('fetchSSRData', () => {
 		expect(result?.producerPolicyContract).toBe('2');
 	});
 
+	it.each([undefined, '3.0.0-proxy'])(
+		'sends the incoming version %s or the package version on init',
+		async (incomingVersion) => {
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+			vi.stubGlobal('fetch', fetchMock);
+
+			const requestHeaders = createRequestHeaders();
+			if (incomingVersion !== undefined) {
+				requestHeaders.set('x-c15t-version', incomingVersion);
+			}
+
+			await fetchSSRData({
+				headers: requestHeaders,
+				projectUrl: 'https://consent.example.com/api/inth',
+			});
+
+			expect(fetchMock).toHaveBeenCalledWith(
+				'https://consent.example.com/api/inth/init',
+				expect.objectContaining({
+					headers: expect.objectContaining({
+						'x-c15t-version': incomingVersion ?? version,
+					}),
+				})
+			);
+		}
+	);
+
 	it('forwards the prefetch markers, so the backend can tell a prefetch from a view', async () => {
 		const fetchMock = vi
 			.fn()
