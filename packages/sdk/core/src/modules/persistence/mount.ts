@@ -22,6 +22,11 @@ import type {
 } from '../../types';
 import { clearStoredRecords } from './clear';
 import {
+	choiceSinceEpoch,
+	noticeSinceEpoch,
+	vendorChoiceSinceEpoch,
+} from './epoch';
+import {
 	hydrateFromStorage,
 	readStoredRecordsForReconcile,
 	readStoredRecordsFromCookieHeader,
@@ -474,6 +479,12 @@ export const mountPersistence = function mountPersistence(
 	 * past the per-cookie limit, so a newer stored one replaces the seeded
 	 * list before any gate consults the denials.
 	 *
+	 * Another tab can clear after the server read the cookies. The browser's
+	 * clear epoch then voids the seeded records from before it, as it voids
+	 * stored ones, and a record it voids yields to what storage holds. A
+	 * seeded decision from the clearing millisecond is kept: the seed does
+	 * not say whether its writer had seen the clear.
+	 *
 	 * The read also becomes what the writer starts from: the kernel's
 	 * records stay the seed's, and storage is what it was read as here.
 	 * Reconciling merges only records that changed since this read, so a
@@ -489,12 +500,19 @@ export const mountPersistence = function mountPersistence(
 			const snapshot = kernel.getSnapshot();
 			const outranks = outranksSeedFamily(read, at);
 			const patch: HydrationRecords = {};
-			const seeded = snapshot.explicitChoice?.categories ?? {};
+			const choice = choiceSinceEpoch(
+				snapshot.explicitChoice,
+				read.epoch,
+				true
+			);
+			const seeded = choice?.categories ?? {};
 			const denials = Object.entries(records.choice?.categories ?? {}).filter(
 				([category, decision]) =>
 					isNewerDenial(decision, seeded[category as keyof typeof seeded])
 			);
-			if (records.choice && outranks.choice) {
+			if (choice !== snapshot.explicitChoice) {
+				patch.choice = records.choice === undefined ? choice : records.choice;
+			} else if (records.choice && outranks.choice) {
 				patch.choice = records.choice;
 			} else if (denials.length > 0) {
 				patch.choice = {
@@ -502,11 +520,22 @@ export const mountPersistence = function mountPersistence(
 					version: 3,
 				};
 			}
+			const notice = noticeSinceEpoch(snapshot.noticeDismissal, read.epoch);
+			if (notice !== snapshot.noticeDismissal) {
+				patch.noticeDismissal =
+					records.noticeDismissal === undefined
+						? notice
+						: records.noticeDismissal;
+			}
+			const vendors = vendorChoiceSinceEpoch(snapshot.vendorChoice, read.epoch);
 			const { vendorChoice } = records;
-			if (
+			if (vendors !== snapshot.vendorChoice) {
+				patch.vendorChoice =
+					vendorChoice === undefined ? vendors : vendorChoice;
+			} else if (
 				vendorChoice &&
 				(outranks.vendors ||
-					vendorChoice.confirmedAt > (snapshot.vendorChoice?.confirmedAt ?? -1))
+					vendorChoice.confirmedAt > (vendors?.confirmedAt ?? -1))
 			) {
 				patch.vendorChoice = vendorChoice;
 			}

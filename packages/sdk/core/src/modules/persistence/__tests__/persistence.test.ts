@@ -19,7 +19,11 @@ import {
 import { readStoredRecordsFromCookieHeader } from '../hydrate';
 import { createPersistence } from '../index';
 import type { StorageConfig } from '../index';
-import { clearStoredConsentRecords } from './record-writes';
+import {
+	clearStoredConsentRecords,
+	writeStoredNoticeDismissal,
+	writeStoredVendorChoice,
+} from './record-writes';
 
 /**
  * Run the macrotask write scheduler without firing the kernel's expiry
@@ -443,6 +447,52 @@ describe('persistence: records c15t stored', () => {
 		expect(effectivePermissions.measurement).toBe(true);
 		expect(effectivePermissions).toEqual(hydrated().effectivePermissions);
 	});
+
+	test.each([
+		['Inth', undefined],
+		['c15t', C15T],
+	])(
+		'a server seed from %s records read before another tab cleared keeps none of them',
+		async (_name, storageConfig) => {
+			await saveUnder(storageConfig, true);
+			writeStoredVendorChoice(
+				{ confirmedAt: NOW, denied: ['meta-pixel'], version: 1 },
+				storageConfig,
+				NOW
+			);
+			writeStoredNoticeDismissal(
+				{ dismissedAt: NOW, fingerprint: 'notice', version: 1 },
+				storageConfig,
+				NOW
+			);
+			const initialRecords = readStoredRecordsFromCookieHeader(
+				document.cookie,
+				undefined,
+				NOW
+			);
+			expect(initialRecords).toMatchObject({
+				choice: { categories: { marketing: { value: true } } },
+				noticeDismissal: { dismissedAt: NOW },
+				vendorChoice: { denied: ['meta-pixel'] },
+			});
+			vi.setSystemTime(NOW + 1000);
+			const other = createConsentKernel({ now: NOW + 1000 });
+			createPersistence({ kernel: other }).clear();
+			flushWrites();
+
+			const kernel = createConsentKernel({ initialRecords, now: NOW + 1000 });
+			createPersistence({ kernel, skipHydration: true });
+			flushWrites();
+
+			expect(kernel.getSnapshot()).toMatchObject({
+				explicitChoice: null,
+				noticeDismissal: null,
+				vendorChoice: null,
+			});
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(hydrated().explicitChoice).toBeNull();
+		}
+	);
 
 	test('a custom storageKey does not read c15t records', async () => {
 		await saveUnder(C15T, true);
