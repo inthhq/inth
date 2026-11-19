@@ -20,7 +20,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { build } from 'esbuild';
-import { chromium } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import {
 	afterAll,
@@ -66,6 +66,13 @@ const sri = (bytes: Buffer) =>
 	`sha384-${createHash('sha384').update(bytes).digest('base64')}`;
 const short = (bytes: Buffer) =>
 	createHash('sha256').update(bytes).digest('hex').slice(0, 16);
+
+/**
+ * The engine the cases run in: Chromium in the required run, or the one
+ * `INTH_SCRIPT_FILES_BROWSER` names (`firefox`, `webkit`).
+ */
+const ENGINE =
+	{ firefox, webkit }[process.env.INTH_SCRIPT_FILES_BROWSER ?? ''] ?? chromium;
 
 /** Whether the cases run against LogRocket's own files. */
 const LIVE =
@@ -263,7 +270,7 @@ beforeAll(async () => {
 		throw new Error('Expected a browser bundle of the runtime.');
 	}
 	bundle = output.text;
-	browser = await chromium.launch();
+	browser = await ENGINE.launch();
 }, 60_000);
 
 /**
@@ -369,13 +376,8 @@ test('refuses changed bytes at the gateway, and does not fall back to the vendor
 	);
 
 	await loaderGaveUp();
-	expect(
-		messages.some((line) =>
-			line.includes(
-				"Failed to find a valid digest in the 'integrity' attribute"
-			)
-		)
-	).toBe(true);
+	// Each engine words it differently; each names the integrity check.
+	expect(messages.some((line) => /integrity/iu.test(line))).toBe(true);
 	expect(
 		await page.evaluate(() => ({
 			logger: typeof window._LRLogger,
@@ -519,4 +521,94 @@ test('runs scripts the registry does not manage in order, without waiting for in
 	await expect
 		.poll(() => page.evaluate(() => (window as { ran?: string[] }).ran))
 		.toEqual(['lib', 'app']);
+});
+
+/**
+ * Insert the logger as page code would, and report how it ended and the
+ * URL it loaded from.
+ */
+const insertLogger = () =>
+	page.evaluate(
+		(url) =>
+			// oxlint-disable-next-line promise/avoid-new -- Settled by the element's events.
+			new Promise<{ ended: string; src: string | null }>((_resolve) => {
+				const script = document.createElement('script');
+				script.src = url;
+				const end = (ended: string) => () =>
+					_resolve({ ended, src: script.getAttribute('src') });
+				script.addEventListener('load', end('load'));
+				script.addEventListener('error', end('error'));
+				document.head.append(script);
+			}),
+		LOGGER_URL
+	);
+
+test('pins again after a library wrote back a method it saved before the pin', async () => {
+	await open();
+	const list = registry({ integrity: sri(logger), src: loggerAtGateway });
+	await page.evaluate((answer) => {
+		(window as { savedAppend?: unknown }).savedAppend =
+			Node.prototype.appendChild;
+		window.__scriptFiles.start(answer);
+	}, list);
+	await loggerRan();
+	await page.evaluate((answer) => {
+		// The library restores what it saved, over the pin's wrapper.
+		Node.prototype.appendChild = (window as { savedAppend?: unknown })
+			.savedAppend as typeof Node.prototype.appendChild;
+		window.__scriptFiles.dispose();
+		window.__scriptFiles.start(answer);
+	}, list);
+
+	expect(await insertLogger()).toEqual({ ended: 'load', src: loggerAtGateway });
+	expect(sent(LOGGER_URL)).toBe(0);
+});
+
+test("keeps a library's src setter that went on between two pins", async () => {
+	await open();
+	const list = registry({ integrity: sri(logger), src: loggerAtGateway });
+	await page.evaluate((answer) => {
+		window.__scriptFiles.start(answer);
+		window.__scriptFiles.dispose();
+		const proto = HTMLScriptElement.prototype;
+		const below = Object.getOwnPropertyDescriptor(
+			proto,
+			'src'
+		) as PropertyDescriptor;
+		const seen: unknown[] = [];
+		(window as { seen?: unknown[] }).seen = seen;
+		const librarySet = function librarySet(
+			this: HTMLScriptElement,
+			value: unknown
+		) {
+			seen.push(String(value));
+			below.set?.call(this, value);
+		};
+		(window as { librarySet?: unknown }).librarySet = librarySet;
+		Object.defineProperty(proto, 'src', {
+			...below,
+			get: below.get,
+			set: librarySet,
+		});
+		window.__scriptFiles.start(answer);
+	}, list);
+	await loggerRan();
+
+	expect(await insertLogger()).toEqual({ ended: 'load', src: loggerAtGateway });
+	expect(sent(LOGGER_URL)).toBe(0);
+	expect(
+		await page.evaluate(() => {
+			window.__scriptFiles.dispose();
+			const { seen, librarySet } = window as {
+				librarySet?: unknown;
+				seen?: string[];
+			};
+			return {
+				kept:
+					Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src')
+						?.set === librarySet,
+				sawLogger: seen?.includes('https://cdn.logrocket.io/logger-1.min.js'),
+			};
+		})
+	).toEqual({ kept: true, sawLogger: true });
 });

@@ -176,7 +176,9 @@ it: `appendChild`, `insertBefore`, `append`, `before`, `replaceWith`,
 checks a script already on the page as it gets its first `src` through
 `script.src` or `setAttribute`. Scripts that c15t creates go through the same
 check. To do this, the script loader patches those DOM methods once the list
-names files, and puts them back on `dispose()`.
+names files. On `dispose()` it puts back each method it is still the outermost
+wrapper of. Under a wrapper another library added later, its own stays in that
+library's chain and does nothing until a list names files again.
 
 Nothing waits for the list. Integrations wait for init as described above, so
 LogRocket's loader starts only after the pin is in place. Every other script
@@ -199,7 +201,9 @@ the list arrives. These load code without c15t seeing it:
 - Iframes, including `srcdoc` frames, and a script element made with another
   frame's DOM methods.
 - Code that kept its own reference to a DOM method, such as
-  `const append = Node.prototype.appendChild`, before the pin went on.
+  `const append = Node.prototype.appendChild`, before the pin went on. If such
+  code writes that method back while the pin is on, the pin is off for that
+  method until a script loader with a list starts again, which puts it back.
 - A script inside a shadow root of a node the page inserts. A script the page
   inserts into a shadow root that is already on the page is checked.
 - A `src` that a script already on the page gets through `setAttributeNS`,

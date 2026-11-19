@@ -312,14 +312,16 @@ describe('pinRegistryFiles', () => {
 		).toEqual(REFUSED);
 	});
 
-	test('puts an element back as it was when its insertion throws', () => {
+	test('pins a listed file whose own integrity has no hash the browser reads', () => {
 		join(files);
-		const element = document.createElement('script');
-		element.src = LOGGER;
-		const stranger = document.createElement('div');
 
-		expect(() => document.head.replaceChild(element, stranger)).toThrow();
-		expect(fetched(element)).toEqual(untouched(LOGGER));
+		expect(
+			fetched(
+				insert(LOGGER, (element) => {
+					element.setAttribute('integrity', 'not-a-hash');
+				})
+			)
+		).toEqual(PINNED);
 	});
 
 	test('combines lists: a refusal in any wins, then the first to name a URL', () => {
@@ -370,6 +372,55 @@ describe('pinRegistryFiles', () => {
 		expect(
 			Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src')?.set
 		).toBe(srcSetter);
+	});
+
+	test('puts ours back when a library wrote back a method it saved before the pin', () => {
+		const saved = Node.prototype.appendChild;
+		const pin = join(files);
+		// The library restores what it saved, over ours.
+		Node.prototype.appendChild = saved;
+		pin.dispose();
+		join(files);
+
+		expect(Node.prototype.appendChild).not.toBe(saved);
+		expect(fetched(insert(LOGGER))).toEqual(PINNED);
+	});
+
+	test('wraps a src setter another library put on between two pins, and keeps it', () => {
+		const scriptProto = HTMLScriptElement.prototype;
+		const native = Object.getOwnPropertyDescriptor(
+			scriptProto,
+			'src'
+		) as PropertyDescriptor;
+		join(files).dispose();
+		const seen: unknown[] = [];
+		const librarySet = function librarySet(
+			this: HTMLScriptElement,
+			value: unknown
+		) {
+			seen.push(value);
+			native.set?.call(this, value);
+		};
+		Object.defineProperty(scriptProto, 'src', {
+			...native,
+			get: native.get,
+			set: librarySet,
+		});
+		try {
+			const pin = join(files);
+			const element = document.createElement('script');
+			document.head.append(element);
+			element.src = LOGGER;
+			expect(seen).toEqual([HASH_SRC]);
+			expect(fetched(element)).toEqual(PINNED);
+
+			pin.dispose();
+			expect(Object.getOwnPropertyDescriptor(scriptProto, 'src')?.set).toBe(
+				librarySet
+			);
+		} finally {
+			Object.defineProperty(scriptProto, 'src', native);
+		}
 	});
 
 	test('adds no layer per install when another library wraps a method on top', () => {

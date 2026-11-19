@@ -17,7 +17,7 @@
  * the pin cannot see loads files without it; only a Content Security
  * Policy that allows the registry, and not the vendor, closes that.
  */
-import { pinAllows } from './sources';
+import { pinAllows, sriHashes } from './sources';
 
 /** Where the registry serves one file. */
 export interface RegistryFile {
@@ -78,61 +78,50 @@ const REFUSED: RegistryFile = {
 };
 
 /** Each loader's list, in the order the loaders joined. */
-const lists = new Set<{ readonly files: RegistryFiles }>();
+const lists: { readonly files: RegistryFiles }[] = [];
 
-/** What the lists say together, by URL; `null` while none names a file. */
-let pins: Map<string, RegistryFile> | null = null;
-
-/** A refusal in any list wins; otherwise the first list to name a URL. */
-const merge = function merge(): void {
-	const next = new Map<string, RegistryFile>();
+/** Where the lists send `url`: a refusal in any wins, then the first. */
+const fileFor = function fileFor(url: string | null): RegistryFile | undefined {
+	let found: RegistryFile | undefined;
 	for (const { files } of lists) {
-		for (const [url, file] of Object.entries(files)) {
+		if (url !== null && Object.hasOwn(files, url)) {
+			const file = files[url];
 			if (!file) {
-				next.set(url, REFUSED);
-			} else if (!next.has(url)) {
-				next.set(url, file);
+				return REFUSED;
 			}
+			found ??= file;
 		}
 	}
-	pins = next.size > 0 ? next : null;
+	return found;
 };
 
 const attribute = (element: Element, name: string): string | null =>
 	Element.prototype.getAttribute.call(element, name);
 
 /**
- * Set or remove an attribute. The pin's own `setAttribute` wrapper passes
- * these through: they are never a connected script's first `src`.
+ * Set an attribute. The pin's own `setAttribute` wrapper passes these
+ * through: they are never a connected script's first `src`.
  */
-const writeAttribute = function writeAttribute(
-	element: Element,
-	name: string,
-	value: string | null
-): void {
-	if (value === null) {
-		Element.prototype.removeAttribute.call(element, name);
-	} else {
-		Element.prototype.setAttribute.call(element, name, value);
-	}
+const writeAttribute = (element: Element, name: string, value: string) => {
+	Element.prototype.setAttribute.call(element, name, value);
 };
 
 /**
  * Point `element` at the registry's copy of `value` when the lists name
  * it, and return the URL it gets instead; otherwise return `value`, so a
- * Trusted Types URL stays one. A page-set integrity stays, as a
- * `scriptLoader.sources` entry treats it: the element moves only when that
- * pin allows the registry's bytes. A refusal moves it whatever it pins.
+ * Trusted Types URL stays one. A page-set integrity the browser reads
+ * stays, as a `scriptLoader.sources` entry treats it: the element moves
+ * only when that pin allows the registry's bytes. One it cannot read
+ * checks nothing, so the registry's replaces it, and a refusal moves the
+ * element whatever it pins.
  */
 const route = function route(element: Element, value: unknown): unknown {
-	const file = pins?.get(
-		normalizeFileUrl(value, element.baseURI || undefined) ?? ''
-	);
+	const file = fileFor(normalizeFileUrl(value, element.baseURI || undefined));
 	if (!file) {
 		return value;
 	}
-	const own = attribute(element, 'integrity');
-	if (file === REFUSED || !own?.trim()) {
+	const own = attribute(element, 'integrity') ?? '';
+	if (file === REFUSED || sriHashes(own).length === 0) {
 		writeAttribute(element, 'integrity', file.integrity);
 	} else if (!pinAllows(own, file.integrity)) {
 		return value;
@@ -141,20 +130,12 @@ const route = function route(element: Element, value: unknown): unknown {
 	return file.src;
 };
 
-/** What a sweep changed on one element, to put back if the insert fails. */
-interface Swept {
-	crossorigin: string | null;
-	element: HTMLScriptElement;
-	integrity: string | null;
-	src: string;
-}
-
 const isTree = (node: unknown): node is Element | DocumentFragment =>
 	node instanceof Element ||
 	(typeof DocumentFragment !== 'undefined' && node instanceof DocumentFragment);
 
 /** Route each script that inserting `node` into the page runs. */
-const sweep = function sweep(node: unknown, swept: Swept[]): void {
+const sweep = function sweep(node: unknown): void {
 	// A connected script has run, or waits on its own `src`: moving it runs
 	// nothing new.
 	if (!isTree(node) || node.isConnected) {
@@ -166,40 +147,42 @@ const sweep = function sweep(node: unknown, swept: Swept[]): void {
 			: node.querySelectorAll('script');
 	for (const element of scripts) {
 		const src = attribute(element, 'src');
-		if (src === null) {
-			continue;
-		}
-		const before: Swept = {
-			crossorigin: attribute(element, 'crossorigin'),
-			element,
-			integrity: attribute(element, 'integrity'),
-			src,
-		};
-		const next = route(element, src);
+		const next = src === null ? src : route(element, src);
 		if (next !== src) {
 			writeAttribute(element, 'src', String(next));
-			swept.push(before);
 		}
 	}
 };
 
 /** Whether giving `element` a `src` makes the browser fetch it now. */
 const fetchesNow = (element: unknown): element is HTMLScriptElement =>
-	pins !== null &&
+	lists.length > 0 &&
 	element instanceof HTMLScriptElement &&
 	element.isConnected &&
 	attribute(element, 'src') === null;
 
-/** One prototype member the pin wraps. */
+/**
+ * One prototype member the pin wraps. Whether ours is in place is read
+ * from the member when the pin goes on or comes off, never kept apart
+ * from it, so a library that writes back a method it saved cannot leave
+ * the pin believing it is on.
+ */
 interface Patch {
-	/** Whether ours is in the member's chain, on top or under another. */
-	inChain: boolean;
+	/** The member as it is now: a method, or the `src` setter. */
+	read: () => unknown;
+	/** Wrap the member as it is now, and put ours on top. */
 	put: () => void;
-	/** Take ours off; `false` when another wrapper sits on top of it. */
-	take: () => boolean;
+	/** Put back what ours wrapped. */
+	restore: () => void;
+	/** Ours, as last put on. */
+	ours?: unknown;
+	/** What ours wrapped. */
+	below?: unknown;
+	/** A wrapper that sat on ours when the pin came off, so still holds it. */
+	above?: unknown;
 }
 
-/** Made on the first install and kept, so a later install reuses them. */
+/** Made on the first install and kept. */
 const patches: Patch[] = [];
 
 type Method = (this: unknown, ...args: unknown[]) => unknown;
@@ -207,42 +190,35 @@ type Method = (this: unknown, ...args: unknown[]) => unknown;
 /** A prototype the pin patches: a DOM node's, or `Range`'s. */
 type Patchable = Node | Range;
 
-/**
- * Wrap `proto[name]`. The wrapper calls whatever the member was when ours
- * was last put on, so taking ours off and putting it back never drops a
- * wrapper another library added in between.
- */
+/** Wrap `proto[name]` with what `wrap` makes of the member below it. */
 const wrapMember = function wrapMember(
 	proto: Patchable | undefined,
 	name: string,
-	wrap: (original: () => Method) => Method
+	wrap: (below: Method) => Method
 ): void {
 	const target = proto as unknown as Record<string, unknown> | undefined;
 	if (!target || typeof target[name] !== 'function') {
 		return;
 	}
-	let original = target[name] as Method;
-	const wrapped = wrap(() => original);
-	patches.push({
-		inChain: false,
+	const patch: Patch = {
 		put() {
-			original = target[name] as Method;
-			target[name] = wrapped;
+			const below = target[name] as Method;
+			patch.below = below;
+			patch.ours = wrap(below);
+			target[name] = patch.ours;
 		},
-		take() {
-			if (target[name] !== wrapped) {
-				return false;
-			}
-			target[name] = original;
-			return true;
+		read: () => target[name],
+		restore() {
+			target[name] = patch.below;
 		},
-	});
+	};
+	patches.push(patch);
 };
 
 /** Sweep the nodes an insertion adds, when it adds them to the page. */
 const insertion =
 	(pick: (args: unknown[]) => unknown[]) =>
-	(original: () => Method): Method =>
+	(below: Method): Method =>
 		function inserted(this: unknown, ...args: unknown[]) {
 			const anchor =
 				typeof Range !== 'undefined' && this instanceof Range
@@ -250,62 +226,60 @@ const insertion =
 					: this;
 			// A node inserted into a detached tree is swept when that tree
 			// joins the page.
-			if (!(pins && anchor instanceof Node && anchor.isConnected)) {
-				return original().apply(this, args);
-			}
-			const swept: Swept[] = [];
-			for (const node of pick(args)) {
-				sweep(node, swept);
-			}
-			try {
-				return original().apply(this, args);
-			} catch (error) {
-				// Nothing was inserted: the elements go back as they were.
-				for (const { crossorigin, element, integrity, src } of swept) {
-					writeAttribute(element, 'src', src);
-					writeAttribute(element, 'integrity', integrity);
-					writeAttribute(element, 'crossorigin', crossorigin);
+			if (lists.length > 0 && anchor instanceof Node && anchor.isConnected) {
+				for (const node of pick(args)) {
+					sweep(node);
 				}
-				throw error;
 			}
+			return below.apply(this, args);
 		};
 
-const createPatches = function createPatches(): void {
+/** The `src` setter, wrapping whichever setter is there when ours goes on. */
+const wrapSrcSetter = function wrapSrcSetter(): void {
 	const scriptProto = HTMLScriptElement.prototype;
-	const descriptor = Object.getOwnPropertyDescriptor(scriptProto, 'src');
-	const ownSet = descriptor?.set;
-	if (descriptor?.configurable && ownSet) {
-		const set = function set(this: HTMLScriptElement, value: unknown) {
-			ownSet.call(this, fetchesNow(this) ? route(this, value) : value);
-		};
-		patches.push({
-			inChain: false,
-			put() {
-				Object.defineProperty(scriptProto, 'src', {
-					...descriptor,
-					get: descriptor.get,
-					set,
-				});
-			},
-			take() {
-				if (Object.getOwnPropertyDescriptor(scriptProto, 'src')?.set !== set) {
-					return false;
-				}
-				Object.defineProperty(scriptProto, 'src', descriptor);
-				return true;
-			},
-		});
-	}
+	const current = () => Object.getOwnPropertyDescriptor(scriptProto, 'src');
+	let belowDescriptor: PropertyDescriptor | undefined;
+	const patch: Patch = {
+		put() {
+			const below = current();
+			const belowSet = below?.set;
+			if (!(below?.configurable && belowSet)) {
+				return;
+			}
+			belowDescriptor = below;
+			patch.below = belowSet;
+			const ours = function ours(this: HTMLScriptElement, value: unknown) {
+				belowSet.call(this, fetchesNow(this) ? route(this, value) : value);
+			};
+			patch.ours = ours;
+			Object.defineProperty(scriptProto, 'src', {
+				...below,
+				get: below.get,
+				set: ours,
+			});
+		},
+		read: () => current()?.set,
+		restore() {
+			if (belowDescriptor) {
+				Object.defineProperty(scriptProto, 'src', belowDescriptor);
+			}
+		},
+	};
+	patches.push(patch);
+};
+
+const createPatches = function createPatches(): void {
+	wrapSrcSetter();
 	const elementProto = Element.prototype;
 	wrapMember(
 		elementProto,
 		'setAttribute',
-		(original) =>
+		(below) =>
 			function routed(this: unknown, ...args: unknown[]) {
 				if (fetchesNow(this) && String(args[0]).toLowerCase() === 'src') {
 					args[1] = route(this, args[1]);
 				}
-				return original().apply(this, args);
+				return below.apply(this, args);
 			}
 	);
 	const first = (args: unknown[]) => args.slice(0, 1);
@@ -343,34 +317,43 @@ const createPatches = function createPatches(): void {
 	}
 };
 
+/**
+ * Put ours on every member that does not hold it: on top, or under the
+ * wrapper that sat on it when the pin last came off.
+ */
 const install = function install(): void {
 	if (patches.length === 0) {
 		createPatches();
 	}
 	for (const patch of patches) {
-		if (!patch.inChain) {
+		const now = patch.read();
+		if (now !== patch.ours && now !== patch.above) {
 			patch.put();
-			patch.inChain = true;
+			patch.above = undefined;
 		}
 	}
 };
 
 /**
- * Take the patches off. One another library wrapped since stays in its
- * chain as a pass-through, since `pins` is `null`, and the next install
- * reuses it instead of adding another layer.
+ * Take ours off. Under a wrapper another library put on it, ours stays in
+ * that chain as a pass-through, since no list is left, and the next
+ * install keeps it there instead of adding a layer.
  */
 const uninstall = function uninstall(): void {
 	for (const patch of patches) {
-		if (patch.inChain && patch.take()) {
-			patch.inChain = false;
+		const now = patch.read();
+		if (now === patch.ours) {
+			patch.restore();
 		}
+		// Ours came off, or someone wrote back what it wrapped: nothing holds
+		// it. Anything else on top still does.
+		patch.above = now === patch.ours || now === patch.below ? undefined : now;
 	}
 };
 
 /**
- * Join the pin with one script loader's list, installing it if no loader
- * pinned yet. A no-op outside the browser.
+ * Join the pin with one script loader's list, and put ours back on any
+ * member that lost it. A no-op outside the browser.
  *
  * @param files - The registry's files.
  * @returns This loader's share, or `null` outside the browser.
@@ -386,16 +369,14 @@ export const pinRegistryFiles = function pinRegistryFiles(
 		return null;
 	}
 	const list = { files };
-	lists.add(list);
-	merge();
-	if (pins) {
-		install();
-	}
+	lists.push(list);
+	install();
 	return {
 		dispose() {
-			if (lists.delete(list)) {
-				merge();
-				if (!pins) {
+			const index = lists.indexOf(list);
+			if (index !== -1) {
+				lists.splice(index, 1);
+				if (lists.length === 0) {
 					uninstall();
 				}
 			}
