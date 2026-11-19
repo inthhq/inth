@@ -16,9 +16,10 @@ import { normalizeRoutePrefix, resolveServerMode } from '@inth/sdk/server';
 import type { ConsentClientOptions } from './types';
 
 /**
- * Next.js replaces this exact expression with the variable's build-time
- * value in server and browser bundles, so it must stay written out in full.
- * Outside Next.js there may be no `process` at all.
+ * Next.js replaces each exact `process.env.NEXT_PUBLIC_*` expression with
+ * the variable's build-time value in server and browser bundles, so they
+ * must stay written out in full. Outside Next.js there may be no `process`
+ * at all.
  */
 declare const process: { env: Record<string, string | undefined> };
 
@@ -26,10 +27,10 @@ declare const process: { env: Record<string, string | undefined> };
 export const BACKEND_URL_ENV = 'NEXT_PUBLIC_INTH_PROJECT_URL';
 
 /**
- * `NEXT_PUBLIC_INTH_PROJECT_URL`, or `undefined` when it is unset or the
- * runtime has no `process`. Only the Inth name is read here, so browser
- * bundles carry one value: `withConsentManifest` sets it from the c15t name
- * when only that is set.
+ * `NEXT_PUBLIC_INTH_PROJECT_URL`, then c15t's `NEXT_PUBLIC_C15T_BACKEND_URL`,
+ * or `undefined` when neither is set or the runtime has no `process`. An
+ * app outside `withConsentManifest`, which copies the c15t name to the Inth
+ * one, still reads the c15t name.
  *
  * @internal
  */
@@ -37,7 +38,11 @@ export const readProjectUrlFromEnv = function readProjectUrlFromEnv():
 	| string
 	| undefined {
 	try {
-		return process.env.NEXT_PUBLIC_INTH_PROJECT_URL || undefined;
+		return (
+			process.env.NEXT_PUBLIC_INTH_PROJECT_URL ||
+			process.env.NEXT_PUBLIC_C15T_BACKEND_URL ||
+			undefined
+		);
 	} catch {
 		return undefined;
 	}
@@ -59,7 +64,8 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * consent saves (`/subjects`) go here. Required unless `mode` is
 	 * `testing()`; the environment variables below supply it when unset.
 	 *
-	 * @default process.env.NEXT_PUBLIC_INTH_PROJECT_URL
+	 * @default process.env.NEXT_PUBLIC_INTH_PROJECT_URL, then
+	 * process.env.NEXT_PUBLIC_C15T_BACKEND_URL
 	 */
 	projectUrl?: string;
 

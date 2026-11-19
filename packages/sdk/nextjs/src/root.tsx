@@ -236,7 +236,8 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
  * choose, it loads after the page's priority images, or at the first tap.
  *
  * @throws {Error} When `manifest()` or `hosted()` has no backend URL: no
- * `inth.config.ts` sets one and `NEXT_PUBLIC_INTH_PROJECT_URL` is unset.
+ * `inth.config.ts` sets one and neither `NEXT_PUBLIC_INTH_PROJECT_URL` nor
+ * `NEXT_PUBLIC_C15T_BACKEND_URL` is set.
  * `local()` needs none.
  *
  * @example

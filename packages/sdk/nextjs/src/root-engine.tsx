@@ -68,7 +68,8 @@ const warnMissingConfig = function warnMissingConfig(): void {
  * The transport for the config's mode, or for `options.mode`.
  *
  * @throws {Error} When the mode needs a backend URL and neither the config
- * nor `NEXT_PUBLIC_INTH_PROJECT_URL` sets one.
+ * nor `NEXT_PUBLIC_INTH_PROJECT_URL` (or `NEXT_PUBLIC_C15T_BACKEND_URL`)
+ * sets one.
  */
 const createMode = function createMode(
 	config: ConsentConfig | undefined,

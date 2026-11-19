@@ -26,7 +26,7 @@ export interface ConsentSourceOptions {
 
 	/**
 	 * Backend base URL. Defaults to the config's, then
-	 * `NEXT_PUBLIC_INTH_PROJECT_URL`.
+	 * `NEXT_PUBLIC_INTH_PROJECT_URL` (or `NEXT_PUBLIC_C15T_BACKEND_URL`).
 	 */
 	projectUrl?: string;
 
@@ -103,7 +103,8 @@ const modeFor = function modeFor(
  * The config, mode and manifest source for a server helper call, by the
  * rule `resolveServerMode` in `@inth/sdk/server` applies in every adapter.
  * The backend URL is the option's, then the config's, then
- * `NEXT_PUBLIC_INTH_PROJECT_URL`, then the one the build read.
+ * `NEXT_PUBLIC_INTH_PROJECT_URL` (or `NEXT_PUBLIC_C15T_BACKEND_URL`), then
+ * the one the build read.
  *
  * @internal
  */

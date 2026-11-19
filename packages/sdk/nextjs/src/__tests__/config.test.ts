@@ -7,6 +7,7 @@ import { hosted, manifest } from '@inth/sdk/modes';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { defineConsentConfig } from '../config';
+import { resolveConsentSource } from '../consent-source';
 import { testing } from '../testing';
 
 afterEach(() => {
@@ -41,6 +42,19 @@ describe('defineConsentConfig', () => {
 		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', 'https://env.example.com');
 
 		expect(defineConsentConfig().projectUrl).toBe('https://env.example.com');
+	});
+
+	test('reads NEXT_PUBLIC_C15T_BACKEND_URL when the Inth name is unset', () => {
+		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', '');
+		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+
+		expect(defineConsentConfig().projectUrl).toBe('https://c15t.example.com');
+		expect(resolveConsentSource().server.route.projectUrl).toBe(
+			'https://c15t.example.com'
+		);
+
+		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
+		expect(defineConsentConfig().projectUrl).toBe('https://inth.example.com');
 	});
 
 	test('names NEXT_PUBLIC_INTH_PROJECT_URL in the missing-URL error', () => {
