@@ -366,9 +366,10 @@ export const createStandInKernel = function createStandInKernel(
 			if (engine) {
 				return false;
 			}
-			if (snapshot !== committed) {
+			// The commit's snapshot carries the surface a choice leaves, even
+			// when it is the snapshot already committed.
+			if (snapshot !== committed || shown !== undefined) {
 				committed = snapshot;
-				// The commit's snapshot carries the surface a choice leaves.
 				shown = undefined;
 				notify();
 			}

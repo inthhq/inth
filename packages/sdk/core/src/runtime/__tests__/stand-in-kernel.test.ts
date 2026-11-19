@@ -89,6 +89,20 @@ describe('createStandInKernel', () => {
 		expect(engine.set.activeUI).toHaveBeenCalledWith('dialog');
 	});
 
+	test('every commit puts back the surface its snapshot shows, even an unchanged one', () => {
+		const handle = createStandInKernel({
+			onSurface: vi.fn(),
+			requestEngine: vi.fn(),
+			snapshot: banner,
+		});
+		for (let round = 0; round < 2; round += 1) {
+			handle.kernel.set.activeUI('dialog');
+			expect(handle.kernel.getSnapshot().activeUI).toBe('dialog');
+			handle.commit(banner, []);
+			expect(handle.kernel.getSnapshot().activeUI).toBe('banner');
+		}
+	});
+
 	test('a surface queues for the engine without local surfaces', () => {
 		const requestEngine = vi.fn();
 		const handle = createStandInKernel({
