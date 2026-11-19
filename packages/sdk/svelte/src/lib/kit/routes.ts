@@ -33,6 +33,7 @@ import type {
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 
 import { readLocals, readServerMode } from './load-consent';
+import type { InthLocals } from './types';
 
 export type { ConsentProxyOptions } from '@inth/sdk/server';
 
@@ -66,6 +67,26 @@ const readRestPath = function readRestPath(
 	const name = REST_PARAM.exec(event.route?.id ?? '')?.groups?.name;
 	const value = name ? event.params?.[name] : undefined;
 	return value === undefined ? undefined : trimPathSlashes(value);
+};
+
+/**
+ * Whether the handle's `projectUrl` names this route's own path, as
+ * `inthHandle({ projectUrl: '/api/inth' })` does when saves go through the
+ * proxy without `routePrefix`. The path is the request's, less the rest
+ * parameter. Forwarding there would call the route itself. With
+ * `routePrefix` set, the handle already dropped such a `projectUrl`.
+ */
+const projectUrlIsRoute = function projectUrlIsRoute(
+	event: RequestEvent,
+	{ projectUrl, routePrefix }: InthLocals
+): boolean {
+	if (routePrefix !== undefined || !projectUrl?.startsWith('/')) {
+		return false;
+	}
+	const rest = readRestPath(event);
+	const path = trimPathSlashes(event.url.pathname);
+	const mount = rest ? path.slice(0, -(rest.length + 1)) : path;
+	return trimPathSlashes(projectUrl) === mount;
 };
 
 /**
@@ -232,7 +253,12 @@ export const createConsentRoute = function createConsentRoute<
 	const handlerFor = function handlerFor(
 		event: RequestEvent
 	): ConsentRouteHandler {
-		const { route } = readServerMode(readLocals(event));
+		const locals = readLocals(event);
+		const { route } = readServerMode(
+			locals && projectUrlIsRoute(event, locals)
+				? { ...locals, projectUrl: undefined }
+				: locals
+		);
 		return cached({
 			adapter: '@inth/svelte',
 			fetch: options.fetch,

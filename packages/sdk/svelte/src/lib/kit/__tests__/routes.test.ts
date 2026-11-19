@@ -276,8 +276,15 @@ describe('createConsentRoute with inthHandle', () => {
 	});
 
 	test.each([
-		['proxy: true', { proxy: true }],
-		["a projectUrl naming the route's own prefix", { projectUrl: '/api/inth' }],
+		['proxy: true', { proxy: true, routePrefix: '/api/inth' }],
+		[
+			"a projectUrl naming the route's own prefix",
+			{ projectUrl: '/api/inth', routePrefix: '/api/inth' },
+		],
+		[
+			'a projectUrl naming the route, with routePrefix unset',
+			{ projectUrl: '/api/inth' },
+		],
 	])(
 		'the proxy setup forwards saves to the build backend, not to itself, with %s',
 		async (_name, setup) => {
@@ -286,7 +293,7 @@ describe('createConsentRoute with inthHandle', () => {
 			setGenerated({ projectUrl: BACKEND });
 			const fetch = upstream();
 			const eventFetch = vi.fn<typeof globalThis.fetch>();
-			const handle = inthHandle({ ...setup, routePrefix: '/api/inth' });
+			const handle = inthHandle(setup);
 			const { GET, POST } = createConsentRoute({ fetch, proxy: true });
 
 			const page = createEvent({ url: 'https://shop.example/' });
@@ -295,10 +302,8 @@ describe('createConsentRoute with inthHandle', () => {
 				resolve: async (event) =>
 					Response.json(await loadConsent(event, { fetch })),
 			}).then((response) => response.json());
-			expect(consent).toMatchObject({
-				projectUrl: '/api/inth',
-				routePrefix: '/api/inth',
-			});
+			expect(consent).toMatchObject({ projectUrl: '/api/inth' });
+			expect(consent.routePrefix).toBe(setup.routePrefix);
 
 			const save = await throughHandle(
 				handle,
