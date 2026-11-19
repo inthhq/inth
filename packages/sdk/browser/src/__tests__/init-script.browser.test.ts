@@ -364,6 +364,17 @@ describe('inth.hosted.js failing to load', () => {
 		expect(await hostedRequestsSoFar()).toBe(4);
 	}, 15_000);
 
+	it('rejects what waits for the engine when dispose() runs first', async () => {
+		const win = await open({ 'hosted-delay': 5000 });
+		const ready = (win.inth.ready as () => Promise<unknown>)();
+
+		(win.inth.dispose as () => void)();
+
+		await expect(ready).rejects.toMatchObject({
+			message: expect.stringContaining('dispose() ran before inth.hosted.js'),
+		});
+	});
+
 	it('stops retrying after dispose(), and init() loads the engine again', async () => {
 		const win = await open({ 'hosted-fail': 1 });
 		await expect

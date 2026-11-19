@@ -285,6 +285,16 @@ export const runInitScript = function runInitScript(
 		return element;
 	};
 
+	/** The engine is not coming: reject what waits for it, and what asks later. */
+	const giveUp = function giveUp(message: string): void {
+		engineError = new Error(message);
+		// oxlint-disable-next-line no-console -- The engine is not coming.
+		console.error(message);
+		for (const call of boot.calls.splice(0) as SettledCall[]) {
+			call.settle?.(engineError, true);
+		}
+	};
+
 	const loadEngine = function loadEngine(): void {
 		if (engineRequested || api || boot.disposed) {
 			return;
@@ -292,8 +302,7 @@ export const runInitScript = function runInitScript(
 		engineRequested = true;
 		const src = fileSrc('hosted');
 		if (!src) {
-			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
-			console.error(
+			giveUp(
 				'@inth/sdk: inth.js cannot tell where inth.hosted.js is. Load inth.js from a URL, or set data-hosted-src.'
 			);
 			return;
@@ -325,14 +334,9 @@ export const runInitScript = function runInitScript(
 					}, wait);
 					return;
 				}
-				engineError = new Error(
+				giveUp(
 					`@inth/sdk: inth.hosted.js failed to load ${tries} times, from ${src}.`
 				);
-				// oxlint-disable-next-line no-console -- The engine is not coming.
-				console.error(engineError.message);
-				for (const call of boot.calls.splice(0) as SettledCall[]) {
-					call.settle?.(engineError, true);
-				}
 			});
 		};
 		request();
@@ -986,7 +990,12 @@ export const runInitScript = function runInitScript(
 			if (api) {
 				return api.dispose();
 			}
-			boot.calls.length = 0;
+			const disposed = new Error(
+				'@inth/sdk: dispose() ran before inth.hosted.js loaded.'
+			);
+			for (const call of boot.calls.splice(0) as SettledCall[]) {
+				call.settle?.(disposed, true);
+			}
 			if (engineError) {
 				// Given up: a later `init()` gets three new tries.
 				engineError = null;
