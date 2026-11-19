@@ -38,6 +38,7 @@ import type { ConsentSubject, KernelTransport, SavePayload } from '../../types';
 import type { KernelRuntime } from '../runtime';
 import type { appendSave, OutboxTransaction, SaveOutboxStore } from './store';
 import { withStoredIdempotencyKey } from './stored-key';
+import type { StoredSavePayload } from './stored-key';
 import type { toStoredPayload } from './stored-payload';
 import type {
 	PendingSaveEntry,
@@ -222,7 +223,7 @@ const createStoredLists = function createStoredLists(
 	// oxlint-disable-next-line complexity
 	const isSavePayload = function isSavePayload(
 		value: unknown
-	): value is SavePayload {
+	): value is StoredSavePayload {
 		if (!isPlainRecord(value)) {
 			return false;
 		}
@@ -277,7 +278,9 @@ const createStoredLists = function createStoredLists(
 
 	const isPendingSaveEntry = function isPendingSaveEntry(
 		value: unknown
-	): value is PendingSaveEntry {
+	): value is Omit<PendingSaveEntry, 'payload'> & {
+		payload: StoredSavePayload;
+	} {
 		return (
 			isPlainRecord(value) &&
 			isSavePayload(value.payload) &&

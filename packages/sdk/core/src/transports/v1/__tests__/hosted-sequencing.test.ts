@@ -10,7 +10,7 @@ import {
 	matchedResolution,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createV1HostedTransport } from '../hosted';
-import { recordAnswer } from './fixtures';
+import { KEY, recordAnswer } from './fixtures';
 
 afterEach(() => {
 	vi.useRealTimers();
@@ -149,6 +149,7 @@ describe('initialData', () => {
 				measurement: false,
 				necessary: true,
 			},
+			idempotencyKey: KEY,
 			model: 'iab',
 			overrides: {},
 			policySnapshotToken: null,
@@ -230,6 +231,7 @@ describe('GPC in decision assertions', () => {
 				measurement: false,
 				necessary: true,
 			},
+			idempotencyKey: KEY,
 			model: 'iab',
 			overrides: {},
 			policySnapshotToken: null,
@@ -311,6 +313,7 @@ describe('decisionInputs seed', () => {
 				measurement: false,
 				necessary: true,
 			},
+			idempotencyKey: KEY,
 			model: 'opt-in',
 			overrides: {},
 			policySnapshotToken: null,
@@ -354,6 +357,7 @@ describe('decisionInputs seed', () => {
 				measurement: false,
 				necessary: true,
 			},
+			idempotencyKey: KEY,
 			model: 'opt-in',
 			overrides: {},
 			policySnapshotToken: null,
@@ -400,6 +404,7 @@ describe('save waits for an in-flight init', () => {
 				measurement: false,
 				necessary: true,
 			},
+			idempotencyKey: KEY,
 			model: 'opt-in',
 			overrides: {},
 			policySnapshotToken: null,
@@ -442,6 +447,7 @@ describe('assertion state across overlapping inits', () => {
 			measurement: false,
 			necessary: true,
 		},
+		idempotencyKey: KEY,
 		model: 'opt-in',
 		overrides: {},
 		policySnapshotToken: null,
@@ -551,6 +557,7 @@ describe('re-init with different inputs', () => {
 			measurement: false,
 			necessary: true,
 		},
+		idempotencyKey: KEY,
 		model: 'opt-in',
 		overrides: {},
 		policySnapshotToken: null,
@@ -698,6 +705,7 @@ describe('removing an override', () => {
 				measurement: false,
 				necessary: true,
 			},
+			idempotencyKey: KEY,
 			model: 'opt-in',
 			overrides: {},
 			policySnapshotToken: null,
