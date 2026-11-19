@@ -38,12 +38,27 @@ const ownBooleanMap = function ownBooleanMap(
 	);
 };
 
-/** The stored receipt text, or `null` when there is none or no storage. */
+/**
+ * The stored receipt text, or `null` when there is none or no storage. A
+ * receipt only c15t's key holds is copied to Inth's.
+ */
 export const readAuthorityReceiptText = function readAuthorityReceiptText():
 	| string
 	| null {
 	try {
-		return localStorage.getItem(IAB_STORAGE_KEYS.authority);
+		const own = localStorage.getItem(IAB_STORAGE_KEYS.authority);
+		if (own !== null) {
+			return own;
+		}
+		const c15t = localStorage.getItem(IAB_STORAGE_KEYS.c15tAuthority);
+		if (c15t !== null) {
+			try {
+				localStorage.setItem(IAB_STORAGE_KEYS.authority, c15t);
+			} catch {
+				// Full storage: c15t's copy is read again next time.
+			}
+		}
+		return c15t;
 	} catch {
 		return null;
 	}
@@ -362,9 +377,9 @@ export const validateAuthority = async function validateAuthority(
 };
 
 /**
- * Removes the addon receipt when authority is cleared by a lifecycle change.
- * With `expected`, only while storage still holds that text, so a receipt
- * another tab stored since is kept.
+ * Removes the addon receipt, and c15t's with it, when authority is cleared
+ * by a lifecycle change. With `expected`, only while storage still holds
+ * that text, so a receipt another tab stored since is kept.
  *
  * The comparison is best effort. localStorage has no conditional removal,
  * and a tab reads its own copy of the shared area, which another tab's
@@ -377,11 +392,9 @@ export const clearAuthorityReceipt = function clearAuthorityReceipt(
 	expected?: string
 ): void {
 	try {
-		if (
-			expected === undefined ||
-			localStorage.getItem(IAB_STORAGE_KEYS.authority) === expected
-		) {
+		if (expected === undefined || readAuthorityReceiptText() === expected) {
 			localStorage.removeItem(IAB_STORAGE_KEYS.authority);
+			localStorage.removeItem(IAB_STORAGE_KEYS.c15tAuthority);
 		}
 	} catch {
 		/* Storage may be unavailable. */

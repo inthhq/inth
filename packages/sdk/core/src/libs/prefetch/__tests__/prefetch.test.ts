@@ -387,7 +387,7 @@ describe('prefetch utilities', () => {
 
 		it('a tab journey continues the id in sessionStorage', () => {
 			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-			sessionStorage.setItem('c15t-journey-v1', id);
+			sessionStorage.setItem('inth-journey-v1', id);
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
 			window.eval(
@@ -398,7 +398,7 @@ describe('prefetch utilities', () => {
 
 		it('with no journey option, continues a tab journey this tab holds', () => {
 			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-			sessionStorage.setItem('c15t-journey-v1', id);
+			sessionStorage.setItem('inth-journey-v1', id);
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
 			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
@@ -413,9 +413,30 @@ describe('prefetch utilities', () => {
 			});
 		});
 
+		it("continues an id only c15t's key holds, and an Inth id wins over it", () => {
+			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
+			const other = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+			sessionStorage.setItem('c15t-journey-v1', id);
+			const fetch = respond();
+			vi.stubGlobal('fetch', fetch);
+			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
+			expect(sent(fetch)).toEqual({ id, scope: 'tab', storedChoice: false });
+			// The script's twin continues it too, and moves it to Inth's key.
+			delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+			void primePrefetchedInitialData({ projectUrl: '/api/other' });
+			expect(readJourneyParams(String(fetch.mock.calls[1]?.[0]))?.id).toBe(id);
+			expect(sessionStorage.getItem('inth-journey-v1')).toBe(id);
+			expect(sessionStorage.getItem('c15t-journey-v1')).toBeNull();
+
+			sessionStorage.setItem('c15t-journey-v1', other);
+			delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+			window.eval(buildPrefetchScript({ projectUrl: '/api/third' }));
+			expect(readJourneyParams(String(fetch.mock.calls[2]?.[0]))?.id).toBe(id);
+		});
+
 		it('an explicit page journey ignores a tab id in sessionStorage', () => {
 			sessionStorage.setItem(
-				'c15t-journey-v1',
+				'inth-journey-v1',
 				'3b241101-e2bb-4255-8caf-4136c566a962'
 			);
 			const fetch = respond();
@@ -480,7 +501,7 @@ describe('prefetch utilities', () => {
 		const early = () =>
 			(window as Window & { __inthExperiment?: unknown }).__inthExperiment;
 		const storeArm = (arm: string, id = 'banner-shape') =>
-			localStorage.setItem('c15t-experiment-v1', JSON.stringify({ arm, id }));
+			localStorage.setItem('inth-experiment-v1', JSON.stringify({ arm, id }));
 		const resolved = async (projectUrl: string) =>
 			(await primePrefetchedInitialData({ projectUrl }))?.metadata?.experiment;
 
@@ -498,6 +519,44 @@ describe('prefetch utilities', () => {
 		});
 
 		it('reads the arm from the cookie when localStorage has none', () => {
+			document.cookie = `inth-experiment-v1=${encodeURIComponent(
+				JSON.stringify({ arm: 'bar', id: 'banner-shape' })
+			)}; path=/`;
+			try {
+				const fetch = respond();
+				vi.stubGlobal('fetch', fetch);
+				window.eval(
+					buildPrefetchScript({ experiment, projectUrl: '/api/inth' })
+				);
+				expect(sentArm(fetch)?.arm).toBe('bar');
+			} finally {
+				document.cookie = 'inth-experiment-v1=; max-age=0; path=/';
+			}
+		});
+
+		it("reads c15t's arm only while Inth's key holds none", () => {
+			localStorage.setItem(
+				'c15t-experiment-v1',
+				JSON.stringify({ arm: 'bar', id: 'banner-shape' })
+			);
+			// A new pick would be the other arm each time.
+			const random = vi.spyOn(Math, 'random').mockReturnValue(0.7);
+			const fetch = respond();
+			vi.stubGlobal('fetch', fetch);
+			window.eval(buildPrefetchScript({ experiment, projectUrl: '/api/inth' }));
+			expect(sentArm(fetch)?.arm).toBe('bar');
+
+			delete (window as Window & { __inthExperiment?: unknown })
+				.__inthExperiment;
+			random.mockReturnValue(0.2);
+			storeArm('floating');
+			window.eval(
+				buildPrefetchScript({ experiment, projectUrl: '/api/other' })
+			);
+			expect(sentArm(fetch, 1)?.arm).toBe('floating');
+		});
+
+		it("reads c15t's cookie arm when no Inth arm is stored", () => {
 			document.cookie = `c15t-experiment-v1=${encodeURIComponent(
 				JSON.stringify({ arm: 'bar', id: 'banner-shape' })
 			)}; path=/`;

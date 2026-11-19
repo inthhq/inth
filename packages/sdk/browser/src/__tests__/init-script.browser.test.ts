@@ -457,7 +457,7 @@ describe('inth.commit.js and inth.records.js', () => {
 			key: string,
 			value: string
 		) {
-			if (key === 'c15t-v3-pending-consent-saves:v1') {
+			if (key === 'inth-pending-consent-saves:v1') {
 				throw new win.DOMException(
 					'The quota has been exceeded.',
 					'QuotaExceededError'
@@ -470,7 +470,7 @@ describe('inth.commit.js and inth.records.js', () => {
 		expect(win.inth.getSnapshot().explicitChoice).not.toBeNull();
 		await expect.poll(() => win.localStorage.getItem('inth')).not.toBeNull();
 		expect(
-			win.localStorage.getItem('c15t-v3-pending-consent-saves:v1')
+			win.localStorage.getItem('inth-pending-consent-saves:v1')
 		).toBeNull();
 		await expect.poll(() => bannerOf(win)).toBeNull();
 

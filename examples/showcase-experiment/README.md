@@ -65,7 +65,7 @@ NEXT_PUBLIC_BANNER_LAYOUT=control bun run --cwd examples/showcase-experiment dev
 With the flag set, the events say `assigned_by: 'host'`.
 
 Without the flag, Inth assigns the arm and stores it under
-`c15t-experiment-v1` in localStorage. To get a new draw, clear the site's
+`inth-experiment-v1` in localStorage. To get a new draw, clear the site's
 data (in Chrome DevTools: Application, Storage, Clear site data) and reload.
 That also clears your consent, so the banner comes back.
 

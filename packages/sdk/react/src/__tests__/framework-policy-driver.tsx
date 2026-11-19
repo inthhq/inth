@@ -335,7 +335,7 @@ export const createFrameworkPolicyDriver = ({
 				seedBytes(setup.storage.legacyLocalStorage)
 			);
 		}
-		localStorage.removeItem('c15t-iab-authority-v1');
+		localStorage.removeItem('inth-iab-authority-v1');
 		const baseline = { logs: logs(), storage: storageBytes() };
 		const consentMode: Record<string, string> = {};
 		const previousGtag = window.gtag;

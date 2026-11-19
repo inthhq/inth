@@ -184,7 +184,7 @@ test('the early /init and the save it leads to carry one journey', async () => {
 
 test('a tab journey on the early /init continues the id an earlier page kept', async () => {
 	const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-	sessionStorage.setItem('c15t-journey-v1', id);
+	sessionStorage.setItem('inth-journey-v1', id);
 	const view = await render(
 		<ConsentProvider
 			options={{ journey: 'tab', mode: mode(), persistence: false }}

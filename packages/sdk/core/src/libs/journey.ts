@@ -8,7 +8,11 @@ import type { ConsentJourneyScope } from '@inth/sdk-schema/types';
 
 import type { KernelJourney } from '../types';
 import { readCookieValueFromHeader } from './cookie/read-header';
-import { JOURNEY_STORAGE_KEY, storedChoiceNames } from './storage-keys';
+import {
+	C15T_JOURNEY_STORAGE_KEY,
+	JOURNEY_STORAGE_KEY,
+	storedChoiceNames,
+} from './storage-keys';
 
 /**
  * Whether and how long a runtime keeps a consent journey id.
@@ -65,6 +69,25 @@ export type JourneyStorage = Pick<
 export const sessionStorageOf = (): JourneyStorage | null =>
 	typeof window === 'undefined' ? null : window.sessionStorage;
 
+/**
+ * The tab's journey id, or `null`. An id only c15t's key holds moves to
+ * Inth's. May throw, as blocked storage does.
+ */
+const readTabJourneyId = function readTabJourneyId(
+	store: JourneyStorage
+): string | null {
+	const id = parseJourneyId(store.getItem(JOURNEY_STORAGE_KEY));
+	if (id) {
+		return id;
+	}
+	const c15t = parseJourneyId(store.getItem(C15T_JOURNEY_STORAGE_KEY));
+	if (c15t) {
+		store.setItem(JOURNEY_STORAGE_KEY, c15t);
+		store.removeItem(C15T_JOURNEY_STORAGE_KEY);
+	}
+	return c15t;
+};
+
 /** A journey that was opened, and whether an earlier page started it. */
 export interface OpenedJourney {
 	journey: KernelJourney;
@@ -96,7 +119,7 @@ export const openJourney = function openJourney(options: {
 		try {
 			const store = (options.storage ?? sessionStorageOf)();
 			if (store) {
-				previous = parseJourneyId(store.getItem(JOURNEY_STORAGE_KEY));
+				previous = readTabJourneyId(store);
 			} else {
 				scope = 'page';
 			}
@@ -127,9 +150,8 @@ export const detectJourneyOption = function detectJourneyOption(
 	storage: () => JourneyStorage | null = sessionStorageOf
 ): ConsentJourneyScope {
 	try {
-		return parseJourneyId(storage()?.getItem(JOURNEY_STORAGE_KEY))
-			? 'tab'
-			: 'page';
+		const store = storage();
+		return store && readTabJourneyId(store) ? 'tab' : 'page';
 	} catch {
 		return 'page';
 	}

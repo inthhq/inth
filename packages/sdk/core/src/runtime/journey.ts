@@ -12,7 +12,10 @@ import {
 	sessionStorageOf,
 } from '../libs/journey';
 import type { ConsentJourneyOption, JourneyStorage } from '../libs/journey';
-import { JOURNEY_STORAGE_KEY } from '../libs/storage-keys';
+import {
+	C15T_JOURNEY_STORAGE_KEY,
+	JOURNEY_STORAGE_KEY,
+} from '../libs/storage-keys';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -22,6 +25,13 @@ import type {
 } from '../types';
 
 export type { JourneyStorage } from '../libs/journey';
+
+const removeTabJourney = function removeTabJourney(
+	store: JourneyStorage | null
+): void {
+	store?.removeItem(JOURNEY_STORAGE_KEY);
+	store?.removeItem(C15T_JOURNEY_STORAGE_KEY);
+};
 
 const hasStoredAnswer = (
 	snapshot: Pick<ConsentSnapshot, 'explicitChoice' | 'noticeDismissal'>
@@ -105,7 +115,7 @@ export const createJourneyController = function createJourneyController(
 			return;
 		}
 		try {
-			storage()?.removeItem(JOURNEY_STORAGE_KEY);
+			removeTabJourney(storage());
 		} catch {
 			// Unusable storage holds nothing this page wrote.
 		}
@@ -155,7 +165,7 @@ export const createJourneyController = function createJourneyController(
 		}
 		stored = false;
 		try {
-			storage()?.removeItem(JOURNEY_STORAGE_KEY);
+			removeTabJourney(storage());
 		} catch {
 			// The id outlives this page in a storage that rejects writes;
 			// nothing else reads it.

@@ -1564,13 +1564,15 @@ export const createIAB = function createIAB(
 				kernel.set.iab({ authority: null, tcString: '' });
 			}
 			// Nor may vendors keep reading the string a stored receipt names,
-			// which no authority in memory stands for yet at startup.
-			const stored = readAuthorityReceipt() as { tcString?: unknown } | null;
-			if (
-				options.persistence !== false &&
-				typeof stored?.tcString === 'string'
-			) {
-				clearStoredTCString(stored.tcString);
+			// which no authority in memory stands for yet at startup. Reading
+			// can copy c15t's receipt, so it waits for persistence too.
+			if (options.persistence !== false) {
+				const stored = readAuthorityReceipt() as {
+					tcString?: unknown;
+				} | null;
+				if (typeof stored?.tcString === 'string') {
+					clearStoredTCString(stored.tcString);
+				}
 			}
 			throw error;
 		}

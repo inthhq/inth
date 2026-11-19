@@ -21,7 +21,10 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { buildPrefetchScript } from '../../libs/prefetch/prefetch';
-import { JOURNEY_STORAGE_KEY } from '../../libs/storage-keys';
+import {
+	C15T_JOURNEY_STORAGE_KEY,
+	JOURNEY_STORAGE_KEY,
+} from '../../libs/storage-keys';
 import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
@@ -275,6 +278,30 @@ describe("journey: 'tab'", () => {
 		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
 	});
 
+	test("continues an id only c15t's key holds, moved to Inth's key", async () => {
+		const id = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+		sessionStorage.setItem(C15T_JOURNEY_STORAGE_KEY, id);
+
+		const runtime = await load({ journey: 'tab' });
+		expect(init()[0]?.journey?.id).toBe(id);
+		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBe(id);
+		expect(sessionStorage.getItem(C15T_JOURNEY_STORAGE_KEY)).toBeNull();
+		await runtime.kernel.commands.save('none');
+		expect(saves()[0]?.journey).toEqual({ id, scope: 'tab' });
+	});
+
+	test("an Inth id wins over c15t's, and a choice drops both", async () => {
+		const id = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+		sessionStorage.setItem(JOURNEY_STORAGE_KEY, id);
+		sessionStorage.setItem(C15T_JOURNEY_STORAGE_KEY, SERVER_ID);
+
+		const runtime = await load({ journey: 'tab' });
+		expect(init()[0]?.journey?.id).toBe(id);
+		await runtime.kernel.commands.save('none');
+		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
+		expect(sessionStorage.getItem(C15T_JOURNEY_STORAGE_KEY)).toBeNull();
+	});
+
 	test.each([
 		[
 			'a policy that prompts for nothing',
@@ -333,6 +360,10 @@ describe("journey: 'tab'", () => {
 			JOURNEY_STORAGE_KEY,
 			'f47ac10b-58cc-4372-a567-0e02b2c3d479'
 		);
+		sessionStorage.setItem(
+			C15T_JOURNEY_STORAGE_KEY,
+			'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+		);
 		const runtime = createConsentRuntime({
 			consentCategories: ['necessary', 'measurement'],
 			journey: 'tab',
@@ -347,6 +378,7 @@ describe("journey: 'tab'", () => {
 		// The prompt is due, yet nothing is kept for later pages.
 		expect(runtime.kernel.getSnapshot().activeUI).toBe('banner');
 		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
+		expect(sessionStorage.getItem(C15T_JOURNEY_STORAGE_KEY)).toBeNull();
 		await runtime.kernel.commands.save('all');
 		expect(saves()[0]?.journey).toEqual({ id: SERVER_ID, scope: 'page' });
 	});

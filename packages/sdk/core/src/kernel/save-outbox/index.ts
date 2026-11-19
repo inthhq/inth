@@ -244,9 +244,8 @@ export const createSaveOutbox = function createSaveOutbox({
 		// page must not replay the cleared subject's saves. Then again under
 		// the lock, after any transaction that read the lists before this.
 		store.clear();
-		return store.transact((tx) => {
-			tx.write('saves', []);
-			tx.write('reassignments', []);
+		return store.transact(() => {
+			store.clear();
 		});
 	};
 

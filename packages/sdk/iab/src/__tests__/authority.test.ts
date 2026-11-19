@@ -534,6 +534,62 @@ const createAddon = function createAddon(kernel: ConsentKernel) {
 	return addon;
 };
 
+/** A receipt only c15t's key holds, as a c15t build left it. */
+const c15tOnlyReceipt = async () => {
+	const original = makeKernel();
+	const addon = createIAB({ cmpId: 28, gvl: completeGVL, kernel: original });
+	addon.acceptAll();
+	await addon.save();
+	const receipt = localStorage.getItem('inth-iab-authority-v1') ?? '';
+	addon.dispose();
+	localStorage.removeItem('inth-iab-authority-v1');
+	localStorage.setItem('c15t-iab-authority-v1', receipt);
+	return {
+		confirmedAt: original.getSnapshot().iab?.authority?.confirmedAt,
+		receipt,
+	};
+};
+
+test("restores a receipt only c15t's key holds, copied to Inth's and kept for c15t pages", async () => {
+	const { confirmedAt, receipt } = await c15tOnlyReceipt();
+	vi.setSystemTime(NOW + 1000);
+	const kernel = makeKernel();
+	createAddon(kernel);
+	await vi.waitFor(() =>
+		expect(kernel.getSnapshot().iab?.authority?.confirmedAt).toBe(confirmedAt)
+	);
+	expect(localStorage.getItem('inth-iab-authority-v1')).toBe(receipt);
+	expect(localStorage.getItem('c15t-iab-authority-v1')).toBe(receipt);
+});
+
+test("an Inth receipt wins over c15t's", async () => {
+	const original = makeKernel();
+	const addon = createIAB({ cmpId: 28, gvl: completeGVL, kernel: original });
+	addon.acceptAll();
+	await addon.save();
+	addon.dispose();
+	localStorage.setItem('c15t-iab-authority-v1', '{"invalid":true}');
+	vi.setSystemTime(NOW + 1000);
+	const kernel = makeKernel();
+	createAddon(kernel);
+	await vi.waitFor(() =>
+		expect(kernel.getSnapshot().iab?.authority).not.toBeNull()
+	);
+});
+
+test("withdrawn authority removes c15t's receipt too, so it cannot restore", async () => {
+	await c15tOnlyReceipt();
+	const kernel = makeKernel();
+	createAddon(kernel);
+	await vi.waitFor(() =>
+		expect(kernel.getSnapshot().iab?.authority).not.toBeNull()
+	);
+	await vi.advanceTimersByTimeAsync(DAY);
+	expect(kernel.getSnapshot().iab?.authority).toBeNull();
+	expect(localStorage.getItem('inth-iab-authority-v1')).toBeNull();
+	expect(localStorage.getItem('c15t-iab-authority-v1')).toBeNull();
+});
+
 test('server-assigned subject preserves locally confirmed authority', async () => {
 	const kernel = makeKernel({
 		save: () => Promise.resolve({ ok: true, subjectId: 'canonical' }),
@@ -659,7 +715,7 @@ test.each(['invalid', 'pending', 'installed', 'unmounted'] as const)(
 		firstAddon.dispose();
 		original.dispose();
 		if (state === 'invalid') {
-			localStorage.setItem('c15t-iab-authority-v1', '{"invalid":true}');
+			localStorage.setItem('inth-iab-authority-v1', '{"invalid":true}');
 		}
 		const kernel = makeKernel();
 		const addon = state === 'unmounted' ? null : createAddon(kernel);
@@ -676,7 +732,7 @@ test.each(['invalid', 'pending', 'installed', 'unmounted'] as const)(
 		// Storage is cleared once persistence's write code has loaded.
 		await vi.waitFor(async () => {
 			await vi.advanceTimersByTimeAsync(1);
-			expect(localStorage.getItem('c15t-iab-authority-v1')).toBeNull();
+			expect(localStorage.getItem('inth-iab-authority-v1')).toBeNull();
 			expect(localStorage.getItem('euconsent-v2')).toBeNull();
 			expect(document.cookie.includes('euconsent-v2=')).toBe(false);
 		});
@@ -931,7 +987,7 @@ test("reconciling another runtime's IAB save publishes that runtime's authority"
 	);
 	expect(evaluateConsent(target, second.getSnapshot(), NOW + 1000)).toBe(false);
 	// Reloading reads the shared receipt; it never removes it.
-	expect(localStorage.getItem('c15t-iab-authority-v1')).toContain(
+	expect(localStorage.getItem('inth-iab-authority-v1')).toContain(
 		rejected ?? 'missing'
 	);
 });
@@ -1020,7 +1076,7 @@ test('a TC string never keeps granting what the reconciled choice denies', async
 	await addon.save();
 	storage.reconcile();
 	expect(evaluateConsent(target, kernel.getSnapshot(), NOW)).toBe(true);
-	const receipt = localStorage.getItem('c15t-iab-authority-v1');
+	const receipt = localStorage.getItem('inth-iab-authority-v1');
 
 	// Another runtime records a denial without a new TC string.
 	vi.setSystemTime(NOW + 1000);
@@ -1036,7 +1092,7 @@ test('a TC string never keeps granting what the reconciled choice denies', async
 	);
 	expect(evaluateConsent(target, kernel.getSnapshot(), NOW + 1000)).toBe(false);
 	// The shared receipt is not this runtime's to delete.
-	expect(localStorage.getItem('c15t-iab-authority-v1')).toBe(receipt);
+	expect(localStorage.getItem('inth-iab-authority-v1')).toBe(receipt);
 
 	// A runtime opened now does not restore the conflicting TC string.
 	const fresh = makeKernel();
@@ -1134,7 +1190,7 @@ test('a newer choice from a sibling subdomain withdraws the TC string it cannot 
 	addon.acceptAll();
 	await addon.save();
 	storage.reconcile();
-	const ownReceipt = localStorage.getItem('c15t-iab-authority-v1');
+	const ownReceipt = localStorage.getItem('inth-iab-authority-v1');
 	const held = kernel.getSnapshot().iab?.authority?.tcString;
 	expect(held).toBeTruthy();
 
@@ -1158,7 +1214,7 @@ test('a newer choice from a sibling subdomain withdraws the TC string it cannot 
 	siblingStorage.reconcile();
 	expect(sibling.getSnapshot().iab?.authority?.tcString).not.toBe(held);
 	// Only the cookie is shared: this origin still has its own receipt.
-	localStorage.setItem('c15t-iab-authority-v1', ownReceipt ?? '');
+	localStorage.setItem('inth-iab-authority-v1', ownReceipt ?? '');
 	localStorage.removeItem('inth');
 
 	expect(kernel.getSnapshot().iab?.authority?.tcString).toBe(held);
@@ -1169,7 +1225,7 @@ test('a newer choice from a sibling subdomain withdraws the TC string it cannot 
 		expect(kernel.getSnapshot().iab?.authority ?? null).toBeNull()
 	);
 	// The receipt is left for this origin's next save to replace.
-	expect(localStorage.getItem('c15t-iab-authority-v1')).toBe(ownReceipt);
+	expect(localStorage.getItem('inth-iab-authority-v1')).toBe(ownReceipt);
 
 	// A fresh page on this subdomain does not restore the stale receipt.
 	const fresh = makeKernel();
@@ -1367,7 +1423,7 @@ test('vendors never see a stale vendor grant after another runtime revokes the v
 
 const receiptEvent = () =>
 	window.dispatchEvent(
-		new StorageEvent('storage', { key: 'c15t-iab-authority-v1' })
+		new StorageEvent('storage', { key: 'inth-iab-authority-v1' })
 	);
 
 test('a vendor revocation saved in the same millisecond reaches vendors through the receipt', async () => {
@@ -1499,7 +1555,7 @@ test('an equal-time receipt with different custom-vendor selections replaces the
 });
 
 const storedCustomConsent = (id: string): unknown =>
-	JSON.parse(localStorage.getItem('c15t-iab-authority-v1') ?? '{}')
+	JSON.parse(localStorage.getItem('inth-iab-authority-v1') ?? '{}')
 		.customConsents?.[id];
 
 const revoke = (id: number) => (addon: IABHandle) => {
@@ -1675,7 +1731,7 @@ test('a receipt removed while another one is being validated is not installed', 
 	// third tab removes it.
 	receiptEvent();
 	await Promise.resolve();
-	localStorage.removeItem('c15t-iab-authority-v1');
+	localStorage.removeItem('inth-iab-authority-v1');
 	receiptEvent();
 	await vi.advanceTimersByTimeAsync(10);
 
@@ -2387,7 +2443,7 @@ describe('returning visitors and changed publisher restrictions', () => {
 		await savedWith(prohibit7);
 		const stored = localStorage.getItem('euconsent-v2');
 		expect(stored).toBeTruthy();
-		const receipt = localStorage.getItem('c15t-iab-authority-v1');
+		const receipt = localStorage.getItem('inth-iab-authority-v1');
 		const { 755: vendor755 } = completeGVL.vendors;
 		if (!vendor755) {
 			throw new Error('Missing vendor 755 fixture');
@@ -2412,11 +2468,11 @@ describe('returning visitors and changed publisher restrictions', () => {
 		expect(localStorage.getItem('euconsent-v2')).toBeNull();
 		expect(document.cookie).not.toContain('euconsent-v2=');
 		// The private receipt stays; it cannot grant under this list.
-		expect(localStorage.getItem('c15t-iab-authority-v1')).toBe(receipt);
+		expect(localStorage.getItem('inth-iab-authority-v1')).toBe(receipt);
 	});
 
 	test('a save in another tab during the check keeps its TC string and asks nothing', async () => {
-		const RECEIPT = 'c15t-iab-authority-v1';
+		const RECEIPT = 'inth-iab-authority-v1';
 		const STORED = 'euconsent-v2';
 		const setStored = (receipt: string, tcString: string) => {
 			localStorage.setItem(RECEIPT, receipt);
@@ -2479,7 +2535,7 @@ describe('returning visitors and changed publisher restrictions', () => {
 	});
 
 	test('a receipt that changes only its custom choices during the check is checked again', async () => {
-		const RECEIPT = 'c15t-iab-authority-v1';
+		const RECEIPT = 'inth-iab-authority-v1';
 		const oneCustomVendor = [
 			{
 				id: 'custom',
@@ -2603,7 +2659,7 @@ describe('returning visitors and changed publisher restrictions', () => {
 		const stored = localStorage.getItem('euconsent-v2');
 		expect(stored).toBeTruthy();
 		expect(document.cookie).toContain('euconsent-v2=');
-		const receipt = localStorage.getItem('c15t-iab-authority-v1');
+		const receipt = localStorage.getItem('inth-iab-authority-v1');
 		const { addon, kernel } = returning(prohibit7);
 		await addon.whenReady();
 		await vi.advanceTimersByTimeAsync(1);
@@ -2612,7 +2668,7 @@ describe('returning visitors and changed publisher restrictions', () => {
 		expect(document.cookie).not.toContain('euconsent-v2=');
 		expect(addon.cmpApi?.loadFromStorage()).toBeNull();
 		// The private receipt stays: it cannot grant under these restrictions.
-		expect(localStorage.getItem('c15t-iab-authority-v1')).toBe(receipt);
+		expect(localStorage.getItem('inth-iab-authority-v1')).toBe(receipt);
 	});
 
 	test.each([

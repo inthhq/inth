@@ -7,7 +7,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { ConsentExperiment } from '../../libs/experiment';
-import { EXPERIMENT_STORAGE_KEY } from '../../libs/storage-keys';
+import {
+	C15T_EXPERIMENT_STORAGE_KEY,
+	EXPERIMENT_STORAGE_KEY,
+} from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { createOfflineTransport } from '../../transports/offline';
 import type { KernelEvent, KernelTransport, SavePayload } from '../../types';
@@ -112,6 +115,36 @@ describe('runtime experiments', () => {
 		await settled(second.runtime);
 		expect(second.runtime.kernel.getSnapshot().experiment?.arm).toBe(other);
 		second.runtime.dispose();
+	});
+
+	test("runs an arm only c15t's key holds and moves it to Inth's", async () => {
+		const stored = JSON.stringify({ arm: 'bar', id: 'banner-shape' });
+		localStorage.setItem(C15T_EXPERIMENT_STORAGE_KEY, stored);
+		document.cookie = `${C15T_EXPERIMENT_STORAGE_KEY}=${encodeURIComponent(stored)}; path=/`;
+		const { runtime } = createRuntime();
+		runtime.start();
+		await settled(runtime);
+		expect(runtime.kernel.getSnapshot().experiment?.arm).toBe('bar');
+		expect(localStorage.getItem(EXPERIMENT_STORAGE_KEY)).toBe(stored);
+		expect(localStorage.getItem(C15T_EXPERIMENT_STORAGE_KEY)).toBeNull();
+		expect(document.cookie).not.toContain(`${C15T_EXPERIMENT_STORAGE_KEY}=`);
+		runtime.dispose();
+	});
+
+	test("an Inth arm wins over c15t's", async () => {
+		localStorage.setItem(
+			EXPERIMENT_STORAGE_KEY,
+			JSON.stringify({ arm: 'floating', id: 'banner-shape' })
+		);
+		localStorage.setItem(
+			C15T_EXPERIMENT_STORAGE_KEY,
+			JSON.stringify({ arm: 'bar', id: 'banner-shape' })
+		);
+		const { runtime } = createRuntime();
+		runtime.start();
+		await settled(runtime);
+		expect(runtime.kernel.getSnapshot().experiment?.arm).toBe('floating');
+		runtime.dispose();
 	});
 
 	test('a prefetched arm the server rendered seeds the snapshot and survives start', async () => {

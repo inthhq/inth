@@ -264,11 +264,12 @@ experiment runs. To keep the banner in the server HTML, resolve the arm on
 the server and pass it as `arm`.
 
 Once the banner has shown the arm, Inth stores `{ id, arm }` under
-`c15t-experiment-v1` in localStorage (a cookie when localStorage is
-unavailable), so the visitor keeps seeing the banner they saw. Nothing is
-stored for a visitor who is never prompted, and nothing is stored for a
-host-resolved arm: your flag provider decides that one on every visit. The
-record holds no identifier. It exists only to keep the consent banner
+`inth-experiment-v1` in localStorage (a cookie when localStorage is
+unavailable), so the visitor keeps seeing the banner they saw. An arm a c15t
+build stored under `c15t-experiment-v1` is kept and moved to the Inth key.
+Nothing is stored for a visitor who is never prompted, and nothing is stored
+for a host-resolved arm: your flag provider decides that one on every visit.
+The record holds no identifier. It exists only to keep the consent banner
 consistent, so treat it like the consent record itself when you describe
 your storage.
 

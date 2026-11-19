@@ -370,12 +370,13 @@ export const pickExperimentArm = function pickExperimentArm(
  * `experiment`.
  */
 const knownArm = function knownArm(
-	experiment: ConsentExperiment
+	experiment: ConsentExperiment,
+	storageConfig?: StorageConfig
 ): StoredExperimentArm | null {
 	const early = readEarlyExperimentArm();
 	return early?.id === experiment.id && isExperimentArm(experiment, early.arm)
 		? early
-		: readStoredExperimentArm();
+		: readStoredExperimentArm(storageConfig);
 };
 
 /**
@@ -502,7 +503,9 @@ export const startExperiment = function startExperiment(
 		return () => undefined;
 	}
 	if (!kernel.getSnapshot().experiment && experiment.arm === undefined) {
-		kernel.set.experiment(pickExperimentArm(experiment, knownArm(experiment)));
+		kernel.set.experiment(
+			pickExperimentArm(experiment, knownArm(experiment, options.storageConfig))
+		);
 	}
 	let detach: (() => void) | null = null;
 	let stopped = false;

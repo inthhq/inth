@@ -13,7 +13,7 @@ import { afterEach, expect, it } from 'vitest';
 import { TAKEN_SUBJECTS_KEY } from './fixtures/subject-conflict-page';
 import type { SubjectConflictPage } from './fixtures/subject-conflict-page';
 
-const PENDING_SAVES_KEY = 'c15t-v3-pending-consent-saves:v1';
+const PENDING_SAVES_KEY = 'inth-pending-consent-saves:v1';
 
 const opened: Window[] = [];
 

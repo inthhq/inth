@@ -73,6 +73,7 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 	removeLegacySubjectId(config);
 	// Addon bytes must be removed even when the addon is not mounted.
 	removeLocalStorageKey(IAB_STORAGE_KEYS.authority);
+	removeLocalStorageKey(IAB_STORAGE_KEYS.c15tAuthority);
 	for (const key of [
 		IAB_STORAGE_KEYS.tcString,
 		IAB_STORAGE_KEYS.additionalConsent,

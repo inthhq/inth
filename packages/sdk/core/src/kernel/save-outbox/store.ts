@@ -16,6 +16,8 @@
  */
 
 import {
+	C15T_PENDING_SAVES_STORAGE_KEY,
+	C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../libs/storage-keys';
@@ -23,9 +25,9 @@ import type { SavePayload } from '../../types';
 import type { PendingSaveEntry } from './supersession';
 
 /**
- * The Web Lock every browser outbox transaction holds. Named apart from
- * the storage keys, so tabs on builds that store under other keys still
- * take turns.
+ * The Web Lock every browser outbox transaction holds: c15t's, so the
+ * transaction that follows a clear also runs after one a c15t tab of the
+ * origin started on the c15t lists the clear removes.
  */
 const OUTBOX_LOCK_NAME = 'c15t-v3-pending-consent-saves:v1';
 
@@ -64,8 +66,7 @@ export interface SaveOutboxStore {
 	 * Remove both lists now, without waiting for exclusive access, so a clear
 	 * holds even when the page closes before a transaction could run. A
 	 * transaction already running elsewhere can still write back what it
-	 * read; the outbox follows this with a transaction that empties the
-	 * lists again.
+	 * read; the outbox calls this again inside a transaction after it.
 	 */
 	clear: () => void;
 }
@@ -141,9 +142,9 @@ const SLOT_KEYS: Record<OutboxSlot, string> = {
 
 /**
  * The outbox store every tab of an origin shares: JSON arrays in
- * localStorage under `c15t-v3-pending-consent-saves:v1` and
- * `c15t-v3-subject-reassignments:v1`, the keys earlier releases wrote, so
- * saves a visitor queued before an upgrade still replay.
+ * localStorage under {@link PENDING_SAVES_STORAGE_KEY} and
+ * {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}. `clear` also removes c15t's
+ * lists.
  *
  * Every transaction holds one Web Lock, so two tabs cannot overwrite each
  * other's entries or replay one twice. Without
@@ -170,7 +171,11 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 	return {
 		clear() {
 			const storage = environment.localStorage() ?? memory;
-			for (const key of Object.values(SLOT_KEYS)) {
+			for (const key of [
+				...Object.values(SLOT_KEYS),
+				C15T_PENDING_SAVES_STORAGE_KEY,
+				C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
+			]) {
 				try {
 					storage.removeItem(key);
 				} catch {

@@ -1,8 +1,9 @@
 /**
  * The browser outbox store: localStorage under a Web Lock, in the format
  * earlier releases wrote, so saves a visitor queued before an upgrade
- * still replay. Storage and locks are injected; the last test runs the
- * default store against the test window's localStorage.
+ * still replay. c15t's lists are never replayed, only cleared. Storage and
+ * locks are injected; the last test runs the default store against the
+ * test window's localStorage.
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -14,8 +15,12 @@ import { createBrowserOutboxStore } from '../save-outbox';
 import type { BrowserOutboxEnvironment } from '../save-outbox/store';
 
 // The stored format is part of the interface: spelled out, not imported.
-const SAVES_KEY = 'c15t-v3-pending-consent-saves:v1';
-const REASSIGNMENTS_KEY = 'c15t-v3-subject-reassignments:v1';
+const SAVES_KEY = 'inth-pending-consent-saves:v1';
+const REASSIGNMENTS_KEY = 'inth-subject-reassignments:v1';
+const C15T_SAVES_KEY = 'c15t-v3-pending-consent-saves:v1';
+const C15T_REASSIGNMENTS_KEY = 'c15t-v3-subject-reassignments:v1';
+// Shared with c15t tabs.
+const LOCK_NAME = 'c15t-v3-pending-consent-saves:v1';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -120,7 +125,7 @@ describe('browser outbox store', () => {
 				queuedAt: expect.any(Number),
 			},
 		]);
-		expect(new Set(names)).toEqual(new Set([SAVES_KEY]));
+		expect(new Set(names)).toEqual(new Set([LOCK_NAME]));
 		kernel.dispose();
 	});
 
@@ -173,6 +178,69 @@ describe('browser outbox store', () => {
 		kernel.dispose();
 	});
 
+	test('never replays or moves the saves a c15t page queued, which may target another backend', async () => {
+		const storage = memoryStorage();
+		const c15tEntry = {
+			...legacyEntry,
+			payload: { ...legacyEntry.payload, subjectId: 'sub_c15t' },
+		};
+		storage.setItem(SAVES_KEY, JSON.stringify([legacyEntry]));
+		storage.setItem(C15T_SAVES_KEY, JSON.stringify([c15tEntry]));
+		const save = vi.fn().mockResolvedValue({ ok: true });
+		const kernel = kernelOn(
+			{ transport: { init: vi.fn().mockResolvedValue({}), save } },
+			{ localStorage: () => storage, locks: () => serialLocks().locks }
+		);
+
+		await kernel.commands.init();
+		await vi.waitFor(() => {
+			expect(storage.getItem(SAVES_KEY)).toBeNull();
+		});
+		expect(save).toHaveBeenCalledTimes(1);
+		expect(save).toHaveBeenCalledWith(legacyEntry.payload, { replay: true });
+		expect(JSON.parse(storage.getItem(C15T_SAVES_KEY) ?? 'null')).toEqual([
+			c15tEntry,
+		]);
+		kernel.dispose();
+	});
+
+	test("a clear removes c15t's lists too, at once and again under the lock", async () => {
+		const storage = memoryStorage();
+		storage.setItem(C15T_SAVES_KEY, JSON.stringify([legacyEntry]));
+		storage.setItem(
+			C15T_REASSIGNMENTS_KEY,
+			JSON.stringify([{ at: Date.now(), from: 'sub_old', to: 'sub_legacy' }])
+		);
+		const { locks } = serialLocks();
+		let releaseLock: () => void = () => {};
+		void locks.request(
+			LOCK_NAME,
+			() =>
+				new Promise<void>((resolve) => {
+					releaseLock = resolve;
+				})
+		);
+		const kernel = kernelOn(
+			{ initialRecords: { subject: { subjectId: 'sub_legacy' } } },
+			{ localStorage: () => storage, locks: () => locks }
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
+
+		clearKernelRecords(kernel);
+		expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
+		expect(storage.getItem(C15T_REASSIGNMENTS_KEY)).toBeNull();
+
+		// A c15t tab's transaction that read its list before the clear.
+		storage.setItem(C15T_SAVES_KEY, JSON.stringify([legacyEntry]));
+		releaseLock();
+		await vi.waitFor(() => {
+			expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
+		});
+		kernel.dispose();
+	});
+
 	test.each([
 		{ label: 'invalid JSON', stored: '{not json' },
 		{ label: 'a non-array value', stored: '{"payload":{}}' },
@@ -205,7 +273,7 @@ describe('browser outbox store', () => {
 		);
 		let releaseLock: () => void = () => {};
 		void locks.request(
-			SAVES_KEY,
+			LOCK_NAME,
 			() =>
 				new Promise<void>((resolve) => {
 					releaseLock = resolve;
@@ -242,7 +310,7 @@ describe('browser outbox store', () => {
 		);
 		const { locks } = serialLocks();
 		void locks.request(
-			SAVES_KEY,
+			LOCK_NAME,
 			() =>
 				new Promise<void>(() => {
 					// Never released.
@@ -281,7 +349,7 @@ describe('browser outbox store', () => {
 		const { locks } = serialLocks();
 		let releaseLock: () => void = () => {};
 		void locks.request(
-			SAVES_KEY,
+			LOCK_NAME,
 			() =>
 				new Promise<void>((resolve) => {
 					releaseLock = resolve;

@@ -5,11 +5,12 @@ import { expect, test } from 'vitest';
 
 import { clearStoredConsentRecords } from './record-writes';
 
-test('clearing removes the IAB addon records, the AC string included', () => {
+test("clearing removes the IAB addon records, the AC string and c15t's receipt included", () => {
 	for (const key of ['euconsent-v2', 'addtl_consent']) {
 		localStorage.setItem(key, 'value');
 		document.cookie = `${key}=value; Path=/`;
 	}
+	localStorage.setItem('inth-iab-authority-v1', 'receipt');
 	localStorage.setItem('c15t-iab-authority-v1', 'receipt');
 
 	clearStoredConsentRecords();
@@ -17,6 +18,7 @@ test('clearing removes the IAB addon records, the AC string included', () => {
 	for (const key of [
 		'euconsent-v2',
 		'addtl_consent',
+		'inth-iab-authority-v1',
 		'c15t-iab-authority-v1',
 	]) {
 		expect(localStorage.getItem(key)).toBeNull();
