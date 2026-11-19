@@ -167,9 +167,10 @@ describe('the IAB vendor list', () => {
 });
 
 /** An IAB manifest that lists Google Additional Consent providers at `url`. */
-const iabManifest = function iabManifest(
-	additionalConsent?: { providers: number[]; url: string }
-): ConsentManifest {
+const iabManifest = function iabManifest(additionalConsent?: {
+	providers: number[];
+	url: string;
+}): ConsentManifest {
 	return {
 		...MANIFEST,
 		cmpId: 28,

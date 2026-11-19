@@ -92,7 +92,10 @@ try {
 			const start = performance.now();
 			const prepared =
 				label === 'after'
-					? deferInitGvl(before, after.gvlReference?.url ?? '/api/inth/v1/consent/init')
+					? deferInitGvl(
+							before,
+							after.gvlReference?.url ?? '/api/inth/v1/consent/init'
+						)
 					: before;
 			const preparedAt = performance.now();
 			JSON.stringify(prepared);
