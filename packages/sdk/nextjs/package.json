@@ -92,6 +92,11 @@
 			"import": "./dist/postcss-tailwind3.js",
 			"default": "./dist/postcss-tailwind3.js"
 		},
+		"./react": {
+			"types": "./dist-types/react.d.ts",
+			"import": "./dist/react.js",
+			"default": "./dist/react.js"
+		},
 		"./headless": {
 			"types": "./dist-types/headless.d.ts",
 			"import": "./dist/headless.js",

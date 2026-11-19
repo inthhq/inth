@@ -6,8 +6,10 @@ group: frameworks
 
 ## Import from @inth/tanstack-start
 
-`@inth/tanstack-start` exports `InthProvider` and re-exports every component and
-hook from `@inth/react`. Import them from `@inth/tanstack-start` so your app has
+`@inth/tanstack-start` exports its own `InthProvider`, `ConsentBanner` and
+`ConsentDialog`, and re-exports every other component and hook from
+`@inth/react`. The `InthProvider` from `@inth/react` is at
+`@inth/tanstack-start/react`. Import them from `@inth/tanstack-start` so your app has
 one import path. They behave the same as in a React app, and render on the
 server with the state the root loader resolved.
 
@@ -24,7 +26,7 @@ server with the state the root loader resolved.
 | `DevTools` from `@inth/react/devtools` | A development panel for consent state and scripts | [DevTools](/docs/frameworks/tanstack-start/components/dev-tools) |
 
 Render every component inside `InthProvider`. Do not also mount the
-`InthProvider` from `@inth/react`; this one already renders it.
+`InthProvider` from `@inth/tanstack-start/react`; this one already renders it.
 
 ## InthProvider
 
@@ -43,7 +45,7 @@ shows it in context.
 | `clearOnRevocation` | Cookies and storage keys to delete when a category is denied |
 | `persistence` | Stores the visitor's choice. On by default |
 | `scriptLoader` | Options for the script loader module |
-| `options` | Any other option of the `InthProvider` from `@inth/react`, such as `theme`, `i18n`, `presentation`, `callbacks`, `consentCategories`, `reloadOnConsentRevoked`, `preloadDialog` or the experimental `experimentalScriptRegistry` |
+| `options` | Any other option of the `InthProvider` from `@inth/tanstack-start/react`, such as `theme`, `i18n`, `presentation`, `callbacks`, `consentCategories`, `reloadOnConsentRevoked`, `preloadDialog` or the experimental `experimentalScriptRegistry` |
 
 The state carries the backend URL, the mode and the route prefix you passed
 to `createConsentStateHandler`, so `InthProvider` has no props for them. With

@@ -191,13 +191,17 @@ longer reads them.
 
 ## Names from an earlier alpha are missing
 
-**Check.** Nuxt warns that it cannot resolve `ConsentRoot`, or an import from
-`@inth/nuxt/components/consent-root` fails. The v3 alphas renamed it with no
-alias.
+**Check.** Nuxt warns that it cannot resolve a component such as `ConsentRoot`,
+or an import from `@inth/nuxt/components/consent-root` fails. The v3 alphas
+renamed these with no alias.
 
-**Fix.** Render `<InthProvider />` in `app.vue`. The module registers it
-globally. Import it from `@inth/nuxt/components/inth-provider` where you need
-the component itself.
+**Fix.** Use the current names. Render the root as the global
+`<InthProvider />` in `app.vue`, with no import: the module registers the Nuxt
+component, whose banner renders on the server.
+
+| Earlier name | Now |
+| --- | --- |
+| `ConsentRoot`, `@inth/nuxt/components/consent-root` | The global `InthProvider` |
 | `ConsentPreferencesLink` | `ConsentDialogLink`. The floating `ConsentDialogTrigger` keeps its name. |
 | `ConsentFrame` | `ConsentGate` |
 

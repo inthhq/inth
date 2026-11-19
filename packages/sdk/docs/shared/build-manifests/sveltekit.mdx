@@ -8,7 +8,7 @@ these files:
 | `vite.config.ts` | `consentManifest` from `@inth/svelte/vite` fetches the policy. |
 | `src/hooks.server.ts` | `inthHandle()`, whose default mode, `manifest()`, resolves from the fetched policy. |
 | `src/routes/+layout.server.ts` | `export { loadConsent as load }` resolves each visitor. |
-| `src/routes/+layout.svelte` | `InthProvider state={data.consent}` renders the result. |
+| `src/routes/+layout.svelte` | `InthProvider` from `@inth/svelte/kit`, given `state={data.consent}`, renders the result. |
 
 The plugin's position in `plugins` does not matter. It fetches the policy
 once Vite has resolved its config, before anything compiles. Without a

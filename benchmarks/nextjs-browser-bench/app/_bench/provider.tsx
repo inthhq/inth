@@ -7,12 +7,9 @@ import {
 	hosted,
 	manifest,
 } from '@inth/nextjs';
-import type {
-	InthProviderOptions,
-	InthProviderProps,
-	WithProjectUrl,
-} from '@inth/nextjs';
-import { InthProvider as ReactProvider } from '@inth/react';
+import type { InthProviderProps, WithProjectUrl } from '@inth/nextjs';
+import { InthProvider as ReactProvider } from '@inth/nextjs/react';
+import type { InthProviderOptions as ReactProviderOptions } from '@inth/nextjs/react';
 // The provider arms take transports; `hosted` from `@inth/nextjs` is data.
 import { hosted as hostedTransport } from '@inth/sdk/transports';
 import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
@@ -35,11 +32,11 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<InthProviderOptions['consentCategories']>;
+] satisfies NonNullable<ReactProviderOptions['consentCategories']>;
 
 const createOptions = function createOptions(
 	scenario: NextjsBenchScenario
-): WithProjectUrl<InthProviderOptions> {
+): WithProjectUrl<ReactProviderOptions> {
 	return {
 		callbacks: {
 			onChoiceRecorded() {

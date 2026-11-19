@@ -46,7 +46,7 @@ import { engineNow } from '#engine-now';
 import type * as RootEngine from './root-engine';
 import type { InthProviderProps } from './root-options';
 
-export type { InthProviderProps } from './root-options';
+export type { InthProviderOptions, InthProviderProps } from './root-options';
 
 type EngineModule = typeof RootEngine;
 

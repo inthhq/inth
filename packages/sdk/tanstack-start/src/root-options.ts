@@ -3,7 +3,7 @@ import type {
 	UsePersistenceOptions,
 	UseScriptLoaderOptions,
 } from '@inth/react/module-hooks';
-import type { InthProviderOptions } from '@inth/react/provider';
+import type { InthProviderOptions as ReactProviderOptions } from '@inth/react/provider';
 /**
  * `InthProvider`'s props and the checks on its state, shared by the
  * first-load shell (`./root`) and the engine it loads (`./root-engine`).
@@ -56,7 +56,7 @@ export interface InthProviderProps {
 	 * resolution and when consent is later revoked.
 	 * Initial-only: remount InthProvider to replace the cleanup configuration.
 	 */
-	clearOnRevocation?: InthProviderOptions['clearOnRevocation'];
+	clearOnRevocation?: ReactProviderOptions['clearOnRevocation'];
 
 	scriptLoader?: UseScriptLoaderOptions;
 
@@ -70,31 +70,37 @@ export interface InthProviderProps {
 	/**
 	 * Additional React provider options.
 	 */
-	options?: Omit<
-		InthProviderOptions,
-		| 'projectUrl'
-		| 'mode'
-		| 'clearOnRevocation'
-		| 'networkBlocker'
-		| 'persistence'
-		| 'prefetch'
-		| 'scriptLoader'
-		| 'scripts'
-		| 'vendors'
-		| '__debugPkg'
-		| '__preloadScriptLoader'
-		| '__resolveStreamedInit'
-	> & {
-		/**
-		 * Replaces the mode the state carries: `manifest()` or `hosted()`
-		 * from `@inth/tanstack-start`, `testing()` from
-		 * `@inth/tanstack-start/testing`, or a transport factory.
-		 */
-		mode?: ConsentMode | ProviderTransportFactory;
-	};
+	options?: InthProviderOptions;
 
 	children: ReactNode;
 }
+
+/**
+ * The `options` of `InthProvider`: the options of the `InthProvider` from
+ * `@inth/tanstack-start/react`, less the ones the root takes on its own.
+ */
+export type InthProviderOptions = Omit<
+	ReactProviderOptions,
+	| 'projectUrl'
+	| 'mode'
+	| 'clearOnRevocation'
+	| 'networkBlocker'
+	| 'persistence'
+	| 'prefetch'
+	| 'scriptLoader'
+	| 'scripts'
+	| 'vendors'
+	| '__debugPkg'
+	| '__preloadScriptLoader'
+	| '__resolveStreamedInit'
+> & {
+	/**
+	 * Replaces the mode the state carries: `manifest()` or `hosted()`
+	 * from `@inth/tanstack-start`, `testing()` from
+	 * `@inth/tanstack-start/testing`, or a transport factory.
+	 */
+	mode?: ConsentMode | ProviderTransportFactory;
+};
 
 /**
  * Whether `state` is a promise the server streams.

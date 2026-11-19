@@ -103,7 +103,7 @@ awaiting it:
 The layout is a Server Component. `@inth/nextjs` gives it `InthProvider`,
 `ConsentBanner`, `ConsentDialog` and `ConsentDialogLink` as client components,
 so you don't need a `'use client'` wrapper. It already wraps the
-`InthProvider` from `@inth/react`, so don't mount both.
+`InthProvider` from `@inth/nextjs/react`, so don't mount both.
 
 Because the layout doesn't await `resolveConsent()`, Next.js sends the page
 without waiting for it and streams the consent result later in the same response. Until

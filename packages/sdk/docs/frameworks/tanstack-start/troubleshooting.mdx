@@ -183,8 +183,8 @@ release, with no alias.
 | Removed | Use instead |
 | --- | --- |
 | `ConsentRoot` and `ConsentRootProps` | `InthProvider` and `InthProviderProps` |
-| `ConsentProvider` from `@inth/tanstack-start` | `InthProvider` from `@inth/react`, for a runtime you manage yourself |
-| `ConsentProviderOptions`, `ConsentProviderCallbacks` and `ConsentProviderPrefetch` | `InthProviderOptions`, `InthProviderCallbacks` and `InthProviderPrefetch` |
+| `ConsentProvider` from `@inth/tanstack-start` | `InthProvider` from `@inth/tanstack-start/react` |
+| `ConsentProviderOptions`, `ConsentProviderCallbacks` and `ConsentProviderPrefetch` | `InthProviderOptions`, `InthProviderCallbacks` and `InthProviderPrefetch` from `@inth/tanstack-start/react`. `InthProviderOptions` from `@inth/tanstack-start` is the root's `options` |
 | `InthProvider`'s `projectUrl` and `routePrefix` props | `createConsentStateHandler({ routePrefix })`. The state carries the backend URL, the mode and the route prefix. |
 | `InthProvider`'s `initRoute` prop, and `DEFAULT_INIT_ROUTE` | `createConsentStateHandler({ routePrefix: '/api/inth' })`. There is no default route any more. |
 | `createConsentServerRoute`, and its `manifestGET`, `initGET` and `proxyHandler` | `createConsentRoute()`, which returns `GET`, plus the write methods with `proxy` |

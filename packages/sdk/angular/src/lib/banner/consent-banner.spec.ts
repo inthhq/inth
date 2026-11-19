@@ -69,6 +69,15 @@ class CustomBannerHost {}
 })
 class RootHost {}
 
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [InthProvider],
+	selector: 'test-wrapping-root-host',
+	template:
+		'<inth-provider><p data-testid="wrapped-app">App</p></inth-provider>',
+})
+class WrappingRootHost {}
+
 const boot = async (host: new () => unknown) => {
 	TestBed.configureTestingModule({ providers: [provideInth(testOptions())] });
 	const fixture = TestBed.createComponent(host);
@@ -146,6 +155,12 @@ describe('<inth-provider>', () => {
 		await vi.waitFor(() => {
 			expect(byTestId('consent-dialog-root')).not.toBeNull();
 		});
+	});
+
+	test('renders the content it wraps', async () => {
+		const { byTestId } = await boot(WrappingRootHost);
+		expect(byTestId('wrapped-app')?.textContent).toBe('App');
+		expect(byTestId('consent-banner-root')).not.toBeNull();
 	});
 });
 

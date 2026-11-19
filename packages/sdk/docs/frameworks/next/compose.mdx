@@ -22,7 +22,7 @@ for that button:
 
 <include src="../../shared/examples/nextjs/compose-banner.mdx" />
 
-`@inth/nextjs` re-exports every `@inth/react` component, so `ConsentBanner` and
+`@inth/nextjs` re-exports the `@inth/react` components, so `ConsentBanner` and
 its parts come from the same import as `InthProvider`. The file starts with
 `'use client'` because a Server Component can neither read a property of a
 client component, such as `ConsentBanner.Root`, nor pass a function, such as

@@ -203,7 +203,7 @@ try {
 	execFileSync('git', ['worktree', 'add', '--detach', base, baseSha], {
 		stdio: 'inherit',
 	});
-	await runCommand(['bun', 'install', '--frozen-lockfile'], { cwd: base });
+	await runCommand(['pnpm', 'install', '--frozen-lockfile'], { cwd: base });
 	if (mode !== 'bundle') {
 		await installBrowsers(base, process.env.CI === 'true');
 		await installBrowsers(root, process.env.CI === 'true');

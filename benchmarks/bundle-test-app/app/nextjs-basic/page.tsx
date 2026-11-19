@@ -2,7 +2,7 @@
 
 import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import { ConsentBanner, useEffectivePermissions } from '@inth/nextjs';
-import { InthProvider } from '@inth/react';
+import { InthProvider } from '@inth/nextjs/react';
 // The provider takes a transport; `offline` from `@inth/nextjs` is data.
 
 const BasicState = () => {

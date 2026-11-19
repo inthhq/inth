@@ -1,4 +1,3 @@
-import { InthProvider as ReactProvider } from '@inth/react';
 // Vite resolves this through the adapter's own React dependency, preserving
 // the dependency graph used by baseline comparisons.
 import { IABProvider, IABConsentBanner } from '@inth/react/iab';
@@ -9,11 +8,9 @@ import {
 	ConsentDialog,
 	InthProvider,
 } from '@inth/tanstack-start';
-import type {
-	InthProviderOptions,
-	WithProjectUrl,
-	InthProviderProps,
-} from '@inth/tanstack-start';
+import type { WithProjectUrl, InthProviderProps } from '@inth/tanstack-start';
+import { InthProvider as ReactProvider } from '@inth/tanstack-start/react';
+import type { InthProviderOptions as ReactProviderOptions } from '@inth/tanstack-start/react';
 import type { ConsentState } from '@inth/tanstack-start/server';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
@@ -34,11 +31,11 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<InthProviderOptions['consentCategories']>;
+] satisfies NonNullable<ReactProviderOptions['consentCategories']>;
 
 const createOptions = function createOptions(
 	scenario: TanstackBenchScenario
-): WithProjectUrl<InthProviderOptions> {
+): WithProjectUrl<ReactProviderOptions> {
 	return {
 		callbacks: {
 			onChoiceRecorded() {

@@ -105,8 +105,8 @@ signals. Hydration and notice dismissal do not become explicit choices.
 
 ## When would I use the React InthProvider?
 
-Install `@inth/react` and use its `InthProvider` when you need to manage the
-runtime and transport yourself. For example, it accepts an externally owned
+Use the `InthProvider` from `@inth/nextjs/react`, the React package's own
+provider, when you need to manage the runtime and transport yourself. For example, it accepts an externally owned
 `runtime`. Its owner must start and dispose that runtime.
 
 For standard Next.js setups, keep `InthProvider` from `@inth/nextjs`. It supports
@@ -129,7 +129,7 @@ itself on revocation, for example through its own opt-out API.
 
 Set `clearOnRevocation` in `inth.config.ts`, or pass it to `InthProvider`, to
 declare cookies and Web Storage keys by optional consent category. Neither
-accepts it inside `options`. If you use the `InthProvider` from `@inth/react`, pass it in that
-provider's `options`. Cleanup runs in the browser after policy resolution, and the value
+accepts it inside `options`. If you use the `InthProvider` from `@inth/nextjs/react`, pass it in
+that provider's `options`. Cleanup runs in the browser after policy resolution, and the value
 is initial-only. See [clear on revocation](/docs/frameworks/next/clear-on-revocation)
 for examples, cookie scopes, and browser limits.

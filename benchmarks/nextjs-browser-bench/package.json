@@ -16,7 +16,6 @@
 		"@inth/benchmarking": "workspace:*",
 		"@inth/integrations": "workspace:*",
 		"@inth/nextjs": "workspace:*",
-		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",
 		"next": "16.2.10",
 		"react": "19.2.7",

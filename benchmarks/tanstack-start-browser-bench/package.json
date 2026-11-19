@@ -14,7 +14,6 @@
 	},
 	"dependencies": {
 		"@inth/benchmarking": "workspace:*",
-		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",
 		"@inth/tanstack-start": "workspace:*",
 		"@tanstack/react-router": "1.170.44",

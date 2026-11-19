@@ -12,7 +12,7 @@ import {
 } from '@inth/react/deferred/engine';
 import type { ScriptServerStartModule } from '@inth/react/deferred/engine';
 import { InthProvider as ReactProvider } from '@inth/react/provider';
-import type { InthProviderOptions } from '@inth/react/provider';
+import type { InthProviderOptions as ReactProviderOptions } from '@inth/react/provider';
 /**
  * The engine side of `InthProvider`, loaded on demand by `./root`.
  *
@@ -185,7 +185,7 @@ const resolveMode = function resolveMode(
 const ServerScriptStart = ({
 	options,
 }: {
-	options: InthProviderOptions;
+	options: ReactProviderOptions;
 }): ReactNode => {
 	const { prefetch } = options;
 	const state = isPending(prefetch as ConsentState | Promise<ConsentState>)
@@ -240,7 +240,7 @@ const CheckedBootData = ({
 	options,
 	serverStart,
 }: {
-	options: InthProviderOptions;
+	options: ReactProviderOptions;
 	/** Whether the render emits the server start, and so has its plan. */
 	serverStart: boolean;
 }): ReactNode => {
@@ -292,7 +292,7 @@ const useRootOptions = function useRootOptions({
 	);
 	void setMode;
 
-	const providerOptions: InthProviderOptions = {
+	const providerOptions: ReactProviderOptions = {
 		...options,
 		__debugPkg: '@inth/tanstack-start',
 		// A returning visitor's state often lets a script run. Start the
@@ -336,7 +336,7 @@ const AfterPage = ({
 	serverStart,
 }: {
 	bootData: boolean;
-	options: InthProviderOptions;
+	options: ReactProviderOptions;
 	serverStart: boolean;
 }) => (
 	<>
@@ -368,7 +368,7 @@ export const EagerRoot = (props: InthProviderProps) => {
 	return (
 		// `resolveMode` threw already when there is no backend.
 		<ReactProvider
-			options={providerOptions as WithProjectUrl<InthProviderOptions>}
+			options={providerOptions as WithProjectUrl<ReactProviderOptions>}
 		>
 			{props.children}
 			<Suspense fallback={null}>
