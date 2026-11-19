@@ -870,6 +870,22 @@ describe('serverScriptStart', () => {
 				expect(document.head.querySelectorAll('script')).toHaveLength(1);
 			});
 
+			test('starts for the c15t record the server read, with no Inth record', () => {
+				const { choice } = choiceRecords(
+					{ marketing: true },
+					{ confirmedAt: CONFIRMED_AT }
+				);
+				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
+				document.cookie = `c15t=${encodeStoredConsentEnvelopeCompact({
+					categories: choice?.categories ?? {},
+					version: 3,
+				})}; path=/`;
+
+				startPixel();
+
+				expect(document.head.querySelectorAll('script')).toHaveLength(1);
+			});
+
 			test('does nothing for a choice c15t stored, with no Inth cookie', () => {
 				const { choice } = choiceRecords(
 					{ marketing: false },

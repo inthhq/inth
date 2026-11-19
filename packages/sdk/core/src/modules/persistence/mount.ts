@@ -37,6 +37,7 @@ import {
 	readLegacyClearEpoch,
 	readStoredConsentRecordFromCookieHeader,
 	readStoredNoticeDismissal,
+	readStoredNoticeDismissalFromCookieHeader,
 	readStoredVendorChoice,
 	readStoredVendorChoiceFromCookieHeader,
 } from './record-storage';
@@ -478,9 +479,13 @@ export const mountPersistence = function mountPersistence(
 			header === null
 				? undefined
 				: readStoredVendorChoiceFromCookieHeader(header, storageConfig, at);
+		const notice =
+			header === null
+				? undefined
+				: readStoredNoticeDismissalFromCookieHeader(header, storageConfig, at);
 		const gone = {
 			choice: header !== null && !choice,
-			notice: false,
+			notice: header !== null && notice?.ok !== true,
 			vendors: header !== null && !vendors,
 		};
 		const legacyEpoch = Math.max(
@@ -497,6 +502,7 @@ export const mountPersistence = function mountPersistence(
 			},
 			outranks: {
 				choice: held.choice && choice?.source === 'legacy-cookie',
+				notice: held.notice && notice?.ok === true && notice.legacy === true,
 				vendors: held.vendors && vendors?.legacy === true,
 			},
 		};
@@ -532,6 +538,23 @@ export const mountPersistence = function mountPersistence(
 	 * grant left out here stays out until another runtime writes storage.
 	 * Returns the subject the stored records carry, `null` for none.
 	 */
+	/**
+	 * The patch for one seeded record, or `null` to keep it: a record the
+	 * clear epoch voided yields to what storage holds, and a kept one to a
+	 * stored record that `wins`.
+	 */
+	const seededRecordPatch = function seededRecordPatch<T>(
+		seeded: T | null,
+		kept: T | null,
+		stored: T | null | undefined,
+		wins: boolean
+	): { value: T | null } | null {
+		if (kept !== seeded) {
+			return { value: stored === undefined ? kept : stored };
+		}
+		return stored && wins ? { value: stored } : null;
+	};
+
 	const applyNewerStoredRecords =
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();
@@ -562,27 +585,28 @@ export const mountPersistence = function mountPersistence(
 					version: 3,
 				};
 			}
-			const notice = noticeSinceEpoch(snapshot.noticeDismissal, epochs.notice);
-			if (notice !== snapshot.noticeDismissal) {
-				patch.noticeDismissal =
-					records.noticeDismissal === undefined
-						? notice
-						: records.noticeDismissal;
+			const notice = seededRecordPatch(
+				snapshot.noticeDismissal,
+				noticeSinceEpoch(snapshot.noticeDismissal, epochs.notice),
+				records.noticeDismissal,
+				outranks.notice
+			);
+			if (notice) {
+				patch.noticeDismissal = notice.value;
 			}
-			const vendors = vendorChoiceSinceEpoch(
+			const kept = vendorChoiceSinceEpoch(
 				snapshot.vendorChoice,
 				epochs.vendors
 			);
-			const { vendorChoice } = records;
-			if (vendors !== snapshot.vendorChoice) {
-				patch.vendorChoice =
-					vendorChoice === undefined ? vendors : vendorChoice;
-			} else if (
-				vendorChoice &&
-				(outranks.vendors ||
-					vendorChoice.confirmedAt > (vendors?.confirmedAt ?? -1))
-			) {
-				patch.vendorChoice = vendorChoice;
+			const vendors = seededRecordPatch(
+				snapshot.vendorChoice,
+				kept,
+				records.vendorChoice,
+				outranks.vendors ||
+					(records.vendorChoice?.confirmedAt ?? -1) > (kept?.confirmedAt ?? -1)
+			);
+			if (vendors) {
+				patch.vendorChoice = vendors.value;
 			}
 			if (Object.keys(patch).length > 0) {
 				kernel.hydrate({ ...patch, now: at });

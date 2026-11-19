@@ -576,6 +576,44 @@ describe('persistence: records c15t stored', () => {
 		expect(effectivePermissions.measurement).toBe(true);
 	});
 
+	test.each([
+		['', false],
+		[' that a c15t tab cleared before mount', true],
+	])(
+		'a server seed from a c15t notice dismissal%s yields to an Inth dismissal only localStorage holds',
+		(_name, cleared) => {
+			vi.setSystemTime(NOW - 1000);
+			writeStoredNoticeDismissal(
+				{ dismissedAt: NOW - 1000, fingerprint: 'inth-notice', version: 1 },
+				undefined,
+				NOW - 1000
+			);
+			// The Inth notice cookie write was dropped; localStorage took it.
+			for (const name of cookieNames().filter((cookie) =>
+				cookie.startsWith(`${STORAGE_KEY_V2}-notice`)
+			)) {
+				deleteCookieNamed(name);
+			}
+			vi.setSystemTime(NOW);
+			writeStoredNoticeDismissal(
+				{ dismissedAt: NOW, fingerprint: 'c15t-notice', version: 1 },
+				C15T,
+				NOW
+			);
+			const initialRecords = serverSeed();
+			expect(initialRecords.noticeDismissal?.fingerprint).toBe('c15t-notice');
+
+			const snapshot = cleared
+				? mountAfterC15tClear(initialRecords)
+				: (() => {
+						const kernel = createConsentKernel({ initialRecords, now: NOW });
+						createPersistence({ kernel, skipHydration: true });
+						return kernel.getSnapshot();
+					})();
+			expect(snapshot.noticeDismissal?.fingerprint).toBe('inth-notice');
+		}
+	);
+
 	test('a c15t clear before mount never voids a seeded Inth choice', async () => {
 		const first = createConsentKernel({ now: NOW });
 		const firstHandle = createPersistence({ kernel: first });
