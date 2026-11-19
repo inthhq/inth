@@ -879,7 +879,7 @@ export interface ConsentChunkGroup {
  * Every SDK package under `node_modules`, whatever the package manager:
  * `@inth/sdk` and the framework packages, not the CLI.
  */
-const INTH_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
+const SDK_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
 
 /**
  * Puts the Inth modules a page's entry imports statically into one chunk.
@@ -897,7 +897,7 @@ export const CONSENT_CHUNK_GROUP: ConsentChunkGroup = {
 	includeDependenciesRecursively: false,
 	name: 'inth',
 	tags: ['$initial'],
-	test: INTH_MODULE,
+	test: SDK_MODULE,
 };
 
 /** Rolldown versions whose groups take `tags` (tested with 1.2). */
