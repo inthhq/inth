@@ -19,13 +19,13 @@ import { databuddy } from './vendors/analytics/databuddy';
 const isDatabuddyLoader = function isDatabuddyLoader(
 	node: HTMLScriptElement
 ): boolean {
-	return node.src.includes('cdn.databuddy.cc/databuddy.js');
+	return node.src.includes('cdn.databuddy.cc/databuddy.');
 };
 
 const isReplayLoader = function isReplayLoader(
 	node: HTMLScriptElement
 ): boolean {
-	return node.src.includes('cdn.databuddy.cc/replay.js');
+	return node.src.includes('cdn.databuddy.cc/replay.');
 };
 
 /**
@@ -346,6 +346,46 @@ describe('databuddy contract', () => {
 
 		expect(stop).toHaveBeenCalledTimes(1);
 		expect(replayScripts[0]?.isConnected).toBe(false);
+	});
+
+	it.each([
+		[
+			'the pinned release with its integrity by default',
+			{},
+			{
+				integrity:
+					'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
+				src: 'https://cdn.databuddy.cc/replay.2026-10-30.1.js',
+			},
+		],
+		[
+			'the release version names, without integrity',
+			{ version: '2026-11-14.1' },
+			{
+				integrity: null,
+				src: 'https://cdn.databuddy.cc/replay.2026-11-14.1.js',
+			},
+		],
+		[
+			'replay.scriptUrl over version, without integrity',
+			{
+				replay: { scriptUrl: 'https://cdn.databuddy.cc/replay.custom.js' },
+				version: '2026-11-14.1',
+			},
+			{ integrity: null, src: 'https://cdn.databuddy.cc/replay.custom.js' },
+		],
+	])('loads replay.js from %s', (_name, options, expected) => {
+		const { replayScripts } = probeDatabuddyScripts();
+
+		loadScripts(
+			[databuddy({ clientId: 'db-contract', replay: true, ...options })],
+			grantedMeasurementConsents
+		);
+
+		expect({
+			integrity: replayScripts[0]?.getAttribute('integrity') ?? null,
+			src: replayScripts[0]?.getAttribute('src') ?? null,
+		}).toEqual(expected);
 	});
 
 	it('keeps both scripts running when equal options are passed again', () => {
