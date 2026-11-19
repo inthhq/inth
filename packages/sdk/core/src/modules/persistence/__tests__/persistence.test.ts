@@ -557,6 +557,25 @@ describe('persistence: records c15t stored', () => {
 		}
 	);
 
+	test('a server seed from a c15t grant a c15t tab cleared before mount yields to an Inth denial only localStorage holds', async () => {
+		vi.setSystemTime(NOW - 1000);
+		const inth = createConsentKernel({ now: NOW - 1000 });
+		const inthHandle = createPersistence({ kernel: inth });
+		await inth.commands.save({ marketing: false, measurement: true });
+		flushWrites();
+		inthHandle.dispose();
+		// The Inth cookie write was dropped; its localStorage copy landed.
+		deleteCookieNamed(STORAGE_KEY_V2);
+		vi.setSystemTime(NOW);
+		await saveUnder(C15T, true);
+		const initialRecords = serverSeed();
+		expect(initialRecords.choice?.categories.marketing?.value).toBe(true);
+
+		const { effectivePermissions } = mountAfterC15tClear(initialRecords);
+		expect(effectivePermissions.marketing).toBe(false);
+		expect(effectivePermissions.measurement).toBe(true);
+	});
+
 	test('a c15t clear before mount never voids a seeded Inth choice', async () => {
 		const first = createConsentKernel({ now: NOW });
 		const firstHandle = createPersistence({ kernel: first });

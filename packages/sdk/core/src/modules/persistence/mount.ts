@@ -454,8 +454,12 @@ export const mountPersistence = function mountPersistence(
 	};
 
 	/**
-	 * Which of the records `held` under the configured family the cookies,
-	 * read as the server read them, hold only under a legacy family.
+	 * Which of the records `held` under the configured family the seed can't
+	 * have come from: the cookies, read as the server read them, hold that
+	 * kind only under a legacy family, or not at all. A seed the configured
+	 * family's cookie no longer holds came from a legacy cookie a clear has
+	 * since removed, since a clear of the configured family voids it through
+	 * the epoch.
 	 */
 	const outranksSeedFamily = function outranksSeedFamily(
 		held: { choice: boolean; vendors: boolean },
@@ -465,15 +469,21 @@ export const mountPersistence = function mountPersistence(
 		if (header === null) {
 			return { choice: false, vendors: false };
 		}
+		const choice = readStoredConsentRecordFromCookieHeader(
+			header,
+			storageConfig,
+			at
+		).selected;
+		const vendors = readStoredVendorChoiceFromCookieHeader(
+			header,
+			storageConfig,
+			at
+		);
 		return {
 			choice:
 				held.choice &&
-				readStoredConsentRecordFromCookieHeader(header, storageConfig, at)
-					.selected?.source === 'legacy-cookie',
-			vendors:
-				held.vendors &&
-				readStoredVendorChoiceFromCookieHeader(header, storageConfig, at)
-					?.legacy === true,
+				(!choice || choice.source === 'legacy-cookie'),
+			vendors: held.vendors && (!vendors || vendors.legacy === true),
 		};
 	};
 
