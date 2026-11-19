@@ -43,7 +43,7 @@ const alias = {
 	),
 	'@inth/sdk/runtime/storage-for': resolve(
 		__dirname,
-		'../core/src/runtime/storage-for.ts'
+		'../core/src/libs/storage-for.ts'
 	),
 	'@inth/sdk/runtime/deferred-boot': resolve(
 		__dirname,
