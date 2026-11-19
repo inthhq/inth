@@ -203,7 +203,7 @@ class CanonicalSubjectTest {
 
 		val link = http.requests.single { it.url.endsWith("/link") }
 		assertEquals("POST", link.method)
-		assertEquals("https://test.c15t.app/v1/subjects/${java.net.URLEncoder.encode(original, "UTF-8")}/link", link.url)
+		assertEquals("https://test.inth.app/v1/subjects/${java.net.URLEncoder.encode(original, "UTF-8")}/link", link.url)
 		assertEquals(
 			kotlinx.serialization.json.Json.parseToJsonElement(
 				"""{"externalId":"user 1","identityProvider":"clerk","identityToken":"secret-token"}""",

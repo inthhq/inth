@@ -198,7 +198,7 @@ class PendingQueueTest {
 		kernel.save(CommitIntent.All)
 
 		assertEquals(
-			listOf("GET https://test.c15t.app/v1/consent/init", "POST https://test.c15t.app/v1/consent/records"),
+			listOf("GET https://test.inth.app/v1/consent/init", "POST https://test.inth.app/v1/consent/records"),
 			http.requests.map { "${it.method} ${it.url}" },
 		)
 		for (request in http.requests) {
@@ -207,7 +207,7 @@ class PendingQueueTest {
 
 		val save = http.requests.last()
 		val body = json.parseToJsonElement(requireNotNull(save.body)).jsonObject
-		assertEquals("test.c15t.app", body["property"]?.jsonPrimitive?.content, "property falls back to the host")
+		assertEquals("test.inth.app", body["property"]?.jsonPrimitive?.content, "property falls back to the host")
 		assertEquals("all", body["consentAction"]?.jsonPrimitive?.content)
 		assertEquals("opt-in", body["model"]?.jsonPrimitive?.content)
 		assertEquals("snap-1", body["policySnapshotToken"]?.jsonPrimitive?.content)
@@ -236,7 +236,7 @@ class PendingQueueTest {
 		val kernel = testKernel(
 			store = InthStore(InMemoryKeyValueStore()),
 			clock = clock,
-			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app/")),
+			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.inth.app/")),
 		)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
@@ -266,7 +266,7 @@ class PendingQueueTest {
 		val kernel = testKernel(
 			store = store,
 			clock = clock,
-			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app/")),
+			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.inth.app/")),
 		)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)

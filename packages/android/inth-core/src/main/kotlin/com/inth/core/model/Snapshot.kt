@@ -66,7 +66,7 @@ data class PolicyResolution(
 		const val REASON_TRANSPORT = "transport"
 		/**
 		 * The policy resolution names a value from a newer schema, such as a right or a
-		 * `version` this build does not know. The `@c15t/schema` reader's label for that
+		 * `version` this build does not know. The `@inth/sdk-schema` reader's label for that
 		 * case; the core treats it as unreadable (contract rule 5).
 		 */
 		const val REASON_UNSUPPORTED_CONTRACT = "unsupported-contract"
