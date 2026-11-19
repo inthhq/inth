@@ -45,6 +45,7 @@ import {
 import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { mergeClientOptions, readPageOptions } from '../auto-init';
+import { dropRejection } from '../drop-rejection';
 import { activateGatedScripts } from '../gated-scripts';
 import { stylesheet } from '../generated/styles';
 import type { InthGlobalBase, QueuedCall } from '../global-base';
@@ -910,11 +911,11 @@ export const runInitScript = function runInitScript(
 		}
 		event.preventDefault();
 		if (action === 'acceptAll' || action === 'rejectAll') {
-			void tap(action === 'acceptAll' ? 'all' : 'none');
+			dropRejection(tap(action === 'acceptAll' ? 'all' : 'none'));
 		} else if (action === 'openDialog') {
 			void openDialog();
 		} else {
-			void act(action, []);
+			dropRejection(act(action, []));
 		}
 	};
 	document.addEventListener('click', onPageClick);
@@ -986,6 +987,11 @@ export const runInitScript = function runInitScript(
 				return api.dispose();
 			}
 			boot.calls.length = 0;
+			if (engineError) {
+				// Given up: a later `init()` gets three new tries.
+				engineError = null;
+				engineRequested = false;
+			}
 			banner?.destroy();
 			banner = null;
 			dialog?.surface.destroy();

@@ -2,6 +2,7 @@ import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
+import { dropRejection } from '../drop-rejection';
 import { classes } from '../generated/styles';
 import type { AdoptedBanner } from '../init/boot';
 import type { ConsentBannerOptions } from '../types';
@@ -146,11 +147,11 @@ export const createBanner = function createBanner(
 					noStyle,
 					onAction: (action) => {
 						if (action === 'accept') {
-							void ctx.client.acceptAll();
+							dropRejection(ctx.client.acceptAll());
 						} else if (action === 'reject') {
-							void ctx.client.rejectAll();
+							dropRejection(ctx.client.rejectAll());
 						} else if (action === 'dismiss') {
-							void ctx.client.dismissNotice();
+							dropRejection(ctx.client.dismissNotice());
 						} else {
 							ctx.client.openDialog();
 						}

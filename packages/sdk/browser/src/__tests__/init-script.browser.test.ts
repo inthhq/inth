@@ -338,6 +338,32 @@ describe('inth.hosted.js failing to load', () => {
 		expect(win.inth.client).toBeNull();
 	}, 15_000);
 
+	it('after giving up, its own controls fail quietly and init() after dispose() tries again', async () => {
+		const win = await open({ 'hosted-fail': 3 });
+		win.console.error = () => undefined;
+		const unhandled: unknown[] = [];
+		win.addEventListener('unhandledrejection', (event) => {
+			unhandled.push(event.reason);
+		});
+		await expect(
+			(win.inth.ready as () => Promise<unknown>)()
+		).rejects.toBeInstanceOf(win.Error);
+
+		const control = win.document.createElement('button');
+		control.dataset.inthAction = 'dismiss';
+		win.document.body.append(control);
+		control.click();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 100);
+		});
+		expect(unhandled).toEqual([]);
+
+		(win.inth.dispose as () => void)();
+		(win.inth.init as () => unknown)();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		expect(await hostedRequestsSoFar()).toBe(4);
+	}, 15_000);
+
 	it('stops retrying after dispose(), and init() loads the engine again', async () => {
 		const win = await open({ 'hosted-fail': 1 });
 		await expect

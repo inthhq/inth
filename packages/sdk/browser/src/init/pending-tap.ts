@@ -16,6 +16,7 @@
 
 import type { ConsentSnapshot } from '@inth/sdk-core';
 
+import { dropRejection } from '../drop-rejection';
 import type { ConsentClient } from '../types';
 
 /** localStorage key of the marker. */
@@ -97,23 +98,28 @@ export const recordPendingTap = function recordPendingTap(
 	if (!tap) {
 		return;
 	}
-	// oxlint-disable-next-line promise/prefer-await-to-then -- Called from a synchronous start.
-	void client.ready().then((snapshot) => {
-		if (readPendingTap()?.t !== tap.t) {
-			return;
-		}
-		clearPendingTap();
-		const { choice } = snapshot.evaluationPolicy;
-		if (
-			snapshot.activeUI === 'banner' &&
-			choice.fingerprint === tap.f &&
-			(choice.maxAgeMs === null || Date.now() - tap.t < choice.maxAgeMs)
-		) {
-			if (typeof tap.c === 'object') {
-				void client.save(tap.c);
-			} else {
-				void (tap.c === 'all' ? client.acceptAll() : client.rejectAll());
+	dropRejection(
+		// Called from a synchronous start.
+		(async () => {
+			const snapshot = await client.ready();
+			if (readPendingTap()?.t !== tap.t) {
+				return;
 			}
-		}
-	});
+			clearPendingTap();
+			const { choice } = snapshot.evaluationPolicy;
+			if (
+				snapshot.activeUI === 'banner' &&
+				choice.fingerprint === tap.f &&
+				(choice.maxAgeMs === null || Date.now() - tap.t < choice.maxAgeMs)
+			) {
+				if (typeof tap.c === 'object') {
+					dropRejection(client.save(tap.c));
+				} else {
+					dropRejection(
+						tap.c === 'all' ? client.acceptAll() : client.rejectAll()
+					);
+				}
+			}
+		})()
+	);
 };
