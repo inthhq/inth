@@ -115,9 +115,9 @@ When init fails, optional categories stay denied, so only `necessary` scripts
 load and the list applies to those. After an `unavailable` answer the visitor's
 choices apply as usual, and the list applies to every script that loads.
 
-- **Stored like the rest of c15t's state.** The list is kept in `localStorage`
+- **Stored like the rest of Inth's state.** The list is kept in `localStorage`
   under `inth-script-registry:v1:` followed by the runtime's absolute
-  `projectUrl`. It is written only once the visitor has made a choice, when c15t
+  `projectUrl`. It is written only once the visitor has made a choice, when Inth
   stores its own record, and never with `persistence: false`, which turns it
   off entirely. A page whose scripts are all `necessary` gets no choice, so
   nothing is remembered for it.

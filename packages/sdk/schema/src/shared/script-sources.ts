@@ -66,7 +66,7 @@ export interface ScriptRegistryWire {
 	 * `true` when the backend answered but could not read the project's
 	 * registry, such as during an incident. It comes without `sources` and
 	 * `files`, and differs from no `scriptRegistry` at all, which means the
-	 * project has no registry: c15t keeps the last list this browser
+	 * project has no registry: Inth keeps the last list this browser
 	 * received and loads by it, as when `/init` fails. Alongside a list it
 	 * is ignored, and the list applies.
 	 */
