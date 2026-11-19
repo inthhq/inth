@@ -604,7 +604,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		diagnostics?.dispose();
 		diagnostics = undefined;
 		stopWaiting?.();
-		releasePin();
 		for (const [scriptId, element] of new Map([
 			...retainedElements,
 			...loadedElements,
@@ -619,6 +618,10 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				);
 			}
 		}
+		// Only now: an element this loader mounted while the list was pending
+		// is held, and has been taken off the page above. Releasing the pin
+		// first would run it from its vendor URL.
+		releasePin();
 		loadedElements.clear();
 		retainedElements.clear();
 		ownedScriptIds.clear();
@@ -765,7 +768,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	});
 	const handle: ScriptLoaderHandle = {
 		dispose() {
-			releasePin();
 			if (disposed) {
 				return;
 			}

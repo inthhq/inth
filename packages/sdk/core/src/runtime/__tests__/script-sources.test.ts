@@ -1574,6 +1574,46 @@ describe('experimentalScriptRegistry files', () => {
 		await vi.waitFor(() => expect(fetched(early)).toEqual(pinnedLogger));
 	});
 
+	test('takes a script it mounted while init is pending off the page before it releases the hold', () => {
+		const runtime = begin({
+			experimentalScriptRegistry: true,
+			mode: custom({
+				// oxlint-disable-next-line promise/avoid-new -- Never settles.
+				init: () =>
+					new Promise(() => {
+						// Init never answers.
+					}) as never,
+			}),
+			persistence: false,
+			scripts: [
+				integration(),
+				{
+					anonymizeId: false,
+					category: 'necessary',
+					id: 'widget',
+					src: 'https://cdn.other.example/widget.js',
+				},
+			],
+		});
+		const widget = document.getElementById(
+			'c15t-script-widget'
+		) as HTMLScriptElement;
+		expect(widget.getAttribute('type')).toBe('inth/held');
+		const observer = new MutationObserver(() => undefined);
+		observer.observe(document, { childList: true, subtree: true });
+
+		runtime.dispose();
+		// Released while still on the page, it would be inserted again in
+		// place and run from its vendor URL.
+		const added = observer
+			.takeRecords()
+			.flatMap((record) => [...record.addedNodes]);
+		observer.disconnect();
+		expect(added).not.toContain(widget);
+		expect(widget.isConnected).toBe(false);
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
+
 	test('releases what it held, unchanged, when init fails', async () => {
 		let fail: (error: Error) => void = () => undefined;
 		begin({

@@ -173,7 +173,8 @@ c15t catches a URL set with `script.src`, `setAttribute`, `setAttributeNS` or
 `setAttributeNode`. It also catches a script element in a node that the page
 inserts with `appendChild`, `insertBefore`, `append`, `before`,
 `replaceWith`, `insertAdjacentElement`, `Range.insertNode` or a similar
-method. Scripts that c15t creates go through the same check. To do this, the
+method, including one in a shadow root inside that node. Scripts that c15t
+creates go through the same check. To do this, the
 script loader patches those DOM methods when the list names files. On
 `dispose()`, it puts the original methods back.
 
@@ -197,6 +198,12 @@ the script loader starts. These load code without c15t seeing it:
 - Workers, including `importScripts` in a worker.
 - Iframes, including `srcdoc` frames, and a script element made with another
   frame's DOM methods.
+- A script in a closed shadow root made before the script loader starts, or
+  declared in HTML.
+- A `src` set with `script.attributes.setNamedItem`, and a `<script>` inside
+  an inline SVG.
+- A file on your own origin that the list names, while init has not answered,
+  since c15t never holds same-origin scripts.
 - A script tag in your HTML, or one that a deferred root or the script-tag build
   starts before the script loader runs.
 - A URL that a page override gives the loader and that the list does not name.
@@ -232,8 +239,8 @@ loads nothing. A `refuseIfSet` that is not a list of paths makes the entry one
 c15t cannot use. To load such a script with that option, give it your own
 `scriptLoader.sources` entry, which wins over the list.
 
-Only a Content Security Policy closes these gaps. Allow the registry and your
-own origin, and no vendor host:
+Only a Content Security Policy closes these gaps in your page. Allow the
+registry and your own origin, and no vendor host:
 
 ```http
 Content-Security-Policy: script-src 'self' https://acme.inth.app; worker-src blob:
@@ -248,6 +255,10 @@ Content-Security-Policy: script-src 'self' https://acme.inth.app; worker-src blo
   `eval`.
 - `worker-src blob:` lets a loader start a worker from code it already has, as
   LogRocket does. It does not allow worker files from a vendor host.
+
+The policy applies to your page and to `srcdoc` frames, not to a frame loaded
+from another origin, which runs under that origin's own policy. Add `frame-src`
+to limit which origins your page can frame.
 
 If you add a `'nonce-…'` for inline scripts, keep vendor code out of them. An
 inline script with a nonce can `import()` a module from any URL, because the

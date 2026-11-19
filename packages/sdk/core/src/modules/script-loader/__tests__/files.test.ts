@@ -324,6 +324,48 @@ describe('pinRegistryFiles', () => {
 		});
 	});
 
+	test('routes scripts in shadow roots when their host joins the page', () => {
+		join(files);
+		const open = document.createElement('div');
+		open.attachShadow({ mode: 'open' }).append(parsed(LOGGER));
+		const closed = document.createElement('div');
+		const closedRoot = closed.attachShadow({ mode: 'closed' });
+		closedRoot.append(parsed(HELD));
+		const wrapper = document.createElement('section');
+		wrapper.append(closed);
+		document.body.append(open, wrapper);
+
+		expect(
+			fetched(open.shadowRoot?.querySelector('script') as HTMLScriptElement)
+		).toEqual(PINNED);
+		expect(
+			(closedRoot.querySelector('script') as HTMLScriptElement).getAttribute(
+				'type'
+			)
+		).toBe('inth/held');
+	});
+
+	test('decides a detached element again at insertion, by the lists then', () => {
+		join(files);
+		const refusedLater = document.createElement('script');
+		refusedLater.src = LOGGER;
+		const heldLater = document.createElement('script');
+		heldLater.src = LOGGER;
+		join({ [LOGGER]: null });
+		document.head.append(refusedLater);
+		expect(fetched(refusedLater)).toEqual({
+			...untouched(LOGGER),
+			type: 'inth/held',
+		});
+
+		join(null);
+		document.head.append(heldLater);
+		expect(fetched(heldLater)).toEqual({
+			...untouched(LOGGER),
+			type: 'inth/held',
+		});
+	});
+
 	test('takes back what it set when the page points the element elsewhere', () => {
 		join(files);
 		const other = 'https://cdn.vendor.example/other.js';
@@ -412,6 +454,19 @@ describe('pinRegistryFiles', () => {
 			expect(onerror).not.toHaveBeenCalled();
 		});
 
+		test('stays inert when the page resets its type, then moves it or sets its src', () => {
+			join(files);
+			const moved = insert(HELD);
+			moved.type = 'text/javascript';
+			document.body.append(moved);
+			expect(moved.getAttribute('type')).toBe('inth/held');
+
+			const repointed = insert(HELD);
+			repointed.removeAttribute('type');
+			repointed.src = 'https://cdn.other.example/fallback.js';
+			expect(repointed.getAttribute('type')).toBe('inth/held');
+		});
+
 		test('keeps an inserted element refused when its src changes', async () => {
 			join(files);
 			const onerror = vi.fn();
@@ -442,6 +497,17 @@ describe('pinRegistryFiles', () => {
 
 			expect(fetched(element)).toEqual({ ...PINNED, type: 'module' });
 			await vi.waitFor(() => expect(added).toContain(element));
+		});
+
+		test('keeps a held script inert when the page resets its type and moves it', () => {
+			const pin = join(null);
+			const element = insert(LOGGER);
+			element.removeAttribute('type');
+			document.body.append(element);
+			expect(element.getAttribute('type')).toBe('inth/held');
+
+			pin.list(files);
+			expect(fetched(element)).toEqual(PINNED);
 		});
 
 		test('lets a held script go as it came when the list does not name it', () => {

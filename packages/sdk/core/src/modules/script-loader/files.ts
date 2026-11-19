@@ -12,8 +12,9 @@
  *   and `setAttributeNode` are routed as they happen.
  * - Inserting a node (`appendChild`, `insertBefore`, `append`, `before`,
  *   `replaceWith`, `insertAdjacentElement`, `Range.insertNode` and the rest)
- *   routes every script in it that is not connected yet, so a script parsed
- *   from a fragment is caught too.
+ *   routes every script in it that is not connected yet, shadow roots
+ *   included, so a script parsed from a fragment is caught too. A held or
+ *   refused script stays inert wherever it moves.
  *
  * A URL the list maps to `null` never loads: the element gets a type the
  * browser does not run, and an `error` event, so the loader's own failure
@@ -30,8 +31,10 @@
  * its own list; the prototypes are restored once the last one leaves.
  *
  * Code the pin cannot see loads files without it: `document.write`, `eval`,
- * `import()`, workers, iframes, script elements from another realm, and
- * any URL a page override hands the loader that the list does not name.
+ * `import()`, workers, iframes, script elements from another realm, closed
+ * shadow roots made before the pin, `attributes.setNamedItem`, SVG
+ * scripts, and any URL a page override hands the loader that the list does
+ * not name.
  * Only a Content Security Policy that allows the registry, and not the
  * vendor, closes those.
  */
@@ -130,6 +133,8 @@ const refused = new WeakSet<HTMLScriptElement>();
 /** Refused elements whose `error` event has been sent. */
 const failed = new WeakSet<HTMLScriptElement>();
 const pinned = new WeakMap<HTMLScriptElement, Pinned>();
+/** Shadow roots by host, closed ones included, made while installed. */
+const shadowRoots = new WeakMap<Element, ShadowRoot>();
 
 type Decision =
 	| { readonly kind: 'pass' | 'hold' | 'refuse' }
@@ -311,8 +316,10 @@ const route = function route(
 ): unknown {
 	// A held element is decided when the list arrives, by the URL it has
 	// then. A refused one that has been inserted stays refused: it sent its
-	// `error`. One not inserted yet is decided again by its new URL.
+	// `error`. Either stays inert if the page gave it a type since. One not
+	// inserted yet is decided again by its new URL.
 	if (install.held.has(element) || failed.has(element)) {
+		enforceType(install.dom, element);
 		return value;
 	}
 	if (refused.has(element)) {
@@ -380,41 +387,85 @@ const recheck = function recheck(
 	return true;
 };
 
+const isTree = (node: unknown): node is Element | DocumentFragment =>
+	node instanceof Element ||
+	(typeof DocumentFragment !== 'undefined' && node instanceof DocumentFragment);
+
+const shadowRootOf = (element: Element): ShadowRoot | null =>
+	element.shadowRoot ?? shadowRoots.get(element) ?? null;
+
+/** The scripts in `node`, in the shadow roots inside it too. */
 const scriptsIn = function scriptsIn(node: unknown): HTMLScriptElement[] {
 	if (node instanceof HTMLScriptElement) {
 		return [node];
 	}
-	if (
-		node instanceof Element ||
-		(typeof DocumentFragment !== 'undefined' &&
-			node instanceof DocumentFragment)
-	) {
-		return Array.from(node.querySelectorAll('script'));
+	if (!isTree(node)) {
+		return [];
 	}
-	return [];
+	const found = Array.from(node.querySelectorAll('script'));
+	const hosts = Array.from(node.querySelectorAll('*'));
+	if (node instanceof Element) {
+		hosts.push(node);
+	}
+	for (const host of hosts) {
+		const root = shadowRootOf(host);
+		if (root) {
+			found.push(...scriptsIn(root));
+		}
+	}
+	return found;
 };
+
+/** Whether a decision still points at the copy an element was pinned to. */
+const keepsPin = (decision: Decision, file: RegistryFile): boolean =>
+	decision.kind === 'pin' &&
+	decision.file.src === file.src &&
+	decision.file.integrity === file.integrity;
 
 /** Route each script in `node` that inserting it may run. */
 const sweep = function sweep(install: Install, node: unknown): void {
+	const { dom } = install;
 	for (const element of scriptsIn(node)) {
+		// A held or refused script never started, so moving it can still run
+		// it: it stays inert wherever it goes.
+		if (install.held.has(element) || failed.has(element)) {
+			enforceType(dom, element);
+			continue;
+		}
 		// A connected script has run, or waits on its own `src`: moving it
 		// never runs it again.
 		if (element.isConnected) {
 			continue;
 		}
-		if (install.held.has(element) || refused.has(element)) {
-			enforceType(install.dom, element);
-			if (refused.has(element)) {
-				failLater(element);
+		// A list that joined or arrived since the element got its URL may
+		// decide it otherwise.
+		const record = pinned.get(element);
+		if (
+			record &&
+			dom.getAttribute.call(element, 'src') === record.file.src &&
+			!keepsPin(
+				decide(
+					install,
+					normalizeFileUrl(record.url, element.baseURI || undefined)
+				),
+				record.file
+			)
+		) {
+			unpin(dom, element);
+			dom.setAttribute.call(element, 'src', record.url);
+		}
+		if (pinned.has(element) && recheck(dom, element)) {
+			continue;
+		}
+		const src = dom.getAttribute.call(element, 'src');
+		if (src !== null) {
+			const next = route(install, element, src);
+			if (next !== src) {
+				dom.setAttribute.call(element, 'src', next as string);
 			}
-		} else if (!(pinned.has(element) && recheck(install.dom, element))) {
-			const src = install.dom.getAttribute.call(element, 'src');
-			if (src !== null) {
-				const next = route(install, element, src);
-				if (next !== src) {
-					install.dom.setAttribute.call(element, 'src', next as string);
-				}
-			}
+		}
+		if (refused.has(element)) {
+			failLater(element);
 		}
 	}
 };
@@ -580,6 +631,20 @@ const installPatches = function installPatches(): Install {
 		};
 	patch(elementProto, 'setAttributeNode', routeNode);
 	patch(elementProto, 'setAttributeNodeNS', routeNode);
+	// A closed shadow root is out of reach from its host, and a script in a
+	// detached one is swept when its host joins the page.
+	patch(
+		elementProto,
+		'attachShadow',
+		(original: Method): Method =>
+			function attached(this: unknown, ...args: unknown[]) {
+				const root = original.apply(this, args);
+				if (this instanceof Element && root instanceof ShadowRoot) {
+					shadowRoots.set(this, root);
+				}
+				return root;
+			}
+	);
 
 	/** Sweep the nodes an insertion adds, when it adds them to the page. */
 	const insertion =
