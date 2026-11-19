@@ -199,6 +199,35 @@ describe('browser outbox store', () => {
 		kernel.dispose();
 	});
 
+	test("a c15t tab's clear after the move voids the save it queued", async () => {
+		const storage = memoryStorage();
+		storage.setItem(C15T_SAVES_KEY, JSON.stringify([legacyEntry]));
+		const save = offline();
+		const transport = { init: vi.fn().mockResolvedValue({}), save };
+		const environment = {
+			localStorage: () => storage,
+			locks: () => serialLocks().locks,
+		};
+		const first = kernelOn({ transport }, environment);
+		await first.commands.init();
+		await vi.waitFor(() => {
+			expect(save).toHaveBeenCalledTimes(1);
+		});
+		first.dispose();
+		expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
+		expect(storage.getItem(SAVES_KEY)).not.toBeNull();
+
+		// The visitor clears in a c15t tab still open.
+		storage.setItem('c15t-epoch', String(Date.now()));
+		const second = kernelOn({ transport }, environment);
+		await second.commands.init();
+		await vi.waitFor(() => {
+			expect(storage.getItem(SAVES_KEY)).toBeNull();
+		});
+		expect(save).toHaveBeenCalledTimes(1);
+		second.dispose();
+	});
+
 	test('follows a subject reassignment a c15t page recorded', async () => {
 		const storage = memoryStorage();
 		storage.setItem(
@@ -228,7 +257,12 @@ describe('browser outbox store', () => {
 		expect(kernel.getSnapshot().subject?.subjectId).toBe('sub_c15t');
 		expect(storage.getItem(C15T_REASSIGNMENTS_KEY)).toBeNull();
 		expect(JSON.parse(storage.getItem(REASSIGNMENTS_KEY) ?? 'null')).toEqual([
-			{ at: expect.any(Number), from: 'sub_taken', to: 'sub_c15t' },
+			{
+				adoptedFrom: 'c15t',
+				at: expect.any(Number),
+				from: 'sub_taken',
+				to: 'sub_c15t',
+			},
 		]);
 		kernel.dispose();
 	});

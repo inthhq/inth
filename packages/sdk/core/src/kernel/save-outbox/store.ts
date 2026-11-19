@@ -15,12 +15,16 @@
  *   without localStorage.
  */
 
+import { getRawCookieValue } from '../../libs/cookie/operations';
 import {
 	C15T_PENDING_SAVES_STORAGE_KEY,
+	C15T_STORAGE_KEY,
 	C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
+	resolveStorageKeys,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../libs/storage-keys';
+import { decodeClearEpoch } from '../../modules/persistence/record-codec';
 import type { SavePayload } from '../../types';
 import type { PendingSaveEntry } from './supersession';
 
@@ -145,6 +149,51 @@ const C15T_SLOT_KEYS: Record<OutboxSlot, string> = {
 	saves: C15T_PENDING_SAVES_STORAGE_KEY,
 };
 
+/** Marks an entry adopted from c15t's lists, which c15t's clear epoch still voids. */
+const ADOPTED = 'c15t';
+
+const markAdopted = (entry: unknown): unknown =>
+	entry !== null && typeof entry === 'object'
+		? { ...entry, adoptedFrom: ADOPTED }
+		: entry;
+
+const isAdopted = (entry: unknown): entry is Record<string, unknown> =>
+	entry !== null &&
+	typeof entry === 'object' &&
+	(entry as Record<string, unknown>).adoptedFrom === ADOPTED;
+
+/** When an adopted entry was made: a save's queue time, a reassignment's. */
+const adoptedAt = (
+	entry: Record<string, unknown>,
+	slot: OutboxSlot
+): number => {
+	const at = slot === 'saves' ? entry.queuedAt : entry.at;
+	return typeof at === 'number' ? at : 0;
+};
+
+const C15T_EPOCH_KEY = resolveStorageKeys({
+	storageKey: C15T_STORAGE_KEY,
+}).epoch;
+
+/** c15t's clear epoch, from its cookie or localStorage copy; `0` for none. */
+const c15tClearEpoch = function c15tClearEpoch(storage: TextStorage): number {
+	const now = Date.now();
+	let local: string | null = null;
+	try {
+		local = storage.getItem(C15T_EPOCH_KEY);
+	} catch {
+		// Blocked storage holds no epoch.
+	}
+	let latest = 0;
+	for (const text of [local, getRawCookieValue(C15T_EPOCH_KEY)]) {
+		const decoded = text ? decodeClearEpoch(text.trim(), now) : null;
+		if (decoded?.ok && decoded.record > latest) {
+			latest = decoded.record;
+		}
+	}
+	return latest;
+};
+
 /**
  * The outbox store every tab of an origin shares: JSON arrays in
  * localStorage under {@link PENDING_SAVES_STORAGE_KEY} and
@@ -199,7 +248,21 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 				}
 			};
 			const tx: OutboxTransaction = {
-				read: (slot) => readKey(SLOT_KEYS[slot]),
+				read(slot) {
+					const value = readKey(SLOT_KEYS[slot]);
+					if (!Array.isArray(value) || !value.some(isAdopted)) {
+						return value;
+					}
+					// A c15t tab can still clear after its entries moved here.
+					const epoch = c15tClearEpoch(storage);
+					const live = value.filter(
+						(entry) => !(isAdopted(entry) && adoptedAt(entry, slot) <= epoch)
+					);
+					if (live.length !== value.length) {
+						tx.write(slot, live);
+					}
+					return live;
+				},
 				write(slot, value) {
 					try {
 						if (value.length === 0) {
@@ -221,9 +284,12 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 						continue;
 					}
 					if (Array.isArray(adopted)) {
-						const own = tx.read(slot);
+						const own = readKey(SLOT_KEYS[slot]);
 						if (
-							!tx.write(slot, [...(Array.isArray(own) ? own : []), ...adopted])
+							!tx.write(slot, [
+								...(Array.isArray(own) ? own : []),
+								...adopted.map(markAdopted),
+							])
 						) {
 							continue;
 						}
